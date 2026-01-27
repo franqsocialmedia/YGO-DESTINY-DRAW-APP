@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Deck Power Evaluator | Meta Versionado</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- CSS ORIGINAL (PEGAR ÍNTEGRO AQUÍ) -->
+<style>
+/* === PEGA AQUÍ EL CSS COMPLETO DE TU APP ORIGINAL SIN CAMBIOS === */
+</style>
+
+<!-- CSS NUEVO -->
+<style>
+.meta-controls {
+    background-color:#002244;
+    border:2px solid #ffcc00;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:20px;
+}
+
+select, button {
+    background:#003366;
+    color:white;
+    border:1px solid #ffcc00;
+    padding:6px;
+    border-radius:6px;
+    margin:4px 0;
+}
+
+.metric {
+    margin-bottom:8px;
+}
+</style>
+</head>
+
+<body>
+<div class="container mx-auto p-4">
+
+<h1>Evaluador de Poder del Deck (Meta Versionado)</h1>
+
+<!-- ================= META CONTROL ================= -->
+<div class="meta-controls">
+<h2>Meta</h2>
+
+<button onclick="selectMetaFolder()">Seleccionar carpeta META</button>
+<button onclick="saveMetaSnapshot()">Guardar Meta (fecha actual)</button>
+
+<p><strong>Deck activo:</strong></p>
+<select id="deckSelector" onchange="loadSelectedDeck()">
+<option value="">— Selecciona un deck —</option>
+</select>
+
+<p id="metaStatus" class="text-sm text-gray-400"></p>
+</div>
+
+<!-- ================= ESTRUCTURA ================= -->
+<div class="power-section">
+<h2>Estructura del Deck</h2>
+
+<div class="metric">Total cartas: <span id="totalCards">—</span></div>
+<div class="metric">Core funcional: <span id="coreCards">—</span></div>
+
+<div class="metric">Starters: <span id="starters">—</span></div>
+<div class="metric">Extenders: <span id="extenders">—</span></div>
+<div class="metric">Handtraps: <span id="handtraps">—</span></div>
+<div class="metric">Boardbreakers: <span id="boardbreakers">—</span></div>
+<div class="metric">Tech: <span id="tech">—</span></div>
+<div class="metric">Non-engine: <span id="nonengine">—</span></div>
+</div>
+
+<!-- ================= CONSISTENCIA ================= -->
+<div class="power-section">
+<h2>Consistencia (Monte Carlo)</h2>
+<button onclick="runMonteCarlo()">Simular 10.000 manos</button>
+
+<p>Brick: <span id="brickP">—</span>%</p>
+<p>Playable: <span id="playableP">—</span>%</p>
+<p>Óptima: <span id="optimalP">—</span>%</p>
+</div>
+
+<!-- ================= PERFIL ESTRATÉGICO ================= -->
+<div class="power-section">
+<h2>Perfil Estratégico</h2>
+<div id="strategyTags"></div>
+</div>
+
+<!-- ================= CONTEXTO META ================= -->
+<div class="power-section">
+<h2>Contexto del Meta</h2>
+<div id="metaCounters"></div>
+</div>
+
+<!-- ================= DESEMPEÑO EMPÍRICO ================= -->
+<div class="power-section">
+<h2>Desempeño Empírico</h2>
+
+<h3>Yendo primero</h3>
+<label>Jugadas</label>
+<input type="number" id="firstPlayed">
+<label>Ganadas</label>
+<input type="number" id="firstWon">
+
+<h3>Yendo segundo</h3>
+<label>Jugadas</label>
+<input type="number" id="secondPlayed">
+<label>Ganadas</label>
+<input type="number" id="secondWon">
+
+<p>Total partidas: <span id="totalGames">—</span></p>
+</div>
+
+</div>
+
+<script>
+/* ======================================================
+   VARIABLES GLOBALES
+====================================================== */
+let metaDirHandle = null;
+let decks = {};
+let activeDeck = null;
+
+/* ======================================================
+   SELECCIÓN DE CARPETA META
+====================================================== */
+async function selectMetaFolder(){
+    try{
+        metaDirHandle = await window.showDirectoryPicker();
+        document.getElementById("metaStatus").textContent =
+            "Carpeta META seleccionada correctamente.";
+        await loadDecksFromMeta();
+    }catch(e){
+        alert("No se seleccionó ninguna carpeta.");
+    }
+}
+
+/* ======================================================
+   GUARDAR SNAPSHOT DEL META (VERSIONADO POR FECHA)
+====================================================== */
+async function saveMetaSnapshot(){
+    if(!metaDirHandle){
+        alert("Selecciona primero la carpeta META.");
+        return;
+    }
+
+    const today = new Date();
+    const folderName =
+        String(today.getDate()).padStart(2,"0") + "-" +
+        String(today.getMonth()+1).padStart(2,"0") + "-" +
+        today.getFullYear();
+
+    const dateDir = await metaDirHandle.getDirectoryHandle(folderName,{create:true});
+    const fileHandle = await dateDir.getFileHandle("meta.json",{create:true});
+    const writable = await fileHandle.createWritable();
+
+    await writable.write(JSON.stringify(decks,null,2));
+    await writable.close();
+
+    document.getElementById("metaStatus").textContent =
+        "Meta guardado en /META/" + folderName;
+}
+
+/* ======================================================
+   CARGAR DECKS DESDE META (.ydk / .txt)
+====================================================== */
+async function loadDecksFromMeta(){
+    decks = {};
+    const selector = document.getElementById("deckSelector");
+    selector.innerHTML = `<option value="">— Selecciona un deck —</option>`;
+
+    for await (const [name,handle] of metaDirHandle.entries()){
+        if(handle.kind !== "file") continue;
+
+        if(name.endsWith(".ydk") || name.endsWith(".txt")){
+            const file = await handle.getFile();
+            const text = await file.text();
+
+            const parsedDeck = name.endsWith(".ydk")
+                ? parseYDK(text)
+                : parseTXT(text);
+
+            decks[name] = parsedDeck;
+
+            const opt = document.createElement("option");
+            opt.value = name;
+            opt.textContent = name;
+            selector.appendChild(opt);
+        }
+    }
+}
+
+/* ======================================================
+   SELECCIÓN DE DECK ACTIVO
+====================================================== */
+function loadSelectedDeck(){
+    const name = document.getElementById("deckSelector").value;
+    if(!name) return;
+
+    activeDeck = decks[name];
+
+    updateStructure();
+    updateStrategy();
+    updateMetaContext();
+}
+
+/* ======================================================
+   PARSER .YDK
+====================================================== */
+function parseYDK(content){
+    const lines = content.split(/\r?\n/);
+
+    let section = "main";
+    const main = [];
+    const extra = [];
+    const side = [];
+
+    for(const line of lines){
+        if(line.startsWith("#main")){ section="main"; continue; }
+        if(line.startsWith("#extra")){ section="extra"; continue; }
+        if(line.startsWith("#side")){ section="side"; continue; }
+        if(line.startsWith("#") || !line.trim()) continue;
+
+        if(section==="main") main.push(line.trim());
+        if(section==="extra") extra.push(line.trim());
+        if(section==="side") side.push(line.trim());
+    }
+
+    return buildInternalDeck({main,extra,side});
+}
+
+/* ======================================================
+   PARSER .TXT
+====================================================== */
+function parseTXT(content){
+    const lines = content.split(/\r?\n/);
+    const main = [];
+
+    for(const line of lines){
+        if(!line.trim()) continue;
+
+        // Soporta: "3 Ash Blossom"
+        const match = line.match(/^(\d+)\s+(.+)$/);
+        if(match){
+            const qty = parseInt(match[1]);
+            const name = match[2];
+            for(let i=0;i<qty;i++) main.push(name);
+        }else{
+            main.push(line.trim());
+        }
+    }
+
+    return buildInternalDeck({main,extra:[],side:[]});
+}
+
+/* ======================================================
+   CONSTRUCCIÓN DEL MODELO INTERNO
+   (REUTILIZA LA LÓGICA DE LA APP ORIGINAL)
+====================================================== */
+function buildInternalDeck({main,extra,side}){
+    const allCards = [...main];
+
+    // Esta función debe existir en la app original
+    // y devolver TODAS las clasificaciones reales
+    const classified = classifyDeckCards(allCards);
+
+    return {
+        total: allCards.length,
+        cards: classified.all,
+        starters: classified.starters,
+        extenders: classified.extenders,
+        handtraps: classified.handtraps,
+        boardbreakers: classified.boardbreakers,
+        tech: classified.tech,
+        nonengine: classified.nonengine,
+        mechanics: classified.mechanics,
+        counters: classified.counters,
+        extraDeck: extra,
+        sideDeck: side
+    };
+}
+
+/* ======================================================
+   ACTUALIZAR SECCIÓN ESTRUCTURA
+====================================================== */
+function updateStructure(){
+    const d = activeDeck;
+
+    document.getElementById("totalCards").textContent = d.total;
+    document.getElementById("starters").textContent = d.starters.length;
+    document.getElementById("extenders").textContent = d.extenders.length;
+    document.getElementById("handtraps").textContent = d.handtraps.length;
+    document.getElementById("boardbreakers").textContent = d.boardbreakers.length;
+    document.getElementById("tech").textContent = d.tech.length;
+    document.getElementById("nonengine").textContent = d.nonengine.length;
+
+    // Core funcional = starters + extenders (NO handtraps, NO tech)
+    document.getElementById("coreCards").textContent =
+        d.starters.length + d.extenders.length;
+}
+
+/* ======================================================
+   MONTE CARLO (CONSISTENCIA REAL)
+====================================================== */
+function runMonteCarlo(){
+    if(!activeDeck){
+        alert("Selecciona un deck primero.");
+        return;
+    }
+
+    let brick = 0;
+    let playable = 0;
+    let optimal = 0;
+
+    const deck = activeDeck.cards;
+
+    for(let i=0;i<10000;i++){
+        const hand = drawHand(deck,5);
+
+        const starters = hand.filter(c=>c.role==="starter").length;
+        const extenders = hand.filter(c=>c.role==="extender").length;
+
+        if(starters === 0){
+            brick++;
+        }else if(starters >= 1 && extenders >= 1){
+            optimal++;
+        }else{
+            playable++;
+        }
+    }
+
+    document.getElementById("brickP").textContent = (brick/100).toFixed(1);
+    document.getElementById("playableP").textContent = (playable/100).toFixed(1);
+    document.getElementById("optimalP").textContent = (optimal/100).toFixed(1);
+}
+
+function drawHand(deck,n){
+    return [...deck].sort(()=>0.5-Math.random()).slice(0,n);
+}
+
+/* ======================================================
+   PERFIL ESTRATÉGICO (MECÁNICAS PRINCIPALES)
+====================================================== */
+function updateStrategy(){
+    const container = document.getElementById("strategyTags");
+    container.innerHTML = "";
+
+    activeDeck.mechanics.forEach(m=>{
+        const tag = document.createElement("span");
+        tag.className = "tag";
+        tag.textContent = m;
+        container.appendChild(tag);
+    });
+}
+
+/* ======================================================
+   CONTEXTO DEL META (COUNTERS)
+====================================================== */
+function updateMetaContext(){
+    const container = document.getElementById("metaCounters");
+    container.innerHTML = "";
+
+    activeDeck.counters.forEach(c=>{
+        const p = document.createElement("p");
+        p.textContent = "• " + c;
+        container.appendChild(p);
+    });
+}
+</script>
+</body>
+</html>
