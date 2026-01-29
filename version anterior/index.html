@@ -116,12 +116,6 @@ h1, h2, h3 {
 	filter: brightness(0.7);
 }
 
-.tab.metatools { /* Pestaña de: META TOOLS */
-    background-image: url('https://static.wikia.nocookie.net/yugioh/images/b/b0/Mokuba_and_Seto_Kaiba.png/revision/latest?cb=20160501002129');
-	background-sizes:100% auto;
-	filter: brightness(0.7);
-}
-
 /* Ensure text is readable over background images */
 .tab span {
     
@@ -2132,7 +2126,6 @@ footer {
     <!-- Updated: Removed inline style, now controlled by JS/CSS -->
     <div class="tab disabled compar" data-target="compare" id="compareTab"><span>Comparar Decks</span></div>
 	 <div class="tab simula" data-target="simulator"><span>Simulador</span></div>
-	 <div class="tab metatools" data-target="metatools"><span>META Tools</span></div>
     <div class="tab meta" data-target="meta-analysis"><span>Meta Analysis</span></div>
 	<!-- Updated: Removed inline style, now controlled by JS/CSS -->
 	<!-- The display style for data-management tab will be controlled by script.js initially hidden -->
@@ -2649,13 +2642,6 @@ footer {
   <!--/div-->
   
 
-  <!-- META Tools Section -->
-  <div class="section" id="metatools">
-    <div id="metatoolsContent">
-      <!-- El contenido será cargado por el módulo meta-tools.js -->
-    </div>
-  </div>
-
   <!-- New Meta Analysis Section -->
   <div class="section" id="meta-analysis">
     <h2 class="text-2xl mb-4">Análisis del Metajuego</h2>
@@ -2929,8 +2915,8 @@ document.querySelectorAll('.tab').forEach(tab => {
     const keywordsSection = document.getElementById('keywordsSection');
     const counterMechanicsSection = document.getElementById('counterMechanicsSection');
 
-    // These sections should only be hidden if the target is 'data-management', 'meta-analysis', or 'metatools'
-    if (target === 'data-management' || target === 'meta-analysis' || target === 'metatools') { 
+    // These sections should only be hidden if the target is 'data-management' or 'meta-analysis'
+    if (target === 'data-management' || target === 'meta-analysis') { 
         if (keywordsSection) keywordsSection.hidden = true;
         if (counterMechanicsSection) counterMechanicsSection.hidden = true;
     } else {
@@ -2947,11 +2933,6 @@ document.querySelectorAll('.tab').forEach(tab => {
       renderManagementTab(); // Refresh data management view
     } else if (target === 'meta-analysis') {
         renderMetaAnalysis();
-    } else if (target === 'metatools') {
-        // Inicializar el módulo META Tools
-        if (typeof initMetaTools === 'function') {
-            initMetaTools();
-        }
     }
   });
 });
@@ -8976,9 +8957,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /**/
 </script>
-
-<!-- Módulo META Tools -->
-<script src="meta-tools.js"></script>
-
 </body>
 </html>
