@@ -1,670 +1,491 @@
-// META TOOLS MODULE
-// Este módulo maneja la funcionalidad de la pestaña META Tools
+/* META TOOLS MODULE - FINAL ROBUST VERSION
+   Integra lectura de carpetas locales y UI completa.
+*/
 
-// CSS específico para el módulo META Tools
-const metaToolsStyles = `
-<style id="meta-tools-styles">
-/* Estilos específicos para META Tools */
-.meta-tools-container {
-    padding: 20px;
-}
+// ==========================================
+// 1. CONFIGURACIÓN Y ESTADO
+// ==========================================
+let metaFileSystem = {}; 
+let isMetaInitialized = false;
 
-.meta-section {
-    background: linear-gradient(135deg, #001f3f, #003366);
-    border: 2px solid #ffcc00;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-}
+// ==========================================
+// 2. ESTILOS (CSS INYECTADO)
+// ==========================================
+// Estos estilos aseguran que se vea bien incluso si el CSS principal falla
+const metaStyles = `
+<style id="meta-tools-critical-css">
+    /* Contenedor Principal */
+    #metaToolsContent {
+        width: 100%;
+        min-height: 500px;
+        color: white;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-.meta-section-title {
-    color: #ffcc00;
-    font-size: 1.8em;
-    font-weight: bold;
-    margin-bottom: 15px;
-    text-align: center;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
-}
+    .meta-dashboard {
+        background-color: rgba(0, 31, 63, 0.95);
+        border: 1px solid #ffcc00;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
 
-.meta-deck-selector {
-    margin-bottom: 20px;
-}
-
-.meta-deck-selector label {
-    color: #ffcc00;
-    font-weight: bold;
-    margin-right: 10px;
-}
-
-.meta-deck-selector select {
-    background-color: #002244;
-    color: #fff;
-    border: 2px solid #ffcc00;
-    padding: 10px;
-    border-radius: 8px;
-    font-size: 16px;
-    min-width: 300px;
-}
-
-.meta-deck-info {
-    display: grid;
-    grid-template-columns: 250px 1fr;
-    gap: 20px;
-    margin-top: 20px;
-}
-
-.meta-deck-image {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.meta-deck-image img {
-    max-width: 200px;
-    border: 3px solid #ffcc00;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-}
-
-.meta-deck-image-label {
-    color: #ffcc00;
-    font-weight: bold;
-    margin-top: 10px;
-    text-align: center;
-}
-
-.meta-deck-details {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.meta-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-}
-
-.meta-stat-card {
-    background: rgba(0, 31, 63, 0.7);
-    border: 2px solid #ff9900;
-    border-radius: 8px;
-    padding: 15px;
-    text-align: center;
-}
-
-.meta-stat-label {
-    color: #ffcc00;
-    font-size: 0.9em;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-.meta-stat-value {
-    color: #fff;
-    font-size: 1.5em;
-    font-weight: bold;
-}
-
-.meta-characteristics {
-    background: rgba(0, 31, 63, 0.7);
-    border: 2px solid #ff9900;
-    border-radius: 8px;
-    padding: 15px;
-}
-
-.meta-characteristics-title {
-    color: #ffcc00;
-    font-size: 1.2em;
-    font-weight: bold;
-    margin-bottom: 10px;
-    text-align: center;
-}
-
-.meta-characteristic-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px;
-    margin-bottom: 5px;
-    background: rgba(0, 51, 102, 0.5);
-    border-radius: 4px;
-}
-
-.meta-characteristic-label {
-    color: #ffcc00;
-    font-weight: bold;
-}
-
-.meta-characteristic-value {
-    color: #fff;
-}
-
-.meta-loading {
-    text-align: center;
-    color: #ffcc00;
-    font-size: 1.2em;
-    padding: 40px;
-}
-
-.meta-error {
-    text-align: center;
-    color: #ff6b6b;
-    font-size: 1.2em;
-    padding: 40px;
-    background: rgba(255, 0, 0, 0.1);
-    border: 2px solid #ff6b6b;
-    border-radius: 8px;
-}
-
-@media (max-width: 768px) {
-    .meta-deck-info {
-        grid-template-columns: 1fr;
+    /* Títulos */
+    .meta-header {
+        text-align: center;
+        border-bottom: 2px solid #ffcc00;
+        margin-bottom: 25px;
+        padding-bottom: 10px;
     }
     
-    .meta-stats-grid {
-        grid-template-columns: 1fr;
+    .meta-header h2 {
+        color: #ffcc00;
+        font-size: 2em;
+        margin: 0;
+        text-transform: uppercase;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     }
-}
+
+    /* Panel de Control (Botones y Selects) */
+    .meta-controls-panel {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        align-items: flex-end;
+        border: 1px solid rgba(255, 204, 0, 0.3);
+    }
+
+    .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .control-group label {
+        color: #ffcc00;
+        font-weight: bold;
+        font-size: 0.9em;
+    }
+
+    /* Inputs y Botones */
+    .meta-select-input {
+        background-color: #001f3f;
+        color: white;
+        border: 1px solid #ffcc00;
+        padding: 10px;
+        border-radius: 5px;
+        min-width: 220px;
+        font-size: 1em;
+    }
+
+    .meta-action-btn {
+        background: linear-gradient(180deg, #ffcc00 0%, #ffaa00 100%);
+        color: #000;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 1em;
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .meta-action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 204, 0, 0.4);
+    }
+
+    .meta-action-btn:active {
+        transform: translateY(0);
+    }
+
+    /* GRID DE RESULTADOS */
+    .meta-results-grid {
+        display: grid;
+        grid-template-columns: 250px 1fr 1fr;
+        gap: 20px;
+        margin-top: 30px;
+        opacity: 0; /* Animación de entrada */
+        animation: fadeIn 0.8s forwards;
+    }
+
+    @media (max-width: 900px) {
+        .meta-results-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Cajas de Estadísticas */
+    .result-box {
+        background: rgba(0,0,0,0.4);
+        border-radius: 8px;
+        padding: 15px;
+        border-left: 5px solid #ffcc00;
+    }
+
+    .result-box h3 {
+        color: #ffcc00;
+        margin-top: 0;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        padding-bottom: 10px;
+    }
+
+    /* Visualización Carta */
+    .card-preview-container {
+        text-align: center;
+        background: rgba(0,0,0,0.6);
+        padding: 10px;
+        border-radius: 8px;
+    }
+    
+    .card-preview-img {
+        max-width: 100%;
+        height: auto;
+        border: 2px solid #666;
+        box-shadow: 0 0 15px rgba(0,0,0,0.8);
+    }
+
+    /* Filas de Datos */
+    .data-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px dashed rgba(255,255,255,0.1);
+        font-size: 0.95em;
+    }
+    
+    .data-label { color: #aaa; }
+    .data-value { color: #fff; font-weight: bold; }
+
+    /* Utilidad */
+    .tier-badge {
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-weight: bold;
+        text-align: center;
+        display: inline-block;
+    }
+    
+    @keyframes fadeIn {
+        to { opacity: 1; }
+    }
 </style>
 `;
 
-// Variables globales del módulo
-let metaDecks = [];
-let currentMetaDeck = null;
+// ==========================================
+// 3. INICIALIZACIÓN (MOTOR GRÁFICO)
+// ==========================================
 
-// Función principal de inicialización
 function initMetaTools() {
-    console.log('Inicializando META Tools...');
-    
-    // Inyectar estilos si no existen
-    if (!document.getElementById('meta-tools-styles')) {
-        document.head.insertAdjacentHTML('beforeend', metaToolsStyles);
-    }
-    
-    // Renderizar la interfaz
-    renderMetaToolsInterface();
-    
-    // Cargar los decks META disponibles
-    loadMetaDecks();
-}
+    // 1. Verificar si ya cargó
+    if (isMetaInitialized) return;
 
-// Renderizar la interfaz principal
-function renderMetaToolsInterface() {
-    const container = document.getElementById('metatoolsContent');
+    const container = document.getElementById('metaToolsContent');
     
+    // 2. Diagnóstico de error en pantalla si no encuentra el ID
+    if (!container) {
+        console.error("META TOOLS CRITICAL: No se encontró <div id='metaToolsContent'>");
+        return; 
+    }
+
+    console.log("META TOOLS: Iniciando renderizado...");
+
+    // 3. Inyectar CSS
+    if (!document.getElementById('meta-tools-critical-css')) {
+        document.head.insertAdjacentHTML('beforeend', metaStyles);
+    }
+
+    // 4. Inyectar HTML Estructural
     container.innerHTML = `
-        <div class="meta-tools-container">
-            <h2 style="color: #ffcc00; text-align: center; font-size: 2.5em; margin-bottom: 20px;">META Tools</h2>
-            
-            <!-- Sección 1: Evaluación de Decks META -->
-            <div class="meta-section">
-                <div class="meta-section-title">📊 Evaluación de Power Level</div>
+        <div class="meta-dashboard">
+            <div class="meta-header">
+                <h2>🛡️ Meta Deck Analyzer</h2>
+                <p style="color: #ccc;">Analiza carpetas locales de YGOPro/Omega para obtener estadísticas del metajuego.</p>
+            </div>
+
+            <div class="meta-controls-panel">
                 
-                <div class="meta-deck-selector">
-                    <label for="metaDeckSelect">Seleccionar Deck META:</label>
-                    <select id="metaDeckSelect" onchange="selectMetaDeck(this.value)">
-                        <option value="">-- Selecciona un deck --</option>
+                <div class="control-group">
+                    <label>1. Cargar Base de Datos</label>
+                    <input type="file" id="metaDirInput" webkitdirectory directory multiple style="display:none" />
+                    <button class="meta-action-btn" onclick="document.getElementById('metaDirInput').click()">
+                        <span>📂</span> Seleccionar Carpeta META
+                    </button>
+                </div>
+
+                <div class="control-group">
+                    <label>2. Formato / Fecha</label>
+                    <select id="metaFolderSelect" class="meta-select-input" onchange="window.selectMetaFolder()">
+                        <option value="">(Esperando carpeta...)</option>
                     </select>
                 </div>
-                
-                <div id="metaDeckDisplay" style="display: none;">
-                    <div class="meta-deck-info">
-                        <div class="meta-deck-image">
-                            <img id="metaDeckStarterImage" src="" alt="Starter Card">
-                            <div class="meta-deck-image-label" id="metaDeckStarterName">Starter Card</div>
-                        </div>
-                        
-                        <div class="meta-deck-details">
-                            <div>
-                                <h3 style="color: #ffcc00; margin-bottom: 10px;">Información del Deck</h3>
-                                <div style="color: #fff;">
-                                    <p><strong style="color: #ffcc00;">Nombre:</strong> <span id="metaDeckName"></span></p>
-                                    <p><strong style="color: #ffcc00;">Total de Cartas:</strong> <span id="metaDeckTotal"></span></p>
-                                    <p><strong style="color: #ffcc00;">Main Deck:</strong> <span id="metaDeckMain"></span></p>
-                                    <p><strong style="color: #ffcc00;">Extra Deck:</strong> <span id="metaDeckExtra"></span></p>
-                                    <p><strong style="color: #ffcc00;">Side Deck:</strong> <span id="metaDeckSide"></span></p>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <h3 style="color: #ffcc00; margin-bottom: 10px;">Deck Stats</h3>
-                                <div class="meta-stats-grid" id="metaDeckStats">
-                                    <!-- Stats dinámicas -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
+                <div class="control-group">
+                    <label>3. Deck Específico</label>
+                    <select id="metaDeckSelect" class="meta-select-input" onchange="window.selectMetaDeck()" disabled>
+                        <option value="">-- Selecciona Deck --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="metaResultsArea" style="display:none;">
+                <div class="meta-results-grid">
                     
-                    <div class="meta-characteristics">
-                        <div class="meta-characteristics-title">Características del Deck</div>
-                        <div id="metaDeckCharacteristics">
-                            <!-- Características dinámicas -->
+                    <div class="result-box">
+                        <h3>Carta Insignia</h3>
+                        <div class="card-preview-container">
+                            <img id="metaStarterImg" class="card-preview-img" src="https://images.ygoprodeck.com/images/cards/back_high.jpg" alt="Card Back">
+                            <div id="metaStarterName" style="margin-top:10px; color:#ffcc00; font-weight:bold;">???</div>
                         </div>
                     </div>
+
+                    <div class="result-box">
+                        <h3>Composición</h3>
+                        <div id="metaStatsList">
+                            </div>
+                    </div>
+
+                    <div class="result-box">
+                        <h3>Perfil Competitivo</h3>
+                        <div id="metaProfileList">
+                            </div>
+                    </div>
+
                 </div>
-                
-                <div id="metaDeckLoading" class="meta-loading" style="display: none;">
-                    <div class="loading-spinner"></div>
-                    <p>Cargando deck...</p>
-                </div>
-                
-                <div id="metaDeckError" class="meta-error" style="display: none;"></div>
             </div>
             
-            <!-- Placeholder para futuras secciones -->
-            <div class="meta-section" style="opacity: 0.6;">
-                <div class="meta-section-title">🔮 Próximas Secciones</div>
-                <p style="text-align: center; color: #aaa;">Más herramientas META próximamente...</p>
+            <div style="text-align:center; margin-top:20px; font-size:0.8em; color:#555;">
+                Meta Tools Module v2.0 - Loaded Successfully
             </div>
         </div>
     `;
+
+    // 5. Vincular Eventos
+    document.getElementById('metaDirInput').addEventListener('change', handleFolderSelect, false);
+    
+    isMetaInitialized = true;
+    console.log("META TOOLS: Renderizado completado.");
 }
 
-// Cargar decks desde la carpeta META
-async function loadMetaDecks() {
-    try {
-        // Obtener la fecha actual en formato DD-MM-YYYY
-        const today = new Date();
-        const day = String(today.getDate()).padStart(2, '0');
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const year = today.getFullYear();
-        const dateFolder = `${day}-${month}-${year}`;
+// ==========================================
+// 4. LÓGICA DE ARCHIVOS (FILE SYSTEM)
+// ==========================================
+
+function handleFolderSelect(event) {
+    const files = event.target.files;
+    metaFileSystem = {}; 
+    let folderCount = 0;
+    
+    const folderSelect = document.getElementById('metaFolderSelect');
+    folderSelect.innerHTML = '<option value="">Cargando...</option>';
+
+    console.log(`META: Escaneando ${files.length} archivos...`);
+
+    // Procesamiento optimizado
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         
-        console.log(`Buscando decks en: META/${dateFolder}/`);
+        // Estructura esperada: META/Fecha/Deck.ydk
+        // webkitRelativePath devuelve la ruta completa
+        const pathParts = file.webkitRelativePath.split('/');
         
-        // Intentar cargar la lista de archivos
-        // Nota: Esto requiere que el servidor permita listar archivos o que tengamos una lista predefinida
-        const response = await fetch(`META/${dateFolder}/`);
-        
-        if (!response.ok) {
-            throw new Error(`No se pudo acceder a la carpeta META/${dateFolder}/`);
+        // Validación estricta: Debe ser .ydk y tener al menos una carpeta padre
+        if (file.name.endsWith('.ydk') && pathParts.length >= 2) {
+            
+            // La carpeta de interés es la que contiene el archivo (penúltima en la ruta)
+            const folderName = pathParts[pathParts.length - 2];
+            
+            // Evitar archivos sueltos en la raíz o carpetas del sistema
+            if (folderName === pathParts[0]) continue; 
+
+            if (!metaFileSystem[folderName]) {
+                metaFileSystem[folderName] = [];
+                folderCount++;
+            }
+            metaFileSystem[folderName].push(file);
         }
-        
-        // Parsear la lista de archivos (esto depende del servidor)
-        // Por ahora, usaremos una lista de ejemplo
-        const exampleDecks = [
-            'Snake-Eye.ydk',
-            'Yubel.ydk',
-            'Centur-Ion.ydk',
-            'Tenpai.ydk'
-        ];
-        
-        const select = document.getElementById('metaDeckSelect');
-        select.innerHTML = '<option value="">-- Selecciona un deck --</option>';
-        
-        exampleDecks.forEach(deckName => {
-            const option = document.createElement('option');
-            option.value = `META/${dateFolder}/${deckName}`;
-            option.textContent = deckName.replace('.ydk', '');
-            select.appendChild(option);
-        });
-        
-        console.log('Decks cargados:', exampleDecks);
-        
-    } catch (error) {
-        console.error('Error al cargar decks META:', error);
-        const errorDiv = document.getElementById('metaDeckError');
-        errorDiv.textContent = `Error: ${error.message}. Asegúrate de que la carpeta META con la fecha de hoy existe.`;
-        errorDiv.style.display = 'block';
     }
-}
 
-// Seleccionar y cargar un deck META
-async function selectMetaDeck(deckPath) {
-    if (!deckPath) {
-        document.getElementById('metaDeckDisplay').style.display = 'none';
+    // Actualizar UI
+    folderSelect.innerHTML = '<option value="">-- Seleccionar Fecha --</option>';
+    
+    if (folderCount === 0) {
+        alert("⚠️ No se encontraron carpetas válidas.\n\nInstrucciones:\n1. Pulsa el botón 'Seleccionar Carpeta META'\n2. Elige la carpeta RAÍZ que contiene las carpetas de fechas (ej: carpeta 'META').\n3. No entres a las subcarpetas.");
         return;
     }
+
+    // Ordenar fechas (descendente simple)
+    const sortedFolders = Object.keys(metaFileSystem).sort().reverse();
     
-    // Mostrar loading
-    document.getElementById('metaDeckLoading').style.display = 'block';
-    document.getElementById('metaDeckDisplay').style.display = 'none';
-    document.getElementById('metaDeckError').style.display = 'none';
-    
-    try {
-        // Cargar el archivo .ydk
-        const response = await fetch(deckPath);
-        if (!response.ok) {
-            throw new Error('No se pudo cargar el archivo del deck');
-        }
-        
-        const ydkContent = await response.text();
-        
-        // Parsear el deck
-        const deck = parseYDKFile(ydkContent);
-        
-        // Obtener información de las cartas desde la API
-        await enrichDeckWithCardData(deck);
-        
-        // Guardar deck actual
-        currentMetaDeck = deck;
-        currentMetaDeck.name = deckPath.split('/').pop().replace('.ydk', '');
-        
-        // Mostrar información del deck
-        displayMetaDeck(currentMetaDeck);
-        
-    } catch (error) {
-        console.error('Error al cargar deck:', error);
-        const errorDiv = document.getElementById('metaDeckError');
-        errorDiv.textContent = `Error al cargar el deck: ${error.message}`;
-        errorDiv.style.display = 'block';
-    } finally {
-        document.getElementById('metaDeckLoading').style.display = 'none';
-    }
+    sortedFolders.forEach(folder => {
+        const option = document.createElement('option');
+        option.value = folder;
+        option.textContent = `📅 ${folder}`;
+        folderSelect.appendChild(option);
+    });
+
+    alert(`✅ Éxito: Se cargaron ${folderCount} formatos diferentes.`);
 }
 
-// Parsear archivo .ydk
-function parseYDKFile(content) {
-    const lines = content.split('\n').map(line => line.trim()).filter(line => line);
-    let section = null;
+// Función global para el HTML onchange
+window.selectMetaFolder = function() {
+    const folderSelect = document.getElementById('metaFolderSelect');
+    const deckSelect = document.getElementById('metaDeckSelect');
+    const selectedFolder = folderSelect.value;
+
+    // Reset UI
+    deckSelect.innerHTML = '<option value="">-- Seleccionar Deck --</option>';
+    deckSelect.disabled = true;
+    document.getElementById('metaResultsArea').style.display = 'none';
+
+    if (!selectedFolder || !metaFileSystem[selectedFolder]) return;
+
+    // Poblar lista de decks
+    const decks = metaFileSystem[selectedFolder];
+    decks.forEach((file, index) => {
+        const option = document.createElement('option');
+        option.value = index; 
+        option.textContent = file.name.replace('.ydk', '');
+        deckSelect.appendChild(option);
+    });
+
+    deckSelect.disabled = false;
+};
+
+window.selectMetaDeck = function() {
+    const folderSelect = document.getElementById('metaFolderSelect');
+    const deckSelect = document.getElementById('metaDeckSelect');
     
-    const deck = {
-        main: [],
-        extra: [],
-        side: []
+    const selectedFolder = folderSelect.value;
+    const fileIndex = deckSelect.value;
+
+    if (fileIndex === "" || !selectedFolder) return;
+
+    const file = metaFileSystem[selectedFolder][fileIndex];
+    
+    // Leer archivo
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        processDeckData(e.target.result, file.name);
     };
-    
+    reader.readAsText(file);
+};
+
+// ==========================================
+// 5. MOTOR DE ANÁLISIS (CORE LOGIC)
+// ==========================================
+
+function processDeckData(content, deckName) {
+    // Parser YDK simple
+    const lines = content.split('\n');
+    const mainIds = [];
+    const extraIds = [];
+    let section = '';
+
     lines.forEach(line => {
-        if (line.startsWith('#main')) {
-            section = 'main';
-        } else if (line.startsWith('#extra')) {
-            section = 'extra';
-        } else if (line.startsWith('!side')) {
-            section = 'side';
-        } else if (line.startsWith('#') || line.startsWith('!')) {
-            // Ignorar otros metadatos
-        } else {
-            const cardId = parseInt(line);
-            if (!isNaN(cardId) && section) {
-                deck[section].push(cardId);
+        const l = line.trim();
+        if (l === '#main') section = 'main';
+        else if (l === '#extra') section = 'extra';
+        else if (l === '!side') section = 'side';
+        else if (l && !l.startsWith('#') && !l.startsWith('!')) {
+            const id = parseInt(l);
+            if (!isNaN(id)) {
+                if (section === 'main') mainIds.push(id);
+                if (section === 'extra') extraIds.push(id);
             }
         }
     });
-    
-    return deck;
+
+    renderDeckAnalysis(mainIds, extraIds, deckName);
 }
 
-// Enriquecer deck con datos de cartas desde la API
-async function enrichDeckWithCardData(deck) {
-    // Obtener todos los IDs únicos
-    const allIds = [...new Set([...deck.main, ...deck.extra, ...deck.side])];
-    
-    // Cargar datos de cartas (usar la variable global allCards si existe)
-    if (typeof allCards !== 'undefined' && allCards.length > 0) {
-        deck.cards = allIds.map(id => {
-            const card = allCards.find(c => c.id == id);
-            return card || { id, name: 'Desconocida', type: 'Unknown' };
-        });
+function renderDeckAnalysis(mainIds, extraIds, deckName) {
+    document.getElementById('metaResultsArea').style.display = 'block';
+
+    // 1. Obtener objetos carta completos
+    // Intentamos usar la base de datos global 'allCards' si existe
+    let cards = [];
+    if (typeof allCards !== 'undefined' && Array.isArray(allCards)) {
+        cards = mainIds.map(id => allCards.find(c => c.id == id)).filter(c => c);
     } else {
-        // Si no hay datos cargados, intentar cargar desde la API
-        try {
-            const response = await fetch('https://db.ygoprodeck.com/api/v7/cardinfo.php');
-            const data = await response.json();
-            const apiCards = data.data;
-            
-            deck.cards = allIds.map(id => {
-                const card = apiCards.find(c => c.id == id);
-                return card || { id, name: 'Desconocida', type: 'Unknown' };
-            });
-        } catch (error) {
-            console.error('Error al cargar datos de cartas:', error);
-            deck.cards = allIds.map(id => ({ id, name: 'Desconocida', type: 'Unknown' }));
-        }
+        console.warn("Base de datos de cartas no encontrada. Modo básico activado.");
     }
-}
 
-// Mostrar información del deck META
-function displayMetaDeck(deck) {
-    // Ocultar mensajes de error/loading
-    document.getElementById('metaDeckError').style.display = 'none';
-    document.getElementById('metaDeckLoading').style.display = 'none';
-    document.getElementById('metaDeckDisplay').style.display = 'block';
-    
-    // Información básica
-    document.getElementById('metaDeckName').textContent = deck.name;
-    document.getElementById('metaDeckTotal').textContent = deck.main.length + deck.extra.length + deck.side.length;
-    document.getElementById('metaDeckMain').textContent = deck.main.length;
-    document.getElementById('metaDeckExtra').textContent = deck.extra.length;
-    document.getElementById('metaDeckSide').textContent = deck.side.length;
-    
-    // Encontrar la primera carta "starter"
-    const starterCard = findStarterCard(deck);
-    if (starterCard) {
-        document.getElementById('metaDeckStarterImage').src = starterCard.card_images[0].image_url_small;
-        document.getElementById('metaDeckStarterName').textContent = starterCard.name;
-    } else {
-        document.getElementById('metaDeckStarterImage').src = 'https://images.ygoprodeck.com/images/cards/cardback.jpg';
-        document.getElementById('metaDeckStarterName').textContent = 'No Starter';
-    }
-    
-    // Calcular y mostrar estadísticas
-    const stats = calculateDeckStats(deck);
-    displayDeckStats(stats);
-    
-    // Mostrar características
-    const characteristics = analyzeDeckCharacteristics(deck);
-    displayDeckCharacteristics(characteristics);
-}
-
-// Encontrar carta starter (primera con clasificación de starter según lógica del deck)
-function findStarterCard(deck) {
-    // Por ahora, buscamos cartas que típicamente son starters
-    // Esto se puede mejorar con clasificación más sofisticada
-    
-    const mainDeckCards = deck.main.map(id => deck.cards.find(c => c.id == id)).filter(c => c);
-    
-    // Buscar cartas de bajo nivel con efectos de búsqueda o invocación
-    const starterKeywords = ['search', 'add', 'special summon', 'from your deck', 'normal summon'];
-    
-    for (const card of mainDeckCards) {
-        if (card.desc) {
-            const desc = card.desc.toLowerCase();
-            if (starterKeywords.some(keyword => desc.includes(keyword)) && 
-                card.type && card.type.includes('Monster') && 
-                (!card.level || card.level <= 4)) {
-                return card;
-            }
-        }
-    }
-    
-    // Si no encuentra, retornar la primera carta del main deck
-    return mainDeckCards[0] || null;
-}
-
-// Calcular estadísticas del deck
-function calculateDeckStats(deck) {
-    const cards = deck.main.map(id => deck.cards.find(c => c.id == id)).filter(c => c);
-    
-    // Contar tipos
-    const monsters = cards.filter(c => c.type && c.type.includes('Monster')).length;
-    const spells = cards.filter(c => c.type && c.type.includes('Spell')).length;
-    const traps = cards.filter(c => c.type && c.type.includes('Trap')).length;
-    
-    // Ratio
-    const ratio = `${monsters}/${spells}/${traps}`;
-    
-    // Nivel promedio de monstruos
-    const monsterCards = cards.filter(c => c.level && c.type && c.type.includes('Monster'));
-    const avgLevel = monsterCards.length > 0 
-        ? (monsterCards.reduce((sum, c) => sum + c.level, 0) / monsterCards.length).toFixed(1)
-        : 0;
-    
-    // Contar hand traps (cartas trampa de mano)
-    const handTraps = cards.filter(c => 
-        c.desc && (
-            c.desc.toLowerCase().includes('from your hand') ||
-            c.desc.toLowerCase().includes('you can discard') ||
-            c.name.includes('Ash Blossom') ||
-            c.name.includes('Effect Veiler') ||
-            c.name.includes('Infinite Impermanence')
-        )
-    ).length;
-    
-    return {
-        ratio,
-        monsters,
-        spells,
-        traps,
-        avgLevel,
-        handTraps,
-        extraDeckSize: deck.extra.length
+    // 2. Calcular Estadísticas
+    const stats = {
+        total: cards.length || mainIds.length,
+        monsters: cards.filter(c => c.type.includes('Monster')).length,
+        spells: cards.filter(c => c.type.includes('Spell')).length,
+        traps: cards.filter(c => c.type.includes('Trap')).length,
+        extra: extraIds.length,
+        // Handtraps comunes (Hardcoded IDs populares para detección rápida)
+        handTraps: cards.filter(c => [10045474, 14558127, 23434538, 59438930, 52038441, 94145021].includes(c.id)).length
     };
-}
 
-// Mostrar estadísticas
-function displayDeckStats(stats) {
-    const container = document.getElementById('metaDeckStats');
+    // 3. Determinar Características
+    const isControl = stats.traps > 8;
+    const isTier1 = stats.handTraps >= 9;
     
-    container.innerHTML = `
-        <div class="meta-stat-card">
-            <div class="meta-stat-label">Ratio M/S/T</div>
-            <div class="meta-stat-value">${stats.ratio}</div>
-        </div>
-        <div class="meta-stat-card">
-            <div class="meta-stat-label">Monstruos</div>
-            <div class="meta-stat-value">${stats.monsters}</div>
-        </div>
-        <div class="meta-stat-card">
-            <div class="meta-stat-label">Magias</div>
-            <div class="meta-stat-value">${stats.spells}</div>
-        </div>
-        <div class="meta-stat-card">
-            <div class="meta-stat-label">Trampas</div>
-            <div class="meta-stat-value">${stats.traps}</div>
-        </div>
-        <div class="meta-stat-card">
-            <div class="meta-stat-label">Nivel Promedio</div>
-            <div class="meta-stat-value">${stats.avgLevel}</div>
-        </div>
-        <div class="meta-stat-card">
-            <div class="meta-stat-label">Hand Traps</div>
-            <div class="meta-stat-value">${stats.handTraps}</div>
-        </div>
-        <div class="meta-stat-card">
-            <div class="meta-stat-label">Extra Deck</div>
-            <div class="meta-stat-value">${stats.extraDeckSize}</div>
-        </div>
+    // 4. Renderizar UI
+    
+    // A) Starter Image
+    const starter = cards.find(c => c.type.includes('Monster') && c.level <= 4 && !c.type.includes('Normal')) || cards[0];
+    if (starter && starter.card_images) {
+        document.getElementById('metaStarterImg').src = starter.card_images[0].image_url;
+        document.getElementById('metaStarterName').textContent = starter.name;
+    }
+
+    // B) Stats List
+    document.getElementById('metaStatsList').innerHTML = `
+        <div class="data-row"><span class="data-label">Main Deck</span> <span class="data-value">${stats.total}</span></div>
+        <div class="data-row"><span class="data-label">Monstruos</span> <span class="data-value">${stats.monsters}</span></div>
+        <div class="data-row"><span class="data-label">Magias</span> <span class="data-value">${stats.spells}</span></div>
+        <div class="data-row"><span class="data-label">Trampas</span> <span class="data-value">${stats.traps}</span></div>
+        <div class="data-row"><span class="data-label">Extra Deck</span> <span class="data-value">${stats.extra}</span></div>
     `;
-}
 
-// Analizar características del deck
-function analyzeDeckCharacteristics(deck) {
-    const cards = [...deck.main, ...deck.extra].map(id => deck.cards.find(c => c.id == id)).filter(c => c);
-    
-    // Atributos
-    const attributes = {};
-    cards.forEach(c => {
-        if (c.attribute) {
-            attributes[c.attribute] = (attributes[c.attribute] || 0) + 1;
-        }
-    });
-    const mainAttribute = Object.keys(attributes).length > 0 
-        ? Object.keys(attributes).reduce((a, b) => attributes[a] > attributes[b] ? a : b)
-        : 'N/A';
-    
-    // Tipos
-    const types = {};
-    cards.forEach(c => {
-        if (c.race) {
-            types[c.race] = (types[c.race] || 0) + 1;
-        }
-    });
-    const mainType = Object.keys(types).length > 0 
-        ? Object.keys(types).reduce((a, b) => types[a] > types[b] ? a : b)
-        : 'N/A';
-    
-    // Arquetipo principal
-    const archetypes = {};
-    cards.forEach(c => {
-        if (c.archetype) {
-            archetypes[c.archetype] = (archetypes[c.archetype] || 0) + 1;
-        }
-    });
-    const mainArchetype = Object.keys(archetypes).length > 0 
-        ? Object.keys(archetypes).reduce((a, b) => archetypes[a] > archetypes[b] ? a : b)
-        : 'N/A';
-    
-    // Velocidad del deck (basado en nivel promedio y cartas de búsqueda)
-    const searchCards = cards.filter(c => 
-        c.desc && (c.desc.toLowerCase().includes('search') || c.desc.toLowerCase().includes('add'))
-    ).length;
-    
-    let speed = 'Media';
-    if (searchCards >= 8) speed = 'Rápida';
-    else if (searchCards <= 3) speed = 'Lenta';
-    
-    // Combo vs Control
-    const comboKeywords = ['special summon', 'xyz summon', 'synchro summon', 'link summon'];
-    const controlKeywords = ['negate', 'destroy', 'remove', 'banish'];
-    
-    let comboCount = 0;
-    let controlCount = 0;
-    
-    cards.forEach(c => {
-        if (c.desc) {
-            const desc = c.desc.toLowerCase();
-            if (comboKeywords.some(kw => desc.includes(kw))) comboCount++;
-            if (controlKeywords.some(kw => desc.includes(kw))) controlCount++;
-        }
-    });
-    
-    const strategy = comboCount > controlCount ? 'Combo' : 'Control';
-    
-    // Power Level (simplificado por ahora)
-    let powerLevel = 'Tier 2';
-    if (searchCards >= 10 && deck.extra.length >= 12) powerLevel = 'Tier 1';
-    else if (searchCards <= 5 || deck.extra.length <= 8) powerLevel = 'Tier 3';
-    
-    return {
-        mainAttribute,
-        mainType,
-        mainArchetype,
-        speed,
-        strategy,
-        powerLevel,
-        consistency: searchCards >= 6 ? 'Alta' : searchCards >= 3 ? 'Media' : 'Baja'
-    };
-}
-
-// Mostrar características
-function displayDeckCharacteristics(chars) {
-    const container = document.getElementById('metaDeckCharacteristics');
-    
-    container.innerHTML = `
-        <div class="meta-characteristic-item">
-            <span class="meta-characteristic-label">Atributo Principal:</span>
-            <span class="meta-characteristic-value">${chars.mainAttribute}</span>
-        </div>
-        <div class="meta-characteristic-item">
-            <span class="meta-characteristic-label">Tipo Principal:</span>
-            <span class="meta-characteristic-value">${chars.mainType}</span>
-        </div>
-        <div class="meta-characteristic-item">
-            <span class="meta-characteristic-label">Arquetipo Principal:</span>
-            <span class="meta-characteristic-value">${chars.mainArchetype}</span>
-        </div>
-        <div class="meta-characteristic-item">
-            <span class="meta-characteristic-label">Velocidad:</span>
-            <span class="meta-characteristic-value">${chars.speed}</span>
-        </div>
-        <div class="meta-characteristic-item">
-            <span class="meta-characteristic-label">Estrategia:</span>
-            <span class="meta-characteristic-value">${chars.strategy}</span>
-        </div>
-        <div class="meta-characteristic-item">
-            <span class="meta-characteristic-label">Consistencia:</span>
-            <span class="meta-characteristic-value">${chars.consistency}</span>
-        </div>
-        <div class="meta-characteristic-item">
-            <span class="meta-characteristic-label">Power Level:</span>
-            <span class="meta-characteristic-value" style="color: ${chars.powerLevel === 'Tier 1' ? '#4caf50' : chars.powerLevel === 'Tier 2' ? '#ffcc00' : '#ff6b6b'};">
-                ${chars.powerLevel}
+    // C) Profile List
+    const powerColor = isTier1 ? '#4caf50' : '#ffcc00';
+    document.getElementById('metaProfileList').innerHTML = `
+        <div class="data-row"><span class="data-label">Arquetipo</span> <span class="data-value">${deckName.replace('.ydk','').split('_')[0]}</span></div>
+        <div class="data-row"><span class="data-label">Velocidad</span> <span class="data-value">${isControl ? 'Lenta (Control)' : 'Rápida (Combo)'}</span></div>
+        <div class="data-row"><span class="data-label">Handtraps</span> <span class="data-value">${stats.handTraps}</span></div>
+        <div style="margin-top:15px; text-align:center;">
+            <span class="tier-badge" style="background:${powerColor}; color:#000;">
+                ${isTier1 ? 'META / TIER 1' : 'ROGUE / TIER 2'}
             </span>
         </div>
     `;
 }
 
-// Exportar funciones globales
+// ==========================================
+// 6. AUTO-ARRANQUE SEGURO
+// ==========================================
+
+// Intenta arrancar al cargar el script
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMetaTools);
+} else {
+    // Si ya cargó, ejecuta inmediatamente
+    initMetaTools();
+}
+
+// Respaldo: Reintentar cada 500ms hasta que el contenedor exista
+// (Soluciona problemas si el HTML de la pestaña se genera dinámicamente)
+const safetyCheck = setInterval(() => {
+    if (document.getElementById('metaToolsContent') && !isMetaInitialized) {
+        initMetaTools();
+        clearInterval(safetyCheck);
+    }
+}, 500);
+
+// Exponer init manualmente por si acaso
 window.initMetaTools = initMetaTools;
-window.selectMetaDeck = selectMetaDeck;
