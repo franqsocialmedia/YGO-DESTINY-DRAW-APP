@@ -42,37 +42,37 @@
         <ul class="nav-tabs">
             <!-- Pestaña: Buscador de Cartas -->
             <li class="nav-item">
-                <button class="nav-button active" data-tab="buscador">
+                <button class="nav-button active" data-tab="buscador" onclick="switchTab('buscador')">
                     Buscador
                 </button>
             </li>
             <!-- Pestaña: Mi Deck -->
             <li class="nav-item">
-                <button class="nav-button" data-tab="mideck">
+                <button class="nav-button" data-tab="mideck" onclick="switchTab('mideck')">
                     Mi Deck
                 </button>
             </li>
             <!-- Pestaña: Estadísticas -->
             <li class="nav-item">
-                <button class="nav-button" data-tab="estadisticas">
+                <button class="nav-button" data-tab="estadisticas" onclick="switchTab('estadisticas')">
                     Estadísticas
                 </button>
             </li>
             <!-- Pestaña: Simuladores -->
             <li class="nav-item">
-                <button class="nav-button" data-tab="simuladores">
+                <button class="nav-button" data-tab="simuladores" onclick="switchTab('simuladores')">
                     Simuladores
                 </button>
             </li>
             <!-- Pestaña: Meta Actual -->
             <li class="nav-item">
-                <button class="nav-button" data-tab="meta">
+                <button class="nav-button" data-tab="meta" onclick="switchTab('meta')">
                     Meta
                 </button>
             </li>
             <!-- Pestaña: Formación/Tutoriales -->
             <li class="nav-item">
-                <button class="nav-button" data-tab="formacion">
+                <button class="nav-button" data-tab="formacion" onclick="switchTab('formacion')">
                     Formación
                 </button>
             </li>
@@ -151,8 +151,7 @@
              Gestión de mazos personales
              ==================================== -->
         <section id="mideck-content" class="tab-content">
-            <h2>Mi Deck</h2>
-            <p>Contenido de gestión de deck (pendiente de implementación)</p>
+            <div id="deck-container"></div>
         </section>
 
         <!-- ====================================
@@ -232,6 +231,7 @@
     <script src="Modules/utils.js"></script>
     <script src="Modules/cardviewer.js"></script>
     <script src="Modules/buscador.js"></script>
+    <script src="Modules/deck.js"></script>
 
 
     <button id="scrollTopBtn">▲</button>

@@ -566,6 +566,115 @@ RESULTADO FINAL ETAPA 1
 El Buscador permite búsqueda por nombre y filtros múltiples, renderiza resultados correctamente y permite abrir un visor detallado de cada carta con interacción completa y descarga de imagen.
 Base funcional sólida para continuar con Etapa 2.
 
-================================================================================
-FIN DEL REPORTE
-================================================================================
+===================================================================
+ACTUALIZACIÓN – ETAPA 2 (MI DECK – IMPLEMENTACIÓN INICIAL)
+===================================================================
+
+Fecha: 08/02/2026
+Versión: 2.0.0
+Estado: FUNCIONAL (BASE ESTABLE)
+
+MÓDULO IMPLEMENTADO
+
+Se desarrolló el módulo “Mi Deck” permitiendo la gestión básica de cartas añadidas desde el Buscador y CardViewer.
+El sistema ahora mantiene un estado interno del deck y renderiza dinámicamente su contenido en el DOM.
+
+FUNCIONALIDADES AGREGADAS
+
+• Sincronización con CardViewer
+
+Las cartas aumentadas/disminuidas en el visor se reflejan automáticamente en “Mi Deck”.
+
+Eliminación automática cuando la cantidad llega a 0.
+
+• Estructura del Deck
+
+Separación lógica de cartas en:
+
+Main Deck
+
+Side Deck
+
+Cambio de ubicación mediante botón por carta.
+
+• Contador de Cartas
+
+El título “Mi Deck” muestra la cantidad total de cartas del Main Deck entre paréntesis.
+
+• Cartas Representativas
+
+Se muestran las 2 cartas con mayor cantidad dentro del deck.
+
+Visualización mediante miniaturas superiores.
+
+• Listado Dinámico de Cartas
+
+Renderizado automático en tabla/filas.
+
+Orden alfabético por nombre de carta.
+
+Columnas:
+
+Imagen pequeña
+
+Nombre
+
+Cantidad (x1, x2…)
+
+Funciones (palabras clave)
+
+Botón de cambio Main/Side
+
+• Control de Cantidades
+
+Botones ◀ ▶ para disminuir o aumentar copias.
+
+Flechas disponibles tanto en Main como en Side.
+
+• Visualización de Carta desde Deck
+
+Click en la imagen abre el CardViewer flotante con todos los datos.
+
+CAMBIOS VISUALES
+
+• Letras de la lista de cartas en color negro.
+• Fondo por tipo de carta:
+
+Monstruo → Marrón claro
+
+Hechizo → Verde claro
+
+Trampa → Rosa claro
+
+• Palabras clave (funciones) mostradas como etiquetas azules redondeadas.
+• Botón de ubicación simplificado a:
+
+“Side Deck”
+
+“Main Deck”
+
+• Aumento de tamaño en cartas representativas superiores.
+
+CORRECCIONES TÉCNICAS
+
+• Eliminado uso de JSON en atributos HTML para evitar errores de sintaxis.
+• Implementado método CardViewer.openFromDeck(id) para abrir cartas desde el deck sin romper el DOM.
+• Corrección de errores undefined en visor de cartas.
+• Ajustes de ordenamiento evitando conflictos entre Object.entries y Object.values.
+• Prevención de errores por referencias inexistentes al cambiar cantidades.
+
+ESTADO ACTUAL
+
+• Buscador funcional.
+• CardViewer funcional.
+• Mi Deck funcional en operaciones básicas.
+• Integración entre módulos estable.
+
+PENDIENTE / MEJORAS FUTURAS
+
+• Refinar comportamiento de traslado Main ↔ Side en casos límite.
+• Clasificación avanzada de funciones de carta.
+• Persistencia de datos (LocalStorage / Base de Datos).
+• Optimización responsive de la tabla de deck.
+
+==============================================

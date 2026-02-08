@@ -104,11 +104,17 @@ thumbs.forEach((t, index) => {
     plus.onclick = () => {
         this.quantities[card.id] = (this.quantities[card.id] || 0) + 1;
         count.textContent = this.quantities[card.id];
+
+        Deck.syncFromViewer(card.id, card, this.quantities[card.id]);
+
     };
 
     minus.onclick = () => {
         this.quantities[card.id] = Math.max(0, (this.quantities[card.id] || 0) - 1);
         count.textContent = this.quantities[card.id];
+
+        Deck.syncFromViewer(card.id, card, this.quantities[card.id]);
+
     };
     const downloadBtn = document.getElementById('cv-download');
 
@@ -123,8 +129,17 @@ downloadBtn.onclick = () => {
     document.body.removeChild(a);
 };
 
-}
-,
+},
+
+openFromDeck: function(id) {
+    if (!window.Deck) return;
+
+    const item = Deck.cards[id];
+    if (!item) return;
+
+    this.open(item.data);
+},
+
 
 
     openFromIndex(index) {
