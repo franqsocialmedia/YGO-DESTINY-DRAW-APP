@@ -1,54 +1,169 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-	<link rel="shortcut icon" type="image/x-icon" href="https://static.wikia.nocookie.net/yugiohenespanol/images/9/9a/Foto_centur-i%C3%B3n_primera.jpg/revision/latest?cb=20240428013735&path-prefix=es">
-	<meta name="description" content="APP Yugioh all in one">
-	<meta name="keywords" content="Yugioh, TCG, OCG, Master Duel, Duel Links">
-	<meta name="author" content="Yan-Yan">
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Destiny Draw Yugioh!</title>
-	<link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
-	<link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aplicación de Yu-Gi-Oh! para gestión de decks, búsqueda de cartas y análisis del meta">
+    <title>Destiny Draw - Yu-Gi-Oh! App</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/style_global.css">
+    <link rel="stylesheet" href="css/style_buscador.css">
+    <link rel="stylesheet" href="css/style_mideck.css">
+    <link rel="stylesheet" href="css/style_estadisticas.css">
+    <link rel="stylesheet" href="css/style_simuladores.css">
+    <link rel="stylesheet" href="css/style_meta.css">
+    <link rel="stylesheet" href="css/style_formacion.css">
+    <link rel="stylesheet" href="css/style_config.css">
 </head>
 <body>
-<div class="container mx-auto p-4 centrico">
-	<p class="subtitle_logo">
-		<img src="https://i.pinimg.com/originals/0f/37/1b/0f371bbd0e6a02a8a8c0d2f3c97f0990.png" style="height:80px;vertical-align:middle">
-	</p>
-	<p class="subtitle">Aplicacion para buscar cartas, construir listas, comparar decks y analizar el meta juego</p>
+    <!-- Header con Parallax -->
+    <header id="header" class="parallax-header">
+        <div class="parallax-bg"></div>
+        <div class="logo-container">
+            <img src="img/LOGO - Destiny Draw Yugioh APP.png" alt="Destiny Draw Logo" class="main-logo" onerror="this.style.display='none'">
+            <h1 class="logo-text"></h1>
+        </div>
+    </header>
 
-	<div class="tabs">
-		<div class="tab busca active" data-target="search"><span>Buscador de Cartas</span></div>
-		<div class="tab baraja" data-target="library"><span><span id="currentDeckName">Mi Deck</span> (<span id="mainDeckCardCount">0</span> cartas)</span></div>
-		<div class="tab disabled compar" data-target="compare" id="compareTab"><span>Comparar Decks</span></div>
-		<div class="tab simula" data-target="simulator"><span>Simulador</span></div>
-		<div class="tab meta" data-target="meta-analysis"><span>Meta Analysis</span></div>
-		<div class="tab adjusment" data-target="data-management" style="display: none;"><span>Gestión de Datos</span></div>
-	</div>
+    <!-- Navigation Menu -->
+    <nav id="main-nav" class="main-navigation">
+        <ul class="nav-tabs">
+            <li class="nav-item">
+                <button class="nav-button active" data-tab="buscador" onclick="switchTab('buscador')">
+                    Buscador
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-button" data-tab="mideck" onclick="switchTab('mideck')">
+                    Mi Deck
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-button" data-tab="estadisticas" onclick="switchTab('estadisticas')">
+                    Estadísticas
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-button" data-tab="simuladores" onclick="switchTab('simuladores')">
+                    Simuladores
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-button" data-tab="meta" onclick="switchTab('meta')">
+                    Meta
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-button" data-tab="formacion" onclick="switchTab('formacion')">
+                    Formación
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-button" data-tab="config" onclick="switchTab('config')">
+                    Config
+                </button>
+            </li>
+        </ul>
+    </nav>
 
-	<button id="scrollToTopBtn" title="Ir arriba">↑</button>
-	<button id="scrollToBottomBtn" title="Ir abajo">↓</button>
+    <!-- Main Content Area -->
+    <main id="main-content" class="content-container">
+        <!-- Buscador Tab -->
+        <section id="buscador-content" class="tab-content active">
+            <h2>Buscador de Cartas</h2>
+            
+            <div class="search-container">
+                <!-- Barra de búsqueda principal -->
+                <div class="search-bar">
+                    <input 
+                        type="text" 
+                        id="card-search-input" 
+                        class="search-input" 
+                        placeholder="Buscar carta por nombre..."
+                        autocomplete="off"
+                    >
+                    <button id="search-btn" class="btn btn-primary" onclick="searchCard()">
+                        <span class="btn-icon">🔍</span>
+                        <span class="btn-text">Buscar</span>
+                    </button>
+                    <button id="clear-btn" class="btn btn-secondary" onclick="clearSearch()">
+                        <span class="btn-icon">✖</span>
+                        <span class="btn-text">Limpiar</span>
+                    </button>
+                </div>
 
-	<div class="section active" id="search"></div>
-	<div class="section" id="library"></div>
-	<div class="section" id="compare"></div>
-	<div class="section" id="simulator"></div>
-	<div class="section" id="meta-analysis"></div>
-	<div class="section" id="data-management"></div>
+                <!-- Filtros adicionales -->
+                <div class="filters-container">
+                    <label for="additional-filters" class="filter-label">
+                        Filtrar por palabras clave (separadas por coma):
+                    </label>
+                    <input 
+                        type="text" 
+                        id="additional-filters" 
+                        class="filter-input" 
+                        placeholder="Ejemplo: dragón, oscuro, efecto"
+                        autocomplete="off"
+                    >
+                    <small class="filter-help">
+                        Ingresa palabras clave separadas por comas para refinar la búsqueda
+                    </small>
+                </div>
+            </div>
 
-	<footer>
-		<br>
-		<p style="text-align:center;">© 2025 Destiny Draw Yugioh. Todos los derechos reservados.</p>
-		<p style="text-align:center;">Este proyecto no está afiliado con Konami. Yu-Gi-Oh! es una marca registrada de Konami Digital Entertainment.</p>
-	</footer>
-</div>
+            <!-- Área de resultados -->
+            <div id="search-results" class="results-container">
+                <p class="results-placeholder">Utiliza el buscador para encontrar cartas de Yu-Gi-Oh!</p>
+            </div>
+        </section>
 
-	<script src="app-core.js"></script>
-	<script src="buscador.js"></script>
-	<script src="mideck.js"></script>
-	<script src="simulador.js"></script>
-	<script src="meta-analisis.js"></script>
-	<script src="gestion-datos.js"></script>
+        <!-- Mi Deck Tab -->
+        <section id="mideck-content" class="tab-content">
+            <h2>Mi Deck</h2>
+            <p>Contenido de gestión de deck (pendiente de implementación)</p>
+        </section>
+
+        <!-- Estadísticas Tab -->
+        <section id="estadisticas-content" class="tab-content">
+            <h2>Estadísticas</h2>
+            <p>Contenido de estadísticas (pendiente de implementación)</p>
+        </section>
+
+        <!-- Simuladores Tab -->
+        <section id="simuladores-content" class="tab-content">
+            <h2>Simuladores</h2>
+            <p>Contenido de simuladores (pendiente de implementación)</p>
+        </section>
+
+        <!-- Meta Tab -->
+        <section id="meta-content" class="tab-content">
+            <h2>Meta</h2>
+            <p>Contenido del meta actual (pendiente de implementación)</p>
+        </section>
+
+        <!-- Formación Tab -->
+        <section id="formacion-content" class="tab-content">
+            <h2>Formación</h2>
+            <p>Contenido de formación (pendiente de implementación)</p>
+        </section>
+
+        <!-- Config Tab -->
+        <section id="config-content" class="tab-content">
+            <h2>Configuración</h2>
+            <p>Contenido de configuración (pendiente de implementación)</p>
+        </section>
+    </main>
+
+    <!-- Scroll to Top Button -->
+    <button id="scroll-to-top" class="scroll-top-btn" onclick="scrollToTop()" title="Volver arriba">
+        <span class="arrow-up">↑</span>
+    </button>
+
+    <!-- JavaScript Modules -->
+    <script src="Modules/logger.js"></script>
+    <script src="Modules/navigation.js"></script>
+    <script src="Modules/parallax.js"></script>
+    <script src="Modules/utils.js"></script>
+    <script src="Modules/buscador.js"></script>
 </body>
 </html>
