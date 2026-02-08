@@ -1,0 +1,59 @@
+.card-viewer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.card-viewer {
+    background: #002b4d;
+    color: #f1f1f1;
+    width: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 12px;
+    padding: 15px;
+    position: relative;
+}
+
+.cv-close {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    background: red;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.cv-image-section img {
+    width: 100%;
+}
+
+.cv-alt-images {
+    display: flex;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+.cv-thumb {
+    width: 40px;
+    cursor: pointer;
+}
+
+.cv-quantity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.cv-quantity button {
+    background: #FFD700;
+    border: none;
+    cursor: pointer;
+}

@@ -521,69 +521,51 @@ Para producción:
 3. Subir a hosting estático (GitHub Pages, Netlify, etc.)
 4. ¡No se necesita servidor!
 
+======================================================
+ACTUALIZACIÓN ETAPA 1 – BUSCADOR Y VISOR DE CARTAS
+======================================================
+
+Fecha: 08/02/2026
+Versión: 1.3.0
+Estado: COMPLETADO
+
+MEJORAS IMPLEMENTADAS
+
+Se completó la funcionalidad del módulo Buscador y se integró un Visor de Cartas flotante totalmente operativo.
+
+CAMBIOS REALIZADOS:
+
+• Corrección del filtrado por palabras clave separadas por coma.
+• Implementación de filtrado múltiple sobre nombre, tipo, descripción, raza y atributo.
+• Optimización del renderizado de resultados para mayor densidad visual (cartas 50% más pequeñas).
+• Integración de botón flotante “Scroll To Top” con transparencia dinámica.
+• Implementación de evento click directo sobre cada carta generada por DOM.
+• Eliminación de uso de JSON en atributos HTML para evitar errores de sintaxis.
+• Implementación de CardViewer como módulo independiente.
+• Creación de ventana flotante con overlay oscuro que bloquea interacción externa.
+• Cierre del visor mediante botón X y clic fuera del modal.
+• Visualización de nombre completo de carta.
+• Imagen principal de la carta.
+• Miniaturas de artes alternativos con cambio dinámico de imagen principal.
+• Contador de “Cantidad en Deck” con incremento y decremento seguro (no negativo).
+• Descripción completa de carta con soporte para textos largos y scroll interno.
+• Visualización condicional de estadísticas de monstruos (ATK, DEF, Nivel, Atributo).
+• Integración de información de banlist desde la API (TCG, OCG, Duel Links, Master Duel cuando disponible).
+• Implementación de botón “Descargar Imagen” dentro del visor para descargar el arte actualmente mostrado.
+
+NOTAS TÉCNICAS
+
+• Se evitó el uso de data-* con objetos JSON por incompatibilidades de comillas y tamaño.
+• Los eventos de cartas se generan directamente en el HTML dinámico.
+• El visor utiliza estilos inline para asegurar visibilidad sin dependencias de CSS externo.
+• Rarezas de Master Duel y Duel Links no disponibles en la API utilizada.
+• Banlist Genesys no disponible en API; se considera dato local futuro.
+
+RESULTADO FINAL ETAPA 1
+
+El Buscador permite búsqueda por nombre y filtros múltiples, renderiza resultados correctamente y permite abrir un visor detallado de cada carta con interacción completa y descarga de imagen.
+Base funcional sólida para continuar con Etapa 2.
 
 ================================================================================
 FIN DEL REPORTE
 ================================================================================
-
-Versión: 1.2.0
-Última actualización: 07/02/2025
-Próxima etapa: Implementación de módulo "Mi Deck"
-
-ESTADO: ✓ COMPLETAMENTE FUNCIONAL SIN SERVIDOR
-
-ACTUALIZACIÓN RÁPIDA – CORRECCIÓN ETAPA 1 (BUSCADOR)
-
-Fecha: 07/02/2026 Versión: 1.2.1 Estado: EN CORRECCIÓN
-
-ERROR DETECTADO
-
-El módulo Buscador NO se estaba ejecutando debido a un problema de RUTAS DE ARCHIVOS.
-
-CAUSA RAÍZ:
-
-index.html carga los scripts desde la carpeta "Modules/"
-
-Los archivos reales se encuentran en la raíz del proyecto (/) o en otra ruta distinta
-
-Al no encontrarse buscador.js, navigation.js, logger.js, etc., el navegador nunca ejecuta el JavaScript
-
-Como consecuencia: • Botón Buscar no responde • Botón Limpiar no responde • Enter no ejecuta búsqueda • No hay errores visibles para el usuario, solo en consola
-
-SÍNTOMA TÉCNICO: En consola del navegador aparecen errores tipo: "Failed to load resource" o "404 not found" para archivos JS.
-
-SOLUCIÓN DEFINITIVA
-
-Existen 2 caminos válidos (elegir UNO):
-
-OPCIÓN A – Crear carpeta Modules/
-
-Crear carpeta llamada "Modules"
-
-Mover dentro: logger.js navigation.js parallax.js utils.js buscador.js
-
-OPCIÓN B – Cambiar rutas en index.html Modificar:
-
-Por:
-
-(repetir con todos los módulos)
-
-RESULTADO ESPERADO TRAS CORRECCIÓN
-
-Botón Buscar ejecuta fetch a la API
-
-Botón Limpiar borra campos
-
-Enter funciona
-
-Resultados se renderizan
-
-Logger aparece en consola
-
-IMPACTO EN ETAPA 1
-
-La lógica del Buscador ES CORRECTA. El problema NO es JavaScript interno ni la API. El problema es exclusivamente de estructura de carpetas.
-
-PRÓXIMO PASO
-
-Corregir rutas y volver a probar antes de avanzar a Etapa 2.
