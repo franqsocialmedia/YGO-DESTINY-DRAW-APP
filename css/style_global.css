@@ -270,64 +270,26 @@ body {
    Botón flotante amarillo para volver arriba
    IMPORTANTE: Funciona sin servidor
    ==================================== */
-.scroll-top-btn {
-    /* Posicionamiento fijo en esquina inferior derecha */
+#scrollTopBtn {
     position: fixed;
-    bottom: 80px;
-    right: 30px;
-    
-    /* Tamaño y forma */
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    
-    /* Colores - AMARILLO #FFD700 */
+    bottom: 90px;
+    right: 20px;
     background: #FFD700;
-    border: 2px solid rgba(255, 255, 255, 0.8);
     color: #003366;
-    font-size: 1.5rem;
-    font-weight: bold;
-    
-    /* Opacidad inicial 0 (invisible) */
-    /* Cuando se hace scroll, se agrega clase 'visible' y opacity cambia a 0.7 */
-    opacity: 0;
-    visibility: hidden;
-    
-    /* Comportamiento */
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
     cursor: pointer;
-    transition: all var(--transition-normal);
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
-    z-index: 999;
-    
-    /* Centrado del contenido */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Estado visible (después de scroll > 300px) */
-.scroll-top-btn.visible {
     opacity: 0.7;
-    visibility: visible;
+    transition: opacity 0.3s;
+    z-index: 9999;
+    display: none;
 }
 
-/* Estado hover - Opacidad al 100% */
-.scroll-top-btn:hover {
-    opacity: 1 !important;
-    transform: translateY(-5px);
-    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
-    border-color: rgba(255, 255, 255, 1);
-}
-
-/* Estado activo (al hacer click) */
-.scroll-top-btn:active {
-    transform: translateY(-2px);
-}
-
-/* Flecha dentro del botón */
-.arrow-up {
-    font-weight: bold;
-    line-height: 1;
+#scrollTopBtn:hover {
+    opacity: 1;
 }
 
 /* ====================================

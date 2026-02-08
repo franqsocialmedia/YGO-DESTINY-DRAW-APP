@@ -204,70 +204,44 @@
    ==================================== */
 
 /* Contenedor de resultados */
-.results-container {
-    background: var(--bg-card);
-    border-radius: 12px;
-    padding: var(--spacing-lg);
-    min-height: 200px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--border-color);
-}
-
-/* Mensaje placeholder */
-.results-placeholder {
-    text-align: center;
-    color: rgba(241, 241, 241, 0.5);
-    font-size: 1.1rem;
-    padding: var(--spacing-xl) 0;
-}
-
-/* Grid de resultados */
 .results-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: var(--spacing-md);
-    margin-top: var(--spacing-md);
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px;
+    padding: 10px;
 }
+
 
 /* Item de carta individual */
+
 .card-item {
-    background: rgba(0, 26, 51, 0.6);
-    border: 2px solid var(--border-color);
-    border-radius: 10px;
-    padding: var(--spacing-sm);
-    transition: all var(--transition-normal);
-    cursor: pointer;
+    background: #002b4d;
+    border-radius: 8px;
+    padding: 6px;
+    text-align: center;
+    font-size: 0.9rem;
+    transition: transform 0.2s;
 }
 
-/* Hover en carta */
 .card-item:hover {
-    transform: translateY(-5px);
-    border-color: var(--gold-color);
-    box-shadow: 0 8px 16px rgba(0, 102, 204, 0.4);
+    transform: scale(1.05);
 }
 
-/* Imagen de la carta */
 .card-image {
     width: 100%;
-    border-radius: 8px;
-    margin-bottom: var(--spacing-sm);
-    display: block;
+    height: auto;
+    border-radius: 4px;
 }
 
-/* Nombre de la carta */
 .card-name {
-    font-weight: 600;
-    color: var(--gold-color);
-    margin-bottom: var(--spacing-xs);
-    font-size: 0.95rem;
-    text-align: center;
+    margin-top: 4px;
+    font-weight: bold;
+    color: #FFD700;
 }
 
-/* Tipo de carta */
 .card-type {
-    font-size: 0.85rem;
-    color: rgba(241, 241, 241, 0.7);
-    text-align: center;
+    font-size: 0.65rem;
+    color: #f1f1f1;
 }
 
 /* ====================================

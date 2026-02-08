@@ -531,3 +531,59 @@ Versión: 1.2.0
 Próxima etapa: Implementación de módulo "Mi Deck"
 
 ESTADO: ✓ COMPLETAMENTE FUNCIONAL SIN SERVIDOR
+
+ACTUALIZACIÓN RÁPIDA – CORRECCIÓN ETAPA 1 (BUSCADOR)
+
+Fecha: 07/02/2026 Versión: 1.2.1 Estado: EN CORRECCIÓN
+
+ERROR DETECTADO
+
+El módulo Buscador NO se estaba ejecutando debido a un problema de RUTAS DE ARCHIVOS.
+
+CAUSA RAÍZ:
+
+index.html carga los scripts desde la carpeta "Modules/"
+
+Los archivos reales se encuentran en la raíz del proyecto (/) o en otra ruta distinta
+
+Al no encontrarse buscador.js, navigation.js, logger.js, etc., el navegador nunca ejecuta el JavaScript
+
+Como consecuencia: • Botón Buscar no responde • Botón Limpiar no responde • Enter no ejecuta búsqueda • No hay errores visibles para el usuario, solo en consola
+
+SÍNTOMA TÉCNICO: En consola del navegador aparecen errores tipo: "Failed to load resource" o "404 not found" para archivos JS.
+
+SOLUCIÓN DEFINITIVA
+
+Existen 2 caminos válidos (elegir UNO):
+
+OPCIÓN A – Crear carpeta Modules/
+
+Crear carpeta llamada "Modules"
+
+Mover dentro: logger.js navigation.js parallax.js utils.js buscador.js
+
+OPCIÓN B – Cambiar rutas en index.html Modificar:
+
+Por:
+
+(repetir con todos los módulos)
+
+RESULTADO ESPERADO TRAS CORRECCIÓN
+
+Botón Buscar ejecuta fetch a la API
+
+Botón Limpiar borra campos
+
+Enter funciona
+
+Resultados se renderizan
+
+Logger aparece en consola
+
+IMPACTO EN ETAPA 1
+
+La lógica del Buscador ES CORRECTA. El problema NO es JavaScript interno ni la API. El problema es exclusivamente de estructura de carpetas.
+
+PRÓXIMO PASO
+
+Corregir rutas y volver a probar antes de avanzar a Etapa 2.
