@@ -1,13 +1,19 @@
 /* ====================================
    BUSCADOR STYLES
    Destiny Draw - Yu-Gi-Oh! App
+   Estilos para el módulo de búsqueda de cartas
    ==================================== */
 
-/* Contenedor principal del buscador */
+/* ====================================
+   CONTENEDOR PRINCIPAL
+   ==================================== */
+
+/* Contenedor del módulo buscador */
 #buscador-content {
     animation: fadeIn 0.4s ease;
 }
 
+/* Contenedor de búsqueda (input y botones) */
 .search-container {
     background: var(--bg-card);
     border-radius: 12px;
@@ -21,6 +27,7 @@
    BARRA DE BÚSQUEDA PRINCIPAL
    ==================================== */
 
+/* Contenedor de la barra de búsqueda */
 .search-bar {
     display: flex;
     gap: var(--spacing-sm);
@@ -28,6 +35,7 @@
     flex-wrap: wrap;
 }
 
+/* Input de búsqueda */
 .search-input {
     flex: 1;
     min-width: 250px;
@@ -41,10 +49,12 @@
     outline: none;
 }
 
+/* Placeholder del input */
 .search-input::placeholder {
     color: rgba(241, 241, 241, 0.5);
 }
 
+/* Estado focus del input */
 .search-input:focus {
     border-color: var(--gold-color);
     background: rgba(0, 26, 51, 0.8);
@@ -55,6 +65,7 @@
    BOTONES
    ==================================== */
 
+/* Botón base */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -71,6 +82,7 @@
     overflow: hidden;
 }
 
+/* Efecto ripple al hacer click */
 .btn::before {
     content: '';
     position: absolute;
@@ -89,10 +101,12 @@
     height: 300px;
 }
 
+/* Icono del botón */
 .btn-icon {
     font-size: 1.2rem;
 }
 
+/* Texto del botón */
 .btn-text {
     position: relative;
     z-index: 1;
@@ -136,11 +150,13 @@
    FILTROS ADICIONALES
    ==================================== */
 
+/* Contenedor de filtros */
 .filters-container {
     padding-top: var(--spacing-md);
     border-top: 1px solid rgba(0, 102, 204, 0.3);
 }
 
+/* Label de filtros */
 .filter-label {
     display: block;
     font-size: 0.95rem;
@@ -149,6 +165,7 @@
     margin-bottom: var(--spacing-xs);
 }
 
+/* Input de filtros */
 .filter-input {
     width: 100%;
     padding: 12px 16px;
@@ -162,16 +179,19 @@
     margin-bottom: var(--spacing-xs);
 }
 
+/* Placeholder del filtro */
 .filter-input::placeholder {
     color: rgba(241, 241, 241, 0.5);
 }
 
+/* Estado focus del filtro */
 .filter-input:focus {
     border-color: var(--gold-color);
     background: rgba(0, 26, 51, 0.8);
     box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
 }
 
+/* Texto de ayuda */
 .filter-help {
     display: block;
     font-size: 0.85rem;
@@ -183,6 +203,7 @@
    RESULTADOS
    ==================================== */
 
+/* Contenedor de resultados */
 .results-container {
     background: var(--bg-card);
     border-radius: 12px;
@@ -192,6 +213,7 @@
     border: 1px solid var(--border-color);
 }
 
+/* Mensaje placeholder */
 .results-placeholder {
     text-align: center;
     color: rgba(241, 241, 241, 0.5);
@@ -199,6 +221,7 @@
     padding: var(--spacing-xl) 0;
 }
 
+/* Grid de resultados */
 .results-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -206,6 +229,7 @@
     margin-top: var(--spacing-md);
 }
 
+/* Item de carta individual */
 .card-item {
     background: rgba(0, 26, 51, 0.6);
     border: 2px solid var(--border-color);
@@ -215,31 +239,42 @@
     cursor: pointer;
 }
 
+/* Hover en carta */
 .card-item:hover {
     transform: translateY(-5px);
     border-color: var(--gold-color);
     box-shadow: 0 8px 16px rgba(0, 102, 204, 0.4);
 }
 
+/* Imagen de la carta */
 .card-image {
     width: 100%;
     border-radius: 8px;
     margin-bottom: var(--spacing-sm);
+    display: block;
 }
 
+/* Nombre de la carta */
 .card-name {
     font-weight: 600;
     color: var(--gold-color);
     margin-bottom: var(--spacing-xs);
     font-size: 0.95rem;
+    text-align: center;
 }
 
+/* Tipo de carta */
 .card-type {
     font-size: 0.85rem;
     color: rgba(241, 241, 241, 0.7);
+    text-align: center;
 }
 
-/* Loading state */
+/* ====================================
+   ESTADOS ESPECIALES
+   ==================================== */
+
+/* Estado de carga */
 .loading {
     text-align: center;
     padding: var(--spacing-xl);
@@ -257,7 +292,7 @@
     50% { opacity: 0.5; }
 }
 
-/* No results */
+/* Sin resultados */
 .no-results {
     text-align: center;
     padding: var(--spacing-xl);
@@ -266,10 +301,131 @@
 }
 
 /* ====================================
-   RESPONSIVE
+   MODAL DE CARTA
    ==================================== */
 
+/* Overlay del modal (fondo oscuro) */
+.card-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Contenedor del modal */
+.card-modal {
+    background: var(--bg-card);
+    border-radius: 12px;
+    max-width: 900px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    border: 2px solid var(--gold-color);
+    position: relative;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Botón cerrar modal */
+.modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    z-index: 10;
+}
+
+.modal-close-btn:hover {
+    background: #ff4757;
+    transform: rotate(90deg);
+}
+
+/* Contenido del modal */
+.modal-content {
+    display: flex;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+}
+
+/* Imagen en el modal */
+.modal-image {
+    flex: 0 0 300px;
+}
+
+.modal-image img {
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Información en el modal */
+.modal-info {
+    flex: 1;
+    color: var(--text-light);
+}
+
+.modal-info h3 {
+    color: var(--gold-color);
+    margin-bottom: var(--spacing-md);
+    font-size: 1.5rem;
+}
+
+.modal-info p {
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.6;
+}
+
+.modal-info strong {
+    color: var(--gold-color);
+}
+
+/* Descripción de la carta */
+.modal-description {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+}
+
+.modal-description p {
+    margin-top: var(--spacing-xs);
+    line-height: 1.8;
+    color: rgba(241, 241, 241, 0.9);
+}
+
+/* ====================================
+   RESPONSIVE - TABLET
+   ==================================== */
 @media (max-width: 768px) {
+    /* Barra de búsqueda en columna */
     .search-bar {
         flex-direction: column;
     }
@@ -283,28 +439,60 @@
         justify-content: center;
     }
 
+    /* Grid de resultados más compacto */
     .results-grid {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
         gap: var(--spacing-sm);
     }
 
+    /* Contenedor de búsqueda más compacto */
     .search-container {
         padding: var(--spacing-md);
     }
+
+    /* Modal responsive */
+    .modal-content {
+        flex-direction: column;
+    }
+
+    .modal-image {
+        flex: none;
+        max-width: 300px;
+        margin: 0 auto;
+    }
 }
 
+/* ====================================
+   RESPONSIVE - MÓVIL
+   ==================================== */
 @media (max-width: 480px) {
+    /* Grid de una sola columna */
     .results-grid {
         grid-template-columns: 1fr;
     }
 
+    /* Botones más compactos */
     .btn {
         padding: 10px 16px;
         font-size: 0.95rem;
     }
 
+    /* Inputs más compactos */
     .search-input,
     .filter-input {
         font-size: 0.9rem;
+    }
+
+    /* Modal más compacto */
+    .card-modal {
+        width: 95%;
+    }
+
+    .modal-content {
+        padding: var(--spacing-md);
+    }
+
+    .modal-info h3 {
+        font-size: 1.2rem;
     }
 }

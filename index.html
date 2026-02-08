@@ -6,7 +6,10 @@
     <meta name="description" content="Aplicación de Yu-Gi-Oh! para gestión de decks, búsqueda de cartas y análisis del meta">
     <title>Destiny Draw - Yu-Gi-Oh! App</title>
     
-    <!-- CSS Files -->
+    <!-- ====================================
+         ARCHIVOS CSS
+         Estilos separados por módulo
+         ==================================== -->
     <link rel="stylesheet" href="css/style_global.css">
     <link rel="stylesheet" href="css/style_buscador.css">
     <link rel="stylesheet" href="css/style_mideck.css">
@@ -17,65 +20,89 @@
     <link rel="stylesheet" href="css/style_config.css">
 </head>
 <body>
-    <!-- Header con Parallax -->
+    <!-- ====================================
+         HEADER CON PARALLAX
+         Contiene el logo y título de la app
+         ==================================== -->
     <header id="header" class="parallax-header">
         <div class="parallax-bg"></div>
         <div class="logo-container">
+            <!-- Logo principal - Se oculta si no existe la imagen -->
             <img src="img/LOGO - Destiny Draw Yugioh APP.png" alt="Destiny Draw Logo" class="main-logo" onerror="this.style.display='none'">
+            <!-- Título alternativo si no hay logo -->
             <h1 class="logo-text"></h1>
         </div>
     </header>
 
-    <!-- Navigation Menu -->
+    <!-- ====================================
+         MENÚ DE NAVEGACIÓN
+         Sistema de pestañas para cambiar entre módulos
+         ==================================== -->
     <nav id="main-nav" class="main-navigation">
         <ul class="nav-tabs">
+            <!-- Pestaña: Buscador de Cartas -->
             <li class="nav-item">
-                <button class="nav-button active" data-tab="buscador" onclick="switchTab('buscador')">
+                <button class="nav-button active" data-tab="buscador">
                     Buscador
                 </button>
             </li>
+            <!-- Pestaña: Mi Deck -->
             <li class="nav-item">
-                <button class="nav-button" data-tab="mideck" onclick="switchTab('mideck')">
+                <button class="nav-button" data-tab="mideck">
                     Mi Deck
                 </button>
             </li>
+            <!-- Pestaña: Estadísticas -->
             <li class="nav-item">
-                <button class="nav-button" data-tab="estadisticas" onclick="switchTab('estadisticas')">
+                <button class="nav-button" data-tab="estadisticas">
                     Estadísticas
                 </button>
             </li>
+            <!-- Pestaña: Simuladores -->
             <li class="nav-item">
-                <button class="nav-button" data-tab="simuladores" onclick="switchTab('simuladores')">
+                <button class="nav-button" data-tab="simuladores">
                     Simuladores
                 </button>
             </li>
+            <!-- Pestaña: Meta Actual -->
             <li class="nav-item">
-                <button class="nav-button" data-tab="meta" onclick="switchTab('meta')">
+                <button class="nav-button" data-tab="meta">
                     Meta
                 </button>
             </li>
+            <!-- Pestaña: Formación/Tutoriales -->
             <li class="nav-item">
-                <button class="nav-button" data-tab="formacion" onclick="switchTab('formacion')">
+                <button class="nav-button" data-tab="formacion">
                     Formación
                 </button>
             </li>
+            <!-- Pestaña: Configuración -->
             <li class="nav-item">
-                <button class="nav-button" data-tab="config" onclick="switchTab('config')">
+                <button class="nav-button" data-tab="config">
                     Config
                 </button>
             </li>
         </ul>
     </nav>
 
-    <!-- Main Content Area -->
+    <!-- ====================================
+         ÁREA DE CONTENIDO PRINCIPAL
+         Aquí se muestran los diferentes módulos
+         ==================================== -->
     <main id="main-content" class="content-container">
-        <!-- Buscador Tab -->
+        
+        <!-- ====================================
+             MÓDULO: BUSCADOR DE CARTAS
+             Permite buscar cartas con filtros
+             ==================================== -->
         <section id="buscador-content" class="tab-content active">
             <h2>Buscador de Cartas</h2>
             
+            <!-- Contenedor de búsqueda -->
             <div class="search-container">
                 <!-- Barra de búsqueda principal -->
                 <div class="search-bar">
+                    <!-- Input para nombre de carta -->
                     <input 
                         type="text" 
                         id="card-search-input" 
@@ -83,17 +110,19 @@
                         placeholder="Buscar carta por nombre..."
                         autocomplete="off"
                     >
-                    <button id="search-btn" class="btn btn-primary" onclick="searchCard()">
+                    <!-- Botón Buscar -->
+                    <button id="search-btn" class="btn btn-primary">
                         <span class="btn-icon">🔍</span>
                         <span class="btn-text">Buscar</span>
                     </button>
-                    <button id="clear-btn" class="btn btn-secondary" onclick="clearSearch()">
+                    <!-- Botón Limpiar -->
+                    <button id="clear-btn" class="btn btn-secondary">
                         <span class="btn-icon">✖</span>
                         <span class="btn-text">Limpiar</span>
                     </button>
                 </div>
 
-                <!-- Filtros adicionales -->
+                <!-- Filtros adicionales por palabras clave -->
                 <div class="filters-container">
                     <label for="additional-filters" class="filter-label">
                         Filtrar por palabras clave (separadas por coma):
@@ -111,55 +140,92 @@
                 </div>
             </div>
 
-            <!-- Área de resultados -->
+            <!-- Área donde se muestran los resultados de búsqueda -->
             <div id="search-results" class="results-container">
                 <p class="results-placeholder">Utiliza el buscador para encontrar cartas de Yu-Gi-Oh!</p>
             </div>
         </section>
 
-        <!-- Mi Deck Tab -->
+        <!-- ====================================
+             MÓDULO: MI DECK
+             Gestión de mazos personales
+             ==================================== -->
         <section id="mideck-content" class="tab-content">
             <h2>Mi Deck</h2>
             <p>Contenido de gestión de deck (pendiente de implementación)</p>
         </section>
 
-        <!-- Estadísticas Tab -->
+        <!-- ====================================
+             MÓDULO: ESTADÍSTICAS
+             Análisis de decks y estadísticas
+             ==================================== -->
         <section id="estadisticas-content" class="tab-content">
             <h2>Estadísticas</h2>
             <p>Contenido de estadísticas (pendiente de implementación)</p>
         </section>
 
-        <!-- Simuladores Tab -->
+        <!-- ====================================
+             MÓDULO: SIMULADORES
+             Simuladores de juego
+             ==================================== -->
         <section id="simuladores-content" class="tab-content">
             <h2>Simuladores</h2>
             <p>Contenido de simuladores (pendiente de implementación)</p>
         </section>
 
-        <!-- Meta Tab -->
+        <!-- ====================================
+             MÓDULO: META
+             Información del meta actual
+             ==================================== -->
         <section id="meta-content" class="tab-content">
             <h2>Meta</h2>
             <p>Contenido del meta actual (pendiente de implementación)</p>
         </section>
 
-        <!-- Formación Tab -->
+        <!-- ====================================
+             MÓDULO: FORMACIÓN
+             Tutoriales y guías
+             ==================================== -->
         <section id="formacion-content" class="tab-content">
             <h2>Formación</h2>
             <p>Contenido de formación (pendiente de implementación)</p>
         </section>
 
-        <!-- Config Tab -->
+        <!-- ====================================
+             MÓDULO: CONFIGURACIÓN
+             Ajustes de la aplicación
+             ==================================== -->
         <section id="config-content" class="tab-content">
             <h2>Configuración</h2>
             <p>Contenido de configuración (pendiente de implementación)</p>
         </section>
     </main>
 
-    <!-- Scroll to Top Button -->
-    <button id="scroll-to-top" class="scroll-top-btn" onclick="scrollToTop()" title="Volver arriba">
+    <!-- ====================================
+         BOTÓN FLOTANTE - SCROLL TO TOP
+         Aparece después de hacer scroll (300px)
+         Lleva al usuario al inicio de la página
+         Color: Amarillo (#FFD700)
+         Opacity: 0.7 normal, 1.0 en hover
+         ==================================== -->
+    <button id="scroll-to-top" class="scroll-top-btn" title="Volver arriba">
         <span class="arrow-up">↑</span>
     </button>
 
-    <!-- JavaScript Modules -->
+    <!-- ====================================
+         FOOTER
+         Información de la aplicación
+         Siempre visible en la parte inferior
+         ==================================== -->
+    <footer class="main-footer">
+        <p>Herramienta de apoyo para el juego de Yugioh!. Destiny Draw! 2025. By El Panda.</p>
+    </footer>
+
+    <!-- ====================================
+         MÓDULOS JAVASCRIPT
+         Se cargan en orden de dependencias
+         IMPORTANTE: Logger debe cargarse primero
+         ==================================== -->
     <script src="Modules/logger.js"></script>
     <script src="Modules/navigation.js"></script>
     <script src="Modules/parallax.js"></script>

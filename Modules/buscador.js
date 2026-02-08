@@ -1,20 +1,33 @@
 /* ====================================
    BUSCADOR MODULE
    Destiny Draw - Yu-Gi-Oh! App
-   Búsqueda de cartas con filtros
+   Búsqueda de cartas con API de YGOPRODeck
+   
+   API: https://ygoprodeck.com/api-guide/
+   Endpoint: https://db.ygoprodeck.com/api/v7/cardinfo.php
+   IMPORTANTE: Esta API permite CORS, funciona SIN servidor
    ==================================== */
 
 const Buscador = {
-    // Elementos DOM
+    // ====================================
+    // ELEMENTOS DOM
+    // ====================================
     searchInput: null,
     additionalFilters: null,
     resultsContainer: null,
     
-    // Estado
+    // ====================================
+    // ESTADO
+    // ====================================
     currentSearchTerm: '',
     currentFilters: [],
     searchResults: [],
     isSearching: false,
+    
+    // ====================================
+    // CONFIGURACIÓN API
+    // ====================================
+    apiUrl: 'https://db.ygoprodeck.com/api/v7/cardinfo.php',
 
     /**
      * Inicializar módulo Buscador
@@ -27,16 +40,17 @@ const Buscador = {
         this.additionalFilters = document.getElementById('additional-filters');
         this.resultsContainer = document.getElementById('search-results');
 
+        // Validar elementos
         if (!this.searchInput || !this.additionalFilters || !this.resultsContainer) {
-            Logger.error('Buscador', 'No se encontraron todos los elementos necesarios del DOM');
+            Logger.error('Buscador', 'Elementos DOM no encontrados');
             return;
         }
 
         // Configurar event listeners
         this.setupEventListeners();
 
+        Logger.success('Buscador', 'Módulo Buscador inicializado');
         Logger.functionEnd('Buscador', 'init');
-        Logger.success('Buscador', 'Módulo Buscador inicializado correctamente');
     },
 
     /**
@@ -45,19 +59,39 @@ const Buscador = {
     setupEventListeners: function() {
         Logger.debug('Buscador', 'Configurando event listeners');
 
+        // Obtener botones
+        const searchBtn = document.getElementById('search-btn');
+        const clearBtn = document.getElementById('clear-btn');
+
+        // Click en botón Buscar
+        if (searchBtn) {
+            searchBtn.addEventListener('click', () => {
+                Logger.buttonClick('search-btn', 'Buscar', 'Buscador');
+                this.search();
+            });
+        }
+
+        // Click en botón Limpiar
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                Logger.buttonClick('clear-btn', 'Limpiar', 'Buscador');
+                this.clear();
+            });
+        }
+
         // Enter en input de búsqueda
         this.searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 Logger.event('Buscador', 'KEYPRESS_ENTER', 'search-input');
-                searchCard();
+                this.search();
             }
         });
 
-        // Enter en filtros adicionales
+        // Enter en filtros
         this.additionalFilters.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 Logger.event('Buscador', 'KEYPRESS_ENTER', 'additional-filters');
-                searchCard();
+                this.search();
             }
         });
 
@@ -65,14 +99,14 @@ const Buscador = {
     },
 
     /**
-     * Realizar búsqueda de carta
+     * Realizar búsqueda
      */
     search: function() {
         Logger.functionStart('Buscador', 'search');
 
-        // Validar que no esté buscando actualmente
+        // Validar que no hay búsqueda en progreso
         if (this.isSearching) {
-            Logger.warning('Buscador', 'Ya hay una búsqueda en progreso');
+            Logger.warning('Buscador', 'Búsqueda en progreso');
             return;
         }
 
@@ -80,90 +114,119 @@ const Buscador = {
         this.currentSearchTerm = this.searchInput.value.trim();
         
         if (!this.currentSearchTerm) {
-            Logger.warning('Buscador', 'Término de búsqueda vacío');
-            this.showMessage('Por favor, ingresa un nombre de carta para buscar', 'warning');
+            Logger.warning('Buscador', 'Término vacío');
+            this.showMessage('⚠️ Ingresa un nombre de carta');
             return;
         }
 
-        // Obtener filtros adicionales
+        // Obtener filtros
         const filtersText = this.additionalFilters.value.trim();
         this.currentFilters = filtersText 
             ? filtersText.split(',').map(f => f.trim()).filter(f => f.length > 0)
             : [];
 
         Logger.info('Buscador', 'Búsqueda iniciada', {
-            searchTerm: this.currentSearchTerm,
+            term: this.currentSearchTerm,
             filters: this.currentFilters
         });
 
-        // Mostrar estado de carga
+        // Mostrar loading
         this.showLoading();
         this.isSearching = true;
 
-        // Simular búsqueda (aquí se integrará la API real)
-        setTimeout(() => {
-            this.performSearch();
-        }, 1000);
+        // Ejecutar búsqueda
+        this.performSearch();
 
         Logger.functionEnd('Buscador', 'search');
     },
 
     /**
-     * Ejecutar búsqueda (placeholder para integración con API)
+     * Ejecutar búsqueda en la API
      */
-    performSearch: function() {
+    performSearch: async function() {
         Logger.functionStart('Buscador', 'performSearch');
 
-        // TODO: Integrar con API de Yu-Gi-Oh!
-        // Por ahora, mostrar resultados de ejemplo
-        
-        const mockResults = [
-            {
-                id: 1,
-                name: 'Dark Magician',
-                type: 'Monster',
-                image: 'https://via.placeholder.com/200x291/003366/FFD700?text=Dark+Magician'
-            },
-            {
-                id: 2,
-                name: 'Blue-Eyes White Dragon',
-                type: 'Monster',
-                image: 'https://via.placeholder.com/200x291/003366/FFD700?text=Blue-Eyes'
-            },
-            {
-                id: 3,
-                name: 'Pot of Greed',
-                type: 'Spell',
-                image: 'https://via.placeholder.com/200x291/003366/FFD700?text=Pot+of+Greed'
+        try {
+            // Construir URL (fname = fuzzy name search)
+            const searchUrl = `${this.apiUrl}?fname=${encodeURIComponent(this.currentSearchTerm)}`;
+            
+            Logger.debug('Buscador', 'Request a API', { url: searchUrl });
+
+            // Hacer request a la API
+            const response = await fetch(searchUrl);
+            
+            // Verificar respuesta
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
             }
-        ];
 
-        // Filtrar resultados basados en el término de búsqueda
-        this.searchResults = mockResults.filter(card => 
-            card.name.toLowerCase().includes(this.currentSearchTerm.toLowerCase())
-        );
-
-        // Aplicar filtros adicionales si existen
-        if (this.currentFilters.length > 0) {
-            this.searchResults = this.searchResults.filter(card => {
-                return this.currentFilters.some(filter => 
-                    card.name.toLowerCase().includes(filter.toLowerCase()) ||
-                    card.type.toLowerCase().includes(filter.toLowerCase())
-                );
+            // Parsear JSON
+            const data = await response.json();
+            
+            Logger.info('Buscador', 'Respuesta recibida', {
+                total: data.data ? data.data.length : 0
             });
+
+            // Guardar resultados
+            this.searchResults = data.data || [];
+
+            // Aplicar filtros adicionales
+            if (this.currentFilters.length > 0) {
+                this.applyAdditionalFilters();
+            }
+
+            Logger.info('Buscador', `${this.searchResults.length} resultados`);
+
+            // Mostrar resultados
+            this.displayResults();
+
+        } catch (error) {
+            Logger.error('Buscador', 'Error en búsqueda', error);
+            
+            // Verificar si es 404 (no encontrado)
+            if (error.message.includes('404')) {
+                this.showNoResults();
+            } else {
+                this.showMessage('❌ Error al buscar. Intenta de nuevo.');
+            }
+        } finally {
+            this.isSearching = false;
+            Logger.functionEnd('Buscador', 'performSearch');
         }
-
-        Logger.info('Buscador', `Búsqueda completada: ${this.searchResults.length} resultados encontrados`);
-
-        // Mostrar resultados
-        this.displayResults();
-        this.isSearching = false;
-
-        Logger.functionEnd('Buscador', 'performSearch');
     },
 
     /**
-     * Mostrar resultados de búsqueda
+     * Aplicar filtros adicionales
+     */
+    applyAdditionalFilters: function() {
+        Logger.debug('Buscador', 'Aplicando filtros', {
+            filters: this.currentFilters,
+            before: this.searchResults.length
+        });
+
+        this.searchResults = this.searchResults.filter(card => {
+            // Texto buscable: nombre, tipo, descripción, race, atributo
+            const searchText = [
+                card.name,
+                card.type,
+                card.desc,
+                card.race,
+                card.attribute
+            ].join(' ').toLowerCase();
+
+            // Verificar si algún filtro coincide
+            return this.currentFilters.some(filter => 
+                searchText.includes(filter.toLowerCase())
+            );
+        });
+
+        Logger.info('Buscador', 'Filtros aplicados', {
+            after: this.searchResults.length
+        });
+    },
+
+    /**
+     * Mostrar resultados
      */
     displayResults: function() {
         Logger.functionStart('Buscador', 'displayResults');
@@ -173,12 +236,21 @@ const Buscador = {
             return;
         }
 
+        // Construir HTML
         let html = '<div class="results-grid">';
 
-        this.searchResults.forEach(card => {
+        this.searchResults.forEach((card, index) => {
+            // Obtener imagen (usar small image)
+            const cardImage = card.card_images && card.card_images[0] 
+                ? card.card_images[0].image_url_small 
+                : 'https://via.placeholder.com/200x291/003366/FFD700?text=No+Image';
+
             html += `
-                <div class="card-item" onclick="Buscador.viewCard(${card.id})">
-                    <img src="${card.image}" alt="${card.name}" class="card-image">
+                <div class="card-item" data-card-index="${index}">
+                    <img src="${cardImage}" 
+                         alt="${card.name}" 
+                         class="card-image"
+                         onerror="this.src='https://via.placeholder.com/200x291/003366/FFD700?text=Error'">
                     <div class="card-name">${card.name}</div>
                     <div class="card-type">${card.type}</div>
                 </div>
@@ -188,128 +260,177 @@ const Buscador = {
         html += '</div>';
 
         this.resultsContainer.innerHTML = html;
+
+        // Agregar event listeners a las cartas
+        const cardItems = this.resultsContainer.querySelectorAll('.card-item');
+        cardItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const index = parseInt(item.getAttribute('data-card-index'));
+                this.viewCard(index);
+            });
+        });
         
         Logger.success('Buscador', `${this.searchResults.length} cartas mostradas`);
         Logger.functionEnd('Buscador', 'displayResults');
     },
 
     /**
-     * Ver detalle de una carta
+     * Ver detalle de carta
      */
-    viewCard: function(cardId) {
-        Logger.buttonClick(`card-${cardId}`, 'Ver Carta', 'Buscador');
-        Logger.info('Buscador', `Visualizando carta ID: ${cardId}`);
+    viewCard: function(cardIndex) {
+        const card = this.searchResults[cardIndex];
         
-        // TODO: Implementar modal o vista de detalle de carta
-        alert(`Ver detalle de carta ID: ${cardId}\n(Funcionalidad pendiente de implementar)`);
+        if (!card) {
+            Logger.error('Buscador', 'Carta no encontrada', { cardIndex });
+            return;
+        }
+
+        Logger.buttonClick(`card-${cardIndex}`, card.name, 'Buscador');
+        
+        // Mostrar modal
+        this.showCardModal(card);
     },
 
     /**
-     * Mostrar estado de carga
+     * Mostrar modal con detalles de carta
+     */
+    showCardModal: function(card) {
+        Logger.debug('Buscador', 'Mostrando modal', { card: card.name });
+
+        // Imagen grande
+        const cardImage = card.card_images && card.card_images[0] 
+            ? card.card_images[0].image_url 
+            : 'https://via.placeholder.com/421x614/003366/FFD700?text=No+Image';
+
+        // Stats (ATK/DEF para monstruos)
+        let statsHtml = '';
+        if (card.type.includes('Monster')) {
+            if (card.type.includes('Link')) {
+                statsHtml = `<p><strong>LINK:</strong> ${card.linkval || 'N/A'}</p>`;
+            } else {
+                statsHtml = `
+                    <p><strong>ATK:</strong> ${card.atk !== undefined ? card.atk : '?'} / 
+                       <strong>DEF:</strong> ${card.def !== undefined ? card.def : '?'}</p>
+                `;
+            }
+            if (card.level) {
+                statsHtml += `<p><strong>Level:</strong> ${card.level}</p>`;
+            }
+        }
+
+        // HTML del modal
+        const modalHtml = `
+            <div class="card-modal-overlay">
+                <div class="card-modal">
+                    <button class="modal-close-btn">✖</button>
+                    <div class="modal-content">
+                        <div class="modal-image">
+                            <img src="${cardImage}" alt="${card.name}">
+                        </div>
+                        <div class="modal-info">
+                            <h3>${card.name}</h3>
+                            <p><strong>Tipo:</strong> ${card.type}</p>
+                            ${card.race ? `<p><strong>Raza:</strong> ${card.race}</p>` : ''}
+                            ${card.attribute ? `<p><strong>Atributo:</strong> ${card.attribute}</p>` : ''}
+                            ${statsHtml}
+                            <div class="modal-description">
+                                <strong>Descripción:</strong>
+                                <p>${card.desc}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Agregar al body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Prevenir scroll
+        document.body.style.overflow = 'hidden';
+
+        // Event listeners para cerrar
+        const overlay = document.querySelector('.card-modal-overlay');
+        const closeBtn = document.querySelector('.modal-close-btn');
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                this.closeCardModal();
+            }
+        });
+
+        closeBtn.addEventListener('click', () => {
+            this.closeCardModal();
+        });
+
+        Logger.success('Buscador', 'Modal mostrado');
+    },
+
+    /**
+     * Cerrar modal
+     */
+    closeCardModal: function() {
+        const modal = document.querySelector('.card-modal-overlay');
+        if (modal) {
+            modal.remove();
+        }
+        document.body.style.overflow = '';
+        Logger.success('Buscador', 'Modal cerrado');
+    },
+
+    /**
+     * Mostrar loading
      */
     showLoading: function() {
         this.resultsContainer.innerHTML = '<div class="loading"></div>';
-        Logger.debug('Buscador', 'Mostrando estado de carga');
     },
 
     /**
-     * Mostrar mensaje cuando no hay resultados
+     * Mostrar sin resultados
      */
     showNoResults: function() {
         this.resultsContainer.innerHTML = `
             <div class="no-results">
-                <p>😕 No se encontraron cartas que coincidan con la búsqueda</p>
+                <p>😕 No se encontraron cartas</p>
                 <p style="font-size: 0.9rem; margin-top: 1rem; color: rgba(241, 241, 241, 0.6);">
-                    Término buscado: "${this.currentSearchTerm}"
+                    Búsqueda: "${this.currentSearchTerm}"
                     ${this.currentFilters.length > 0 ? '<br>Filtros: ' + this.currentFilters.join(', ') : ''}
                 </p>
             </div>
         `;
-        Logger.info('Buscador', 'No se encontraron resultados');
     },
 
     /**
-     * Mostrar mensaje general
+     * Mostrar mensaje
      */
-    showMessage: function(message, type = 'info') {
-        const icons = {
-            info: 'ℹ️',
-            warning: '⚠️',
-            error: '❌',
-            success: '✅'
-        };
-
+    showMessage: function(message) {
         this.resultsContainer.innerHTML = `
-            <div class="results-placeholder">
-                ${icons[type] || icons.info} ${message}
-            </div>
+            <div class="results-placeholder">${message}</div>
         `;
-        
-        Logger.debug('Buscador', `Mensaje mostrado: ${message}`);
     },
 
     /**
      * Limpiar búsqueda
      */
     clear: function() {
-        Logger.functionStart('Buscador', 'clear');
-
-        // Limpiar inputs
         this.searchInput.value = '';
         this.additionalFilters.value = '';
-
-        // Resetear estado
         this.currentSearchTerm = '';
         this.currentFilters = [];
         this.searchResults = [];
-
-        // Mostrar mensaje inicial
+        
         this.showMessage('Utiliza el buscador para encontrar cartas de Yu-Gi-Oh!');
-
-        // Focus en el input de búsqueda
         this.searchInput.focus();
-
+        
         Logger.success('Buscador', 'Búsqueda limpiada');
-        Logger.functionEnd('Buscador', 'clear');
-    },
-
-    /**
-     * Obtener estadísticas de búsqueda
-     */
-    getStats: function() {
-        return {
-            currentSearchTerm: this.currentSearchTerm,
-            filtersCount: this.currentFilters.length,
-            resultsCount: this.searchResults.length,
-            isSearching: this.isSearching
-        };
     }
 };
 
-/**
- * Función global para buscar (llamada desde HTML)
- */
-function searchCard() {
-    Logger.buttonClick('search-btn', 'Buscar', 'Buscador');
-    Buscador.search();
-}
-
-/**
- * Función global para limpiar búsqueda (llamada desde HTML)
- */
-function clearSearch() {
-    Logger.buttonClick('clear-btn', 'Limpiar', 'Buscador');
-    Buscador.clear();
-}
-
-// Inicializar cuando el DOM esté listo
+// Auto-inicializar
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => Buscador.init());
 } else {
     Buscador.init();
 }
 
-// Exportar para uso global
 window.Buscador = Buscador;
-window.searchCard = searchCard;
-window.clearSearch = clearSearch;
