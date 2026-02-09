@@ -1,56 +1,512 @@
-.deck-top-img {
-    width: 100px; /* antes 40 */
-    margin-right: 6px;
-    border-radius: 6px;
+/* ====================================
+   MI DECK STYLES
+   Destiny Draw - Yu-Gi-Oh! App
+   Estilos para el módulo de gestión de deck
+   ==================================== */
+
+/* ====================================
+   CONTENEDOR PRINCIPAL
+   ==================================== */
+
+#mideck-content {
+    animation: fadeIn 0.4s ease;
 }
+
+/* ====================================
+   ESTADO VACÍO
+   ==================================== */
+
+.deck-empty-state {
+    text-align: center;
+    padding: var(--spacing-xl) var(--spacing-md);
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 2px dashed var(--border-color);
+    margin-bottom: var(--spacing-lg);
+}
+
+.deck-empty-state p {
+    font-size: 1.2rem;
+    color: var(--gold-color);
+    margin-bottom: var(--spacing-sm);
+}
+
+.deck-help {
+    font-size: 0.9rem !important;
+    color: rgba(241, 241, 241, 0.7) !important;
+}
+
+/* ====================================
+   TÍTULO DEL DECK
+   ==================================== */
+
+.deck-title {
+    color: var(--gold-color);
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    background: var(--bg-card);
+    border-radius: 8px;
+    margin-bottom: var(--spacing-md);
+    transition: all var(--transition-normal);
+    border: 2px solid var(--border-color);
+}
+
+.deck-title:hover {
+    background: rgba(0, 102, 204, 0.2);
+    border-color: var(--gold-color);
+    transform: translateX(5px);
+}
+
+/* ====================================
+   TÍTULOS DE SECCIÓN
+   ==================================== */
 
 .deck-section-title {
-    margin-top: 12px;
-    font-size: 18px;
-    font-weight: bold;
-    color: black;
+    color: var(--text-light);
+    background: var(--secondary-color);
+    padding: var(--spacing-sm);
+    border-radius: 8px;
+    margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    border-left: 4px solid var(--accent-color);
 }
+
+.deck-section-title:hover {
+    background: var(--accent-color);
+    border-left-color: var(--gold-color);
+}
+
+/* ====================================
+   SECCIONES (Main, Extra, Side)
+   ==================================== */
+
+.deck-section {
+    background: var(--bg-card);
+    border-radius: 8px;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid var(--border-color);
+}
+
+.deck-empty {
+    text-align: center;
+    color: rgba(241, 241, 241, 0.5);
+    padding: var(--spacing-md);
+    font-style: italic;
+}
+
+/* ====================================
+   FILAS DE CARTAS
+   ==================================== */
 
 .deck-row {
-    display: grid;
-    grid-template-columns: 60px 60px 60px 110px 60px;
+    display: flex;
     align-items: center;
-    padding: 6px;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
     border-radius: 8px;
-    font-size: 14px;
-    color: black;
+    transition: all var(--transition-normal);
+    border: 2px solid transparent;
 }
 
+.deck-row:hover {
+    border-color: var(--gold-color);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transform: translateX(5px);
+}
+
+/* Imagen de la carta */
 .deck-img {
-    width: 50px;
+    width: 60px;
+    height: auto;
+    border-radius: 4px;
     cursor: pointer;
+    transition: transform var(--transition-fast);
+    border: 2px solid rgba(0, 0, 0, 0.3);
 }
 
+.deck-img:hover {
+    transform: scale(1.1);
+}
+
+/* Nombre de la carta */
 .deck-name {
-    font-weight: bold;
-    color: black;
-    margin-right: 10px;
+    flex: 1;
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 0.95rem;
 }
 
-.deck-tag {
-    background: #2196f3;
-    color: white;
-    padding: 2px 6px;
-    border-radius: 12px;
-    font-size: 12px;
+/* Controles de cantidad */
+.deck-qty {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
+
+.deck-qty button {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all var(--transition-fast);
+}
+
+.deck-qty button:hover {
+    background: var(--accent-hover);
+    transform: scale(1.1);
+}
+
+.deck-qty button:active {
+    transform: scale(0.95);
+}
+
+.qty-number {
+    font-weight: bold;
+    color: var(--text-dark);
+    min-width: 30px;
+    text-align: center;
+}
+
+/* Botón mover (Main <-> Side) */
+.deck-move {
+    background: var(--secondary-color);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all var(--transition-normal);
+    white-space: nowrap;
+}
+
+.deck-move:hover {
+    background: var(--accent-color);
+    border-color: var(--gold-color);
+    transform: translateY(-2px);
+}
+
+/* ====================================
+   ACCIONES
+   ==================================== */
+
+.deck-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--bg-card);
+    border-radius: 8px;
+    margin-bottom: var(--spacing-md);
+}
+
+.deck-actions button {
+    flex: 1;
+    min-width: 150px;
+}
+
+/* ====================================
+   MODAL / OVERLAY
+   ==================================== */
+
 .deck-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fadeIn 0.3s ease;
 }
 
 .deck-modal {
-  background: #222;
-  padding: 20px;
-  border-radius: 10px;
-  color: white;
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: var(--spacing-lg);
+    max-width: 500px;
+    width: 90%;
+    border: 2px solid var(--gold-color);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s ease;
+}
+
+.deck-modal h3 {
+    color: var(--gold-color);
+    margin-bottom: var(--spacing-md);
+    font-size: 1.3rem;
+}
+
+.deck-modal input {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: rgba(0, 26, 51, 0.6);
+    color: var(--text-light);
+    margin-bottom: var(--spacing-md);
+    outline: none;
+}
+
+.deck-modal input:focus {
+    border-color: var(--gold-color);
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+.deck-modal-buttons {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.deck-modal-buttons button {
+    flex: 1;
+}
+
+/* Modal de advertencia */
+.deck-modal-warning {
+    border-color: var(--danger-color);
+}
+
+.deck-modal-warning h3 {
+    color: var(--danger-color);
+}
+
+.deck-modal-highlight {
+    color: var(--gold-color);
+    font-weight: bold;
+    font-size: 1.1rem;
+    text-align: center;
+    margin: var(--spacing-sm) 0;
+}
+
+.deck-modal-note {
+    color: rgba(241, 241, 241, 0.7);
+    font-size: 0.9rem;
+    text-align: center;
+    font-style: italic;
+    margin-bottom: var(--spacing-md);
+}
+
+.btn-danger {
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.btn-danger:hover {
+    background: #ff4757;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(214, 48, 49, 0.4);
+}
+
+/* ====================================
+   LISTA DE DECKS GUARDADOS
+   ==================================== */
+
+#deck-list-container {
+    margin-bottom: var(--spacing-xl);
+}
+
+.deck-list-title {
+    color: var(--gold-color);
+    font-size: 1.8rem;
+    margin-bottom: var(--spacing-md);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.deck-list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.deck-list-item {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    border: 2px solid var(--border-color);
+    position: relative;
+    transition: all var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.deck-list-item:hover {
+    border-color: var(--gold-color);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 102, 204, 0.4);
+}
+
+/* Botón eliminar */
+.deck-delete-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: all var(--transition-fast);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.deck-delete-btn:hover {
+    background: #ff4757;
+    transform: rotate(90deg) scale(1.1);
+}
+
+/* Miniatura */
+.deck-thumbnail {
+    width: 100%;
+    aspect-ratio: 421/614;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--bg-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.deck-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Información del deck */
+.deck-info {
+    flex: 1;
+}
+
+.deck-item-name {
+    color: var(--gold-color);
+    font-size: 1.1rem;
+    margin-bottom: var(--spacing-xs);
+    font-weight: bold;
+}
+
+.deck-counts {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.deck-count-main {
+    color: #90EE90;
+}
+
+.deck-count-extra {
+    color: #FFB6C1;
+}
+
+.deck-count-side {
+    color: #87CEEB;
+}
+
+/* Botón ver deck */
+.deck-load-btn {
+    width: 100%;
+    margin-top: auto;
+}
+
+/* ====================================
+   ANIMACIONES
+   ==================================== */
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ====================================
+   RESPONSIVE
+   ==================================== */
+
+@media (max-width: 768px) {
+    .deck-row {
+        flex-wrap: wrap;
+    }
+
+    .deck-name {
+        flex-basis: 100%;
+        order: -1;
+    }
+
+    .deck-qty {
+        flex: 1;
+    }
+
+    .deck-move {
+        flex: 1;
+    }
+
+    .deck-actions {
+        flex-direction: column;
+    }
+
+    .deck-actions button {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .deck-list-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .deck-img {
+        width: 50px;
+    }
+
+    .deck-name {
+        font-size: 0.85rem;
+    }
+
+    .deck-qty button {
+        width: 25px;
+        height: 25px;
+        font-size: 0.9rem;
+    }
+
+    .deck-move {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+    }
+
+    .deck-modal {
+        width: 95%;
+        padding: var(--spacing-md);
+    }
 }

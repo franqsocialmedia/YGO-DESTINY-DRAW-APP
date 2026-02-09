@@ -1,7 +1,7 @@
 /* ====================================
    DECK MODULE
    Destiny Draw - Yu-Gi-Oh! App
-   Gestión del Deck del usuario
+   GestiÃ³n del Deck del usuario
    ==================================== */
 
 const Deck = {
@@ -16,7 +16,7 @@ const Deck = {
     },
 
     // ===============================
-    // CLASIFICACIÓN EXTRA DECK
+    // CLASIFICACIÃ“N EXTRA DECK
     // ===============================
     isExtraDeckCard: function (card) {
         if (!card || !card.type) return false;
@@ -177,7 +177,7 @@ const Deck = {
             .sort((a, b) => a[1].data.name.localeCompare(b[1].data.name));
 
         if (entries.length === 0) {
-            return `<p class="deck-empty">Vacío</p>`;
+            return `<p class="deck-empty">Vacio</p>`;
         }
 
         let html = '';
