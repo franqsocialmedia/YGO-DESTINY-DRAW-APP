@@ -209,9 +209,7 @@
          Color: Amarillo (#FFD700)
          Opacity: 0.7 normal, 1.0 en hover
          ==================================== -->
-    <button id="scroll-to-top" class="scroll-top-btn" title="Volver arriba">
-        <span class="arrow-up">↑</span>
-    </button>
+   
 
     <!-- ====================================
          FOOTER
@@ -226,6 +224,7 @@
          MÓDULOS JAVASCRIPT
          Se cargan en orden de dependencias
          IMPORTANTE: Logger debe cargarse primero
+         ConfigManager debe cargarse antes de deck.js
          ==================================== -->
     <script src="Modules/logger.js"></script>
     <script src="Modules/navigation.js"></script>
@@ -233,7 +232,9 @@
     <script src="Modules/utils.js"></script>
     <script src="Modules/cardviewer.js"></script>
     <script src="Modules/buscador.js"></script>
+    <script src="Modules/configmanager.js"></script>
     <script src="Modules/deck.js"></script>
+    <script src="Modules/config.js"></script>
 
 
     <button id="scrollTopBtn">▲</button>

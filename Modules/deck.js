@@ -43,21 +43,8 @@ const Deck = {
             return roles; // Retorna array vacío, sin roles asignados
         }
         
-        // Diccionario de palabras clave y roles
-        const roleKeywords = {
-            'Handtrap': ['from your hand'],
-            'Boardbreaker': ['destroy all', 'destroy'],
-            'Extender': ['special summon this'],
-            'Starter': ['summoned'],
-            'Booster': ['gain'],
-            'Draw-Engine': ['draw 1'],
-            'Burner': ['inflict'],
-            'Recovery': ['from the gy', 'from the graveyard', 'from the banish'],
-            'Negater': ['negate'],
-            'Searcher': ['add', 'from your deck'],
-            'Banisher': ['remove', 'banish 1', 'banish it'],
-            'Disruption': ['quick-effect']
-        };
+        // ACTUALIZADO: Obtener roles desde ConfigManager
+        const roleKeywords = ConfigManager.getRoles();
 
         // Verificar cada rol
         for (const [role, keywords] of Object.entries(roleKeywords)) {
@@ -160,12 +147,8 @@ const Deck = {
         const item = this.cards[id];
         if (!item) return;
 
-        const availableRoles = [
-            'Handtrap', 'Starter', 'Extender', 'Boardbreaker', 
-            'Booster', 'Draw-Engine', 'Burner', 'Recovery', 
-            'Negater', 'Searcher', 'Backrow-Removal', 'Banisher', 
-            'Disruption', 'Boss Monster'
-        ];
+        // ACTUALIZADO: Obtener roles desde ConfigManager
+        const availableRoles = ConfigManager.getRoleNames();
 
         const currentRoles = item.roles || [];
 
@@ -571,6 +554,7 @@ const Deck = {
 
             let color = '';
             let nameClass = 'deck-name';
+            let qtyColor = '#003366'; // Negro por defecto
 
             // Determinar color según tipo de carta
             if (type.includes('monster')) {
@@ -582,9 +566,11 @@ const Deck = {
                 } else if (type.includes('xyz')) {
                     color = 'rgba(0, 0, 0, 0.85)'; // Negro 85%
                     nameClass = 'deck-name deck-name-white';
+                    qtyColor = '#ffffff'; // Blanco para Xyz
                 } else if (type.includes('link')) {
                     color = '#4169e1'; // Azul
                     nameClass = 'deck-name deck-name-white';
+                    qtyColor = '#ffffff'; // Blanco para Link
                 } else if (type.includes('ritual')) {
                     color = '#b3d9ff'; // Azul claro
                 } else if (type.includes('pendulum')) {
@@ -630,7 +616,7 @@ const Deck = {
 
                     <div class="deck-qty">
                         <button onclick="Deck.changeQty(${id}, -1)">◀</button>
-                        x${item.qty}
+                        <span class="qty-number" style="color: ${qtyColor}">x${item.qty}</span>
                         <button onclick="Deck.changeQty(${id}, 1)">▶</button>
                     </div>
 

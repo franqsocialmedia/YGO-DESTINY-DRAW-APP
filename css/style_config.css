@@ -1,0 +1,382 @@
+/* ====================================
+   CONFIG STYLES
+   Destiny Draw - Yu-Gi-Oh! App
+   Estilos para el módulo de configuración
+   ==================================== */
+
+/* ====================================
+   CONTENEDOR PRINCIPAL
+   ==================================== */
+
+#config-content {
+    animation: fadeIn 0.4s ease;
+}
+
+#config-content h2 {
+    color: var(--gold-color);
+    margin-bottom: var(--spacing-lg);
+    font-size: 1.8rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* ====================================
+   SECCIONES
+   ==================================== */
+
+.config-section {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    border: 2px solid var(--border-color);
+}
+
+.config-section-title {
+    color: var(--gold-color);
+    font-size: 1.4rem;
+    margin-bottom: var(--spacing-md);
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    background: rgba(0, 102, 204, 0.2);
+    border-radius: 8px;
+    transition: all var(--transition-normal);
+}
+
+.config-section-title:hover {
+    background: rgba(0, 102, 204, 0.3);
+    transform: translateX(5px);
+}
+
+.config-section-content {
+    margin-top: var(--spacing-md);
+}
+
+/* ====================================
+   NUEVO ROL
+   ==================================== */
+
+.config-new-role {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: rgba(0, 26, 51, 0.4);
+    border-radius: 8px;
+    border: 2px dashed var(--border-color);
+}
+
+.config-input {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: rgba(0, 26, 51, 0.6);
+    color: var(--text-light);
+    transition: all var(--transition-normal);
+    outline: none;
+}
+
+.config-input:focus {
+    border-color: var(--gold-color);
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+/* ====================================
+   LISTA DE ROLES
+   ==================================== */
+
+.roles-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: var(--spacing-md);
+}
+
+/* ====================================
+   TARJETA DE ROL
+   ==================================== */
+
+.role-card {
+    background: linear-gradient(135deg, rgba(0, 51, 102, 0.4), rgba(0, 43, 77, 0.6));
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    transition: all var(--transition-normal);
+}
+
+.role-card:hover {
+    border-color: var(--gold-color);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+    transform: translateY(-3px);
+}
+
+/* Header de la tarjeta */
+.role-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.role-name-input {
+    flex: 1;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--gold-color);
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    padding: 6px 10px;
+    transition: all var(--transition-fast);
+    outline: none;
+}
+
+.role-name-input:hover {
+    background: rgba(0, 26, 51, 0.3);
+}
+
+.role-name-input:focus {
+    background: rgba(0, 26, 51, 0.6);
+    border-color: var(--gold-color);
+}
+
+.btn-delete-role {
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    width: 35px;
+    height: 35px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-delete-role:hover {
+    background: #ff4757;
+    transform: scale(1.1) rotate(10deg);
+}
+
+/* Body de la tarjeta */
+.role-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.config-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: 4px;
+}
+
+/* ====================================
+   CONTENEDOR DE PALABRAS CLAVE
+   ==================================== */
+
+.keywords-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 40px;
+    padding: var(--spacing-sm);
+    background: rgba(0, 26, 51, 0.3);
+    border-radius: 8px;
+    border: 1px dashed rgba(0, 102, 204, 0.4);
+}
+
+.keywords-container:empty::before {
+    content: 'Sin palabras clave asignadas';
+    color: rgba(241, 241, 241, 0.4);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+/* ====================================
+   CHIPS DE PALABRAS CLAVE
+   ==================================== */
+
+.keyword-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    color: var(--text-light);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0, 102, 204, 0.4);
+    transition: all var(--transition-fast);
+    animation: chipFadeIn 0.3s ease;
+}
+
+.keyword-chip:hover {
+    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.6);
+    transform: translateY(-2px);
+}
+
+@keyframes chipFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.chip-text {
+    user-select: none;
+}
+
+.chip-remove {
+    cursor: pointer;
+    font-size: 1.3rem;
+    line-height: 1;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.8);
+    transition: all var(--transition-fast);
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.chip-remove:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    transform: rotate(90deg);
+}
+
+/* ====================================
+   AGREGAR PALABRA CLAVE
+   ==================================== */
+
+.add-keyword-container {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-xs);
+}
+
+.keyword-input {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    background: rgba(0, 26, 51, 0.6);
+    color: var(--text-light);
+    transition: all var(--transition-normal);
+    outline: none;
+}
+
+.keyword-input:focus {
+    border-color: var(--gold-color);
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
+}
+
+/* ====================================
+   BOTONES
+   ==================================== */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    color: var(--text-light);
+    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0080ff, var(--accent-color));
+    box-shadow: 0 6px 12px rgba(0, 102, 204, 0.5);
+    transform: translateY(-2px);
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+}
+
+.btn-danger {
+    background: var(--danger-color);
+    color: white;
+    box-shadow: 0 4px 8px rgba(214, 48, 49, 0.3);
+}
+
+.btn-danger:hover {
+    background: #ff4757;
+    box-shadow: 0 6px 12px rgba(214, 48, 49, 0.5);
+    transform: translateY(-2px);
+}
+
+/* ====================================
+   ACCIONES
+   ==================================== */
+
+.config-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-xl);
+}
+
+/* ====================================
+   RESPONSIVE
+   ==================================== */
+
+@media (max-width: 768px) {
+    .roles-list {
+        grid-template-columns: 1fr;
+    }
+
+    .config-new-role {
+        flex-direction: column;
+    }
+
+    .add-keyword-container {
+        flex-direction: column;
+    }
+
+    .keyword-input {
+        width: 100%;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .role-card {
+        padding: var(--spacing-sm);
+    }
+
+    .config-section {
+        padding: var(--spacing-sm);
+    }
+}

@@ -1204,3 +1204,111 @@ PENDIENTE / MEJORAS FUTURAS
 - Compartir deck mediante URL/código
 
 =======================================================================
+ETAPA 2: BUSCADOR Y MI DECK - FINALIZACIÃ"N ✅Objetivos Completados:
+
+✅ Sistema de búsqueda de cartas mediante API de YGOProDeck
+✅ Filtrado por palabras clave con sistema de chips visuales
+✅ Visor de cartas con detalles completos
+✅ Gestión de decks (Main, Extra, Side)
+✅ Asignación automática y manual de roles a cartas
+✅ Sistema de guardado múltiple de decks
+✅ Importación/Exportación de decks (YDK y TXT)
+✅ Ajuste: Monstruos Normales no reciben roles automáticos
+Archivos Actualizados:
+
+index.html - Agregado contenedor de chips de filtros
+buscador.js - Sistema de chips de palabras clave implementado
+style_buscador.css - Estilos para chips con animaciones
+deck.js - Exclusión de Monstruos Normales en asignación de roles
+Funcionalidades Destacadas:
+
+Chips de Filtrado: Al escribir palabras clave separadas por coma, se crean chips visuales que filtran las cartas por tipo, subtipo, atributo, descripción, etc. (no solo por nombre)
+Click para Eliminar: Los chips se pueden eliminar haciendo click en la "×"
+Búsqueda sin Nombre: El sistema permite buscar solo con palabras clave, sin necesidad de escribir un nombre de carta
+Botón Limpiar: Limpia tanto el input principal como los chips de filtros
+Estado:
+ETAPA 2 COMPLETADA - Sistema de búsqueda y gestión de decks completamente funcional y listo para integración con módulo de configuración.
+
+==========================================================================
+
+ETAPA 3: CONFIGURACIÃ"N - IMPLEMENTACIÃ"N INICIAL ✅
+Objetivos Completados:
+
+==========================================================================
+
+✅ Módulo de Configuración creado con secciones colapsables
+✅ Sección "Roles y Palabras Asociadas" completamente funcional
+✅ Sistema de chips visuales para palabras clave (igual que Buscador)
+✅ Integración dinámica con módulo Mi Deck
+✅ Exportación e Importación de configuración en formato .txt
+✅ Ajuste de color en indicador de cantidad (qty-number) en Mi Deck
+
+Archivos Nuevos Creados:
+
+configmanager.js - Gestor centralizado de configuración con localStorage
+config.js - Módulo visual de configuración
+style_config.css - Estilos completos para el módulo de configuración
+
+Archivos Actualizados:
+
+deck.js - Ahora usa ConfigManager para roles dinámicos + color qty ajustado
+index.html - Scripts agregados en orden correcto de dependencias
+
+Funcionalidades de Configuración:
+
+Gestión de Roles:
+
+Crear nuevos roles personalizados
+Renombrar roles existentes (click en el nombre)
+Eliminar roles con botón de basura (🗑️)
+
+
+Gestión de Palabras Clave:
+
+Agregar palabras clave asociadas a cada rol
+Visualización como chips interactivos
+Eliminar palabras con click en "×"
+Textbox individual por rol para agregar más palabras
+
+
+Exportar/Importar Data:
+
+📥 Exportar Data: Descarga archivo yugioh_config_backup.txt
+📤 Importar Data: Carga configuración desde archivo .txt
+Formato JSON extensible para futuras configuraciones
+Validación de estructura al importar
+
+
+Restaurar Por Defecto:
+
+Botón para volver a configuración original
+Confirmación antes de ejecutar
+
+
+
+Ajustes Visuales en Mi Deck:
+
+Color qty-number dinámico:
+
+Blanco (#ffffff) para Xyz y Link
+Negro (#003366) para todos los demás tipos
+Mejora legibilidad en fondos de colores claros
+
+
+
+Sistema de Almacenamiento:
+
+Configuración guardada en localStorage con clave yugioh_config
+Formato JSON con estructura { roles: { "NombreRol": ["palabra1", "palabra2"] } }
+Sincronización automática con asignador de roles en Mi Deck
+Configuración por defecto incluye 14 roles predefinidos
+
+Integración con Módulos Existentes:
+
+ConfigManager cargado antes de deck.js para disponibilidad inmediata
+deck.js consulta roles dinámicamente en autoAssignRoles()
+deck.js usa lista actualizada en openRolePanel()
+Cambios en configuración se reflejan instantáneamente en Mi Deck
+
+Estado:
+CONFIGURACIÃ"N BASE COMPLETADA - Sistema modular listo para agregar nuevas secciones de configuración. El formato de exportación/importación es extensible y no causará problemas al agregar futuras funcionalidades.
