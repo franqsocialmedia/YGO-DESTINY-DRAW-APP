@@ -111,8 +111,104 @@ const Deck = {
     // ACCIONES
     // ===============================
     saveDeck: function () {
-        localStorage.setItem(`deck_${this.name}`, JSON.stringify(this.cards));
+        const deckData = {
+            cards: this.cards,
+            savedAt: new Date().getTime()
+        };
+        localStorage.setItem(`deck_${this.name}`, JSON.stringify(deckData));
         alert('Deck guardado');
+        this.render();
+    },
+
+    getSavedDecks: function () {
+        const decks = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('deck_')) {
+                try {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    const deckName = key.replace('deck_', '');
+                    decks.push({
+                        name: deckName,
+                        cards: data.cards || data,
+                        savedAt: data.savedAt || 0
+                    });
+                } catch (e) {
+                    console.error('Error cargando deck:', key);
+                }
+            }
+        }
+        return decks.sort((a, b) => b.savedAt - a.savedAt);
+    },
+
+    getMostRepeatedCard: function (cards) {
+        let maxQty = 0;
+        let mostRepeated = null;
+        
+        Object.values(cards).forEach(item => {
+            if (item.qty > maxQty) {
+                maxQty = item.qty;
+                mostRepeated = item.data;
+            }
+        });
+        
+        return mostRepeated;
+    },
+
+    openLoadDeckPanel: function (deckName) {
+        const overlay = document.createElement('div');
+        overlay.className = 'deck-overlay';
+
+        overlay.innerHTML = `
+            <div class="deck-modal">
+                <h3>Cargar Deck</h3>
+                <p class="deck-modal-highlight">${deckName}</p>
+                <p class="deck-modal-note">¿Deseas cargar este deck? Se reemplazarán las cartas actuales.</p>
+                <div class="deck-modal-buttons">
+                    <button onclick="Deck.confirmLoadDeck('${deckName}')">Sí, Cargar</button>
+                    <button onclick="Deck.closeModal()">Cancelar</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+    },
+
+    confirmLoadDeck: function (deckName) {
+        try {
+            const data = JSON.parse(localStorage.getItem(`deck_${deckName}`));
+            this.cards = data.cards || data;
+            this.name = deckName;
+            this.closeModal();
+            this.render();
+        } catch (e) {
+            alert('Error al cargar el deck');
+        }
+    },
+
+    openDeleteDeckPanel: function (deckName) {
+        const overlay = document.createElement('div');
+        overlay.className = 'deck-overlay';
+
+        overlay.innerHTML = `
+            <div class="deck-modal deck-modal-warning">
+                <h3>Eliminar Deck</h3>
+                <p class="deck-modal-highlight">${deckName}</p>
+                <p class="deck-modal-note">¿Estás seguro de eliminar este deck? Esta acción no se puede deshacer.</p>
+                <div class="deck-modal-buttons">
+                    <button class="btn-danger" onclick="Deck.confirmDeleteDeck('${deckName}')">Sí, Eliminar</button>
+                    <button onclick="Deck.closeModal()">Cancelar</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+    },
+
+    confirmDeleteDeck: function (deckName) {
+        localStorage.removeItem(`deck_${deckName}`);
+        this.closeModal();
+        this.render();
     },
 
     clearDeck: function () {
@@ -165,6 +261,63 @@ const Deck = {
         const el = document.getElementById(id);
         if (!el) return;
         el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    },
+
+    // ===============================
+    // RENDERIZAR LISTA DE DECKS
+    // ===============================
+    renderDeckList: function () {
+        const savedDecks = this.getSavedDecks();
+        
+        if (savedDecks.length === 0) {
+            return '<p class="deck-empty">No hay decks guardados</p>';
+        }
+
+        let html = '<div class="deck-list-grid">';
+
+        savedDecks.forEach(deck => {
+            const mostRepeatedCard = this.getMostRepeatedCard(deck.cards);
+            const imgUrl = mostRepeatedCard 
+                ? mostRepeatedCard.card_images[0].image_url_small 
+                : 'https://images.ygoprodeck.com/images/cards/6983839.jpg';
+
+            const mainCount = Object.values(deck.cards)
+                .filter(c => c.location === 'main')
+                .reduce((s, c) => s + c.qty, 0);
+
+            const extraCount = Object.values(deck.cards)
+                .filter(c => c.location === 'extra')
+                .reduce((s, c) => s + c.qty, 0);
+
+            const sideCount = Object.values(deck.cards)
+                .filter(c => c.location === 'side')
+                .reduce((s, c) => s + c.qty, 0);
+
+            html += `
+                <div class="deck-list-item">
+                    <button class="deck-delete-btn" onclick="Deck.openDeleteDeckPanel('${deck.name}')" title="Eliminar deck">
+                        ✖
+                    </button>
+                    <div class="deck-thumbnail">
+                        <img src="${imgUrl}" alt="${deck.name}">
+                    </div>
+                    <div class="deck-info">
+                        <h4 class="deck-item-name">${deck.name}</h4>
+                        <p class="deck-counts">
+                            <span class="deck-count-main">Main: ${mainCount}</span> | 
+                            <span class="deck-count-extra">Extra: ${extraCount}</span> | 
+                            <span class="deck-count-side">Side: ${sideCount}</span>
+                        </p>
+                    </div>
+                    <button class="btn btn-primary deck-load-btn" onclick="Deck.openLoadDeckPanel('${deck.name}')">
+                        Ver Deck
+                    </button>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        return html;
     },
 
     // ===============================
@@ -231,13 +384,24 @@ const Deck = {
         const extraC = this.count('extra');
         const sideC = this.count('side');
 
+        let html = `
+            <div id="deck-list-container">
+                <h2 class="deck-list-title" onclick="Deck.toggleSection('saved-decks-sec')">
+                    Decks Guardados
+                </h2>
+                <div id="saved-decks-sec">
+                    ${this.renderDeckList()}
+                </div>
+            </div>
+        `;
+
         if (Object.keys(this.cards).length === 0) {
-            this.container.innerHTML =
-                `<p>No hay un Deck seleccionado para mostrar.</p>`;
+            html += `<p>No hay un Deck seleccionado para mostrar.</p>`;
+            this.container.innerHTML = html;
             return;
         }
 
-        let html = `
+        html += `
             <h2 onclick="Deck.openRenamePanel()" class="deck-title">
                 ${this.name} (${mainC})
             </h2>

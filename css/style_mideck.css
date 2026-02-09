@@ -328,6 +328,17 @@
     font-size: 1.8rem;
     margin-bottom: var(--spacing-md);
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    background: var(--bg-card);
+    border-radius: 8px;
+    transition: all var(--transition-normal);
+    border: 2px solid var(--border-color);
+}
+
+.deck-list-title:hover {
+    background: rgba(0, 102, 204, 0.2);
+    border-color: var(--gold-color);
 }
 
 .deck-list-grid {
@@ -432,6 +443,31 @@
 .deck-load-btn {
     width: 100%;
     margin-top: auto;
+}
+
+/* ====================================
+   BOTONES GENERALES
+   ==================================== */
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-size: 0.95rem;
+}
+
+.btn-primary {
+    background: var(--accent-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.4);
 }
 
 /* ====================================
