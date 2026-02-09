@@ -220,13 +220,15 @@ const Deck = {
         let main = '', extra = '', side = '';
 
         Object.entries(this.cards).forEach(([id, item]) => {
-            const line = id + '\n';
-            if (item.location === 'main') main += line;
-            if (item.location === 'extra') extra += line;
-            if (item.location === 'side') side += line;
+            // Repetir el ID tantas veces como copias tenga
+            for (let i = 0; i < item.qty; i++) {
+                if (item.location === 'main') main += id + '\n';
+                if (item.location === 'extra') extra += id + '\n';
+                if (item.location === 'side') side += id + '\n';
+            }
         });
 
-        const content = `#main\n${main}#extra\n${extra}!side\n${side}`;
+        const content = `#created by Destiny Draw\n#main\n${main}#extra\n${extra}!side\n${side}`;
         const blob = new Blob([content], { type: 'text/plain' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -252,6 +254,117 @@ const Deck = {
         a.href = URL.createObjectURL(blob);
         a.download = `${this.name}.txt`;
         a.click();
+    },
+
+    importYDK: function () {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.ydk';
+        
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const text = await file.text();
+            this.parseYDK(text, file.name);
+        };
+
+        input.click();
+    },
+
+    parseYDK: async function (content, filename) {
+        const lines = content.split('\n').map(l => l.trim()).filter(l => l);
+        
+        let currentSection = '';
+        const cardIds = { main: [], extra: [], side: [] };
+
+        lines.forEach(line => {
+            if (line.startsWith('#main')) {
+                currentSection = 'main';
+            } else if (line.startsWith('#extra')) {
+                currentSection = 'extra';
+            } else if (line.startsWith('!side')) {
+                currentSection = 'side';
+            } else if (line.startsWith('#') || line.startsWith('!')) {
+                // Ignorar otros comentarios
+            } else if (/^\d+$/.test(line)) {
+                // Es un ID de carta
+                if (currentSection) {
+                    cardIds[currentSection].push(line);
+                }
+            }
+        });
+
+        // Contar cantidades
+        const cardCounts = { main: {}, extra: {}, side: {} };
+        
+        ['main', 'extra', 'side'].forEach(section => {
+            cardIds[section].forEach(id => {
+                cardCounts[section][id] = (cardCounts[section][id] || 0) + 1;
+            });
+        });
+
+        // Obtener IDs únicos
+        const uniqueIds = new Set([
+            ...Object.keys(cardCounts.main),
+            ...Object.keys(cardCounts.extra),
+            ...Object.keys(cardCounts.side)
+        ]);
+
+        if (uniqueIds.size === 0) {
+            alert('No se encontraron cartas en el archivo');
+            return;
+        }
+
+        // Buscar cartas en la API
+        try {
+            const idsArray = Array.from(uniqueIds);
+            const url = `https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${idsArray.join(',')}`;
+            
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Error al buscar cartas');
+            
+            const result = await response.json();
+            const cardsData = result.data;
+
+            // Construir nuevo deck
+            const newCards = {};
+
+            cardsData.forEach(card => {
+                const id = card.id.toString();
+                let location = '';
+                let qty = 0;
+
+                if (cardCounts.main[id]) {
+                    location = 'main';
+                    qty = cardCounts.main[id];
+                } else if (cardCounts.extra[id]) {
+                    location = 'extra';
+                    qty = cardCounts.extra[id];
+                } else if (cardCounts.side[id]) {
+                    location = 'side';
+                    qty = cardCounts.side[id];
+                }
+
+                if (qty > 0) {
+                    newCards[id] = {
+                        data: card,
+                        qty: qty,
+                        location: location
+                    };
+                }
+            });
+
+            // Actualizar deck
+            this.cards = newCards;
+            this.name = filename.replace('.ydk', '');
+            this.render();
+            alert(`Deck importado: ${this.name}`);
+
+        } catch (error) {
+            console.error('Error al importar deck:', error);
+            alert('Error al importar el deck. Verifica que el archivo sea válido.');
+        }
     },
 
     // ===============================
@@ -426,6 +539,7 @@ const Deck = {
                 <button onclick="Deck.saveDeck()">Guardar Deck</button>
                 <button onclick="Deck.clearDeck()">Limpiar Deck</button>
                 <button onclick="Deck.exportYDK()">Exportar Deck</button>
+                <button onclick="Deck.importYDK()">Importar Deck</button>
                 <button onclick="Deck.exportTXT()">Lista en .txt</button>
             </div>
         `;
