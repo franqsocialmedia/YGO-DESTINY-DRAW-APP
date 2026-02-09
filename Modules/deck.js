@@ -35,6 +35,13 @@ const Deck = {
     autoAssignRoles: function (card) {
         const roles = [];
         const desc = card.desc ? card.desc.toLowerCase() : '';
+        const type = card.type ? card.type.toLowerCase() : '';
+        
+        // AJUSTE: Ignorar Monstruos Normales (sin efecto)
+        // Los Monstruos Normales tienen type que incluye "normal monster"
+        if (type.includes('normal monster')) {
+            return roles; // Retorna array vacío, sin roles asignados
+        }
         
         // Diccionario de palabras clave y roles
         const roleKeywords = {

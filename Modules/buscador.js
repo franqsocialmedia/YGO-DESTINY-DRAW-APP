@@ -12,6 +12,7 @@ const Buscador = {
     searchBtn: null,
     clearBtn: null,
     resultsContainer: null,
+    chipsContainer: null,
     filterWords: [],
     currentCards: [],
 
@@ -23,6 +24,7 @@ const Buscador = {
         this.searchBtn = document.getElementById('search-btn');
         this.clearBtn = document.getElementById('clear-btn');
         this.resultsContainer = document.getElementById('search-results');
+        this.chipsContainer = document.getElementById('filter-chips-container');
 
         if (!this.searchInput || !this.searchBtn || !this.clearBtn || !this.resultsContainer) {
             console.error('Buscador: Elementos no encontrados');
@@ -42,9 +44,122 @@ const Buscador = {
         });
 
         if (this.filterInput) {
+            // Detectar cuando se presiona coma o Enter para agregar chip
             this.filterInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') this.search();
+                if (e.key === ',' || e.key === 'Enter') {
+                    e.preventDefault();
+                    this.addChipFromInput();
+                }
             });
+
+            // También buscar automáticamente cuando cambian los chips
+            this.filterInput.addEventListener('input', (e) => {
+                // Si el usuario borra todo, también actualizar
+                if (e.target.value === '' && this.filterWords.length > 0) {
+                    this.autoSearch();
+                }
+            });
+        }
+    },
+
+    // NUEVO: Agregar chip desde el input
+    addChipFromInput: function () {
+        if (!this.filterInput) return;
+
+        const value = this.filterInput.value.trim().toLowerCase();
+        
+        if (value && !this.filterWords.includes(value)) {
+            this.filterWords.push(value);
+            this.filterInput.value = '';
+            this.renderChips();
+            this.autoSearch();
+        }
+    },
+
+    // NUEVO: Renderizar los chips visuales
+    renderChips: function () {
+        if (!this.chipsContainer) return;
+
+        this.chipsContainer.innerHTML = '';
+
+        this.filterWords.forEach((word, index) => {
+            const chip = document.createElement('div');
+            chip.className = 'filter-chip';
+            chip.innerHTML = `
+                <span class="chip-text">${word}</span>
+                <span class="chip-remove" data-index="${index}">×</span>
+            `;
+
+            // Evento click para eliminar chip
+            chip.querySelector('.chip-remove').addEventListener('click', () => {
+                this.removeChip(index);
+            });
+
+            this.chipsContainer.appendChild(chip);
+        });
+    },
+
+    // NUEVO: Eliminar un chip específico
+    removeChip: function (index) {
+        this.filterWords.splice(index, 1);
+        this.renderChips();
+        this.autoSearch();
+    },
+
+    // NUEVO: Buscar automáticamente cuando hay chips (incluso sin nombre)
+    autoSearch: async function () {
+        // Si no hay chips y no hay nombre, no buscar
+        if (this.filterWords.length === 0 && !this.searchInput.value.trim()) {
+            this.resultsContainer.innerHTML =
+                '<p class="results-placeholder">Utiliza el buscador para encontrar cartas de Yu-Gi-Oh!</p>';
+            return;
+        }
+
+        this.showLoading();
+
+        try {
+            let cards = [];
+
+            const mainTerm = this.searchInput.value.trim();
+
+            if (mainTerm) {
+                // Búsqueda normal por nombre
+                const url = `${this.apiUrl}?fname=${encodeURIComponent(mainTerm)}`;
+                const response = await fetch(url);
+
+                if (!response.ok) throw new Error('Error HTTP');
+
+                const data = await response.json();
+                cards = data.data || [];
+            } else {
+                // Búsqueda solo por filtros (obtener todas las cartas y filtrar)
+                // Usamos un nombre genérico para obtener un conjunto amplio
+                const url = `${this.apiUrl}`;
+                const response = await fetch(url);
+
+                if (!response.ok) throw new Error('Error HTTP');
+
+                const data = await response.json();
+                cards = data.data || [];
+            }
+
+            if (cards.length === 0) {
+                this.showMessage('😕 No se encontraron cartas');
+                return;
+            }
+
+            const filteredCards = this.applyWordFilters(cards);
+
+            if (filteredCards.length === 0) {
+                this.showMessage('😕 No coinciden los filtros');
+                return;
+            }
+
+            this.displayResults(filteredCards);
+
+        } catch (err) {
+            console.error(err);
+            this.showMessage('❌ Error al buscar cartas');
         }
     },
 
@@ -52,30 +167,36 @@ const Buscador = {
 
         const mainTerm = this.searchInput.value.trim();
 
-        if (!mainTerm) {
-            this.showMessage('⚠️ Escribe un nombre de carta');
+        // Permitir buscar solo con filtros (sin nombre)
+        if (!mainTerm && this.filterWords.length === 0) {
+            this.showMessage('⚠️ Escribe un nombre de carta o agrega palabras clave');
             return;
-        }
-
-        if (this.filterInput) {
-            this.filterWords = this.filterInput.value
-                .split(',')
-                .map(w => w.trim().toLowerCase())
-                .filter(w => w.length > 0);
-        } else {
-            this.filterWords = [];
         }
 
         this.showLoading();
 
         try {
-            const url = `${this.apiUrl}?fname=${encodeURIComponent(mainTerm)}`;
-            const response = await fetch(url);
+            let cards = [];
 
-            if (!response.ok) throw new Error('Error HTTP');
+            if (mainTerm) {
+                // Búsqueda normal por nombre
+                const url = `${this.apiUrl}?fname=${encodeURIComponent(mainTerm)}`;
+                const response = await fetch(url);
 
-            const data = await response.json();
-            const cards = data.data || [];
+                if (!response.ok) throw new Error('Error HTTP');
+
+                const data = await response.json();
+                cards = data.data || [];
+            } else {
+                // Búsqueda solo por filtros (obtener todas las cartas)
+                const url = `${this.apiUrl}`;
+                const response = await fetch(url);
+
+                if (!response.ok) throw new Error('Error HTTP');
+
+                const data = await response.json();
+                cards = data.data || [];
+            }
 
             if (cards.length === 0) {
                 this.showMessage('😕 No se encontraron cartas');
@@ -142,7 +263,10 @@ const Buscador = {
 
         this.searchInput.value = '';
         if (this.filterInput) this.filterInput.value = '';
+        
+        // NUEVO: Limpiar también los chips
         this.filterWords = [];
+        this.renderChips();
 
         this.resultsContainer.innerHTML =
             '<p class="results-placeholder">Utiliza el buscador para encontrar cartas de Yu-Gi-Oh!</p>';
