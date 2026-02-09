@@ -30,6 +30,44 @@ const Deck = {
     },
 
     // ===============================
+    // AUTO-ASIGNACIÓN DE ROLES
+    // ===============================
+    autoAssignRoles: function (card) {
+        const roles = [];
+        const desc = card.desc ? card.desc.toLowerCase() : '';
+        
+        // Diccionario de palabras clave y roles
+        const roleKeywords = {
+            'Handtrap': ['from your hand'],
+            'Boardbreaker': ['destroy all', 'destroy'],
+            'Extender': ['special summon this'],
+            'Starter': ['summoned'],
+            'Booster': ['gain'],
+            'Draw-Engine': ['draw 1'],
+            'Burner': ['inflict'],
+            'Recovery': ['from the gy', 'from the graveyard', 'from the banish'],
+            'Negater': ['negate'],
+            'Searcher': ['add', 'from your deck'],
+            'Banisher': ['remove', 'banish 1', 'banish it'],
+            'Disruption': ['quick-effect']
+        };
+
+        // Verificar cada rol
+        for (const [role, keywords] of Object.entries(roleKeywords)) {
+            for (const keyword of keywords) {
+                if (desc.includes(keyword)) {
+                    if (!roles.includes(role)) {
+                        roles.push(role);
+                    }
+                    break; // Ya encontró una palabra clave para este rol
+                }
+            }
+        }
+
+        return roles;
+    },
+
+    // ===============================
     // SINCRONIZAR DESDE CARDVIEWER
     // ===============================
     syncFromViewer: function (id, card, qty) {
@@ -40,7 +78,8 @@ const Deck = {
                 this.cards[id] = {
                     data: card,
                     qty: qty,
-                    location: this.isExtraDeckCard(card) ? 'extra' : 'main'
+                    location: this.isExtraDeckCard(card) ? 'extra' : 'main',
+                    roles: this.autoAssignRoles(card)
                 };
             } else {
                 this.cards[id].qty = qty;
@@ -105,6 +144,75 @@ const Deck = {
     closeModal: function () {
         const overlay = document.querySelector('.deck-overlay');
         if (overlay) overlay.remove();
+    },
+
+    // ===============================
+    // GESTIÓN DE ROLES
+    // ===============================
+    openRolePanel: function (id) {
+        const item = this.cards[id];
+        if (!item) return;
+
+        const availableRoles = [
+            'Handtrap', 'Starter', 'Extender', 'Boardbreaker', 
+            'Booster', 'Draw-Engine', 'Burner', 'Recovery', 
+            'Negater', 'Searcher', 'Backrow-Removal', 'Banisher', 
+            'Disruption', 'Boss Monster'
+        ];
+
+        const currentRoles = item.roles || [];
+
+        const overlay = document.createElement('div');
+        overlay.className = 'deck-overlay';
+
+        let checkboxesHTML = '';
+        availableRoles.forEach(role => {
+            const isChecked = currentRoles.includes(role) ? 'checked' : '';
+            checkboxesHTML += `
+                <label class="role-checkbox-label">
+                    <input type="checkbox" value="${role}" ${isChecked} class="role-checkbox">
+                    ${role}
+                </label>
+            `;
+        });
+
+        overlay.innerHTML = `
+            <div class="deck-modal">
+                <h3>Asignar Roles</h3>
+                <p class="deck-modal-highlight">${item.data.name}</p>
+                <div class="role-checkboxes">
+                    ${checkboxesHTML}
+                </div>
+                <div class="deck-modal-buttons">
+                    <button onclick="Deck.assignRoles(${id})">Asignar Rol</button>
+                    <button onclick="Deck.removeRoles(${id})">Quitar Roles</button>
+                    <button onclick="Deck.closeModal()">Cancelar</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+    },
+
+    assignRoles: function (id) {
+        const item = this.cards[id];
+        if (!item) return;
+
+        const checkboxes = document.querySelectorAll('.role-checkbox:checked');
+        const selectedRoles = Array.from(checkboxes).map(cb => cb.value);
+
+        item.roles = selectedRoles;
+        this.closeModal();
+        this.render();
+    },
+
+    removeRoles: function (id) {
+        const item = this.cards[id];
+        if (!item) return;
+
+        item.roles = [];
+        this.closeModal();
+        this.render();
     },
 
     // ===============================
@@ -350,7 +458,8 @@ const Deck = {
                     newCards[id] = {
                         data: card,
                         qty: qty,
-                        location: location
+                        location: location,
+                        roles: this.autoAssignRoles(card)
                     };
                 }
             });
@@ -451,14 +560,54 @@ const Deck = {
         entries.forEach(([id, item]) => {
 
             const card = item.data;
+            const type = card.type.toLowerCase();
 
-            const color =
-                card.type.includes('Monster') ? '#d9b38c' :
-                card.type.includes('Spell') ? '#b7f7c3' :
-                '#ffb3d9';
+            let color = '';
+            let nameClass = 'deck-name';
+
+            // Determinar color según tipo de carta
+            if (type.includes('monster')) {
+                // Monstruos especiales
+                if (type.includes('synchro')) {
+                    color = '#ffffff'; // Blanco
+                } else if (type.includes('fusion')) {
+                    color = '#d8b5d8'; // Morado claro
+                } else if (type.includes('xyz')) {
+                    color = 'rgba(0, 0, 0, 0.85)'; // Negro 85%
+                    nameClass = 'deck-name deck-name-white';
+                } else if (type.includes('link')) {
+                    color = '#4169e1'; // Azul
+                    nameClass = 'deck-name deck-name-white';
+                } else if (type.includes('ritual')) {
+                    color = '#b3d9ff'; // Azul claro
+                } else if (type.includes('pendulum')) {
+                    color = 'linear-gradient(to right, #d9b38c, #b7f7c3)'; // Degradado
+                } else {
+                    color = '#d9b38c'; // Marrón claro normal
+                }
+            } else if (type.includes('spell')) {
+                color = '#b7f7c3'; // Verde claro
+            } else if (type.includes('trap')) {
+                color = '#ffb3d9'; // Rosa claro
+            } else {
+                color = '#d9b38c'; // Default
+            }
+
+            // Si es degradado, usar background en lugar de background-color
+            const backgroundStyle = color.includes('gradient') 
+                ? `background: ${color}` 
+                : `background: ${color}`;
+
+            // Generar badges de roles
+            let rolesBadges = '';
+            if (item.roles && item.roles.length > 0) {
+                item.roles.forEach(role => {
+                    rolesBadges += `<span class="role-badge">${role}</span>`;
+                });
+            }
 
             html += `
-                <div class="deck-row" style="background:${color}">
+                <div class="deck-row" style="${backgroundStyle}">
                     
                     <img 
                         src="${card.card_images[0].image_url_small}" 
@@ -466,7 +615,11 @@ const Deck = {
                         onclick="CardViewer.openFromDeck(${id})"
                     >
 
-                    <div class="deck-name">${card.name}</div>
+                    <div class="${nameClass}">${card.name}</div>
+
+                    <div class="deck-roles">
+                        ${rolesBadges}
+                    </div>
 
                     <div class="deck-qty">
                         <button onclick="Deck.changeQty(${id}, -1)">◀</button>
@@ -474,11 +627,17 @@ const Deck = {
                         <button onclick="Deck.changeQty(${id}, 1)">▶</button>
                     </div>
 
-                    ${location !== 'extra' ? `
-                        <button class="deck-move" onclick="Deck.toggleLocation(${id})">
-                            ${item.location === 'main' ? 'Side Deck' : 'Main Deck'}
+                    <div class="deck-buttons">
+                        ${location !== 'extra' ? `
+                            <button class="deck-move" onclick="Deck.toggleLocation(${id})">
+                                ${item.location === 'main' ? 'Side Deck' : 'Main Deck'}
+                            </button>
+                        ` : ''}
+                        
+                        <button class="deck-role-btn" onclick="Deck.openRolePanel(${id})">
+                            Rol
                         </button>
-                    ` : ''}
+                    </div>
 
                 </div>
             `;

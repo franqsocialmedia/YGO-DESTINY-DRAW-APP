@@ -796,3 +796,411 @@ Extra Deck (x)
 Side Deck (x)
 
 =======================================================================
+=======================================================================
+[ACTUALIZACIÓN – ETAPA 2.1 / MÓDULO "MI DECK" – GESTIÓN AVANZADA]
+=======================================================================
+
+Fecha: 09/02/2026
+Versión: 2.1.0
+Estado: FUNCIONAL (MEJORAS IMPLEMENTADAS)
+
+RESUMEN DE LA ACTUALIZACIÓN
+
+Se implementaron mejoras significativas en el módulo "Mi Deck" enfocadas en:
+- Gestión de decks guardados con interfaz visual
+- Corrección del sistema de exportación/importación de archivos .ydk
+- Sistema completo de clasificación por roles
+- Auto-asignación inteligente de roles basada en efectos de cartas
+- Diferenciación visual por tipo de monstruo
+
+===================================================================
+FUNCIONALIDADES AGREGADAS
+===================================================================
+
+- LISTA DE DECKS GUARDADOS
+
+Implementación de sección desplegable al inicio del módulo "Mi Deck" que muestra todos los decks guardados en localStorage del navegador.
+
+Características:
+- Contenedor con título clickeable "Decks Guardados" para mostrar/ocultar
+- Lista en formato grid responsive
+- Orden descendente por fecha de guardado (más reciente primero)
+- Cada deck muestra:
+  * Miniatura: Imagen de la carta con mayor cantidad de copias
+  * Nombre del deck
+  * Contadores de cartas (Main/Extra/Side) con colores distintivos
+  * Botón "Ver Deck" para cargar
+  * Botón "X" para eliminar
+
+Funciones implementadas:
+- getSavedDecks(): Obtiene todos los decks del localStorage
+- getMostRepeatedCard(): Identifica la carta más repetida para miniatura
+- openLoadDeckPanel(): Muestra confirmación antes de cargar
+- confirmLoadDeck(): Carga el deck seleccionado
+- openDeleteDeckPanel(): Muestra advertencia antes de eliminar
+- confirmDeleteDeck(): Elimina el deck de localStorage
+- renderDeckList(): Renderiza la lista completa de decks
+
+Almacenamiento mejorado:
+Al guardar un deck ahora se incluye:
+{
+  cards: {...},
+  savedAt: timestamp
+}
+
+- CORRECCIÓN DE EXPORTACIÓN .YDK
+
+Se corrigió un error crítico en la función exportYDK() que causaba que todas las cartas se exportaran a 1 copia independientemente de la cantidad real.
+
+Problema identificado:
+- El formato .ydk requiere repetir el ID de cada carta tantas veces como copias tenga
+- La versión anterior solo escribía cada ID una vez
+
+Solución implementada:
+```javascript
+Object.entries(this.cards).forEach(([id, item]) => {
+    // Repetir el ID tantas veces como copias tenga
+    for (let i = 0; i < item.qty; i++) {
+        if (item.location === 'main') main += id + '\n';
+        if (item.location === 'extra') extra += id + '\n';
+        if (item.location === 'side') side += id + '\n';
+    }
+});
+```
+
+Estructura del archivo .ydk:
+#created by Destiny Draw
+#main
+[IDs del Main Deck, repetidos según cantidad]
+#extra
+[IDs del Extra Deck, repetidos según cantidad]
+!side
+[IDs del Side Deck, repetidos según cantidad]
+
+- IMPORTACIÓN DE DECKS .YDK
+
+Nueva funcionalidad para importar archivos .ydk desde el sistema local.
+
+Funciones implementadas:
+- importYDK(): Abre selector de archivos y lee el .ydk
+- parseYDK(): Procesa el contenido del archivo
+
+Proceso de importación:
+1. Usuario selecciona archivo .ydk desde su sistema
+2. Se lee el archivo y se divide en secciones (main/extra/side)
+3. Se extraen los IDs y se cuentan las cantidades
+4. Se consulta la API de YGOPRODeck con todos los IDs únicos
+5. Se construye el objeto de cartas con cantidades correctas
+6. Se auto-asignan roles a cada carta importada
+7. Se reemplaza el deck actual
+8. El nombre del deck toma el nombre del archivo
+
+Manejo de errores:
+- Validación de formato de archivo
+- Manejo de IDs inválidos
+- Feedback al usuario en caso de error
+
+- SISTEMA DE ROLES PARA CARTAS
+
+Implementación completa de clasificación por roles de juego para cada carta del deck.
+
+Roles disponibles:
+- Handtrap
+- Starter
+- Extender
+- Boardbreaker
+- Booster
+- Draw-Engine
+- Burner
+- Recovery
+- Negater
+- Searcher
+- Backrow-Removal
+- Banisher
+- Disruption
+- Boss Monster
+
+Estructura de datos:
+Cada carta ahora incluye un array de roles:
+```javascript
+{
+    data: [objeto de carta],
+    qty: [cantidad],
+    location: 'main'|'extra'|'side',
+    roles: ['Starter', 'Searcher', ...]
+}
+```
+
+Funciones implementadas:
+- openRolePanel(): Muestra panel flotante con checkboxes
+- assignRoles(): Guarda los roles seleccionados
+- removeRoles(): Elimina todos los roles de la carta
+
+Panel de asignación:
+- Modal flotante con overlay oscuro
+- Checkboxes de selección múltiple organizados en grid 2 columnas
+- Pre-selección de roles existentes
+- 3 botones de acción:
+  * "Asignar Rol": Guarda selección
+  * "Quitar Roles": Elimina todos los roles
+  * "Cancelar": Cierra sin cambios
+
+Visualización en listas:
+- Los roles aparecen como badges azules redondeados
+- Ubicados entre el nombre y los controles de cantidad
+- Diseño responsive que se ajusta al espacio disponible
+
+- AUTO-ASIGNACIÓN DE ROLES POR PALABRAS CLAVE
+
+Sistema inteligente que analiza la descripción/efecto de cada carta y asigna roles automáticamente.
+
+Función: autoAssignRoles(card)
+
+Diccionario de palabras clave implementado:
+```javascript
+{
+    'Handtrap': ['from your hand'],
+    'Boardbreaker': ['destroy all', 'destroy'],
+    'Extender': ['special summon this'],
+    'Starter': ['summoned'],
+    'Booster': ['gain'],
+    'Draw-Engine': ['draw 1'],
+    'Burner': ['inflict'],
+    'Recovery': ['from the gy', 'from the graveyard', 'from the banish'],
+    'Negater': ['negate'],
+    'Searcher': ['add', 'from your deck'],
+    'Banisher': ['remove', 'banish 1', 'banish it'],
+    'Disruption': ['quick-effect']
+}
+```
+
+Roles sin auto-asignación:
+- Backrow-Removal (requiere asignación manual)
+- Boss Monster (requiere asignación manual)
+
+Proceso de análisis:
+1. Convierte la descripción de la carta a minúsculas
+2. Itera sobre cada rol y sus palabras clave
+3. Si encuentra alguna palabra clave, asigna el rol
+4. Evita duplicados en el array de roles
+5. Retorna array de roles encontrados
+
+Aplicación:
+- Se ejecuta al agregar carta desde CardViewer
+- Se ejecuta al importar deck desde archivo .ydk
+- Solo aplica en cartas nuevas (no sobreescribe ediciones manuales)
+- Los roles auto-asignados pueden ser modificados manualmente después
+
+- CLASIFICACIÓN VISUAL POR TIPO DE MONSTRUO
+
+Implementación de colores específicos de fondo según el tipo de monstruo en las listas del deck.
+
+Colores implementados:
+
+Main Deck:
+- Monstruos normales: #d9b38c (Marrón claro)
+- Monstruos Ritual: #b3d9ff (Azul claro)
+- Monstruos Péndulo: Degradado de #d9b38c a #b7f7c3 (Marrón → Verde)
+
+Extra Deck:
+- Monstruos Fusión: #d8b5d8 (Morado claro)
+- Monstruos Synchro: #ffffff (Blanco)
+- Monstruos Xyz: rgba(0, 0, 0, 0.85) (Negro 85%) + texto blanco
+- Monstruos Link: #4169e1 (Azul) + texto blanco
+
+Cartas de magia y trampa:
+- Spell: #b7f7c3 (Verde claro)
+- Trap: #ffb3d9 (Rosa claro)
+
+Implementación técnica:
+```javascript
+// Detección de tipo
+const type = card.type.toLowerCase();
+
+// Aplicación de color
+if (type.includes('xyz')) {
+    color = 'rgba(0, 0, 0, 0.85)';
+    nameClass = 'deck-name deck-name-white';
+}
+
+// Para degradados
+const backgroundStyle = color.includes('gradient') 
+    ? `background: ${color}` 
+    : `background: ${color}`;
+```
+
+Clase CSS adicional:
+.deck-name-white: Aplica color blanco al texto para fondos oscuros
+
+===================================================================
+CAMBIOS VISUALES
+===================================================================
+
+- Panel de Decks Guardados
+- Grid responsive (auto-fill, minmax 300px)
+- Cards con efecto hover (elevación y cambio de borde)
+- Miniatura con aspect ratio 421:614 (proporción de carta Yu-Gi-Oh!)
+- Botón eliminar circular en esquina superior derecha
+- Contadores con códigos de color:
+  * Main: #90EE90 (Verde claro)
+  * Extra: #FFB6C1 (Rosa claro)
+  * Side: #87CEEB (Azul cielo)
+
+- Badges de Roles
+- Background: var(--accent-color) (Azul de la app)
+- Color de texto: Blanco
+- Padding: 2px 8px
+- Border-radius: 12px (totalmente redondeado)
+- Font-size: 0.75rem
+- Font-weight: 600
+
+- Reorganización de Deck Row
+- Cambio de display: flex a display: grid
+- Grid-template-columns: 60px 1fr auto auto auto
+- Mejor alineación de elementos
+- Columna dedicada para roles
+
+- Botón "Rol"
+- Color de fondo: var(--accent-color)
+- Ubicado debajo del botón "Side Deck" / "Main Deck"
+- Diseño consistente con otros botones del módulo
+
+- Panel de Roles
+- Checkboxes en grid de 2 columnas
+- Scroll vertical si excede 300px de altura
+- Fondo semi-transparente para contenedor de checkboxes
+- Efecto hover en cada label
+- Accent-color personalizado para checkboxes
+
+- Fondos por Tipo de Monstruo
+- Identificación visual inmediata del tipo de carta
+- Texto en blanco para fondos oscuros (Xyz, Link)
+- Degradado suave en cartas Péndulo
+- Consistencia con los colores oficiales de Yu-Gi-Oh!
+
+===================================================================
+CORRECCIONES TÉCNICAS
+===================================================================
+
+- Corrección del Algoritmo de Exportación YDK
+Antes: Escribía cada ID una sola vez
+Ahora: Repite el ID según la cantidad de copias
+Impacto: Decks ahora compatibles con YGOPro, EDOPro y otros simuladores
+
+- Gestión de Roles en Estructura de Datos
+- Array roles[] agregado a cada carta en this.cards
+- Inicialización automática en syncFromViewer()
+- Inicialización automática en parseYDK()
+- Persistencia en localStorage al guardar deck
+
+- Mejora en Almacenamiento de Decks
+- Timestamp agregado para ordenamiento cronológico
+- Compatibilidad con formato antiguo (sin timestamp)
+- Manejo de errores en getSavedDecks()
+
+- Responsive Mejorado
+- Grid de deck-row adaptable a móviles
+- Grid-template-areas para reorganización en pantallas pequeñas
+- Checkboxes de roles a 1 columna en móvil
+
+===================================================================
+NOTAS TÉCNICAS
+===================================================================
+
+- FORMATO .YDK
+El formato .ydk es un estándar de facto para intercambio de decks de Yu-Gi-Oh!
+- Cada línea contiene un ID numérico de carta
+- Los IDs se repiten según cantidad de copias
+- Secciones separadas por #main, #extra, !side
+- Comentarios opcionales con #
+
+- AUTO-ASIGNACIÓN DE ROLES
+El sistema analiza la descripción en inglés de las cartas.
+Limitaciones:
+- Solo detecta palabras/frases exactas (case-insensitive)
+- No interpreta contexto ni sinónimos
+- Puede asignar múltiples roles si cumple varios criterios
+- Roles como "Boss Monster" requieren criterio humano
+
+Mejoras futuras posibles:
+- Análisis del ATK/DEF para Boss Monster
+- Detección de arquetipos
+- Machine learning para clasificación más precisa
+
+- PERFORMANCE
+Con el sistema de roles:
+- Cada carta ahora almacena más datos
+- El análisis de descripción ocurre solo una vez (al agregar)
+- Los roles se guardan en localStorage
+- No hay impacto significativo en renderizado
+
+- COMPATIBILIDAD
+Formato de localStorage backward-compatible:
+- Decks antiguos sin timestamp funcionan correctamente
+- Decks antiguos sin roles se inicializan con array vacío
+- Migración automática al cargar y guardar
+
+===================================================================
+ARCHIVOS MODIFICADOS
+===================================================================
+
+deck.js:
+- Nuevas funciones: getSavedDecks, getMostRepeatedCard, openLoadDeckPanel, 
+  confirmLoadDeck, openDeleteDeckPanel, confirmDeleteDeck, importYDK, 
+  parseYDK, autoAssignRoles, openRolePanel, assignRoles, removeRoles, 
+  renderDeckList
+- Modificaciones: exportYDK (corregido algoritmo de repetición), 
+  syncFromViewer (auto-asignación de roles), render (inclusión de lista de decks),
+  renderRows (colores por tipo, visualización de roles)
+
+style_mideck.css:
+- Nuevas clases: deck-list-title, deck-list-grid, deck-list-item, 
+  deck-delete-btn, deck-thumbnail, deck-info, deck-item-name, deck-counts,
+  deck-count-main, deck-count-extra, deck-count-side, deck-load-btn,
+  deck-roles, role-badge, deck-buttons, deck-role-btn, role-checkboxes,
+  role-checkbox-label, role-checkbox, deck-name-white
+- Modificaciones: deck-row (cambio a grid), deck-name (sin flex), 
+  responsive (grid-template-areas para móvil)
+
+===================================================================
+ESTADO ACTUAL DEL MÓDULO "MI DECK"
+===================================================================
+
+✓ Búsqueda y agregado de cartas desde Buscador
+✓ Clasificación automática Main/Extra/Side Deck
+✓ Gestión de cantidades (incremento/decremento)
+✓ Cambio de ubicación Main ↔ Side
+✓ Visualización de cartas mediante CardViewer
+✓ Renombrado de deck
+✓ Guardado en localStorage
+✓ Lista de decks guardados con miniaturas
+✓ Carga de decks guardados
+✓ Eliminación de decks guardados
+✓ Exportación a formato .ydk (corregido)
+✓ Importación desde formato .ydk
+✓ Exportación a formato .txt
+✓ Sistema de roles con 14 categorías
+✓ Auto-asignación de roles por palabras clave
+✓ Edición manual de roles
+✓ Diferenciación visual por tipo de monstruo
+✓ Contadores dinámicos Main/Extra/Side
+✓ Secciones desplegables
+
+===================================================================
+PENDIENTE / MEJORAS FUTURAS
+===================================================================
+
+- Validación de límites de deck (40-60 Main, 0-15 Extra, 0-15 Side)
+- Advertencias de cartas limitadas/prohibidas
+- Sistema de importación desde otras plataformas (YGOPRO Mobile, etc.)
+- Estadísticas del deck (curva de nivel, distribución de tipos)
+- Análisis de sinergia entre cartas
+- Sugerencias de cartas basadas en arquetipo
+- Comparación entre múltiples decks
+- Duplicación de decks existentes
+- Historial de cambios en deck
+- Notas/comentarios por carta o deck
+- Exportación a imagen del deck
+- Compartir deck mediante URL/código
+
+=======================================================================

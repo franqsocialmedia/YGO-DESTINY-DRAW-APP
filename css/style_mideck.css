@@ -133,10 +133,32 @@
 
 /* Nombre de la carta */
 .deck-name {
-    flex: 1;
     font-weight: 600;
     color: var(--text-dark);
     font-size: 0.95rem;
+    min-width: 150px;
+}
+
+.deck-name-white {
+    color: white !important;
+}
+
+/* Roles (badges) */
+.deck-roles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 120px;
+}
+
+.role-badge {
+    background: var(--accent-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 /* Controles de cantidad */
@@ -189,6 +211,32 @@
 
 .deck-move:hover {
     background: var(--accent-color);
+    border-color: var(--gold-color);
+    transform: translateY(-2px);
+}
+
+/* Contenedor de botones */
+.deck-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Botón Rol */
+.deck-role-btn {
+    background: var(--accent-color);
+    color: white;
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all var(--transition-normal);
+    white-space: nowrap;
+}
+
+.deck-role-btn:hover {
+    background: var(--accent-hover);
     border-color: var(--gold-color);
     transform: translateY(-2px);
 }
@@ -313,6 +361,41 @@
     background: #ff4757;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(214, 48, 49, 0.4);
+}
+
+/* Checkboxes de roles */
+.role-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    max-height: 300px;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+    background: rgba(0, 26, 51, 0.3);
+    border-radius: 8px;
+}
+
+.role-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background var(--transition-fast);
+}
+
+.role-checkbox-label:hover {
+    background: rgba(0, 102, 204, 0.2);
+}
+
+.role-checkbox {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-color);
 }
 
 /* ====================================
@@ -491,20 +574,34 @@
 
 @media (max-width: 768px) {
     .deck-row {
-        flex-wrap: wrap;
+        grid-template-columns: 60px 1fr;
+        grid-template-areas:
+            "img name"
+            "roles roles"
+            "qty buttons";
+    }
+
+    .deck-img {
+        grid-area: img;
     }
 
     .deck-name {
-        flex-basis: 100%;
-        order: -1;
+        grid-area: name;
+    }
+
+    .deck-roles {
+        grid-area: roles;
+        margin: 4px 0;
     }
 
     .deck-qty {
-        flex: 1;
+        grid-area: qty;
     }
 
-    .deck-move {
-        flex: 1;
+    .deck-buttons {
+        grid-area: buttons;
+        flex-direction: row;
+        justify-self: end;
     }
 
     .deck-actions {
@@ -517,6 +614,10 @@
     }
 
     .deck-list-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .role-checkboxes {
         grid-template-columns: 1fr;
     }
 }
