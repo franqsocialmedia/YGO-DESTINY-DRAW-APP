@@ -677,4 +677,122 @@ PENDIENTE / MEJORAS FUTURAS
 • Persistencia de datos (LocalStorage / Base de Datos).
 • Optimización responsive de la tabla de deck.
 
-==============================================
+
+=======================================================================
+[REGISTRO DE CAMBIOS – ETAPA 2 / MÓDULO “MI DECK” – ACTUALIZACIÓN]
+=======================================================================
+
+Se implementaron mejoras estructurales y funcionales en la pestaña Mi Deck, enfocadas en organización automática de cartas, visualización de listas y nuevas secciones internas del módulo. Los cambios realizados son los siguientes:
+
+• Clasificación Automática de Cartas
+
+Se creó un sistema que identifica cartas de Fusión, Sincronía, Xyz y Link para asignarlas automáticamente al Extra Deck.
+
+Estas cartas ya no se contabilizan dentro del conteo del Main Deck.
+
+• Separación de Decks Internos
+
+El Deck ahora se divide en:
+
+Main Deck
+
+Extra Deck
+
+Side Deck
+
+Cada sección posee su propio conteo independiente.
+
+• Contenedores Desplegables
+
+Se implementaron subtítulos clickeables que permiten mostrar u ocultar:
+
+Main Deck
+
+Extra Deck
+
+Side Deck
+
+Acciones
+
+• Orden Alfabético
+
+Las cartas dentro de cada lista ahora se ordenan alfabéticamente por nombre.
+
+• Panel Flotante para Renombrar Deck
+
+Al hacer clic en el título principal del Deck se despliega un panel flotante.
+
+Incluye:
+
+Campo de texto editable
+
+Botón Cambiar Nombre
+
+Botón Cancelar
+
+Fondo oscuro transparente bloquea interacción externa mientras el panel está activo.
+
+• Mensaje de Estado Vacío
+
+Cuando no existen cartas en ninguna lista se muestra:
+
+“No hay un Deck seleccionado para mostrar.”
+
+• Sección “Acciones”
+Se agregó un contenedor con botones funcionales:
+
+Guardar Deck
+
+Guarda el Deck en almacenamiento local del navegador.
+
+Sustituye versiones anteriores con el mismo nombre.
+
+Limpiar Deck
+
+Borra todas las cartas del Deck actual.
+
+Exportar Deck (.ydk)
+
+Genera archivo compatible con formato YDK.
+
+Respeta Main / Extra / Side.
+
+Lista en .txt
+
+Exporta un archivo de texto simple con estructura:
+
+Nombre del Deck
+
+Separadores por sección
+
+Nombre – Tipo – Cantidad
+
+• Mejora de Visualización de Listas
+
+Corrección del error donde solo aparecían “…”.
+
+Las listas ahora renderizan correctamente todas las cartas.
+
+• Botones de Ubicación
+
+Cartas del Main pueden enviarse al Side.
+
+Cartas del Side pueden volver al Main.
+
+Cartas del Extra permanecen fijas.
+
+• Integración con CardViewer
+
+Al hacer clic en la imagen de una carta dentro del Deck se abre el panel flotante con los datos completos.
+
+• Conteos Dinámicos
+
+Los subtítulos muestran la cantidad de cartas en tiempo real:
+
+Main Deck (x)
+
+Extra Deck (x)
+
+Side Deck (x)
+
+=======================================================================
