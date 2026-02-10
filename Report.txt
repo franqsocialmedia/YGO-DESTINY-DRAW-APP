@@ -1312,3 +1312,100 @@ Cambios en configuración se reflejan instantáneamente en Mi Deck
 
 Estado:
 CONFIGURACIÃ"N BASE COMPLETADA - Sistema modular listo para agregar nuevas secciones de configuración. El formato de exportación/importación es extensible y no causará problemas al agregar futuras funcionalidades.
+
+================================================================
+ETAPA 4: SISTEMA DE PUNTOS Y POWER CREEP - INTERNAL SCORE ✅
+================================================================
+
+Objetivos Completados:
+
+✅ Roles "Brick" y "Bridge" agregados a configuración por defecto
+✅ Módulo de estadísticas creado (stats.js)
+✅ Sistema de Internal Score completamente funcional
+✅ Visualización de estadísticas en Mi Deck
+✅ Power Level y Match-up Score en lista de decks guardados
+✅ Contenedores de lista reducidos en 50% para mejor uso del espacio
+
+Archivos Nuevos Creados:
+
+stats.js - Módulo completo de cálculo de Internal Score
+
+Archivos Actualizados:
+
+configmanager.js - Agregados roles Brick y Bridge
+deck.js - Integrado cálculo y visualización de estadísticas
+style_mideck.css - Estilos para Stats Card y reducción de contenedores
+index.html - Agregado stats.js en orden de dependencias
+
+Sistema de Internal Score:
+Fórmula Implementada:
+Internal Score = (Consistencia × 0.5) + (Potencia × 0.3) + (Resiliencia × 0.2)
+Componentes:
+
+Consistencia (50%) - Umbral: 12 cartas = 10/10
+
+Suma: Starter, Searcher, Draw-Engine
+Resta: Brick (cartas que dificultan el arranque)
+
+
+Potencia (30%) - Umbral: 6 cartas = 10/10
+
+Suma: Boss Monster, Negater, Burner, Booster
+
+
+Resiliencia (20%) - Umbral: 6 cartas = 10/10
+
+Suma: Extender, Recovery, Bridge
+
+
+
+Penalización por Exceso:
+
+Si total de cartas > 45: -0.5 por cada carta adicional
+Justificación: Probabilidad estadística de éxito se diluye
+
+Justificación de Porcentajes:
+
+Consistencia 50%: Es el suelo del mazo - sin acceso a piezas clave, nada más importa
+Potencia 30%: El techo del mazo - lo que finalmente gana el juego
+Resiliencia 20%: El Plan B - valioso pero secundario
+
+Visualización de Estadísticas:
+Stats Card en Mi Deck:
+
+Score total con código de colores (verde/amarillo/rojo)
+Desglose detallado de cada componente (C/P/R)
+Conteo de cartas por categoría
+Advertencia de penalización si excede 45 cartas
+Total de cartas del deck (Main + Extra)
+
+Lista de Decks Guardados:
+
+Power Level: Muestra Internal Score (término competitivo Yu-Gi-Oh)
+Match-up: Muestra External Score (preparado, actualmente 0.0)
+Contenedores reducidos 50% para mejor distribución espacial
+
+Nuevos Roles Agregados:
+
+Brick: Cartas que restan de la consistencia
+Bridge: Cartas que ayudan a la resiliencia
+
+Mejoras Visuales:
+
+Grid de decks: 300px → 150px (50% reducción)
+Padding optimizado para compactar información
+Font sizes ajustados para legibilidad en espacios reducidos
+Scores con colores distintivos (dorado/azul)
+
+Pendiente (No Implementado):
+
+External Score: Sistema de Defensa y Versatilidad
+
+Pendiente según solicitud del usuario
+Estructura preparada en código
+Actualmente muestra 0.0 en interfaz
+
+
+
+Estado:
+INTERNAL SCORE COMPLETADO - Sistema de puntuación interno completamente funcional y visualizado. External Score queda pendiente para próxima implementación. El sistema calcula automáticamente el poder del deck basado en roles asignados y aplica penalizaciones por construcción subóptima.

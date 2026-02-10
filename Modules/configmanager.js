@@ -22,7 +22,9 @@ const ConfigManager = {
             'Backrow-Removal': ['destroy', 'remove'],
             'Banisher': ['remove', 'banish 1', 'banish it'],
             'Disruption': ['quick-effect'],
-            'Boss Monster': []
+            'Boss Monster': [],
+            'Brick': [],
+            'Bridge': []
         }
     },
 

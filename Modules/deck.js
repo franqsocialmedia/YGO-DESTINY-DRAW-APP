@@ -505,6 +505,30 @@ const Deck = {
                 .filter(c => c.location === 'side')
                 .reduce((s, c) => s + c.qty, 0);
 
+            // Calcular Internal Score para tier
+            let tierLabel = 'Rogue';
+            let tierClass = 'tier-rogue';
+            let internalScore = 0;
+            
+            if (typeof Stats !== 'undefined') {
+                const stats = Stats.calculateInternalScore(deck.cards);
+                internalScore = parseFloat(stats.internalScore);
+                
+                // Determinar tier según Internal Score
+                if (internalScore >= 7.5) {
+                    tierLabel = 'Tier 1';
+                    tierClass = 'tier-1';
+                } else if (internalScore >= 6) {
+                    tierLabel = 'Tier 2';
+                    tierClass = 'tier-2';
+                } else if (internalScore >= 4) {
+                    tierLabel = 'Tier 3';
+                    tierClass = 'tier-3';
+                }
+            }
+
+            const externalScore = 0; // Por ahora en 0, se calculará después
+
             html += `
                 <div class="deck-list-item">
                     <button class="deck-delete-btn" onclick="Deck.openDeleteDeckPanel('${deck.name}')" title="Eliminar deck">
@@ -516,10 +540,20 @@ const Deck = {
                     <div class="deck-info">
                         <h4 class="deck-item-name">${deck.name}</h4>
                         <p class="deck-counts">
-                            <span class="deck-count-main">Main: ${mainCount}</span> | 
-                            <span class="deck-count-extra">Extra: ${extraCount}</span> | 
-                            <span class="deck-count-side">Side: ${sideCount}</span>
+                            <span class="deck-count-main">M: ${mainCount}</span> | 
+                            <span class="deck-count-extra">E: ${extraCount}</span> | 
+                            <span class="deck-count-side">S: ${sideCount}</span>
                         </p>
+                        <div class="deck-scores">
+                            <div class="deck-score-row">
+                                <span class="deck-score-label">Power Level:</span>
+                                <span class="deck-score-value deck-score-internal">${internalScore.toFixed(1)}</span>
+                            </div>
+                            <div class="deck-score-row">
+                                <span class="deck-score-label">Match-up:</span>
+                                <span class="deck-score-value deck-score-external">${externalScore.toFixed(1)}</span>
+                            </div>
+                        </div>
                     </div>
                     <button class="btn btn-primary deck-load-btn" onclick="Deck.openLoadDeckPanel('${deck.name}')">
                         Ver Deck

@@ -426,20 +426,20 @@
 
 .deck-list-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: var(--spacing-md);
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--spacing-sm);
 }
 
 .deck-list-item {
     background: var(--bg-card);
-    border-radius: 12px;
-    padding: var(--spacing-md);
+    border-radius: 8px;
+    padding: var(--spacing-sm);
     border: 2px solid var(--border-color);
     position: relative;
     transition: all var(--transition-normal);
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm);
+    gap: 6px;
 }
 
 .deck-list-item:hover {
@@ -451,16 +451,16 @@
 /* Botón eliminar */
 .deck-delete-btn {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 6px;
+    right: 6px;
     background: var(--danger-color);
     color: white;
     border: none;
     border-radius: 50%;
-    width: 30px;
-    height: 30px;
+    width: 22px;
+    height: 22px;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 0.8rem;
     font-weight: bold;
     transition: all var(--transition-fast);
     z-index: 10;
@@ -499,14 +499,14 @@
 
 .deck-item-name {
     color: var(--gold-color);
-    font-size: 1.1rem;
-    margin-bottom: var(--spacing-xs);
+    font-size: 0.85rem;
+    margin-bottom: 4px;
     font-weight: bold;
 }
 
 .deck-counts {
     color: var(--text-light);
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     margin: 0;
 }
 
@@ -519,6 +519,38 @@
 }
 
 .deck-count-side {
+    color: #87CEEB;
+}
+
+/* Scores del deck en lista */
+.deck-scores {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(0, 102, 204, 0.3);
+}
+
+.deck-score-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+}
+
+.deck-score-label {
+    color: rgba(241, 241, 241, 0.7);
+}
+
+.deck-score-value {
+    font-weight: bold;
+}
+
+.deck-score-internal {
+    color: var(--gold-color);
+}
+
+.deck-score-external {
     color: #87CEEB;
 }
 
@@ -551,6 +583,93 @@
     background: var(--accent-hover);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 102, 204, 0.4);
+}
+
+/* ====================================
+   STATS CARD - INTERNAL SCORE
+   ==================================== */
+
+.stats-card {
+    background: linear-gradient(135deg, rgba(0, 51, 102, 0.6), rgba(0, 43, 77, 0.8));
+    border: 2px solid var(--gold-color);
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.stats-header h3 {
+    color: var(--gold-color);
+    font-size: 1.3rem;
+    margin: 0;
+}
+
+.stats-score {
+    font-size: 2rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.stats-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-xs);
+    background: rgba(0, 26, 51, 0.4);
+    border-radius: 6px;
+}
+
+.stat-label {
+    color: var(--text-light);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.stat-value {
+    color: var(--gold-color);
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.stat-count {
+    color: rgba(241, 241, 241, 0.6);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.stats-footer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid rgba(0, 102, 204, 0.3);
+}
+
+.stat-info {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.stat-penalty {
+    color: var(--warning-color);
+    font-weight: 600;
+    font-size: 0.9rem;
 }
 
 /* ====================================
