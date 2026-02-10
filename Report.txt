@@ -1409,3 +1409,74 @@ Actualmente muestra 0.0 en interfaz
 
 Estado:
 INTERNAL SCORE COMPLETADO - Sistema de puntuación interno completamente funcional y visualizado. External Score queda pendiente para próxima implementación. El sistema calcula automáticamente el poder del deck basado en roles asignados y aplica penalizaciones por construcción subóptima.
+
+====================================================================================
+ETAPA 2.5: INFRAESTRUCTURA DE ESTADÍSTICAS Y GESTIÓN DE META
+====================================================================================
+
+Fecha: 10/02/2026
+
+Versión: 2.1.0
+
+Estado: EN DESARROLLO (Arquitectura Base Completada)
+
+1. ARQUITECTURA DEL MÓDULO DE ESTADÍSTICAS (estadisticas.js)
+Se ha implementado el módulo Estadisticas bajo un patrón de objeto literal (Singleton), centralizando la lógica de análisis comparativo entre el deck del usuario y el "Meta".
+
+
+Persistencia Local (LocalStorage): * El sistema utiliza la clave yugioh_meta_decks para almacenar toda la estructura de carpetas y decks sin necesidad de base de datos externa.
+
+
+Por qué: Permite que el usuario mantenga su base de datos de consulta de forma privada y ultrarrápida.
+
+Sistema de Carpetas Cronológicas:
+
+Los decks se organizan en "Folders" (ej: "Febrero 2026").
+
+Incluye lógica de ordenamiento por fecha (getMonthNumber) para que las carpetas más recientes aparezcan siempre primero.
+
+2. MOTOR DE PROCESAMIENTO Y PARSING (YDK)
+A diferencia del buscador que usa API, el módulo de estadísticas procesa archivos locales:
+
+
+Parser de Archivos .ydk: Implementa parseYDK que limpia y extrae IDs de cartas directamente de archivos de texto del juego.
+
+
+Identificación Automática de Miniaturas: * Función getMostFrequentCardId: Analiza el deck importado y determina cuál es la carta más repetida.
+
+
+Cómo funciona: Este ID se usa para consultar automáticamente la imagen en los servidores de YGOPRODeck, asignando un arte representativo al deck de forma dinámica.
+
+3. COMPONENTES DE INTERFAZ AVANZADOS (UI/UX)
+Se han añadido elementos visuales críticos detallados en style_estadisticas.css:
+
+
+Deck Floating Widget: * Un componente flotante que permite al usuario previsualizar el deck activo mientras navega por las estadísticas.
+
+Posee estados activos (.widget-deck-item.active) y transiciones de opacidad para no obstruir la vista principal.
+
+Visualización de Scores Mediante Barras:
+
+Se implementó un sistema de barras de progreso dinámicas (.stat-bar) con transiciones CSS para representar la Consistencia, Potencia y Resiliencia.
+
+Utiliza colores variables (Dorado/Azul) para indicar la calidad del deck respecto al estándar de competición.
+
+4. MEJORAS DE NAVEGACIÓN Y FEEDBACK
+
+Fallback de Imágenes: Se implementó lógica de onerror en los thumbnails de los decks para mostrar una imagen por defecto (placeholder) si la API falla o la carta no existe, evitando "broken images" en la interfaz.
+
+
+Animaciones de Entrada: El contenido de estadísticas carga con una animación fadeIn de 0.4s para suavizar la transición entre módulos.
+
+
+Filtrado Dinámico: El usuario puede filtrar la vista de decks por carpeta sin recargar la página (setFolderFilter), optimizando la gestión de grandes volúmenes de datos.
+
+RAZÓN DE ESTOS CAMBIOS:
+Proporcionar una herramienta que no solo diga "qué hace tu deck", sino que permita compararlo contra referencias reales del juego (archivos .ydk) de forma visual y organizada, manteniendo la filosofía de cero dependencia de servidores.
+
+NOTAS TÉCNICAS ADICIONALES PARA PROGRAMADORES:
+
+Importación Masiva: El método importYDK soporta la selección múltiple de archivos mediante input.multiple = true, procesándolos de forma asíncrona con Promise.all para no bloquear el hilo principal de la UI.
+
+
+Manejo de Errores de Formato: El sistema valida el nombre de las carpetas mediante Regex (/^[A-Za-z]+ \d{4}$/) para asegurar la consistencia de los datos en el localStorage.

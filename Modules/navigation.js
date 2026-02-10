@@ -112,6 +112,12 @@ const Navigation = {
         this.currentTab = tabName;
         
         SafeLogger.info('Navigation', `Navegación completada: ${previousTab} → ${tabName}`);
+
+        // 🔽 NUEVO: NOTIFICAR A ESTADÍSTICAS PARA MOSTRAR / OCULTAR WIDGET
+        if (window.Estadisticas && typeof Estadisticas.updateFloatingWidgetVisibility === 'function') {
+            Estadisticas.updateFloatingWidgetVisibility(tabName);
+        }
+
         SafeLogger.functionEnd('Navigation', 'showTab', { success: true, currentTab: tabName });
 
         // PASO 6: Hacer scroll al inicio del contenido (smooth)
