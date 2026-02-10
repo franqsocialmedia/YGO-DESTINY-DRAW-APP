@@ -348,6 +348,39 @@ const Estadisticas = {
         document.body.appendChild(widget);
         this.updateFloatingWidget();
     },
+    openDeckFromWidget(deckId) {
+    const metaDecks = JSON.parse(localStorage.getItem('yugioh_meta_decks')) || {};
+    
+    let selectedDeck = null;
+
+    Object.values(metaDecks).forEach(folder => {
+        folder.decks.forEach(deck => {
+            if (deck.id === deckId) {
+                selectedDeck = deck;
+            }
+        });
+    });
+
+    if (!selectedDeck) {
+        alert('No se pudo cargar el deck');
+        return;
+    }
+
+    // Sustituye el deck activo
+    Deck.cards = JSON.parse(JSON.stringify(selectedDeck.cards));
+    Deck.name = selectedDeck.name;
+
+    Deck.render();
+
+    // Feedback visual
+    document
+        .querySelectorAll('.widget-deck-item')
+        .forEach(el => el.classList.remove('active'));
+
+    const activeItem = document.querySelector(`[data-deck-id="${deckId}"]`);
+    if (activeItem) activeItem.classList.add('active');
+},
+
 
     updateFloatingWidget: function () {
         const widget = document.getElementById('deck-floating-widget');
@@ -439,6 +472,32 @@ const Estadisticas = {
             this.updateFloatingWidget();
         }, 100);
     },
+    initFloatingDeckWidgetEvents() {
+    const widget = document.querySelector('.deck-floating-widget');
+    if (!widget) return;
+
+    widget.addEventListener('click', (e) => {
+
+        // Botón eliminar (X) → no abrir deck
+        if (e.target.classList.contains('meta-deck-delete')) {
+            e.stopPropagation();
+            return;
+        }
+
+        // Buscar el item del deck clickeado
+        const deckItem = e.target.closest('.widget-deck-item, .meta-deck-item');
+        if (!deckItem) return;
+
+        const deckId = deckItem.dataset.deckId;
+        if (!deckId) {
+            console.warn('[Stats] Deck sin dataset.deckId');
+            return;
+        }
+
+        // 👉 ACCIÓN REAL: abrir / sustituir deck
+        Estadisticas.openDeckFromWidget(deckId);
+    });
+},
 
     render: function () {
         if (!this.container) return;

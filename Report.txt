@@ -1480,3 +1480,130 @@ Importación Masiva: El método importYDK soporta la selección múltiple de arc
 
 
 Manejo de Errores de Formato: El sistema valida el nombre de las carpetas mediante Regex (/^[A-Za-z]+ \d{4}$/) para asegurar la consistencia de los datos en el localStorage.
+
+==========================================================================
+
+# REPORTE DE CAMBIOS
+
+**Módulo:** Estadísticas – Deck Floating Widget
+**Fecha:** 2026-02-10
+**Estado:** ✅ Resuelto / Funcional
+
+---
+
+## 1. PROBLEMA IDENTIFICADO
+
+Al hacer click sobre un deck dentro de la **lista flotante (Deck Floating Widget)**, no se ejecutaba ninguna acción.
+
+### Síntomas observados
+
+* El widget se renderiza correctamente
+* Los decks aparecen listados
+* El cursor responde visualmente al hover
+* El click **no abre ni sustituye el deck**
+* No se producen errores visibles en consola
+
+---
+
+## 2. CAUSA RAÍZ
+
+Los elementos `.widget-deck-item / .meta-deck-item` del widget:
+
+* Son creados dinámicamente mediante `innerHTML`
+* No poseen eventos `click` activos después del render
+* No existe **delegación de eventos** en el contenedor padre
+
+Cada re-render del widget elimina cualquier listener previamente asociado a los items.
+
+---
+
+## 3. DECISIÓN TÉCNICA
+
+Se descartó:
+
+* Uso de `onclick` inline
+* Re-asignación de eventos por item tras cada render
+
+Se adoptó:
+
+* **Delegación de eventos** desde el contenedor del widget
+
+Esta solución:
+
+* Es persistente
+* No depende del ciclo de render
+* Escala correctamente con filtros, carpetas y futuros cambios
+
+---
+
+## 4. CAMBIOS IMPLEMENTADOS
+
+### 4.1 Nuevo Listener Global del Widget
+
+Se añadió un único listener `click` al contenedor `.deck-floating-widget`.
+
+#### Función añadida
+
+```js
+Estadisticas.initFloatingDeckWidgetEvents()
+```
+
+Responsabilidades:
+
+* Detectar clicks en cualquier deck renderizado
+* Ignorar clicks en botones secundarios (eliminar)
+* Extraer `data-deck-id`
+* Delegar la acción de carga del deck
+
+---
+
+### 4.2 Lógica de Apertura / Sustitución de Deck
+
+Se añadió / reemplazó la función responsable de cargar el deck desde el widget.
+
+#### Función utilizada
+
+```js
+Estadisticas.openDeckFromWidget(deckId)
+```
+
+Responsabilidades:
+
+* Buscar el deck seleccionado en `localStorage`
+* Sustituir el deck activo (`Deck.cards`)
+* Actualizar el nombre del deck (`Deck.name`)
+* Renderizar el nuevo estado
+* Marcar visualmente el deck activo
+
+---
+
+## 5. INTEGRACIÓN EN EL CICLO DE VIDA
+
+La inicialización del listener se ejecuta:
+
+* Una sola vez
+* Después del render del widget
+* Preferentemente desde `init()` o al final de `renderFloatingWidget()`
+
+```js
+Estadisticas.initFloatingDeckWidgetEvents();
+```
+
+Esto garantiza que:
+
+* El listener no se duplique
+* No se pierda tras futuros renders
+
+---
+
+## 6. RESULTADO FINAL
+
+### Estado actual
+
+* X Click aun sin funcionar en todos los decks del widget
+* X Sustitución correcta del deck activo
+* ✅ Sin conflictos con botones secundarios
+* ✅ Sin dependencias frágiles de render
+* ✅ Compatible con futuras extensiones
+
+---
