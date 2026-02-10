@@ -36,6 +36,16 @@ const Config = {
                 </div>
             </div>
 
+            <!-- Sección: Especialidades (NUEVO - Paso 1) -->
+            <div class="config-section">
+                <h3 class="config-section-title" onclick="Config.toggleSection('specialties-section')">
+                    Especialidades y Counters
+                </h3>
+                <div id="specialties-section" class="config-section-content" style="display: none;">
+                    ${this.renderSpecialtiesSection()}
+                </div>
+            </div>
+
             <!-- Botones de acción -->
             <div class="config-actions">
                 <button class="btn btn-primary" onclick="Config.exportConfig()">
@@ -142,6 +152,112 @@ const Config = {
                 </div>
             </div>
         `;
+    },
+
+    // ===============================
+    // SECCIÓN DE ESPECIALIDADES (PASO 1)
+    // ===============================
+    renderSpecialtiesSection: function () {
+        const specialties = ConfigManager.getSpecialties();
+        let html = '';
+
+        // Botón para crear nueva especialidad
+        html += `
+            <div class="config-new-role">
+                <input 
+                    type="text" 
+                    id="new-specialty-input" 
+                    class="config-input" 
+                    placeholder="Keyword de especialidad (ej: return, negate)..."
+                >
+                <button class="btn btn-primary" onclick="Config.createNewSpecialty()">
+                    + Crear Especialidad
+                </button>
+            </div>
+        `;
+
+        // Lista de especialidades existentes
+        html += '<div class="roles-list">';
+
+        for (const [keyword, data] of Object.entries(specialties)) {
+            html += this.renderSpecialtyCard(keyword, data);
+        }
+
+        html += '</div>';
+
+        return html;
+    },
+
+    renderSpecialtyCard: function (keyword, data) {
+        return `
+            <div class="role-card" data-specialty="${keyword}">
+                <div class="role-card-header">
+                    <input 
+                        type="text" 
+                        class="role-name-input" 
+                        value="${keyword}"
+                        data-original="${keyword}"
+                        onblur="Config.renameSpecialtyKeyword(this)"
+                        onkeydown="if(event.key === 'Enter') this.blur()"
+                        placeholder="Keyword"
+                    >
+                    <button class="btn-delete-role" onclick="Config.deleteSpecialty('${keyword}')" title="Eliminar especialidad">
+                        🗑️
+                    </button>
+                </div>
+                
+                <div class="role-card-body">
+                    <label class="config-label">Nombre a nivel carta:</label>
+                    <input 
+                        type="text" 
+                        class="specialty-field-input" 
+                        value="${data.cardLevel || ''}"
+                        data-keyword="${keyword}"
+                        data-field="cardLevel"
+                        onchange="Config.updateSpecialtyField(this)"
+                        placeholder="Ej: Recycle"
+                    >
+                    
+                    <label class="config-label">Nombre a nivel deck:</label>
+                    <input 
+                        type="text" 
+                        class="specialty-field-input" 
+                        value="${data.deckLevel || ''}"
+                        data-keyword="${keyword}"
+                        data-field="deckLevel"
+                        onchange="Config.updateSpecialtyField(this)"
+                        placeholder="Ej: Bounce"
+                    >
+                    
+                    <label class="config-label">Rol vinculado (opcional):</label>
+                    <select 
+                        class="specialty-field-input" 
+                        data-keyword="${keyword}"
+                        data-field="linkedRole"
+                        onchange="Config.updateSpecialtyField(this)"
+                    >
+                        <option value="">-- Sin vincular --</option>
+                        ${this.renderRoleOptions(data.linkedRole)}
+                    </select>
+                    
+                    <label class="config-label">
+                        <small style="color: rgba(241, 241, 241, 0.6);">
+                            Counters y CounteredBy se manejan automáticamente
+                        </small>
+                    </label>
+                </div>
+            </div>
+        `;
+    },
+
+    renderRoleOptions: function (selectedRole) {
+        const roles = ConfigManager.getRoleNames();
+        let html = '';
+        roles.forEach(role => {
+            const selected = role === selectedRole ? 'selected' : '';
+            html += `<option value="${role}" ${selected}>${role}</option>`;
+        });
+        return html;
     },
 
     // ===============================
@@ -270,6 +386,85 @@ const Config = {
         } catch (error) {
             alert('❌ Error al importar: ' + error);
             inputElement.value = '';
+        }
+    },
+
+    // ===============================
+    // ACCIONES DE ESPECIALIDADES (PASO 1)
+    // ===============================
+    createNewSpecialty: function () {
+        const input = document.getElementById('new-specialty-input');
+        const keyword = input.value.trim().toLowerCase();
+
+        if (!keyword) {
+            alert('⚠️ Escribe un keyword para la especialidad');
+            return;
+        }
+
+        const data = {
+            cardLevel: keyword,
+            deckLevel: keyword,
+            linkedRole: '',
+            counters: [],
+            counteredBy: []
+        };
+
+        if (ConfigManager.createSpecialty(keyword, data)) {
+            input.value = '';
+            this.render();
+            alert('✅ Especialidad creada exitosamente');
+        } else {
+            alert('❌ No se pudo crear la especialidad (puede que ya exista)');
+        }
+    },
+
+    renameSpecialtyKeyword: function (inputElement) {
+        const oldKeyword = inputElement.dataset.original;
+        const newKeyword = inputElement.value.trim().toLowerCase();
+
+        if (newKeyword === oldKeyword) return;
+
+        if (!newKeyword) {
+            alert('⚠️ El keyword no puede estar vacío');
+            inputElement.value = oldKeyword;
+            return;
+        }
+
+        if (ConfigManager.renameSpecialtyKeyword(oldKeyword, newKeyword)) {
+            this.render();
+            alert('✅ Keyword renombrado exitosamente');
+        } else {
+            alert('❌ No se pudo renombrar el keyword (puede que el nuevo ya exista)');
+            inputElement.value = oldKeyword;
+        }
+    },
+
+    deleteSpecialty: function (keyword) {
+        if (!confirm(`¿Eliminar la especialidad "${keyword}"?`)) return;
+
+        if (ConfigManager.deleteSpecialty(keyword)) {
+            this.render();
+            alert('✅ Especialidad eliminada exitosamente');
+        } else {
+            alert('❌ No se pudo eliminar la especialidad');
+        }
+    },
+
+    updateSpecialtyField: function (inputElement) {
+        const keyword = inputElement.dataset.keyword;
+        const field = inputElement.dataset.field;
+        const value = inputElement.value.trim();
+
+        const specialty = ConfigManager.getSpecialty(keyword);
+        if (!specialty) return;
+
+        specialty[field] = value;
+
+        if (ConfigManager.updateSpecialty(keyword, specialty)) {
+            // No re-renderizar para mejor UX
+            console.log(`Especialidad ${keyword} actualizada: ${field} = ${value}`);
+        } else {
+            alert('❌ No se pudo actualizar la especialidad');
         }
     },
 

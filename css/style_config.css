@@ -346,6 +346,33 @@
 }
 
 /* ====================================
+   CAMPOS DE ESPECIALIDADES (PASO 1)
+   ==================================== */
+
+.specialty-field-input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    background: rgba(0, 26, 51, 0.6);
+    color: var(--text-light);
+    transition: all var(--transition-normal);
+    outline: none;
+    margin-bottom: var(--spacing-sm);
+}
+
+.specialty-field-input:focus {
+    border-color: var(--gold-color);
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
+}
+
+.specialty-field-input option {
+    background: var(--bg-card);
+    color: var(--text-light);
+}
+
+/* ====================================
    RESPONSIVE
    ==================================== */
 

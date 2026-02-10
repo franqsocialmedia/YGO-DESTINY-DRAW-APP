@@ -1,0 +1,457 @@
+================================================================================
+PASO 1 - SISTEMA DE ESPECIALIDADES Y COUNTERS
+Destiny Draw - Yu-Gi-Oh! App
+Fecha: 10/02/2026
+Estado: ✅ COMPLETADO
+================================================================================
+
+RESUMEN EJECUTIVO
+--------------------------------------------------------------------------------
+Se ha implementado exitosamente la infraestructura base para el sistema de
+Roles, Especialidades y Counters. Este sistema permite:
+
+1. Detectar especialidades automáticamente en las cartas
+2. Analizar especialización del deck completo
+3. Sistema de counters entre cartas (preparado para Paso 6-7)
+4. Gestión visual de especialidades en Configuración
+5. Estructura escalable para futuros pasos
+
+================================================================================
+ARQUITECTURA IMPLEMENTADA
+================================================================================
+
+1. ESTRUCTURA DE DATOS
+--------------------------------------------------------------------------------
+
+ConfigManager.defaultConfig ahora incluye:
+
+a) ROLES (Ya existente - Mantenido)
+   - 16 roles predefinidos
+   - Palabras clave asociadas
+
+b) SPECIALTIES (NUEVO - Paso 1)
+   Estructura:
+   {
+     "keyword": {
+       cardLevel: "Nombre a nivel carta",
+       deckLevel: "Nombre a nivel deck", 
+       linkedRole: "Rol asociado (opcional)",
+       counters: ["especialidades que contrarresta"],
+       counteredBy: ["especialidades que lo contrarestan"]
+     }
+   }
+
+   Especialidades predefinidas:
+   - return → Recycle / Bounce
+   - negate → Negation / Control
+   - destroy → Removal / Destruction
+   - banish → Banish / Exile
+   - search → Search / Consistency
+   - draw → Draw / Card Advantage
+
+c) ROLE_CONDITIONS (NUEVO - Preparado para Paso 3)
+   Sistema de roles compuestos con condicionales
+   Estructura:
+   {
+     "NombreRol": {
+       conditionals: ["palabras que deben estar"],
+       keywords: ["al menos una de estas"]
+     }
+   }
+
+================================================================================
+ARCHIVOS CREADOS/MODIFICADOS
+================================================================================
+
+1. SPECIALTY-ANALYZER.JS (NUEVO)
+--------------------------------------------------------------------------------
+Módulo completo de análisis de especialidades
+
+FUNCIONES PRINCIPALES:
+
+analyzeCard(card)
+- Analiza una carta individual
+- Busca keywords de especialidades en la descripción
+- Retorna array de especialidades detectadas
+- Incluye datos de counters
+
+analyzeDeck(cards)
+- Analiza el deck completo
+- Cuenta especialidades por tipo
+- Retorna especialización del deck
+- Estructura:
+  {
+    specializations: {
+      "NombreEspecialización": {
+        deckLevel: "Nombre",
+        cardCount: 5,
+        counters: [...],
+        counteredBy: [...],
+        linkedKeywords: [...]
+      }
+    },
+    rawCount: { ... }
+  }
+
+getPrimarySpecialization(deckAnalysis)
+- Determina la especialización principal del deck
+- Basado en la mayor cantidad de cartas
+- Retorna nombre, count, counters y counteredBy
+
+calculateCardVsCard(card1, card2) [Preparado para Paso 6]
+- Calcula counter score entre dos cartas
+- Verifica si card1 contrarresta a card2
+- Retorna score numérico
+
+calculateDeckVsDeck(deck1, deck2) [Preparado para Paso 7]
+- Calcula counter score entre dos decks
+- Retorna: counterScore, interactions, avgCounter
+- Base para External Score
+
+renderDeckSpecializations(deckAnalysis)
+- Genera HTML para mostrar especialidades
+- Ordenado por cantidad de cartas
+- Listo para integración UI
+
+2. CONFIGMANAGER.JS (MODIFICADO)
+--------------------------------------------------------------------------------
+NUEVAS FUNCIONES:
+
+getSpecialties()
+- Retorna todas las especialidades configuradas
+
+getSpecialtyNames()
+- Retorna array de keywords de especialidades
+
+getSpecialty(keyword)
+- Retorna especialidad específica
+
+createSpecialty(keyword, data)
+- Crea nueva especialidad
+- Valida que no exista duplicado
+
+updateSpecialty(keyword, data)
+- Actualiza datos de especialidad existente
+
+deleteSpecialty(keyword)
+- Elimina especialidad
+
+renameSpecialtyKeyword(oldKeyword, newKeyword)
+- Renombra keyword de especialidad
+
+3. DECK.JS (MODIFICADO)
+--------------------------------------------------------------------------------
+CAMBIOS EN syncFromViewer():
+
+Al agregar carta al deck:
+- Ahora detecta especialidades automáticamente
+- Llama a SpecialtyAnalyzer.analyzeCard(card)
+- Almacena specialties en la carta:
+  {
+    data: {...},
+    qty: 1,
+    location: 'main',
+    roles: [...],
+    specialties: [...]  // NUEVO
+  }
+
+4. CONFIG.JS (MODIFICADO)
+--------------------------------------------------------------------------------
+NUEVA SECCIÓN: "Especialidades y Counters"
+
+FUNCIONES AGREGADAS:
+
+renderSpecialtiesSection()
+- Renderiza sección completa de especialidades
+- Botón crear nueva especialidad
+- Lista de especialidades existentes
+
+renderSpecialtyCard(keyword, data)
+- Tarjeta individual de especialidad
+- Campos editables:
+  • Keyword (renombrable)
+  • Nombre a nivel carta
+  • Nombre a nivel deck
+  • Rol vinculado (dropdown)
+  • Nota sobre counters automáticos
+
+renderRoleOptions(selectedRole)
+- Genera opciones de roles para dropdown
+
+createNewSpecialty()
+- Crea especialidad desde UI
+- Valores por defecto
+
+renameSpecialtyKeyword(inputElement)
+- Renombra keyword con validación
+
+deleteSpecialty(keyword)
+- Elimina con confirmación
+
+updateSpecialtyField(inputElement)
+- Actualiza campo individual
+- Sin re-render para mejor UX
+
+5. STYLE_CONFIG.CSS (MODIFICADO)
+--------------------------------------------------------------------------------
+NUEVOS ESTILOS:
+
+.specialty-field-input
+- Inputs y selects para campos de especialidad
+- Estilo consistente con el resto de la UI
+- Focus states
+- Responsive
+
+6. INDEX.HTML (MODIFICADO)
+--------------------------------------------------------------------------------
+ORDEN DE CARGA ACTUALIZADO:
+
+1. logger.js
+2. navigation.js
+3. parallax.js
+4. utils.js
+5. cardviewer.js
+6. buscador.js
+7. configmanager.js
+8. specialty-analyzer.js ← NUEVO
+9. stats.js
+10. deck.js
+11. estadisticas.js
+12. config.js
+
+================================================================================
+FUNCIONAMIENTO DEL SISTEMA
+================================================================================
+
+FLUJO DE TRABAJO:
+
+1. USUARIO AGREGA CARTA AL DECK
+   ↓
+2. deck.js → syncFromViewer()
+   ↓
+3. SpecialtyAnalyzer.analyzeCard(card)
+   - Busca keywords en descripción
+   - Retorna especialidades detectadas
+   ↓
+4. Carta almacenada con specialties:
+   {
+     data: {...},
+     qty: 1,
+     roles: [...],
+     specialties: [
+       {
+         keyword: "return",
+         cardLevel: "Recycle",
+         deckLevel: "Bounce",
+         counters: [...],
+         counteredBy: [...]
+       }
+     ]
+   }
+   ↓
+5. ANÁLISIS DE DECK (futuro)
+   - SpecialtyAnalyzer.analyzeDeck(Deck.cards)
+   - Determina especialización principal
+   - Calcula counters vs otros decks
+
+EJEMPLO PRÁCTICO:
+
+Carta: "Harpie's Feather Duster"
+Descripción: "Destroy all Spell and Trap Cards..."
+
+Análisis:
+→ keyword "destroy" detectado
+→ Especialidad asignada:
+  {
+    keyword: "destroy",
+    cardLevel: "Removal",
+    deckLevel: "Destruction",
+    linkedRole: "Boardbreaker",
+    counters: ["monster-effect", "backrow"],
+    counteredBy: ["destruction-protection"]
+  }
+
+Deck con 8 cartas "Removal":
+→ Especialización del deck: "Destruction"
+→ Counter potencial contra decks con backrow pesado
+
+================================================================================
+DATOS INTERNOS VS PÚBLICOS
+================================================================================
+
+PÚBLICOS (Visibles en UI):
+- Roles (badges en cartas)
+
+INTERNOS (No mostrados directamente):
+- Specialties de cada carta
+- Especialización del deck
+- Counter scores
+- Análisis comparativo
+
+RAZÓN:
+Evitar saturar la interfaz. Los datos internos se usarán para:
+- Cálculos de scores
+- Análisis del deck (Paso 8)
+- Recomendaciones automáticas
+- Sistema de counters (Paso 6-7)
+
+================================================================================
+CONFIGURACIÓN DESDE UI
+================================================================================
+
+USUARIO PUEDE:
+
+1. Crear nuevas especialidades
+   - Definir keyword
+   - Nombre a nivel carta
+   - Nombre a nivel deck
+   - Vincular a rol existente
+
+2. Editar especialidades
+   - Cambiar nombres
+   - Modificar vinculación
+   - Renombrar keywords
+
+3. Eliminar especialidades
+   - Con confirmación
+
+4. Exportar/Importar
+   - Incluye especialidades en backup
+   - Formato JSON extendido
+
+EJEMPLO DE USO:
+
+Usuario quiere agregar "shuffle":
+1. Va a Config → Especialidades y Counters
+2. Escribe "shuffle" en input
+3. Click "Crear Especialidad"
+4. Edita campos:
+   - Carta: "Shuffle"
+   - Deck: "Deck Manipulation"
+   - Rol: (ninguno)
+5. Guardar
+
+Ahora todas las cartas con "shuffle" en descripción
+tendrán esta especialidad detectada automáticamente.
+
+================================================================================
+PREPARACIÓN PARA PASOS FUTUROS
+================================================================================
+
+PASO 2: LISTA DE STAPLES
+- Sistema ya soporta specialties
+- Staples tendrán misma estructura
+- Solo falta UI y gestión específica
+
+PASO 3: ROLES COMPUESTOS
+- roleConditions ya está en estructura
+- Solo falta implementar lógica de validación
+- autoAssignRoles() será modificado
+
+PASO 6: PUNTOS DE PODER POR CARTA
+- calculateCardVsCard() ya implementado
+- Estructura de counters lista
+- Solo falta fórmula de scoring
+
+PASO 7: COUNTER-CARDS Y COUNTER-DECKS
+- calculateDeckVsDeck() ya implementado
+- Sistema escalable
+- Listo para integración con Meta
+
+PASO 8: ANÁLISIS DEL DECK
+- analyzeDeck() proporciona datos base
+- getPrimarySpecialization() identifica fortalezas
+- Counters detectan debilidades
+
+================================================================================
+TESTING Y VALIDACIÓN
+================================================================================
+
+PARA PROBAR EL SISTEMA:
+
+1. Agregar carta con keyword conocido
+   Ejemplo: "Monster Reborn" (tiene "special summon")
+   Verificar: carta.specialties debe contener datos
+
+2. Configuración
+   - Ir a Config → Especialidades y Counters
+   - Crear especialidad de prueba
+   - Verificar que se guarda en localStorage
+
+3. Análisis de Deck
+   En consola:
+   ```javascript
+   const analysis = SpecialtyAnalyzer.analyzeDeck(Deck.cards);
+   console.log(analysis);
+   ```
+
+4. Exportar Configuración
+   - Verificar que incluye specialties
+   - Importar en sesión nueva
+   - Confirmar persistencia
+
+================================================================================
+ESTRUCTURA DE DATOS EN LOCALSTORAGE
+================================================================================
+
+yugioh_config:
+{
+  "roles": { ... },
+  "specialties": {
+    "return": {
+      "cardLevel": "Recycle",
+      "deckLevel": "Bounce",
+      "linkedRole": "Recovery",
+      "counters": ["spell-negate"],
+      "counteredBy": ["anti-spell"]
+    },
+    ...
+  },
+  "roleConditions": { ... }
+}
+
+yugioh_deck:
+{
+  "12345678": {
+    "data": { ... },
+    "qty": 2,
+    "location": "main",
+    "roles": ["Searcher"],
+    "specialties": [
+      {
+        "keyword": "search",
+        "cardLevel": "Search",
+        "deckLevel": "Consistency",
+        "linkedRole": "Searcher",
+        "counters": [],
+        "counteredBy": ["search-lock"]
+      }
+    ]
+  }
+}
+
+================================================================================
+CONCLUSIÓN
+================================================================================
+
+PASO 1 COMPLETADO EXITOSAMENTE ✅
+
+IMPLEMENTADO:
+✅ Sistema de Especialidades completo
+✅ Detección automática en cartas
+✅ Análisis de especialización de deck
+✅ UI para gestión en Configuración
+✅ Sistema de counters (base para Paso 6-7)
+✅ Estructura escalable para todos los pasos
+
+LISTO PARA:
+→ Paso 2: Lista de Staples
+→ Paso 3: Roles Compuestos con Condicionales
+→ Paso 6: Sistema de Puntos de Poder
+→ Paso 7: Counter-Cards y Counter-Decks
+→ Paso 8: Análisis Completo del Deck
+
+PRÓXIMO PASO:
+Implementar Paso 2 - Lista de Staples
+
+================================================================================

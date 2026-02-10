@@ -25,6 +25,65 @@ const ConfigManager = {
             'Boss Monster': [],
             'Brick': [],
             'Bridge': []
+        },
+        
+        // NUEVO: Sistema de Especialidades (Paso 1)
+        // Estructura: keyword -> { cardLevel, deckLevel, linkedRole, counters, counteredBy }
+        specialties: {
+            "return": {
+                cardLevel: "Recycle",
+                deckLevel: "Bounce",
+                linkedRole: "Recovery",
+                counters: ["spell-negate"],
+                counteredBy: ["anti-spell"]
+            },
+            "negate": {
+                cardLevel: "Negation",
+                deckLevel: "Control",
+                linkedRole: "Negater",
+                counters: ["effect-activation"],
+                counteredBy: ["spell-negate"]
+            },
+            "destroy": {
+                cardLevel: "Removal",
+                deckLevel: "Destruction",
+                linkedRole: "Boardbreaker",
+                counters: ["monster-effect", "backrow"],
+                counteredBy: ["destruction-protection"]
+            },
+            "banish": {
+                cardLevel: "Banish",
+                deckLevel: "Exile",
+                linkedRole: "Banisher",
+                counters: ["graveyard-effect"],
+                counteredBy: ["banish-protection"]
+            },
+            "search": {
+                cardLevel: "Search",
+                deckLevel: "Consistency",
+                linkedRole: "Searcher",
+                counters: [],
+                counteredBy: ["search-lock"]
+            },
+            "draw": {
+                cardLevel: "Draw",
+                deckLevel: "Card Advantage",
+                linkedRole: "Draw-Engine",
+                counters: [],
+                counteredBy: ["hand-limit"]
+            }
+        },
+        
+        // NUEVO: Roles Compuestos con Condicionales (Preparado para Paso 3)
+        roleConditions: {
+            "Handtrap": {
+                conditionals: [],  // Vacío = sin condicionales
+                keywords: ["from your hand", "from the hand", "from their hand"]
+            },
+            "Disruption": {
+                conditionals: ["quick-effect", "during either player"],
+                keywords: ["negate", "destroy"]
+            }
         }
     },
 
@@ -194,6 +253,93 @@ const ConfigManager = {
             
             reader.readAsText(file);
         });
+    },
+
+    // ===============================
+    // GESTIÓN DE ESPECIALIDADES (PASO 1)
+    // ===============================
+    
+    // Obtener todas las especialidades
+    getSpecialties: function () {
+        const config = this.getConfig();
+        return config.specialties || {};
+    },
+
+    // Obtener nombres de especialidades
+    getSpecialtyNames: function () {
+        return Object.keys(this.getSpecialties());
+    },
+
+    // Obtener especialidad específica
+    getSpecialty: function (keyword) {
+        const specialties = this.getSpecialties();
+        return specialties[keyword] || null;
+    },
+
+    // Crear nueva especialidad
+    createSpecialty: function (keyword, data) {
+        const config = this.getConfig();
+        if (!config.specialties) {
+            config.specialties = {};
+        }
+        
+        const trimmedKeyword = keyword.toLowerCase().trim();
+        
+        if (trimmedKeyword && !config.specialties[trimmedKeyword]) {
+            config.specialties[trimmedKeyword] = {
+                cardLevel: data.cardLevel || trimmedKeyword,
+                deckLevel: data.deckLevel || trimmedKeyword,
+                linkedRole: data.linkedRole || '',
+                counters: data.counters || [],
+                counteredBy: data.counteredBy || []
+            };
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
+
+    // Actualizar especialidad
+    updateSpecialty: function (keyword, data) {
+        const config = this.getConfig();
+        if (config.specialties && config.specialties[keyword]) {
+            config.specialties[keyword] = {
+                cardLevel: data.cardLevel || keyword,
+                deckLevel: data.deckLevel || keyword,
+                linkedRole: data.linkedRole || '',
+                counters: data.counters || [],
+                counteredBy: data.counteredBy || []
+            };
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
+
+    // Eliminar especialidad
+    deleteSpecialty: function (keyword) {
+        const config = this.getConfig();
+        if (config.specialties && config.specialties[keyword]) {
+            delete config.specialties[keyword];
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
+
+    // Renombrar keyword de especialidad
+    renameSpecialtyKeyword: function (oldKeyword, newKeyword) {
+        const config = this.getConfig();
+        const trimmedNewKeyword = newKeyword.toLowerCase().trim();
+        
+        if (config.specialties && config.specialties[oldKeyword] && 
+            trimmedNewKeyword && !config.specialties[trimmedNewKeyword]) {
+            config.specialties[trimmedNewKeyword] = config.specialties[oldKeyword];
+            delete config.specialties[oldKeyword];
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
     }
 };
 

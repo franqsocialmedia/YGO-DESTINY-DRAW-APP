@@ -69,11 +69,17 @@ const Deck = {
             delete this.cards[id];
         } else {
             if (!this.cards[id]) {
+                // Analizar especialidades de la carta
+                const specialties = typeof SpecialtyAnalyzer !== 'undefined' 
+                    ? SpecialtyAnalyzer.analyzeCard(card) 
+                    : [];
+                
                 this.cards[id] = {
                     data: card,
                     qty: qty,
                     location: this.isExtraDeckCard(card) ? 'extra' : 'main',
-                    roles: this.autoAssignRoles(card)
+                    roles: this.autoAssignRoles(card),
+                    specialties: specialties  // NUEVO: Especialidades detectadas
                 };
             } else {
                 this.cards[id].qty = qty;
