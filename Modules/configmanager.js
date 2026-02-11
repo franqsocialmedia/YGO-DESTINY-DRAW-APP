@@ -114,6 +114,66 @@ const ConfigManager = {
                 specialtyKeywords: ["destroy all", "attack position"],
                 notes: "Trampa de remoción masiva"
             }
+        },
+
+        // NUEVO: Sistema de Nomenclatura (Paso 4)
+        // Análisis de estructura de efectos de cartas
+        nomenclature: {
+            effectSpeed: {
+                "Quick Effect": ["quick effect", "(quick effect)"],
+                "Trigger": ["when", "if"],
+                "Ignition": ["activate", "use"]
+            },
+            effectType: {
+                "Targeting": ["target"],
+                "Non-Targeting": ["choose", "select without targeting"]
+            },
+            timing: {
+                "On Summon": ["when this card is summoned", "if this card is summoned"],
+                "On Activation": ["when this card is activated"],
+                "During Battle": ["during the battle phase", "during damage calculation"],
+                "End Phase": ["during the end phase", "at the end phase"]
+            },
+            requirements: [
+                "if you control",
+                "if your opponent",
+                "if you have",
+                "only if"
+            ],
+            conditions: [
+                "while",
+                "during",
+                "as long as"
+            ],
+            cost: [
+                "discard",
+                "banish",
+                "tribute",
+                "pay",
+                "detach",
+                "send"
+            ],
+            effects: {
+                "Destruction": ["destroy"],
+                "Negation": ["negate"],
+                "Banish": ["banish"],
+                "Special Summon": ["special summon"],
+                "Search": ["add", "search"],
+                "Draw": ["draw"],
+                "Burn": ["inflict damage"],
+                "Gain": ["gain"]
+            },
+            duration: {
+                "Until End Phase": ["until the end of this turn", "until the end phase"],
+                "Permanent": ["cannot", "must always"],
+                "Once While Face-up": ["once while face-up", "once while this card"]
+            },
+            restrictions: {
+                "Once Per Turn": ["once per turn", "only once per turn"],
+                "Hard Once Per Turn": ["you can only", "only once that turn"],
+                "Cannot Summon": ["you cannot summon", "you cannot special summon"],
+                "Cannot Activate": ["you cannot activate"]
+            }
         }
     },
 
@@ -499,6 +559,115 @@ const ConfigManager = {
             const index = config.staples[cardId].specialtyKeywords.indexOf(keyword);
             if (index > -1) {
                 config.staples[cardId].specialtyKeywords.splice(index, 1);
+                this.saveConfig(config);
+                return true;
+            }
+        }
+        return false;
+    },
+
+    // ===============================
+    // GESTIÓN DE NOMENCLATURE (PASO 4)
+    // ===============================
+    
+    // Obtener configuración completa de nomenclature
+    getNomenclature: function () {
+        const config = this.getConfig();
+        return config.nomenclature || this.defaultConfig.nomenclature;
+    },
+
+    // Obtener categoría específica
+    getNomenclatureCategory: function (category) {
+        const nomenclature = this.getNomenclature();
+        return nomenclature[category] || {};
+    },
+
+    // Agregar palabra clave a categoría
+    addNomenclatureKeyword: function (category, subcategory, keyword) {
+        const config = this.getConfig();
+        if (!config.nomenclature) {
+            config.nomenclature = JSON.parse(JSON.stringify(this.defaultConfig.nomenclature));
+        }
+
+        const lowerKeyword = keyword.toLowerCase().trim();
+        
+        // Para categorías con subcategorías (objetos)
+        if (typeof config.nomenclature[category] === 'object' && !Array.isArray(config.nomenclature[category])) {
+            if (!config.nomenclature[category][subcategory]) {
+                config.nomenclature[category][subcategory] = [];
+            }
+            if (!config.nomenclature[category][subcategory].includes(lowerKeyword)) {
+                config.nomenclature[category][subcategory].push(lowerKeyword);
+                this.saveConfig(config);
+                return true;
+            }
+        }
+        // Para categorías simples (arrays)
+        else if (Array.isArray(config.nomenclature[category])) {
+            if (!config.nomenclature[category].includes(lowerKeyword)) {
+                config.nomenclature[category].push(lowerKeyword);
+                this.saveConfig(config);
+                return true;
+            }
+        }
+        
+        return false;
+    },
+
+    // Eliminar palabra clave de categoría
+    removeNomenclatureKeyword: function (category, subcategory, keyword) {
+        const config = this.getConfig();
+        if (!config.nomenclature) return false;
+
+        // Para categorías con subcategorías
+        if (typeof config.nomenclature[category] === 'object' && !Array.isArray(config.nomenclature[category])) {
+            if (config.nomenclature[category][subcategory]) {
+                const index = config.nomenclature[category][subcategory].indexOf(keyword);
+                if (index > -1) {
+                    config.nomenclature[category][subcategory].splice(index, 1);
+                    this.saveConfig(config);
+                    return true;
+                }
+            }
+        }
+        // Para categorías simples
+        else if (Array.isArray(config.nomenclature[category])) {
+            const index = config.nomenclature[category].indexOf(keyword);
+            if (index > -1) {
+                config.nomenclature[category].splice(index, 1);
+                this.saveConfig(config);
+                return true;
+            }
+        }
+        
+        return false;
+    },
+
+    // Crear nueva subcategoría
+    createNomenclatureSubcategory: function (category, subcategoryName) {
+        const config = this.getConfig();
+        if (!config.nomenclature) {
+            config.nomenclature = JSON.parse(JSON.stringify(this.defaultConfig.nomenclature));
+        }
+
+        if (typeof config.nomenclature[category] === 'object' && !Array.isArray(config.nomenclature[category])) {
+            const trimmedName = subcategoryName.trim();
+            if (trimmedName && !config.nomenclature[category][trimmedName]) {
+                config.nomenclature[category][trimmedName] = [];
+                this.saveConfig(config);
+                return true;
+            }
+        }
+        
+        return false;
+    },
+
+    // Eliminar subcategoría
+    deleteNomenclatureSubcategory: function (category, subcategoryName) {
+        const config = this.getConfig();
+        if (config.nomenclature && config.nomenclature[category]) {
+            if (config.nomenclature[category][subcategoryName]) {
+                delete config.nomenclature[category][subcategoryName];
                 this.saveConfig(config);
                 return true;
             }

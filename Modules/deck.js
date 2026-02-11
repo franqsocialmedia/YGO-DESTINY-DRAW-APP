@@ -111,6 +111,11 @@ const Deck = {
                     ? SpecialtyAnalyzer.analyzeCard(card) 
                     : [];
                 
+                // PASO 4: Analizar nomenclatura de la carta
+                const nomenclature = typeof NomenclatureAnalyzer !== 'undefined'
+                    ? NomenclatureAnalyzer.analyzeCard(card)
+                    : null;
+                
                 // Obtener roles automáticos
                 let roles = this.autoAssignRoles(card);
                 
@@ -132,7 +137,8 @@ const Deck = {
                     qty: qty,
                     location: this.isExtraDeckCard(card) ? 'extra' : 'main',
                     roles: roles,  // Roles combinados (automáticos + staples)
-                    specialties: specialties  // Especialidades detectadas (incluye staples)
+                    specialties: specialties,  // Especialidades detectadas (incluye staples)
+                    nomenclature: nomenclature  // PASO 4: Nomenclatura del efecto
                 };
             } else {
                 this.cards[id].qty = qty;
