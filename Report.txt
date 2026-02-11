@@ -3909,3 +3909,5 @@ Restriccion o lock. Son las oraciones donde termina con . pero tiene la palabra 
 Limitacion. Son las oraciones que poseen alguna de las siguientes palabras clave "per turn", "per duel" o "you can only use" o "you can only activate"
 
 ====================================================
+
+Actualmente se necesita ajustar algo primordial. Y es que las partes de la nomenclatura de las cartas tienen condiciones, no son dirigidas por palabras claves por aisladas.
