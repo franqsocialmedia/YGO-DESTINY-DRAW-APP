@@ -1,0 +1,550 @@
+================================================================================
+PASO 4 - NOMENCLATURA DE EFECTOS DE CARTAS
+Destiny Draw - Yu-Gi-Oh! App
+Fecha: 11/02/2026
+Estado: ✅ COMPLETADO
+================================================================================
+
+RESUMEN EJECUTIVO
+--------------------------------------------------------------------------------
+Se ha implementado exitosamente el sistema de Nomenclatura de Efectos que
+permite identificar y resaltar visualmente las diferentes partes estructurales
+de los efectos de las cartas de Yu-Gi-Oh!. Este sistema incluye:
+
+1. Detección automática de 9 categorías de nomenclatura
+2. Resaltado visual con marks de colores en CardViewer
+3. Tooltips informativos al pasar el cursor
+4. Interfaz de configuración completa para personalización
+5. Sistema basado en párrafos (delimitados por . : ;)
+
+================================================================================
+ARQUITECTURA IMPLEMENTADA
+================================================================================
+
+1. CATEGORÍAS DE NOMENCLATURA
+--------------------------------------------------------------------------------
+
+El sistema identifica 9 categorías principales de efectos:
+
+a) VELOCIDAD DE EFECTO (effectSpeed)
+   - Quick Effect
+   - Trigger  
+   - Ignition
+   
+b) TIPO DE EFECTO (effectType)
+   - Targeting
+   - Non-Targeting
+
+c) TIMING DEL EFECTO (timing)
+   - On Summon
+   - On Activation
+   - During Battle
+   - End Phase
+
+d) REQUISITOS (requirements)
+   - Condiciones necesarias para activar
+   - Array de palabras clave
+
+e) CONDICIÓN DE ACTIVACIÓN (conditions)
+   - While
+   - During
+   - As long as
+
+f) COSTO DE ACTIVACIÓN (cost)
+   - Discard
+   - Banish
+   - Tribute
+   - Pay
+   - Detach
+   - Send
+
+g) EFECTO (effects)
+   - Destruction
+   - Negation
+   - Banish
+   - Special Summon
+   - Search
+   - Draw
+   - Burn
+   - Gain
+
+h) DURACIÓN DEL EFECTO (duration)
+   - Until End Phase
+   - Permanent
+   - Once While Face-up
+
+i) RESTRICCIÓN (restrictions)
+   - Once Per Turn
+   - Hard Once Per Turn
+   - Cannot Summon
+   - Cannot Activate
+
+2. ESTRUCTURA DE DATOS EN CONFIGMANAGER
+--------------------------------------------------------------------------------
+
+DefaultConfig ahora incluye:
+
+nomenclature: {
+    effectSpeed: {
+        "Quick Effect": ["quick effect", "(quick effect)"],
+        "Trigger": ["when", "if"],
+        ...
+    },
+    effectType: { ... },
+    timing: { ... },
+    requirements: [...],  // Array simple
+    conditions: [...],     // Array simple
+    cost: [...],           // Array simple
+    effects: { ... },
+    duration: { ... },
+    restrictions: { ... }
+}
+
+nomenclatureColors: {
+    effectSpeed: "#FF6B6B",        // Rojo
+    effectType: "#4ECDC4",         // Cyan
+    timing: "#FFE66D",             // Amarillo
+    requirements: "#95E1D3",       // Verde agua
+    conditions: "#F38181",         // Rosa
+    cost: "#AA96DA",               // Morado
+    effects: "#FCBAD3",            // Rosa claro
+    duration: "#A8E6CF",           // Verde menta
+    restrictions: "#FFD3B6"        // Naranja pastel
+}
+
+================================================================================
+ARCHIVOS MODIFICADOS/CREADOS
+================================================================================
+
+1. CONFIGMANAGER.JS (MODIFICADO)
+--------------------------------------------------------------------------------
+
+NUEVAS FUNCIONES:
+
+getNomenclature()
+- Retorna toda la configuración de nomenclatura
+- Incluye keywords y categorías
+
+getNomenclatureColors()
+- Retorna el objeto completo de colores
+- Usado por CardViewer para resaltado
+
+updateNomenclatureColor(category, color)
+- Actualiza color de una categoría
+- Guarda en localStorage
+- Formato hexadecimal (#RRGGBB)
+
+COLORES POR DEFECTO AGREGADOS:
+- 9 colores distintos para cada categoría
+- Paleta armoniosa y legible
+- Transparencia aplicada en CSS (0.6)
+
+2. CARDVIEWER.JS (MODIFICADO COMPLETAMENTE)
+--------------------------------------------------------------------------------
+
+NUEVAS FUNCIONES:
+
+highlightNomenclature(desc)
+- Función principal de resaltado
+- Divide descripción en párrafos
+- Llama a highlightParagraph por cada uno
+
+splitIntoParagraphs(text)
+- Divide texto en párrafos usando delimitadores
+- Delimitadores: . (punto), : (dos puntos), ; (punto y coma)
+- Retorna array de objetos con texto y posiciones
+
+highlightParagraph(paragraph, nomenclature, colors)
+- Analiza UN párrafo completo
+- Verifica keywords de cada categoría
+- Si coincide, resalta TODO el párrafo
+- Retorna HTML con <mark> o texto sin modificar
+
+LÓGICA DE RESALTADO:
+1. Se divide el efecto completo en párrafos
+2. Cada párrafo se analiza independientemente
+3. Se busca si contiene keywords de alguna categoría
+4. Si coincide, se resalta el párrafo COMPLETO con el color de esa categoría
+5. Solo un color por párrafo (primera coincidencia)
+
+MARKS CON TOOLTIPS:
+<mark style="background-color: #FF6B6B; opacity: 0.6; padding: 2px 4px; 
+      border-radius: 3px; cursor: help;" 
+      title="Velocidad de Efecto">
+    When this card is Normal Summoned:
+</mark>
+
+El atributo title="" muestra el nombre de la categoría al hacer hover
+
+3. CONFIG.JS (MODIFICADO)
+--------------------------------------------------------------------------------
+
+NUEVA SECCIÓN: "Nomenclatura de Efectos"
+
+FUNCIONES AGREGADAS:
+
+renderNomenclatureSection()
+- Renderiza sección completa
+- Muestra las 9 categorías
+- Cada categoría tiene:
+  * Nombre (readonly)
+  * Color picker
+  * Lista de keywords actuales
+  * Input para agregar nuevas
+
+renderNomenclatureKeywords(category, categoryData)
+- Renderiza chips de keywords
+- Maneja dos estructuras:
+  * Objetos: { "Nombre": ["kw1", "kw2"] }
+  * Arrays: ["kw1", "kw2", "kw3"]
+
+updateNomenclatureColor(inputElement)
+- Actualiza color desde color picker
+- Guarda en ConfigManager
+- No requiere re-render
+
+addNomenclatureKeywordFromInput(inputElement)
+- Agrega nueva keyword a categoría
+- Maneja estructuras de objeto y array
+- Valida duplicados
+- Re-renderiza sección
+
+removeNomenclatureKeyword(category, name, keyword)
+- Elimina keyword específica
+- Limpia objetos vacíos (Custom_*)
+- Re-renderiza sección
+
+INTERFAZ VISUAL:
+- Tarjetas por categoría
+- Color picker integrado
+- Chips interactivos con X para eliminar
+- Input inline para agregar keywords
+- Nombres de categoría en español
+
+4. NOMENCLATURE-ANALYZER.JS (YA EXISTÍA - SIN CAMBIOS)
+--------------------------------------------------------------------------------
+Este módulo ya existía desde implementación previa.
+Funciones disponibles:
+- analyzeCard(card) - Analiza carta completa
+- detectEffectSpeed, detectTiming, etc.
+- hasNomenclatureData(nomenclature)
+
+NOTA: Este módulo NO se usa actualmente en CardViewer.
+CardViewer implementa su propia lógica de resaltado basada en párrafos.
+NomenclatureAnalyzer podría usarse en futuras funcionalidades.
+
+================================================================================
+FUNCIONAMIENTO DEL SISTEMA
+================================================================================
+
+FLUJO COMPLETO:
+
+1. USUARIO ABRE CARTA EN CARDVIEWER
+   ↓
+2. CardViewer.highlightNomenclature(card.desc)
+   ↓
+3. splitIntoParagraphs() divide el efecto
+   Ejemplo: "When this card is Normal Summoned: You can add 1 card."
+   Párrafos:
+   - "When this card is Normal Summoned:"
+   - " You can add 1 card."
+   ↓
+4. highlightParagraph() por cada párrafo
+   ↓
+5. Verifica keywords en orden de prioridad:
+   effectSpeed → effectType → timing → requirements → ...
+   ↓
+6. Si encuentra coincidencia:
+   - Obtiene color de la categoría
+   - Envuelve párrafo en <mark> con color y tooltip
+   - Retorna párrafo resaltado
+   ↓
+7. Si NO encuentra coincidencia:
+   - Retorna párrafo sin modificar
+   ↓
+8. Todos los párrafos se unen y se muestran en CardViewer
+
+EJEMPLO PRÁCTICO:
+
+Carta: "Ash Blossom & Joyous Spring"
+Descripción:
+"When a card or effect is activated that includes any of these effects 
+(Quick Effect): You can discard this card; negate that effect."
+
+ANÁLISIS POR PÁRRAFOS:
+
+Párrafo 1: "When a card or effect is activated that includes any of 
+           these effects (Quick Effect):"
+Keywords detectadas: "when", "(quick effect)"
+Categoría: timing (primera coincidencia)
+Color: #FFE66D (amarillo)
+Resultado: <mark style="..." title="Timing del Efecto">...</mark>
+
+Párrafo 2: " You can discard this card;"
+Keywords detectadas: "discard"
+Categoría: cost
+Color: #AA96DA (morado)
+Resultado: <mark style="..." title="Costo de Activación">...</mark>
+
+Párrafo 3: " negate that effect."
+Keywords detectadas: "negate"
+Categoría: effects
+Color: #FCBAD3 (rosa claro)
+Resultado: <mark style="..." title="Efecto">...</mark>
+
+================================================================================
+PERSONALIZACIÓN DESDE CONFIG
+================================================================================
+
+USUARIO PUEDE:
+
+1. CAMBIAR COLORES
+   - Click en color picker de cada categoría
+   - Seleccionar color deseado
+   - Cambio se aplica inmediatamente
+   - Persiste en localStorage
+
+2. AGREGAR PALABRAS CLAVE
+   - Escribir en input de categoría
+   - Enter o click en "+ Agregar"
+   - Keyword se guarda y aparece como chip
+   - Disponible inmediatamente para detección
+
+3. ELIMINAR PALABRAS CLAVE
+   - Click en "×" del chip
+   - Confirmación automática
+   - Re-renderiza sección
+   - Cambio se guarda en localStorage
+
+4. EXPORTAR/IMPORTAR CONFIGURACIÓN
+   - Botón "Exportar Data" incluye nomenclatura
+   - Formato JSON con toda la config
+   - Importar restaura keywords y colores
+
+EJEMPLO DE USO:
+
+Usuario quiere agregar "tribute summon" a timing:
+1. Va a Config → Nomenclatura de Efectos
+2. Busca categoría "Timing del Efecto"
+3. Escribe "tribute summon" en input
+4. Click en "+ Agregar"
+5. Chip aparece en la lista
+6. Ahora cualquier párrafo con "tribute summon" 
+   se resalta en amarillo (#FFE66D)
+
+================================================================================
+CARACTERÍSTICAS TÉCNICAS
+================================================================================
+
+1. RESALTADO POR PÁRRAFOS
+   - NO resalta palabras sueltas
+   - Resalta el PÁRRAFO COMPLETO que contiene la keyword
+   - Respeta delimitadores de Yu-Gi-Oh! (. : ;)
+   - Un solo color por párrafo (primera categoría que coincida)
+
+2. TOOLTIPS CON TITLE
+   - Atributo HTML nativo
+   - Funciona en desktop (hover)
+   - Funciona en móvil (tap)
+   - Muestra nombre en español de la categoría
+
+3. SISTEMA DE PRIORIDAD
+   - Categorías se verifican en orden específico:
+     effectSpeed → effectType → timing → requirements → 
+     conditions → cost → effects → duration → restrictions
+   - Primera coincidencia gana
+   - Evita resaltados múltiples en mismo párrafo
+
+4. OPACIDAD Y ESTILO
+   - Opacity: 0.6 (permite leer texto debajo)
+   - Padding: 2px 4px (espaciado cómodo)
+   - Border-radius: 3px (esquinas redondeadas)
+   - Cursor: help (indica que hay tooltip)
+
+5. ESTRUCTURA FLEXIBLE
+   - Soporta objetos: { "Nombre": ["kw"] }
+   - Soporta arrays: ["kw1", "kw2"]
+   - ConfigManager maneja ambos casos
+   - Expansible a nuevas categorías
+
+================================================================================
+DATOS EN LOCALSTORAGE
+================================================================================
+
+yugioh_config:
+{
+  "nomenclature": {
+    "effectSpeed": {
+      "Quick Effect": ["quick effect", "(quick effect)"],
+      "Custom_1707654321": ["nueva keyword personalizada"]
+    },
+    "requirements": [
+      "if you control",
+      "if your opponent",
+      "nueva keyword agregada"
+    ],
+    ...
+  },
+  "nomenclatureColors": {
+    "effectSpeed": "#FF0000",  // Usuario cambió a rojo puro
+    "timing": "#FFE66D",       // Color por defecto
+    ...
+  }
+}
+
+================================================================================
+DIFERENCIAS CON IMPLEMENTACIÓN PREVIA
+================================================================================
+
+ANTES (nomenclature-analyzer.js):
+- Detectaba categorías por carta completa
+- Almacenaba datos en objeto de análisis
+- No tenía visualización
+- Era sistema interno
+
+AHORA (cardviewer.js):
+- Resalta visualmente en tiempo real
+- Sistema basado en párrafos completos
+- Tooltips informativos
+- Personalizable por usuario
+- Colores configurables
+
+COEXISTENCIA:
+- NomenclatureAnalyzer sigue existiendo
+- Puede usarse para análisis interno
+- CardViewer usa su propia implementación
+- Ambos comparten misma fuente de keywords (ConfigManager)
+
+================================================================================
+TESTING Y VALIDACIÓN
+================================================================================
+
+PARA PROBAR:
+
+1. Abrir cualquier carta en CardViewer
+   - Verificar que párrafos estén resaltados
+   - Pasar cursor sobre marks
+   - Ver tooltips con nombres de categorías
+
+2. Configuración
+   - Ir a Config → Nomenclatura de Efectos
+   - Cambiar color de "Velocidad de Efecto" a #00FF00
+   - Abrir carta con Quick Effect
+   - Verificar que aparece en verde
+
+3. Agregar Keyword
+   - En Config → "Costo de Activación"
+   - Agregar "reveal"
+   - Abrir carta con "reveal" en descripción
+   - Verificar que párrafo se resalta en morado
+
+4. Eliminar Keyword
+   - Click en × de cualquier chip
+   - Verificar que desaparece
+   - Abrir carta con esa keyword
+   - Verificar que párrafo NO se resalta
+
+5. Exportar/Importar
+   - Exportar configuración
+   - Modificar keywords y colores
+   - Importar configuración exportada
+   - Verificar que vuelve a estado anterior
+
+================================================================================
+LIMITACIONES CONOCIDAS
+================================================================================
+
+1. UN COLOR POR PÁRRAFO
+   - Si un párrafo cumple múltiples categorías
+   - Solo se resalta con la primera categoría detectada
+   - Orden de prioridad es fijo
+
+2. CASE INSENSITIVE
+   - Búsqueda ignora mayúsculas/minúsculas
+   - "Quick Effect" detecta "quick effect" y "QUICK EFFECT"
+   - No distingue contexto
+
+3. NOMBRES DE CATEGORÍA NO EDITABLES
+   - Los 9 nombres están fijos en código
+   - Solo se pueden editar keywords y colores
+   - Nombres en español hardcodeados en categoryNames
+
+4. DELIMITADORES FIJOS
+   - Solo . : ; delimitan párrafos
+   - No se pueden personalizar
+   - Basado en formato estándar de Yu-Gi-Oh!
+
+================================================================================
+FUTURAS MEJORAS POSIBLES
+================================================================================
+
+□ Permitir orden de prioridad personalizable
+□ Resaltado con múltiples colores (gradientes)
+□ Modo "solo keywords" vs "párrafos completos"
+□ Delimitadores personalizables
+□ Nombres de categoría editables
+□ Categorías personalizadas (crear nuevas)
+□ Previsualización en Config (ejemplo en vivo)
+□ Estadísticas de uso de categorías
+□ Exportar solo nomenclatura (no toda la config)
+□ Plantillas predefinidas de colores
+
+================================================================================
+INTEGRACIÓN CON OTROS MÓDULOS
+================================================================================
+
+NOMENCLATURE-ANALYZER.JS:
+- Disponible para uso futuro
+- No interfiere con CardViewer
+- Podría usarse en:
+  * Análisis de deck
+  * Estadísticas de nomenclatura
+  * Sugerencias de mejora
+  * Detección de patrones
+
+SPECIALTY-ANALYZER.JS:
+- Sistema independiente
+- Ambos coexisten sin conflicto
+- Specialties = datos internos
+- Nomenclature = visualización
+
+STATS.JS:
+- Podría incorporar análisis de nomenclatura
+- Score basado en estructura de efectos
+- Complejidad vs simplicidad
+
+================================================================================
+CONCLUSIÓN
+================================================================================
+
+PASO 4 COMPLETADO EXITOSAMENTE ✅
+
+IMPLEMENTADO:
+✅ Sistema completo de nomenclatura (9 categorías)
+✅ Resaltado visual por párrafos en CardViewer
+✅ Tooltips con nombres de categorías
+✅ Interfaz de configuración completa
+✅ Colores personalizables por categoría
+✅ Keywords editables (agregar/eliminar)
+✅ Persistencia en localStorage
+✅ Exportar/Importar incluye nomenclatura
+
+CARACTERÍSTICAS DESTACADAS:
+→ Resaltado de párrafos completos (no palabras sueltas)
+→ Delimitadores de Yu-Gi-Oh! (. : ;)
+→ Tooltips nativos con HTML title
+→ Sistema de prioridad de categorías
+→ Opacidad 0.6 para legibilidad
+→ Color picker integrado
+→ Chips interactivos
+
+LISTO PARA:
+→ Paso 5: Recurrencia de cartas en META
+→ Uso en análisis avanzado de decks
+→ Integración con sistema de counters
+→ Estadísticas por tipo de efecto
+
+PRÓXIMO PASO:
+Implementar Paso 5 - Sistema de recurrencia y análisis de uso de cartas en el META
+
+================================================================================

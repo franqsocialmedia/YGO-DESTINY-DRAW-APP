@@ -1607,3 +1607,2305 @@ Esto garantiza que:
 * ✅ Compatible con futuras extensiones
 
 ---
+
+===========================================================
+Etapa 4: Pasos Estadisticos
+==========================================================
+
+Por necesidad de organizar y trabajar mejor se procedio a realizar un esquema para esta etapa de varios pasos.
+
+Lo que haremos en esta estapa actual es el reestructurar la idea a otra forma un poco mas conveniente a largo plazo. Primero te planteo lo que se hara por partes para que vayamos avanzando parte por parte hasta que todo cuadre y vayas haciendolo de forma que un paso anterior no dañe o dificulte el siguiente:
+
+Paso 1: Quiero reestructurar el algoritmo que trabaja con los roles  para que haga exactamente lo que hace ahora pero que tambien se acople a la siguiente logica que estaremos desarrollando (asi si necesita cambios o ajustes lo dealices, si ya esta bien para lo que queremos lograr, entonces puedes dejarlo como esta): Una carta posee descripcion/efecto, del cual se toman las palabras y se clasifican palabras clave especificas (acciones o terminos) que con ellas se definen Roles (viendolo como parte de un todo) y/o especialidades de la carta (lo que hace por separado). Por ultimo, dicha carta con su rol y/o especialidad se registra en las cookies y se toman encuenta como parte de un ecosistema de cartas con eso mismo y de ahi los roles y especialidades de una carta pueden terminar siendo counter de otra en dicho ecosistema (creandose asi un sistema de counters). Esa es la idea general. Necesitaria que crees este primer paso. Pero si hay alguna mejor sugerencia o forma de abordar la meta de este paso, puedes compartilo. Pero toma en cuenta la existencia de los siguientes pasos para que sepas a donde se dirigira todo esto. PD: El ecosistema de cartas registrados le llamaremos: Cartas META (Most Efficient Strategy Available o algo asi). El meta depende de que hayan otras cartas a las cuales ser counter o aportar. Por todo esto, el sistema de counter sera aparte del de la carta asi como lo es especialidad y roles (los roles son los unicos que se marcaran visiblemente como ya lo hace como tags pero especialidad y counter seran datos internos no publicos)  *por ejemplo que hayan palabras clave como "return" es "Recycle" como rol, pero en sí mismo, "return" en el deck aumenta de nivel. generando que cuando un deck tiene muchas cartas con esa palabra clave significa que la especialidad del deck es bounce, y asi sucesivamente con otros nombres que luego te dare. Pero la especializacion es sobre el deck y el Rol es sobre la carta. En configuracion quiero una seccion donde pueda agregar otras palabras clave que seran tomadas en cuenta como especializaciones para cartas y el nombre que recibe al ser para un deck (por defecto dira lo mismo que para la carta). 
+
+Paso 2: Lista de staples, esto sera en otro modulo. Quiero que internamente haya una lista de staples (cartas genericas) que yo mismo introducire, aunque quiero que empieces con estas como ejemplo: "Renace al monstruo", "tifon mistico espacial" y "fuerza del espejo". Esta lista no se mostrara visualmente, estara interno en el sistema y dicha lista puede ser ampliada, editada o eliminada desde configuraciones. Debe de aplicarse Roles, especialidad y counters.
+
+Paso 3: Ajustar roles compuestos. Se trata de poder poner no solo palabra clave que posea X o Y rol, sino que tambien haya una lista de palabras clave que se tomen como condicionales, para que solo tome en cuenta el rol si cumple dicha condicional y 1 o mas de las palabras claves del rol. Ej.: "Quick-Effect" (condicional) y "from your hand", "from the hand", "from theirs hands", etc. (con cumplir alguna de estas + la condicional entonces es considerado el rol correspondiente). Si no posee condicional (si se deja en blanco) entonces es porque ese rol no tiene condicionales.
+
+Paso 4: Nomenclatura de cartas, esto sera otro modulo. Es la funcion o modulo que debe de desglosar lo que posee o no posee la carta (velocidad de efecto, tipo de efecto, timming del efecto, si posee o no requisitos, condiciones, costos, efectos/objetivos (con su conectores logicos), duracion y restriccion). Seria establecerlos en una seccion de configuracion (que palabras claves, signos de puntuacion, simbolos o frases debe de tener para que se considere alguna de estas). 
+
+Paso 5: Cada carta en el META debe ser contado (incluyendo sus copias) para establecer un nivel de recurrencia de dicha carta, asi vemos cuales son las cartas que mas se usan. Tambien debe mostrar un promedio de a cuantas copias se suele llevar por deck. Esto debe ser en el mismo modulo que se esta trabajando los Internal Score y External Score.
+
+Paso 6: Debe crearse una funcion como sistema de puntos de poder para cada carta individual. Esto se multiplica por copia, y este nivel de poder debe ser siguiendo la logica de: Una carta usada mucho en el META actual, se usa porque es muy util por ello sus puntos deben ser altos, gracias a que es una gran especializacion para la mayoria de (cartas y decks en el Meta) o porque le aumentan la especialidad que ya tenian los decks actuales. Digamos que le da un puesto por uso (digamos, por utilidad). Pero sea cual sea la razon, si existe una carta counter en el meta, dicha counter debe aumentar su poder segun a los rangos de las cartas a las que les hace counter, porque su relevancia se incrementa y detiene a mas cartas y mas decks por su alta concurrencia. Esa es la logica detras de los puntos de poder por cartas. Que supongo que como esto nace de una comparativa con otras cartas, al igual que los counters dependen del meta por eso sera algo que ira ajustandose segun los decks que hay en el meta.
+
+Paso 7: El sistema de counter los dividiremos en Counter-cards y counter-decks. El primero es el nivel counter que posee cada carta por separado y el segundo es el nivel de counter que posee el deck por la suma de poder counter de todas las cartas que posee. Tomar en cuenta que habran roles que disminuyen el poder counter-deck. Como que Brick disminuye el poder counter en general.
+
+Paso 8: Sistema de analisis del deck. Es una seccion especial donde tomara el deck completo y dara respuestas pre-establecidas segun las estadisticas del mismo. Ejemplo: El Deck X posee un poder teórico de 7/10 puntos de poder (que viene de los internal score del Deck), pero frente al META es de 3/10 (puntos externos) por la existencia de decks como X, Y y Z (que son counters-decks). Cartas como : A, B y C golpean muy fuerte a este deck (cartas counters con alta repetición en el meta). Cartas como : A y B podrían ayudar en este formato actual (cartas staples que son counters de los counters del deck)
+
+Paso 9: Poder exportar los datos del deck, del meta, staples y demas funciones que necesitan ser ajustadas para poder usarlos para analisis de parte de los jugadores.
+
+Donde se puede ver el avance y estructura actual del proyecto en la rama: "MetaPowerCreep" del repositorio en Github: 
+https://github.com/franqsocialmedia/YGO-DESTINY-DRAW-APP.git
+
+Estos pasos se han ido realizando uno a uno y estos son sus reportes:
+
+================================================================================
+PASO 1 - SISTEMA DE ESPECIALIDADES Y COUNTERS
+Destiny Draw - Yu-Gi-Oh! App
+Fecha: 10/02/2026
+Estado: ✅ COMPLETADO
+================================================================================
+
+RESUMEN EJECUTIVO
+--------------------------------------------------------------------------------
+Se ha implementado exitosamente la infraestructura base para el sistema de
+Roles, Especialidades y Counters. Este sistema permite:
+
+1. Detectar especialidades automáticamente en las cartas
+2. Analizar especialización del deck completo
+3. Sistema de counters entre cartas (preparado para Paso 6-7)
+4. Gestión visual de especialidades en Configuración
+5. Estructura escalable para futuros pasos
+
+================================================================================
+ARQUITECTURA IMPLEMENTADA
+================================================================================
+
+1. ESTRUCTURA DE DATOS
+--------------------------------------------------------------------------------
+
+ConfigManager.defaultConfig ahora incluye:
+
+a) ROLES (Ya existente - Mantenido)
+   - 16 roles predefinidos
+   - Palabras clave asociadas
+
+b) SPECIALTIES (NUEVO - Paso 1)
+   Estructura:
+   {
+     "keyword": {
+       cardLevel: "Nombre a nivel carta",
+       deckLevel: "Nombre a nivel deck", 
+       linkedRole: "Rol asociado (opcional)",
+       counters: ["especialidades que contrarresta"],
+       counteredBy: ["especialidades que lo contrarestan"]
+     }
+   }
+
+   Especialidades predefinidas:
+   - return → Recycle / Bounce
+   - negate → Negation / Control
+   - destroy → Removal / Destruction
+   - banish → Banish / Exile
+   - search → Search / Consistency
+   - draw → Draw / Card Advantage
+
+c) ROLE_CONDITIONS (NUEVO - Preparado para Paso 3)
+   Sistema de roles compuestos con condicionales
+   Estructura:
+   {
+     "NombreRol": {
+       conditionals: ["palabras que deben estar"],
+       keywords: ["al menos una de estas"]
+     }
+   }
+
+================================================================================
+ARCHIVOS CREADOS/MODIFICADOS
+================================================================================
+
+1. SPECIALTY-ANALYZER.JS (NUEVO)
+--------------------------------------------------------------------------------
+Módulo completo de análisis de especialidades
+
+FUNCIONES PRINCIPALES:
+
+analyzeCard(card)
+- Analiza una carta individual
+- Busca keywords de especialidades en la descripción
+- Retorna array de especialidades detectadas
+- Incluye datos de counters
+
+analyzeDeck(cards)
+- Analiza el deck completo
+- Cuenta especialidades por tipo
+- Retorna especialización del deck
+- Estructura:
+  {
+    specializations: {
+      "NombreEspecialización": {
+        deckLevel: "Nombre",
+        cardCount: 5,
+        counters: [...],
+        counteredBy: [...],
+        linkedKeywords: [...]
+      }
+    },
+    rawCount: { ... }
+  }
+
+getPrimarySpecialization(deckAnalysis)
+- Determina la especialización principal del deck
+- Basado en la mayor cantidad de cartas
+- Retorna nombre, count, counters y counteredBy
+
+calculateCardVsCard(card1, card2) [Preparado para Paso 6]
+- Calcula counter score entre dos cartas
+- Verifica si card1 contrarresta a card2
+- Retorna score numérico
+
+calculateDeckVsDeck(deck1, deck2) [Preparado para Paso 7]
+- Calcula counter score entre dos decks
+- Retorna: counterScore, interactions, avgCounter
+- Base para External Score
+
+renderDeckSpecializations(deckAnalysis)
+- Genera HTML para mostrar especialidades
+- Ordenado por cantidad de cartas
+- Listo para integración UI
+
+2. CONFIGMANAGER.JS (MODIFICADO)
+--------------------------------------------------------------------------------
+NUEVAS FUNCIONES:
+
+getSpecialties()
+- Retorna todas las especialidades configuradas
+
+getSpecialtyNames()
+- Retorna array de keywords de especialidades
+
+getSpecialty(keyword)
+- Retorna especialidad específica
+
+createSpecialty(keyword, data)
+- Crea nueva especialidad
+- Valida que no exista duplicado
+
+updateSpecialty(keyword, data)
+- Actualiza datos de especialidad existente
+
+deleteSpecialty(keyword)
+- Elimina especialidad
+
+renameSpecialtyKeyword(oldKeyword, newKeyword)
+- Renombra keyword de especialidad
+
+3. DECK.JS (MODIFICADO)
+--------------------------------------------------------------------------------
+CAMBIOS EN syncFromViewer():
+
+Al agregar carta al deck:
+- Ahora detecta especialidades automáticamente
+- Llama a SpecialtyAnalyzer.analyzeCard(card)
+- Almacena specialties en la carta:
+  {
+    data: {...},
+    qty: 1,
+    location: 'main',
+    roles: [...],
+    specialties: [...]  // NUEVO
+  }
+
+4. CONFIG.JS (MODIFICADO)
+--------------------------------------------------------------------------------
+NUEVA SECCIÓN: "Especialidades y Counters"
+
+FUNCIONES AGREGADAS:
+
+renderSpecialtiesSection()
+- Renderiza sección completa de especialidades
+- Botón crear nueva especialidad
+- Lista de especialidades existentes
+
+renderSpecialtyCard(keyword, data)
+- Tarjeta individual de especialidad
+- Campos editables:
+  • Keyword (renombrable)
+  • Nombre a nivel carta
+  • Nombre a nivel deck
+  • Rol vinculado (dropdown)
+  • Nota sobre counters automáticos
+
+renderRoleOptions(selectedRole)
+- Genera opciones de roles para dropdown
+
+createNewSpecialty()
+- Crea especialidad desde UI
+- Valores por defecto
+
+renameSpecialtyKeyword(inputElement)
+- Renombra keyword con validación
+
+deleteSpecialty(keyword)
+- Elimina con confirmación
+
+updateSpecialtyField(inputElement)
+- Actualiza campo individual
+- Sin re-render para mejor UX
+
+5. STYLE_CONFIG.CSS (MODIFICADO)
+--------------------------------------------------------------------------------
+NUEVOS ESTILOS:
+
+.specialty-field-input
+- Inputs y selects para campos de especialidad
+- Estilo consistente con el resto de la UI
+- Focus states
+- Responsive
+
+6. INDEX.HTML (MODIFICADO)
+--------------------------------------------------------------------------------
+ORDEN DE CARGA ACTUALIZADO:
+
+1. logger.js
+2. navigation.js
+3. parallax.js
+4. utils.js
+5. cardviewer.js
+6. buscador.js
+7. configmanager.js
+8. specialty-analyzer.js ← NUEVO
+9. stats.js
+10. deck.js
+11. estadisticas.js
+12. config.js
+
+================================================================================
+FUNCIONAMIENTO DEL SISTEMA
+================================================================================
+
+FLUJO DE TRABAJO:
+
+1. USUARIO AGREGA CARTA AL DECK
+   ↓
+2. deck.js → syncFromViewer()
+   ↓
+3. SpecialtyAnalyzer.analyzeCard(card)
+   - Busca keywords en descripción
+   - Retorna especialidades detectadas
+   ↓
+4. Carta almacenada con specialties:
+   {
+     data: {...},
+     qty: 1,
+     roles: [...],
+     specialties: [
+       {
+         keyword: "return",
+         cardLevel: "Recycle",
+         deckLevel: "Bounce",
+         counters: [...],
+         counteredBy: [...]
+       }
+     ]
+   }
+   ↓
+5. ANÁLISIS DE DECK (futuro)
+   - SpecialtyAnalyzer.analyzeDeck(Deck.cards)
+   - Determina especialización principal
+   - Calcula counters vs otros decks
+
+EJEMPLO PRÁCTICO:
+
+Carta: "Harpie's Feather Duster"
+Descripción: "Destroy all Spell and Trap Cards..."
+
+Análisis:
+→ keyword "destroy" detectado
+→ Especialidad asignada:
+  {
+    keyword: "destroy",
+    cardLevel: "Removal",
+    deckLevel: "Destruction",
+    linkedRole: "Boardbreaker",
+    counters: ["monster-effect", "backrow"],
+    counteredBy: ["destruction-protection"]
+  }
+
+Deck con 8 cartas "Removal":
+→ Especialización del deck: "Destruction"
+→ Counter potencial contra decks con backrow pesado
+
+================================================================================
+DATOS INTERNOS VS PÚBLICOS
+================================================================================
+
+PÚBLICOS (Visibles en UI):
+- Roles (badges en cartas)
+
+INTERNOS (No mostrados directamente):
+- Specialties de cada carta
+- Especialización del deck
+- Counter scores
+- Análisis comparativo
+
+RAZÓN:
+Evitar saturar la interfaz. Los datos internos se usarán para:
+- Cálculos de scores
+- Análisis del deck (Paso 8)
+- Recomendaciones automáticas
+- Sistema de counters (Paso 6-7)
+
+================================================================================
+CONFIGURACIÓN DESDE UI
+================================================================================
+
+USUARIO PUEDE:
+
+1. Crear nuevas especialidades
+   - Definir keyword
+   - Nombre a nivel carta
+   - Nombre a nivel deck
+   - Vincular a rol existente
+
+2. Editar especialidades
+   - Cambiar nombres
+   - Modificar vinculación
+   - Renombrar keywords
+
+3. Eliminar especialidades
+   - Con confirmación
+
+4. Exportar/Importar
+   - Incluye especialidades en backup
+   - Formato JSON extendido
+
+EJEMPLO DE USO:
+
+Usuario quiere agregar "shuffle":
+1. Va a Config → Especialidades y Counters
+2. Escribe "shuffle" en input
+3. Click "Crear Especialidad"
+4. Edita campos:
+   - Carta: "Shuffle"
+   - Deck: "Deck Manipulation"
+   - Rol: (ninguno)
+5. Guardar
+
+Ahora todas las cartas con "shuffle" en descripción
+tendrán esta especialidad detectada automáticamente.
+
+================================================================================
+PREPARACIÓN PARA PASOS FUTUROS
+================================================================================
+
+PASO 2: LISTA DE STAPLES
+- Sistema ya soporta specialties
+- Staples tendrán misma estructura
+- Solo falta UI y gestión específica
+
+PASO 3: ROLES COMPUESTOS
+- roleConditions ya está en estructura
+- Solo falta implementar lógica de validación
+- autoAssignRoles() será modificado
+
+PASO 6: PUNTOS DE PODER POR CARTA
+- calculateCardVsCard() ya implementado
+- Estructura de counters lista
+- Solo falta fórmula de scoring
+
+PASO 7: COUNTER-CARDS Y COUNTER-DECKS
+- calculateDeckVsDeck() ya implementado
+- Sistema escalable
+- Listo para integración con Meta
+
+PASO 8: ANÁLISIS DEL DECK
+- analyzeDeck() proporciona datos base
+- getPrimarySpecialization() identifica fortalezas
+- Counters detectan debilidades
+
+================================================================================
+TESTING Y VALIDACIÓN
+================================================================================
+
+PARA PROBAR EL SISTEMA:
+
+1. Agregar carta con keyword conocido
+   Ejemplo: "Monster Reborn" (tiene "special summon")
+   Verificar: carta.specialties debe contener datos
+
+2. Configuración
+   - Ir a Config → Especialidades y Counters
+   - Crear especialidad de prueba
+   - Verificar que se guarda en localStorage
+
+3. Análisis de Deck
+   En consola:
+   ```javascript
+   const analysis = SpecialtyAnalyzer.analyzeDeck(Deck.cards);
+   console.log(analysis);
+   ```
+
+4. Exportar Configuración
+   - Verificar que incluye specialties
+   - Importar en sesión nueva
+   - Confirmar persistencia
+
+================================================================================
+ESTRUCTURA DE DATOS EN LOCALSTORAGE
+================================================================================
+
+yugioh_config:
+{
+  "roles": { ... },
+  "specialties": {
+    "return": {
+      "cardLevel": "Recycle",
+      "deckLevel": "Bounce",
+      "linkedRole": "Recovery",
+      "counters": ["spell-negate"],
+      "counteredBy": ["anti-spell"]
+    },
+    ...
+  },
+  "roleConditions": { ... }
+}
+
+yugioh_deck:
+{
+  "12345678": {
+    "data": { ... },
+    "qty": 2,
+    "location": "main",
+    "roles": ["Searcher"],
+    "specialties": [
+      {
+        "keyword": "search",
+        "cardLevel": "Search",
+        "deckLevel": "Consistency",
+        "linkedRole": "Searcher",
+        "counters": [],
+        "counteredBy": ["search-lock"]
+      }
+    ]
+  }
+}
+
+================================================================================
+CONCLUSIÓN
+================================================================================
+
+PASO 1 COMPLETADO EXITOSAMENTE ✅
+
+IMPLEMENTADO:
+✅ Sistema de Especialidades completo
+✅ Detección automática en cartas
+✅ Análisis de especialización de deck
+✅ UI para gestión en Configuración
+✅ Sistema de counters (base para Paso 6-7)
+✅ Estructura escalable para todos los pasos
+
+LISTO PARA:
+→ Paso 2: Lista de Staples
+→ Paso 3: Roles Compuestos con Condicionales
+→ Paso 6: Sistema de Puntos de Poder
+→ Paso 7: Counter-Cards y Counter-Decks
+→ Paso 8: Análisis Completo del Deck
+
+PRÓXIMO PASO:
+Implementar Paso 2 - Lista de Staples
+
+================================================================================
+
+================================================================================
+PASO 2 - LISTA DE STAPLES
+Destiny Draw - Yu-Gi-Oh! App
+Fecha: 10/02/2026
+Estado: ✅ COMPLETADO
+================================================================================
+
+RESUMEN EJECUTIVO
+--------------------------------------------------------------------------------
+Se ha implementado exitosamente el sistema de Lista de Staples. Este sistema
+permite:
+
+1. Mantener una lista interna de cartas genéricas (staples)
+2. Asignar roles predefinidos a staples
+3. Definir specialty keywords para cada staple
+4. Gestionar staples desde Configuración
+5. Aplicar automáticamente roles y especialidades de staples al deck
+6. Sistema NO visible directamente en la UI del deck (datos internos)
+
+================================================================================
+ARQUITECTURA IMPLEMENTADA
+================================================================================
+
+1. ESTRUCTURA DE DATOS - STAPLES
+--------------------------------------------------------------------------------
+
+ConfigManager.defaultConfig.staples:
+{
+  "ID_CARTA": {
+    id: "ID_CARTA",
+    name: "Nombre en Español",
+    nameEn: "English Name",
+    roles: ["Rol1", "Rol2"],
+    specialtyKeywords: ["keyword1", "keyword2"],
+    notes: "Notas opcionales"
+  }
+}
+
+STAPLES PREDEFINIDOS:
+
+1. Monster Reborn (83764718)
+   - Nombre: "Renace al monstruo"
+   - Roles: ["Recovery", "Extender"]
+   - Keywords: ["special summon", "from the graveyard"]
+   - Notas: "Staple universal de recuperación"
+
+2. Mystical Space Typhoon (5318639)
+   - Nombre: "Tifón Místico Espacial"
+   - Roles: ["Backrow-Removal"]
+   - Keywords: ["destroy", "spell", "trap"]
+   - Notas: "Remoción de backrow estándar"
+
+3. Mirror Force (44095762)
+   - Nombre: "Fuerza del Espejo"
+   - Roles: ["Boardbreaker", "Disruption"]
+   - Keywords: ["destroy all", "attack position"]
+   - Notas: "Trampa de remoción masiva"
+
+================================================================================
+ARCHIVOS MODIFICADOS
+================================================================================
+
+1. CONFIGMANAGER.JS
+--------------------------------------------------------------------------------
+
+NUEVA SECCIÓN: defaultConfig.staples
+- Estructura completa de staples predefinidos
+- 3 cartas iniciales configuradas
+
+NUEVAS FUNCIONES (11 métodos):
+
+getStaples()
+- Retorna todas las staples configuradas
+
+getStapleIds()
+- Retorna array de IDs de staples
+
+getStaple(cardId)
+- Retorna staple específico por ID
+
+isStaple(cardId)
+- Verifica si una carta es staple
+
+createStaple(cardId, data)
+- Crea nuevo staple
+- Valida duplicados
+
+updateStaple(cardId, data)
+- Actualiza datos de staple existente
+
+deleteStaple(cardId)
+- Elimina staple
+
+addRoleToStaple(cardId, roleName)
+- Agrega rol a un staple
+- Evita duplicados
+
+removeRoleFromStaple(cardId, roleName)
+- Elimina rol de staple
+
+addSpecialtyKeywordToStaple(cardId, keyword)
+- Agrega specialty keyword a staple
+- Normaliza a lowercase
+
+removeSpecialtyKeywordFromStaple(cardId, keyword)
+- Elimina specialty keyword de staple
+
+2. CONFIG.JS
+--------------------------------------------------------------------------------
+
+NUEVA SECCIÓN: "Lista de Staples"
+- Colapsable por defecto (no visible inicialmente)
+- Explicación de qué son las staples
+
+NUEVAS FUNCIONES DE RENDERIZADO:
+
+renderStaplesSection()
+- Genera sección completa de staples
+- Incluye explicación y botón crear
+- Lista de staples existentes
+
+renderStapleCard(cardId, data)
+- Tarjeta individual de staple
+- Header con nombre, ID y nombre en inglés
+- Chips de roles (color azul estándar)
+- Chips de specialty keywords (color púrpura #6c5ce7)
+- Dropdown para agregar roles
+- Input para agregar keywords
+- Campo de notas editable
+- Botón eliminar
+
+NUEVAS FUNCIONES DE ACCIONES:
+
+createNewStaple()
+- Crea staple desde UI
+- Requiere ID y nombre
+- Inicializa con arrays vacíos
+
+deleteStaple(cardId)
+- Elimina con confirmación
+- Muestra nombre en confirmación
+
+addRoleToStapleFromSelect(selectElement)
+- Agrega rol desde dropdown
+- Auto-resetea select después
+
+removeRoleFromStaple(cardId, roleName)
+- Elimina rol con re-render
+
+addSpecialtyKeywordToStapleFromInput(inputElement)
+- Agrega keyword desde input
+- Normaliza a lowercase
+- Limpia input después
+
+removeSpecialtyKeywordFromStaple(cardId, keyword)
+- Elimina keyword con re-render
+
+updateStapleNotes(inputElement)
+- Actualiza notas sin re-render
+- Mejor UX para edición continua
+
+3. STYLE_CONFIG.CSS
+--------------------------------------------------------------------------------
+
+NUEVOS ESTILOS:
+
+.config-help-text
+- Caja de ayuda con fondo azul claro
+- Border-left accent
+- Para explicaciones
+
+.staples-list
+- Grid de staples cards
+
+.staple-card
+- Gradiente azul oscuro a negro
+- Border púrpura (rgba(108, 92, 231, 0.3))
+- Hover effect con glow púrpura
+- Diferenciación visual vs role-cards
+
+.staple-card-header
+- Flex layout
+- Info del staple vs botón eliminar
+
+.staple-info
+- Column layout
+- Nombre (dorado)
+- ID (monospace, gris)
+- Nombre inglés (cursiva, gris claro)
+
+.staple-card-body
+- Column layout con gap
+- Secciones para roles, keywords, notas
+
+.empty-chips
+- Placeholder cuando no hay chips
+- Texto gris cursiva
+
+4. SPECIALTY-ANALYZER.JS
+--------------------------------------------------------------------------------
+
+MODIFICACIÓN: analyzeCard(card)
+
+NUEVA LÓGICA:
+1. Verificar si carta es staple (ConfigManager.isStaple)
+2. Si es staple:
+   - Obtener specialty keywords del staple
+   - Buscar cada keyword en specialties config
+   - Agregar a detectedSpecialties con flag fromStaple: true
+3. Continuar con detección normal desde descripción
+4. Evitar duplicados (keywords ya agregados desde staple)
+
+Resultado: Staples tienen especialidades predefinidas + detectadas
+
+NUEVA FUNCIÓN: getStapleRoles(cardId)
+- Retorna roles predefinidos de un staple
+- Usado por deck.js para combinar roles
+
+5. DECK.JS
+--------------------------------------------------------------------------------
+
+MODIFICACIÓN: syncFromViewer(id, card, qty)
+
+NUEVA LÓGICA AL AGREGAR CARTA:
+1. Detectar especialidades (incluye staples automáticamente)
+2. Obtener roles automáticos (autoAssignRoles)
+3. Si es staple:
+   - Obtener roles predefinidos (getStapleRoles)
+   - Combinar con roles automáticos
+   - Evitar duplicados
+4. Crear carta con roles combinados
+
+Resultado: Staples tienen roles automáticos + predefinidos
+
+================================================================================
+FUNCIONAMIENTO DEL SISTEMA
+================================================================================
+
+FLUJO COMPLETO - AGREGAR STAPLE AL DECK:
+
+1. USUARIO AGREGA "MONSTER REBORN" AL DECK
+   ↓
+2. deck.js → syncFromViewer()
+   ↓
+3. SpecialtyAnalyzer.analyzeCard()
+   - Detecta que ID 83764718 es staple
+   - Obtiene specialty keywords: ["special summon", "from the graveyard"]
+   - Busca "special summon" en specialties config
+   - Busca "from the graveyard" en specialties config
+   - Marca como fromStaple: true
+   ↓
+4. autoAssignRoles()
+   - Detecta "special summon" → agrega "Extender"
+   - Detecta "from the graveyard" → agrega "Recovery"
+   ↓
+5. SpecialtyAnalyzer.getStapleRoles()
+   - Retorna ["Recovery", "Extender"] desde config
+   ↓
+6. COMBINAR ROLES (automáticos + staples)
+   - Automáticos: ["Extender", "Recovery"]
+   - Staples: ["Recovery", "Extender"]
+   - Resultado: ["Extender", "Recovery"] (sin duplicados)
+   ↓
+7. CARTA ALMACENADA:
+   {
+     data: {...},
+     qty: 1,
+     location: 'main',
+     roles: ["Extender", "Recovery"],
+     specialties: [
+       {
+         keyword: "special summon",
+         cardLevel: "...",
+         deckLevel: "...",
+         fromStaple: true
+       },
+       {
+         keyword: "from the graveyard",
+         cardLevel: "...",
+         deckLevel: "...",
+         fromStaple: true
+       }
+     ]
+   }
+
+================================================================================
+GESTIÓN DESDE CONFIGURACIÓN
+================================================================================
+
+USUARIO PUEDE:
+
+1. VER LISTA DE STAPLES
+   Config → Lista de Staples → Ver todas las staples
+
+2. AGREGAR NUEVO STAPLE
+   - Ingresar ID de carta (ej: 12345678)
+   - Ingresar nombre (ej: "Ash Blossom")
+   - Click "Agregar Staple"
+   - Se crea con arrays vacíos
+
+3. ASIGNAR ROLES A STAPLE
+   - Dropdown con todos los roles disponibles
+   - Select rol → se agrega
+   - Click × en chip → se elimina
+
+4. AGREGAR SPECIALTY KEYWORDS
+   - Input de texto
+   - Enter o botón "Agregar"
+   - Keywords en lowercase automáticamente
+   - Click × en chip → se elimina
+
+5. EDITAR NOTAS
+   - Campo de texto editable
+   - Cambio automático sin re-render
+
+6. ELIMINAR STAPLE
+   - Click botón 🗑️
+   - Confirmación con nombre
+   - Eliminación permanente
+
+EJEMPLO PRÁCTICO:
+
+Usuario quiere agregar "Ash Blossom & Joyous Spring":
+
+1. Config → Lista de Staples
+2. ID: 14558127
+3. Nombre: "Ash Blossom y Primavera Jubilosa"
+4. Agregar
+5. Dropdown → Seleccionar "Handtrap"
+6. Input keywords → "negate" + Enter
+7. Input keywords → "effect activation" + Enter
+8. Notas → "Handtrap universal"
+9. Listo
+
+Ahora cuando el usuario agregue Ash Blossom al deck:
+- Tendrá rol "Handtrap" automáticamente
+- Tendrá especialidades "Negation" y "Effect Activation"
+- Se contará en análisis de deck
+
+================================================================================
+DATOS INTERNOS VS PÚBLICOS
+================================================================================
+
+PÚBLICOS (Visibles):
+- Roles en badges de cartas del deck
+- Configuración de staples (solo en Config)
+
+INTERNOS (No visibles directamente):
+- Lista de staples en deck
+- Specialty keywords de staples
+- Origen de roles (si vino de staple o automático)
+- Flag fromStaple en especialidades
+
+RAZÓN:
+- Evitar saturar UI del deck
+- Datos usados para:
+  • Análisis interno
+  • Cálculos de scores
+  • Comparación con meta
+  • Recomendaciones futuras
+
+================================================================================
+PERSISTENCIA DE DATOS
+================================================================================
+
+LOCALSTORAGE - yugioh_config:
+{
+  "roles": { ... },
+  "specialties": { ... },
+  "roleConditions": { ... },
+  "staples": {
+    "83764718": {
+      "id": "83764718",
+      "name": "Renace al monstruo",
+      "nameEn": "Monster Reborn",
+      "roles": ["Recovery", "Extender"],
+      "specialtyKeywords": ["special summon", "from the graveyard"],
+      "notes": "Staple universal de recuperación"
+    },
+    ...
+  }
+}
+
+LOCALSTORAGE - yugioh_deck:
+{
+  "83764718": {
+    "data": { ... },
+    "qty": 1,
+    "location": "main",
+    "roles": ["Recovery", "Extender"],
+    "specialties": [
+      {
+        "keyword": "special summon",
+        "cardLevel": "...",
+        "fromStaple": true
+      }
+    ]
+  }
+}
+
+================================================================================
+INTEGRACIÓN CON PASOS ANTERIORES
+================================================================================
+
+PASO 1 - ESPECIALIDADES:
+✅ Staples usan el mismo sistema de especialidades
+✅ Keywords de staples se buscan en specialties config
+✅ Misma estructura de datos (counters, counteredBy)
+
+COMPATIBILIDAD:
+✅ Roles automáticos se combinan con roles de staples
+✅ Sin conflictos ni duplicados
+✅ Sistema escalable
+
+================================================================================
+PREPARACIÓN PARA PASOS FUTUROS
+================================================================================
+
+PASO 3: ROLES COMPUESTOS
+- Staples pueden tener roles compuestos
+- Sistema ya soporta múltiples roles por staple
+
+PASO 5: RECURRENCIA EN META
+- Staples se contarán en análisis de meta
+- isStaple() permite identificarlos fácilmente
+- Base para estadísticas de uso
+
+PASO 6: PUNTOS DE PODER POR CARTA
+- Staples tendrán scoring especial
+- Alto uso en meta = mayor poder
+- Counters ya configurados
+
+PASO 8: ANÁLISIS DEL DECK
+- "Deck usa X staples del meta actual"
+- "Staple Y es contrarrestado por Z en el meta"
+- Recomendaciones basadas en staples
+
+================================================================================
+CASOS DE USO COMUNES
+================================================================================
+
+1. JUGADOR ANALIZA SU DECK
+   - Ve que usa 3 staples (Monster Reborn, MST, Mirror Force)
+   - Sistema detecta especialización "Removal" alta
+   - Análisis: "Deck orientado a control/remoción"
+
+2. COMPARACIÓN CON META
+   - Meta actual usa Ash Blossom en 80% de decks
+   - Usuario no la tiene
+   - Recomendación futura: "Considera agregar Ash Blossom"
+
+3. CONSTRUCCIÓN DE DECK
+   - Usuario agrega staples conocidos
+   - Roles se aplican automáticamente
+   - No necesita marcar manualmente
+
+4. ACTUALIZACIÓN DE META
+   - Nueva banlist hace staple una carta
+   - Usuario la agrega a lista de staples
+   - Automáticamente se considera en análisis futuros
+
+================================================================================
+TESTING Y VALIDACIÓN
+================================================================================
+
+PARA PROBAR EL SISTEMA:
+
+1. VERIFICAR STAPLES PREDEFINIDOS
+   En consola:
+   ```javascript
+   console.log(ConfigManager.getStaples());
+   // Debe mostrar 3 staples predefinidos
+   ```
+
+2. AGREGAR STAPLE AL DECK
+   - Buscar "Monster Reborn"
+   - Agregar al deck
+   - Verificar que tiene roles "Recovery" y "Extender"
+   - En consola:
+   ```javascript
+   console.log(Deck.cards["83764718"]);
+   // Debe mostrar roles y especialidades
+   ```
+
+3. CREAR NUEVO STAPLE
+   - Config → Lista de Staples
+   - ID: 14558127, Nombre: "Ash Blossom"
+   - Agregar rol "Handtrap"
+   - Agregar keyword "negate"
+   - Verificar en localStorage
+
+4. VERIFICAR COMBINACIÓN DE ROLES
+   - Agregar staple que tiene rol predefinido
+   - Verificar que autoAssignRoles también detecta
+   - Roles deben combinarse sin duplicados
+
+================================================================================
+DIFERENCIAS VISUALES
+================================================================================
+
+STAPLES VS ROLES VS ESPECIALIDADES:
+
+ROLES:
+- Color: Azul estándar (#0066cc)
+- Visibles como badges en deck
+- Gestionables en Config
+
+ESPECIALIDADES:
+- Color: Variable por tipo
+- NO visibles en UI de deck
+- Gestionables en Config
+
+STAPLES:
+- Color chips roles: Azul
+- Color chips keywords: Púrpura (#6c5ce7)
+- Border púrpura en cards
+- Sección separada en Config
+
+================================================================================
+BENEFICIOS DEL SISTEMA
+================================================================================
+
+1. AUTOMATIZACIÓN
+   - No necesita marcar staples manualmente
+   - Roles y especialidades automáticos
+
+2. FLEXIBILIDAD
+   - Lista editable y expandible
+   - Adaptable a nuevos metas
+
+3. ANÁLISIS
+   - Base para recomendaciones futuras
+   - Comparación con meta
+
+4. CONSISTENCIA
+   - Mismas cartas siempre reconocidas
+   - Datos predefinidos confiables
+
+5. ESCALABILIDAD
+   - Fácil agregar nuevos staples
+   - Sistema preparado para cientos de cartas
+
+================================================================================
+CONCLUSIÓN
+================================================================================
+
+PASO 2 COMPLETADO EXITOSAMENTE ✅
+
+IMPLEMENTADO:
+✅ Sistema completo de staples
+✅ 3 staples predefinidos
+✅ Gestión desde Configuración
+✅ Detección automática en deck
+✅ Roles y especialidades combinados
+✅ UI específica con estilos diferenciados
+✅ 11 nuevos métodos en ConfigManager
+✅ 9 nuevas funciones en Config.js
+✅ Integración con specialty-analyzer.js
+✅ Integración con deck.js
+
+LISTO PARA:
+→ Paso 3: Roles Compuestos con Condicionales
+→ Paso 4: Nomenclatura de Cartas
+→ Paso 5: Recurrencia en Meta
+→ Paso 6: Puntos de Poder por Carta
+
+PRÓXIMO PASO:
+Implementar Paso 3 - Roles Compuestos con Condicionales
+
+================================================================================
+
+================================================================================
+PASO 3 - ROLES COMPUESTOS CON CONDICIONALES
+Destiny Draw - Yu-Gi-Oh! App
+Fecha: 10/02/2026
+Estado: ✅ COMPLETADO
+================================================================================
+
+RESUMEN EJECUTIVO
+--------------------------------------------------------------------------------
+Se ha implementado exitosamente el sistema de Roles Compuestos con
+Condicionales. Este sistema permite:
+
+1. Definir roles que requieren condicionales (palabras que DEBEN estar)
+2. Definir keywords (AL MENOS UNA debe estar presente)
+3. Combinar ambos para detección precisa de roles
+4. Gestionar condicionales desde Configuración
+5. Compatibilidad con roles simples (sin condicionales)
+6. Diferenciación visual clara en UI
+
+================================================================================
+CONCEPTO - ROLES COMPUESTOS
+================================================================================
+
+ROLES SIMPLES (Paso 1):
+- Solo verifica que AL MENOS UNA keyword esté presente
+- Ejemplo: "Searcher" → ["add", "from your deck"]
+- Si encuentra "add" → asigna rol Searcher
+
+ROLES COMPUESTOS (Paso 3):
+- Verifica que TODAS las condicionales estén presentes
+- Y que AL MENOS UNA keyword esté presente
+- Ejemplo: "Handtrap" → 
+  • Condicionales: ["quick-effect"] (DEBE estar)
+  • Keywords: ["from your hand", "from the hand"] (AL MENOS UNA)
+- Si tiene "quick-effect" Y "from your hand" → asigna rol Handtrap
+
+BENEFICIO:
+- Mayor precisión en detección de roles
+- Evita falsos positivos
+- Permite roles más específicos y complejos
+
+================================================================================
+ARQUITECTURA IMPLEMENTADA
+================================================================================
+
+ESTRUCTURA DE DATOS - roleConditions
+--------------------------------------------------------------------------------
+
+ConfigManager.defaultConfig.roleConditions:
+{
+  "NombreRol": {
+    conditionals: ["palabra1", "palabra2"],  // TODAS deben cumplirse
+    keywords: ["keyword1", "keyword2"]       // AL MENOS UNA debe cumplirse
+  }
+}
+
+ROLES COMPUESTOS PREDEFINIDOS:
+
+1. Handtrap
+   - Condicionales: [] (vacío = sin condicionales, es rol simple)
+   - Keywords: ["from your hand", "from the hand", "from their hand"]
+   - Lógica: Si tiene alguna keyword → es Handtrap
+
+2. Disruption
+   - Condicionales: ["quick-effect", "during either player"]
+   - Keywords: ["negate", "destroy"]
+   - Lógica: Si tiene "quick-effect" Y "during either player" Y ("negate" O "destroy") → es Disruption
+
+EJEMPLO PRÁCTICO:
+
+Carta: "Effect Veiler"
+Descripción: "During your opponent's Main Phase (Quick Effect): You can send this card from your hand to the Graveyard, then target 1 Effect Monster your opponent controls; negate that face-up monster's effects until the end of this turn."
+
+Análisis:
+- ✅ Tiene "quick effect" (condicional de Disruption)
+- ✅ Tiene "during" (condicional de Disruption)
+- ❌ NO tiene "either player" (falta condicional)
+- ✅ Tiene "negate" (keyword de Disruption)
+- ✅ Tiene "from your hand" (keyword de Handtrap)
+
+Resultado:
+- ✅ Asigna "Handtrap" (cumple keywords, no tiene condicionales)
+- ❌ NO asigna "Disruption" (falta condicional "either player")
+
+================================================================================
+ARCHIVOS MODIFICADOS
+================================================================================
+
+1. DECK.JS - autoAssignRoles()
+--------------------------------------------------------------------------------
+
+LÓGICA ACTUALIZADA:
+
+Para cada rol:
+1. Verificar si existe en roleConditions
+2. Si existe en roleConditions:
+   a) Verificar que TODAS las condicionales estén en desc
+   b) Si todas las condicionales se cumplen:
+      - Verificar que AL MENOS UNA keyword esté en desc
+      - Si se cumple → asignar rol
+3. Si NO existe en roleConditions:
+   - Usar lógica simple (buscar keywords en roles)
+   - Si encuentra alguna → asignar rol
+
+PSEUDOCÓDIGO:
+```javascript
+for each (roleName, keywords) in roles {
+  if (roleConditions[roleName]) {
+    // ROL COMPUESTO
+    allConditionsMet = true
+    for each conditional in roleConditions[roleName].conditionals {
+      if (!desc.includes(conditional)) {
+        allConditionsMet = false
+        break
+      }
+    }
+    
+    if (allConditionsMet) {
+      for each keyword in roleConditions[roleName].keywords {
+        if (desc.includes(keyword)) {
+          assignRole(roleName)
+          break
+        }
+      }
+    }
+  } else {
+    // ROL SIMPLE
+    for each keyword in keywords {
+      if (desc.includes(keyword)) {
+        assignRole(roleName)
+        break
+      }
+    }
+  }
+}
+```
+
+VENTAJAS:
+- Compatible con roles simples (sin romper nada)
+- Permite roles complejos y precisos
+- Escalable y mantenible
+
+2. CONFIGMANAGER.JS
+--------------------------------------------------------------------------------
+
+NUEVAS FUNCIONES (9 métodos):
+
+getRoleConditions()
+- Retorna todas las roleConditions
+
+getRoleCondition(roleName)
+- Retorna condition específica de un rol
+- null si no tiene
+
+hasConditions(roleName)
+- Verifica si un rol tiene condicionales
+- true/false
+
+setRoleCondition(roleName, conditionals, keywords)
+- Crea o actualiza roleCondition completa
+- Permite definir ambos arrays de una vez
+
+removeRoleCondition(roleName)
+- Elimina roleCondition de un rol
+- Rol vuelve a ser simple
+
+addConditionalToRole(roleName, conditional)
+- Agrega condicional individual
+- Normaliza a lowercase
+- Evita duplicados
+
+removeConditionalFromRole(roleName, conditional)
+- Elimina condicional específica
+
+addKeywordToRoleCondition(roleName, keyword)
+- Agrega keyword a roleCondition
+- Normaliza a lowercase
+- Evita duplicados
+
+removeKeywordFromRoleCondition(roleName, keyword)
+- Elimina keyword específica
+
+3. CONFIG.JS - renderRoleCard()
+--------------------------------------------------------------------------------
+
+NUEVA SECCIÓN: "Roles Compuestos (Opcional)"
+
+ELEMENTOS AGREGADOS:
+
+1. Explicación:
+   "Define condicionales que DEBEN cumplirse + keywords que AL MENOS UNA debe estar presente"
+
+2. Sección Condicionales:
+   - Chips rojos (#e74c3c)
+   - Input + botón "Agregar Condicional"
+   - Placeholder: "Sin condicionales (rol simple)"
+
+3. Sección Keywords:
+   - Chips azules (#3498db)
+   - Input + botón "Agregar Keyword"
+   - Placeholder: "Sin keywords de condición"
+
+COLORES DISTINTIVOS:
+- Palabras clave normales: Azul estándar
+- Condicionales: Rojo (#e74c3c)
+- Keywords de condición: Azul claro (#3498db)
+
+NUEVAS FUNCIONES DE ACCIONES:
+
+addConditionalFromInput(inputElement)
+- Agrega condicional desde input
+- Validación y normalización
+
+removeConditional(roleName, conditional)
+- Elimina condicional con re-render
+
+addCondKeywordFromInput(inputElement)
+- Agrega keyword de condición
+- Validación y normalización
+
+removeCondKeyword(roleName, keyword)
+- Elimina keyword con re-render
+
+4. STYLE_CONFIG.CSS
+--------------------------------------------------------------------------------
+
+NUEVOS ESTILOS:
+
+.role-conditions-section
+- Separación visual con border-top dashed
+- Margin superior para espaciado
+
+.role-conditions-section .config-label
+- Ajustes de spacing
+
+.role-conditions-section .keywords-container
+- Min-height para consistencia
+- Margin bottom
+
+.keyword-chip[style*="background: #e74c3c"]
+- Fuerza color rojo para condicionales
+
+.keyword-chip[style*="background: #3498db"]
+- Fuerza color azul claro para keywords de condición
+
+================================================================================
+FUNCIONAMIENTO DEL SISTEMA
+================================================================================
+
+FLUJO COMPLETO - DETECCIÓN DE ROL COMPUESTO:
+
+1. USUARIO AGREGA CARTA AL DECK
+   ↓
+2. deck.js → autoAssignRoles(card)
+   ↓
+3. Para cada rol en roles config:
+   ↓
+4. Verificar si existe en roleConditions
+   ↓
+5. Si SÍ existe en roleConditions:
+   
+   a) Obtener condicionales: ["quick-effect", "during either player"]
+   b) Verificar TODAS en descripción:
+      - ✅ "quick effect" → encontrado
+      - ✅ "during either player" → encontrado
+      - allConditionsMet = true
+   
+   c) Si allConditionsMet:
+      - Obtener keywords: ["negate", "destroy"]
+      - Buscar AL MENOS UNA:
+        • ✅ "negate" → encontrado
+        • shouldAssign = true
+   
+   d) Asignar rol "Disruption"
+   
+6. Si NO existe en roleConditions:
+   - Buscar keywords normales
+   - Si encuentra alguna → asignar
+
+EJEMPLO - CARTA "ASH BLOSSOM & JOYOUS SPRING":
+
+Descripción (simplificada):
+"When a card or effect is activated that includes any of these effects (Quick Effect): You can discard this card from your hand; negate that effect."
+
+Paso a paso:
+
+ROL: "Disruption"
+- ❌ Condicional "during either player" → NO encontrada
+- Resultado: NO asigna Disruption
+
+ROL: "Handtrap"
+- ✅ No tiene condicionales (rol simple)
+- ✅ Keyword "from your hand" → encontrada
+- Resultado: ✅ Asigna Handtrap
+
+ROL: "Negater"
+- ✅ No tiene condicionales (rol simple)
+- ✅ Keyword "negate" → encontrada
+- Resultado: ✅ Asigna Negater
+
+Roles finales: ["Handtrap", "Negater"]
+
+================================================================================
+GESTIÓN DESDE CONFIGURACIÓN
+================================================================================
+
+USUARIO PUEDE:
+
+1. VER CONDICIONALES Y KEYWORDS
+   - Expandir rol en Config → Roles y Palabras Asociadas
+   - Ver sección "Roles Compuestos (Opcional)"
+   - Chips rojos = condicionales
+   - Chips azules = keywords de condición
+
+2. AGREGAR CONDICIONALES
+   - Input en sección condicionales
+   - Escribir condicional (ej: "quick-effect")
+   - Enter o botón "Agregar Condicional"
+   - Se normaliza a lowercase automáticamente
+
+3. ELIMINAR CONDICIONALES
+   - Click × en chip rojo
+   - Se elimina con confirmación
+
+4. AGREGAR KEYWORDS DE CONDICIÓN
+   - Input en sección keywords
+   - Escribir keyword (ej: "negate")
+   - Enter o botón "Agregar Keyword"
+   - Se normaliza a lowercase
+
+5. ELIMINAR KEYWORDS DE CONDICIÓN
+   - Click × en chip azul
+   - Se elimina con confirmación
+
+6. CONVERTIR ROL SIMPLE EN COMPUESTO
+   - Rol sin condicionales = rol simple
+   - Agregar condicional → se convierte en compuesto
+   - Agregar keywords de condición
+
+7. CONVERTIR ROL COMPUESTO EN SIMPLE
+   - Eliminar todas las condicionales
+   - Rol vuelve a ser simple
+   - Solo usa keywords normales
+
+EJEMPLO PRÁCTICO:
+
+Usuario quiere crear "Quick Hand Trap":
+
+1. Config → Roles y Palabras Asociadas
+2. Crear nuevo rol: "Quick Hand Trap"
+3. Palabras clave normales: (vacío o ignoradas)
+4. Sección Roles Compuestos:
+   - Condicional: "quick-effect"
+   - Keyword: "from your hand"
+5. Guardar
+
+Ahora cartas con "quick-effect" Y "from your hand" tendrán rol "Quick Hand Trap"
+
+================================================================================
+DIFERENCIAS VISUALES
+================================================================================
+
+CHIPS POR TIPO:
+
+1. PALABRAS CLAVE NORMALES:
+   - Color: Azul estándar (#0066cc)
+   - Sección: "Palabras clave asociadas"
+   - Uso: Roles simples
+
+2. CONDICIONALES:
+   - Color: Rojo (#e74c3c)
+   - Sección: "Condicionales (TODAS deben cumplirse)"
+   - Uso: Roles compuestos
+
+3. KEYWORDS DE CONDICIÓN:
+   - Color: Azul claro (#3498db)
+   - Sección: "Keywords (AL MENOS UNA debe cumplirse)"
+   - Uso: Roles compuestos
+
+SECCIÓN DE ROLES COMPUESTOS:
+- Border-top dashed azul
+- Margin superior
+- Explicación clara
+- Placeholder cuando vacío
+
+================================================================================
+COMPATIBILIDAD
+================================================================================
+
+ROLES EXISTENTES SIN CAMBIOS:
+✅ Todos los roles simples funcionan igual
+✅ Búsqueda de keywords sin afectar
+✅ Sin breaking changes
+
+ROLES CON CONDICIONALES PREDEFINIDOS:
+✅ "Handtrap" - sin condicionales (rol simple)
+✅ "Disruption" - con condicionales (rol compuesto)
+
+MIGRACIÓN:
+- Roles antiguos siguen funcionando
+- Pueden convertirse en compuestos agregando condicionales
+- Proceso gradual y reversible
+
+================================================================================
+CASOS DE USO
+================================================================================
+
+1. HANDTRAPS ESPECÍFICOS
+   Crear rol "Hand Trap de Negación":
+   - Condicional: "quick effect"
+   - Keywords: ["from your hand", "negate"]
+   → Solo handtraps que niegan
+
+2. DISRUPCIONES ACTIVAS
+   Crear rol "Disruption Activa":
+   - Condicionales: ["quick-effect", "during either"]
+   - Keywords: ["destroy", "negate", "banish"]
+   → Solo efectos que pueden activarse en turno del oponente
+
+3. STARTERS ESPECÍFICOS
+   Crear rol "Normal Summon Starter":
+   - Condicional: "when this card is normal summoned"
+   - Keywords: ["add", "special summon"]
+   → Solo starters por invocación normal
+
+4. EXTENDERS CON CONDICIÓN
+   Crear rol "Extender de Desventaja":
+   - Condicionales: ["you control no", "if you have no"]
+   - Keywords: ["special summon"]
+   → Solo extenders cuando no tienes campo
+
+================================================================================
+PERSISTENCIA DE DATOS
+================================================================================
+
+LOCALSTORAGE - yugioh_config:
+{
+  "roles": {
+    "Handtrap": ["from your hand"],
+    "Disruption": ["quick-effect"],
+    ...
+  },
+  "roleConditions": {
+    "Handtrap": {
+      "conditionals": [],
+      "keywords": ["from your hand", "from the hand", "from their hand"]
+    },
+    "Disruption": {
+      "conditionals": ["quick-effect", "during either player"],
+      "keywords": ["negate", "destroy"]
+    }
+  },
+  "specialties": { ... },
+  "staples": { ... }
+}
+
+NOTA:
+- roles: keywords antiguas (compatibilidad)
+- roleConditions: nueva estructura (preferida)
+- Si roleConditions existe → usa esa
+- Si no existe → usa roles normal
+
+================================================================================
+INTEGRACIÓN CON PASOS ANTERIORES
+================================================================================
+
+PASO 1 - ESPECIALIDADES:
+✅ Sin conflictos
+✅ Sistemas independientes
+✅ Ambos funcionan simultáneamente
+
+PASO 2 - STAPLES:
+✅ Staples pueden tener roles compuestos
+✅ Detección automática usa roleConditions
+✅ Combinación de roles funciona igual
+
+COMPATIBILIDAD:
+✅ Todo el código anterior sigue funcionando
+✅ Sin breaking changes
+✅ Mejora progresiva
+
+================================================================================
+BENEFICIOS DEL SISTEMA
+================================================================================
+
+1. PRECISIÓN
+   - Detección más exacta de roles
+   - Menos falsos positivos
+
+2. FLEXIBILIDAD
+   - Roles simples y compuestos coexisten
+   - Convertir entre ambos fácilmente
+
+3. ESCALABILIDAD
+   - Crear roles muy específicos
+   - Adaptable a nuevos arquetipos
+
+4. MANTENIBILIDAD
+   - Lógica clara y separada
+   - Fácil de entender y modificar
+
+5. COMPATIBILIDAD
+   - Sin romper código existente
+   - Migración gradual
+
+================================================================================
+TESTING Y VALIDACIÓN
+================================================================================
+
+PARA PROBAR EL SISTEMA:
+
+1. VERIFICAR ROLES PREDEFINIDOS
+   En consola:
+   ```javascript
+   console.log(ConfigManager.getRoleConditions());
+   // Debe mostrar Handtrap y Disruption
+   ```
+
+2. CREAR ROL COMPUESTO
+   - Config → Roles y Palabras Asociadas
+   - Crear rol "Test"
+   - Agregar condicional "quick-effect"
+   - Agregar keyword "negate"
+   - Verificar en localStorage
+
+3. PROBAR DETECCIÓN
+   - Agregar carta con "quick-effect" y "negate"
+   - Verificar que tiene rol "Test"
+   - Agregar carta solo con "negate"
+   - Verificar que NO tiene rol "Test"
+
+4. CONVERTIR ROL SIMPLE A COMPUESTO
+   - Tomar rol existente (ej: "Searcher")
+   - Agregar condicional "when this card is summoned"
+   - Agregar keyword "add"
+   - Probar con cartas
+
+5. VERIFICAR COLORES
+   - Config → Roles
+   - Ver chips rojos (condicionales)
+   - Ver chips azules clares (keywords condición)
+   - Ver chips azules normales (keywords normales)
+
+================================================================================
+LIMITACIONES Y CONSIDERACIONES
+================================================================================
+
+LIMITACIONES:
+- Condicionales y keywords son case-insensitive
+- No soporta regex (solo includes)
+- Todas las condicionales son AND, no OR
+
+CONSIDERACIONES:
+- Más condicionales = más específico pero menos cartas
+- Balance entre precisión y cobertura
+- Probar con cartas reales antes de usar
+
+RECOMENDACIONES:
+- Empezar con roles simples
+- Convertir a compuestos solo si necesario
+- Usar condicionales para roles muy específicos
+- Mantener keywords de condición cortas y claras
+
+================================================================================
+EJEMPLOS DE CONFIGURACIÓN
+================================================================================
+
+ROL SIMPLE (Sin condicionales):
+```json
+{
+  "roles": {
+    "Searcher": ["add", "from your deck"]
+  },
+  "roleConditions": {
+    // No existe entrada para Searcher
+  }
+}
+```
+
+ROL COMPUESTO (Con condicionales):
+```json
+{
+  "roles": {
+    "Disruption": ["quick-effect"]
+  },
+  "roleConditions": {
+    "Disruption": {
+      "conditionals": ["quick-effect", "during either player"],
+      "keywords": ["negate", "destroy"]
+    }
+  }
+}
+```
+
+ROL HÍBRIDO (Transición):
+```json
+{
+  "roles": {
+    "Handtrap": ["from your hand"]  // Usado si no hay roleConditions
+  },
+  "roleConditions": {
+    "Handtrap": {
+      "conditionals": [],  // Sin condicionales = usa keywords de aquí
+      "keywords": ["from your hand", "from the hand"]
+    }
+  }
+}
+```
+
+================================================================================
+CONCLUSIÓN
+================================================================================
+
+PASO 3 COMPLETADO EXITOSAMENTE ✅
+
+IMPLEMENTADO:
+✅ Sistema completo de roles compuestos
+✅ Lógica de condicionales (TODAS) + keywords (AL MENOS UNA)
+✅ UI en Configuración con colores distintivos
+✅ 9 nuevos métodos en ConfigManager
+✅ 4 nuevas funciones en Config.js
+✅ autoAssignRoles() actualizado con nueva lógica
+✅ Estilos CSS diferenciados
+✅ Compatibilidad total con código anterior
+✅ 2 roleConditions predefinidos
+
+LISTO PARA:
+→ Paso 4: Nomenclatura de Cartas
+→ Paso 5: Recurrencia en Meta
+→ Paso 6: Puntos de Poder por Carta
+→ Paso 7: Counter-Cards y Counter-Decks
+
+PRÓXIMO PASO:
+Implementar Paso 4 - Nomenclatura de Cartas
+
+================================================================================
+
+================================================================================
+PASO 4 - NOMENCLATURA DE EFECTOS DE CARTAS
+Destiny Draw - Yu-Gi-Oh! App
+Fecha: 11/02/2026
+Estado: ✅ COMPLETADO
+================================================================================
+
+RESUMEN EJECUTIVO
+--------------------------------------------------------------------------------
+Se ha implementado exitosamente el sistema de Nomenclatura de Efectos que
+permite identificar y resaltar visualmente las diferentes partes estructurales
+de los efectos de las cartas de Yu-Gi-Oh!. Este sistema incluye:
+
+1. Detección automática de 9 categorías de nomenclatura
+2. Resaltado visual con marks de colores en CardViewer
+3. Tooltips informativos al pasar el cursor
+4. Interfaz de configuración completa para personalización
+5. Sistema basado en párrafos (delimitados por . : ;)
+
+================================================================================
+ARQUITECTURA IMPLEMENTADA
+================================================================================
+
+1. CATEGORÍAS DE NOMENCLATURA
+--------------------------------------------------------------------------------
+
+El sistema identifica 9 categorías principales de efectos:
+
+a) VELOCIDAD DE EFECTO (effectSpeed)
+   - Quick Effect
+   - Trigger  
+   - Ignition
+   
+b) TIPO DE EFECTO (effectType)
+   - Targeting
+   - Non-Targeting
+
+c) TIMING DEL EFECTO (timing)
+   - On Summon
+   - On Activation
+   - During Battle
+   - End Phase
+
+d) REQUISITOS (requirements)
+   - Condiciones necesarias para activar
+   - Array de palabras clave
+
+e) CONDICIÓN DE ACTIVACIÓN (conditions)
+   - While
+   - During
+   - As long as
+
+f) COSTO DE ACTIVACIÓN (cost)
+   - Discard
+   - Banish
+   - Tribute
+   - Pay
+   - Detach
+   - Send
+
+g) EFECTO (effects)
+   - Destruction
+   - Negation
+   - Banish
+   - Special Summon
+   - Search
+   - Draw
+   - Burn
+   - Gain
+
+h) DURACIÓN DEL EFECTO (duration)
+   - Until End Phase
+   - Permanent
+   - Once While Face-up
+
+i) RESTRICCIÓN (restrictions)
+   - Once Per Turn
+   - Hard Once Per Turn
+   - Cannot Summon
+   - Cannot Activate
+
+2. ESTRUCTURA DE DATOS EN CONFIGMANAGER
+--------------------------------------------------------------------------------
+
+DefaultConfig ahora incluye:
+
+nomenclature: {
+    effectSpeed: {
+        "Quick Effect": ["quick effect", "(quick effect)"],
+        "Trigger": ["when", "if"],
+        ...
+    },
+    effectType: { ... },
+    timing: { ... },
+    requirements: [...],  // Array simple
+    conditions: [...],     // Array simple
+    cost: [...],           // Array simple
+    effects: { ... },
+    duration: { ... },
+    restrictions: { ... }
+}
+
+nomenclatureColors: {
+    effectSpeed: "#FF6B6B",        // Rojo
+    effectType: "#4ECDC4",         // Cyan
+    timing: "#FFE66D",             // Amarillo
+    requirements: "#95E1D3",       // Verde agua
+    conditions: "#F38181",         // Rosa
+    cost: "#AA96DA",               // Morado
+    effects: "#FCBAD3",            // Rosa claro
+    duration: "#A8E6CF",           // Verde menta
+    restrictions: "#FFD3B6"        // Naranja pastel
+}
+
+================================================================================
+ARCHIVOS MODIFICADOS/CREADOS
+================================================================================
+
+1. CONFIGMANAGER.JS (MODIFICADO)
+--------------------------------------------------------------------------------
+
+NUEVAS FUNCIONES:
+
+getNomenclature()
+- Retorna toda la configuración de nomenclatura
+- Incluye keywords y categorías
+
+getNomenclatureColors()
+- Retorna el objeto completo de colores
+- Usado por CardViewer para resaltado
+
+updateNomenclatureColor(category, color)
+- Actualiza color de una categoría
+- Guarda en localStorage
+- Formato hexadecimal (#RRGGBB)
+
+COLORES POR DEFECTO AGREGADOS:
+- 9 colores distintos para cada categoría
+- Paleta armoniosa y legible
+- Transparencia aplicada en CSS (0.6)
+
+2. CARDVIEWER.JS (MODIFICADO COMPLETAMENTE)
+--------------------------------------------------------------------------------
+
+NUEVAS FUNCIONES:
+
+highlightNomenclature(desc)
+- Función principal de resaltado
+- Divide descripción en párrafos
+- Llama a highlightParagraph por cada uno
+
+splitIntoParagraphs(text)
+- Divide texto en párrafos usando delimitadores
+- Delimitadores: . (punto), : (dos puntos), ; (punto y coma)
+- Retorna array de objetos con texto y posiciones
+
+highlightParagraph(paragraph, nomenclature, colors)
+- Analiza UN párrafo completo
+- Verifica keywords de cada categoría
+- Si coincide, resalta TODO el párrafo
+- Retorna HTML con <mark> o texto sin modificar
+
+LÓGICA DE RESALTADO:
+1. Se divide el efecto completo en párrafos
+2. Cada párrafo se analiza independientemente
+3. Se busca si contiene keywords de alguna categoría
+4. Si coincide, se resalta el párrafo COMPLETO con el color de esa categoría
+5. Solo un color por párrafo (primera coincidencia)
+
+MARKS CON TOOLTIPS:
+<mark style="background-color: #FF6B6B; opacity: 0.6; padding: 2px 4px; 
+      border-radius: 3px; cursor: help;" 
+      title="Velocidad de Efecto">
+    When this card is Normal Summoned:
+</mark>
+
+El atributo title="" muestra el nombre de la categoría al hacer hover
+
+3. CONFIG.JS (MODIFICADO)
+--------------------------------------------------------------------------------
+
+NUEVA SECCIÓN: "Nomenclatura de Efectos"
+
+FUNCIONES AGREGADAS:
+
+renderNomenclatureSection()
+- Renderiza sección completa
+- Muestra las 9 categorías
+- Cada categoría tiene:
+  * Nombre (readonly)
+  * Color picker
+  * Lista de keywords actuales
+  * Input para agregar nuevas
+
+renderNomenclatureKeywords(category, categoryData)
+- Renderiza chips de keywords
+- Maneja dos estructuras:
+  * Objetos: { "Nombre": ["kw1", "kw2"] }
+  * Arrays: ["kw1", "kw2", "kw3"]
+
+updateNomenclatureColor(inputElement)
+- Actualiza color desde color picker
+- Guarda en ConfigManager
+- No requiere re-render
+
+addNomenclatureKeywordFromInput(inputElement)
+- Agrega nueva keyword a categoría
+- Maneja estructuras de objeto y array
+- Valida duplicados
+- Re-renderiza sección
+
+removeNomenclatureKeyword(category, name, keyword)
+- Elimina keyword específica
+- Limpia objetos vacíos (Custom_*)
+- Re-renderiza sección
+
+INTERFAZ VISUAL:
+- Tarjetas por categoría
+- Color picker integrado
+- Chips interactivos con X para eliminar
+- Input inline para agregar keywords
+- Nombres de categoría en español
+
+4. NOMENCLATURE-ANALYZER.JS (YA EXISTÍA - SIN CAMBIOS)
+--------------------------------------------------------------------------------
+Este módulo ya existía desde implementación previa.
+Funciones disponibles:
+- analyzeCard(card) - Analiza carta completa
+- detectEffectSpeed, detectTiming, etc.
+- hasNomenclatureData(nomenclature)
+
+NOTA: Este módulo NO se usa actualmente en CardViewer.
+CardViewer implementa su propia lógica de resaltado basada en párrafos.
+NomenclatureAnalyzer podría usarse en futuras funcionalidades.
+
+================================================================================
+FUNCIONAMIENTO DEL SISTEMA
+================================================================================
+
+FLUJO COMPLETO:
+
+1. USUARIO ABRE CARTA EN CARDVIEWER
+   ↓
+2. CardViewer.highlightNomenclature(card.desc)
+   ↓
+3. splitIntoParagraphs() divide el efecto
+   Ejemplo: "When this card is Normal Summoned: You can add 1 card."
+   Párrafos:
+   - "When this card is Normal Summoned:"
+   - " You can add 1 card."
+   ↓
+4. highlightParagraph() por cada párrafo
+   ↓
+5. Verifica keywords en orden de prioridad:
+   effectSpeed → effectType → timing → requirements → ...
+   ↓
+6. Si encuentra coincidencia:
+   - Obtiene color de la categoría
+   - Envuelve párrafo en <mark> con color y tooltip
+   - Retorna párrafo resaltado
+   ↓
+7. Si NO encuentra coincidencia:
+   - Retorna párrafo sin modificar
+   ↓
+8. Todos los párrafos se unen y se muestran en CardViewer
+
+EJEMPLO PRÁCTICO:
+
+Carta: "Ash Blossom & Joyous Spring"
+Descripción:
+"When a card or effect is activated that includes any of these effects 
+(Quick Effect): You can discard this card; negate that effect."
+
+ANÁLISIS POR PÁRRAFOS:
+
+Párrafo 1: "When a card or effect is activated that includes any of 
+           these effects (Quick Effect):"
+Keywords detectadas: "when", "(quick effect)"
+Categoría: timing (primera coincidencia)
+Color: #FFE66D (amarillo)
+Resultado: <mark style="..." title="Timing del Efecto">...</mark>
+
+Párrafo 2: " You can discard this card;"
+Keywords detectadas: "discard"
+Categoría: cost
+Color: #AA96DA (morado)
+Resultado: <mark style="..." title="Costo de Activación">...</mark>
+
+Párrafo 3: " negate that effect."
+Keywords detectadas: "negate"
+Categoría: effects
+Color: #FCBAD3 (rosa claro)
+Resultado: <mark style="..." title="Efecto">...</mark>
+
+================================================================================
+PERSONALIZACIÓN DESDE CONFIG
+================================================================================
+
+USUARIO PUEDE:
+
+1. CAMBIAR COLORES
+   - Click en color picker de cada categoría
+   - Seleccionar color deseado
+   - Cambio se aplica inmediatamente
+   - Persiste en localStorage
+
+2. AGREGAR PALABRAS CLAVE
+   - Escribir en input de categoría
+   - Enter o click en "+ Agregar"
+   - Keyword se guarda y aparece como chip
+   - Disponible inmediatamente para detección
+
+3. ELIMINAR PALABRAS CLAVE
+   - Click en "×" del chip
+   - Confirmación automática
+   - Re-renderiza sección
+   - Cambio se guarda en localStorage
+
+4. EXPORTAR/IMPORTAR CONFIGURACIÓN
+   - Botón "Exportar Data" incluye nomenclatura
+   - Formato JSON con toda la config
+   - Importar restaura keywords y colores
+
+EJEMPLO DE USO:
+
+Usuario quiere agregar "tribute summon" a timing:
+1. Va a Config → Nomenclatura de Efectos
+2. Busca categoría "Timing del Efecto"
+3. Escribe "tribute summon" en input
+4. Click en "+ Agregar"
+5. Chip aparece en la lista
+6. Ahora cualquier párrafo con "tribute summon" 
+   se resalta en amarillo (#FFE66D)
+
+================================================================================
+CARACTERÍSTICAS TÉCNICAS
+================================================================================
+
+1. RESALTADO POR PÁRRAFOS
+   - NO resalta palabras sueltas
+   - Resalta el PÁRRAFO COMPLETO que contiene la keyword
+   - Respeta delimitadores de Yu-Gi-Oh! (. : ;)
+   - Un solo color por párrafo (primera categoría que coincida)
+
+2. TOOLTIPS CON TITLE
+   - Atributo HTML nativo
+   - Funciona en desktop (hover)
+   - Funciona en móvil (tap)
+   - Muestra nombre en español de la categoría
+
+3. SISTEMA DE PRIORIDAD
+   - Categorías se verifican en orden específico:
+     effectSpeed → effectType → timing → requirements → 
+     conditions → cost → effects → duration → restrictions
+   - Primera coincidencia gana
+   - Evita resaltados múltiples en mismo párrafo
+
+4. OPACIDAD Y ESTILO
+   - Opacity: 0.6 (permite leer texto debajo)
+   - Padding: 2px 4px (espaciado cómodo)
+   - Border-radius: 3px (esquinas redondeadas)
+   - Cursor: help (indica que hay tooltip)
+
+5. ESTRUCTURA FLEXIBLE
+   - Soporta objetos: { "Nombre": ["kw"] }
+   - Soporta arrays: ["kw1", "kw2"]
+   - ConfigManager maneja ambos casos
+   - Expansible a nuevas categorías
+
+================================================================================
+DATOS EN LOCALSTORAGE
+================================================================================
+
+yugioh_config:
+{
+  "nomenclature": {
+    "effectSpeed": {
+      "Quick Effect": ["quick effect", "(quick effect)"],
+      "Custom_1707654321": ["nueva keyword personalizada"]
+    },
+    "requirements": [
+      "if you control",
+      "if your opponent",
+      "nueva keyword agregada"
+    ],
+    ...
+  },
+  "nomenclatureColors": {
+    "effectSpeed": "#FF0000",  // Usuario cambió a rojo puro
+    "timing": "#FFE66D",       // Color por defecto
+    ...
+  }
+}
+
+================================================================================
+DIFERENCIAS CON IMPLEMENTACIÓN PREVIA
+================================================================================
+
+ANTES (nomenclature-analyzer.js):
+- Detectaba categorías por carta completa
+- Almacenaba datos en objeto de análisis
+- No tenía visualización
+- Era sistema interno
+
+AHORA (cardviewer.js):
+- Resalta visualmente en tiempo real
+- Sistema basado en párrafos completos
+- Tooltips informativos
+- Personalizable por usuario
+- Colores configurables
+
+COEXISTENCIA:
+- NomenclatureAnalyzer sigue existiendo
+- Puede usarse para análisis interno
+- CardViewer usa su propia implementación
+- Ambos comparten misma fuente de keywords (ConfigManager)
+
+================================================================================
+TESTING Y VALIDACIÓN
+================================================================================
+
+PARA PROBAR:
+
+1. Abrir cualquier carta en CardViewer
+   - Verificar que párrafos estén resaltados
+   - Pasar cursor sobre marks
+   - Ver tooltips con nombres de categorías
+
+2. Configuración
+   - Ir a Config → Nomenclatura de Efectos
+   - Cambiar color de "Velocidad de Efecto" a #00FF00
+   - Abrir carta con Quick Effect
+   - Verificar que aparece en verde
+
+3. Agregar Keyword
+   - En Config → "Costo de Activación"
+   - Agregar "reveal"
+   - Abrir carta con "reveal" en descripción
+   - Verificar que párrafo se resalta en morado
+
+4. Eliminar Keyword
+   - Click en × de cualquier chip
+   - Verificar que desaparece
+   - Abrir carta con esa keyword
+   - Verificar que párrafo NO se resalta
+
+5. Exportar/Importar
+   - Exportar configuración
+   - Modificar keywords y colores
+   - Importar configuración exportada
+   - Verificar que vuelve a estado anterior
+
+================================================================================
+LIMITACIONES CONOCIDAS
+================================================================================
+
+1. UN COLOR POR PÁRRAFO
+   - Si un párrafo cumple múltiples categorías
+   - Solo se resalta con la primera categoría detectada
+   - Orden de prioridad es fijo
+
+2. CASE INSENSITIVE
+   - Búsqueda ignora mayúsculas/minúsculas
+   - "Quick Effect" detecta "quick effect" y "QUICK EFFECT"
+   - No distingue contexto
+
+3. NOMBRES DE CATEGORÍA NO EDITABLES
+   - Los 9 nombres están fijos en código
+   - Solo se pueden editar keywords y colores
+   - Nombres en español hardcodeados en categoryNames
+
+4. DELIMITADORES FIJOS
+   - Solo . : ; delimitan párrafos
+   - No se pueden personalizar
+   - Basado en formato estándar de Yu-Gi-Oh!
+
+================================================================================
+FUTURAS MEJORAS POSIBLES
+================================================================================
+
+□ Permitir orden de prioridad personalizable
+□ Resaltado con múltiples colores (gradientes)
+□ Modo "solo keywords" vs "párrafos completos"
+□ Delimitadores personalizables
+□ Nombres de categoría editables
+□ Categorías personalizadas (crear nuevas)
+□ Previsualización en Config (ejemplo en vivo)
+□ Estadísticas de uso de categorías
+□ Exportar solo nomenclatura (no toda la config)
+□ Plantillas predefinidas de colores
+
+================================================================================
+INTEGRACIÓN CON OTROS MÓDULOS
+================================================================================
+
+NOMENCLATURE-ANALYZER.JS:
+- Disponible para uso futuro
+- No interfiere con CardViewer
+- Podría usarse en:
+  * Análisis de deck
+  * Estadísticas de nomenclatura
+  * Sugerencias de mejora
+  * Detección de patrones
+
+SPECIALTY-ANALYZER.JS:
+- Sistema independiente
+- Ambos coexisten sin conflicto
+- Specialties = datos internos
+- Nomenclature = visualización
+
+STATS.JS:
+- Podría incorporar análisis de nomenclatura
+- Score basado en estructura de efectos
+- Complejidad vs simplicidad
+
+================================================================================
+CONCLUSIÓN
+================================================================================
+
+PASO 4 COMPLETADO EXITOSAMENTE ✅
+
+IMPLEMENTADO:
+✅ Sistema completo de nomenclatura (9 categorías)
+✅ Resaltado visual por párrafos en CardViewer
+✅ Tooltips con nombres de categorías
+✅ Interfaz de configuración completa
+✅ Colores personalizables por categoría
+✅ Keywords editables (agregar/eliminar)
+✅ Persistencia en localStorage
+✅ Exportar/Importar incluye nomenclatura
+
+CARACTERÍSTICAS DESTACADAS:
+→ Resaltado de párrafos completos (no palabras sueltas)
+→ Delimitadores de Yu-Gi-Oh! (. : ;)
+→ Tooltips nativos con HTML title
+→ Sistema de prioridad de categorías
+→ Opacidad 0.6 para legibilidad
+→ Color picker integrado
+→ Chips interactivos
+
+LISTO PARA:
+→ Paso 5: Recurrencia de cartas en META
+→ Uso en análisis avanzado de decks
+→ Integración con sistema de counters
+→ Estadísticas por tipo de efecto
+
+PRÓXIMO PASO:
+Implementar Paso 5 - Sistema de recurrencia y análisis de uso de cartas en el META
+
+================================================================================
+
+Este paso 4 tuvo que dividirse en 2 partes donde la segunda parte fue la siguiente peticion:
+
+Quiero que al ver una carta (en el panel flotante) en el texto se subraye las parte del efecto (segun la nomenclatura de las cartas, y estas a su vez serán definidas, editadas o eliminadas en config. también quiero poder elegir un color para cada parte de la nomenclatura de las cartas) y que ese subrayar sea con una especie de mark del color definido para dicha parte de la nomenclatura (un mark con transparencia 0.6). Aunque no todas las cartas cubren todas las partes de la nomenclatura.
+
+La nomenclatura general es la siguiente: 
+
+Velocidad de hechizo. Solo puede ser 1, son: Velocidad 1 (cuando no posee nada de las demas velocidades o cuando posee "You can" iniciando en mayuscula), Velocidad 2 (cuando poseen: "When" o "If" iniciando en mayusculas en la condicion de activacion, tambien si es una carta del tipo "spell" y del subtipo: "quick-play" o si es una carta del tipo "trap" que no sea del subtipo: "counter"), Velocidad 3 (cuando la carta es especificamente tipo: "trap" y subtipo: "counter") y Irrespondible (cuando la carta expresa "in response to this card's activation"). Siempre se pone solo la velocidad mas alta en caso de cumplir con 2 o mas.
+
+
+
+Timming del efecto. En respuesta (si tiene "when"), Siguiente cadena (si tiene "If"), En resolucion (cuando tiene "instead" o "resolves"), Inmediatamente (cuando tiene "immediatly"), Por cada uno (cuando tiene "each time") o Al activar/invocar (si no cumple ninguno de los requisitos de Timming anteriormente mencionados). Este Timming del efecto es 1 por efecto, asi que seria el timming del efecto 1, 2, etc. 
+
+
+
+Requisitos. Son los recursos que necesita la carta para poder activar en principio sino seria una jugada ilegal. Ej.: Si una carta tiene el efecto donde dice: "send this card from your hand to the GY..." es porque el requisito es tenerlo en mano y poder enviar cartas al cementerio. O si una carta dice: "special summon 1 monster from your deck..." es porque debe haber minimo 1 carta tipo monstruo en el deck. Asi es la logica de esta parte. Obviamente tiene que ser algo mas simple a nivel de automatizacion por palabras clave. El como resolver esto, me dejas saber e implementalo mientras.
+
+
+
+Condicion de activacion. Ya esto es mas especifico del como esta escrito una carta (hay cartas que poseen esto y otras no. En los casos de no tenerlo se pone que NO posee Condicion de activacion o cualquiera de los siguientes puntos). Las cartas para esta parte se lee por oraciones completas (no palabras por separado, ignorando las , coma como divisor de oraciones) y se ve como acaba cada oracion. La condicion de activacion son las oraciones que acaban en : (dos puntos). Tambien son las oraciones que inician en When o If terminando en : (dos puntos).
+
+
+
+Costo de activacion. El costo de activacion son las oraciones que acaban en ; (punto y coma)
+
+
+
+Efecto 1. Los efectos son todas la oraciones que acaba en . mientras no posea la palabra clave "follow" o no hayan podido cumplir ninguna de los puntos anteriores ni siguientes.
+
+
+
+Tipo de efecto 1. Son efectos Mandatory cuando luego del costo de activacion o la condicion lo que sigue es el efecto 1 y no inicia el efecto con la palabra clave "you can". Trigger, son los tipos de efectos que se activan por ser el Timming de activacion: En respuesta. Estan los Quick Effect, son los tipos de efectos que poseen "Quick Effect" en la condicion. Tambien estan los Ignition, que son los tipos de efectos que no cumple ninguna de las anteriores categorias de tipo de efecto. Aunque tomar en cuenta que Mandatory  puede estar combinada con Ignition y con Trigger, siendo asi: Ignition-Mandatory o Trigger-Mandatory, respectivamente. Los Mandatory sin condiciones ni costos son conocidos como efectos Continuos.
+
+
+
+Efecto 2. Es lo mismo que Efecto 1 solo que es en otra oracion posterior que cumpla los requisitos para ser efecto. Pudiendo haber mas de 2 efectos.
+
+
+
+Tipo de efecto 2. Esto sera igual para cada efecto. 
+
+
+
+Duracion del efecto. son las oraciones que poseen "for the rest", "phase of this turn", "phase of the next turn", "phase of the next opponent's turn", "phase of your next turn", "During your", "During the"
+
+
+
+Restriccion o lock. Son las oraciones donde termina con . pero tiene la palabra clave "you cannot"
+
+
+
+Limitacion. Son las oraciones que poseen alguna de las siguientes palabras clave "per turn", "per duel" o "you can only use" o "you can only activate"
+
+====================================================

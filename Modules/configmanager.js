@@ -174,6 +174,19 @@ const ConfigManager = {
                 "Cannot Summon": ["you cannot summon", "you cannot special summon"],
                 "Cannot Activate": ["you cannot activate"]
             }
+        },
+
+        // Colores para marks de nomenclatura (con transparencia 0.6 aplicada en CSS)
+        nomenclatureColors: {
+            effectSpeed: "#FF6B6B",        // Rojo
+            effectType: "#4ECDC4",         // Cyan
+            timing: "#FFE66D",             // Amarillo
+            requirements: "#95E1D3",       // Verde agua
+            conditions: "#F38181",         // Rosa
+            cost: "#AA96DA",               // Morado
+            effects: "#FCBAD3",            // Rosa claro
+            duration: "#A8E6CF",           // Verde menta
+            restrictions: "#FFD3B6"        // Naranja pastel
         }
     },
 
@@ -796,6 +809,30 @@ const ConfigManager = {
             }
         }
         return false;
+    },
+
+    // ===============================
+    // NOMENCLATURA
+    // ===============================
+
+    getNomenclature: function () {
+        const config = this.getConfig();
+        return config.nomenclature || this.defaultConfig.nomenclature;
+    },
+
+    getNomenclatureColors: function () {
+        const config = this.getConfig();
+        return config.nomenclatureColors || this.defaultConfig.nomenclatureColors;
+    },
+
+    updateNomenclatureColor: function (category, color) {
+        const config = this.getConfig();
+        if (!config.nomenclatureColors) {
+            config.nomenclatureColors = JSON.parse(JSON.stringify(this.defaultConfig.nomenclatureColors));
+        }
+        config.nomenclatureColors[category] = color;
+        this.saveConfig(config);
+        return true;
     }
 };
 

@@ -56,6 +56,16 @@ const Config = {
                 </div>
             </div>
 
+            <!-- Sección: Nomenclatura (NUEVO - Paso 4) -->
+            <div class="config-section">
+                <h3 class="config-section-title" onclick="Config.toggleSection('nomenclature-section')">
+                    Nomenclatura de Efectos
+                </h3>
+                <div id="nomenclature-section" class="config-section-content" style="display: none;">
+                    ${this.renderNomenclatureSection()}
+                </div>
+            </div>
+
             <!-- Botones de acción -->
             <div class="config-actions">
                 <button class="btn btn-primary" onclick="Config.exportConfig()">
@@ -855,6 +865,188 @@ const Config = {
             console.log(`Notas de staple ${cardId} actualizadas`);
         } else {
             alert('❌ No se pudo actualizar las notas');
+        }
+    },
+
+    // ===============================
+    // SECCIÓN DE NOMENCLATURA (PASO 4)
+    // ===============================
+    
+    renderNomenclatureSection: function () {
+        const nomenclature = ConfigManager.getNomenclature();
+        const colors = ConfigManager.getNomenclatureColors();
+
+        const categoryNames = {
+            effectSpeed: 'Velocidad de Efecto',
+            effectType: 'Tipo de Efecto',
+            timing: 'Timing del Efecto',
+            requirements: 'Requisitos',
+            conditions: 'Condición de Activación',
+            cost: 'Costo de Activación',
+            effects: 'Efecto',
+            duration: 'Duración del Efecto',
+            restrictions: 'Restricción'
+        };
+
+        let html = `
+            <div class="config-help-text">
+                <p><strong>Nomenclatura de Efectos</strong></p>
+                <small>Define las palabras clave que identifican cada parte del efecto de una carta. Los párrafos que contengan estas palabras serán resaltados en el visor de cartas.</small>
+            </div>
+        `;
+
+        for (const [category, displayName] of Object.entries(categoryNames)) {
+            const categoryData = nomenclature[category];
+            const color = colors[category] || '#FFFFFF';
+
+            html += `
+                <div class="role-card">
+                    <div class="role-card-header">
+                        <input 
+                            type="text" 
+                            class="role-name-input" 
+                            value="${displayName}"
+                            data-category="${category}"
+                            onblur="Config.updateNomenclatureName(this)"
+                            readonly
+                            title="Nombre de la categoría (no editable)"
+                        >
+                        <input 
+                            type="color" 
+                            value="${color}"
+                            data-category="${category}"
+                            onchange="Config.updateNomenclatureColor(this)"
+                            title="Color del mark"
+                            style="width: 50px; height: 35px; cursor: pointer; border: 2px solid var(--border-color); border-radius: 6px;"
+                        >
+                    </div>
+
+                    <div class="role-card-body">
+                        <label class="config-label">Palabras Clave:</label>
+                        <div class="keywords-container" id="nomenclature-keywords-${category}">
+                            ${this.renderNomenclatureKeywords(category, categoryData)}
+                        </div>
+
+                        <div class="add-keyword-container">
+                            <input 
+                                type="text" 
+                                class="keyword-input" 
+                                placeholder="Nueva palabra clave..."
+                                data-category="${category}"
+                                onkeypress="if(event.key==='Enter') Config.addNomenclatureKeywordFromInput(this)"
+                            >
+                            <button 
+                                class="btn btn-primary btn-sm" 
+                                onclick="Config.addNomenclatureKeywordFromInput(this.previousElementSibling)"
+                            >
+                                + Agregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        return html;
+    },
+
+    renderNomenclatureKeywords: function (category, categoryData) {
+        let html = '';
+
+        if (typeof categoryData === 'object' && !Array.isArray(categoryData)) {
+            for (const [name, keywords] of Object.entries(categoryData)) {
+                keywords.forEach(kw => {
+                    html += `
+                        <div class="keyword-chip">
+                            <span class="chip-text">${kw}</span>
+                            <span class="chip-remove" onclick="Config.removeNomenclatureKeyword('${category}', '${name}', '${kw}')">×</span>
+                        </div>
+                    `;
+                });
+            }
+        } else if (Array.isArray(categoryData)) {
+            categoryData.forEach(kw => {
+                html += `
+                    <div class="keyword-chip">
+                        <span class="chip-text">${kw}</span>
+                        <span class="chip-remove" onclick="Config.removeNomenclatureKeyword('${category}', null, '${kw}')">×</span>
+                    </div>
+                `;
+            });
+        }
+
+        return html;
+    },
+
+    updateNomenclatureColor: function (inputElement) {
+        const category = inputElement.dataset.category;
+        const color = inputElement.value;
+
+        if (ConfigManager.updateNomenclatureColor(category, color)) {
+            console.log(`Color de ${category} actualizado a ${color}`);
+        } else {
+            alert('❌ No se pudo actualizar el color');
+        }
+    },
+
+    addNomenclatureKeywordFromInput: function (inputElement) {
+        const category = inputElement.dataset.category;
+        const keyword = inputElement.value.trim().toLowerCase();
+
+        if (!keyword) {
+            alert('⚠️ Escribe una palabra clave');
+            return;
+        }
+
+        const config = ConfigManager.getConfig();
+        const nomenclature = config.nomenclature;
+
+        if (typeof nomenclature[category] === 'object' && !Array.isArray(nomenclature[category])) {
+            const customKey = `Custom_${Date.now()}`;
+            if (!nomenclature[category][customKey]) {
+                nomenclature[category][customKey] = [];
+            }
+            if (!nomenclature[category][customKey].includes(keyword)) {
+                nomenclature[category][customKey].push(keyword);
+                ConfigManager.saveConfig(config);
+                inputElement.value = '';
+                this.render();
+            } else {
+                alert('⚠️ Esta palabra clave ya existe');
+            }
+        } else if (Array.isArray(nomenclature[category])) {
+            if (!nomenclature[category].includes(keyword)) {
+                nomenclature[category].push(keyword);
+                ConfigManager.saveConfig(config);
+                inputElement.value = '';
+                this.render();
+            } else {
+                alert('⚠️ Esta palabra clave ya existe');
+            }
+        }
+    },
+
+    removeNomenclatureKeyword: function (category, name, keyword) {
+        const config = ConfigManager.getConfig();
+        const nomenclature = config.nomenclature;
+
+        if (typeof nomenclature[category] === 'object' && !Array.isArray(nomenclature[category]) && name) {
+            const index = nomenclature[category][name].indexOf(keyword);
+            if (index > -1) {
+                nomenclature[category][name].splice(index, 1);
+                if (nomenclature[category][name].length === 0 && name.startsWith('Custom_')) {
+                    delete nomenclature[category][name];
+                }
+                ConfigManager.saveConfig(config);
+                this.render();
+            }
+        } else if (Array.isArray(nomenclature[category])) {
+            const index = nomenclature[category].indexOf(keyword);
+            if (index > -1) {
+                nomenclature[category].splice(index, 1);
+                ConfigManager.saveConfig(config);
+                this.render();
+            }
         }
     },
 
