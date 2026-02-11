@@ -373,6 +373,119 @@
 }
 
 /* ====================================
+   ROLE CONDITIONS (PASO 3)
+   ==================================== */
+
+.role-conditions-section {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 2px dashed rgba(0, 102, 204, 0.3);
+}
+
+.role-conditions-section .config-label {
+    margin-bottom: var(--spacing-xs);
+}
+
+.role-conditions-section .keywords-container {
+    min-height: 40px;
+    margin-bottom: var(--spacing-sm);
+}
+
+/* Chips con colores específicos para condicionales y keywords */
+.keyword-chip[style*="background: #e74c3c"] {
+    /* Condicionales en rojo */
+    background: #e74c3c !important;
+}
+
+.keyword-chip[style*="background: #3498db"] {
+    /* Keywords de condición en azul claro */
+    background: #3498db !important;
+}
+
+/* ====================================
+   SECCIÓN DE STAPLES (PASO 2)
+   ==================================== */
+
+.config-help-text {
+    background: rgba(0, 102, 204, 0.1);
+    border-left: 4px solid var(--accent-color);
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    border-radius: 6px;
+}
+
+.config-help-text p {
+    margin: var(--spacing-xs) 0;
+    color: var(--text-light);
+}
+
+.config-help-text small {
+    color: rgba(241, 241, 241, 0.6);
+}
+
+.staples-list {
+    display: grid;
+    gap: var(--spacing-md);
+}
+
+.staple-card {
+    background: linear-gradient(135deg, rgba(0, 43, 77, 0.6), rgba(0, 26, 51, 0.8));
+    border: 2px solid rgba(108, 92, 231, 0.3);
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    transition: all var(--transition-normal);
+}
+
+.staple-card:hover {
+    border-color: rgba(108, 92, 231, 0.7);
+    box-shadow: 0 4px 12px rgba(108, 92, 231, 0.2);
+}
+
+.staple-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid rgba(108, 92, 231, 0.2);
+}
+
+.staple-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.staple-info strong {
+    color: var(--gold-color);
+    font-size: 1.1rem;
+}
+
+.staple-id {
+    color: rgba(241, 241, 241, 0.5);
+    font-size: 0.85rem;
+    font-family: monospace;
+}
+
+.staple-name-en {
+    color: rgba(241, 241, 241, 0.7);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.staple-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.empty-chips {
+    color: rgba(241, 241, 241, 0.4);
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+/* ====================================
    RESPONSIVE
    ==================================== */
 

@@ -43,18 +43,55 @@ const Deck = {
             return roles; // Retorna array vacío, sin roles asignados
         }
         
-        // ACTUALIZADO: Obtener roles desde ConfigManager
-        const roleKeywords = ConfigManager.getRoles();
+        // PASO 3: Obtener roleConditions para roles compuestos
+        const config = ConfigManager.getConfig();
+        const roleConditions = config.roleConditions || {};
+        const roleKeywords = config.roles || {};
 
         // Verificar cada rol
-        for (const [role, keywords] of Object.entries(roleKeywords)) {
-            for (const keyword of keywords) {
-                if (desc.includes(keyword)) {
-                    if (!roles.includes(role)) {
-                        roles.push(role);
+        for (const [roleName, keywords] of Object.entries(roleKeywords)) {
+            let shouldAssign = false;
+            
+            // PASO 3: Verificar si este rol tiene condicionales
+            if (roleConditions[roleName]) {
+                const condition = roleConditions[roleName];
+                const conditionals = condition.conditionals || [];
+                const condKeywords = condition.keywords || [];
+                
+                // Si hay condicionales, TODAS deben estar presentes
+                let allConditionsMet = true;
+                if (conditionals.length > 0) {
+                    for (const conditional of conditionals) {
+                        if (!desc.includes(conditional.toLowerCase())) {
+                            allConditionsMet = false;
+                            break;
+                        }
                     }
-                    break; // Ya encontró una palabra clave para este rol
                 }
+                
+                // Si todas las condicionales se cumplen, verificar keywords
+                if (allConditionsMet) {
+                    // Al menos UNA keyword debe estar presente
+                    for (const keyword of condKeywords) {
+                        if (desc.includes(keyword.toLowerCase())) {
+                            shouldAssign = true;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                // NO tiene condicionales, usar lógica normal
+                for (const keyword of keywords) {
+                    if (desc.includes(keyword.toLowerCase())) {
+                        shouldAssign = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Asignar rol si cumple
+            if (shouldAssign && !roles.includes(roleName)) {
+                roles.push(roleName);
             }
         }
 
@@ -69,17 +106,33 @@ const Deck = {
             delete this.cards[id];
         } else {
             if (!this.cards[id]) {
-                // Analizar especialidades de la carta
+                // Analizar especialidades de la carta (incluye staples - Paso 2)
                 const specialties = typeof SpecialtyAnalyzer !== 'undefined' 
                     ? SpecialtyAnalyzer.analyzeCard(card) 
                     : [];
+                
+                // Obtener roles automáticos
+                let roles = this.autoAssignRoles(card);
+                
+                // PASO 2: Si es staple, agregar roles predefinidos
+                if (typeof SpecialtyAnalyzer !== 'undefined') {
+                    const stapleRoles = SpecialtyAnalyzer.getStapleRoles(id);
+                    if (stapleRoles.length > 0) {
+                        // Combinar roles automáticos con roles de staple (evitando duplicados)
+                        stapleRoles.forEach(role => {
+                            if (!roles.includes(role)) {
+                                roles.push(role);
+                            }
+                        });
+                    }
+                }
                 
                 this.cards[id] = {
                     data: card,
                     qty: qty,
                     location: this.isExtraDeckCard(card) ? 'extra' : 'main',
-                    roles: this.autoAssignRoles(card),
-                    specialties: specialties  // NUEVO: Especialidades detectadas
+                    roles: roles,  // Roles combinados (automáticos + staples)
+                    specialties: specialties  // Especialidades detectadas (incluye staples)
                 };
             } else {
                 this.cards[id].qty = qty;

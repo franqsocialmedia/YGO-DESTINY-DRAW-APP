@@ -1,0 +1,570 @@
+================================================================================
+PASO 2 - LISTA DE STAPLES
+Destiny Draw - Yu-Gi-Oh! App
+Fecha: 10/02/2026
+Estado: ✅ COMPLETADO
+================================================================================
+
+RESUMEN EJECUTIVO
+--------------------------------------------------------------------------------
+Se ha implementado exitosamente el sistema de Lista de Staples. Este sistema
+permite:
+
+1. Mantener una lista interna de cartas genéricas (staples)
+2. Asignar roles predefinidos a staples
+3. Definir specialty keywords para cada staple
+4. Gestionar staples desde Configuración
+5. Aplicar automáticamente roles y especialidades de staples al deck
+6. Sistema NO visible directamente en la UI del deck (datos internos)
+
+================================================================================
+ARQUITECTURA IMPLEMENTADA
+================================================================================
+
+1. ESTRUCTURA DE DATOS - STAPLES
+--------------------------------------------------------------------------------
+
+ConfigManager.defaultConfig.staples:
+{
+  "ID_CARTA": {
+    id: "ID_CARTA",
+    name: "Nombre en Español",
+    nameEn: "English Name",
+    roles: ["Rol1", "Rol2"],
+    specialtyKeywords: ["keyword1", "keyword2"],
+    notes: "Notas opcionales"
+  }
+}
+
+STAPLES PREDEFINIDOS:
+
+1. Monster Reborn (83764718)
+   - Nombre: "Renace al monstruo"
+   - Roles: ["Recovery", "Extender"]
+   - Keywords: ["special summon", "from the graveyard"]
+   - Notas: "Staple universal de recuperación"
+
+2. Mystical Space Typhoon (5318639)
+   - Nombre: "Tifón Místico Espacial"
+   - Roles: ["Backrow-Removal"]
+   - Keywords: ["destroy", "spell", "trap"]
+   - Notas: "Remoción de backrow estándar"
+
+3. Mirror Force (44095762)
+   - Nombre: "Fuerza del Espejo"
+   - Roles: ["Boardbreaker", "Disruption"]
+   - Keywords: ["destroy all", "attack position"]
+   - Notas: "Trampa de remoción masiva"
+
+================================================================================
+ARCHIVOS MODIFICADOS
+================================================================================
+
+1. CONFIGMANAGER.JS
+--------------------------------------------------------------------------------
+
+NUEVA SECCIÓN: defaultConfig.staples
+- Estructura completa de staples predefinidos
+- 3 cartas iniciales configuradas
+
+NUEVAS FUNCIONES (11 métodos):
+
+getStaples()
+- Retorna todas las staples configuradas
+
+getStapleIds()
+- Retorna array de IDs de staples
+
+getStaple(cardId)
+- Retorna staple específico por ID
+
+isStaple(cardId)
+- Verifica si una carta es staple
+
+createStaple(cardId, data)
+- Crea nuevo staple
+- Valida duplicados
+
+updateStaple(cardId, data)
+- Actualiza datos de staple existente
+
+deleteStaple(cardId)
+- Elimina staple
+
+addRoleToStaple(cardId, roleName)
+- Agrega rol a un staple
+- Evita duplicados
+
+removeRoleFromStaple(cardId, roleName)
+- Elimina rol de staple
+
+addSpecialtyKeywordToStaple(cardId, keyword)
+- Agrega specialty keyword a staple
+- Normaliza a lowercase
+
+removeSpecialtyKeywordFromStaple(cardId, keyword)
+- Elimina specialty keyword de staple
+
+2. CONFIG.JS
+--------------------------------------------------------------------------------
+
+NUEVA SECCIÓN: "Lista de Staples"
+- Colapsable por defecto (no visible inicialmente)
+- Explicación de qué son las staples
+
+NUEVAS FUNCIONES DE RENDERIZADO:
+
+renderStaplesSection()
+- Genera sección completa de staples
+- Incluye explicación y botón crear
+- Lista de staples existentes
+
+renderStapleCard(cardId, data)
+- Tarjeta individual de staple
+- Header con nombre, ID y nombre en inglés
+- Chips de roles (color azul estándar)
+- Chips de specialty keywords (color púrpura #6c5ce7)
+- Dropdown para agregar roles
+- Input para agregar keywords
+- Campo de notas editable
+- Botón eliminar
+
+NUEVAS FUNCIONES DE ACCIONES:
+
+createNewStaple()
+- Crea staple desde UI
+- Requiere ID y nombre
+- Inicializa con arrays vacíos
+
+deleteStaple(cardId)
+- Elimina con confirmación
+- Muestra nombre en confirmación
+
+addRoleToStapleFromSelect(selectElement)
+- Agrega rol desde dropdown
+- Auto-resetea select después
+
+removeRoleFromStaple(cardId, roleName)
+- Elimina rol con re-render
+
+addSpecialtyKeywordToStapleFromInput(inputElement)
+- Agrega keyword desde input
+- Normaliza a lowercase
+- Limpia input después
+
+removeSpecialtyKeywordFromStaple(cardId, keyword)
+- Elimina keyword con re-render
+
+updateStapleNotes(inputElement)
+- Actualiza notas sin re-render
+- Mejor UX para edición continua
+
+3. STYLE_CONFIG.CSS
+--------------------------------------------------------------------------------
+
+NUEVOS ESTILOS:
+
+.config-help-text
+- Caja de ayuda con fondo azul claro
+- Border-left accent
+- Para explicaciones
+
+.staples-list
+- Grid de staples cards
+
+.staple-card
+- Gradiente azul oscuro a negro
+- Border púrpura (rgba(108, 92, 231, 0.3))
+- Hover effect con glow púrpura
+- Diferenciación visual vs role-cards
+
+.staple-card-header
+- Flex layout
+- Info del staple vs botón eliminar
+
+.staple-info
+- Column layout
+- Nombre (dorado)
+- ID (monospace, gris)
+- Nombre inglés (cursiva, gris claro)
+
+.staple-card-body
+- Column layout con gap
+- Secciones para roles, keywords, notas
+
+.empty-chips
+- Placeholder cuando no hay chips
+- Texto gris cursiva
+
+4. SPECIALTY-ANALYZER.JS
+--------------------------------------------------------------------------------
+
+MODIFICACIÓN: analyzeCard(card)
+
+NUEVA LÓGICA:
+1. Verificar si carta es staple (ConfigManager.isStaple)
+2. Si es staple:
+   - Obtener specialty keywords del staple
+   - Buscar cada keyword en specialties config
+   - Agregar a detectedSpecialties con flag fromStaple: true
+3. Continuar con detección normal desde descripción
+4. Evitar duplicados (keywords ya agregados desde staple)
+
+Resultado: Staples tienen especialidades predefinidas + detectadas
+
+NUEVA FUNCIÓN: getStapleRoles(cardId)
+- Retorna roles predefinidos de un staple
+- Usado por deck.js para combinar roles
+
+5. DECK.JS
+--------------------------------------------------------------------------------
+
+MODIFICACIÓN: syncFromViewer(id, card, qty)
+
+NUEVA LÓGICA AL AGREGAR CARTA:
+1. Detectar especialidades (incluye staples automáticamente)
+2. Obtener roles automáticos (autoAssignRoles)
+3. Si es staple:
+   - Obtener roles predefinidos (getStapleRoles)
+   - Combinar con roles automáticos
+   - Evitar duplicados
+4. Crear carta con roles combinados
+
+Resultado: Staples tienen roles automáticos + predefinidos
+
+================================================================================
+FUNCIONAMIENTO DEL SISTEMA
+================================================================================
+
+FLUJO COMPLETO - AGREGAR STAPLE AL DECK:
+
+1. USUARIO AGREGA "MONSTER REBORN" AL DECK
+   ↓
+2. deck.js → syncFromViewer()
+   ↓
+3. SpecialtyAnalyzer.analyzeCard()
+   - Detecta que ID 83764718 es staple
+   - Obtiene specialty keywords: ["special summon", "from the graveyard"]
+   - Busca "special summon" en specialties config
+   - Busca "from the graveyard" en specialties config
+   - Marca como fromStaple: true
+   ↓
+4. autoAssignRoles()
+   - Detecta "special summon" → agrega "Extender"
+   - Detecta "from the graveyard" → agrega "Recovery"
+   ↓
+5. SpecialtyAnalyzer.getStapleRoles()
+   - Retorna ["Recovery", "Extender"] desde config
+   ↓
+6. COMBINAR ROLES (automáticos + staples)
+   - Automáticos: ["Extender", "Recovery"]
+   - Staples: ["Recovery", "Extender"]
+   - Resultado: ["Extender", "Recovery"] (sin duplicados)
+   ↓
+7. CARTA ALMACENADA:
+   {
+     data: {...},
+     qty: 1,
+     location: 'main',
+     roles: ["Extender", "Recovery"],
+     specialties: [
+       {
+         keyword: "special summon",
+         cardLevel: "...",
+         deckLevel: "...",
+         fromStaple: true
+       },
+       {
+         keyword: "from the graveyard",
+         cardLevel: "...",
+         deckLevel: "...",
+         fromStaple: true
+       }
+     ]
+   }
+
+================================================================================
+GESTIÓN DESDE CONFIGURACIÓN
+================================================================================
+
+USUARIO PUEDE:
+
+1. VER LISTA DE STAPLES
+   Config → Lista de Staples → Ver todas las staples
+
+2. AGREGAR NUEVO STAPLE
+   - Ingresar ID de carta (ej: 12345678)
+   - Ingresar nombre (ej: "Ash Blossom")
+   - Click "Agregar Staple"
+   - Se crea con arrays vacíos
+
+3. ASIGNAR ROLES A STAPLE
+   - Dropdown con todos los roles disponibles
+   - Select rol → se agrega
+   - Click × en chip → se elimina
+
+4. AGREGAR SPECIALTY KEYWORDS
+   - Input de texto
+   - Enter o botón "Agregar"
+   - Keywords en lowercase automáticamente
+   - Click × en chip → se elimina
+
+5. EDITAR NOTAS
+   - Campo de texto editable
+   - Cambio automático sin re-render
+
+6. ELIMINAR STAPLE
+   - Click botón 🗑️
+   - Confirmación con nombre
+   - Eliminación permanente
+
+EJEMPLO PRÁCTICO:
+
+Usuario quiere agregar "Ash Blossom & Joyous Spring":
+
+1. Config → Lista de Staples
+2. ID: 14558127
+3. Nombre: "Ash Blossom y Primavera Jubilosa"
+4. Agregar
+5. Dropdown → Seleccionar "Handtrap"
+6. Input keywords → "negate" + Enter
+7. Input keywords → "effect activation" + Enter
+8. Notas → "Handtrap universal"
+9. Listo
+
+Ahora cuando el usuario agregue Ash Blossom al deck:
+- Tendrá rol "Handtrap" automáticamente
+- Tendrá especialidades "Negation" y "Effect Activation"
+- Se contará en análisis de deck
+
+================================================================================
+DATOS INTERNOS VS PÚBLICOS
+================================================================================
+
+PÚBLICOS (Visibles):
+- Roles en badges de cartas del deck
+- Configuración de staples (solo en Config)
+
+INTERNOS (No visibles directamente):
+- Lista de staples en deck
+- Specialty keywords de staples
+- Origen de roles (si vino de staple o automático)
+- Flag fromStaple en especialidades
+
+RAZÓN:
+- Evitar saturar UI del deck
+- Datos usados para:
+  • Análisis interno
+  • Cálculos de scores
+  • Comparación con meta
+  • Recomendaciones futuras
+
+================================================================================
+PERSISTENCIA DE DATOS
+================================================================================
+
+LOCALSTORAGE - yugioh_config:
+{
+  "roles": { ... },
+  "specialties": { ... },
+  "roleConditions": { ... },
+  "staples": {
+    "83764718": {
+      "id": "83764718",
+      "name": "Renace al monstruo",
+      "nameEn": "Monster Reborn",
+      "roles": ["Recovery", "Extender"],
+      "specialtyKeywords": ["special summon", "from the graveyard"],
+      "notes": "Staple universal de recuperación"
+    },
+    ...
+  }
+}
+
+LOCALSTORAGE - yugioh_deck:
+{
+  "83764718": {
+    "data": { ... },
+    "qty": 1,
+    "location": "main",
+    "roles": ["Recovery", "Extender"],
+    "specialties": [
+      {
+        "keyword": "special summon",
+        "cardLevel": "...",
+        "fromStaple": true
+      }
+    ]
+  }
+}
+
+================================================================================
+INTEGRACIÓN CON PASOS ANTERIORES
+================================================================================
+
+PASO 1 - ESPECIALIDADES:
+✅ Staples usan el mismo sistema de especialidades
+✅ Keywords de staples se buscan en specialties config
+✅ Misma estructura de datos (counters, counteredBy)
+
+COMPATIBILIDAD:
+✅ Roles automáticos se combinan con roles de staples
+✅ Sin conflictos ni duplicados
+✅ Sistema escalable
+
+================================================================================
+PREPARACIÓN PARA PASOS FUTUROS
+================================================================================
+
+PASO 3: ROLES COMPUESTOS
+- Staples pueden tener roles compuestos
+- Sistema ya soporta múltiples roles por staple
+
+PASO 5: RECURRENCIA EN META
+- Staples se contarán en análisis de meta
+- isStaple() permite identificarlos fácilmente
+- Base para estadísticas de uso
+
+PASO 6: PUNTOS DE PODER POR CARTA
+- Staples tendrán scoring especial
+- Alto uso en meta = mayor poder
+- Counters ya configurados
+
+PASO 8: ANÁLISIS DEL DECK
+- "Deck usa X staples del meta actual"
+- "Staple Y es contrarrestado por Z en el meta"
+- Recomendaciones basadas en staples
+
+================================================================================
+CASOS DE USO COMUNES
+================================================================================
+
+1. JUGADOR ANALIZA SU DECK
+   - Ve que usa 3 staples (Monster Reborn, MST, Mirror Force)
+   - Sistema detecta especialización "Removal" alta
+   - Análisis: "Deck orientado a control/remoción"
+
+2. COMPARACIÓN CON META
+   - Meta actual usa Ash Blossom en 80% de decks
+   - Usuario no la tiene
+   - Recomendación futura: "Considera agregar Ash Blossom"
+
+3. CONSTRUCCIÓN DE DECK
+   - Usuario agrega staples conocidos
+   - Roles se aplican automáticamente
+   - No necesita marcar manualmente
+
+4. ACTUALIZACIÓN DE META
+   - Nueva banlist hace staple una carta
+   - Usuario la agrega a lista de staples
+   - Automáticamente se considera en análisis futuros
+
+================================================================================
+TESTING Y VALIDACIÓN
+================================================================================
+
+PARA PROBAR EL SISTEMA:
+
+1. VERIFICAR STAPLES PREDEFINIDOS
+   En consola:
+   ```javascript
+   console.log(ConfigManager.getStaples());
+   // Debe mostrar 3 staples predefinidos
+   ```
+
+2. AGREGAR STAPLE AL DECK
+   - Buscar "Monster Reborn"
+   - Agregar al deck
+   - Verificar que tiene roles "Recovery" y "Extender"
+   - En consola:
+   ```javascript
+   console.log(Deck.cards["83764718"]);
+   // Debe mostrar roles y especialidades
+   ```
+
+3. CREAR NUEVO STAPLE
+   - Config → Lista de Staples
+   - ID: 14558127, Nombre: "Ash Blossom"
+   - Agregar rol "Handtrap"
+   - Agregar keyword "negate"
+   - Verificar en localStorage
+
+4. VERIFICAR COMBINACIÓN DE ROLES
+   - Agregar staple que tiene rol predefinido
+   - Verificar que autoAssignRoles también detecta
+   - Roles deben combinarse sin duplicados
+
+================================================================================
+DIFERENCIAS VISUALES
+================================================================================
+
+STAPLES VS ROLES VS ESPECIALIDADES:
+
+ROLES:
+- Color: Azul estándar (#0066cc)
+- Visibles como badges en deck
+- Gestionables en Config
+
+ESPECIALIDADES:
+- Color: Variable por tipo
+- NO visibles en UI de deck
+- Gestionables en Config
+
+STAPLES:
+- Color chips roles: Azul
+- Color chips keywords: Púrpura (#6c5ce7)
+- Border púrpura en cards
+- Sección separada en Config
+
+================================================================================
+BENEFICIOS DEL SISTEMA
+================================================================================
+
+1. AUTOMATIZACIÓN
+   - No necesita marcar staples manualmente
+   - Roles y especialidades automáticos
+
+2. FLEXIBILIDAD
+   - Lista editable y expandible
+   - Adaptable a nuevos metas
+
+3. ANÁLISIS
+   - Base para recomendaciones futuras
+   - Comparación con meta
+
+4. CONSISTENCIA
+   - Mismas cartas siempre reconocidas
+   - Datos predefinidos confiables
+
+5. ESCALABILIDAD
+   - Fácil agregar nuevos staples
+   - Sistema preparado para cientos de cartas
+
+================================================================================
+CONCLUSIÓN
+================================================================================
+
+PASO 2 COMPLETADO EXITOSAMENTE ✅
+
+IMPLEMENTADO:
+✅ Sistema completo de staples
+✅ 3 staples predefinidos
+✅ Gestión desde Configuración
+✅ Detección automática en deck
+✅ Roles y especialidades combinados
+✅ UI específica con estilos diferenciados
+✅ 11 nuevos métodos en ConfigManager
+✅ 9 nuevas funciones en Config.js
+✅ Integración con specialty-analyzer.js
+✅ Integración con deck.js
+
+LISTO PARA:
+→ Paso 3: Roles Compuestos con Condicionales
+→ Paso 4: Nomenclatura de Cartas
+→ Paso 5: Recurrencia en Meta
+→ Paso 6: Puntos de Poder por Carta
+
+PRÓXIMO PASO:
+Implementar Paso 3 - Roles Compuestos con Condicionales
+
+================================================================================

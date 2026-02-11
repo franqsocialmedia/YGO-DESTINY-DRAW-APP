@@ -13,24 +13,65 @@ const SpecialtyAnalyzer = {
     // Analizar especialidades de una carta
     analyzeCard: function (card) {
         const desc = (card.desc || '').toLowerCase();
+        const cardId = String(card.id);
         const specialties = ConfigManager.getSpecialties();
         const detectedSpecialties = [];
         
-        // Buscar cada keyword de especialidad en la descripción
-        for (const [keyword, data] of Object.entries(specialties)) {
-            if (desc.includes(keyword)) {
-                detectedSpecialties.push({
-                    keyword: keyword,
-                    cardLevel: data.cardLevel,
-                    deckLevel: data.deckLevel,
-                    linkedRole: data.linkedRole,
-                    counters: data.counters || [],
-                    counteredBy: data.counteredBy || []
+        // PASO 2: Verificar si es staple y aplicar keywords predefinidas
+        if (typeof ConfigManager.isStaple === 'function' && ConfigManager.isStaple(cardId)) {
+            const staple = ConfigManager.getStaple(cardId);
+            if (staple && staple.specialtyKeywords) {
+                // Buscar especialidades basadas en los keywords del staple
+                staple.specialtyKeywords.forEach(keyword => {
+                    const specialtyData = specialties[keyword];
+                    if (specialtyData) {
+                        detectedSpecialties.push({
+                            keyword: keyword,
+                            cardLevel: specialtyData.cardLevel,
+                            deckLevel: specialtyData.deckLevel,
+                            linkedRole: specialtyData.linkedRole,
+                            counters: specialtyData.counters || [],
+                            counteredBy: specialtyData.counteredBy || [],
+                            fromStaple: true  // Marcador para identificar que viene de staple
+                        });
+                    }
                 });
             }
         }
         
+        // Buscar cada keyword de especialidad en la descripción
+        for (const [keyword, data] of Object.entries(specialties)) {
+            if (desc.includes(keyword)) {
+                // Evitar duplicados si ya se agregó desde staple
+                const alreadyAdded = detectedSpecialties.some(s => s.keyword === keyword);
+                if (!alreadyAdded) {
+                    detectedSpecialties.push({
+                        keyword: keyword,
+                        cardLevel: data.cardLevel,
+                        deckLevel: data.deckLevel,
+                        linkedRole: data.linkedRole,
+                        counters: data.counters || [],
+                        counteredBy: data.counteredBy || [],
+                        fromStaple: false
+                    });
+                }
+            }
+        }
+        
         return detectedSpecialties;
+    },
+
+    // ===============================
+    // GESTIÓN DE ROLES PARA STAPLES (PASO 2)
+    // ===============================
+    
+    // Obtener roles predefinidos para un staple
+    getStapleRoles: function (cardId) {
+        if (typeof ConfigManager.isStaple === 'function' && ConfigManager.isStaple(String(cardId))) {
+            const staple = ConfigManager.getStaple(String(cardId));
+            return staple ? (staple.roles || []) : [];
+        }
+        return [];
     },
 
     // ===============================

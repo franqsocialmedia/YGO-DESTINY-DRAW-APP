@@ -84,6 +84,36 @@ const ConfigManager = {
                 conditionals: ["quick-effect", "during either player"],
                 keywords: ["negate", "destroy"]
             }
+        },
+
+        // NUEVO: Lista de Staples (Paso 2)
+        // Cartas genéricas que se usan en múltiples decks
+        // Estructura: id -> { id, name, roles, specialtyKeywords, notes }
+        staples: {
+            "83764718": {
+                id: "83764718",
+                name: "Renace al monstruo",
+                nameEn: "Monster Reborn",
+                roles: ["Recovery", "Extender"],
+                specialtyKeywords: ["special summon", "from the graveyard"],
+                notes: "Staple universal de recuperación"
+            },
+            "5318639": {
+                id: "5318639",
+                name: "Tifón Místico Espacial",
+                nameEn: "Mystical Space Typhoon",
+                roles: ["Backrow-Removal"],
+                specialtyKeywords: ["destroy", "spell", "trap"],
+                notes: "Remoción de backrow estándar"
+            },
+            "44095762": {
+                id: "44095762",
+                name: "Fuerza del Espejo",
+                nameEn: "Mirror Force",
+                roles: ["Boardbreaker", "Disruption"],
+                specialtyKeywords: ["destroy all", "attack position"],
+                notes: "Trampa de remoción masiva"
+            }
         }
     },
 
@@ -338,6 +368,263 @@ const ConfigManager = {
             delete config.specialties[oldKeyword];
             this.saveConfig(config);
             return true;
+        }
+        return false;
+    },
+
+    // ===============================
+    // GESTIÓN DE STAPLES (PASO 2)
+    // ===============================
+    
+    // Obtener todas las staples
+    getStaples: function () {
+        const config = this.getConfig();
+        return config.staples || {};
+    },
+
+    // Obtener IDs de staples
+    getStapleIds: function () {
+        return Object.keys(this.getStaples());
+    },
+
+    // Obtener staple específico por ID
+    getStaple: function (cardId) {
+        const staples = this.getStaples();
+        return staples[cardId] || null;
+    },
+
+    // Verificar si una carta es staple
+    isStaple: function (cardId) {
+        return this.getStaple(cardId) !== null;
+    },
+
+    // Crear nuevo staple
+    createStaple: function (cardId, data) {
+        const config = this.getConfig();
+        if (!config.staples) {
+            config.staples = {};
+        }
+        
+        const trimmedId = String(cardId).trim();
+        
+        if (trimmedId && !config.staples[trimmedId]) {
+            config.staples[trimmedId] = {
+                id: trimmedId,
+                name: data.name || '',
+                nameEn: data.nameEn || '',
+                roles: data.roles || [],
+                specialtyKeywords: data.specialtyKeywords || [],
+                notes: data.notes || ''
+            };
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
+
+    // Actualizar staple
+    updateStaple: function (cardId, data) {
+        const config = this.getConfig();
+        if (config.staples && config.staples[cardId]) {
+            config.staples[cardId] = {
+                id: cardId,
+                name: data.name || '',
+                nameEn: data.nameEn || '',
+                roles: data.roles || [],
+                specialtyKeywords: data.specialtyKeywords || [],
+                notes: data.notes || ''
+            };
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
+
+    // Eliminar staple
+    deleteStaple: function (cardId) {
+        const config = this.getConfig();
+        if (config.staples && config.staples[cardId]) {
+            delete config.staples[cardId];
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
+
+    // Agregar rol a staple
+    addRoleToStaple: function (cardId, roleName) {
+        const config = this.getConfig();
+        if (config.staples && config.staples[cardId]) {
+            if (!config.staples[cardId].roles.includes(roleName)) {
+                config.staples[cardId].roles.push(roleName);
+                this.saveConfig(config);
+                return true;
+            }
+        }
+        return false;
+    },
+
+    // Eliminar rol de staple
+    removeRoleFromStaple: function (cardId, roleName) {
+        const config = this.getConfig();
+        if (config.staples && config.staples[cardId]) {
+            const index = config.staples[cardId].roles.indexOf(roleName);
+            if (index > -1) {
+                config.staples[cardId].roles.splice(index, 1);
+                this.saveConfig(config);
+                return true;
+            }
+        }
+        return false;
+    },
+
+    // Agregar specialty keyword a staple
+    addSpecialtyKeywordToStaple: function (cardId, keyword) {
+        const config = this.getConfig();
+        if (config.staples && config.staples[cardId]) {
+            const lowerKeyword = keyword.toLowerCase().trim();
+            if (lowerKeyword && !config.staples[cardId].specialtyKeywords.includes(lowerKeyword)) {
+                config.staples[cardId].specialtyKeywords.push(lowerKeyword);
+                this.saveConfig(config);
+                return true;
+            }
+        }
+        return false;
+    },
+
+    // Eliminar specialty keyword de staple
+    removeSpecialtyKeywordFromStaple: function (cardId, keyword) {
+        const config = this.getConfig();
+        if (config.staples && config.staples[cardId]) {
+            const index = config.staples[cardId].specialtyKeywords.indexOf(keyword);
+            if (index > -1) {
+                config.staples[cardId].specialtyKeywords.splice(index, 1);
+                this.saveConfig(config);
+                return true;
+            }
+        }
+        return false;
+    },
+
+    // ===============================
+    // GESTIÓN DE ROLE CONDITIONS (PASO 3)
+    // ===============================
+    
+    // Obtener todas las roleConditions
+    getRoleConditions: function () {
+        const config = this.getConfig();
+        return config.roleConditions || {};
+    },
+
+    // Obtener condition de un rol específico
+    getRoleCondition: function (roleName) {
+        const conditions = this.getRoleConditions();
+        return conditions[roleName] || null;
+    },
+
+    // Verificar si un rol tiene condicionales
+    hasConditions: function (roleName) {
+        const condition = this.getRoleCondition(roleName);
+        return condition && condition.conditionals && condition.conditionals.length > 0;
+    },
+
+    // Crear/actualizar roleCondition para un rol
+    setRoleCondition: function (roleName, conditionals, keywords) {
+        const config = this.getConfig();
+        if (!config.roleConditions) {
+            config.roleConditions = {};
+        }
+        
+        config.roleConditions[roleName] = {
+            conditionals: conditionals || [],
+            keywords: keywords || []
+        };
+        
+        this.saveConfig(config);
+        return true;
+    },
+
+    // Eliminar roleCondition de un rol
+    removeRoleCondition: function (roleName) {
+        const config = this.getConfig();
+        if (config.roleConditions && config.roleConditions[roleName]) {
+            delete config.roleConditions[roleName];
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
+
+    // Agregar condicional a un rol
+    addConditionalToRole: function (roleName, conditional) {
+        const config = this.getConfig();
+        if (!config.roleConditions) {
+            config.roleConditions = {};
+        }
+        
+        if (!config.roleConditions[roleName]) {
+            config.roleConditions[roleName] = {
+                conditionals: [],
+                keywords: []
+            };
+        }
+        
+        const lowerConditional = conditional.toLowerCase().trim();
+        if (lowerConditional && !config.roleConditions[roleName].conditionals.includes(lowerConditional)) {
+            config.roleConditions[roleName].conditionals.push(lowerConditional);
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
+
+    // Eliminar condicional de un rol
+    removeConditionalFromRole: function (roleName, conditional) {
+        const config = this.getConfig();
+        if (config.roleConditions && config.roleConditions[roleName]) {
+            const index = config.roleConditions[roleName].conditionals.indexOf(conditional);
+            if (index > -1) {
+                config.roleConditions[roleName].conditionals.splice(index, 1);
+                this.saveConfig(config);
+                return true;
+            }
+        }
+        return false;
+    },
+
+    // Agregar keyword a roleCondition
+    addKeywordToRoleCondition: function (roleName, keyword) {
+        const config = this.getConfig();
+        if (!config.roleConditions) {
+            config.roleConditions = {};
+        }
+        
+        if (!config.roleConditions[roleName]) {
+            config.roleConditions[roleName] = {
+                conditionals: [],
+                keywords: []
+            };
+        }
+        
+        const lowerKeyword = keyword.toLowerCase().trim();
+        if (lowerKeyword && !config.roleConditions[roleName].keywords.includes(lowerKeyword)) {
+            config.roleConditions[roleName].keywords.push(lowerKeyword);
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
+
+    // Eliminar keyword de roleCondition
+    removeKeywordFromRoleCondition: function (roleName, keyword) {
+        const config = this.getConfig();
+        if (config.roleConditions && config.roleConditions[roleName]) {
+            const index = config.roleConditions[roleName].keywords.indexOf(keyword);
+            if (index > -1) {
+                config.roleConditions[roleName].keywords.splice(index, 1);
+                this.saveConfig(config);
+                return true;
+            }
         }
         return false;
     }
