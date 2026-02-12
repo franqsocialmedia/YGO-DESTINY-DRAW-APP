@@ -880,18 +880,20 @@ const Config = {
             effectSpeed: 'Velocidad de Efecto',
             effectType: 'Tipo de Efecto',
             timing: 'Timing del Efecto',
-            requirements: 'Requisitos',
             conditions: 'Condición de Activación',
             cost: 'Costo de Activación',
             effects: 'Efecto',
-            duration: 'Duración del Efecto',
             restrictions: 'Restricción'
         };
 
         let html = `
             <div class="config-help-text">
                 <p><strong>Nomenclatura de Efectos</strong></p>
-                <small>Define las palabras clave que identifican cada parte del efecto de una carta. Los párrafos que contengan estas palabras serán resaltados en el visor de cartas.</small>
+                <small>Define las palabras clave que identifican cada parte del efecto de una carta.</small>
+                <small style="display: block; margin-top: 8px;">
+                    <strong>4 campos por configuración:</strong> Inicio (palabra que empieza), Interna 1, Interna 2, Fin (palabra/signo que termina). 
+                    Dejar vacío = no requerido.
+                </small>
             </div>
         `;
 
@@ -900,14 +902,12 @@ const Config = {
             const color = colors[category] || '#FFFFFF';
 
             html += `
-                <div class="role-card">
+                <div class="nomenclature-category-card">
                     <div class="role-card-header">
                         <input 
                             type="text" 
                             class="role-name-input" 
                             value="${displayName}"
-                            data-category="${category}"
-                            onblur="Config.updateNomenclatureName(this)"
                             readonly
                             title="Nombre de la categoría (no editable)"
                         >
@@ -922,25 +922,73 @@ const Config = {
                     </div>
 
                     <div class="role-card-body">
-                        <label class="config-label">Palabras Clave:</label>
-                        <div class="keywords-container" id="nomenclature-keywords-${category}">
-                            ${this.renderNomenclatureKeywords(category, categoryData)}
+                        <label class="config-label">Configuraciones existentes:</label>
+                        <div class="nomenclature-configs-list">
+                            ${this.renderNomenclatureConfigs(category, categoryData)}
                         </div>
 
-                        <div class="add-keyword-container">
-                            <input 
-                                type="text" 
-                                class="keyword-input" 
-                                placeholder="Nueva palabra clave..."
-                                data-category="${category}"
-                                onkeypress="if(event.key==='Enter') Config.addNomenclatureKeywordFromInput(this)"
-                            >
-                            <button 
-                                class="btn btn-primary btn-sm" 
-                                onclick="Config.addNomenclatureKeywordFromInput(this.previousElementSibling)"
-                            >
-                                + Agregar
-                            </button>
+                        <label class="config-label" style="margin-top: var(--spacing-md);">Nueva configuración:</label>
+                        <div class="nomenclature-4fields-grid">
+                            <div class="nomenclature-field-wrapper">
+                                <label class="nomenclature-field-label">Inicio:</label>
+                                <input 
+                                    type="text" 
+                                    class="nomenclature-field-input" 
+                                    placeholder="Palabra inicial..."
+                                    data-category="${category}"
+                                    data-field="start"
+                                >
+                            </div>
+                            <div class="nomenclature-field-wrapper">
+                                <label class="nomenclature-field-label">Interna 1:</label>
+                                <input 
+                                    type="text" 
+                                    class="nomenclature-field-input" 
+                                    placeholder="Palabra interna 1..."
+                                    data-category="${category}"
+                                    data-field="internal1"
+                                >
+                            </div>
+                            <div class="nomenclature-field-wrapper">
+                                <label class="nomenclature-field-label">Interna 2:</label>
+                                <input 
+                                    type="text" 
+                                    class="nomenclature-field-input" 
+                                    placeholder="Palabra interna 2..."
+                                    data-category="${category}"
+                                    data-field="internal2"
+                                >
+                            </div>
+                            <div class="nomenclature-field-wrapper">
+                                <label class="nomenclature-field-label">Fin:</label>
+                                <input 
+                                    type="text" 
+                                    class="nomenclature-field-input" 
+                                    placeholder="Palabra/signo final..."
+                                    data-category="${category}"
+                                    data-field="end"
+                                >
+                            </div>
+                        </div>
+                        <div class="nomenclature-field-wrapper" style="margin-top: var(--spacing-sm);">
+                            <label class="nomenclature-field-label">Nombre de esta configuración:</label>
+                            <div style="display: flex; gap: var(--spacing-xs);">
+                                <input 
+                                    type="text" 
+                                    class="nomenclature-field-input" 
+                                    placeholder="Ej: Quick Effect, Trigger, etc..."
+                                    data-category="${category}"
+                                    data-field="name"
+                                    style="flex: 1;"
+                                >
+                                <button 
+                                    class="btn btn-primary btn-sm" 
+                                    onclick="Config.addNomenclatureConfigFromFields('${category}')"
+                                    style="white-space: nowrap;"
+                                >
+                                    + Agregar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -950,32 +998,36 @@ const Config = {
         return html;
     },
 
-    renderNomenclatureKeywords: function (category, categoryData) {
+    renderNomenclatureConfigs: function (category, categoryData) {
         let html = '';
 
-        if (typeof categoryData === 'object' && !Array.isArray(categoryData)) {
-            for (const [name, keywords] of Object.entries(categoryData)) {
-                keywords.forEach(kw => {
-                    html += `
-                        <div class="keyword-chip">
-                            <span class="chip-text">${kw}</span>
-                            <span class="chip-remove" onclick="Config.removeNomenclatureKeyword('${category}', '${name}', '${kw}')">×</span>
-                        </div>
-                    `;
-                });
-            }
-        } else if (Array.isArray(categoryData)) {
-            categoryData.forEach(kw => {
-                html += `
-                    <div class="keyword-chip">
-                        <span class="chip-text">${kw}</span>
-                        <span class="chip-remove" onclick="Config.removeNomenclatureKeyword('${category}', null, '${kw}')">×</span>
-                    </div>
-                `;
-            });
+        if (!categoryData || typeof categoryData !== 'object') {
+            return '<p class="empty-chips">Sin configuraciones</p>';
         }
 
-        return html;
+        for (const [name, config] of Object.entries(categoryData)) {
+            const start = config.start || '-';
+            const internal1 = config.internal1 || '-';
+            const internal2 = config.internal2 || '-';
+            const end = config.end || '-';
+
+            html += `
+                <div class="nomenclature-config-item">
+                    <div class="nomenclature-config-header">
+                        <strong>${name}</strong>
+                        <span class="chip-remove" onclick="Config.removeNomenclatureConfig('${category}', '${name}')" title="Eliminar configuración">×</span>
+                    </div>
+                    <div class="nomenclature-config-fields">
+                        <span><strong>Inicio:</strong> ${start}</span>
+                        <span><strong>Int1:</strong> ${internal1}</span>
+                        <span><strong>Int2:</strong> ${internal2}</span>
+                        <span><strong>Fin:</strong> ${end}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        return html || '<p class="empty-chips">Sin configuraciones</p>';
     },
 
     updateNomenclatureColor: function (inputElement) {
@@ -989,64 +1041,80 @@ const Config = {
         }
     },
 
-    addNomenclatureKeywordFromInput: function (inputElement) {
-        const category = inputElement.dataset.category;
-        const keyword = inputElement.value.trim().toLowerCase();
+    addNomenclatureConfigFromFields: function (category) {
+        const inputs = document.querySelectorAll(`input[data-category="${category}"]`);
+        
+        let name = '';
+        let start = '';
+        let internal1 = '';
+        let internal2 = '';
+        let end = '';
 
-        if (!keyword) {
-            alert('⚠️ Escribe una palabra clave');
+        inputs.forEach(input => {
+            const field = input.dataset.field;
+            const value = input.value.trim().toLowerCase();
+            
+            if (field === 'name') {
+                name = input.value.trim(); // No lowercase para el nombre
+            } else if (field === 'start') {
+                start = value;
+            } else if (field === 'internal1') {
+                internal1 = value;
+            } else if (field === 'internal2') {
+                internal2 = value;
+            } else if (field === 'end') {
+                end = value;
+            }
+        });
+
+        if (!name) {
+            alert('⚠️ Ingresa un nombre para esta configuración');
             return;
         }
 
         const config = ConfigManager.getConfig();
-        const nomenclature = config.nomenclature;
-
-        if (typeof nomenclature[category] === 'object' && !Array.isArray(nomenclature[category])) {
-            const customKey = `Custom_${Date.now()}`;
-            if (!nomenclature[category][customKey]) {
-                nomenclature[category][customKey] = [];
-            }
-            if (!nomenclature[category][customKey].includes(keyword)) {
-                nomenclature[category][customKey].push(keyword);
-                ConfigManager.saveConfig(config);
-                inputElement.value = '';
-                this.render();
-            } else {
-                alert('⚠️ Esta palabra clave ya existe');
-            }
-        } else if (Array.isArray(nomenclature[category])) {
-            if (!nomenclature[category].includes(keyword)) {
-                nomenclature[category].push(keyword);
-                ConfigManager.saveConfig(config);
-                inputElement.value = '';
-                this.render();
-            } else {
-                alert('⚠️ Esta palabra clave ya existe');
-            }
+        
+        if (!config.nomenclature[category]) {
+            config.nomenclature[category] = {};
         }
+
+        if (config.nomenclature[category][name]) {
+            alert('⚠️ Ya existe una configuración con ese nombre');
+            return;
+        }
+
+        config.nomenclature[category][name] = {
+            start: start,
+            internal1: internal1,
+            internal2: internal2,
+            end: end
+        };
+
+        ConfigManager.saveConfig(config);
+        
+        // Limpiar campos
+        inputs.forEach(input => {
+            input.value = '';
+        });
+
+        this.render();
+        alert('✅ Configuración agregada exitosamente');
     },
 
-    removeNomenclatureKeyword: function (category, name, keyword) {
-        const config = ConfigManager.getConfig();
-        const nomenclature = config.nomenclature;
+    removeNomenclatureConfig: function (category, name) {
+        if (!confirm(`¿Eliminar configuración "${name}"?`)) {
+            return;
+        }
 
-        if (typeof nomenclature[category] === 'object' && !Array.isArray(nomenclature[category]) && name) {
-            const index = nomenclature[category][name].indexOf(keyword);
-            if (index > -1) {
-                nomenclature[category][name].splice(index, 1);
-                if (nomenclature[category][name].length === 0 && name.startsWith('Custom_')) {
-                    delete nomenclature[category][name];
-                }
-                ConfigManager.saveConfig(config);
-                this.render();
-            }
-        } else if (Array.isArray(nomenclature[category])) {
-            const index = nomenclature[category].indexOf(keyword);
-            if (index > -1) {
-                nomenclature[category].splice(index, 1);
-                ConfigManager.saveConfig(config);
-                this.render();
-            }
+        const config = ConfigManager.getConfig();
+        
+        if (config.nomenclature[category] && config.nomenclature[category][name]) {
+            delete config.nomenclature[category][name];
+            ConfigManager.saveConfig(config);
+            this.render();
+            alert('✅ Configuración eliminada');
+        } else {
+            alert('❌ No se pudo eliminar la configuración');
         }
     },
 

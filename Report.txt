@@ -3910,4 +3910,703 @@ Limitacion. Son las oraciones que poseen alguna de las siguientes palabras clave
 
 ====================================================
 
-Actualmente se necesita ajustar algo primordial. Y es que las partes de la nomenclatura de las cartas tienen condiciones, no son dirigidas por palabras claves por aisladas.
+================================================================================
+ACTUALIZACIÓN NOMENCLATURA - SISTEMA DE 4 CAMPOS
+Destiny Draw - Yu-Gi-Oh! App
+Fecha: 12/02/2026
+Estado: ✅ COMPLETADO
+================================================================================
+
+RESUMEN EJECUTIVO
+--------------------------------------------------------------------------------
+Se ha actualizado completamente el sistema de Nomenclatura de Efectos con las
+siguientes mejoras clave:
+
+1. ✅ Nueva estructura de 4 campos por configuración
+2. ✅ Eliminadas categorías: "Duración del Efecto" y "Requisitos"
+3. ✅ Opacidad del subrayado reducida a 60%
+4. ✅ UI completamente rediseñada con 4 textboxes
+5. ✅ Nueva lógica de detección basada en cumplimiento de campos
+
+================================================================================
+CAMBIOS PRINCIPALES
+================================================================================
+
+1. NUEVA ESTRUCTURA DE DATOS (4 CAMPOS)
+--------------------------------------------------------------------------------
+
+ANTES (Arrays de keywords):
+```javascript
+effectSpeed: {
+    "Quick Effect": ["quick effect", "(quick effect)"],
+    "Trigger": ["when", "if"]
+}
+```
+
+DESPUÉS (Objetos con 4 campos):
+```javascript
+effectSpeed: {
+    "Quick Effect": {
+        start: "quick effect",      // Palabra de inicio
+        internal1: "",               // Primera palabra interna
+        internal2: "",               // Segunda palabra interna
+        end: ":"                     // Palabra/signo de fin
+    },
+    "Trigger": {
+        start: "when",
+        internal1: "",
+        internal2: "",
+        end: ":"
+    }
+}
+```
+
+SIGNIFICADO DE LOS CAMPOS:
+- **start**: Palabra clave que debe aparecer al INICIO del párrafo
+- **internal1**: Primera palabra que debe estar DENTRO del párrafo
+- **internal2**: Segunda palabra que debe estar DENTRO del párrafo  
+- **end**: Palabra o signo de puntuación que debe aparecer al FINAL
+
+CAMPOS VACÍOS:
+- Si un campo está vacío (""), NO se verifica
+- Permite flexibilidad: algunas configuraciones solo necesitan 1-2 campos
+- Ejemplo: Solo internal1 + end, sin start ni internal2
+
+2. CATEGORÍAS ELIMINADAS
+--------------------------------------------------------------------------------
+
+CATEGORÍAS REMOVIDAS:
+❌ "Duración del Efecto" (duration)
+❌ "Requisitos" (requirements)
+
+CATEGORÍAS ACTUALES (7 total):
+✅ effectSpeed - Velocidad de Efecto
+✅ effectType - Tipo de Efecto
+✅ timing - Timing del Efecto
+✅ conditions - Condición de Activación
+✅ cost - Costo de Activación
+✅ effects - Efecto
+✅ restrictions - Restricción
+
+RAZÓN:
+- Simplificación del sistema
+- Categorías menos utilizadas
+- Mejor enfoque en elementos esenciales
+
+3. OPACIDAD AJUSTADA
+--------------------------------------------------------------------------------
+
+ANTES:
+```css
+opacity: 0.6; /* 60% en el mark */
+```
+
+DESPUÉS:
+```css
+opacity: 0.6; /* Movido directamente al estilo del mark */
+```
+
+CAMBIO:
+- Subrayado más sutil y menos intrusivo
+- Mejor legibilidad del texto original
+- Marca visible pero no dominante
+
+================================================================================
+ARCHIVOS MODIFICADOS
+================================================================================
+
+1. CONFIGMANAGER.JS
+--------------------------------------------------------------------------------
+
+CAMBIOS EN defaultConfig.nomenclature:
+
+a) NUEVA ESTRUCTURA:
+   - Todas las categorías ahora usan objetos con 4 campos
+   - Campos: start, internal1, internal2, end
+   - Valores predefinidos actualizados
+
+b) EJEMPLOS DE CONFIGURACIONES PREDEFINIDAS:
+
+effectSpeed:
+```javascript
+"Quick Effect": {
+    start: "quick effect",
+    internal1: "",
+    internal2: "",
+    end: ":"
+}
+```
+
+cost:
+```javascript
+"Discard": {
+    start: "",
+    internal1: "discard",
+    internal2: "",
+    end: ";"
+}
+```
+
+effects (con 2 palabras internas):
+```javascript
+"Burn": {
+    start: "",
+    internal1: "inflict",
+    internal2: "damage",
+    end: "."
+}
+```
+
+c) COLORS ACTUALIZADOS:
+   - Eliminados: requirements, duration
+   - Mantenidos: 7 colores para 7 categorías
+
+2. CONFIG.JS
+--------------------------------------------------------------------------------
+
+FUNCIONES COMPLETAMENTE REESCRITAS:
+
+a) renderNomenclatureSection()
+   - Nueva UI con explicación de 4 campos
+   - Grid de 4 textboxes (2x2)
+   - Campo adicional para nombre de configuración
+   - Botón "Agregar" centralizado
+
+b) renderNomenclatureConfigs() (NUEVA)
+   - Muestra configuraciones existentes
+   - Formato: Nombre + 4 campos resumidos
+   - Botón × para eliminar cada configuración
+
+c) addNomenclatureConfigFromFields() (NUEVA)
+   - Reemplaza: addNomenclatureKeywordFromInput()
+   - Captura valores de los 4 textboxes
+   - Valida nombre de configuración
+   - Crea objeto con estructura de 4 campos
+   - Limpia inputs después de agregar
+
+d) removeNomenclatureConfig() (NUEVA)
+   - Reemplaza: removeNomenclatureKeyword()
+   - Elimina configuración completa por nombre
+   - Confirmación antes de eliminar
+
+ESTRUCTURA DE UI:
+
+```
+[Velocidad de Efecto]              [Color Picker]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Configuraciones existentes:
+┌─────────────────────────────┐
+│ Quick Effect              × │
+│ Inicio: quick effect        │
+│ Int1: -  Int2: -  Fin: :    │
+└─────────────────────────────┘
+
+Nueva configuración:
+┌──────────────┬──────────────┐
+│ Inicio:      │ Interna 1:   │
+│ [________]   │ [________]   │
+├──────────────┼──────────────┤
+│ Interna 2:   │ Fin:         │
+│ [________]   │ [________]   │
+└──────────────┴──────────────┘
+
+Nombre: [_______________] [+ Agregar]
+```
+
+3. CARDVIEWER.JS
+--------------------------------------------------------------------------------
+
+FUNCIÓN highlightParagraph() REESCRITA:
+
+NUEVA LÓGICA DE DETECCIÓN:
+
+```javascript
+for (const category of categories) {
+    for (const [name, config] of categoryData) {
+        let matches = true;
+        
+        // Verificar START (si no vacío)
+        if (config.start && config.start.trim() !== '') {
+            if (!paraLower.includes(config.start)) {
+                matches = false;
+            }
+        }
+        
+        // Verificar INTERNAL1 (si no vacío)
+        if (matches && config.internal1 && config.internal1.trim() !== '') {
+            if (!paraLower.includes(config.internal1)) {
+                matches = false;
+            }
+        }
+        
+        // Verificar INTERNAL2 (si no vacío)
+        if (matches && config.internal2 && config.internal2.trim() !== '') {
+            if (!paraLower.includes(config.internal2)) {
+                matches = false;
+            }
+        }
+        
+        // Verificar END (si no vacío)
+        if (matches && config.end && config.end.trim() !== '') {
+            if (!paraLower.includes(config.end)) {
+                matches = false;
+            }
+        }
+        
+        // Si cumple TODAS las condiciones no-vacías
+        if (matches) {
+            matchedCategory = category;
+            break;
+        }
+    }
+}
+```
+
+ORDEN DE PRIORIDAD:
+1. effectSpeed
+2. effectType
+3. timing
+4. conditions
+5. cost
+6. effects
+7. restrictions
+
+CAMBIO EN MARK:
+```html
+<!-- ANTES -->
+<mark style="opacity: 0.6; ...">texto</mark>
+
+<!-- DESPUÉS -->
+<mark style="opacity: 0.6; ...">texto</mark>
+```
+
+4. STYLE_CONFIG.CSS
+--------------------------------------------------------------------------------
+
+NUEVOS ESTILOS AGREGADOS:
+
+a) .nomenclature-category-card
+   - Card contenedor para cada categoría
+   - Gradient azul, hover dorado
+
+b) .nomenclature-configs-list
+   - Lista de configuraciones existentes
+   - Background oscuro, min-height
+
+c) .nomenclature-config-item
+   - Item individual de configuración
+   - Gradient, hover effect
+
+d) .nomenclature-config-header
+   - Header con nombre y botón eliminar
+   - Border-bottom, flex layout
+
+e) .nomenclature-config-fields
+   - Grid auto-fit para campos
+   - Muestra: Inicio, Int1, Int2, Fin
+
+f) .nomenclature-4fields-grid
+   - Grid 2x2 para los 4 textboxes
+   - Responsive: 1 columna en móvil
+
+g) .nomenclature-field-wrapper
+   - Wrapper para label + input
+   - Flex column, gap pequeño
+
+h) .nomenclature-field-label
+   - Label dorado, pequeño
+   - Font-weight 600
+
+i) .nomenclature-field-input
+   - Input estilizado
+   - Focus dorado, placeholder italic
+
+RESPONSIVE:
+- Desktop: Grid 2x2 (2 campos por fila)
+- Tablet/Mobile: Grid 1 columna (4 campos apilados)
+
+================================================================================
+FUNCIONAMIENTO DEL SISTEMA
+================================================================================
+
+EJEMPLO PRÁCTICO - ASH BLOSSOM:
+
+Descripción:
+"When a card or effect is activated that includes any of these effects 
+(Quick Effect): You can discard this card from your hand; negate that effect."
+
+PÁRRAFOS DIVIDIDOS:
+1. "When a card or effect is activated that includes any of these effects (Quick Effect):"
+2. " You can discard this card from your hand;"
+3. " negate that effect."
+
+ANÁLISIS PÁRRAFO 1:
+
+Configuración "Quick Effect":
+- start: "quick effect" ✅ PRESENTE
+- internal1: "" (vacío) ⏭️ SKIP
+- internal2: "" (vacío) ⏭️ SKIP
+- end: ":" ✅ PRESENTE
+
+Resultado: ✅ CUMPLE → Categoría: effectSpeed, Color: #FF6B6B
+
+ANÁLISIS PÁRRAFO 2:
+
+Configuración "Discard":
+- start: "" (vacío) ⏭️ SKIP
+- internal1: "discard" ✅ PRESENTE
+- internal2: "" (vacío) ⏭️ SKIP
+- end: ";" ✅ PRESENTE
+
+Resultado: ✅ CUMPLE → Categoría: cost, Color: #AA96DA
+
+ANÁLISIS PÁRRAFO 3:
+
+Configuración "Negation":
+- start: "" (vacío) ⏭️ SKIP
+- internal1: "negate" ✅ PRESENTE
+- internal2: "" (vacío) ⏭️ SKIP
+- end: "." ✅ PRESENTE
+
+Resultado: ✅ CUMPLE → Categoría: effects, Color: #FCBAD3
+
+SALIDA FINAL (HTML):
+```html
+<mark style="background-color: #FF6B6B; opacity: 0.6; ..." title="Velocidad de Efecto">
+    When a card or effect is activated that includes any of these effects (Quick Effect):
+</mark>
+<mark style="background-color: #AA96DA; opacity: 0.6; ..." title="Costo de Activacion">
+     You can discard this card from your hand;
+</mark>
+<mark style="background-color: #FCBAD3; opacity: 0.6; ..." title="Efecto">
+     negate that effect.
+</mark>
+```
+
+================================================================================
+FLUJO DE USO DEL USUARIO
+================================================================================
+
+1. AGREGAR NUEVA CONFIGURACIÓN
+--------------------------------------------------------------------------------
+
+Pasos:
+a) Ir a Config → Nomenclatura de Efectos
+b) Seleccionar categoría (ej: "Velocidad de Efecto")
+c) Completar los 4 campos:
+   - Inicio: "quick effect"
+   - Interna 1: (dejar vacío)
+   - Interna 2: (dejar vacío)
+   - Fin: ":"
+d) Nombre: "Quick Effect"
+e) Click "+ Agregar"
+
+Resultado:
+- Configuración agregada a effectSpeed
+- Aparece en lista de configuraciones
+- Campos se limpian automáticamente
+- Ready para agregar otra configuración
+
+2. VER CONFIGURACIONES EXISTENTES
+--------------------------------------------------------------------------------
+
+Cada categoría muestra:
+```
+┌─────────────────────────────┐
+│ Quick Effect              × │
+│ Inicio: quick effect        │
+│ Int1: -  Int2: -  Fin: :    │
+└─────────────────────────────┘
+```
+
+Información visible:
+- Nombre de la configuración
+- Valor de cada campo (- = vacío)
+- Botón × para eliminar
+
+3. ELIMINAR CONFIGURACIÓN
+--------------------------------------------------------------------------------
+
+Pasos:
+a) Click en × de la configuración
+b) Confirmar eliminación
+c) Configuración removida
+d) UI se actualiza automáticamente
+
+4. CAMBIAR COLOR DE CATEGORÍA
+--------------------------------------------------------------------------------
+
+Pasos:
+a) Click en color picker
+b) Seleccionar nuevo color
+c) Color se guarda automáticamente
+d) Se aplica inmediatamente en CardViewer
+
+================================================================================
+EJEMPLOS DE CONFIGURACIONES
+================================================================================
+
+1. SOLO PALABRA INTERNA + FIN
+--------------------------------------------------------------------------------
+```javascript
+"Discard": {
+    start: "",              // No requiere inicio específico
+    internal1: "discard",   // Debe contener "discard"
+    internal2: "",          // No requiere segunda palabra
+    end: ";"                // Debe terminar con ";"
+}
+```
+
+Párrafo que cumple:
+"You can discard this card from your hand;"
+
+Párrafo que NO cumple:
+"Discard 1 card from your hand." (termina con punto, no punto y coma)
+
+2. INICIO + FIN (SIN INTERNAS)
+--------------------------------------------------------------------------------
+```javascript
+"Trigger": {
+    start: "when",          // Debe empezar con "when"
+    internal1: "",          // No requiere palabra interna
+    internal2: "",          // No requiere palabra interna
+    end: ":"                // Debe terminar con ":"
+}
+```
+
+Párrafo que cumple:
+"When this card is Normal Summoned:"
+
+Párrafo que NO cumple:
+"If this card is Normal Summoned:" (empieza con "if", no "when")
+
+3. DOS PALABRAS INTERNAS + FIN
+--------------------------------------------------------------------------------
+```javascript
+"Burn": {
+    start: "",              // No requiere inicio
+    internal1: "inflict",   // Debe contener "inflict"
+    internal2: "damage",    // Debe contener "damage"
+    end: "."                // Debe terminar con "."
+}
+```
+
+Párrafo que cumple:
+"inflict 1000 damage to your opponent."
+
+Párrafo que NO cumple:
+"inflict 1000 points." (no contiene "damage")
+
+4. TODOS LOS CAMPOS COMPLETOS
+--------------------------------------------------------------------------------
+```javascript
+"Hard Once Per Turn": {
+    start: "you can only",      // Debe empezar con esto
+    internal1: "use",           // Debe contener "use"
+    internal2: "effect",        // Debe contener "effect"
+    end: "that turn"            // Debe terminar con esto
+}
+```
+
+Párrafo que cumple:
+"You can only use this effect of 'Card Name' once per turn."
+
+Párrafo que NO cumple:
+"You can only activate this effect once per turn." 
+(contiene "activate" en lugar de "use")
+
+================================================================================
+VENTAJAS DEL NUEVO SISTEMA
+================================================================================
+
+1. MAYOR PRECISIÓN
+--------------------------------------------------------------------------------
+- Sistema de 4 campos permite detección más específica
+- Reduce falsos positivos
+- Mejor control sobre qué se considera cada categoría
+
+EJEMPLO:
+Antes: "draw" → cualquier párrafo con "draw" era "Efecto - Draw"
+Ahora: Puede requerir start="", internal1="draw", internal2="", end="."
+Solo párrafos que terminen en punto se consideran
+
+2. FLEXIBILIDAD
+--------------------------------------------------------------------------------
+- Campos vacíos = no requeridos
+- Permite desde 1 hasta 4 condiciones
+- Adaptable a diferentes tipos de efectos
+
+EJEMPLO:
+- Efecto simple: Solo internal1
+- Efecto complejo: start + internal1 + internal2 + end
+
+3. CLARIDAD VISUAL
+--------------------------------------------------------------------------------
+- UI de 4 textboxes es intuitiva
+- Usuario ve claramente qué campos necesita
+- Configuraciones existentes muestran valores
+
+4. MENOS SATURACIÓN
+--------------------------------------------------------------------------------
+- Eliminadas 2 categorías (duration, requirements)
+- 7 categorías son suficientes
+- Mejor rendimiento en detección
+
+5. SUBRAYADO MÁS SUTIL
+--------------------------------------------------------------------------------
+- opacity: 0.6 (60%)
+- Marca visible pero no dominante
+- Mejor experiencia de lectura
+
+================================================================================
+COMPATIBILIDAD Y MIGRACIÓN
+================================================================================
+
+DATOS ANTIGUOS:
+- Si el usuario tenía configuraciones antiguas en localStorage
+- Sistema detectará estructura antigua
+- NOTA: Usuario deberá recrear configuraciones en nuevo formato
+
+RECOMENDACIÓN:
+1. Exportar configuración antigua (si existe)
+2. Actualizar archivos del sistema
+3. Recrear configuraciones importantes en nuevo formato
+4. Importar otros datos (roles, staples, etc.)
+
+DATOS QUE SE MANTIENEN:
+✅ Roles y keywords
+✅ Especialidades
+✅ Staples
+✅ roleConditions
+✅ Colores de nomenclatura
+
+DATOS QUE SE RESETEAN:
+❌ Configuraciones de nomenclatura (estructura cambió)
+
+================================================================================
+TESTING Y VALIDACIÓN
+================================================================================
+
+PRUEBAS RECOMENDADAS:
+
+1. AGREGAR CONFIGURACIÓN SIMPLE
+   - Categoría: effects
+   - Nombre: "Destroy"
+   - internal1: "destroy"
+   - end: "."
+   - Verificar: Se agrega correctamente
+
+2. AGREGAR CONFIGURACIÓN COMPLEJA
+   - Categoría: restrictions
+   - Nombre: "HOPT"
+   - start: "you can only"
+   - internal1: "use"
+   - end: "that turn"
+   - Verificar: Se agrega correctamente
+
+3. ELIMINAR CONFIGURACIÓN
+   - Click × en cualquier configuración
+   - Confirmar
+   - Verificar: Se elimina
+
+4. PROBAR DETECCIÓN EN CARDVIEWER
+   - Abrir carta con efectos variados
+   - Verificar: Párrafos se resaltan correctamente
+   - Verificar: Colores corresponden a categorías
+   - Verificar: Opacity 60%
+
+5. CAMBIAR COLOR
+   - Cambiar color de una categoría
+   - Abrir carta en CardViewer
+   - Verificar: Nuevo color se aplica
+
+6. RESPONSIVE
+   - Abrir en móvil
+   - Verificar: 4 campos se apilan verticalmente
+   - Verificar: Todo es usable en pantalla pequeña
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+PROBLEMA: "No se resaltan los párrafos"
+SOLUCIÓN:
+- Verificar que hay configuraciones en la categoría
+- Verificar que los campos no están todos vacíos
+- Revisar consola por errores
+
+PROBLEMA: "Se resalta todo el efecto con un solo color"
+SOLUCIÓN:
+- Revisar delimitadores (. : ;)
+- Verificar que config no tiene conflictos
+- Orden de prioridad: primera categoría que cumple gana
+
+PROBLEMA: "No se guarda la configuración"
+SOLUCIÓN:
+- Verificar que el nombre no está vacío
+- Verificar que no existe configuración con ese nombre
+- Revisar localStorage (F12 → Application → localStorage)
+
+PROBLEMA: "Color muy fuerte/débil"
+SOLUCIÓN:
+- opacity está fijada en 0.6 en cardviewer.js
+- Para cambiar: Modificar línea del <mark style="...">
+
+================================================================================
+PRÓXIMOS PASOS POSIBLES
+================================================================================
+
+MEJORAS FUTURAS:
+
+1. EDITAR CONFIGURACIONES
+   - Permitir editar campos sin eliminar
+   - Modal de edición inline
+
+2. DUPLICAR CONFIGURACIONES
+   - Botón para copiar configuración existente
+   - Facilita crear variaciones
+
+3. IMPORTAR/EXPORTAR NOMENCLATURA
+   - Exportar solo nomenclatura (no toda config)
+   - Compartir configuraciones entre usuarios
+
+4. PREVISUALIZACIÓN
+   - Mostrar ejemplo de párrafo que cumpliría
+   - Feedback visual antes de agregar
+
+5. REGEX SUPPORT
+   - Permitir expresiones regulares en campos
+   - Mayor flexibilidad en detección
+
+6. ESTADÍSTICAS
+   - Qué configuraciones detectan más párrafos
+   - Sugerencias de optimización
+
+================================================================================
+CONCLUSIÓN
+================================================================================
+
+ACTUALIZACIÓN COMPLETADA ✅
+
+ARCHIVOS MODIFICADOS:
+✅ configmanager.js - Nueva estructura de 4 campos
+✅ config.js - UI rediseñada con 4 textboxes
+✅ cardviewer.js - Nueva lógica de detección
+✅ style_config.css - Estilos para nueva UI
+
+CARACTERÍSTICAS IMPLEMENTADAS:
+✅ Sistema de 4 campos (start, internal1, internal2, end)
+✅ Campos vacíos = no requeridos
+✅ Eliminadas categorías duration y requirements
+✅ Opacidad 60% en marks
+✅ UI intuitiva con grid 2x2
+✅ Configuraciones visibles con resumen
+✅ Responsive design
+✅ Detección mejorada y precisa
+
+RESULTADO:
+Sistema de nomenclatura más flexible, preciso y fácil de usar.
+Mejor experiencia para el usuario en configuración y visualización.
+
+================================================================================

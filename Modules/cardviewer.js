@@ -170,54 +170,70 @@ const CardViewer = {
             effectSpeed: 'Velocidad de Efecto',
             effectType: 'Tipo de Efecto',
             timing: 'Timing del Efecto',
-            requirements: 'Requisitos',
             conditions: 'Condicion de Activacion',
             cost: 'Costo de Activacion',
             effects: 'Efecto',
-            duration: 'Duracion del Efecto',
             restrictions: 'Restriccion'
         };
 
         let matchedCategory = null;
-        let matchedKeywords = [];
+        const paraLower = paragraph.toLowerCase();
 
-        const checkMatch = (category, keywords, isObject = false) => {
-            if (isObject) {
-                for (const [name, kwList] of Object.entries(keywords)) {
-                    for (const kw of kwList) {
-                        if (paragraph.toLowerCase().includes(kw.toLowerCase())) {
-                            matchedCategory = category;
-                            matchedKeywords.push(kw);
-                            return true;
-                        }
+        // Orden de prioridad de categorías
+        const categories = ['effectSpeed', 'effectType', 'timing', 'conditions', 'cost', 'effects', 'restrictions'];
+
+        for (const category of categories) {
+            const categoryData = nomenclature[category];
+            if (!categoryData || typeof categoryData !== 'object') continue;
+
+            // Verificar cada configuración de esta categoría
+            for (const [name, config] of Object.entries(categoryData)) {
+                let matches = true;
+
+                // Verificar campo START (si no está vacío)
+                if (config.start && config.start.trim() !== '') {
+                    if (!paraLower.includes(config.start.toLowerCase())) {
+                        matches = false;
                     }
                 }
-            } else {
-                for (const kw of keywords) {
-                    if (paragraph.toLowerCase().includes(kw.toLowerCase())) {
-                        matchedCategory = category;
-                        matchedKeywords.push(kw);
-                        return true;
+
+                // Verificar campo INTERNAL1 (si no está vacío)
+                if (matches && config.internal1 && config.internal1.trim() !== '') {
+                    if (!paraLower.includes(config.internal1.toLowerCase())) {
+                        matches = false;
                     }
+                }
+
+                // Verificar campo INTERNAL2 (si no está vacío)
+                if (matches && config.internal2 && config.internal2.trim() !== '') {
+                    if (!paraLower.includes(config.internal2.toLowerCase())) {
+                        matches = false;
+                    }
+                }
+
+                // Verificar campo END (si no está vacío)
+                if (matches && config.end && config.end.trim() !== '') {
+                    if (!paraLower.includes(config.end.toLowerCase())) {
+                        matches = false;
+                    }
+                }
+
+                // Si cumple con todas las condiciones no-vacías
+                if (matches) {
+                    matchedCategory = category;
+                    break; // Primera coincidencia gana
                 }
             }
-            return false;
-        };
 
-        checkMatch('effectSpeed', nomenclature.effectSpeed, true) ||
-        checkMatch('effectType', nomenclature.effectType, true) ||
-        checkMatch('timing', nomenclature.timing, true) ||
-        checkMatch('requirements', nomenclature.requirements, false) ||
-        checkMatch('conditions', nomenclature.conditions, false) ||
-        checkMatch('cost', nomenclature.cost, false) ||
-        checkMatch('effects', nomenclature.effects, true) ||
-        checkMatch('duration', nomenclature.duration, true) ||
-        checkMatch('restrictions', nomenclature.restrictions, true);
+            if (matchedCategory) {
+                break; // Ya encontró coincidencia en esta categoría
+            }
+        }
 
         if (matchedCategory) {
             const color = colors[matchedCategory] || '#FFFFFF';
             const categoryName = categoryNames[matchedCategory] || matchedCategory;
-            return `<mark style="background-color: ${color}; opacity: 0.6; padding: 2px 4px; border-radius: 3px; cursor: help;" title="${categoryName}">${paragraph}</mark>`;
+            return `<mark style="background-color: ${color}; padding: 2px 4px; border-radius: 3px; cursor: help; opacity: 0.6;" title="${categoryName}">${paragraph}</mark>`;
         }
 
         return paragraph;

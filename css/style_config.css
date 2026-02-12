@@ -234,7 +234,7 @@
 }
 
 .chip-text {
-    user-select: none;
+    -webkit-user-select: none;
 }
 
 .chip-remove {
@@ -486,6 +486,121 @@
 }
 
 /* ====================================
+   NOMENCLATURA CON 4 CAMPOS (PASO 4)
+   ==================================== */
+
+.nomenclature-category-card {
+    background: linear-gradient(135deg, rgba(0, 51, 102, 0.4), rgba(0, 43, 77, 0.6));
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    transition: all var(--transition-normal);
+}
+
+.nomenclature-category-card:hover {
+    border-color: var(--gold-color);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.nomenclature-configs-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: rgba(0, 26, 51, 0.3);
+    border-radius: 8px;
+    min-height: 60px;
+    margin-bottom: var(--spacing-md);
+}
+
+.nomenclature-config-item {
+    background: linear-gradient(135deg, rgba(0, 102, 204, 0.2), rgba(0, 77, 153, 0.3));
+    border: 1px solid rgba(0, 102, 204, 0.4);
+    border-radius: 8px;
+    padding: var(--spacing-sm);
+    transition: all var(--transition-fast);
+}
+
+.nomenclature-config-item:hover {
+    background: linear-gradient(135deg, rgba(0, 102, 204, 0.3), rgba(0, 77, 153, 0.4));
+    border-color: var(--gold-color);
+}
+
+.nomenclature-config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 1px solid rgba(0, 102, 204, 0.3);
+}
+
+.nomenclature-config-header strong {
+    color: var(--gold-color);
+    font-size: 1rem;
+}
+
+.nomenclature-config-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--spacing-xs);
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.nomenclature-config-fields span {
+    background: rgba(0, 26, 51, 0.4);
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nomenclature-4fields-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.nomenclature-field-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.nomenclature-field-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gold-color);
+    margin-bottom: 2px;
+}
+
+.nomenclature-field-input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    background: rgba(0, 26, 51, 0.6);
+    color: var(--text-light);
+    transition: all var(--transition-normal);
+    outline: none;
+}
+
+.nomenclature-field-input:focus {
+    border-color: var(--gold-color);
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
+}
+
+.nomenclature-field-input::placeholder {
+    color: rgba(241, 241, 241, 0.4);
+    font-style: italic;
+}
+
+/* ====================================
    RESPONSIVE
    ==================================== */
 
@@ -508,6 +623,14 @@
 
     .btn {
         width: 100%;
+    }
+
+    .nomenclature-4fields-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .nomenclature-config-fields {
+        grid-template-columns: 1fr;
     }
 }
 

@@ -120,72 +120,209 @@ const ConfigManager = {
         // Análisis de estructura de efectos de cartas
         nomenclature: {
             effectSpeed: {
-                "Quick Effect": ["quick effect", "(quick effect)"],
-                "Trigger": ["when", "if"],
-                "Ignition": ["activate", "use"]
+                "Quick Effect": {
+                    start: "quick effect",
+                    internal1: "",
+                    internal2: "",
+                    end: ":"
+                },
+                "Trigger": {
+                    start: "when",
+                    internal1: "",
+                    internal2: "",
+                    end: ":"
+                },
+                "Ignition": {
+                    start: "",
+                    internal1: "activate",
+                    internal2: "",
+                    end: "."
+                }
             },
             effectType: {
-                "Targeting": ["target"],
-                "Non-Targeting": ["choose", "select without targeting"]
+                "Targeting": {
+                    start: "",
+                    internal1: "target",
+                    internal2: "",
+                    end: ";"
+                },
+                "Non-Targeting": {
+                    start: "",
+                    internal1: "choose",
+                    internal2: "",
+                    end: ""
+                }
             },
             timing: {
-                "On Summon": ["when this card is summoned", "if this card is summoned"],
-                "On Activation": ["when this card is activated"],
-                "During Battle": ["during the battle phase", "during damage calculation"],
-                "End Phase": ["during the end phase", "at the end phase"]
+                "On Summon": {
+                    start: "when",
+                    internal1: "summoned",
+                    internal2: "",
+                    end: ":"
+                },
+                "On Activation": {
+                    start: "when",
+                    internal1: "activated",
+                    internal2: "",
+                    end: ":"
+                },
+                "During Battle": {
+                    start: "during",
+                    internal1: "battle",
+                    internal2: "",
+                    end: ":"
+                },
+                "End Phase": {
+                    start: "during",
+                    internal1: "end phase",
+                    internal2: "",
+                    end: ":"
+                }
             },
-            requirements: [
-                "if you control",
-                "if your opponent",
-                "if you have",
-                "only if"
-            ],
-            conditions: [
-                "while",
-                "during",
-                "as long as"
-            ],
-            cost: [
-                "discard",
-                "banish",
-                "tribute",
-                "pay",
-                "detach",
-                "send"
-            ],
+            conditions: {
+                "While": {
+                    start: "while",
+                    internal1: "",
+                    internal2: "",
+                    end: ":"
+                },
+                "During": {
+                    start: "during",
+                    internal1: "",
+                    internal2: "",
+                    end: ":"
+                },
+                "As Long As": {
+                    start: "as long as",
+                    internal1: "",
+                    internal2: "",
+                    end: ""
+                }
+            },
+            cost: {
+                "Discard": {
+                    start: "",
+                    internal1: "discard",
+                    internal2: "",
+                    end: ";"
+                },
+                "Banish": {
+                    start: "",
+                    internal1: "banish",
+                    internal2: "",
+                    end: ";"
+                },
+                "Tribute": {
+                    start: "",
+                    internal1: "tribute",
+                    internal2: "",
+                    end: ";"
+                },
+                "Pay": {
+                    start: "",
+                    internal1: "pay",
+                    internal2: "",
+                    end: ";"
+                },
+                "Detach": {
+                    start: "",
+                    internal1: "detach",
+                    internal2: "",
+                    end: ";"
+                },
+                "Send": {
+                    start: "",
+                    internal1: "send",
+                    internal2: "",
+                    end: ";"
+                }
+            },
             effects: {
-                "Destruction": ["destroy"],
-                "Negation": ["negate"],
-                "Banish": ["banish"],
-                "Special Summon": ["special summon"],
-                "Search": ["add", "search"],
-                "Draw": ["draw"],
-                "Burn": ["inflict damage"],
-                "Gain": ["gain"]
-            },
-            duration: {
-                "Until End Phase": ["until the end of this turn", "until the end phase"],
-                "Permanent": ["cannot", "must always"],
-                "Once While Face-up": ["once while face-up", "once while this card"]
+                "Destruction": {
+                    start: "",
+                    internal1: "destroy",
+                    internal2: "",
+                    end: "."
+                },
+                "Negation": {
+                    start: "",
+                    internal1: "negate",
+                    internal2: "",
+                    end: "."
+                },
+                "Banish": {
+                    start: "",
+                    internal1: "banish",
+                    internal2: "",
+                    end: "."
+                },
+                "Special Summon": {
+                    start: "",
+                    internal1: "special summon",
+                    internal2: "",
+                    end: "."
+                },
+                "Search": {
+                    start: "",
+                    internal1: "add",
+                    internal2: "",
+                    end: "."
+                },
+                "Draw": {
+                    start: "",
+                    internal1: "draw",
+                    internal2: "",
+                    end: "."
+                },
+                "Burn": {
+                    start: "",
+                    internal1: "inflict",
+                    internal2: "damage",
+                    end: "."
+                },
+                "Gain": {
+                    start: "",
+                    internal1: "gain",
+                    internal2: "",
+                    end: "."
+                }
             },
             restrictions: {
-                "Once Per Turn": ["once per turn", "only once per turn"],
-                "Hard Once Per Turn": ["you can only", "only once that turn"],
-                "Cannot Summon": ["you cannot summon", "you cannot special summon"],
-                "Cannot Activate": ["you cannot activate"]
+                "Once Per Turn": {
+                    start: "",
+                    internal1: "once per turn",
+                    internal2: "",
+                    end: "."
+                },
+                "Hard Once Per Turn": {
+                    start: "you can only",
+                    internal1: "",
+                    internal2: "",
+                    end: "that turn"
+                },
+                "Cannot Summon": {
+                    start: "you cannot",
+                    internal1: "summon",
+                    internal2: "",
+                    end: "."
+                },
+                "Cannot Activate": {
+                    start: "you cannot",
+                    internal1: "activate",
+                    internal2: "",
+                    end: "."
+                }
             }
         },
 
-        // Colores para marks de nomenclatura (con transparencia 0.6 aplicada en CSS)
+        // Colores para marks de nomenclatura
         nomenclatureColors: {
             effectSpeed: "#FF6B6B",        // Rojo
             effectType: "#4ECDC4",         // Cyan
             timing: "#FFE66D",             // Amarillo
-            requirements: "#95E1D3",       // Verde agua
             conditions: "#F38181",         // Rosa
             cost: "#AA96DA",               // Morado
             effects: "#FCBAD3",            // Rosa claro
-            duration: "#A8E6CF",           // Verde menta
             restrictions: "#FFD3B6"        // Naranja pastel
         }
     },
