@@ -398,7 +398,7 @@ const Estadisticas = {
         const mostFrequent = Deck.getMostFrequentCard ? Deck.getMostFrequentCard(Deck.cards) : null;
         const thumbnailUrl = mostFrequent && mostFrequent.data.card_images 
             ? mostFrequent.data.card_images[0].image_url_small 
-            : 'https://via.placeholder.com/80x116/003366/FFD700?text=Deck';
+            : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="116"><rect width="80" height="116" fill="%23003366"/><text x="40" y="63" font-family="sans-serif" font-size="11" text-anchor="middle" fill="%23FFD700">Deck</text></svg>';
 
         widget.innerHTML = `
             <div class="widget-thumbnail">
@@ -433,7 +433,7 @@ const Estadisticas = {
             const firstCard = Object.values(deck.cards)[0];
             const thumbnailUrl = firstCard && firstCard.data && firstCard.data.card_images
                 ? firstCard.data.card_images[0].image_url_small
-                : 'https://via.placeholder.com/60x87/003366/FFD700?text=Deck';
+                : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="87"><rect width="60" height="87" fill="%23003366"/><text x="30" y="48" font-family="sans-serif" font-size="10" text-anchor="middle" fill="%23FFD700">Deck</text></svg>';
 
             deckListHTML += `
                 <div class="widget-deck-item ${isActive ? 'active' : ''}" 
@@ -479,7 +479,7 @@ const Estadisticas = {
         
         // Cambiar a la pestaña "Mi Deck"
         if (window.Navigation && typeof Navigation.showTab === 'function') {
-            Navigation.showTab('mi-deck');
+            Navigation.showTab('mideck');   // ✅ nombre correcto del tab
         }
         
         this.updateDeckStats();
@@ -569,7 +569,7 @@ const Estadisticas = {
                             <button class="meta-deck-delete" onclick="event.stopPropagation(); Estadisticas.deleteDeck('${deck.folder}', '${deck.filename}')" title="Eliminar">X</button>
                             <div class="meta-deck-thumbnail">
                                 <img src="https://images.ygoprodeck.com/images/cards_small/${deck.mostFrequentCard || '0'}.jpg" 
-                                     onerror="this.src='https://via.placeholder.com/100x145/003366/FFD700?text=Deck'"
+                                     onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22145%22><rect width=%22100%22 height=%22145%22 fill=%22%23003366%22/><text x=%2250%22 y=%2278%22 font-family=%22sans-serif%22 font-size=%2212%22 text-anchor=%22middle%22 fill=%22%23FFD700%22>Deck</text></svg>'"
                                      alt="${deck.filename}">
                             </div>
                             <div class="meta-deck-info">
