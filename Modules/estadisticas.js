@@ -429,10 +429,20 @@ const Estadisticas = {
             const extraCount = Object.values(deck.cards).filter(c => c.location === 'extra').reduce((s, c) => s + c.qty, 0);
             const isActive = deck.key === currentDeckKey;
 
+            // Obtener imagen de la primera carta del deck
+            const firstCard = Object.values(deck.cards)[0];
+            const thumbnailUrl = firstCard && firstCard.data && firstCard.data.card_images
+                ? firstCard.data.card_images[0].image_url_small
+                : 'https://via.placeholder.com/60x87/003366/FFD700?text=Deck';
+
             deckListHTML += `
-                <div class="widget-deck-item ${isActive ? 'active' : ''}" onclick="event.stopPropagation(); Estadisticas.selectDeckFromWidget('${deck.key}')">
-                    <span class="widget-deck-name">${deck.name}</span>
-                    <span class="widget-deck-counts">Main: ${mainCount} | Extra: ${extraCount}</span>
+                <div class="widget-deck-item ${isActive ? 'active' : ''}" 
+                     onclick="event.stopPropagation(); Estadisticas.selectDeckFromWidget('${deck.key}')">
+                    <img src="${thumbnailUrl}" class="widget-deck-thumbnail" alt="${deck.name}">
+                    <div class="widget-deck-info">
+                        <span class="widget-deck-name">${deck.name}</span>
+                        <span class="widget-deck-counts">Main: ${mainCount} | Extra: ${extraCount}</span>
+                    </div>
                 </div>
             `;
         });
@@ -466,6 +476,12 @@ const Estadisticas = {
         if (Deck && Deck.loadDeck) {
             Deck.loadDeck(deckKey);
         }
+        
+        // Cambiar a la pestaña "Mi Deck"
+        if (window.Navigation && typeof Navigation.showTab === 'function') {
+            Navigation.showTab('mi-deck');
+        }
+        
         this.updateDeckStats();
         this.collapseDeckList();
         setTimeout(() => {

@@ -738,6 +738,135 @@
     filter: saturate(30%);
     transition: filter 0.3s ease;
 }
+/* ====================================
+   ESTILOS PARA BADGES DE SUBTIPOS
+   Destiny Draw - Yu-Gi-Oh! App
+   
+   Agregar al final de style_deck.css
+   ==================================== */
+
+/* Badge de subtipo (amarillo con letras negras) */
+.subtype-badge {
+    display: inline-block;
+    background: #FFD700; /* Amarillo dorado */
+    color: #000000; /* Letras negras */
+    padding: 4px 10px;
+    margin: 2px 4px 2px 0;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    border: 1px solid #DAA520; /* Borde dorado oscuro */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Asegurar que los badges de subtipos se vean bien junto a los de roles */
+.deck-roles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Opcional: Efecto hover en badges de subtipos */
+.subtype-badge:hover {
+    background: #FFC700;
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+}
+/* ====================================
+   ESTILOS PARA WIDGET FLOTANTE CON THUMBNAILS
+   Destiny Draw - Yu-Gi-Oh! App
+   
+   Agregar al final de style.css o crear archivo separado
+   ==================================== */
+
+/* Modificar widget-deck-item para incluir imagen */
+.widget-deck-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.widget-deck-item:hover {
+    background: linear-gradient(135deg, #2d2d2d, #3a3a3a);
+    border-color: #3498db;
+    transform: translateX(5px);
+}
+
+.widget-deck-item.active {
+    border-color: #FFD700;
+    background: linear-gradient(135deg, #2d2d2d, #1a472a);
+}
+
+/* Thumbnail de la carta en el item del deck */
+.widget-deck-thumbnail {
+    width: 50px;
+    height: 72px;
+    border-radius: 4px;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    border: 1px solid #444;
+    flex-shrink: 0;
+}
+
+/* Contenedor de info del deck */
+.widget-deck-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0; /* Para que funcione text-overflow */
+}
+
+.widget-deck-name {
+    font-weight: bold;
+    color: white;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.widget-deck-counts {
+    color: #FFD700;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Ajustar altura de widget expandido */
+.widget-deck-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* Scrollbar personalizado para lista de decks */
+.widget-deck-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.widget-deck-list::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 3px;
+}
+
+.widget-deck-list::-webkit-scrollbar-thumb {
+    background: #3498db;
+    border-radius: 3px;
+}
+
+.widget-deck-list::-webkit-scrollbar-thumb:hover {
+    background: #5dade2;
+}
 
 /* ====================================
    RESPONSIVE
