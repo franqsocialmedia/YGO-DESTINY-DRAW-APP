@@ -80,7 +80,10 @@ const CardViewer = {
                     </div>
 
                     <hr>
-                    <button id="cv-download">Descargar Imagen</button>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button id="cv-open-image" style="flex: 1; min-width: 120px;">Abrir Imagen</button>
+                        <button id="cv-download-test" style="flex: 1; min-width: 120px; background: #4CAF50; color: white;">PRUEBA DECKLIST</button>
+                    </div>
 
                 </div>
             </div>
@@ -188,16 +191,85 @@ const CardViewer = {
             }
         };
 
-        const downloadBtn = document.getElementById('cv-download');
-        downloadBtn.onclick = () => {
+        // Botón: Abrir Imagen en nueva pestaña
+        const openImageBtn = document.getElementById('cv-open-image');
+        openImageBtn.onclick = () => {
             const imgUrl = mainImage.src;
+            window.open(imgUrl, '_blank');
+        };
+
+        // Botón: PRUEBA DECKLIST - Descarga automática
+        const downloadTestBtn = document.getElementById('cv-download-test');
+        downloadTestBtn.onclick = () => {
+            this.downloadCardImage(mainImage.src, card.name);
+        };
+    },
+
+    // Nueva función para descargar imagen evitando CORS
+    downloadCardImage: async function(imageUrl, cardName) {
+        try {
+            console.log('📥 [CardViewer] Iniciando descarga de:', cardName);
+            
+            // Crear un elemento de imagen temporal
+            const img = new Image();
+            img.crossOrigin = 'anonymous'; // Intenta evitar CORS
+            
+            // Esperar a que la imagen cargue
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = imageUrl;
+            });
+            
+            // Crear canvas del tamaño de la imagen
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            
+            // Dibujar imagen en el canvas
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            
+            // Convertir canvas a blob
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    console.error('❌ [CardViewer] Error al crear blob');
+                    alert('Error al procesar la imagen');
+                    return;
+                }
+                
+                // Crear URL temporal del blob
+                const url = URL.createObjectURL(blob);
+                
+                // Crear enlace de descarga
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = cardName.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.png';
+                document.body.appendChild(a);
+                a.click();
+                
+                // Limpiar
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+                
+                console.log('✅ [CardViewer] Imagen descargada exitosamente');
+            }, 'image/png');
+            
+        } catch (error) {
+            console.error('❌ [CardViewer] Error al descargar imagen:', error);
+            
+            // Fallback: intentar descarga directa
+            console.log('🔄 [CardViewer] Intentando descarga directa...');
             const a = document.createElement('a');
-            a.href = imgUrl;
-            a.download = card.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.jpg';
+            a.href = imageUrl;
+            a.download = cardName.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.png';
+            a.target = '_blank';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-        };
+        }
     },
 
     highlightNomenclature: function(desc) {
