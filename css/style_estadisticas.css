@@ -409,7 +409,128 @@
     font-style: italic;
     padding: var(--spacing-md);
 }
+/* ====================================
+   RECURRENCIA DE CARTAS DEL META
+   ==================================== */
 
+.meta-card-stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(0, 51, 102, 0.4);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: rgba(241, 241, 241, 0.8);
+}
+
+.meta-card-stats-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.meta-card-stat-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: var(--bg-dark);
+    border-radius: 8px;
+    padding: 8px var(--spacing-sm);
+    border: 1px solid var(--border-color);
+    transition: border-color var(--transition-fast);
+}
+
+.meta-card-stat-item:hover {
+    border-color: var(--gold-color);
+}
+
+.mcs-rank {
+    min-width: 32px;
+    text-align: center;
+    font-weight: bold;
+    color: var(--gold-color);
+    font-size: 0.85rem;
+}
+
+.mcs-img {
+    width: 42px;
+    min-width: 42px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.mcs-name {
+    flex: 1;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mcs-stats {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-shrink: 0;
+}
+
+.mcs-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+}
+
+.mcs-stat-label {
+    font-size: 0.7rem;
+    color: rgba(241, 241, 241, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.mcs-stat-value {
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+.mcs-stat-value em {
+    font-style: normal;
+    font-size: 0.8rem;
+    color: rgba(241, 241, 241, 0.6);
+}
+
+@media (max-width: 768px) {
+    .mcs-stats {
+        gap: var(--spacing-sm);
+    }
+    .mcs-stat {
+        min-width: 60px;
+    }
+    .meta-card-stats-header {
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .meta-card-stat-item {
+        flex-wrap: wrap;
+    }
+    .mcs-name {
+        flex-basis: 100%;
+        white-space: normal;
+    }
+    .mcs-stats {
+        width: 100%;
+        justify-content: space-around;
+    }
+}
 /* ====================================
    RESPONSIVE
    ==================================== */

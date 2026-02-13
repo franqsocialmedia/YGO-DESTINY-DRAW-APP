@@ -124,10 +124,16 @@ const Estadisticas = {
 
                 const mostFrequentId = this.getMostFrequentCardId(deckData.cards);
 
+               const cardFrequency = {};
+                deckData.cards.forEach(id => {
+                    cardFrequency[id] = (cardFrequency[id] || 0) + 1;
+                });
+
                 const deckInfo = {
                     filename: file.name.replace('.ydk', ''),
                     mostFrequentCard: mostFrequentId,
-                    cardCount: deckData.cards.length
+                    cardCount: deckData.cards.length,
+                    cardFrequency: cardFrequency
                 };
 
                 if (!this.metaDecks[folderName]) {
@@ -499,7 +505,109 @@ const Estadisticas = {
         Estadisticas.openDeckFromWidget(deckId);
     });
 },
+// ===============================
+// ESTADÍSTICAS DE CARTAS DEL META
+// ===============================
+calculateMetaCardStats: function () {
+    const filtered = this.getFilteredDecks();
+    const totalCopies = {};
+    const deckUsage = {};
+    let decksWithData = 0;
 
+    filtered.forEach(deck => {
+        if (!deck.cardFrequency || Object.keys(deck.cardFrequency).length === 0) return;
+        decksWithData++;
+        Object.entries(deck.cardFrequency).forEach(([cardId, copies]) => {
+            totalCopies[cardId] = (totalCopies[cardId] || 0) + copies;
+            deckUsage[cardId]   = (deckUsage[cardId]   || 0) + 1;
+        });
+    });
+
+    const stats = Object.entries(totalCopies)
+        .map(([cardId, total]) => ({
+            cardId,
+            totalCopies:  total,
+            deckCount:    deckUsage[cardId],
+            avgCopies:    (total / deckUsage[cardId]).toFixed(2),
+            presencePct:  Math.round((deckUsage[cardId] / decksWithData) * 100)
+        }))
+        .sort((a, b) => b.totalCopies - a.totalCopies)
+        .slice(0, 30);
+
+    return { stats, decksWithData, totalDecks: filtered.length };
+},
+
+renderMetaCardStats: function () {
+    const { stats, decksWithData, totalDecks } = this.calculateMetaCardStats();
+
+    if (totalDecks === 0) {
+        return '<p class="stats-empty">No hay decks del meta cargados aún.</p>';
+    }
+
+    if (decksWithData === 0) {
+        return `
+            <p class="stats-empty">
+                Ningún deck tiene datos de recurrencia.<br>
+                <small>Re-importa los archivos .ydk para generar esta estadística.</small>
+            </p>`;
+    }
+
+    const header = `
+        <div class="meta-card-stats-header">
+            <span>Analizando <strong>${decksWithData}</strong> de ${totalDecks} decks</span>
+            <span>Mostrando top ${stats.length} cartas</span>
+        </div>`;
+
+    const grid = stats.map((item, i) => `
+        <div class="meta-card-stat-item">
+            <div class="mcs-rank">#${i + 1}</div>
+            <img class="mcs-img"
+                 src="https://images.ygoprodeck.com/images/cards_small/${item.cardId}.jpg"
+                 alt="${item.cardId}"
+                 id="mcs-img-${item.cardId}"
+                 onerror="this.style.background='#002b4d';this.src='';">
+            <div class="mcs-name" id="mcs-name-${item.cardId}">···</div>
+            <div class="mcs-stats">
+                <div class="mcs-stat" title="Total de copias en todos los decks">
+                    <span class="mcs-stat-label">Copias totales</span>
+                    <span class="mcs-stat-value">${item.totalCopies}</span>
+                </div>
+                <div class="mcs-stat" title="En cuántos decks aparece">
+                    <span class="mcs-stat-label">Presencia</span>
+                    <span class="mcs-stat-value">${item.deckCount}/${decksWithData} <em>(${item.presencePct}%)</em></span>
+                </div>
+                <div class="mcs-stat" title="Promedio de copias en los decks que la usan">
+                    <span class="mcs-stat-label">Promedio x deck</span>
+                    <span class="mcs-stat-value">${item.avgCopies}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    // Lanzar carga de nombres tras render
+    setTimeout(() => this.loadCardNames(stats.map(s => s.cardId)), 0);
+
+    return header + `<div class="meta-card-stats-grid">${grid}</div>`;
+},
+
+loadCardNames: async function (cardIds) {
+    // Lanza peticiones en lotes de 10 para no saturar la API
+    const batchSize = 10;
+    for (let i = 0; i < cardIds.length; i += batchSize) {
+        const batch = cardIds.slice(i, i + batchSize);
+        await Promise.all(batch.map(async id => {
+            try {
+                const res  = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${id}`);
+                const data = await res.json();
+                const name = data.data?.[0]?.name;
+                if (name) {
+                    const el = document.getElementById(`mcs-name-${id}`);
+                    if (el) el.textContent = name;
+                }
+            } catch (_) { /* sin nombre si falla */ }
+        }));
+    }
+},
     render: function () {
         if (!this.container) return;
 
@@ -567,7 +675,14 @@ const Estadisticas = {
                 </div>
             </div>
         `;
-
+html += `
+    <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('meta-card-stats-sec')">
+        Recurrencia de Cartas en el Meta
+    </h3>
+    <div id="meta-card-stats-sec" class="stats-section">
+        ${this.renderMetaCardStats()}
+    </div>
+`;
         this.container.innerHTML = html;
     },
 
