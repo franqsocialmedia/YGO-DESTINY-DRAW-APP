@@ -316,7 +316,8 @@ const Buscador = {
         this.removeCardActions();
         const card = this.currentCards[index];
         if (window.Deck && card) {
-            Deck.syncFromViewer(card.id, 1);
+            const currentQty = Deck.cards[card.id] ? Deck.cards[card.id].qty : 0;
+            Deck.syncFromViewer(card.id, card, currentQty + 1);
         }
     }
 };

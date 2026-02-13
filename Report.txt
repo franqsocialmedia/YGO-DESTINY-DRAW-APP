@@ -4961,3 +4961,118 @@ CALIDAD DEL CÓDIGO:
 ¡PASO 4 FINALIZADO CON ÉXITO! 🎉
 
 ================================================================================
+
+================================================================================
+DESTINY DRAW - REPORTE DE SESIÓN - CONTINUACIÓN PASO 4 / PRE-PASO 5
+Fecha: 13/02/2026
+Estado: COMPLETADO ✓ - Proyecto en estado estable 98% funcional
+================================================================================
+
+CAMBIOS REALIZADOS EN ESTA SESIÓN
+--------------------------------------------------------------------------------
+
+1. ELIMINACIÓN: config_nomenclature_snippet.js
+   Archivo eliminado del proyecto.
+   Razón: Era un fragmento de desarrollo residual que nunca fue cargado en
+   index.html. Sus métodos ya estaban integrados correctamente en config.js
+   desde el Paso 4. Su presencia solo generaba confusión.
+
+2. FIX: via.placeholder.com → SVG Data URI (estadisticas.js)
+   Tres ocurrencias reemplazadas en:
+   - updateFloatingWidget()
+   - expandDeckList()
+   - render() [onerror de img]
+   Razón: El dominio via.placeholder.com fue dado de baja y generaba
+   ERR_NAME_NOT_RESOLVED en consola. Se reemplazó por SVGs inline (data URI)
+   que funcionan sin internet ni servidor, consistente con el principio
+   core del proyecto.
+
+3. FIX: Widget flotante - click en deck no cargaba (estadisticas.js)
+   Tres correcciones encadenadas:
+   - deck.key → deck.name para detectar deck activo
+   - selectDeckFromWidget recibía deck.key (undefined) → ahora deck.name
+   - Deck.loadDeck() (inexistente) → Deck.confirmLoadDeck() (método real)
+   - Navigation.showTab('mi-deck') → Navigation.showTab('mideck') (nombre correcto del tab)
+   Razón: La función getSavedDecks() de deck.js nunca expuso una propiedad
+   "key", y el nombre del tab en index.html es "mideck" sin guion.
+   El widget ahora actúa como atajo directo al botón "Ver Deck" de
+   Decks Guardados en Mi Deck.
+
+4. MEJORA: Widget flotante - imagen fija del reverso (estadisticas.js)
+   updateFloatingWidget() simplificado para mostrar siempre el reverso
+   oficial de carta de Yu-Gi-Oh! (images.ygoprodeck.com/images/cards/back.jpg)
+   cuando está contraído, con SVG data URI como fallback.
+   Razón: La imagen anterior intentaba mostrar la carta más frecuente del
+   deck activo, lo que era frágil y visualmente inconsistente. El reverso
+   es una imagen reconocible, temática y siempre estable.
+
+5. MEJORA: Nomenclatura - Contiene / NO contiene multi-keyword (3 archivos)
+   
+   configmanager.js:
+   - contains y notContains migrados de String a Array en defaultConfig
+   - addNomenclatureCategory() actualizado para usar arrays vacíos
+   - Migración automática en getConfig() para datos viejos en localStorage
+   - Nuevos métodos: addNomCondKw() y removeNomCondKw()
+   
+   config.js:
+   - renderNomenclatureCategory() rediseñado con chips visuales para
+     ambos campos, igual al sistema de keywords de Roles
+   - Nuevos métodos: addNomCondKw() y removeNomCondKw() (bridge a ConfigManager)
+   - Lógica semántica explícita: "Contiene" = OR (al menos una),
+     "NO contiene" = AND exclusión (ninguna debe estar)
+   
+   nomenclature-analyzer.js:
+   - matchesConditions() actualizado para manejar array o string
+     con la misma lógica OR/AND según campo
+   
+   Razón: El campo "Contiene" con un solo valor era muy restrictivo para
+   detectar párrafos con variantes de texto. Por ejemplo, para detectar
+   costos había que elegir entre "discard" o "send to the gy" pero no ambos
+   como opciones. Ahora funciona igual que el sistema de keywords de Roles,
+   que ya era familiar para el usuario.
+
+6. FIX CRÍTICO: CardViewer.highlightParagraphNew() roto tras mejora #5
+   (cardviewer.js)
+   Razón: Al convertir contains/notContains a arrays, cardviewer.js
+   intentaba llamar .trim() sobre un array, lanzando TypeError silencioso
+   que impedía que open() completara su ejecución, rompiendo el panel
+   flotante de detalles de carta. Se aplicó el mismo patrón defensivo
+   Array.isArray() ya usado en nomenclature-analyzer.js.
+
+7. FIX: Botón "Añadir" del buscador no agregaba carta al deck (buscador.js)
+   Razón: addCard() llamaba a Deck.syncFromViewer(card.id, 1) con firma
+   incorrecta. La firma real es syncFromViewer(id, card, qty). Sin el
+   objeto card, Deck no podía construir la entrada ni asignar roles,
+   localización ni especialidades. Ahora respeta copias existentes y
+   suma +1 igual que el botón cv-plus del CardViewer.
+
+================================================================================
+ARCHIVOS MODIFICADOS
+================================================================================
+
+Modules/estadisticas.js     → Fixes 2, 3, 4
+Modules/configmanager.js    → Mejora 5
+Modules/config.js           → Mejora 5
+Modules/nomenclature-analyzer.js → Mejora 5
+Modules/cardviewer.js       → Fix crítico 6
+Modules/buscador.js         → Fix 7
+[Eliminado] config_nomenclature_snippet.js → Cambio 1
+
+================================================================================
+ESTADO DEL PROYECTO POST-SESIÓN
+================================================================================
+
+FUNCIONALIDADES 100% OPERATIVAS:
+- Buscador con chips de filtro, overlay de acciones, botón Ver y Añadir
+- CardViewer: panel flotante, highlight de nomenclatura, +/- cantidad
+- Mi Deck: agregar, quitar, roles, localización, side deck, exportar
+- Widget flotante: imagen fija, lista expandible, carga de deck como atajo
+- Estadísticas: Internal Score, carpetas meta, import YDK
+- Config: Roles, Especialidades, Staples, Nomenclatura multi-keyword
+
+PRINCIPIOS RESPETADOS:
+- Sin servidor local (todo client-side)
+- Compatibilidad backward con datos en localStorage
+- Arquitectura modular sin romper módulos existentes
+
+================================================================================

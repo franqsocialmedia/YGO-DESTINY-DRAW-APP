@@ -397,20 +397,20 @@ const CardViewer = {
                 }
             }
 
-            if (matches && cond.contains && cond.contains.trim() !== '') {
-                if (!paraLower.includes(cond.contains.toLowerCase().trim())) {
+            if (matches) {
+                const containsArr = Array.isArray(cond.contains)
+                    ? cond.contains.filter(c => c.trim())
+                    : (cond.contains && cond.contains.trim() ? [cond.contains.trim()] : []);
+                if (containsArr.length > 0 && !containsArr.some(kw => paraLower.includes(kw.toLowerCase()))) {
                     matches = false;
                 }
             }
 
-            if (matches && cond.notContains && cond.notContains.trim() !== '') {
-                if (paraLower.includes(cond.notContains.toLowerCase().trim())) {
-                    matches = false;
-                }
-            }
-
-            if (matches && cond.endsWith && cond.endsWith.trim() !== '') {
-                if (!paraLower.endsWith(cond.endsWith.toLowerCase().trim())) {
+            if (matches) {
+                const notContainsArr = Array.isArray(cond.notContains)
+                    ? cond.notContains.filter(c => c.trim())
+                    : (cond.notContains && cond.notContains.trim() ? [cond.notContains.trim()] : []);
+                if (notContainsArr.length > 0 && notContainsArr.some(kw => paraLower.includes(kw.toLowerCase()))) {
                     matches = false;
                 }
             }

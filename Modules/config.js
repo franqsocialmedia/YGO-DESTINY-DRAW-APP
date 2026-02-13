@@ -316,50 +316,80 @@ const Config = {
     },
 
     renderNomenclatureCategory: function (cat) {
-        const cond = cat.conditions || {};
-        
-        return `
-            <div class="role-card">
-                <div class="role-card-header">
-                    <input type="color" value="${cat.color}" title="Color de la categoría"
-                        style="width:44px;height:34px;border:2px solid var(--border-color);border-radius:6px;cursor:pointer;padding:2px;margin-right:8px;background:transparent;"
-                        onchange="ConfigManager.updateNomenclatureCategory('${cat.id}',{color:this.value});Config.render()">
-                    <input type="text" class="role-name-input" value="${cat.name}"
-                        onblur="ConfigManager.updateNomenclatureCategory('${cat.id}',{name:this.value})"
-                        onkeydown="if(event.key==='Enter')this.blur()">
-                    <button class="btn-delete-role" onclick="Config.deleteNomCategory('${cat.id}')">🗑️</button>
+    const cond = cat.conditions || {};
+
+    const containsArr = Array.isArray(cond.contains) ? cond.contains 
+        : (cond.contains ? [cond.contains] : []);
+    const notContainsArr = Array.isArray(cond.notContains) ? cond.notContains 
+        : (cond.notContains ? [cond.notContains] : []);
+
+    const containsChips = containsArr.map(kw => `
+        <div class="keyword-chip">
+            <span class="chip-text">${kw}</span>
+            <span class="chip-remove" onclick="Config.removeNomCondKw('${cat.id}','contains','${kw.replace(/'/g,"\\'")}')">×</span>
+        </div>`).join('');
+
+    const notContainsChips = notContainsArr.map(kw => `
+        <div class="keyword-chip conditional-chip">
+            <span class="chip-text">${kw}</span>
+            <span class="chip-remove" onclick="Config.removeNomCondKw('${cat.id}','notContains','${kw.replace(/'/g,"\\'")}')">×</span>
+        </div>`).join('');
+
+    return `
+        <div class="role-card">
+            <div class="role-card-header">
+                <input type="color" value="${cat.color}" title="Color de la categoría"
+                    style="width:50px;height:34px;border:2px solid var(--border-color);border-radius:6px;cursor:pointer;padding:0px;margin-right:3px;background:transparent;"
+                    onchange="ConfigManager.updateNomenclatureCategory('${cat.id}',{color:this.value});Config.render()">
+                <input type="text" class="role-name-input" value="${cat.name}"
+                    onblur="ConfigManager.updateNomenclatureCategory('${cat.id}',{name:this.value})"
+                    onkeydown="if(event.key==='Enter')this.blur()">
+                <button class="btn-delete-role" onclick="Config.deleteNomCategory('${cat.id}')">🗑️</button>
+            </div>
+            <div class="role-card-body" style="gap:12px;">
+
+                <label class="config-label">Empieza con:</label>
+                <input type="text" class="keyword-input" value="${cond.startsWith || ''}"
+                    placeholder="vacío = cualquiera"
+                    onblur="ConfigManager.updateNomenclatureCategoryCondition('${cat.id}','startsWith',this.value)"
+                    onkeydown="if(event.key==='Enter')this.blur()">
+
+                <label class="config-label">
+                    Contiene: <small style="font-weight:normal;color:rgba(241,241,241,0.55);">— al menos UNA debe cumplirse</small>
+                </label>
+                <div class="keywords-container">
+                    ${containsChips || '<span class="empty-chips">Sin keywords (cualquier texto)</span>'}
                 </div>
-                <div class="role-card-body" style="gap:12px;">
-                    <label class="config-label">Empieza con:</label>
-                    <input type="text" class="keyword-input" value="${cond.startsWith || ''}"
-                        placeholder="vacío = cualquiera"
-                        onblur="ConfigManager.updateNomenclatureCategoryCondition('${cat.id}','startsWith',this.value)"
-                        onkeydown="if(event.key==='Enter')this.blur()">
-                    
-                    <label class="config-label">Contiene:</label>
-                    <input type="text" class="keyword-input" value="${cond.contains || ''}"
-                        placeholder="vacío = cualquiera"
-                        onblur="ConfigManager.updateNomenclatureCategoryCondition('${cat.id}','contains',this.value)"
-                        onkeydown="if(event.key==='Enter')this.blur()">
-                    
-                    <label class="config-label">NO contiene:</label>
-                    <input type="text" class="keyword-input" value="${cond.notContains || ''}"
-                        placeholder="vacío = sin restricción"
-                        onblur="ConfigManager.updateNomenclatureCategoryCondition('${cat.id}','notContains',this.value)"
-                        onkeydown="if(event.key==='Enter')this.blur()">
-                    
-                    <label class="config-label">Termina en:</label>
-                    <input type="text" class="keyword-input" value="${cond.endsWith || ''}"
-                        placeholder="por defecto: ."
-                        onblur="ConfigManager.updateNomenclatureCategoryCondition('${cat.id}','endsWith',this.value)"
-                        onkeydown="if(event.key==='Enter')this.blur()">
-                    
-                    <div class="config-help-text" style="margin-top:8px;">
-                        <small><strong>Cómo funciona:</strong> Un párrafo se detecta si cumple TODOS los campos no-vacíos. Ejemplo: si pones "quick effect" en "Contiene" y ":" en "Termina", solo detectará párrafos que contengan "quick effect" Y terminen en ":".</small>
-                    </div>
+                <div class="add-keyword-container">
+                    <input type="text" class="keyword-input" id="nom-contains-${cat.id}" placeholder="Agregar opción..."
+                        onkeydown="if(event.key==='Enter')Config.addNomCondKw('${cat.id}','contains',this)">
+                    <button class="btn btn-sm" onclick="Config.addNomCondKw('${cat.id}','contains',document.getElementById('nom-contains-${cat.id}'))">+ Agregar</button>
                 </div>
-            </div>`;
-    },
+
+                <label class="config-label conditional-label">
+                    NO contiene: <small style="font-weight:normal;">— TODAS deben estar ausentes</small>
+                </label>
+                <div class="keywords-container">
+                    ${notContainsChips || '<span class="empty-chips">Sin restricciones</span>'}
+                </div>
+                <div class="add-keyword-container">
+                    <input type="text" class="keyword-input conditional-input" id="nom-notcontains-${cat.id}" placeholder="Agregar exclusión..."
+                        onkeydown="if(event.key==='Enter')Config.addNomCondKw('${cat.id}','notContains',this)">
+                    <button class="btn btn-sm btn-danger" onclick="Config.addNomCondKw('${cat.id}','notContains',document.getElementById('nom-notcontains-${cat.id}'))">+ Agregar</button>
+                </div>
+
+                <label class="config-label">Termina en:</label>
+                <input type="text" class="keyword-input" value="${cond.endsWith || ''}"
+                    placeholder="por defecto: ."
+                    onblur="ConfigManager.updateNomenclatureCategoryCondition('${cat.id}','endsWith',this.value)"
+                    onkeydown="if(event.key==='Enter')this.blur()">
+
+                <div class="config-help-text" style="margin-top:8px;">
+                    <small><strong>Cómo funciona:</strong> Un párrafo se detecta si: empieza con el texto indicado, contiene AL MENOS UNA de las keywords de "Contiene", NO contiene NINGUNA de las de "NO contiene", y termina con el texto indicado.</small>
+                </div>
+            </div>
+        </div>`;
+},
 
     // ===============================
     // ACCIONES - ROLES
@@ -593,13 +623,33 @@ const Config = {
             alert('❌ Error al importar: ' + err);
         }
         el.value = '';
-    },
+    },addNomCondKw: function (catId, field, el) {
+    const kw = el.value.trim().toLowerCase();
+    if (!kw) { alert('⚠️ Escribe una keyword'); return; }
+    if (ConfigManager.addNomCondKw(catId, field, kw)) {
+        el.value = '';
+        this.render();
+        const sec = document.getElementById('nomenclature-section');
+        if (sec) sec.style.display = 'block';
+    } else {
+        alert('❌ Ya existe esa keyword');
+    }
+},
+
+removeNomCondKw: function (catId, field, kw) {
+    if (ConfigManager.removeNomCondKw(catId, field, kw)) {
+        this.render();
+        const sec = document.getElementById('nomenclature-section');
+        if (sec) sec.style.display = 'block';
+    }
+},
 
     toggleSection: function (sectionId) {
         const sec = document.getElementById(sectionId);
         if (sec) {
             sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
         }
+        
     }
 };
 

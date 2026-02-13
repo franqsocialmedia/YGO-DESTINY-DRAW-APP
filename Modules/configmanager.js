@@ -138,86 +138,51 @@ const ConfigManager = {
         // ⭐ NOMENCLATURA - Compatible con cardviewer.js y nomenclature-analyzer.js
         // Cada categoría tiene UNA configuración directa con 4 campos
         nomenclature: {
-            categories: [
-                {
-                    id: 'effectSpeed',
-                    name: 'Velocidad de Efecto',
-                    color: '#FF6B6B',
-                    conditions: {
-                        startsWith: '',
-                        contains: 'quick effect',
-                        notContains: '',
-                        endsWith: ':'
-                    }
-                },
-                {
-                    id: 'effectType',
-                    name: 'Tipo de Efecto',
-                    color: '#4ECDC4',
-                    conditions: {
-                        startsWith: '',
-                        contains: 'target',
-                        notContains: '',
-                        endsWith: ';'
-                    }
-                },
-                {
-                    id: 'timing',
-                    name: 'Momento de Activación',
-                    color: '#FFE66D',
-                    conditions: {
-                        startsWith: 'when',
-                        contains: 'summoned',
-                        notContains: '',
-                        endsWith: ':'
-                    }
-                },
-                {
-                    id: 'conditions',
-                    name: 'Condición de Activación',
-                    color: '#F38181',
-                    conditions: {
-                        startsWith: 'while',
-                        contains: '',
-                        notContains: '',
-                        endsWith: ':'
-                    }
-                },
-                {
-                    id: 'cost',
-                    name: 'Costo de Activación',
-                    color: '#AA96DA',
-                    conditions: {
-                        startsWith: '',
-                        contains: 'discard',
-                        notContains: '',
-                        endsWith: ';'
-                    }
-                },
-                {
-                    id: 'effects',
-                    name: 'Efectos',
-                    color: '#FCBAD3',
-                    conditions: {
-                        startsWith: '',
-                        contains: 'destroy',
-                        notContains: '',
-                        endsWith: '.'
-                    }
-                },
-                {
-                    id: 'restrictions',
-                    name: 'Restricciones',
-                    color: '#FFD3B6',
-                    conditions: {
-                        startsWith: 'you can only',
-                        contains: '',
-                        notContains: '',
-                        endsWith: 'that turn'
-                    }
-                }
-            ]
+    categories: [
+        {
+            id: 'effectSpeed',
+            name: 'Velocidad de Efecto',
+            color: '#FF6B6B',
+            conditions: { startsWith: '', contains: ['quick effect'], notContains: [], endsWith: ':' }
+        },
+        {
+            id: 'effectType',
+            name: 'Tipo de Efecto',
+            color: '#4ECDC4',
+            conditions: { startsWith: '', contains: ['target'], notContains: [], endsWith: ';' }
+        },
+        {
+            id: 'timing',
+            name: 'Momento de Activación',
+            color: '#FFE66D',
+            conditions: { startsWith: 'when', contains: ['summoned'], notContains: [], endsWith: ':' }
+        },
+        {
+            id: 'conditions',
+            name: 'Condición de Activación',
+            color: '#F38181',
+            conditions: { startsWith: 'while', contains: [], notContains: [], endsWith: ':' }
+        },
+        {
+            id: 'cost',
+            name: 'Costo de Activación',
+            color: '#AA96DA',
+            conditions: { startsWith: '', contains: ['discard'], notContains: [], endsWith: ';' }
+        },
+        {
+            id: 'effects',
+            name: 'Efectos',
+            color: '#FCBAD3',
+            conditions: { startsWith: '', contains: ['destroy'], notContains: [], endsWith: '.' }
+        },
+        {
+            id: 'restrictions',
+            name: 'Restricciones',
+            color: '#FFD3B6',
+            conditions: { startsWith: 'you can only', contains: [], notContains: [], endsWith: 'that turn' }
         }
+    ]
+}
     },
 
     // ===============================
@@ -259,7 +224,19 @@ const ConfigManager = {
                         parsed.nomenclature = JSON.parse(JSON.stringify(this.defaultConfig.nomenclature));
                     }
                 }
-                
+                // Migración: contains/notContains de string a array
+                if (parsed.nomenclature && parsed.nomenclature.categories) {
+                    parsed.nomenclature.categories.forEach(cat => {
+                        if (cat.conditions) {
+                            if (typeof cat.conditions.contains === 'string') {
+                                cat.conditions.contains = cat.conditions.contains.trim() ? [cat.conditions.contains.trim()] : [];
+                            }
+                            if (typeof cat.conditions.notContains === 'string') {
+                                cat.conditions.notContains = cat.conditions.notContains.trim() ? [cat.conditions.notContains.trim()] : [];
+                            }
+                        }
+                    });
+                }
                 return parsed;
             }
         } catch (err) {
@@ -669,7 +646,7 @@ const ConfigManager = {
             id: 'custom_' + Date.now(),
             name: 'Nueva Categoría',
             color: '#FFFFFF',
-            conditions: { startsWith: '', contains: '', notContains: '', endsWith: '.' }
+            conditions: { startsWith: '', contains: [], notContains: [], endsWith: '.' }
         });
         this.saveConfig(config);
         return true;
@@ -697,7 +674,35 @@ const ConfigManager = {
             return true;
         }
         return false;
+    },
+    addNomCondKw: function (categoryId, field, keyword) {
+    const config = this.getConfig();
+    const cat = (config.nomenclature?.categories || []).find(c => c.id === categoryId);
+    if (!cat || !cat.conditions) return false;
+    if (!Array.isArray(cat.conditions[field])) {
+        cat.conditions[field] = cat.conditions[field] ? [cat.conditions[field]] : [];
     }
+    const kw = keyword.toLowerCase().trim();
+    if (kw && !cat.conditions[field].includes(kw)) {
+        cat.conditions[field].push(kw);
+        this.saveConfig(config);
+        return true;
+    }
+    return false;
+},
+
+removeNomCondKw: function (categoryId, field, keyword) {
+    const config = this.getConfig();
+    const cat = (config.nomenclature?.categories || []).find(c => c.id === categoryId);
+    if (!cat || !cat.conditions || !Array.isArray(cat.conditions[field])) return false;
+    const idx = cat.conditions[field].indexOf(keyword);
+    if (idx > -1) {
+        cat.conditions[field].splice(idx, 1);
+        this.saveConfig(config);
+        return true;
+    }
+    return false;
+},
 };
 
 window.ConfigManager = ConfigManager;

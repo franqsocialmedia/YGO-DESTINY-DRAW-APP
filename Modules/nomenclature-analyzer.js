@@ -43,22 +43,33 @@ const NomenclatureAnalyzer = {
     },
 
     matchesConditions: function (paragraph, conditions) {
-        if (!conditions) return false;
-        const p = paragraph.toLowerCase().trim();
+    if (!conditions) return false;
+    const p = paragraph.toLowerCase().trim();
 
-        if (conditions.startsWith && conditions.startsWith.trim() !== '') {
-            if (!p.startsWith(conditions.startsWith.toLowerCase().trim())) return false;
-        }
-        if (conditions.contains && conditions.contains.trim() !== '') {
-            if (!p.includes(conditions.contains.toLowerCase().trim())) return false;
-        }
-        if (conditions.notContains && conditions.notContains.trim() !== '') {
-            if (p.includes(conditions.notContains.toLowerCase().trim())) return false;
-        }
-        if (conditions.endsWith && conditions.endsWith.trim() !== '') {
-            if (!p.endsWith(conditions.endsWith.toLowerCase().trim())) return false;
-        }
-        return true;
+    if (conditions.startsWith && conditions.startsWith.trim() !== '') {
+        if (!p.startsWith(conditions.startsWith.toLowerCase().trim())) return false;
+    }
+
+    // contains: array OR lógica — al menos una debe cumplirse
+    const containsArr = Array.isArray(conditions.contains)
+        ? conditions.contains.filter(c => c.trim())
+        : (conditions.contains && conditions.contains.trim() ? [conditions.contains.trim()] : []);
+    if (containsArr.length > 0) {
+        if (!containsArr.some(kw => p.includes(kw.toLowerCase()))) return false;
+    }
+
+    // notContains: array AND lógica — ninguna debe estar presente
+    const notContainsArr = Array.isArray(conditions.notContains)
+        ? conditions.notContains.filter(c => c.trim())
+        : (conditions.notContains && conditions.notContains.trim() ? [conditions.notContains.trim()] : []);
+    if (notContainsArr.length > 0) {
+        if (notContainsArr.some(kw => p.includes(kw.toLowerCase()))) return false;
+    }
+
+    if (conditions.endsWith && conditions.endsWith.trim() !== '') {
+        if (!p.endsWith(conditions.endsWith.toLowerCase().trim())) return false;
+    }
+    return true;
     },
 
     // ===============================
