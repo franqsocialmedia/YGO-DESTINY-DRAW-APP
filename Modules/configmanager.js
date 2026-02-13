@@ -1,13 +1,12 @@
 /* ====================================
-   CONFIG MANAGER
-   Destiny Draw - Yu-Gi-Oh! App
-   Gestor centralizado de configuración
+   CONFIG MANAGER - Destiny Draw
+   Versión Unificada CORRECTA
    ==================================== */
 
 const ConfigManager = {
 
-    // Configuración por defecto
     defaultConfig: {
+        // Roles: estructura compatible con OLD VERSION
         roles: {
             'Handtrap': ['from your hand'],
             'Boardbreaker': ['destroy all', 'destroy'],
@@ -27,312 +26,241 @@ const ConfigManager = {
             'Bridge': []
         },
         
-        // NUEVO: Sistema de Especialidades (Paso 1)
-        // Estructura: keyword -> { cardLevel, deckLevel, linkedRole, counters, counteredBy }
-        specialties: {
-            "return": {
-                cardLevel: "Recycle",
-                deckLevel: "Bounce",
-                linkedRole: "Recovery",
-                counters: ["spell-negate"],
-                counteredBy: ["anti-spell"]
-            },
-            "negate": {
-                cardLevel: "Negation",
-                deckLevel: "Control",
-                linkedRole: "Negater",
-                counters: ["effect-activation"],
-                counteredBy: ["spell-negate"]
-            },
-            "destroy": {
-                cardLevel: "Removal",
-                deckLevel: "Destruction",
-                linkedRole: "Boardbreaker",
-                counters: ["monster-effect", "backrow"],
-                counteredBy: ["destruction-protection"]
-            },
-            "banish": {
-                cardLevel: "Banish",
-                deckLevel: "Exile",
-                linkedRole: "Banisher",
-                counters: ["graveyard-effect"],
-                counteredBy: ["banish-protection"]
-            },
-            "search": {
-                cardLevel: "Search",
-                deckLevel: "Consistency",
-                linkedRole: "Searcher",
-                counters: [],
-                counteredBy: ["search-lock"]
-            },
-            "draw": {
-                cardLevel: "Draw",
-                deckLevel: "Card Advantage",
-                linkedRole: "Draw-Engine",
-                counters: [],
-                counteredBy: ["hand-limit"]
-            }
-        },
-        
-        // NUEVO: Roles Compuestos con Condicionales (Preparado para Paso 3)
+        // RoleConditions: keywords (actúan solos O con condicional)
         roleConditions: {
-            "Handtrap": {
-                conditionals: [],  // Vacío = sin condicionales
-                keywords: ["from your hand", "from the hand", "from their hand"]
+            'Handtrap': {
+                conditionals: [],
+                keywords: ['from your hand', 'from the hand', 'from their hand']
             },
-            "Disruption": {
-                conditionals: ["quick-effect", "during either player"],
-                keywords: ["negate", "destroy"]
+            'Disruption': {
+                conditionals: ['quick-effect', 'during either player'],
+                keywords: ['negate', 'destroy']
+            },
+            'Boardbreaker': {
+                conditionals: [],
+                keywords: ['destroy all', 'destroy']
+            },
+            'Recovery': {
+                conditionals: [],
+                keywords: ['from the gy', 'from the graveyard', 'from the banish']
+            },
+            'Negater': {
+                conditionals: [],
+                keywords: ['negate']
+            },
+            'Searcher': {
+                conditionals: [],
+                keywords: ['add', 'from your deck']
+            },
+            'Banisher': {
+                conditionals: [],
+                keywords: ['remove', 'banish 1', 'banish it']
+            },
+            'Draw-Engine': {
+                conditionals: [],
+                keywords: ['draw 1']
+            },
+            'Extender': {
+                conditionals: [],
+                keywords: ['special summon this']
+            },
+            'Starter': {
+                conditionals: [],
+                keywords: ['summoned']
             }
         },
 
-        // NUEVO: Lista de Staples (Paso 2)
-        // Cartas genéricas que se usan en múltiples decks
-        // Estructura: id -> { id, name, roles, specialtyKeywords, notes }
+        // Specialties: array de pares
+        specialties: [
+            {
+                id: 'spec_001',
+                specialization: {
+                    name: 'Recursion',
+                    rol: 'Recovery',
+                    keywords: ['from the gy', 'from the graveyard']
+                },
+                counter: {
+                    name: 'Anti-Recursion',
+                    rol: 'Banisher',
+                    keywords: ['banish', 'remove from play']
+                }
+            },
+            {
+                id: 'spec_002',
+                specialization: {
+                    name: 'Negation',
+                    rol: 'Negater',
+                    keywords: ['negate']
+                },
+                counter: {
+                    name: 'Anti-Negate',
+                    rol: '',
+                    keywords: ['cannot be negated', 'unaffected by']
+                }
+            },
+            {
+                id: 'spec_003',
+                specialization: {
+                    name: 'Search',
+                    rol: 'Searcher',
+                    keywords: ['add', 'from your deck to your hand']
+                },
+                counter: {
+                    name: 'Search-Lock',
+                    rol: '',
+                    keywords: ['cannot add', 'cannot search']
+                }
+            }
+        ],
+
+        // Staples: estructura simplificada
         staples: {
             "83764718": {
                 id: "83764718",
-                name: "Renace al monstruo",
-                nameEn: "Monster Reborn",
-                roles: ["Recovery", "Extender"],
-                specialtyKeywords: ["special summon", "from the graveyard"],
-                notes: "Staple universal de recuperación"
+                name: "Monster Reborn",
+                imageUrl: "https://images.ygoprodeck.com/images/cards_small/83764718.jpg",
+                type: "Spell Card"
             },
             "5318639": {
                 id: "5318639",
-                name: "Tifón Místico Espacial",
-                nameEn: "Mystical Space Typhoon",
-                roles: ["Backrow-Removal"],
-                specialtyKeywords: ["destroy", "spell", "trap"],
-                notes: "Remoción de backrow estándar"
+                name: "Mystical Space Typhoon",
+                imageUrl: "https://images.ygoprodeck.com/images/cards_small/5318639.jpg",
+                type: "Spell Card"
             },
             "44095762": {
                 id: "44095762",
-                name: "Fuerza del Espejo",
-                nameEn: "Mirror Force",
-                roles: ["Boardbreaker", "Disruption"],
-                specialtyKeywords: ["destroy all", "attack position"],
-                notes: "Trampa de remoción masiva"
+                name: "Mirror Force",
+                imageUrl: "https://images.ygoprodeck.com/images/cards_small/44095762.jpg",
+                type: "Trap Card"
             }
         },
 
-        // NUEVO: Sistema de Nomenclatura (Paso 4)
-        // Análisis de estructura de efectos de cartas
+        // ⭐ NOMENCLATURA - Compatible con cardviewer.js y nomenclature-analyzer.js
+        // Cada categoría tiene UNA configuración directa con 4 campos
         nomenclature: {
-            effectSpeed: {
-                "Quick Effect": {
-                    start: "quick effect",
-                    internal1: "",
-                    internal2: "",
-                    end: ":"
+            categories: [
+                {
+                    id: 'effectSpeed',
+                    name: 'Velocidad de Efecto',
+                    color: '#FF6B6B',
+                    conditions: {
+                        startsWith: '',
+                        contains: 'quick effect',
+                        notContains: '',
+                        endsWith: ':'
+                    }
                 },
-                "Trigger": {
-                    start: "when",
-                    internal1: "",
-                    internal2: "",
-                    end: ":"
+                {
+                    id: 'effectType',
+                    name: 'Tipo de Efecto',
+                    color: '#4ECDC4',
+                    conditions: {
+                        startsWith: '',
+                        contains: 'target',
+                        notContains: '',
+                        endsWith: ';'
+                    }
                 },
-                "Ignition": {
-                    start: "",
-                    internal1: "activate",
-                    internal2: "",
-                    end: "."
+                {
+                    id: 'timing',
+                    name: 'Momento de Activación',
+                    color: '#FFE66D',
+                    conditions: {
+                        startsWith: 'when',
+                        contains: 'summoned',
+                        notContains: '',
+                        endsWith: ':'
+                    }
+                },
+                {
+                    id: 'conditions',
+                    name: 'Condición de Activación',
+                    color: '#F38181',
+                    conditions: {
+                        startsWith: 'while',
+                        contains: '',
+                        notContains: '',
+                        endsWith: ':'
+                    }
+                },
+                {
+                    id: 'cost',
+                    name: 'Costo de Activación',
+                    color: '#AA96DA',
+                    conditions: {
+                        startsWith: '',
+                        contains: 'discard',
+                        notContains: '',
+                        endsWith: ';'
+                    }
+                },
+                {
+                    id: 'effects',
+                    name: 'Efectos',
+                    color: '#FCBAD3',
+                    conditions: {
+                        startsWith: '',
+                        contains: 'destroy',
+                        notContains: '',
+                        endsWith: '.'
+                    }
+                },
+                {
+                    id: 'restrictions',
+                    name: 'Restricciones',
+                    color: '#FFD3B6',
+                    conditions: {
+                        startsWith: 'you can only',
+                        contains: '',
+                        notContains: '',
+                        endsWith: 'that turn'
+                    }
                 }
-            },
-            effectType: {
-                "Targeting": {
-                    start: "",
-                    internal1: "target",
-                    internal2: "",
-                    end: ";"
-                },
-                "Non-Targeting": {
-                    start: "",
-                    internal1: "choose",
-                    internal2: "",
-                    end: ""
-                }
-            },
-            timing: {
-                "On Summon": {
-                    start: "when",
-                    internal1: "summoned",
-                    internal2: "",
-                    end: ":"
-                },
-                "On Activation": {
-                    start: "when",
-                    internal1: "activated",
-                    internal2: "",
-                    end: ":"
-                },
-                "During Battle": {
-                    start: "during",
-                    internal1: "battle",
-                    internal2: "",
-                    end: ":"
-                },
-                "End Phase": {
-                    start: "during",
-                    internal1: "end phase",
-                    internal2: "",
-                    end: ":"
-                }
-            },
-            conditions: {
-                "While": {
-                    start: "while",
-                    internal1: "",
-                    internal2: "",
-                    end: ":"
-                },
-                "During": {
-                    start: "during",
-                    internal1: "",
-                    internal2: "",
-                    end: ":"
-                },
-                "As Long As": {
-                    start: "as long as",
-                    internal1: "",
-                    internal2: "",
-                    end: ""
-                }
-            },
-            cost: {
-                "Discard": {
-                    start: "",
-                    internal1: "discard",
-                    internal2: "",
-                    end: ";"
-                },
-                "Banish": {
-                    start: "",
-                    internal1: "banish",
-                    internal2: "",
-                    end: ";"
-                },
-                "Tribute": {
-                    start: "",
-                    internal1: "tribute",
-                    internal2: "",
-                    end: ";"
-                },
-                "Pay": {
-                    start: "",
-                    internal1: "pay",
-                    internal2: "",
-                    end: ";"
-                },
-                "Detach": {
-                    start: "",
-                    internal1: "detach",
-                    internal2: "",
-                    end: ";"
-                },
-                "Send": {
-                    start: "",
-                    internal1: "send",
-                    internal2: "",
-                    end: ";"
-                }
-            },
-            effects: {
-                "Destruction": {
-                    start: "",
-                    internal1: "destroy",
-                    internal2: "",
-                    end: "."
-                },
-                "Negation": {
-                    start: "",
-                    internal1: "negate",
-                    internal2: "",
-                    end: "."
-                },
-                "Banish": {
-                    start: "",
-                    internal1: "banish",
-                    internal2: "",
-                    end: "."
-                },
-                "Special Summon": {
-                    start: "",
-                    internal1: "special summon",
-                    internal2: "",
-                    end: "."
-                },
-                "Search": {
-                    start: "",
-                    internal1: "add",
-                    internal2: "",
-                    end: "."
-                },
-                "Draw": {
-                    start: "",
-                    internal1: "draw",
-                    internal2: "",
-                    end: "."
-                },
-                "Burn": {
-                    start: "",
-                    internal1: "inflict",
-                    internal2: "damage",
-                    end: "."
-                },
-                "Gain": {
-                    start: "",
-                    internal1: "gain",
-                    internal2: "",
-                    end: "."
-                }
-            },
-            restrictions: {
-                "Once Per Turn": {
-                    start: "",
-                    internal1: "once per turn",
-                    internal2: "",
-                    end: "."
-                },
-                "Hard Once Per Turn": {
-                    start: "you can only",
-                    internal1: "",
-                    internal2: "",
-                    end: "that turn"
-                },
-                "Cannot Summon": {
-                    start: "you cannot",
-                    internal1: "summon",
-                    internal2: "",
-                    end: "."
-                },
-                "Cannot Activate": {
-                    start: "you cannot",
-                    internal1: "activate",
-                    internal2: "",
-                    end: "."
-                }
-            }
-        },
-
-        // Colores para marks de nomenclatura
-        nomenclatureColors: {
-            effectSpeed: "#FF6B6B",        // Rojo
-            effectType: "#4ECDC4",         // Cyan
-            timing: "#FFE66D",             // Amarillo
-            conditions: "#F38181",         // Rosa
-            cost: "#AA96DA",               // Morado
-            effects: "#FCBAD3",            // Rosa claro
-            restrictions: "#FFD3B6"        // Naranja pastel
+            ]
         }
     },
 
-    // Obtener configuración actual
+    // ===============================
+    // CORE: CARGAR / GUARDAR
+    // ===============================
+
     getConfig: function () {
         try {
             const saved = localStorage.getItem('yugioh_config');
             if (saved) {
-                return JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                
+                // Migración: specialties objeto -> array de pares
+                if (parsed.specialties && !Array.isArray(parsed.specialties)) {
+                    console.log('Migrando specialties de objeto a array');
+                    parsed.specialties = JSON.parse(JSON.stringify(this.defaultConfig.specialties));
+                }
+                
+                // Migración: staples con campos legacy -> estructura simplificada
+                if (parsed.staples) {
+                    Object.keys(parsed.staples).forEach(id => {
+                        const s = parsed.staples[id];
+                        if (s.roles !== undefined || s.specialtyKeywords !== undefined) {
+                            parsed.staples[id] = {
+                                id: s.id || id,
+                                name: s.nameEn || s.name || '',
+                                imageUrl: s.imageUrl || `https://images.ygoprodeck.com/images/cards_small/${id}.jpg`,
+                                type: s.type || ''
+                            };
+                        }
+                    });
+                }
+                
+                // Migración: nomenclature OLD estructura -> NUEVA
+                if (parsed.nomenclature) {
+                    // Si tiene la estructura OLD (con efectSpeed, effectType como objetos)
+                    if (!parsed.nomenclature.categories && (parsed.nomenclature.effectSpeed || parsed.nomenclature.effectType)) {
+                        console.log('Migrando nomenclature OLD a NUEVA estructura');
+                        parsed.nomenclature = JSON.parse(JSON.stringify(this.defaultConfig.nomenclature));
+                    }
+                }
+                
+                return parsed;
             }
         } catch (err) {
             console.error('Error cargando configuración:', err);
@@ -340,7 +268,6 @@ const ConfigManager = {
         return JSON.parse(JSON.stringify(this.defaultConfig));
     },
 
-    // Guardar configuración
     saveConfig: function (config) {
         try {
             localStorage.setItem('yugioh_config', JSON.stringify(config));
@@ -351,364 +278,122 @@ const ConfigManager = {
         }
     },
 
-    // Obtener solo los roles
-    getRoles: function () {
-        const config = this.getConfig();
-        return config.roles || {};
-    },
-
-    // Obtener lista de nombres de roles
-    getRoleNames: function () {
-        return Object.keys(this.getRoles());
-    },
-
-    // Obtener palabras clave de un rol específico
-    getRoleKeywords: function (roleName) {
-        const roles = this.getRoles();
-        return roles[roleName] || [];
-    },
-
-    // Agregar palabra clave a un rol
-    addKeywordToRole: function (roleName, keyword) {
-        const config = this.getConfig();
-        if (!config.roles[roleName]) {
-            config.roles[roleName] = [];
-        }
-        
-        const lowerKeyword = keyword.toLowerCase().trim();
-        if (lowerKeyword && !config.roles[roleName].includes(lowerKeyword)) {
-            config.roles[roleName].push(lowerKeyword);
-            this.saveConfig(config);
-            return true;
-        }
-        return false;
-    },
-
-    // Eliminar palabra clave de un rol
-    removeKeywordFromRole: function (roleName, keyword) {
-        const config = this.getConfig();
-        if (config.roles[roleName]) {
-            const index = config.roles[roleName].indexOf(keyword);
-            if (index > -1) {
-                config.roles[roleName].splice(index, 1);
-                this.saveConfig(config);
-                return true;
-            }
-        }
-        return false;
-    },
-
-    // Crear nuevo rol
-    createRole: function (roleName) {
-        const config = this.getConfig();
-        const trimmedName = roleName.trim();
-        
-        if (trimmedName && !config.roles[trimmedName]) {
-            config.roles[trimmedName] = [];
-            this.saveConfig(config);
-            return true;
-        }
-        return false;
-    },
-
-    // Renombrar rol
-    renameRole: function (oldName, newName) {
-        const config = this.getConfig();
-        const trimmedNewName = newName.trim();
-        
-        if (config.roles[oldName] && trimmedNewName && !config.roles[trimmedNewName]) {
-            config.roles[trimmedNewName] = config.roles[oldName];
-            delete config.roles[oldName];
-            this.saveConfig(config);
-            return true;
-        }
-        return false;
-    },
-
-    // Eliminar rol
-    deleteRole: function (roleName) {
-        const config = this.getConfig();
-        if (config.roles[roleName]) {
-            delete config.roles[roleName];
-            this.saveConfig(config);
-            return true;
-        }
-        return false;
-    },
-
-    // Restaurar configuración por defecto
     resetToDefault: function () {
         this.saveConfig(JSON.parse(JSON.stringify(this.defaultConfig)));
         return true;
     },
 
-    // Exportar configuración completa a archivo .txt
     exportConfig: function () {
         try {
             const config = this.getConfig();
-            const configText = JSON.stringify(config, null, 2);
-            const blob = new Blob([configText], { type: 'text/plain' });
+            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'yugioh_config_backup.txt';
+            a.download = 'destiny_draw_config.txt';
             a.click();
             URL.revokeObjectURL(url);
             return true;
         } catch (err) {
-            console.error('Error exportando configuración:', err);
+            console.error('Error exportando:', err);
             return false;
         }
     },
 
-    // Importar configuración desde archivo .txt
     importConfig: function (file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            
             reader.onload = (e) => {
                 try {
-                    const configText = e.target.result;
-                    const config = JSON.parse(configText);
-                    
-                    // Validar que tenga la estructura básica
+                    const config = JSON.parse(e.target.result);
                     if (!config.roles || typeof config.roles !== 'object') {
                         reject('Archivo de configuración inválido');
                         return;
                     }
-                    
-                    // Guardar configuración importada
                     this.saveConfig(config);
                     resolve(true);
-                    
                 } catch (err) {
                     console.error('Error parseando configuración:', err);
                     reject('Error al leer el archivo de configuración');
                 }
             };
-            
-            reader.onerror = () => {
-                reject('Error al leer el archivo');
-            };
-            
+            reader.onerror = () => reject('Error al leer el archivo');
             reader.readAsText(file);
         });
     },
 
     // ===============================
-    // GESTIÓN DE ESPECIALIDADES (PASO 1)
+    // ROLES
     // ===============================
-    
-    // Obtener todas las especialidades
-    getSpecialties: function () {
+
+    getRoles: function () {
+        return this.getConfig().roles || {};
+    },
+
+    getRoleNames: function () {
+        return Object.keys(this.getRoles());
+    },
+
+    getRoleKeywords: function (roleName) {
+        return (this.getRoles()[roleName] || []);
+    },
+
+    createRole: function (roleName) {
         const config = this.getConfig();
-        return config.specialties || {};
-    },
-
-    // Obtener nombres de especialidades
-    getSpecialtyNames: function () {
-        return Object.keys(this.getSpecialties());
-    },
-
-    // Obtener especialidad específica
-    getSpecialty: function (keyword) {
-        const specialties = this.getSpecialties();
-        return specialties[keyword] || null;
-    },
-
-    // Crear nueva especialidad
-    createSpecialty: function (keyword, data) {
-        const config = this.getConfig();
-        if (!config.specialties) {
-            config.specialties = {};
-        }
-        
-        const trimmedKeyword = keyword.toLowerCase().trim();
-        
-        if (trimmedKeyword && !config.specialties[trimmedKeyword]) {
-            config.specialties[trimmedKeyword] = {
-                cardLevel: data.cardLevel || trimmedKeyword,
-                deckLevel: data.deckLevel || trimmedKeyword,
-                linkedRole: data.linkedRole || '',
-                counters: data.counters || [],
-                counteredBy: data.counteredBy || []
-            };
+        const name = roleName.trim();
+        if (name && config.roles[name] === undefined) {
+            config.roles[name] = [];
             this.saveConfig(config);
             return true;
         }
         return false;
     },
 
-    // Actualizar especialidad
-    updateSpecialty: function (keyword, data) {
+    renameRole: function (oldName, newName) {
         const config = this.getConfig();
-        if (config.specialties && config.specialties[keyword]) {
-            config.specialties[keyword] = {
-                cardLevel: data.cardLevel || keyword,
-                deckLevel: data.deckLevel || keyword,
-                linkedRole: data.linkedRole || '',
-                counters: data.counters || [],
-                counteredBy: data.counteredBy || []
-            };
-            this.saveConfig(config);
-            return true;
-        }
-        return false;
-    },
-
-    // Eliminar especialidad
-    deleteSpecialty: function (keyword) {
-        const config = this.getConfig();
-        if (config.specialties && config.specialties[keyword]) {
-            delete config.specialties[keyword];
-            this.saveConfig(config);
-            return true;
-        }
-        return false;
-    },
-
-    // Renombrar keyword de especialidad
-    renameSpecialtyKeyword: function (oldKeyword, newKeyword) {
-        const config = this.getConfig();
-        const trimmedNewKeyword = newKeyword.toLowerCase().trim();
-        
-        if (config.specialties && config.specialties[oldKeyword] && 
-            trimmedNewKeyword && !config.specialties[trimmedNewKeyword]) {
-            config.specialties[trimmedNewKeyword] = config.specialties[oldKeyword];
-            delete config.specialties[oldKeyword];
-            this.saveConfig(config);
-            return true;
-        }
-        return false;
-    },
-
-    // ===============================
-    // GESTIÓN DE STAPLES (PASO 2)
-    // ===============================
-    
-    // Obtener todas las staples
-    getStaples: function () {
-        const config = this.getConfig();
-        return config.staples || {};
-    },
-
-    // Obtener IDs de staples
-    getStapleIds: function () {
-        return Object.keys(this.getStaples());
-    },
-
-    // Obtener staple específico por ID
-    getStaple: function (cardId) {
-        const staples = this.getStaples();
-        return staples[cardId] || null;
-    },
-
-    // Verificar si una carta es staple
-    isStaple: function (cardId) {
-        return this.getStaple(cardId) !== null;
-    },
-
-    // Crear nuevo staple
-    createStaple: function (cardId, data) {
-        const config = this.getConfig();
-        if (!config.staples) {
-            config.staples = {};
-        }
-        
-        const trimmedId = String(cardId).trim();
-        
-        if (trimmedId && !config.staples[trimmedId]) {
-            config.staples[trimmedId] = {
-                id: trimmedId,
-                name: data.name || '',
-                nameEn: data.nameEn || '',
-                roles: data.roles || [],
-                specialtyKeywords: data.specialtyKeywords || [],
-                notes: data.notes || ''
-            };
-            this.saveConfig(config);
-            return true;
-        }
-        return false;
-    },
-
-    // Actualizar staple
-    updateStaple: function (cardId, data) {
-        const config = this.getConfig();
-        if (config.staples && config.staples[cardId]) {
-            config.staples[cardId] = {
-                id: cardId,
-                name: data.name || '',
-                nameEn: data.nameEn || '',
-                roles: data.roles || [],
-                specialtyKeywords: data.specialtyKeywords || [],
-                notes: data.notes || ''
-            };
-            this.saveConfig(config);
-            return true;
-        }
-        return false;
-    },
-
-    // Eliminar staple
-    deleteStaple: function (cardId) {
-        const config = this.getConfig();
-        if (config.staples && config.staples[cardId]) {
-            delete config.staples[cardId];
-            this.saveConfig(config);
-            return true;
-        }
-        return false;
-    },
-
-    // Agregar rol a staple
-    addRoleToStaple: function (cardId, roleName) {
-        const config = this.getConfig();
-        if (config.staples && config.staples[cardId]) {
-            if (!config.staples[cardId].roles.includes(roleName)) {
-                config.staples[cardId].roles.push(roleName);
-                this.saveConfig(config);
-                return true;
+        const trimmed = newName.trim();
+        if (config.roles[oldName] !== undefined && trimmed && config.roles[trimmed] === undefined) {
+            config.roles[trimmed] = config.roles[oldName];
+            delete config.roles[oldName];
+            if (config.roleConditions && config.roleConditions[oldName]) {
+                config.roleConditions[trimmed] = config.roleConditions[oldName];
+                delete config.roleConditions[oldName];
             }
+            this.saveConfig(config);
+            return true;
         }
         return false;
     },
 
-    // Eliminar rol de staple
-    removeRoleFromStaple: function (cardId, roleName) {
+    deleteRole: function (roleName) {
         const config = this.getConfig();
-        if (config.staples && config.staples[cardId]) {
-            const index = config.staples[cardId].roles.indexOf(roleName);
-            if (index > -1) {
-                config.staples[cardId].roles.splice(index, 1);
-                this.saveConfig(config);
-                return true;
-            }
+        if (config.roles[roleName] !== undefined) {
+            delete config.roles[roleName];
+            if (config.roleConditions) delete config.roleConditions[roleName];
+            this.saveConfig(config);
+            return true;
         }
         return false;
     },
 
-    // Agregar specialty keyword a staple
-    addSpecialtyKeywordToStaple: function (cardId, keyword) {
+    addKeywordToRole: function (roleName, keyword) {
         const config = this.getConfig();
-        if (config.staples && config.staples[cardId]) {
-            const lowerKeyword = keyword.toLowerCase().trim();
-            if (lowerKeyword && !config.staples[cardId].specialtyKeywords.includes(lowerKeyword)) {
-                config.staples[cardId].specialtyKeywords.push(lowerKeyword);
-                this.saveConfig(config);
-                return true;
-            }
+        if (!config.roles[roleName]) config.roles[roleName] = [];
+        const kw = keyword.toLowerCase().trim();
+        if (kw && !config.roles[roleName].includes(kw)) {
+            config.roles[roleName].push(kw);
+            this.saveConfig(config);
+            return true;
         }
         return false;
     },
 
-    // Eliminar specialty keyword de staple
-    removeSpecialtyKeywordFromStaple: function (cardId, keyword) {
+    removeKeywordFromRole: function (roleName, keyword) {
         const config = this.getConfig();
-        if (config.staples && config.staples[cardId]) {
-            const index = config.staples[cardId].specialtyKeywords.indexOf(keyword);
-            if (index > -1) {
-                config.staples[cardId].specialtyKeywords.splice(index, 1);
+        if (config.roles[roleName]) {
+            const idx = config.roles[roleName].indexOf(keyword);
+            if (idx > -1) {
+                config.roles[roleName].splice(idx, 1);
                 this.saveConfig(config);
                 return true;
             }
@@ -717,153 +402,33 @@ const ConfigManager = {
     },
 
     // ===============================
-    // GESTIÓN DE NOMENCLATURE (PASO 4)
+    // ROLE CONDITIONS
     // ===============================
-    
-    // Obtener configuración completa de nomenclature
-    getNomenclature: function () {
-        const config = this.getConfig();
-        return config.nomenclature || this.defaultConfig.nomenclature;
-    },
 
-    // Obtener categoría específica
-    getNomenclatureCategory: function (category) {
-        const nomenclature = this.getNomenclature();
-        return nomenclature[category] || {};
-    },
-
-    // Agregar palabra clave a categoría
-    addNomenclatureKeyword: function (category, subcategory, keyword) {
-        const config = this.getConfig();
-        if (!config.nomenclature) {
-            config.nomenclature = JSON.parse(JSON.stringify(this.defaultConfig.nomenclature));
-        }
-
-        const lowerKeyword = keyword.toLowerCase().trim();
-        
-        // Para categorías con subcategorías (objetos)
-        if (typeof config.nomenclature[category] === 'object' && !Array.isArray(config.nomenclature[category])) {
-            if (!config.nomenclature[category][subcategory]) {
-                config.nomenclature[category][subcategory] = [];
-            }
-            if (!config.nomenclature[category][subcategory].includes(lowerKeyword)) {
-                config.nomenclature[category][subcategory].push(lowerKeyword);
-                this.saveConfig(config);
-                return true;
-            }
-        }
-        // Para categorías simples (arrays)
-        else if (Array.isArray(config.nomenclature[category])) {
-            if (!config.nomenclature[category].includes(lowerKeyword)) {
-                config.nomenclature[category].push(lowerKeyword);
-                this.saveConfig(config);
-                return true;
-            }
-        }
-        
-        return false;
-    },
-
-    // Eliminar palabra clave de categoría
-    removeNomenclatureKeyword: function (category, subcategory, keyword) {
-        const config = this.getConfig();
-        if (!config.nomenclature) return false;
-
-        // Para categorías con subcategorías
-        if (typeof config.nomenclature[category] === 'object' && !Array.isArray(config.nomenclature[category])) {
-            if (config.nomenclature[category][subcategory]) {
-                const index = config.nomenclature[category][subcategory].indexOf(keyword);
-                if (index > -1) {
-                    config.nomenclature[category][subcategory].splice(index, 1);
-                    this.saveConfig(config);
-                    return true;
-                }
-            }
-        }
-        // Para categorías simples
-        else if (Array.isArray(config.nomenclature[category])) {
-            const index = config.nomenclature[category].indexOf(keyword);
-            if (index > -1) {
-                config.nomenclature[category].splice(index, 1);
-                this.saveConfig(config);
-                return true;
-            }
-        }
-        
-        return false;
-    },
-
-    // Crear nueva subcategoría
-    createNomenclatureSubcategory: function (category, subcategoryName) {
-        const config = this.getConfig();
-        if (!config.nomenclature) {
-            config.nomenclature = JSON.parse(JSON.stringify(this.defaultConfig.nomenclature));
-        }
-
-        if (typeof config.nomenclature[category] === 'object' && !Array.isArray(config.nomenclature[category])) {
-            const trimmedName = subcategoryName.trim();
-            if (trimmedName && !config.nomenclature[category][trimmedName]) {
-                config.nomenclature[category][trimmedName] = [];
-                this.saveConfig(config);
-                return true;
-            }
-        }
-        
-        return false;
-    },
-
-    // Eliminar subcategoría
-    deleteNomenclatureSubcategory: function (category, subcategoryName) {
-        const config = this.getConfig();
-        if (config.nomenclature && config.nomenclature[category]) {
-            if (config.nomenclature[category][subcategoryName]) {
-                delete config.nomenclature[category][subcategoryName];
-                this.saveConfig(config);
-                return true;
-            }
-        }
-        return false;
-    },
-
-    // ===============================
-    // GESTIÓN DE ROLE CONDITIONS (PASO 3)
-    // ===============================
-    
-    // Obtener todas las roleConditions
     getRoleConditions: function () {
-        const config = this.getConfig();
-        return config.roleConditions || {};
+        return this.getConfig().roleConditions || {};
     },
 
-    // Obtener condition de un rol específico
     getRoleCondition: function (roleName) {
-        const conditions = this.getRoleConditions();
-        return conditions[roleName] || null;
+        return (this.getConfig().roleConditions || {})[roleName] || null;
     },
 
-    // Verificar si un rol tiene condicionales
     hasConditions: function (roleName) {
         const condition = this.getRoleCondition(roleName);
         return condition && condition.conditionals && condition.conditionals.length > 0;
     },
 
-    // Crear/actualizar roleCondition para un rol
     setRoleCondition: function (roleName, conditionals, keywords) {
         const config = this.getConfig();
-        if (!config.roleConditions) {
-            config.roleConditions = {};
-        }
-        
+        if (!config.roleConditions) config.roleConditions = {};
         config.roleConditions[roleName] = {
             conditionals: conditionals || [],
             keywords: keywords || []
         };
-        
         this.saveConfig(config);
         return true;
     },
 
-    // Eliminar roleCondition de un rol
     removeRoleCondition: function (roleName) {
         const config = this.getConfig();
         if (config.roleConditions && config.roleConditions[roleName]) {
@@ -874,36 +439,27 @@ const ConfigManager = {
         return false;
     },
 
-    // Agregar condicional a un rol
     addConditionalToRole: function (roleName, conditional) {
         const config = this.getConfig();
-        if (!config.roleConditions) {
-            config.roleConditions = {};
-        }
-        
+        if (!config.roleConditions) config.roleConditions = {};
         if (!config.roleConditions[roleName]) {
-            config.roleConditions[roleName] = {
-                conditionals: [],
-                keywords: []
-            };
+            config.roleConditions[roleName] = { conditionals: [], keywords: [] };
         }
-        
-        const lowerConditional = conditional.toLowerCase().trim();
-        if (lowerConditional && !config.roleConditions[roleName].conditionals.includes(lowerConditional)) {
-            config.roleConditions[roleName].conditionals.push(lowerConditional);
+        const val = conditional.toLowerCase().trim();
+        if (val && !config.roleConditions[roleName].conditionals.includes(val)) {
+            config.roleConditions[roleName].conditionals.push(val);
             this.saveConfig(config);
             return true;
         }
         return false;
     },
 
-    // Eliminar condicional de un rol
     removeConditionalFromRole: function (roleName, conditional) {
         const config = this.getConfig();
         if (config.roleConditions && config.roleConditions[roleName]) {
-            const index = config.roleConditions[roleName].conditionals.indexOf(conditional);
-            if (index > -1) {
-                config.roleConditions[roleName].conditionals.splice(index, 1);
+            const idx = config.roleConditions[roleName].conditionals.indexOf(conditional);
+            if (idx > -1) {
+                config.roleConditions[roleName].conditionals.splice(idx, 1);
                 this.saveConfig(config);
                 return true;
             }
@@ -911,36 +467,27 @@ const ConfigManager = {
         return false;
     },
 
-    // Agregar keyword a roleCondition
     addKeywordToRoleCondition: function (roleName, keyword) {
         const config = this.getConfig();
-        if (!config.roleConditions) {
-            config.roleConditions = {};
-        }
-        
+        if (!config.roleConditions) config.roleConditions = {};
         if (!config.roleConditions[roleName]) {
-            config.roleConditions[roleName] = {
-                conditionals: [],
-                keywords: []
-            };
+            config.roleConditions[roleName] = { conditionals: [], keywords: [] };
         }
-        
-        const lowerKeyword = keyword.toLowerCase().trim();
-        if (lowerKeyword && !config.roleConditions[roleName].keywords.includes(lowerKeyword)) {
-            config.roleConditions[roleName].keywords.push(lowerKeyword);
+        const kw = keyword.toLowerCase().trim();
+        if (kw && !config.roleConditions[roleName].keywords.includes(kw)) {
+            config.roleConditions[roleName].keywords.push(kw);
             this.saveConfig(config);
             return true;
         }
         return false;
     },
 
-    // Eliminar keyword de roleCondition
     removeKeywordFromRoleCondition: function (roleName, keyword) {
         const config = this.getConfig();
         if (config.roleConditions && config.roleConditions[roleName]) {
-            const index = config.roleConditions[roleName].keywords.indexOf(keyword);
-            if (index > -1) {
-                config.roleConditions[roleName].keywords.splice(index, 1);
+            const idx = config.roleConditions[roleName].keywords.indexOf(keyword);
+            if (idx > -1) {
+                config.roleConditions[roleName].keywords.splice(idx, 1);
                 this.saveConfig(config);
                 return true;
             }
@@ -949,7 +496,138 @@ const ConfigManager = {
     },
 
     // ===============================
-    // NOMENCLATURA
+    // SPECIALTIES (pares)
+    // ===============================
+
+    getSpecialties: function () {
+        const config = this.getConfig();
+        return Array.isArray(config.specialties) ? config.specialties : [];
+    },
+
+    getSpecialtyPairById: function (id) {
+        return this.getSpecialties().find(p => p.id === id) || null;
+    },
+
+    createSpecialtyPair: function (specName, specRol, counterName, counterRol) {
+        const config = this.getConfig();
+        if (!Array.isArray(config.specialties)) config.specialties = [];
+        const newPair = {
+            id: 'spec_' + Date.now(),
+            specialization: {
+                name: specName || 'Nueva Especialización',
+                rol: specRol || '',
+                keywords: []
+            },
+            counter: {
+                name: counterName || 'Nuevo Counter',
+                rol: counterRol || '',
+                keywords: []
+            }
+        };
+        config.specialties.push(newPair);
+        this.saveConfig(config);
+        return newPair.id;
+    },
+
+    deleteSpecialtyPair: function (id) {
+        const config = this.getConfig();
+        if (!Array.isArray(config.specialties)) return false;
+        const idx = config.specialties.findIndex(p => p.id === id);
+        if (idx > -1) {
+            config.specialties.splice(idx, 1);
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
+
+    updateSpecialtyPairField: function (id, side, field, value) {
+        const config = this.getConfig();
+        const pair = (config.specialties || []).find(p => p.id === id);
+        if (pair && pair[side]) {
+            pair[side][field] = value;
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
+
+    addKeywordToSpecialtyPair: function (id, side, keyword) {
+        const config = this.getConfig();
+        const pair = (config.specialties || []).find(p => p.id === id);
+        if (pair && pair[side]) {
+            const kw = keyword.toLowerCase().trim();
+            if (kw && !pair[side].keywords.includes(kw)) {
+                pair[side].keywords.push(kw);
+                this.saveConfig(config);
+                return true;
+            }
+        }
+        return false;
+    },
+
+    removeKeywordFromSpecialtyPair: function (id, side, keyword) {
+        const config = this.getConfig();
+        const pair = (config.specialties || []).find(p => p.id === id);
+        if (pair && pair[side]) {
+            const idx = pair[side].keywords.indexOf(keyword);
+            if (idx > -1) {
+                pair[side].keywords.splice(idx, 1);
+                this.saveConfig(config);
+                return true;
+            }
+        }
+        return false;
+    },
+
+    // ===============================
+    // STAPLES
+    // ===============================
+
+    getStaples: function () {
+        return this.getConfig().staples || {};
+    },
+
+    getStapleIds: function () {
+        return Object.keys(this.getStaples());
+    },
+
+    getStaple: function (cardId) {
+        return (this.getConfig().staples || {})[String(cardId)] || null;
+    },
+
+    isStaple: function (cardId) {
+        return this.getStaple(String(cardId)) !== null;
+    },
+
+    createStaple: function (cardId, data) {
+        const config = this.getConfig();
+        if (!config.staples) config.staples = {};
+        const id = String(cardId).trim();
+        if (!id || config.staples[id]) return false;
+        config.staples[id] = {
+            id: id,
+            name: data.name || '',
+            imageUrl: data.imageUrl || `https://images.ygoprodeck.com/images/cards_small/${id}.jpg`,
+            type: data.type || ''
+        };
+        this.saveConfig(config);
+        return true;
+    },
+
+    deleteStaple: function (cardId) {
+        const config = this.getConfig();
+        const id = String(cardId);
+        if (config.staples && config.staples[id]) {
+            delete config.staples[id];
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
+
+    // ===============================
+    // NOMENCLATURA (Compatible con cardviewer y nomenclature-analyzer)
     // ===============================
 
     getNomenclature: function () {
@@ -958,18 +636,67 @@ const ConfigManager = {
     },
 
     getNomenclatureColors: function () {
-        const config = this.getConfig();
-        return config.nomenclatureColors || this.defaultConfig.nomenclatureColors;
+        const cats = this.getNomenclature().categories || [];
+        const colors = {};
+        cats.forEach(c => { colors[c.id] = c.color; });
+        return colors;
     },
 
-    updateNomenclatureColor: function (category, color) {
+    updateNomenclatureColor: function (categoryId, color) {
+        return this.updateNomenclatureCategory(categoryId, { color: color });
+    },
+
+    updateNomenclatureCategory: function (categoryId, updates) {
         const config = this.getConfig();
-        if (!config.nomenclatureColors) {
-            config.nomenclatureColors = JSON.parse(JSON.stringify(this.defaultConfig.nomenclatureColors));
+        if (!config.nomenclature || !config.nomenclature.categories) {
+            config.nomenclature = JSON.parse(JSON.stringify(this.defaultConfig.nomenclature));
         }
-        config.nomenclatureColors[category] = color;
+        const cat = config.nomenclature.categories.find(c => c.id === categoryId);
+        if (cat) {
+            Object.assign(cat, updates);
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
+
+    addNomenclatureCategory: function () {
+        const config = this.getConfig();
+        if (!config.nomenclature || !config.nomenclature.categories) {
+            config.nomenclature = JSON.parse(JSON.stringify(this.defaultConfig.nomenclature));
+        }
+        config.nomenclature.categories.push({
+            id: 'custom_' + Date.now(),
+            name: 'Nueva Categoría',
+            color: '#FFFFFF',
+            conditions: { startsWith: '', contains: '', notContains: '', endsWith: '.' }
+        });
         this.saveConfig(config);
         return true;
+    },
+
+    deleteNomenclatureCategory: function (categoryId) {
+        const config = this.getConfig();
+        if (!config.nomenclature || !config.nomenclature.categories) return false;
+        const idx = config.nomenclature.categories.findIndex(c => c.id === categoryId);
+        if (idx > -1) {
+            config.nomenclature.categories.splice(idx, 1);
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
+
+    updateNomenclatureCategoryCondition: function (categoryId, conditionField, value) {
+        const config = this.getConfig();
+        if (!config.nomenclature || !config.nomenclature.categories) return false;
+        const cat = config.nomenclature.categories.find(c => c.id === categoryId);
+        if (cat && cat.conditions) {
+            cat.conditions[conditionField] = value;
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
     }
 };
 

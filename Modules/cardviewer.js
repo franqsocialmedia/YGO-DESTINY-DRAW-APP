@@ -1,8 +1,16 @@
+/* ====================================
+   CARD VIEWER MODULE - CON DEBUG
+   Destiny Draw - Yu-Gi-Oh! App
+   ==================================== */
+
 const CardViewer = {
     quantities: {}, 
 
     open(card) {
+        console.log('🔍 [CardViewer] Abriendo carta:', card.name, 'ID:', card.id);
+        
         const quantity = this.quantities[card.id] || 0;
+        console.log('📊 [CardViewer] Cantidad actual en quantities:', quantity);
 
         const images = card.card_images || [];
         const mainImg = images[0]?.image_url || '';
@@ -102,15 +110,82 @@ const CardViewer = {
         const count = document.getElementById('cv-count');
 
         plus.onclick = () => {
+            console.log('➕ [CardViewer] Click en botón PLUS');
+            
+            // Verificar que Deck existe
+            if (!window.Deck) {
+                console.error('❌ [CardViewer] ERROR: window.Deck no existe');
+                alert('ERROR: El módulo Deck no está cargado. Verifica que deck.js esté incluido en index.html');
+                return;
+            }
+            
+            // Verificar que Deck.syncFromViewer existe
+            if (typeof Deck.syncFromViewer !== 'function') {
+                console.error('❌ [CardViewer] ERROR: Deck.syncFromViewer no es una función');
+                alert('ERROR: Deck.syncFromViewer no está implementado. Verifica deck.js');
+                return;
+            }
+            
+            // Incrementar cantidad
             this.quantities[card.id] = (this.quantities[card.id] || 0) + 1;
-            count.textContent = this.quantities[card.id];
-            Deck.syncFromViewer(card.id, card, this.quantities[card.id]);
+            const newQty = this.quantities[card.id];
+            
+            console.log('📈 [CardViewer] Nueva cantidad:', newQty);
+            
+            // Actualizar UI
+            count.textContent = newQty;
+            
+            // Sincronizar con Deck
+            console.log('🔄 [CardViewer] Llamando a Deck.syncFromViewer...');
+            console.log('   ID:', card.id);
+            console.log('   Card:', card.name);
+            console.log('   Qty:', newQty);
+            
+            try {
+                Deck.syncFromViewer(card.id, card, newQty);
+                console.log('✅ [CardViewer] Deck.syncFromViewer ejecutado correctamente');
+            } catch (error) {
+                console.error('❌ [CardViewer] ERROR al ejecutar Deck.syncFromViewer:', error);
+                alert('ERROR: ' + error.message);
+            }
         };
 
         minus.onclick = () => {
+            console.log('➖ [CardViewer] Click en botón MINUS');
+            
+            // Verificar que Deck existe
+            if (!window.Deck) {
+                console.error('❌ [CardViewer] ERROR: window.Deck no existe');
+                alert('ERROR: El módulo Deck no está cargado');
+                return;
+            }
+            
+            // Verificar que Deck.syncFromViewer existe
+            if (typeof Deck.syncFromViewer !== 'function') {
+                console.error('❌ [CardViewer] ERROR: Deck.syncFromViewer no es una función');
+                alert('ERROR: Deck.syncFromViewer no está implementado');
+                return;
+            }
+            
+            // Decrementar cantidad (mínimo 0)
             this.quantities[card.id] = Math.max(0, (this.quantities[card.id] || 0) - 1);
-            count.textContent = this.quantities[card.id];
-            Deck.syncFromViewer(card.id, card, this.quantities[card.id]);
+            const newQty = this.quantities[card.id];
+            
+            console.log('📉 [CardViewer] Nueva cantidad:', newQty);
+            
+            // Actualizar UI
+            count.textContent = newQty;
+            
+            // Sincronizar con Deck
+            console.log('🔄 [CardViewer] Llamando a Deck.syncFromViewer...');
+            
+            try {
+                Deck.syncFromViewer(card.id, card, newQty);
+                console.log('✅ [CardViewer] Deck.syncFromViewer ejecutado correctamente');
+            } catch (error) {
+                console.error('❌ [CardViewer] ERROR al ejecutar Deck.syncFromViewer:', error);
+                alert('ERROR: ' + error.message);
+            }
         };
 
         const downloadBtn = document.getElementById('cv-download');
@@ -129,14 +204,26 @@ const CardViewer = {
         if (!desc || !window.ConfigManager) return desc;
 
         const nomenclature = ConfigManager.getNomenclature();
-        const colors = ConfigManager.getNomenclatureColors();
-
-        const paragraphs = this.splitIntoParagraphs(desc);
-        const highlightedParagraphs = paragraphs.map(para => {
-            return this.highlightParagraph(para.text, nomenclature, colors);
-        });
-
-        return highlightedParagraphs.join('');
+        
+        // Verificar si tiene la estructura NUEVA (categories)
+        if (nomenclature && nomenclature.categories) {
+            const paragraphs = this.splitIntoParagraphs(desc);
+            const highlightedParagraphs = paragraphs.map(para => {
+                return this.highlightParagraphNew(para.text, nomenclature.categories);
+            });
+            return highlightedParagraphs.join('');
+        } 
+        // Verificar si tiene estructura OLD (effectSpeed, cost, etc.)
+        else if (nomenclature && nomenclature.effectSpeed) {
+            const colors = ConfigManager.getNomenclatureColors();
+            const paragraphs = this.splitIntoParagraphs(desc);
+            const highlightedParagraphs = paragraphs.map(para => {
+                return this.highlightParagraphOld(para.text, nomenclature, colors);
+            });
+            return highlightedParagraphs.join('');
+        }
+        
+        return desc;
     },
 
     splitIntoParagraphs: function(text) {
@@ -165,75 +252,101 @@ const CardViewer = {
         return paragraphs;
     },
 
-    highlightParagraph: function(paragraph, nomenclature, colors) {
+    highlightParagraphNew: function(paragraph, categories) {
+        if (!categories || categories.length === 0) return paragraph;
+
+        const paraLower = paragraph.toLowerCase().trim();
+        
+        for (const category of categories) {
+            if (!category.conditions) continue;
+
+            const cond = category.conditions;
+            let matches = true;
+
+            if (cond.startsWith && cond.startsWith.trim() !== '') {
+                if (!paraLower.startsWith(cond.startsWith.toLowerCase().trim())) {
+                    matches = false;
+                }
+            }
+
+            if (matches && cond.contains && cond.contains.trim() !== '') {
+                if (!paraLower.includes(cond.contains.toLowerCase().trim())) {
+                    matches = false;
+                }
+            }
+
+            if (matches && cond.notContains && cond.notContains.trim() !== '') {
+                if (paraLower.includes(cond.notContains.toLowerCase().trim())) {
+                    matches = false;
+                }
+            }
+
+            if (matches && cond.endsWith && cond.endsWith.trim() !== '') {
+                if (!paraLower.endsWith(cond.endsWith.toLowerCase().trim())) {
+                    matches = false;
+                }
+            }
+
+            if (matches) {
+                const color = category.color || '#FFFFFF';
+                const categoryName = category.name || category.id;
+                return `<mark style="background-color: ${color}; padding: 2px 4px; border-radius: 3px; cursor: help; opacity: 0.6;" title="${categoryName}">${paragraph}</mark>`;
+            }
+        }
+
+        return paragraph;
+    },
+
+    highlightParagraphOld: function(paragraph, nomenclature, colors) {
         const categoryNames = {
             effectSpeed: 'Velocidad de Efecto',
             effectType: 'Tipo de Efecto',
             timing: 'Timing del Efecto',
+            requirements: 'Requisitos',
             conditions: 'Condicion de Activacion',
             cost: 'Costo de Activacion',
             effects: 'Efecto',
+            duration: 'Duracion del Efecto',
             restrictions: 'Restriccion'
         };
 
         let matchedCategory = null;
-        const paraLower = paragraph.toLowerCase();
 
-        // Orden de prioridad de categorías
-        const categories = ['effectSpeed', 'effectType', 'timing', 'conditions', 'cost', 'effects', 'restrictions'];
-
-        for (const category of categories) {
-            const categoryData = nomenclature[category];
-            if (!categoryData || typeof categoryData !== 'object') continue;
-
-            // Verificar cada configuración de esta categoría
-            for (const [name, config] of Object.entries(categoryData)) {
-                let matches = true;
-
-                // Verificar campo START (si no está vacío)
-                if (config.start && config.start.trim() !== '') {
-                    if (!paraLower.includes(config.start.toLowerCase())) {
-                        matches = false;
+        const checkMatch = (category, keywords, isObject = false) => {
+            if (isObject) {
+                for (const [name, kwList] of Object.entries(keywords)) {
+                    for (const kw of kwList) {
+                        if (paragraph.toLowerCase().includes(kw.toLowerCase())) {
+                            matchedCategory = category;
+                            return true;
+                        }
                     }
                 }
-
-                // Verificar campo INTERNAL1 (si no está vacío)
-                if (matches && config.internal1 && config.internal1.trim() !== '') {
-                    if (!paraLower.includes(config.internal1.toLowerCase())) {
-                        matches = false;
+            } else {
+                for (const kw of keywords) {
+                    if (paragraph.toLowerCase().includes(kw.toLowerCase())) {
+                        matchedCategory = category;
+                        return true;
                     }
-                }
-
-                // Verificar campo INTERNAL2 (si no está vacío)
-                if (matches && config.internal2 && config.internal2.trim() !== '') {
-                    if (!paraLower.includes(config.internal2.toLowerCase())) {
-                        matches = false;
-                    }
-                }
-
-                // Verificar campo END (si no está vacío)
-                if (matches && config.end && config.end.trim() !== '') {
-                    if (!paraLower.includes(config.end.toLowerCase())) {
-                        matches = false;
-                    }
-                }
-
-                // Si cumple con todas las condiciones no-vacías
-                if (matches) {
-                    matchedCategory = category;
-                    break; // Primera coincidencia gana
                 }
             }
+            return false;
+        };
 
-            if (matchedCategory) {
-                break; // Ya encontró coincidencia en esta categoría
-            }
-        }
+        checkMatch('effectSpeed', nomenclature.effectSpeed, true) ||
+        checkMatch('effectType', nomenclature.effectType, true) ||
+        checkMatch('timing', nomenclature.timing, true) ||
+        checkMatch('requirements', nomenclature.requirements, false) ||
+        checkMatch('conditions', nomenclature.conditions, false) ||
+        checkMatch('cost', nomenclature.cost, false) ||
+        checkMatch('effects', nomenclature.effects, true) ||
+        checkMatch('duration', nomenclature.duration, true) ||
+        checkMatch('restrictions', nomenclature.restrictions, true);
 
         if (matchedCategory) {
             const color = colors[matchedCategory] || '#FFFFFF';
             const categoryName = categoryNames[matchedCategory] || matchedCategory;
-            return `<mark style="background-color: ${color}; padding: 2px 4px; border-radius: 3px; cursor: help; opacity: 0.6;" title="${categoryName}">${paragraph}</mark>`;
+            return `<mark style="background-color: ${color}; opacity: 0.6; padding: 2px 4px; border-radius: 3px; cursor: help;" title="${categoryName}">${paragraph}</mark>`;
         }
 
         return paragraph;

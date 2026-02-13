@@ -30,6 +30,77 @@ const Deck = {
     },
 
     // ===============================
+    // ORDENAMIENTO DE CARTAS
+    // ===============================
+    
+    // Determinar tipo de carta para ordenamiento Main Deck
+    getMainDeckCardType: function(card) {
+        if (!card || !card.type) return 999; // Desconocido al final
+        
+        const type = card.type.toLowerCase();
+        
+        // Orden: Ritual → Normal → Effect → Pendulum → Spell → Trap
+        if (type.includes('ritual monster')) return 0;
+        if (type.includes('normal monster')) return 1;
+        if (type.includes('effect monster')) return 2;
+        if (type.includes('pendulum')) return 3;
+        if (type.includes('spell')) return 4;
+        if (type.includes('trap')) return 5;
+        
+        return 999; // Otros al final
+    },
+    
+    // Determinar tipo de carta para ordenamiento Extra Deck
+    getExtraDeckCardType: function(card) {
+        if (!card || !card.type) return 999; // Desconocido al final
+        
+        const type = card.type.toLowerCase();
+        
+        // Orden: Fusion → Synchro → Xyz → Link
+        if (type.includes('fusion')) return 0;
+        if (type.includes('synchro')) return 1;
+        if (type.includes('xyz')) return 2;
+        if (type.includes('link')) return 3;
+        
+        return 999; // Otros al final
+    },
+    
+    // Comparador para ordenamiento
+    compareCards: function(a, b, location) {
+        const cardA = a[1].data;
+        const cardB = b[1].data;
+        
+        if (location === 'main') {
+            // Ordenar Main Deck
+            const typeA = this.getMainDeckCardType(cardA);
+            const typeB = this.getMainDeckCardType(cardB);
+            
+            if (typeA !== typeB) {
+                return typeA - typeB; // Por tipo primero
+            }
+            
+            // Si son del mismo tipo, ordenar alfabéticamente
+            return cardA.name.localeCompare(cardB.name);
+            
+        } else if (location === 'extra') {
+            // Ordenar Extra Deck
+            const typeA = this.getExtraDeckCardType(cardA);
+            const typeB = this.getExtraDeckCardType(cardB);
+            
+            if (typeA !== typeB) {
+                return typeA - typeB; // Por tipo primero
+            }
+            
+            // Si son del mismo tipo, ordenar alfabéticamente
+            return cardA.name.localeCompare(cardB.name);
+            
+        } else {
+            // Side Deck: solo alfabético
+            return cardA.name.localeCompare(cardB.name);
+        }
+    },
+
+    // ===============================
     // AUTO-ASIGNACIÓN DE ROLES
     // ===============================
     autoAssignRoles: function (card) {
@@ -102,10 +173,15 @@ const Deck = {
     // SINCRONIZAR DESDE CARDVIEWER
     // ===============================
     syncFromViewer: function (id, card, qty) {
+        console.log('🔄 [Deck] syncFromViewer llamado:', { id, cardName: card.name, qty });
+        
         if (qty <= 0) {
+            console.log('❌ [Deck] Cantidad <= 0, eliminando carta');
             delete this.cards[id];
         } else {
             if (!this.cards[id]) {
+                console.log('➕ [Deck] Nueva carta, creando entrada');
+                
                 // Analizar especialidades de la carta (incluye staples - Paso 2)
                 const specialties = typeof SpecialtyAnalyzer !== 'undefined' 
                     ? SpecialtyAnalyzer.analyzeCard(card) 
@@ -119,32 +195,28 @@ const Deck = {
                 // Obtener roles automáticos
                 let roles = this.autoAssignRoles(card);
                 
-                // PASO 2: Si es staple, agregar roles predefinidos
-                if (typeof SpecialtyAnalyzer !== 'undefined') {
-                    const stapleRoles = SpecialtyAnalyzer.getStapleRoles(id);
-                    if (stapleRoles.length > 0) {
-                        // Combinar roles automáticos con roles de staple (evitando duplicados)
-                        stapleRoles.forEach(role => {
-                            if (!roles.includes(role)) {
-                                roles.push(role);
-                            }
-                        });
-                    }
-                }
+                console.log('📊 [Deck] Roles automáticos asignados:', roles);
+                console.log('🎯 [Deck] Especialidades detectadas:', specialties);
                 
                 this.cards[id] = {
                     data: card,
                     qty: qty,
                     location: this.isExtraDeckCard(card) ? 'extra' : 'main',
-                    roles: roles,  // Roles combinados (automáticos + staples)
-                    specialties: specialties,  // Especialidades detectadas (incluye staples)
-                    nomenclature: nomenclature  // PASO 4: Nomenclatura del efecto
+                    roles: roles,
+                    specialties: specialties,
+                    nomenclature: nomenclature
                 };
+                
+                console.log('✅ [Deck] Carta agregada:', this.cards[id]);
             } else {
+                console.log('📝 [Deck] Carta existente, actualizando cantidad');
                 this.cards[id].qty = qty;
             }
         }
+        
+        console.log('🎨 [Deck] Llamando a render()');
         this.render();
+        console.log('✅ [Deck] syncFromViewer completado');
     },
 
     changeQty: function (id, delta) {
@@ -638,7 +710,7 @@ const Deck = {
 
         const entries = Object.entries(this.cards)
             .filter(([_, c]) => c.location === location)
-            .sort((a, b) => a[1].data.name.localeCompare(b[1].data.name));
+            .sort((a, b) => this.compareCards(a, b, location));
 
         if (entries.length === 0) {
             return `<p class="deck-empty">Vacio</p>`;
@@ -747,6 +819,8 @@ const Deck = {
         const mainC = this.count('main');
         const extraC = this.count('extra');
         const sideC = this.count('side');
+        const totalCards = Object.keys(this.cards).length;
+        const isEmpty = totalCards === 0;
 
         let html = `
             <div id="deck-list-container">
@@ -759,39 +833,40 @@ const Deck = {
             </div>
         `;
 
-        if (Object.keys(this.cards).length === 0) {
+        if (isEmpty) {
             html += `<p>No hay un Deck seleccionado para mostrar.</p>`;
-            this.container.innerHTML = html;
-            return;
+        } else {
+            html += `
+                <h2 onclick="Deck.openRenamePanel()" class="deck-title">
+                    ${this.name} (${mainC})
+                </h2>
+
+                <h3 onclick="Deck.toggleSection('main-sec')">
+                    Main Deck (${mainC})
+                </h3>
+                <div id="main-sec">${this.renderRows('main')}</div>
+
+                <h3 onclick="Deck.toggleSection('extra-sec')">
+                    Extra Deck (${extraC})
+                </h3>
+                <div id="extra-sec">${this.renderRows('extra')}</div>
+
+                <h3 onclick="Deck.toggleSection('side-sec')">
+                    Side Deck (${sideC})
+                </h3>
+                <div id="side-sec">${this.renderRows('side')}</div>
+            `;
         }
 
+        // SECCIÓN DE ACCIONES - SIEMPRE VISIBLE
         html += `
-            <h2 onclick="Deck.openRenamePanel()" class="deck-title">
-                ${this.name} (${mainC})
-            </h2>
-
-            <h3 onclick="Deck.toggleSection('main-sec')">
-                Main Deck (${mainC})
-            </h3>
-            <div id="main-sec">${this.renderRows('main')}</div>
-
-            <h3 onclick="Deck.toggleSection('extra-sec')">
-                Extra Deck (${extraC})
-            </h3>
-            <div id="extra-sec">${this.renderRows('extra')}</div>
-
-            <h3 onclick="Deck.toggleSection('side-sec')">
-                Side Deck (${sideC})
-            </h3>
-            <div id="side-sec">${this.renderRows('side')}</div>
-
             <h3 onclick="Deck.toggleSection('actions-sec')">Acciones</h3>
             <div id="actions-sec" class="deck-actions">
-                <button onclick="Deck.saveDeck()">Guardar Deck</button>
-                <button onclick="Deck.clearDeck()">Limpiar Deck</button>
-                <button onclick="Deck.exportYDK()">Exportar Deck</button>
-                <button onclick="Deck.importYDK()">Importar Deck</button>
-                <button onclick="Deck.exportTXT()">Lista en .txt</button>
+                <button onclick="Deck.saveDeck()" ${isEmpty ? 'disabled' : ''}>Guardar Deck</button>
+                <button onclick="Deck.clearDeck()" ${isEmpty ? 'disabled' : ''}>Limpiar Deck</button>
+                <button onclick="Deck.exportYDK()" ${isEmpty ? 'disabled' : ''}>Exportar Deck (.ydk)</button>
+                <button onclick="Deck.importYDK()">Importar Deck (.ydk)</button>
+                <button onclick="Deck.exportTXT()" ${isEmpty ? 'disabled' : ''}>Descargar Lista (.txt)</button>
             </div>
         `;
 

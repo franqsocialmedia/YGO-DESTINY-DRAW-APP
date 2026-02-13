@@ -1,7 +1,5 @@
 /* ====================================
-   CONFIG STYLES
-   Destiny Draw - Yu-Gi-Oh! App
-   Estilos para el módulo de configuración
+   CONFIG STYLES - Destiny Draw
    ==================================== */
 
 /* ====================================
@@ -34,17 +32,18 @@
 .config-section-title {
     color: var(--gold-color);
     font-size: 1.4rem;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: 0;
     cursor: pointer;
     padding: var(--spacing-sm);
     background: rgba(0, 102, 204, 0.2);
     border-radius: 8px;
     transition: all var(--transition-normal);
+    -webkit-user-select: none;
 }
 
 .config-section-title:hover {
-    background: rgba(0, 102, 204, 0.3);
-    transform: translateX(5px);
+    background: rgba(0, 102, 204, 0.35);
+    transform: translateX(4px);
 }
 
 .config-section-content {
@@ -52,7 +51,7 @@
 }
 
 /* ====================================
-   NUEVO ROL
+   NUEVO ROL / NUEVO STAPLE
    ==================================== */
 
 .config-new-role {
@@ -63,10 +62,12 @@
     background: rgba(0, 26, 51, 0.4);
     border-radius: 8px;
     border: 2px dashed var(--border-color);
+    flex-wrap: wrap;
 }
 
 .config-input {
     flex: 1;
+    min-width: 180px;
     padding: 12px 16px;
     font-size: 1rem;
     border: 2px solid var(--border-color);
@@ -88,7 +89,7 @@
 
 .roles-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: var(--spacing-md);
 }
 
@@ -106,11 +107,10 @@
 
 .role-card:hover {
     border-color: var(--gold-color);
-    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
-    transform: translateY(-3px);
+    box-shadow: 0 4px 14px rgba(0, 102, 204, 0.3);
+    transform: translateY(-2px);
 }
 
-/* Header de la tarjeta */
 .role-card-header {
     display: flex;
     align-items: center;
@@ -122,7 +122,7 @@
 
 .role-name-input {
     flex: 1;
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     font-weight: bold;
     color: var(--gold-color);
     background: transparent;
@@ -133,14 +133,8 @@
     outline: none;
 }
 
-.role-name-input:hover {
-    background: rgba(0, 26, 51, 0.3);
-}
-
-.role-name-input:focus {
-    background: rgba(0, 26, 51, 0.6);
-    border-color: var(--gold-color);
-}
+.role-name-input:hover { background: rgba(0, 26, 51, 0.3); }
+.role-name-input:focus { background: rgba(0, 26, 51, 0.6); border-color: var(--gold-color); }
 
 .btn-delete-role {
     background: var(--danger-color);
@@ -149,20 +143,20 @@
     border-radius: 6px;
     width: 35px;
     height: 35px;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     cursor: pointer;
     transition: all var(--transition-fast);
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .btn-delete-role:hover {
     background: #ff4757;
-    transform: scale(1.1) rotate(10deg);
+    transform: scale(1.1) rotate(8deg);
 }
 
-/* Body de la tarjeta */
 .role-card-body {
     display: flex;
     flex-direction: column;
@@ -173,11 +167,20 @@
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--text-light);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
+    display: block;
+}
+
+/* Etiqueta Condicional en rojo */
+.conditional-label {
+    color: #ff6b6b;
+    font-weight: 800;
+    font-size: 0.95rem;
+    margin-top: var(--spacing-sm);
 }
 
 /* ====================================
-   CONTENEDOR DE PALABRAS CLAVE
+   KEYWORDS CONTAINER
    ==================================== */
 
 .keywords-container {
@@ -191,15 +194,8 @@
     border: 1px dashed rgba(0, 102, 204, 0.4);
 }
 
-.keywords-container:empty::before {
-    content: 'Sin palabras clave asignadas';
-    color: rgba(241, 241, 241, 0.4);
-    font-style: italic;
-    font-size: 0.9rem;
-}
-
 /* ====================================
-   CHIPS DE PALABRAS CLAVE
+   CHIPS
    ==================================== */
 
 .keyword-chip {
@@ -208,44 +204,53 @@
     gap: 6px;
     background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
     color: var(--text-light);
-    padding: 6px 12px;
+    padding: 5px 11px;
     border-radius: 20px;
-    font-size: 0.85rem;
+    font-size: 0.83rem;
     font-weight: 600;
-    box-shadow: 0 2px 6px rgba(0, 102, 204, 0.4);
+    box-shadow: 0 2px 6px rgba(0, 102, 204, 0.3);
     transition: all var(--transition-fast);
-    animation: chipFadeIn 0.3s ease;
+    animation: chipFadeIn 0.25s ease;
 }
 
 .keyword-chip:hover {
-    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.6);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.5);
+}
+
+/* Chip condicional — rojo */
+.conditional-chip {
+    background: linear-gradient(135deg, #c0392b, #e74c3c) !important;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    box-shadow: 0 2px 6px rgba(231, 76, 60, 0.4);
+}
+
+/* Chips de especialidades */
+.spec-kw-chip {
+    background: linear-gradient(135deg, #1e6fb5, #2980b9) !important;
+}
+
+.counter-kw-chip {
+    background: linear-gradient(135deg, #8e44ad, #9b59b6) !important;
 }
 
 @keyframes chipFadeIn {
-    from {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+    from { opacity: 0; transform: scale(0.8); }
+    to   { opacity: 1; transform: scale(1); }
 }
 
-.chip-text {
-    -webkit-user-select: none;
-}
+.chip-text { -webkit-user-select: none; }
 
 .chip-remove {
     cursor: pointer;
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     line-height: 1;
     font-weight: bold;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.75);
     transition: all var(--transition-fast);
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -253,19 +258,26 @@
 }
 
 .chip-remove:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
     color: white;
     transform: rotate(90deg);
 }
 
+.empty-chips {
+    color: rgba(241, 241, 241, 0.38);
+    font-style: italic;
+    font-size: 0.85rem;
+    padding: 4px;
+}
+
 /* ====================================
-   AGREGAR PALABRA CLAVE
+   ADD KEYWORD CONTAINER
    ==================================== */
 
 .add-keyword-container {
     display: flex;
     gap: var(--spacing-xs);
-    margin-top: var(--spacing-xs);
+    margin-top: 2px;
 }
 
 .keyword-input {
@@ -285,6 +297,21 @@
     box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
 }
 
+/* Input condicional — borde rojo */
+.conditional-input {
+    border-color: rgba(231, 76, 60, 0.5) !important;
+}
+
+.conditional-input:focus {
+    border-color: #e74c3c !important;
+    box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.15) !important;
+}
+
+.keyword-input option {
+    background: var(--bg-card);
+    color: var(--text-light);
+}
+
 /* ====================================
    BOTONES
    ==================================== */
@@ -293,7 +320,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     padding: 10px 20px;
     font-size: 0.95rem;
     font-weight: 600;
@@ -317,19 +344,31 @@
 }
 
 .btn-sm {
-    padding: 8px 16px;
+    padding: 7px 14px;
     font-size: 0.85rem;
 }
 
 .btn-danger {
-    background: var(--danger-color);
+    background: linear-gradient(135deg, #c0392b, var(--danger-color));
     color: white;
     box-shadow: 0 4px 8px rgba(214, 48, 49, 0.3);
 }
 
 .btn-danger:hover {
-    background: #ff4757;
+    background: linear-gradient(135deg, #e74c3c, #ff4757);
     box-shadow: 0 6px 12px rgba(214, 48, 49, 0.5);
+    transform: translateY(-2px);
+}
+
+/* Botón counter (morado) */
+.btn-counter {
+    background: linear-gradient(135deg, #8e44ad, #9b59b6) !important;
+    color: white;
+    box-shadow: 0 4px 8px rgba(142, 68, 173, 0.3);
+}
+
+.btn-counter:hover {
+    background: linear-gradient(135deg, #9b59b6, #a569bd) !important;
     transform: translateY(-2px);
 }
 
@@ -343,79 +382,23 @@
     gap: var(--spacing-md);
     padding: var(--spacing-lg);
     margin-top: var(--spacing-xl);
+    flex-wrap: wrap;
 }
 
 /* ====================================
-   CAMPOS DE ESPECIALIDADES (PASO 1)
-   ==================================== */
-
-.specialty-field-input {
-    width: 100%;
-    padding: 8px 12px;
-    font-size: 0.9rem;
-    border: 2px solid var(--border-color);
-    border-radius: 6px;
-    background: rgba(0, 26, 51, 0.6);
-    color: var(--text-light);
-    transition: all var(--transition-normal);
-    outline: none;
-    margin-bottom: var(--spacing-sm);
-}
-
-.specialty-field-input:focus {
-    border-color: var(--gold-color);
-    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
-}
-
-.specialty-field-input option {
-    background: var(--bg-card);
-    color: var(--text-light);
-}
-
-/* ====================================
-   ROLE CONDITIONS (PASO 3)
-   ==================================== */
-
-.role-conditions-section {
-    margin-top: var(--spacing-md);
-    padding-top: var(--spacing-md);
-    border-top: 2px dashed rgba(0, 102, 204, 0.3);
-}
-
-.role-conditions-section .config-label {
-    margin-bottom: var(--spacing-xs);
-}
-
-.role-conditions-section .keywords-container {
-    min-height: 40px;
-    margin-bottom: var(--spacing-sm);
-}
-
-/* Chips con colores específicos para condicionales y keywords */
-.keyword-chip[style*="background: #e74c3c"] {
-    /* Condicionales en rojo */
-    background: #e74c3c !important;
-}
-
-.keyword-chip[style*="background: #3498db"] {
-    /* Keywords de condición en azul claro */
-    background: #3498db !important;
-}
-
-/* ====================================
-   SECCIÓN DE STAPLES (PASO 2)
+   HELP TEXT
    ==================================== */
 
 .config-help-text {
-    background: rgba(0, 102, 204, 0.1);
+    background: rgba(0, 102, 204, 0.08);
     border-left: 4px solid var(--accent-color);
-    padding: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
     margin-bottom: var(--spacing-md);
     border-radius: 6px;
 }
 
 .config-help-text p {
-    margin: var(--spacing-xs) 0;
+    margin: 4px 0;
     color: var(--text-light);
 }
 
@@ -423,181 +406,161 @@
     color: rgba(241, 241, 241, 0.6);
 }
 
-.staples-list {
-    display: grid;
-    gap: var(--spacing-md);
+/* ====================================
+   ESPECIALIDADES: PARES HORIZONTALES
+   ==================================== */
+
+.specialty-pairs-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
 }
 
-.staple-card {
-    background: linear-gradient(135deg, rgba(0, 43, 77, 0.6), rgba(0, 26, 51, 0.8));
-    border: 2px solid rgba(108, 92, 231, 0.3);
-    border-radius: 12px;
+.specialty-pair-row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    background: rgba(0, 26, 51, 0.3);
+    border: 2px solid var(--border-color);
+    border-radius: 14px;
     padding: var(--spacing-md);
     transition: all var(--transition-normal);
 }
 
-.staple-card:hover {
-    border-color: rgba(108, 92, 231, 0.7);
-    box-shadow: 0 4px 12px rgba(108, 92, 231, 0.2);
+.specialty-pair-row:hover {
+    border-color: rgba(100, 180, 255, 0.5);
+    box-shadow: 0 4px 16px rgba(0, 102, 204, 0.2);
 }
 
-.staple-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: var(--spacing-md);
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 1px solid rgba(108, 92, 231, 0.2);
-}
-
-.staple-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.staple-info strong {
-    color: var(--gold-color);
-    font-size: 1.1rem;
-}
-
-.staple-id {
-    color: rgba(241, 241, 241, 0.5);
-    font-size: 0.85rem;
-    font-family: monospace;
-}
-
-.staple-name-en {
-    color: rgba(241, 241, 241, 0.7);
-    font-size: 0.9rem;
-    font-style: italic;
-}
-
-.staple-card-body {
+.specialty-half {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
 }
 
-.empty-chips {
-    color: rgba(241, 241, 241, 0.4);
-    font-style: italic;
-    font-size: 0.85rem;
+.spec-side {
+    background: rgba(30, 111, 181, 0.12);
+    border: 1px solid rgba(41, 128, 185, 0.35);
+    border-radius: 10px;
+    padding: var(--spacing-sm);
+}
+
+.counter-side {
+    background: rgba(142, 68, 173, 0.12);
+    border: 1px solid rgba(155, 89, 182, 0.35);
+    border-radius: 10px;
+    padding: var(--spacing-sm);
+}
+
+.specialty-half-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.spec-badge {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #5dade2;
+    text-transform: uppercase;
+}
+
+.counter-badge {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #bb8fce;
+    text-transform: uppercase;
+}
+
+.specialty-connector {
+    font-size: 1.8rem;
+    color: rgba(255, 215, 0, 0.6);
+    padding-top: 38px;
+    flex-shrink: 0;
+    -webkit-user-select: none;
 }
 
 /* ====================================
-   NOMENCLATURA CON 4 CAMPOS (PASO 4)
+   STAPLES: GRID DE IMÁGENES
    ==================================== */
 
-.nomenclature-category-card {
-    background: linear-gradient(135deg, rgba(0, 51, 102, 0.4), rgba(0, 43, 77, 0.6));
-    border: 2px solid var(--border-color);
-    border-radius: 12px;
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
+.staples-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) 0;
+}
+
+.staple-img-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
     transition: all var(--transition-normal);
 }
 
-.nomenclature-category-card:hover {
+.staple-img-card:hover {
+    transform: translateY(-4px);
+}
+
+.staple-img-card img {
+    width: 100%;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    display: block;
+    transition: all var(--transition-normal);
+}
+
+.staple-img-card:hover img {
     border-color: var(--gold-color);
-    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+    box-shadow: 0 6px 18px rgba(255, 215, 0, 0.3);
 }
 
-.nomenclature-configs-list {
+.staple-delete-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(214, 48, 49, 0.85);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    cursor: pointer;
     display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm);
-    background: rgba(0, 26, 51, 0.3);
-    border-radius: 8px;
-    min-height: 60px;
-    margin-bottom: var(--spacing-md);
-}
-
-.nomenclature-config-item {
-    background: linear-gradient(135deg, rgba(0, 102, 204, 0.2), rgba(0, 77, 153, 0.3));
-    border: 1px solid rgba(0, 102, 204, 0.4);
-    border-radius: 8px;
-    padding: var(--spacing-sm);
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
     transition: all var(--transition-fast);
 }
 
-.nomenclature-config-item:hover {
-    background: linear-gradient(135deg, rgba(0, 102, 204, 0.3), rgba(0, 77, 153, 0.4));
-    border-color: var(--gold-color);
+.staple-img-card:hover .staple-delete-btn {
+    opacity: 1;
 }
 
-.nomenclature-config-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-xs);
-    padding-bottom: var(--spacing-xs);
-    border-bottom: 1px solid rgba(0, 102, 204, 0.3);
+.staple-delete-btn:hover {
+    background: #ff4757;
+    transform: scale(1.15);
 }
 
-.nomenclature-config-header strong {
-    color: var(--gold-color);
-    font-size: 1rem;
-}
-
-.nomenclature-config-fields {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: var(--spacing-xs);
-    font-size: 0.85rem;
-    color: var(--text-light);
-}
-
-.nomenclature-config-fields span {
-    background: rgba(0, 26, 51, 0.4);
-    padding: 4px 8px;
-    border-radius: 4px;
-    white-space: nowrap;
+.staple-img-name {
+    font-size: 0.72rem;
+    color: rgba(241, 241, 241, 0.65);
+    text-align: center;
+    line-height: 1.2;
+    width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-.nomenclature-4fields-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
-}
-
-.nomenclature-field-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.nomenclature-field-label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--gold-color);
-    margin-bottom: 2px;
-}
-
-.nomenclature-field-input {
-    width: 100%;
-    padding: 8px 12px;
-    font-size: 0.9rem;
-    border: 2px solid var(--border-color);
-    border-radius: 6px;
-    background: rgba(0, 26, 51, 0.6);
-    color: var(--text-light);
-    transition: all var(--transition-normal);
-    outline: none;
-}
-
-.nomenclature-field-input:focus {
-    border-color: var(--gold-color);
-    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
-}
-
-.nomenclature-field-input::placeholder {
-    color: rgba(241, 241, 241, 0.4);
-    font-style: italic;
+    white-space: nowrap;
 }
 
 /* ====================================
@@ -617,20 +580,24 @@
         flex-direction: column;
     }
 
-    .keyword-input {
-        width: 100%;
-    }
-
     .btn {
         width: 100%;
+        justify-content: center;
     }
 
-    .nomenclature-4fields-grid {
-        grid-template-columns: 1fr;
+    .specialty-pair-row {
+        flex-direction: column;
     }
 
-    .nomenclature-config-fields {
-        grid-template-columns: 1fr;
+    .specialty-connector {
+        padding-top: 0;
+        text-align: center;
+        transform: rotate(90deg);
+        font-size: 1.4rem;
+    }
+
+    .staples-grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     }
 }
 
@@ -641,5 +608,10 @@
 
     .config-section {
         padding: var(--spacing-sm);
+    }
+
+    .config-actions {
+        flex-direction: column;
+        align-items: stretch;
     }
 }

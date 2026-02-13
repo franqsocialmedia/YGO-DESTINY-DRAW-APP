@@ -1,0 +1,80 @@
+/* ====================================
+   ESTILOS PARA BOTÓN GUARDAR NOMENCLATURA
+   Destiny Draw - Yu-Gi-Oh! App
+   
+   Agregar al final de style_config.css
+   ==================================== */
+
+/* Botón de guardar categoría */
+.btn-success {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #45a049, #3d8b40);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.btn-success:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+}
+
+/* Animaciones para mensajes */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Efecto visual al guardar */
+.role-card {
+    transition: border 0.3s ease;
+}
+
+/* Mensajes de configuración */
+.config-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    font-weight: bold;
+}
+
+.config-message-success {
+    background: #4CAF50;
+    color: white;
+}
+
+.config-message-error {
+    background: #f44336;
+    color: white;
+}

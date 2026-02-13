@@ -1,7 +1,6 @@
 /* ====================================
-   NOMENCLATURE ANALYZER
-   Destiny Draw - Yu-Gi-Oh! App
-   Análisis de nomenclatura de efectos de cartas
+   NOMENCLATURE ANALYZER - Destiny Draw
+   Análisis de estructura de efectos de cartas
    ==================================== */
 
 const NomenclatureAnalyzer = {
@@ -9,181 +8,91 @@ const NomenclatureAnalyzer = {
     // ===============================
     // ANALIZAR CARTA COMPLETA
     // ===============================
-    analyzeCard: function(card) {
-        if (!card || !card.desc) {
-            return null;
-        }
 
-        const desc = card.desc;
-        const config = window.ConfigManager.getNomenclature();
+    analyzeCard: function (card) {
+        if (!card || !card.desc) return null;
+        const nomenclature = window.ConfigManager.getNomenclature();
+        const categories   = nomenclature.categories || [];
+        const paragraphs   = this.splitIntoParagraphs(card.desc);
 
-        return {
-            effectSpeed: this.detectEffectSpeed(desc, config.effectSpeed),
-            effectType: this.detectEffectType(desc, config.effectType),
-            timing: this.detectTiming(desc, config.timing),
-            hasRequirements: this.detectRequirements(desc, config.requirements),
-            hasConditions: this.detectConditions(desc, config.conditions),
-            hasCost: this.detectCost(desc, config.cost),
-            effects: this.detectEffects(desc, config.effects),
-            duration: this.detectDuration(desc, config.duration),
-            restrictions: this.detectRestrictions(desc, config.restrictions)
-        };
+        const result = [];
+        paragraphs.forEach(para => {
+            const cat = this.detectCategory(para, categories);
+            result.push({
+                text:     para,
+                category: cat ? cat.id   : null,
+                name:     cat ? cat.name : null,
+                color:    cat ? cat.color: null
+            });
+        });
+
+        return result;
     },
 
     // ===============================
-    // DETECTORES INDIVIDUALES
+    // DETECCIÓN DE CATEGORÍA
     // ===============================
-    
-    detectEffectSpeed: function(desc, keywords) {
-        const descLower = desc.toLowerCase();
-        const detected = [];
-        
-        for (const [name, kws] of Object.entries(keywords)) {
-            for (const kw of kws) {
-                if (descLower.includes(kw.toLowerCase())) {
-                    detected.push(name);
-                    break;
-                }
+
+    detectCategory: function (paragraph, categories) {
+        for (const cat of categories) {
+            if (this.matchesConditions(paragraph, cat.conditions)) {
+                return cat;
             }
         }
-        
-        return detected;
+        return null;
     },
 
-    detectEffectType: function(desc, keywords) {
-        const descLower = desc.toLowerCase();
-        const detected = [];
-        
-        for (const [name, kws] of Object.entries(keywords)) {
-            for (const kw of kws) {
-                if (descLower.includes(kw.toLowerCase())) {
-                    detected.push(name);
-                    break;
-                }
-            }
+    matchesConditions: function (paragraph, conditions) {
+        if (!conditions) return false;
+        const p = paragraph.toLowerCase().trim();
+
+        if (conditions.startsWith && conditions.startsWith.trim() !== '') {
+            if (!p.startsWith(conditions.startsWith.toLowerCase().trim())) return false;
         }
-        
-        return detected;
+        if (conditions.contains && conditions.contains.trim() !== '') {
+            if (!p.includes(conditions.contains.toLowerCase().trim())) return false;
+        }
+        if (conditions.notContains && conditions.notContains.trim() !== '') {
+            if (p.includes(conditions.notContains.toLowerCase().trim())) return false;
+        }
+        if (conditions.endsWith && conditions.endsWith.trim() !== '') {
+            if (!p.endsWith(conditions.endsWith.toLowerCase().trim())) return false;
+        }
+        return true;
     },
 
-    detectTiming: function(desc, keywords) {
-        const descLower = desc.toLowerCase();
-        const detected = [];
-        
-        for (const [name, kws] of Object.entries(keywords)) {
-            for (const kw of kws) {
-                if (descLower.includes(kw.toLowerCase())) {
-                    detected.push(name);
-                    break;
-                }
-            }
-        }
-        
-        return detected;
-    },
+    // ===============================
+    // DIVISIÓN EN PÁRRAFOS
+    // ===============================
 
-    detectRequirements: function(desc, keywords) {
-        const descLower = desc.toLowerCase();
-        
-        for (const kw of keywords) {
-            if (descLower.includes(kw.toLowerCase())) {
-                return true;
-            }
-        }
-        
-        return false;
-    },
-
-    detectConditions: function(desc, keywords) {
-        const descLower = desc.toLowerCase();
-        
-        for (const kw of keywords) {
-            if (descLower.includes(kw.toLowerCase())) {
-                return true;
-            }
-        }
-        
-        return false;
-    },
-
-    detectCost: function(desc, keywords) {
-        const descLower = desc.toLowerCase();
-        
-        for (const kw of keywords) {
-            if (descLower.includes(kw.toLowerCase())) {
-                return true;
-            }
-        }
-        
-        return false;
-    },
-
-    detectEffects: function(desc, keywords) {
-        const descLower = desc.toLowerCase();
-        const detected = [];
-        
-        for (const [name, kws] of Object.entries(keywords)) {
-            for (const kw of kws) {
-                if (descLower.includes(kw.toLowerCase())) {
-                    detected.push(name);
-                    break;
-                }
-            }
-        }
-        
-        return detected;
-    },
-
-    detectDuration: function(desc, keywords) {
-        const descLower = desc.toLowerCase();
-        const detected = [];
-        
-        for (const [name, kws] of Object.entries(keywords)) {
-            for (const kw of kws) {
-                if (descLower.includes(kw.toLowerCase())) {
-                    detected.push(name);
-                    break;
-                }
-            }
-        }
-        
-        return detected;
-    },
-
-    detectRestrictions: function(desc, keywords) {
-        const descLower = desc.toLowerCase();
-        const detected = [];
-        
-        for (const [name, kws] of Object.entries(keywords)) {
-            for (const kw of kws) {
-                if (descLower.includes(kw.toLowerCase())) {
-                    detected.push(name);
-                    break;
-                }
-            }
-        }
-        
-        return detected;
+    splitIntoParagraphs: function (text) {
+        if (!text) return [];
+        // Dividir por . : ; manteniendo el delimitador al final de cada segmento
+        const parts = text.split(/(?<=[.;:])\s+/);
+        return parts
+            .map(p => p.trim())
+            .filter(p => p.length > 0);
     },
 
     // ===============================
     // UTILIDADES
     // ===============================
-    
-    hasNomenclatureData: function(nomenclature) {
-        if (!nomenclature) return false;
-        
-        return (
-            nomenclature.effectSpeed.length > 0 ||
-            nomenclature.effectType.length > 0 ||
-            nomenclature.timing.length > 0 ||
-            nomenclature.hasRequirements ||
-            nomenclature.hasConditions ||
-            nomenclature.hasCost ||
-            nomenclature.effects.length > 0 ||
-            nomenclature.duration.length > 0 ||
-            nomenclature.restrictions.length > 0
-        );
+
+    hasNomenclatureData: function (analysis) {
+        return Array.isArray(analysis) && analysis.some(p => p.category !== null);
+    },
+
+    // Obtener resumen de categorías presentes
+    getSummary: function (analysis) {
+        if (!Array.isArray(analysis)) return {};
+        const summary = {};
+        analysis.forEach(p => {
+            if (p.category) {
+                if (!summary[p.category]) summary[p.category] = { name: p.name, count: 0 };
+                summary[p.category].count++;
+            }
+        });
+        return summary;
     }
 };
 

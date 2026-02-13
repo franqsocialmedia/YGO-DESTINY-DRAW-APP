@@ -1,89 +1,75 @@
 /* ====================================
-   CONFIG MODULE
-   Destiny Draw - Yu-Gi-Oh! App
-   Módulo de configuración de la aplicación
+   CONFIG MODULE - Destiny Draw
+   Versión Unificada CORRECTA
    ==================================== */
 
 const Config = {
-
     container: null,
 
     init: function () {
         this.container = document.getElementById('config-content');
-        if (!this.container) {
-            console.error('Config: contenedor no encontrado');
-            return;
+        if (!this.container) { 
+            console.error('Config: contenedor no encontrado'); 
+            return; 
         }
         this.render();
     },
 
-    // ===============================
-    // RENDERIZADO PRINCIPAL
-    // ===============================
     render: function () {
         if (!this.container) return;
-
-        const html = `
+        
+        this.container.innerHTML = `
             <h2>Configuración</h2>
-            
+
             <!-- Sección: Roles y Palabras Asociadas -->
             <div class="config-section">
                 <h3 class="config-section-title" onclick="Config.toggleSection('roles-section')">
-                    Roles y Palabras Asociadas
+                    ▶ Roles y Palabras Asociadas
                 </h3>
                 <div id="roles-section" class="config-section-content">
                     ${this.renderRolesSection()}
                 </div>
             </div>
 
-            <!-- Sección: Especialidades (NUEVO - Paso 1) -->
+            <!-- Sección: Especialidades y Counters -->
             <div class="config-section">
                 <h3 class="config-section-title" onclick="Config.toggleSection('specialties-section')">
-                    Especialidades y Counters
+                    ▶ Especialidades y Counters
                 </h3>
-                <div id="specialties-section" class="config-section-content" style="display: none;">
+                <div id="specialties-section" class="config-section-content" style="display:none;">
                     ${this.renderSpecialtiesSection()}
                 </div>
             </div>
 
-            <!-- Sección: Staples (NUEVO - Paso 2) -->
+            <!-- Sección: Lista de Staples -->
             <div class="config-section">
                 <h3 class="config-section-title" onclick="Config.toggleSection('staples-section')">
-                    Lista de Staples
+                    ▶ Lista de Staples
                 </h3>
-                <div id="staples-section" class="config-section-content" style="display: none;">
+                <div id="staples-section" class="config-section-content" style="display:none;">
                     ${this.renderStaplesSection()}
                 </div>
             </div>
 
-            <!-- Sección: Nomenclatura (NUEVO - Paso 4) -->
+            <!-- Sección: Nomenclatura de Efectos -->
             <div class="config-section">
                 <h3 class="config-section-title" onclick="Config.toggleSection('nomenclature-section')">
-                    Nomenclatura de Efectos
+                    ▶ Nomenclatura de Efectos
                 </h3>
-                <div id="nomenclature-section" class="config-section-content" style="display: none;">
+                <div id="nomenclature-section" class="config-section-content" style="display:none;">
                     ${this.renderNomenclatureSection()}
                 </div>
             </div>
 
             <!-- Botones de acción -->
             <div class="config-actions">
-                <button class="btn btn-primary" onclick="Config.exportConfig()">
-                    📥 Exportar Data
-                </button>
-                <button class="btn btn-primary" onclick="Config.importConfig()">
-                    📤 Importar Data
-                </button>
-                <button class="btn btn-danger" onclick="Config.resetToDefault()">
-                    🔄 Restaurar Configuración por Defecto
-                </button>
+                <button class="btn btn-primary" onclick="Config.exportConfig()">📥 Exportar Data</button>
+                <button class="btn btn-primary" onclick="Config.importConfig()">📤 Importar Data</button>
+                <button class="btn btn-danger" onclick="Config.resetToDefault()">🔄 Restaurar por Defecto</button>
             </div>
             
-            <!-- Input oculto para importar archivo -->
-            <input type="file" id="config-import-file" accept=".txt" style="display: none;" onchange="Config.handleFileImport(this)">
+            <input type="file" id="config-import-file" accept=".txt" style="display:none;" onchange="Config.handleFileImport(this)">
         `;
-
-        this.container.innerHTML = html;
     },
 
     // ===============================
@@ -91,553 +77,494 @@ const Config = {
     // ===============================
     renderRolesSection: function () {
         const roles = ConfigManager.getRoles();
-        let html = '';
-
-        // Botón para crear nuevo rol
-        html += `
+        
+        let html = `
             <div class="config-new-role">
-                <input 
-                    type="text" 
-                    id="new-role-input" 
-                    class="config-input" 
-                    placeholder="Nombre del nuevo rol..."
-                >
-                <button class="btn btn-primary" onclick="Config.createNewRole()">
-                    + Crear Rol
-                </button>
+                <input type="text" id="new-role-input" class="config-input" placeholder="Nombre del nuevo rol...">
+                <button class="btn btn-primary" onclick="Config.createNewRole()">+ Crear Rol</button>
             </div>
-        `;
+            <div class="roles-list">`;
 
-        // Lista de roles existentes
-        html += '<div class="roles-list">';
-
-        for (const [roleName, keywords] of Object.entries(roles)) {
-            html += this.renderRoleCard(roleName, keywords);
+        for (const [roleName] of Object.entries(roles)) {
+            html += this.renderRoleCard(roleName);
         }
-
+        
         html += '</div>';
-
         return html;
     },
 
-    // ===============================
-    // TARJETA DE ROL INDIVIDUAL
-    // ===============================
-    renderRoleCard: function (roleName, keywords) {
-        // Generar chips de palabras clave
-        let keywordsChips = '';
-        keywords.forEach((keyword, index) => {
-            keywordsChips += `
-                <div class="keyword-chip">
-                    <span class="chip-text">${keyword}</span>
-                    <span class="chip-remove" onclick="Config.removeKeyword('${roleName}', '${keyword}')">×</span>
-                </div>
-            `;
-        });
-
-        // PASO 3: Obtener roleCondition si existe
+    renderRoleCard: function (roleName) {
         const roleCondition = ConfigManager.getRoleCondition(roleName);
+        const keywords     = roleCondition ? (roleCondition.keywords || []) : [];
         const conditionals = roleCondition ? (roleCondition.conditionals || []) : [];
-        const condKeywords = roleCondition ? (roleCondition.keywords || []) : [];
-        
-        // Generar chips de condicionales
-        let conditionalsChips = '';
-        conditionals.forEach(conditional => {
-            conditionalsChips += `
-                <div class="keyword-chip" style="background: #e74c3c;">
-                    <span class="chip-text">${conditional}</span>
-                    <span class="chip-remove" onclick="Config.removeConditional('${roleName}', '${conditional}')">×</span>
-                </div>
-            `;
-        });
-        
-        // Generar chips de keywords de roleCondition
-        let condKeywordsChips = '';
-        condKeywords.forEach(keyword => {
-            condKeywordsChips += `
-                <div class="keyword-chip" style="background: #3498db;">
-                    <span class="chip-text">${keyword}</span>
-                    <span class="chip-remove" onclick="Config.removeCondKeyword('${roleName}', '${keyword}')">×</span>
-                </div>
-            `;
-        });
+
+        const kwChips = keywords.map(kw => `
+            <div class="keyword-chip">
+                <span class="chip-text">${kw}</span>
+                <span class="chip-remove" onclick="Config.removeCondKeyword('${roleName}','${kw.replace(/'/g, "\\'")}')">×</span>
+            </div>`).join('');
+
+        const condChips = conditionals.map(c => `
+            <div class="keyword-chip conditional-chip">
+                <span class="chip-text">${c}</span>
+                <span class="chip-remove" onclick="Config.removeConditional('${roleName}','${c.replace(/'/g, "\\'")}')">×</span>
+            </div>`).join('');
 
         return `
             <div class="role-card" data-role="${roleName}">
                 <div class="role-card-header">
-                    <input 
-                        type="text" 
-                        class="role-name-input" 
-                        value="${roleName}"
+                    <input type="text" class="role-name-input" value="${roleName}"
                         data-original="${roleName}"
                         onblur="Config.renameRole(this)"
-                        onkeydown="if(event.key === 'Enter') this.blur()"
-                    >
-                    <button class="btn-delete-role" onclick="Config.deleteRole('${roleName}')" title="Eliminar rol">
-                        🗑️
-                    </button>
+                        onkeydown="if(event.key==='Enter')this.blur()">
+                    <button class="btn-delete-role" onclick="Config.deleteRole('${roleName}')" title="Eliminar rol">🗑️</button>
                 </div>
-                
                 <div class="role-card-body">
-                    <label class="config-label">Palabras clave asociadas:</label>
-                    <div class="keywords-container">
-                        ${keywordsChips}
-                    </div>
-                    
-                    <div class="add-keyword-container">
-                        <input 
-                            type="text" 
-                            class="keyword-input" 
-                            placeholder="Nueva palabra clave..."
-                            data-role="${roleName}"
-                            onkeydown="if(event.key === 'Enter') Config.addKeywordFromInput(this)"
-                        >
-                        <button class="btn btn-sm" onclick="Config.addKeywordFromInput(this.previousElementSibling)">
-                            + Agregar
-                        </button>
-                    </div>
-                    
-                    <!-- PASO 3: Sección de Roles Compuestos -->
-                    <div class="role-conditions-section">
-                        <label class="config-label" style="margin-top: var(--spacing-md);">
-                            <strong>Roles Compuestos (Opcional):</strong>
-                            <small style="display: block; color: rgba(241, 241, 241, 0.6); font-weight: normal;">
-                                Define condicionales que DEBEN cumplirse + keywords que AL MENOS UNA debe estar presente
-                            </small>
-                        </label>
-                        
-                        <label class="config-label" style="font-size: 0.85rem; margin-top: var(--spacing-sm);">
-                            Condicionales (TODAS deben cumplirse):
-                        </label>
-                        <div class="keywords-container">
-                            ${conditionalsChips || '<span class="empty-chips">Sin condicionales (rol simple)</span>'}
-                        </div>
-                        <div class="add-keyword-container">
-                            <input 
-                                type="text" 
-                                class="keyword-input" 
-                                placeholder="Nueva condicional..."
-                                data-role="${roleName}"
-                                onkeydown="if(event.key === 'Enter') Config.addConditionalFromInput(this)"
-                            >
-                            <button class="btn btn-sm" onclick="Config.addConditionalFromInput(this.previousElementSibling)">
-                                + Agregar Condicional
-                            </button>
-                        </div>
-                        
-                        <label class="config-label" style="font-size: 0.85rem; margin-top: var(--spacing-sm);">
-                            Keywords (AL MENOS UNA debe cumplirse):
-                        </label>
-                        <div class="keywords-container">
-                            ${condKeywordsChips || '<span class="empty-chips">Sin keywords de condición</span>'}
-                        </div>
-                        <div class="add-keyword-container">
-                            <input 
-                                type="text" 
-                                class="keyword-input" 
-                                placeholder="Nueva keyword..."
-                                data-role="${roleName}"
-                                onkeydown="if(event.key === 'Enter') Config.addCondKeywordFromInput(this)"
-                            >
-                            <button class="btn btn-sm" onclick="Config.addCondKeywordFromInput(this.previousElementSibling)">
-                                + Agregar Keyword
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    },
 
-    // ===============================
-    // SECCIÓN DE ESPECIALIDADES (PASO 1)
-    // ===============================
-    renderSpecialtiesSection: function () {
-        const specialties = ConfigManager.getSpecialties();
-        let html = '';
-
-        // Botón para crear nueva especialidad
-        html += `
-            <div class="config-new-role">
-                <input 
-                    type="text" 
-                    id="new-specialty-input" 
-                    class="config-input" 
-                    placeholder="Keyword de especialidad (ej: return, negate)..."
-                >
-                <button class="btn btn-primary" onclick="Config.createNewSpecialty()">
-                    + Crear Especialidad
-                </button>
-            </div>
-        `;
-
-        // Lista de especialidades existentes
-        html += '<div class="roles-list">';
-
-        for (const [keyword, data] of Object.entries(specialties)) {
-            html += this.renderSpecialtyCard(keyword, data);
-        }
-
-        html += '</div>';
-
-        return html;
-    },
-
-    renderSpecialtyCard: function (keyword, data) {
-        return `
-            <div class="role-card" data-specialty="${keyword}">
-                <div class="role-card-header">
-                    <input 
-                        type="text" 
-                        class="role-name-input" 
-                        value="${keyword}"
-                        data-original="${keyword}"
-                        onblur="Config.renameSpecialtyKeyword(this)"
-                        onkeydown="if(event.key === 'Enter') this.blur()"
-                        placeholder="Keyword"
-                    >
-                    <button class="btn-delete-role" onclick="Config.deleteSpecialty('${keyword}')" title="Eliminar especialidad">
-                        🗑️
-                    </button>
-                </div>
-                
-                <div class="role-card-body">
-                    <label class="config-label">Nombre a nivel carta:</label>
-                    <input 
-                        type="text" 
-                        class="specialty-field-input" 
-                        value="${data.cardLevel || ''}"
-                        data-keyword="${keyword}"
-                        data-field="cardLevel"
-                        onchange="Config.updateSpecialtyField(this)"
-                        placeholder="Ej: Recycle"
-                    >
-                    
-                    <label class="config-label">Nombre a nivel deck:</label>
-                    <input 
-                        type="text" 
-                        class="specialty-field-input" 
-                        value="${data.deckLevel || ''}"
-                        data-keyword="${keyword}"
-                        data-field="deckLevel"
-                        onchange="Config.updateSpecialtyField(this)"
-                        placeholder="Ej: Bounce"
-                    >
-                    
-                    <label class="config-label">Rol vinculado (opcional):</label>
-                    <select 
-                        class="specialty-field-input" 
-                        data-keyword="${keyword}"
-                        data-field="linkedRole"
-                        onchange="Config.updateSpecialtyField(this)"
-                    >
-                        <option value="">-- Sin vincular --</option>
-                        ${this.renderRoleOptions(data.linkedRole)}
-                    </select>
-                    
                     <label class="config-label">
-                        <small style="color: rgba(241, 241, 241, 0.6);">
-                            Counters y CounteredBy se manejan automáticamente
+                        Keyword
+                        <small style="font-weight:normal;color:rgba(241,241,241,0.55);">
+                            — sin condicional actúa sola; con condicional ambas deben cumplirse
                         </small>
                     </label>
+                    <div class="keywords-container">
+                        ${kwChips || '<span class="empty-chips">Sin keywords asignadas</span>'}
+                    </div>
+                    <div class="add-keyword-container">
+                        <input type="text" class="keyword-input" placeholder="Nueva keyword..."
+                            data-role="${roleName}"
+                            onkeydown="if(event.key==='Enter')Config.addCondKeywordFromInput(this)">
+                        <button class="btn btn-sm" onclick="Config.addCondKeywordFromInput(this.previousElementSibling)">+ Agregar</button>
+                    </div>
+
+                    <label class="config-label conditional-label">
+                        Condicional
+                        <small style="font-weight:normal;">— opcional, DEBE estar presente junto a la keyword</small>
+                    </label>
+                    <div class="keywords-container">
+                        ${condChips || '<span class="empty-chips">Sin condicionales (rol simple)</span>'}
+                    </div>
+                    <div class="add-keyword-container">
+                        <input type="text" class="keyword-input conditional-input"
+                            placeholder="Nueva condicional..."
+                            data-role="${roleName}"
+                            onkeydown="if(event.key==='Enter')Config.addConditionalFromInput(this)">
+                        <button class="btn btn-sm btn-danger" onclick="Config.addConditionalFromInput(this.previousElementSibling)">+ Agregar</button>
+                    </div>
+
                 </div>
-            </div>
-        `;
+            </div>`;
     },
 
-    renderRoleOptions: function (selectedRole) {
+    // ===============================
+    // SECCIÓN DE ESPECIALIDADES (pares horizontales)
+    // ===============================
+    renderSpecialtiesSection: function () {
+        const pairs = ConfigManager.getSpecialties();
         const roles = ConfigManager.getRoleNames();
-        let html = '';
-        roles.forEach(role => {
-            const selected = role === selectedRole ? 'selected' : '';
-            html += `<option value="${role}" ${selected}>${role}</option>`;
-        });
-        return html;
-    },
+        const roleOpts = (sel) => ['', ...roles].map(r =>
+            `<option value="${r}" ${r === sel ? 'selected' : ''}>${r || '-- Sin rol --'}</option>`
+        ).join('');
 
-    // ===============================
-    // SECCIÓN DE STAPLES (PASO 2)
-    // ===============================
-    renderStaplesSection: function () {
-        const staples = ConfigManager.getStaples();
-        let html = '';
-
-        // Explicación de qué son las staples
-        html += `
+        let html = `
             <div class="config-help-text">
-                <p><strong>Staples:</strong> Cartas genéricas que se usan en múltiples decks del meta.</p>
-                <p><small>Esta lista es interna y se usa para análisis comparativo y recomendaciones.</small></p>
+                <p><strong>Especialidades:</strong> Pares de Especialización y Counter asociado.</p>
+                <small>Los keywords son internos — no se exponen en texto. Se usan para análisis automático de cartas.</small>
             </div>
-        `;
-
-        // Botón para agregar nuevo staple
-        html += `
-            <div class="config-new-role">
-                <input 
-                    type="text" 
-                    id="new-staple-id" 
-                    class="config-input" 
-                    placeholder="ID de la carta (ej: 83764718)"
-                    style="width: 200px;"
-                >
-                <input 
-                    type="text" 
-                    id="new-staple-name" 
-                    class="config-input" 
-                    placeholder="Nombre (ej: Renace al monstruo)"
-                    style="width: 250px;"
-                >
-                <button class="btn btn-primary" onclick="Config.createNewStaple()">
-                    + Agregar Staple
-                </button>
+            <div style="margin-bottom:var(--spacing-md);">
+                <button class="btn btn-primary" onclick="Config.createSpecialtyPair()">➕ Nuevo Par</button>
             </div>
-        `;
+            <div class="specialty-pairs-list">`;
 
-        // Lista de staples existentes
-        html += '<div class="staples-list">';
-        
-        const stapleEntries = Object.entries(staples);
-        if (stapleEntries.length === 0) {
-            html += '<p class="stats-empty">No hay staples configurados</p>';
-        } else {
-            stapleEntries.forEach(([id, data]) => {
-                html += this.renderStapleCard(id, data);
-            });
+        if (pairs.length === 0) {
+            html += '<p class="empty-chips" style="padding:var(--spacing-md);">No hay pares configurados</p>';
         }
 
-        html += '</div>';
+        pairs.forEach(pair => {
+            const specKwChips = (pair.specialization.keywords || []).map(kw =>
+                `<div class="keyword-chip spec-kw-chip">
+                    <span class="chip-text">${kw}</span>
+                    <span class="chip-remove" onclick="Config.removeSpecKw('${pair.id}','specialization','${kw.replace(/'/g, "\\'")}')">×</span>
+                </div>`).join('');
 
+            const counterKwChips = (pair.counter.keywords || []).map(kw =>
+                `<div class="keyword-chip counter-kw-chip">
+                    <span class="chip-text">${kw}</span>
+                    <span class="chip-remove" onclick="Config.removeSpecKw('${pair.id}','counter','${kw.replace(/'/g, "\\'")}')">×</span>
+                </div>`).join('');
+
+            html += `
+                <div class="specialty-pair-row">
+                    <!-- Lado Especialización -->
+                    <div class="specialty-half spec-side">
+                        <div class="specialty-half-header">
+                            <span class="spec-badge">Especialización</span>
+                        </div>
+                        <input type="text" class="role-name-input" value="${pair.specialization.name}"
+                            style="margin-bottom:6px;"
+                            onblur="ConfigManager.updateSpecialtyPairField('${pair.id}','specialization','name',this.value)"
+                            onkeydown="if(event.key==='Enter')this.blur()">
+                        <label class="config-label" style="font-size:0.8rem;margin-bottom:2px;">Rol asociado:</label>
+                        <select class="keyword-input" style="margin-bottom:8px;"
+                            onchange="ConfigManager.updateSpecialtyPairField('${pair.id}','specialization','rol',this.value)">
+                            ${roleOpts(pair.specialization.rol)}
+                        </select>
+                        <label class="config-label" style="font-size:0.8rem;">Keywords:</label>
+                        <div class="keywords-container" style="min-height:34px;">
+                            ${specKwChips || '<span class="empty-chips" style="font-size:0.75rem;">Sin keywords</span>'}
+                        </div>
+                        <div class="add-keyword-container">
+                            <input type="text" id="spec-kw-${pair.id}" class="keyword-input" placeholder="Keyword...">
+                            <button class="btn btn-sm" onclick="Config.addSpecKw('${pair.id}','specialization',document.getElementById('spec-kw-${pair.id}'))">+</button>
+                        </div>
+                    </div>
+
+                    <div class="specialty-connector">⟷</div>
+
+                    <!-- Lado Counter -->
+                    <div class="specialty-half counter-side">
+                        <div class="specialty-half-header">
+                            <span class="counter-badge">Counter</span>
+                        </div>
+                        <input type="text" class="role-name-input" value="${pair.counter.name}"
+                            style="margin-bottom:6px;"
+                            onblur="ConfigManager.updateSpecialtyPairField('${pair.id}','counter','name',this.value)"
+                            onkeydown="if(event.key==='Enter')this.blur()">
+                        <label class="config-label" style="font-size:0.8rem;margin-bottom:2px;">Rol asociado:</label>
+                        <select class="keyword-input" style="margin-bottom:8px;"
+                            onchange="ConfigManager.updateSpecialtyPairField('${pair.id}','counter','rol',this.value)">
+                            ${roleOpts(pair.counter.rol)}
+                        </select>
+                        <label class="config-label" style="font-size:0.8rem;">Keywords:</label>
+                        <div class="keywords-container" style="min-height:34px;">
+                            ${counterKwChips || '<span class="empty-chips" style="font-size:0.75rem;">Sin keywords</span>'}
+                        </div>
+                        <div class="add-keyword-container">
+                            <input type="text" id="counter-kw-${pair.id}" class="keyword-input" placeholder="Keyword...">
+                            <button class="btn btn-sm btn-counter" onclick="Config.addSpecKw('${pair.id}','counter',document.getElementById('counter-kw-${pair.id}'))">+</button>
+                        </div>
+                    </div>
+
+                    <button class="btn-delete-role" onclick="Config.deleteSpecialtyPair('${pair.id}')" 
+                        style="position:absolute;top:8px;right:8px;" title="Eliminar par">🗑️</button>
+                </div>`;
+        });
+
+        html += '</div>';
         return html;
     },
 
-    renderStapleCard: function (cardId, data) {
-        // Generar chips de roles
-        let rolesChips = '';
-        (data.roles || []).forEach(role => {
-            rolesChips += `
-                <div class="keyword-chip">
-                    <span class="chip-text">${role}</span>
-                    <span class="chip-remove" onclick="Config.removeRoleFromStaple('${cardId}', '${role}')">×</span>
-                </div>
-            `;
-        });
+    // ===============================
+    // SECCIÓN DE STAPLES (grid de imágenes)
+    // ===============================
+    renderStaplesSection: function () {
+        const staples  = ConfigManager.getStaples();
+        const entries  = Object.entries(staples);
 
-        // Generar chips de specialty keywords
-        let specialtyChips = '';
-        (data.specialtyKeywords || []).forEach(keyword => {
-            specialtyChips += `
-                <div class="keyword-chip" style="background: #6c5ce7;">
-                    <span class="chip-text">${keyword}</span>
-                    <span class="chip-remove" onclick="Config.removeSpecialtyKeywordFromStaple('${cardId}', '${keyword}')">×</span>
-                </div>
-            `;
-        });
-
-        return `
-            <div class="staple-card" data-staple-id="${cardId}">
-                <div class="staple-card-header">
-                    <div class="staple-info">
-                        <strong>${data.name || 'Sin nombre'}</strong>
-                        <span class="staple-id">ID: ${cardId}</span>
-                        ${data.nameEn ? `<span class="staple-name-en">(${data.nameEn})</span>` : ''}
-                    </div>
-                    <button class="btn-delete-role" onclick="Config.deleteStaple('${cardId}')" title="Eliminar staple">
-                        🗑️
-                    </button>
-                </div>
-                
-                <div class="staple-card-body">
-                    <label class="config-label">Roles asignados:</label>
-                    <div class="keywords-container">
-                        ${rolesChips || '<span class="empty-chips">Sin roles</span>'}
-                    </div>
-                    <div class="add-keyword-container">
-                        <select 
-                            class="keyword-input" 
-                            data-staple-id="${cardId}"
-                            onchange="Config.addRoleToStapleFromSelect(this)"
-                        >
-                            <option value="">-- Seleccionar rol --</option>
-                            ${this.renderRoleOptions('')}
-                        </select>
-                    </div>
-
-                    <label class="config-label">Specialty Keywords:</label>
-                    <div class="keywords-container">
-                        ${specialtyChips || '<span class="empty-chips">Sin keywords</span>'}
-                    </div>
-                    <div class="add-keyword-container">
-                        <input 
-                            type="text" 
-                            class="keyword-input" 
-                            placeholder="Nueva keyword..."
-                            data-staple-id="${cardId}"
-                            onkeydown="if(event.key === 'Enter') Config.addSpecialtyKeywordToStapleFromInput(this)"
-                        >
-                        <button class="btn btn-sm" onclick="Config.addSpecialtyKeywordToStapleFromInput(this.previousElementSibling)">
-                            + Agregar
-                        </button>
-                    </div>
-
-                    <label class="config-label">Notas:</label>
-                    <input 
-                        type="text" 
-                        class="specialty-field-input" 
-                        value="${data.notes || ''}"
-                        data-staple-id="${cardId}"
-                        onchange="Config.updateStapleNotes(this)"
-                        placeholder="Notas opcionales..."
-                    >
-                </div>
+        let html = `
+            <div class="config-help-text">
+                <p><strong>Staples:</strong> Cartas genéricas usadas en múltiples decks. Solo ingresa el ID — los datos se obtienen automáticamente.</p>
+                <small>Haz click en cualquier imagen para ver los detalles de la carta.</small>
             </div>
-        `;
+            <div class="config-new-role">
+                <input type="text" id="new-staple-id" class="config-input" placeholder="ID de la carta (ej: 83764718)">
+                <button class="btn btn-primary" onclick="Config.createNewStaple()">+ Agregar</button>
+            </div>
+            <div class="staples-grid">`;
+
+        if (entries.length === 0) {
+            html += '<p class="empty-chips" style="grid-column:1/-1;padding:var(--spacing-md);">No hay staples configurados</p>';
+        }
+        
+        entries.forEach(([id, data]) => {
+            html += `
+                <div class="staple-img-card" title="${data.name || id}">
+                    <img src="${data.imageUrl}"
+                         alt="${data.name || id}"
+                         onclick="Config.openStapleCard('${id}')"
+                         onerror="this.src='';this.style.background='#002b4d';this.style.minHeight='120px';">
+                    <button class="staple-delete-btn" onclick="Config.deleteStaple('${id}')" title="Eliminar">✕</button>
+                    <div class="staple-img-name">${data.name || id}</div>
+                </div>`;
+        });
+
+        html += '</div>';
+        return html;
     },
 
     // ===============================
-    // ACCIONES DE ROLES
+    // SECCIÓN DE NOMENCLATURA (Compatible con cardviewer)
+    // ===============================
+    renderNomenclatureSection: function () {
+        const nomenclature = ConfigManager.getNomenclature();
+
+        let html = `
+            <div class="config-help-text">
+                <p><strong>Nomenclatura de Efectos:</strong> Define cómo se detecta y colorea cada parte del efecto de una carta.</p>
+                <small>Cada categoría tiene UNA configuración con 4 campos. Los campos vacíos no se verifican.</small>
+            </div>
+            <button class="btn btn-primary" onclick="Config.addNomenclatureCategory()" 
+                style="margin-bottom:var(--spacing-md);">➕ Nueva Categoría</button>
+            <div class="roles-list">`;
+
+        (nomenclature.categories || []).forEach(cat => {
+            html += this.renderNomenclatureCategory(cat);
+        });
+
+        html += '</div>';
+        return html;
+    },
+
+    renderNomenclatureCategory: function (cat) {
+        const cond = cat.conditions || {};
+        
+        return `
+            <div class="role-card">
+                <div class="role-card-header">
+                    <input type="color" value="${cat.color}" title="Color de la categoría"
+                        style="width:44px;height:34px;border:2px solid var(--border-color);border-radius:6px;cursor:pointer;padding:2px;margin-right:8px;background:transparent;"
+                        onchange="ConfigManager.updateNomenclatureCategory('${cat.id}',{color:this.value});Config.render()">
+                    <input type="text" class="role-name-input" value="${cat.name}"
+                        onblur="ConfigManager.updateNomenclatureCategory('${cat.id}',{name:this.value})"
+                        onkeydown="if(event.key==='Enter')this.blur()">
+                    <button class="btn-delete-role" onclick="Config.deleteNomCategory('${cat.id}')">🗑️</button>
+                </div>
+                <div class="role-card-body" style="gap:12px;">
+                    <label class="config-label">Empieza con:</label>
+                    <input type="text" class="keyword-input" value="${cond.startsWith || ''}"
+                        placeholder="vacío = cualquiera"
+                        onblur="ConfigManager.updateNomenclatureCategoryCondition('${cat.id}','startsWith',this.value)"
+                        onkeydown="if(event.key==='Enter')this.blur()">
+                    
+                    <label class="config-label">Contiene:</label>
+                    <input type="text" class="keyword-input" value="${cond.contains || ''}"
+                        placeholder="vacío = cualquiera"
+                        onblur="ConfigManager.updateNomenclatureCategoryCondition('${cat.id}','contains',this.value)"
+                        onkeydown="if(event.key==='Enter')this.blur()">
+                    
+                    <label class="config-label">NO contiene:</label>
+                    <input type="text" class="keyword-input" value="${cond.notContains || ''}"
+                        placeholder="vacío = sin restricción"
+                        onblur="ConfigManager.updateNomenclatureCategoryCondition('${cat.id}','notContains',this.value)"
+                        onkeydown="if(event.key==='Enter')this.blur()">
+                    
+                    <label class="config-label">Termina en:</label>
+                    <input type="text" class="keyword-input" value="${cond.endsWith || ''}"
+                        placeholder="por defecto: ."
+                        onblur="ConfigManager.updateNomenclatureCategoryCondition('${cat.id}','endsWith',this.value)"
+                        onkeydown="if(event.key==='Enter')this.blur()">
+                    
+                    <div class="config-help-text" style="margin-top:8px;">
+                        <small><strong>Cómo funciona:</strong> Un párrafo se detecta si cumple TODOS los campos no-vacíos. Ejemplo: si pones "quick effect" en "Contiene" y ":" en "Termina", solo detectará párrafos que contengan "quick effect" Y terminen en ":".</small>
+                    </div>
+                </div>
+            </div>`;
+    },
+
+    // ===============================
+    // ACCIONES - ROLES
     // ===============================
     createNewRole: function () {
         const input = document.getElementById('new-role-input');
-        const roleName = input.value.trim();
-
-        if (!roleName) {
-            alert('⚠️ Escribe un nombre para el rol');
-            return;
-        }
-
-        if (ConfigManager.createRole(roleName)) {
-            input.value = '';
-            this.render();
-            alert('✅ Rol creado exitosamente');
+        const name  = input.value.trim();
+        if (!name) { alert('⚠️ Escribe un nombre para el rol'); return; }
+        if (ConfigManager.createRole(name)) { 
+            input.value = ''; 
+            this.render(); 
         } else {
             alert('❌ No se pudo crear el rol (puede que ya exista)');
         }
     },
 
-    renameRole: function (inputElement) {
-        const oldName = inputElement.dataset.original;
-        const newName = inputElement.value.trim();
-
+    renameRole: function (el) {
+        const oldName = el.dataset.original;
+        const newName = el.value.trim();
         if (newName === oldName) return;
-
-        if (!newName) {
-            alert('⚠️ El nombre no puede estar vacío');
-            inputElement.value = oldName;
-            return;
+        if (!newName) { 
+            alert('⚠️ El nombre no puede estar vacío'); 
+            el.value = oldName; 
+            return; 
         }
-
         if (ConfigManager.renameRole(oldName, newName)) {
             this.render();
-            alert('✅ Rol renombrado exitosamente');
-        } else {
-            alert('❌ No se pudo renombrar el rol (puede que el nuevo nombre ya exista)');
-            inputElement.value = oldName;
+        } else { 
+            alert('❌ No se pudo renombrar'); 
+            el.value = oldName; 
         }
     },
 
     deleteRole: function (roleName) {
         if (!confirm(`¿Eliminar el rol "${roleName}"?`)) return;
-
         if (ConfigManager.deleteRole(roleName)) {
             this.render();
-            alert('✅ Rol eliminado exitosamente');
         } else {
             alert('❌ No se pudo eliminar el rol');
         }
     },
 
-    // ===============================
-    // ACCIONES DE PALABRAS CLAVE
-    // ===============================
-    addKeywordFromInput: function (inputElement) {
-        const roleName = inputElement.dataset.role;
-        const keyword = inputElement.value.trim().toLowerCase();
-
-        if (!keyword) {
-            alert('⚠️ Escribe una palabra clave');
-            return;
-        }
-
-        if (ConfigManager.addKeywordToRole(roleName, keyword)) {
-            inputElement.value = '';
-            this.render();
+    addCondKeywordFromInput: function (el) {
+        const roleName = el.dataset.role;
+        const kw       = el.value.trim().toLowerCase();
+        if (!kw) { alert('⚠️ Escribe una keyword'); return; }
+        if (ConfigManager.addKeywordToRoleCondition(roleName, kw)) { 
+            el.value = ''; 
+            this.render(); 
         } else {
-            alert('❌ No se pudo agregar la palabra clave (puede que ya exista)');
-        }
-    },
-
-    removeKeyword: function (roleName, keyword) {
-        if (ConfigManager.removeKeywordFromRole(roleName, keyword)) {
-            this.render();
-        } else {
-            alert('❌ No se pudo eliminar la palabra clave');
-        }
-    },
-
-    // ===============================
-    // ACCIONES DE ROLE CONDITIONS (PASO 3)
-    // ===============================
-    addConditionalFromInput: function (inputElement) {
-        const roleName = inputElement.dataset.role;
-        const conditional = inputElement.value.trim().toLowerCase();
-
-        if (!conditional) {
-            alert('⚠️ Escribe una condicional');
-            return;
-        }
-
-        if (ConfigManager.addConditionalToRole(roleName, conditional)) {
-            inputElement.value = '';
-            this.render();
-        } else {
-            alert('❌ No se pudo agregar la condicional (puede que ya exista)');
-        }
-    },
-
-    removeConditional: function (roleName, conditional) {
-        if (ConfigManager.removeConditionalFromRole(roleName, conditional)) {
-            this.render();
-        } else {
-            alert('❌ No se pudo eliminar la condicional');
-        }
-    },
-
-    addCondKeywordFromInput: function (inputElement) {
-        const roleName = inputElement.dataset.role;
-        const keyword = inputElement.value.trim().toLowerCase();
-
-        if (!keyword) {
-            alert('⚠️ Escribe una keyword');
-            return;
-        }
-
-        if (ConfigManager.addKeywordToRoleCondition(roleName, keyword)) {
-            inputElement.value = '';
-            this.render();
-        } else {
-            alert('❌ No se pudo agregar la keyword (puede que ya exista)');
+            alert('❌ No se pudo agregar (puede que ya exista)');
         }
     },
 
     removeCondKeyword: function (roleName, keyword) {
         if (ConfigManager.removeKeywordFromRoleCondition(roleName, keyword)) {
             this.render();
+        }
+    },
+
+    addConditionalFromInput: function (el) {
+        const roleName = el.dataset.role;
+        const val      = el.value.trim().toLowerCase();
+        if (!val) { alert('⚠️ Escribe una condicional'); return; }
+        if (ConfigManager.addConditionalToRole(roleName, val)) { 
+            el.value = ''; 
+            this.render(); 
         } else {
-            alert('❌ No se pudo eliminar la keyword');
+            alert('❌ No se pudo agregar (puede que ya exista)');
+        }
+    },
+
+    removeConditional: function (roleName, conditional) {
+        if (ConfigManager.removeConditionalFromRole(roleName, conditional)) {
+            this.render();
         }
     },
 
     // ===============================
-    // OTRAS ACCIONES
+    // ACCIONES - ESPECIALIDADES
     // ===============================
-    resetToDefault: function () {
-        if (!confirm('¿Restaurar toda la configuración a los valores por defecto? Esta acción no se puede deshacer.')) {
-            return;
+    createSpecialtyPair: function () {
+        ConfigManager.createSpecialtyPair('Nueva Especialización', '', 'Nuevo Counter', '');
+        const sec = document.getElementById('specialties-section');
+        if (sec && sec.style.display === 'none') sec.style.display = 'block';
+        this.render();
+        const sec2 = document.getElementById('specialties-section');
+        if (sec2) sec2.style.display = 'block';
+    },
+
+    deleteSpecialtyPair: function (id) {
+        if (!confirm('¿Eliminar este par?')) return;
+        if (ConfigManager.deleteSpecialtyPair(id)) {
+            this.render();
+        }
+    },
+
+    addSpecKw: function (id, side, el) {
+        const kw = el.value.trim().toLowerCase();
+        if (!kw) return;
+        if (ConfigManager.addKeywordToSpecialtyPair(id, side, kw)) { 
+            el.value = ''; 
+            this.render(); 
+        } else {
+            alert('❌ Keyword ya existe');
+        }
+    },
+
+    removeSpecKw: function (id, side, keyword) {
+        if (ConfigManager.removeKeywordFromSpecialtyPair(id, side, keyword)) {
+            this.render();
+        }
+    },
+
+    // ===============================
+    // ACCIONES - STAPLES
+    // ===============================
+    createNewStaple: async function () {
+        const input  = document.getElementById('new-staple-id');
+        const cardId = input.value.trim();
+        if (!cardId) { alert('⚠️ Ingresa un ID de carta'); return; }
+        if (ConfigManager.isStaple(cardId)) { 
+            alert('⚠️ Esta carta ya está en la lista'); 
+            return; 
         }
 
-        if (ConfigManager.resetToDefault()) {
+        const btn = input.nextElementSibling;
+        const originalText = btn.textContent;
+        btn.textContent = '⏳';
+        btn.disabled = true;
+
+        try {
+            const resp = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${cardId}`);
+            if (!resp.ok) throw new Error('not found');
+            const data = await resp.json();
+            if (!data.data || data.data.length === 0) { 
+                alert('❌ Carta no encontrada'); 
+                return; 
+            }
+            const card = data.data[0];
+            ConfigManager.createStaple(String(card.id), {
+                name:     card.name,
+                imageUrl: card.card_images[0]?.image_url_small || `https://images.ygoprodeck.com/images/cards_small/${card.id}.jpg`,
+                type:     card.type
+            });
+            input.value = '';
             this.render();
-            alert('✅ Configuración restaurada a los valores por defecto');
+            const sec = document.getElementById('staples-section');
+            if (sec) sec.style.display = 'block';
+        } catch (e) {
+            alert('❌ No se encontró la carta. Verifica el ID.');
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled    = false;
+        }
+    },
+
+    deleteStaple: function (cardId) {
+        if (!confirm('¿Eliminar este staple?')) return;
+        if (ConfigManager.deleteStaple(cardId)) {
+            this.render();
+        }
+    },
+
+    openStapleCard: async function (cardId) {
+        try {
+            const resp = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${cardId}`);
+            const data = await resp.json();
+            if (data.data && data.data[0]) {
+                if (window.CardViewer && typeof CardViewer.open === 'function') {
+                    CardViewer.open(data.data[0]);
+                } else if (window.Buscador && typeof Buscador.openCardModal === 'function') {
+                    Buscador.openCardModal(data.data[0]);
+                }
+            }
+        } catch (e) { 
+            console.error('Error abriendo staple:', e); 
+        }
+    },
+
+    // ===============================
+    // ACCIONES - NOMENCLATURA
+    // ===============================
+    addNomenclatureCategory: function () {
+        ConfigManager.addNomenclatureCategory();
+        this.render();
+        const sec = document.getElementById('nomenclature-section');
+        if (sec) sec.style.display = 'block';
+    },
+
+    deleteNomCategory: function (categoryId) {
+        if (!confirm('¿Eliminar esta categoría?')) return;
+        if (ConfigManager.deleteNomenclatureCategory(categoryId)) {
+            this.render();
+        }
+    },
+
+    // ===============================
+    // ACCIONES GENERALES
+    // ===============================
+    resetToDefault: function () {
+        if (!confirm('¿Restaurar toda la configuración a los valores por defecto? Esta acción no se puede deshacer.')) return;
+        if (ConfigManager.resetToDefault()) { 
+            this.render(); 
+            alert('✅ Configuración restaurada'); 
         } else {
             alert('❌ No se pudo restaurar la configuración');
         }
@@ -647,481 +574,31 @@ const Config = {
         if (ConfigManager.exportConfig()) {
             alert('✅ Configuración exportada exitosamente');
         } else {
-            alert('❌ No se pudo exportar la configuración');
+            alert('❌ No se pudo exportar');
         }
     },
 
     importConfig: function () {
-        // Abrir el diálogo de selección de archivo
-        const fileInput = document.getElementById('config-import-file');
-        if (fileInput) {
-            fileInput.click();
-        }
+        document.getElementById('config-import-file')?.click();
     },
 
-    handleFileImport: async function (inputElement) {
-        const file = inputElement.files[0];
+    handleFileImport: async function (el) {
+        const file = el.files[0];
         if (!file) return;
-
         try {
             await ConfigManager.importConfig(file);
             this.render();
             alert('✅ Configuración importada exitosamente');
-            // Limpiar el input para permitir importar el mismo archivo de nuevo
-            inputElement.value = '';
-        } catch (error) {
-            alert('❌ Error al importar: ' + error);
-            inputElement.value = '';
+        } catch (err) {
+            alert('❌ Error al importar: ' + err);
         }
-    },
-
-    // ===============================
-    // ACCIONES DE ESPECIALIDADES (PASO 1)
-    // ===============================
-    createNewSpecialty: function () {
-        const input = document.getElementById('new-specialty-input');
-        const keyword = input.value.trim().toLowerCase();
-
-        if (!keyword) {
-            alert('⚠️ Escribe un keyword para la especialidad');
-            return;
-        }
-
-        const data = {
-            cardLevel: keyword,
-            deckLevel: keyword,
-            linkedRole: '',
-            counters: [],
-            counteredBy: []
-        };
-
-        if (ConfigManager.createSpecialty(keyword, data)) {
-            input.value = '';
-            this.render();
-            alert('✅ Especialidad creada exitosamente');
-        } else {
-            alert('❌ No se pudo crear la especialidad (puede que ya exista)');
-        }
-    },
-
-    renameSpecialtyKeyword: function (inputElement) {
-        const oldKeyword = inputElement.dataset.original;
-        const newKeyword = inputElement.value.trim().toLowerCase();
-
-        if (newKeyword === oldKeyword) return;
-
-        if (!newKeyword) {
-            alert('⚠️ El keyword no puede estar vacío');
-            inputElement.value = oldKeyword;
-            return;
-        }
-
-        if (ConfigManager.renameSpecialtyKeyword(oldKeyword, newKeyword)) {
-            this.render();
-            alert('✅ Keyword renombrado exitosamente');
-        } else {
-            alert('❌ No se pudo renombrar el keyword (puede que el nuevo ya exista)');
-            inputElement.value = oldKeyword;
-        }
-    },
-
-    deleteSpecialty: function (keyword) {
-        if (!confirm(`¿Eliminar la especialidad "${keyword}"?`)) return;
-
-        if (ConfigManager.deleteSpecialty(keyword)) {
-            this.render();
-            alert('✅ Especialidad eliminada exitosamente');
-        } else {
-            alert('❌ No se pudo eliminar la especialidad');
-        }
-    },
-
-    updateSpecialtyField: function (inputElement) {
-        const keyword = inputElement.dataset.keyword;
-        const field = inputElement.dataset.field;
-        const value = inputElement.value.trim();
-
-        const specialty = ConfigManager.getSpecialty(keyword);
-        if (!specialty) return;
-
-        specialty[field] = value;
-
-        if (ConfigManager.updateSpecialty(keyword, specialty)) {
-            // No re-renderizar para mejor UX
-            console.log(`Especialidad ${keyword} actualizada: ${field} = ${value}`);
-        } else {
-            alert('❌ No se pudo actualizar la especialidad');
-        }
-    },
-
-    // ===============================
-    // ACCIONES DE STAPLES (PASO 2)
-    // ===============================
-    createNewStaple: function () {
-        const idInput = document.getElementById('new-staple-id');
-        const nameInput = document.getElementById('new-staple-name');
-        const cardId = idInput.value.trim();
-        const name = nameInput.value.trim();
-
-        if (!cardId) {
-            alert('⚠️ Ingresa el ID de la carta');
-            return;
-        }
-
-        if (!name) {
-            alert('⚠️ Ingresa el nombre de la carta');
-            return;
-        }
-
-        const data = {
-            name: name,
-            nameEn: '',
-            roles: [],
-            specialtyKeywords: [],
-            notes: ''
-        };
-
-        if (ConfigManager.createStaple(cardId, data)) {
-            idInput.value = '';
-            nameInput.value = '';
-            this.render();
-            alert('✅ Staple agregado exitosamente');
-        } else {
-            alert('❌ No se pudo agregar el staple (puede que ya exista)');
-        }
-    },
-
-    deleteStaple: function (cardId) {
-        const staple = ConfigManager.getStaple(cardId);
-        const name = staple ? staple.name : cardId;
-        
-        if (!confirm(`¿Eliminar staple "${name}"?`)) return;
-
-        if (ConfigManager.deleteStaple(cardId)) {
-            this.render();
-            alert('✅ Staple eliminado exitosamente');
-        } else {
-            alert('❌ No se pudo eliminar el staple');
-        }
-    },
-
-    addRoleToStapleFromSelect: function (selectElement) {
-        const cardId = selectElement.dataset.stapleId;
-        const roleName = selectElement.value;
-
-        if (!roleName) return;
-
-        if (ConfigManager.addRoleToStaple(cardId, roleName)) {
-            selectElement.value = '';
-            this.render();
-        } else {
-            alert('❌ No se pudo agregar el rol (puede que ya exista)');
-        }
-    },
-
-    removeRoleFromStaple: function (cardId, roleName) {
-        if (ConfigManager.removeRoleFromStaple(cardId, roleName)) {
-            this.render();
-        } else {
-            alert('❌ No se pudo eliminar el rol');
-        }
-    },
-
-    addSpecialtyKeywordToStapleFromInput: function (inputElement) {
-        const cardId = inputElement.dataset.stapleId;
-        const keyword = inputElement.value.trim().toLowerCase();
-
-        if (!keyword) {
-            alert('⚠️ Escribe una keyword');
-            return;
-        }
-
-        if (ConfigManager.addSpecialtyKeywordToStaple(cardId, keyword)) {
-            inputElement.value = '';
-            this.render();
-        } else {
-            alert('❌ No se pudo agregar la keyword (puede que ya exista)');
-        }
-    },
-
-    removeSpecialtyKeywordFromStaple: function (cardId, keyword) {
-        if (ConfigManager.removeSpecialtyKeywordFromStaple(cardId, keyword)) {
-            this.render();
-        } else {
-            alert('❌ No se pudo eliminar la keyword');
-        }
-    },
-
-    updateStapleNotes: function (inputElement) {
-        const cardId = inputElement.dataset.stapleId;
-        const notes = inputElement.value.trim();
-
-        const staple = ConfigManager.getStaple(cardId);
-        if (!staple) return;
-
-        staple.notes = notes;
-
-        if (ConfigManager.updateStaple(cardId, staple)) {
-            console.log(`Notas de staple ${cardId} actualizadas`);
-        } else {
-            alert('❌ No se pudo actualizar las notas');
-        }
-    },
-
-    // ===============================
-    // SECCIÓN DE NOMENCLATURA (PASO 4)
-    // ===============================
-    
-    renderNomenclatureSection: function () {
-        const nomenclature = ConfigManager.getNomenclature();
-        const colors = ConfigManager.getNomenclatureColors();
-
-        const categoryNames = {
-            effectSpeed: 'Velocidad de Efecto',
-            effectType: 'Tipo de Efecto',
-            timing: 'Timing del Efecto',
-            conditions: 'Condición de Activación',
-            cost: 'Costo de Activación',
-            effects: 'Efecto',
-            restrictions: 'Restricción'
-        };
-
-        let html = `
-            <div class="config-help-text">
-                <p><strong>Nomenclatura de Efectos</strong></p>
-                <small>Define las palabras clave que identifican cada parte del efecto de una carta.</small>
-                <small style="display: block; margin-top: 8px;">
-                    <strong>4 campos por configuración:</strong> Inicio (palabra que empieza), Interna 1, Interna 2, Fin (palabra/signo que termina). 
-                    Dejar vacío = no requerido.
-                </small>
-            </div>
-        `;
-
-        for (const [category, displayName] of Object.entries(categoryNames)) {
-            const categoryData = nomenclature[category];
-            const color = colors[category] || '#FFFFFF';
-
-            html += `
-                <div class="nomenclature-category-card">
-                    <div class="role-card-header">
-                        <input 
-                            type="text" 
-                            class="role-name-input" 
-                            value="${displayName}"
-                            readonly
-                            title="Nombre de la categoría (no editable)"
-                        >
-                        <input 
-                            type="color" 
-                            value="${color}"
-                            data-category="${category}"
-                            onchange="Config.updateNomenclatureColor(this)"
-                            title="Color del mark"
-                            style="width: 50px; height: 35px; cursor: pointer; border: 2px solid var(--border-color); border-radius: 6px;"
-                        >
-                    </div>
-
-                    <div class="role-card-body">
-                        <label class="config-label">Configuraciones existentes:</label>
-                        <div class="nomenclature-configs-list">
-                            ${this.renderNomenclatureConfigs(category, categoryData)}
-                        </div>
-
-                        <label class="config-label" style="margin-top: var(--spacing-md);">Nueva configuración:</label>
-                        <div class="nomenclature-4fields-grid">
-                            <div class="nomenclature-field-wrapper">
-                                <label class="nomenclature-field-label">Inicio:</label>
-                                <input 
-                                    type="text" 
-                                    class="nomenclature-field-input" 
-                                    placeholder="Palabra inicial..."
-                                    data-category="${category}"
-                                    data-field="start"
-                                >
-                            </div>
-                            <div class="nomenclature-field-wrapper">
-                                <label class="nomenclature-field-label">Interna 1:</label>
-                                <input 
-                                    type="text" 
-                                    class="nomenclature-field-input" 
-                                    placeholder="Palabra interna 1..."
-                                    data-category="${category}"
-                                    data-field="internal1"
-                                >
-                            </div>
-                            <div class="nomenclature-field-wrapper">
-                                <label class="nomenclature-field-label">Interna 2:</label>
-                                <input 
-                                    type="text" 
-                                    class="nomenclature-field-input" 
-                                    placeholder="Palabra interna 2..."
-                                    data-category="${category}"
-                                    data-field="internal2"
-                                >
-                            </div>
-                            <div class="nomenclature-field-wrapper">
-                                <label class="nomenclature-field-label">Fin:</label>
-                                <input 
-                                    type="text" 
-                                    class="nomenclature-field-input" 
-                                    placeholder="Palabra/signo final..."
-                                    data-category="${category}"
-                                    data-field="end"
-                                >
-                            </div>
-                        </div>
-                        <div class="nomenclature-field-wrapper" style="margin-top: var(--spacing-sm);">
-                            <label class="nomenclature-field-label">Nombre de esta configuración:</label>
-                            <div style="display: flex; gap: var(--spacing-xs);">
-                                <input 
-                                    type="text" 
-                                    class="nomenclature-field-input" 
-                                    placeholder="Ej: Quick Effect, Trigger, etc..."
-                                    data-category="${category}"
-                                    data-field="name"
-                                    style="flex: 1;"
-                                >
-                                <button 
-                                    class="btn btn-primary btn-sm" 
-                                    onclick="Config.addNomenclatureConfigFromFields('${category}')"
-                                    style="white-space: nowrap;"
-                                >
-                                    + Agregar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        return html;
-    },
-
-    renderNomenclatureConfigs: function (category, categoryData) {
-        let html = '';
-
-        if (!categoryData || typeof categoryData !== 'object') {
-            return '<p class="empty-chips">Sin configuraciones</p>';
-        }
-
-        for (const [name, config] of Object.entries(categoryData)) {
-            const start = config.start || '-';
-            const internal1 = config.internal1 || '-';
-            const internal2 = config.internal2 || '-';
-            const end = config.end || '-';
-
-            html += `
-                <div class="nomenclature-config-item">
-                    <div class="nomenclature-config-header">
-                        <strong>${name}</strong>
-                        <span class="chip-remove" onclick="Config.removeNomenclatureConfig('${category}', '${name}')" title="Eliminar configuración">×</span>
-                    </div>
-                    <div class="nomenclature-config-fields">
-                        <span><strong>Inicio:</strong> ${start}</span>
-                        <span><strong>Int1:</strong> ${internal1}</span>
-                        <span><strong>Int2:</strong> ${internal2}</span>
-                        <span><strong>Fin:</strong> ${end}</span>
-                    </div>
-                </div>
-            `;
-        }
-
-        return html || '<p class="empty-chips">Sin configuraciones</p>';
-    },
-
-    updateNomenclatureColor: function (inputElement) {
-        const category = inputElement.dataset.category;
-        const color = inputElement.value;
-
-        if (ConfigManager.updateNomenclatureColor(category, color)) {
-            console.log(`Color de ${category} actualizado a ${color}`);
-        } else {
-            alert('❌ No se pudo actualizar el color');
-        }
-    },
-
-    addNomenclatureConfigFromFields: function (category) {
-        const inputs = document.querySelectorAll(`input[data-category="${category}"]`);
-        
-        let name = '';
-        let start = '';
-        let internal1 = '';
-        let internal2 = '';
-        let end = '';
-
-        inputs.forEach(input => {
-            const field = input.dataset.field;
-            const value = input.value.trim().toLowerCase();
-            
-            if (field === 'name') {
-                name = input.value.trim(); // No lowercase para el nombre
-            } else if (field === 'start') {
-                start = value;
-            } else if (field === 'internal1') {
-                internal1 = value;
-            } else if (field === 'internal2') {
-                internal2 = value;
-            } else if (field === 'end') {
-                end = value;
-            }
-        });
-
-        if (!name) {
-            alert('⚠️ Ingresa un nombre para esta configuración');
-            return;
-        }
-
-        const config = ConfigManager.getConfig();
-        
-        if (!config.nomenclature[category]) {
-            config.nomenclature[category] = {};
-        }
-
-        if (config.nomenclature[category][name]) {
-            alert('⚠️ Ya existe una configuración con ese nombre');
-            return;
-        }
-
-        config.nomenclature[category][name] = {
-            start: start,
-            internal1: internal1,
-            internal2: internal2,
-            end: end
-        };
-
-        ConfigManager.saveConfig(config);
-        
-        // Limpiar campos
-        inputs.forEach(input => {
-            input.value = '';
-        });
-
-        this.render();
-        alert('✅ Configuración agregada exitosamente');
-    },
-
-    removeNomenclatureConfig: function (category, name) {
-        if (!confirm(`¿Eliminar configuración "${name}"?`)) {
-            return;
-        }
-
-        const config = ConfigManager.getConfig();
-        
-        if (config.nomenclature[category] && config.nomenclature[category][name]) {
-            delete config.nomenclature[category][name];
-            ConfigManager.saveConfig(config);
-            this.render();
-            alert('✅ Configuración eliminada');
-        } else {
-            alert('❌ No se pudo eliminar la configuración');
-        }
+        el.value = '';
     },
 
     toggleSection: function (sectionId) {
-        const section = document.getElementById(sectionId);
-        if (section) {
-            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        const sec = document.getElementById(sectionId);
+        if (sec) {
+            sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
         }
     }
 };
