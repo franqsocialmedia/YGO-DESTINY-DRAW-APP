@@ -284,61 +284,108 @@ const Estadisticas = {
     },
 
     renderDeckStats: function () {
-        if (!Deck || !Deck.cards || Object.keys(Deck.cards).length === 0) {
-            return `
-                <div class="stats-empty">
-                    <p>No hay deck activo para mostrar estadisticas</p>
-                    <p class="stats-help">Ve a "Mi Deck" y carga un deck para ver sus estadisticas</p>
-                </div>
-            `;
-        }
-
-        const stats = Stats.calculateInternalScore(Deck.cards);
-
-        const scoreColor = stats.internalScore >= 7 ? '#00b894' : 
-                          stats.internalScore >= 5 ? '#fdcb6e' : '#d63031';
-
+    if (!Deck || !Deck.cards || Object.keys(Deck.cards).length === 0) {
         return `
-            <div class="stats-card">
-                <div class="stats-header">
-                    <h3>Internal Score - ${Deck.name}</h3>
-                    <div class="stats-score" style="color: ${scoreColor}">
-                        ${stats.internalScore} / 10
-                    </div>
-                </div>
+            <div class="stats-empty">
+                <p>No hay deck activo para mostrar estadisticas</p>
+                <p class="stats-help">Ve a "Mi Deck" y carga un deck para ver sus estadisticas</p>
+            </div>`;
+    }
 
-                <div class="stats-bars">
-                    <div class="stat-bar-row">
-                        <span class="stat-bar-label">Consistencia (50%)</span>
-                        <div class="stat-bar-container">
-                            <div class="stat-bar" style="width: ${stats.consistency * 10}%; background: #00b894"></div>
-                        </div>
-                        <span class="stat-bar-value">${stats.consistency}/10</span>
-                    </div>
+    const stats   = Stats.calculateInternalScore(Deck.cards);
+    const counter = Stats.calculateCounterDeckScore(Deck.cards, this.powerScoreCache);
 
-                    <div class="stat-bar-row">
-                        <span class="stat-bar-label">Potencia (30%)</span>
-                        <div class="stat-bar-container">
-                            <div class="stat-bar" style="width: ${stats.power * 10}%; background: #d63031"></div>
-                        </div>
-                        <span class="stat-bar-value">${stats.power}/10</span>
-                    </div>
+    const scoreColor = stats.internalScore >= 7 ? '#00b894'
+                     : stats.internalScore >= 5 ? '#fdcb6e' : '#d63031';
 
-                    <div class="stat-bar-row">
-                        <span class="stat-bar-label">Resiliencia (20%)</span>
-                        <div class="stat-bar-container">
-                            <div class="stat-bar" style="width: ${stats.resilience * 10}%; background: #0066cc"></div>
-                        </div>
-                        <span class="stat-bar-value">${stats.resilience}/10</span>
-                    </div>
-                </div>
+    const breakdownRows = counter.breakdown.slice(0, 5).map(c => `
+        <div class="counter-breakdown-row">
+            <span class="counter-card-name">${c.name}${c.estimated ? ' *' : ''}</span>
+            <span class="counter-card-contrib">
+                x${c.qty} · ${c.bonus}pts → <strong>+${c.contrib}</strong>
+            </span>
+        </div>`).join('');
 
-                <div class="stats-footer">
-                    <span>Total: ${stats.totalCards} cartas</span>
+    const brickNote = counter.brickCount > 0
+        ? `<div class="counter-brick-note">
+               🧱 ${counter.brickCount} Brick(s) aplicaron penalización de -${counter.brickPenalty} pts
+           </div>`
+        : '';
+
+    const noPowerNote = !counter.hasPowerData
+        ? `<small class="counter-no-meta">* Sin cache de poder del meta. Calcula ⚡ Poder de Cartas para valores precisos.</small>`
+        : '';
+
+    return `
+        <div class="stats-card">
+            <div class="stats-header">
+                <h3>Internal Score — ${Deck.name}</h3>
+                <div class="stats-score" style="color:${scoreColor}">
+                    ${stats.internalScore} / 10
                 </div>
             </div>
-        `;
-    },
+
+            <div class="stats-bars">
+                <div class="stat-bar-row">
+                    <span class="stat-bar-label">Consistencia (50%)</span>
+                    <div class="stat-bar-container">
+                        <div class="stat-bar" style="width:${stats.consistency * 10}%;background:#00b894"></div>
+                    </div>
+                    <span class="stat-bar-value">${stats.consistency}/10</span>
+                </div>
+                <div class="stat-bar-row">
+                    <span class="stat-bar-label">Potencia (30%)</span>
+                    <div class="stat-bar-container">
+                        <div class="stat-bar" style="width:${stats.power * 10}%;background:#d63031"></div>
+                    </div>
+                    <span class="stat-bar-value">${stats.power}/10</span>
+                </div>
+                <div class="stat-bar-row">
+                    <span class="stat-bar-label">Resiliencia (20%)</span>
+                    <div class="stat-bar-container">
+                        <div class="stat-bar" style="width:${stats.resilience * 10}%;background:#0066cc"></div>
+                    </div>
+                    <span class="stat-bar-value">${stats.resilience}/10</span>
+                </div>
+            </div>
+
+            <div class="stats-footer">
+                <span>Total: ${stats.totalCards} cartas</span>
+                ${stats.penalty > 0 ? `<span style="color:var(--warning-color)">⚠️ Penalización exceso: -${stats.penalty}</span>` : ''}
+            </div>
+        </div>
+
+        <!-- COUNTER-DECK SCORE -->
+        <div class="counter-deck-card">
+            <div class="counter-deck-header">
+                <div>
+                    <h3>Counter-Deck Score</h3>
+                    <div class="counter-deck-level" style="color:${counter.levelColor}">
+                        ${counter.level}
+                    </div>
+                </div>
+                <div class="counter-deck-score" style="color:${counter.levelColor}">
+                    ${counter.finalScore}
+                    <span class="counter-deck-score-label">pts</span>
+                </div>
+            </div>
+
+            <div class="counter-deck-meta">
+                <span>${counter.counterCards} cartas con función counter</span>
+                <span>Raw: ${counter.rawCounter} ${counter.brickPenalty > 0 ? `→ -${counter.brickPenalty}` : ''}</span>
+            </div>
+
+            ${brickNote}
+
+            ${counter.breakdown.length > 0 ? `
+                <div class="counter-breakdown">
+                    <div class="counter-breakdown-title">Top contribuidoras:</div>
+                    ${breakdownRows}
+                </div>` : ''}
+
+            ${noPowerNote}
+        </div>`;
+},
 
     updateDeckStats: function () {
         const statsSection = document.getElementById('deck-stats-sec');
@@ -784,6 +831,67 @@ renderPowerScores: function ({ cards, maxPower }) {
             <span style="font-size:0.75rem;opacity:0.6;">Hover sobre la barra para ver desglose</span>
         </div>
         <div class="power-scores-list">${rows}</div>`;
+},// ===============================
+// COUNTER-CARDS DEL META
+// ===============================
+renderCounterCardStats: function () {
+    if (!this.powerScoreCache) {
+        return `
+            <p class="stats-empty">
+                Requiere calcular ⚡ Poder de Cartas primero.
+            </p>`;
+    }
+
+    const counterCards = this.powerScoreCache.cards
+        .filter(c => c.isCounter && c.counterBonus > 0)
+        .sort((a, b) => b.counterBonus - a.counterBonus);
+
+    if (counterCards.length === 0) {
+        return `
+            <p class="stats-empty">
+                Ninguna carta del meta detectada como counter.<br>
+                <small>Configura pares en Config → Especialidades y Counters.</small>
+            </p>`;
+    }
+
+    const maxBonus = counterCards[0].counterBonus;
+    const medals   = ['🥇', '🥈', '🥉'];
+
+    const rows = counterCards.map((card, i) => {
+        const pct  = Math.round((card.counterBonus / maxBonus) * 100);
+        const name = card.cardData?.name || card.cardId;
+        const countersNames = (card.specAnalysis?.counters || [])
+            .map(c => c.countersSpec).filter(Boolean)
+            .join(', ') || '—';
+        const rank = i < 3 ? medals[i] : `#${i + 1}`;
+
+        return `
+            <div class="counter-card-meta-item">
+                <div class="ccm-rank">${rank}</div>
+                <img class="ccm-img"
+                     src="https://images.ygoprodeck.com/images/cards_small/${card.cardId}.jpg"
+                     alt="${name}"
+                     onerror="this.src='';">
+                <div class="ccm-info">
+                    <div class="ccm-name">${name}</div>
+                    <div class="ccm-counters">Contrarresta: <em>${countersNames}</em></div>
+                    <div class="ccm-bar-container">
+                        <div class="ccm-bar" style="width:${pct}%"></div>
+                    </div>
+                </div>
+                <div class="ccm-score">
+                    <span class="ccm-score-num">${card.counterBonus}</span>
+                    <span class="ccm-score-label">pts counter</span>
+                    <span class="ccm-presence">${card.presencePct}% meta</span>
+                </div>
+            </div>`;
+    }).join('');
+
+    return `
+        <div class="counter-cards-header">
+            ${counterCards.length} cartas con función counter detectadas en el meta
+        </div>
+        <div class="counter-cards-list">${rows}</div>`;
 },
     render: function () {
         if (!this.container) return;
@@ -879,6 +987,13 @@ html += `
                    </div>`
             }
         </div>
+    </div>
+`;html += `
+    <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('counter-cards-sec')">
+        🛡️ Counter-Cards del Meta
+    </h3>
+    <div id="counter-cards-sec" class="stats-section" style="display:none;">
+        ${this.renderCounterCardStats()}
     </div>
 `;
         this.container.innerHTML = html;

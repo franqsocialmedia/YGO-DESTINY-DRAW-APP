@@ -163,7 +163,92 @@ const Stats = {
         }
 
         return this.calculateInternalScore(deckCards);
+    },
+    // ===============================
+// COUNTER-DECK SCORE
+// ===============================
+calculateCounterDeckScore: function (cards, powerData) {
+    // powerData = powerScoreCache de Estadisticas (puede ser null)
+    const powerMap = {};
+    if (powerData && powerData.cards) {
+        powerData.cards.forEach(pc => { powerMap[String(pc.cardId)] = pc; });
     }
+    const hasPowerData = Object.keys(powerMap).length > 0;
+
+    let rawCounter    = 0;
+    let brickCount    = 0;
+    let totalCards    = 0;
+    let counterCards  = 0;
+    const breakdown   = [];
+
+    for (const [id, item] of Object.entries(cards)) {
+        if (item.location !== 'main' && item.location !== 'extra') continue;
+        const qty   = item.qty || 1;
+        const roles = (item.roles || []).map(r => r.toLowerCase());
+        totalCards += qty;
+
+        // BRICK: cuenta para penalización, no suma counter
+        if (roles.includes('brick')) {
+            brickCount += qty;
+            continue;
+        }
+
+        const cached = powerMap[String(id)];
+
+        if (cached && cached.isCounter && cached.counterBonus > 0) {
+            const contrib = cached.counterBonus * qty;
+            rawCounter   += contrib;
+            counterCards += qty;
+            breakdown.push({
+                name:    cached.cardData?.name || id,
+                bonus:   cached.counterBonus,
+                qty,
+                contrib
+            });
+        } else if (!cached && window.SpecialtyAnalyzer && item.data) {
+            // Fallback sin cache: detección binaria
+            const analysis = SpecialtyAnalyzer.analyzeCard(item.data);
+            if (analysis.counters && analysis.counters.length > 0) {
+                const contrib = 5 * qty;
+                rawCounter   += contrib;
+                counterCards += qty;
+                breakdown.push({
+                    name:    item.data.name || id,
+                    bonus:   5,
+                    qty,
+                    contrib,
+                    estimated: true
+                });
+            }
+        }
+    }
+
+    // Penalización por Bricks: proporcional a su presencia en el deck
+    const brickRatio   = totalCards > 0 ? brickCount / totalCards : 0;
+    const brickPenalty = Math.round(rawCounter * brickRatio * 0.6);
+    const finalScore   = Math.max(0, rawCounter - brickPenalty);
+
+    // Nivel descriptivo
+    let level, levelColor;
+    if (finalScore === 0)       { level = 'Sin Counter';   levelColor = '#636e72'; }
+    else if (finalScore <= 30)  { level = 'Bajo';          levelColor = '#fdcb6e'; }
+    else if (finalScore <= 70)  { level = 'Medio';         levelColor = '#0066cc'; }
+    else if (finalScore <= 120) { level = 'Alto';          levelColor = '#00b894'; }
+    else                        { level = 'Meta Counter';  levelColor = '#ffd700'; }
+
+    return {
+        finalScore,
+        rawCounter,
+        brickPenalty,
+        brickCount,
+        counterCards,
+        totalCards,
+        breakdown: breakdown.sort((a, b) => b.contrib - a.contrib),
+        level,
+        levelColor,
+        hasPowerData
+    };
+}
 };
 
 window.Stats = Stats;

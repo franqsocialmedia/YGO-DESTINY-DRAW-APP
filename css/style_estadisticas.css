@@ -724,6 +724,242 @@
     .power-copies-avg { margin-top: 0; }
 }
 /* ====================================
+   COUNTER-DECK SCORE
+   ==================================== */
+
+.counter-deck-card {
+    background: var(--bg-dark);
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    border: 2px solid #d63031;
+    margin-top: var(--spacing-md);
+}
+
+.counter-deck-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-sm);
+}
+
+.counter-deck-header h3 {
+    color: var(--text-light);
+    font-size: 1rem;
+    margin: 0 0 4px 0;
+}
+
+.counter-deck-level {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.counter-deck-score {
+    font-size: 2rem;
+    font-weight: bold;
+    line-height: 1;
+    text-align: right;
+}
+
+.counter-deck-score-label {
+    font-size: 0.7rem;
+    color: rgba(241,241,241,0.5);
+    display: block;
+    text-align: right;
+}
+
+.counter-deck-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: rgba(241,241,241,0.55);
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid rgba(214,48,49,0.3);
+}
+
+.counter-brick-note {
+    background: rgba(214, 48, 49, 0.1);
+    border: 1px solid rgba(214,48,49,0.4);
+    border-radius: 6px;
+    padding: 6px var(--spacing-sm);
+    font-size: 0.82rem;
+    color: #ff7675;
+    margin-bottom: var(--spacing-sm);
+}
+
+.counter-breakdown {
+    margin-top: var(--spacing-sm);
+}
+
+.counter-breakdown-title {
+    font-size: 0.8rem;
+    color: var(--gold-color);
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.counter-breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.82rem;
+}
+
+.counter-card-name {
+    color: var(--text-light);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.counter-card-contrib {
+    color: rgba(241,241,241,0.6);
+    white-space: nowrap;
+    margin-left: var(--spacing-sm);
+}
+
+.counter-card-contrib strong {
+    color: #ff7675;
+}
+
+.counter-no-meta {
+    display: block;
+    margin-top: var(--spacing-sm);
+    color: rgba(241,241,241,0.4);
+    font-size: 0.78rem;
+}
+
+/* ====================================
+   COUNTER-CARDS DEL META
+   ==================================== */
+
+.counter-cards-header {
+    font-size: 0.85rem;
+    color: rgba(241,241,241,0.6);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(214, 48, 49, 0.1);
+    border-radius: 6px;
+    border-left: 3px solid #d63031;
+}
+
+.counter-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.counter-card-meta-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: var(--bg-dark);
+    border-radius: 8px;
+    padding: 10px var(--spacing-sm);
+    border: 1px solid rgba(214,48,49,0.3);
+    transition: border-color var(--transition-fast);
+}
+
+.counter-card-meta-item:hover {
+    border-color: #d63031;
+}
+
+.ccm-rank {
+    min-width: 32px;
+    text-align: center;
+    font-size: 1rem;
+}
+
+.ccm-img {
+    width: 42px;
+    min-width: 42px;
+    border-radius: 4px;
+}
+
+.ccm-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ccm-name {
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ccm-counters {
+    font-size: 0.75rem;
+    color: rgba(241,241,241,0.5);
+    margin: 2px 0 5px 0;
+}
+
+.ccm-counters em {
+    font-style: normal;
+    color: #ff7675;
+}
+
+.ccm-bar-container {
+    height: 5px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.ccm-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #d63031, #ff7675);
+    border-radius: 3px;
+    transition: width 0.6s ease;
+}
+
+.ccm-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 70px;
+}
+
+.ccm-score-num {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #ff7675;
+    line-height: 1;
+}
+
+.ccm-score-label {
+    font-size: 0.65rem;
+    color: rgba(241,241,241,0.4);
+    text-transform: uppercase;
+}
+
+.ccm-presence {
+    font-size: 0.7rem;
+    color: rgba(241,241,241,0.35);
+    margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+    .counter-deck-header { flex-wrap: wrap; gap: var(--spacing-sm); }
+    .ccm-counters { display: none; }
+}
+
+@media (max-width: 480px) {
+    .counter-card-meta-item { flex-wrap: wrap; }
+    .ccm-score {
+        flex-direction: row;
+        gap: 6px;
+        width: 100%;
+        justify-content: flex-end;
+        align-items: baseline;
+    }
+}
+/* ====================================
    RESPONSIVE
    ==================================== */
 
