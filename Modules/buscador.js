@@ -241,18 +241,17 @@ const Buscador = {
         let html = '<div class="results-grid">';
         this.currentCards = cards;
 
-            cards.forEach((card, index) => {
+           cards.forEach((card, index) => {
+    const img = card.card_images?.[0]?.image_url_small || '';
 
-                const img = card.card_images?.[0]?.image_url_small || '';
-
-                html += `
-                    <div class="card-item" onclick="CardViewer.openFromIndex(${index})">
-                        <img src="${img}" class="card-image">
-                        <div class="card-name">${card.name}</div>
-                        <div class="card-type">${card.type}</div>
-                    </div>
-                `;
-            });
+    html += `
+        <div class="card-item" onclick="Buscador.showCardActions(${index}, this)">
+            <img src="${img}" class="card-image">
+            <div class="card-name">${card.name}</div>
+            <div class="card-type">${card.type}</div>
+        </div>
+    `;
+});
 
 
         html += '</div>';
@@ -282,6 +281,43 @@ const Buscador = {
     showMessage: function (msg) {
         this.resultsContainer.innerHTML =
             `<p class="results-placeholder">${msg}</p>`;
+    },
+    showCardActions: function(index, element) {
+        // Remover cualquier overlay previo
+        this.removeCardActions();
+        
+        // Crear overlay con botones
+        const overlay = document.createElement('div');
+        overlay.className = 'card-actions-overlay';
+        overlay.innerHTML = `
+            <button class="card-action-btn btn-view" onclick="Buscador.viewCard(${index}); event.stopPropagation();">Ver</button>
+            <button class="card-action-btn btn-add" onclick="Buscador.addCard(${index}); event.stopPropagation();">Añadir</button>
+        `;
+        
+        element.appendChild(overlay);
+        element.classList.add('card-item-active');
+    },
+
+    removeCardActions: function() {
+        const activeItems = document.querySelectorAll('.card-item-active');
+        activeItems.forEach(item => {
+            const overlay = item.querySelector('.card-actions-overlay');
+            if (overlay) overlay.remove();
+            item.classList.remove('card-item-active');
+        });
+    },
+
+    viewCard: function(index) {
+        this.removeCardActions();
+        CardViewer.openFromIndex(index);
+    },
+
+    addCard: function(index) {
+        this.removeCardActions();
+        const card = this.currentCards[index];
+        if (window.Deck && card) {
+            Deck.syncFromViewer(card.id, 1);
+        }
     }
 };
 

@@ -243,7 +243,7 @@
 
 /* Texto del chip */
 .chip-text {
-    user-select: none;
+    -webkit-user-select: none;
 }
 
 /* Botón de eliminar chip */
@@ -470,7 +470,71 @@
     line-height: 1.8;
     color: rgba(241, 241, 241, 0.9);
 }
+/* ====================================
+   ACCIONES DE CARTA EN BUSCADOR
+   ==================================== */
 
+/* Item de carta con posición relativa para el overlay */
+.card-item {
+    position: relative;
+    cursor: pointer;
+}
+
+/* Estado activo con overlay */
+.card-item-active {
+    position: relative;
+}
+
+/* Overlay oscuro con botones */
+.card-actions-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 8px;
+    z-index: 10;
+}
+
+/* Botones de acción */
+.card-action-btn {
+    padding: 8px 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 100px;
+}
+
+/* Botón Ver */
+.btn-view {
+    background: linear-gradient(135deg, #0066cc, #004080);
+    color: white;
+}
+
+.btn-view:hover {
+    background: linear-gradient(135deg, #0080ff, #0066cc);
+    transform: scale(1.05);
+}
+
+/* Botón Añadir */
+.btn-add {
+    background: linear-gradient(135deg, #00b894, #00a383);
+    color: white;
+}
+
+.btn-add:hover {
+    background: linear-gradient(135deg, #00d9a5, #00b894);
+    transform: scale(1.05);
+}
 /* ====================================
    RESPONSIVE - TABLET
    ==================================== */

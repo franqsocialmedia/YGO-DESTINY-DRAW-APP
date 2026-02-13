@@ -153,7 +153,7 @@ const Deck = {
                 let allConditionsMet = true;
                 if (conditionals.length > 0) {
                     for (const conditional of conditionals) {
-                        if (!desc.includes(conditional.toLowerCase())) {
+                        if (!conditional || typeof conditional !== 'string' || !desc.includes(conditional.toLowerCase())) {
                             allConditionsMet = false;
                             break;
                         }
@@ -161,19 +161,20 @@ const Deck = {
                 }
                 
                 // Si todas las condicionales se cumplen, verificar keywords
-                if (allConditionsMet) {
-                    // Al menos UNA keyword debe estar presente
-                    for (const keyword of condKeywords) {
-                        if (desc.includes(keyword.toLowerCase())) {
-                            shouldAssign = true;
-                            break;
-                        }
+                // Si todas las condicionales se cumplen, verificar keywords
+            if (allConditionsMet) {
+                // Al menos UNA keyword debe estar presente
+                for (const keyword of condKeywords) {
+                    if (keyword && typeof keyword === 'string' && desc.includes(keyword.toLowerCase())) {
+                        shouldAssign = true;
+                        break;
                     }
                 }
+            }
             } else {
                 // NO tiene condicionales, usar lógica normal
                 for (const keyword of keywords) {
-                    if (desc.includes(keyword.toLowerCase())) {
+                    if (keyword && typeof keyword === 'string' && desc.includes(keyword.toLowerCase())) {
                         shouldAssign = true;
                         break;
                     }
