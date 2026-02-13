@@ -81,7 +81,7 @@ const CardViewer = {
 
                     <hr>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button id="cv-open-image" style="flex: 1; min-width: 120px;">Abrir Imagen</button>
+                        <button id="cv-open-image" style="flex: 1; min-width: 120px;">Ver Imagen HD</button>
                         <button id="cv-download-test" style="flex: 1; min-width: 120px; background: #4CAF50; color: white;">PRUEBA DECKLIST</button>
                     </div>
 
@@ -191,85 +191,141 @@ const CardViewer = {
             }
         };
 
-        // Botón: Abrir Imagen en nueva pestaña
+        // Botón: Ver Imagen HD en nueva pestaña
         const openImageBtn = document.getElementById('cv-open-image');
         openImageBtn.onclick = () => {
             const imgUrl = mainImage.src;
             window.open(imgUrl, '_blank');
         };
 
-        // Botón: PRUEBA DECKLIST - Descarga automática
+        // Botón: PRUEBA DECKLIST - Generar imagen con html2canvas
         const downloadTestBtn = document.getElementById('cv-download-test');
         downloadTestBtn.onclick = () => {
-            this.downloadCardImage(mainImage.src, card.name);
+            this.generateCardDecklistHTML2Canvas(card);
         };
     },
 
-    // Nueva función para descargar imagen evitando CORS
-    downloadCardImage: async function(imageUrl, cardName) {
+    // Método 1: html2canvas (recomendado - igual que downloadDecklist)
+    generateCardDecklistHTML2Canvas: async function(card) {
         try {
-            console.log('📥 [CardViewer] Iniciando descarga de:', cardName);
-            
-            // Crear un elemento de imagen temporal
-            const img = new Image();
-            img.crossOrigin = 'anonymous'; // Intenta evitar CORS
-            
+            // Verificar si html2canvas está disponible
+            if (typeof html2canvas === 'undefined') {
+                alert('⚠️ html2canvas no está cargado.\n\nVerifica que esté en index.html');
+                return;
+            }
+
+            console.log('📸 [CardViewer] Generando decklist con html2canvas');
+
+            // Obtener URL de imagen
+            const imgUrl = card.card_images[0].image_url || card.card_images[0].image_url_small;
+
+            // Crear HTML temporal
+            const html = `
+                <div style="font-family: Arial, sans-serif; background: white; padding: 30px; text-align: center; display: inline-block;">
+                    <img src="${imgUrl}" 
+                         style="max-width: 400px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"
+                         crossorigin="anonymous">
+                    <div style="margin-top: 20px; font-size: 24px; font-weight: bold; color: #333;">
+                        ${card.name}
+                    </div>
+                </div>
+            `;
+
+            // Crear contenedor temporal
+            const tempContainer = document.createElement('div');
+            tempContainer.innerHTML = html;
+            tempContainer.style.cssText = 'position:absolute;left:-9999px;top:0;';
+            document.body.appendChild(tempContainer);
+
             // Esperar a que la imagen cargue
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Generar canvas con html2canvas
+            const canvas = await html2canvas(tempContainer.firstElementChild, {
+                backgroundColor: '#ffffff',
+                scale: 2,
+                logging: false,
+                useCORS: true,
+                allowTaint: true
+            });
+
+            // Descargar
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = card.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '_card.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                // Limpiar
+                document.body.removeChild(tempContainer);
+                console.log('✅ [CardViewer] Descarga completada');
+            });
+
+        } catch (error) {
+            console.error('❌ [CardViewer] Error:', error);
+            alert('Error al generar la imagen. Intenta con "Ver Imagen HD"');
+        }
+    },
+
+    // Método 2: Canvas manual sin CORS (alternativa)
+    generateCardDecklistCanvas: async function(card) {
+        try {
+            console.log('📸 [CardViewer] Método Canvas manual');
+            
+            const imgUrl = card.card_images[0].image_url;
+            
+            // Cargar imagen sin CORS
+            const img = new Image();
+            img.src = imgUrl; // SIN crossOrigin
+            
             await new Promise((resolve, reject) => {
                 img.onload = resolve;
                 img.onerror = reject;
-                img.src = imageUrl;
             });
             
-            // Crear canvas del tamaño de la imagen
+            const padding = 40;
+            const nameHeight = 80;
             const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
-            
-            // Dibujar imagen en el canvas
+            canvas.width = img.width + (padding * 2);
+            canvas.height = img.height + nameHeight + (padding * 2);
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
             
-            // Convertir canvas a blob
-            canvas.toBlob((blob) => {
-                if (!blob) {
-                    console.error('❌ [CardViewer] Error al crear blob');
-                    alert('Error al procesar la imagen');
-                    return;
-                }
-                
-                // Crear URL temporal del blob
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, padding, padding);
+            
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 32px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(card.name, canvas.width / 2, padding + img.height + 40);
+            
+            canvas.toBlob(blob => {
                 const url = URL.createObjectURL(blob);
-                
-                // Crear enlace de descarga
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = cardName.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.png';
-                document.body.appendChild(a);
+                a.download = card.name.replace(/[^a-z0-9]/gi, '_') + '_card.png';
                 a.click();
-                
-                // Limpiar
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                }, 100);
-                
-                console.log('✅ [CardViewer] Imagen descargada exitosamente');
-            }, 'image/png');
-            
+                URL.revokeObjectURL(url);
+            });
+
         } catch (error) {
-            console.error('❌ [CardViewer] Error al descargar imagen:', error);
-            
-            // Fallback: intentar descarga directa
-            console.log('🔄 [CardViewer] Intentando descarga directa...');
-            const a = document.createElement('a');
-            a.href = imageUrl;
-            a.download = cardName.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.png';
-            a.target = '_blank';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            console.error('❌ Error:', error);
+            this.generateCardDecklistFallback(card);
         }
+    },
+
+    // Método 3: Fallback - descarga directa
+    generateCardDecklistFallback: function(card) {
+        const imgUrl = card.card_images[0].image_url;
+        const a = document.createElement('a');
+        a.href = imgUrl;
+        a.download = card.name.replace(/[^a-z0-9]/gi, '_') + '.jpg';
+        a.target = '_blank';
+        a.click();
     },
 
     highlightNomenclature: function(desc) {
