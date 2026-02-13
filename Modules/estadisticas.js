@@ -913,7 +913,7 @@ renderCounterCardStats: function () {
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('meta-management-sec')">
                 Gestion de Carpetas del Meta
             </h3>
-            <div id="meta-management-sec" class="stats-section" ">
+            <div id="meta-management-sec" class="stats-section" style="display:none;">
                 <button onclick="Estadisticas.createFolder()" class="btn btn-primary">Crear Carpeta</button>
                 <div class="meta-folders-list">
                     ${this.metaFolders.length === 0 ? '<p class="stats-empty">No hay carpetas creadas</p>' : ''}
@@ -966,7 +966,7 @@ html += `
     <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('meta-card-stats-sec')">
         Recurrencia de Cartas en el Meta
     </h3>
-    <div id="meta-card-stats-sec" class="stats-section">
+    <div id="meta-card-stats-sec" class="stats-section"style="display:none;">
         ${this.renderMetaCardStats()}
     </div>
 `;

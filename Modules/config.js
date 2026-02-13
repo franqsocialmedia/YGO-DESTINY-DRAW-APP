@@ -26,7 +26,7 @@ const Config = {
                 <h3 class="config-section-title" onclick="Config.toggleSection('roles-section')">
                     ▶ Roles y Palabras Asociadas
                 </h3>
-                <div id="roles-section" class="config-section-content">
+                <div id="roles-section" class="config-section-content" style="display:none;">
                     ${this.renderRolesSection()}
                 </div>
             </div>
@@ -46,7 +46,7 @@ const Config = {
                 <h3 class="config-section-title" onclick="Config.toggleSection('staples-section')">
                     ▶ Lista de Staples
                 </h3>
-                <div id="staples-section" class="config-section-content" style="display:none;">
+                <div id="staples-section" class="config-section-content">
                     ${this.renderStaplesSection()}
                 </div>
             </div>

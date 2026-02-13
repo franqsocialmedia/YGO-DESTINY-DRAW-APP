@@ -868,14 +868,14 @@ const Deck = {
                 <h2 class="deck-list-title" onclick="Deck.toggleSection('saved-decks-sec')">
                     Decks Guardados
                 </h2>
-                <div id="saved-decks-sec">
+                <div id="saved-decks-sec"style="display:none;">
                     ${this.renderDeckList()}
                 </div>
             </div>
         `;
 
         if (isEmpty) {
-            html += `<p>No hay un Deck seleccionado para mostrar.</p>`;
+            html += `<p>Abra la seccion de Decks Guardados y elija uno o agregue cartas desde la pestaña Buscador.</p>`;
         } else {
             html += `
                 <h2 onclick="Deck.openRenamePanel()" class="deck-title">
@@ -885,12 +885,12 @@ const Deck = {
                 <h3 onclick="Deck.toggleSection('main-sec')">
                     Main Deck (${mainC})
                 </h3>
-                <div id="main-sec">${this.renderRows('main')}</div>
+                <div id="main-sec" style="display:none;">${this.renderRows('main')}</div>
 
                 <h3 onclick="Deck.toggleSection('extra-sec')">
                     Extra Deck (${extraC})
                 </h3>
-                <div id="extra-sec">${this.renderRows('extra')}</div>
+                <div id="extra-sec" style="display:none;">${this.renderRows('extra')}</div>
 
                 <h3 onclick="Deck.toggleSection('side-sec')">
                     Side Deck (${sideC})
@@ -901,7 +901,7 @@ const Deck = {
 
         // SECCIÓN DE ACCIONES - SIEMPRE VISIBLE
         html += `
-            <h3 onclick="Deck.toggleSection('actions-sec')">Acciones</h3>
+            <h3 onclick="Deck.toggleSection('actions-sec')"></h3>
             <div id="actions-sec" class="deck-actions">
                 <button onclick="Deck.saveDeck()" ${isEmpty ? 'disabled' : ''}>Guardar Deck</button>
                 <button onclick="Deck.clearDeck()" ${isEmpty ? 'disabled' : ''}>Limpiar Deck</button>
