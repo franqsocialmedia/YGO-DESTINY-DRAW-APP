@@ -11,7 +11,8 @@ const Estadisticas = {
     currentMetaDeck: null,
     selectedFolder: 'all',
     deckListExpanded: false,
-
+    powerScoreCache: null,
+    powerScoreLoading: false,
     init: function () {
         this.container = document.getElementById('estadisticas-content');
         if (!this.container) return;
@@ -50,6 +51,7 @@ const Estadisticas = {
     },
 
     saveMetaData: function () {
+        this.powerScoreCache = null;
         try {
             localStorage.setItem('yugioh_meta_decks', JSON.stringify({
                 decks: this.metaDecks
@@ -607,6 +609,181 @@ loadCardNames: async function (cardIds) {
             } catch (_) { /* sin nombre si falla */ }
         }));
     }
+},// ===============================
+// SISTEMA DE PUNTOS DE PODER
+// ===============================
+loadPowerScores: async function () {
+    const container = document.getElementById('power-scores-content');
+    if (!container || this.powerScoreLoading) return;
+
+    this.powerScoreLoading = true;
+    container.innerHTML = `
+        <div style="text-align:center;padding:var(--spacing-lg);">
+            <div class="power-loading-spinner"></div>
+            <p style="margin-top:var(--spacing-sm);color:var(--gold-color);">
+                ⚡ Calculando poder... Consultando API para ${this.calculateMetaCardStats().stats.length} cartas
+            </p>
+        </div>`;
+
+    try {
+        const result = await this.calculatePowerScores();
+        this.powerScoreCache = result;
+        container.innerHTML = this.renderPowerScores(result);
+    } catch (e) {
+        container.innerHTML = `<p class="stats-empty">❌ Error al calcular: ${e.message}</p>`;
+    } finally {
+        this.powerScoreLoading = false;
+    }
+},
+
+calculatePowerScores: async function () {
+    const { stats, decksWithData } = this.calculateMetaCardStats();
+    if (stats.length === 0) return { cards: [], maxPower: 1 };
+
+    const maxCopies = stats[0].totalCopies;
+
+    // PASO 1: base recurrence score (0-100)
+    let cards = stats.map(item => ({
+        ...item,
+        baseScore: Math.round(
+            (item.presencePct * 0.6) +
+            ((item.totalCopies / maxCopies) * 100 * 0.4)
+        ),
+        cardData:    null,
+        specAnalysis: null,
+        specBonus:   0,
+        counterBonus: 0,
+        powerScore:  0,
+        isCounter:   false
+    }));
+
+    // PASO 2: fetch card data en lotes de 5
+    for (let i = 0; i < cards.length; i += 5) {
+        await Promise.all(cards.slice(i, i + 5).map(async item => {
+            try {
+                const res  = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${item.cardId}`);
+                const data = await res.json();
+                if (data.data?.[0]) {
+                    item.cardData    = data.data[0];
+                    item.specAnalysis = window.SpecialtyAnalyzer
+                        ? SpecialtyAnalyzer.analyzeCard(item.cardData)
+                        : { specializations: [], counters: [] };
+                }
+            } catch (_) {}
+        }));
+    }
+
+    // PASO 3: mapa de peso de especialización en el meta
+    // specWeight[specName] = suma de baseScore de todas las cartas con esa spec
+    const specWeight = {};
+    cards.forEach(card => {
+        (card.specAnalysis?.specializations || []).forEach(spec => {
+            specWeight[spec.name] = (specWeight[spec.name] || 0) + card.baseScore;
+        });
+    });
+
+    // PASO 4: specialization bonus (primera pasada de scores)
+    cards.forEach(card => {
+        (card.specAnalysis?.specializations || []).forEach(spec => {
+            const w = specWeight[spec.name] || 0;
+            card.specBonus += Math.round((w / 100) * 15);
+        });
+        card.phase2Score = card.baseScore + card.specBonus;
+    });
+
+    // PASO 5: counter bonus basado en phase2Score de las cartas que contrarresta
+    cards.forEach(card => {
+        (card.specAnalysis?.counters || []).forEach(ctr => {
+            const countered = cards.filter(c =>
+                (c.specAnalysis?.specializations || []).some(s => s.name === ctr.countersSpec)
+            );
+            const bonus = countered.reduce((sum, c) => sum + c.phase2Score, 0);
+            card.counterBonus += Math.round(bonus * 0.4);
+            if (bonus > 0) card.isCounter = true;
+        });
+    });
+
+    // PASO 6: power final = (base + bonuses) × multiplicador de copias
+    cards.forEach(card => {
+        const raw   = card.baseScore + card.specBonus + card.counterBonus;
+        const multi = Math.min(1.0, Math.max(0.33, parseFloat(card.avgCopies) / 3));
+        card.powerScore = Math.round(raw * multi);
+    });
+
+    cards.sort((a, b) => b.powerScore - a.powerScore);
+    const maxPower = cards[0]?.powerScore || 1;
+    return { cards, maxPower };
+},
+
+renderPowerScores: function ({ cards, maxPower }) {
+    const { decksWithData } = this.calculateMetaCardStats();
+
+    if (cards.length === 0) {
+        return '<p class="stats-empty">No hay datos suficientes.</p>';
+    }
+
+    const medals = ['🥇', '🥈', '🥉'];
+
+    const rows = cards.map((card, i) => {
+        const pct       = Math.round((card.powerScore / maxPower) * 100);
+        const barColor  = card.isCounter ? '#d63031' : '#0066cc';
+        const rankLabel = i < 3 ? medals[i] : `#${i + 1}`;
+        const name      = card.cardData?.name || card.cardId;
+        const type      = card.cardData?.type || '';
+        const tags      = [
+            card.isCounter ? '<span class="power-tag tag-counter">COUNTER</span>' : '',
+            (card.specAnalysis?.specializations?.length > 0)
+                ? '<span class="power-tag tag-spec">ESPECIALIZACIÓN</span>' : ''
+        ].filter(Boolean).join('');
+
+        const breakdown = `Base: ${card.baseScore} | Esp: +${card.specBonus} | Counter: +${card.counterBonus}`;
+
+        return `
+            <div class="power-card-item" title="${breakdown}">
+                <div class="power-rank">${rankLabel}</div>
+                <img class="power-img"
+                     src="https://images.ygoprodeck.com/images/cards_small/${card.cardId}.jpg"
+                     alt="${name}"
+                     onerror="this.src='';">
+                <div class="power-info">
+                    <div class="power-name">${name}</div>
+                    <div class="power-type">${type}</div>
+                    <div class="power-tags">${tags}</div>
+                    <div class="power-bar-container" title="${breakdown}">
+                        <div class="power-bar" style="width:${pct}%;background:${barColor};"></div>
+                    </div>
+                </div>
+                <div class="power-score-box">
+                    <span class="power-score-num" style="color:${barColor}">${card.powerScore}</span>
+                    <span class="power-score-label">pts</span>
+                    <span class="power-copies-avg">x̄ ${card.avgCopies}/deck</span>
+                </div>
+            </div>`;
+    }).join('');
+
+    const hasCounterConfig = window.ConfigManager &&
+        ConfigManager.getSpecialties().length > 0;
+
+    const notice = !hasCounterConfig
+        ? `<div class="power-notice">
+               💡 Configura pares de <strong>Especialidades y Counters</strong> en la pestaña Config
+               para que el bonus de counter se active.
+           </div>`
+        : '';
+
+    return `
+        ${notice}
+        <div class="power-scores-meta">
+            Análisis sobre <strong>${decksWithData}</strong> decks del meta ·
+            <button class="btn btn-sm btn-secondary" onclick="Estadisticas.loadPowerScores()" 
+                style="margin-left:8px;">🔄 Recalcular</button>
+        </div>
+        <div class="power-legend">
+            <span><span class="power-dot" style="background:#0066cc;"></span> Especialización</span>
+            <span><span class="power-dot" style="background:#d63031;"></span> Counter</span>
+            <span style="font-size:0.75rem;opacity:0.6;">Hover sobre la barra para ver desglose</span>
+        </div>
+        <div class="power-scores-list">${rows}</div>`;
 },
     render: function () {
         if (!this.container) return;
@@ -681,6 +858,27 @@ html += `
     </h3>
     <div id="meta-card-stats-sec" class="stats-section">
         ${this.renderMetaCardStats()}
+    </div>
+`;
+html += `
+    <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('power-scores-sec')">
+        ⚡ Poder de Cartas del Meta
+    </h3>
+    <div id="power-scores-sec" class="stats-section" style="display:none;">
+        <div id="power-scores-content">
+            ${this.powerScoreCache
+                ? this.renderPowerScores(this.powerScoreCache)
+                : `<div style="text-align:center;padding:var(--spacing-md);">
+                       <button class="btn btn-primary" onclick="Estadisticas.loadPowerScores()">
+                           ⚡ Calcular Poder de Cartas
+                       </button>
+                       <p class="stats-help" style="margin-top:var(--spacing-sm);">
+                           Analiza cada carta del meta, su utilidad, especialización y valor de counter.
+                           Requiere conexión para consultar la API.
+                       </p>
+                   </div>`
+            }
+        </div>
     </div>
 `;
         this.container.innerHTML = html;
