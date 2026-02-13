@@ -296,7 +296,7 @@
     left: 20px;
     width: 64px;
     background: rgba(0, 51, 102, 0.7);
-    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 2px solid var(--gold-color);
     border-radius: 8px;
     cursor: pointer;

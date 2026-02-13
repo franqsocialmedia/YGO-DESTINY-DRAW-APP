@@ -427,7 +427,7 @@ const Estadisticas = {
         savedDecks.forEach(deck => {
             const mainCount = Object.values(deck.cards).filter(c => c.location === 'main').reduce((s, c) => s + c.qty, 0);
             const extraCount = Object.values(deck.cards).filter(c => c.location === 'extra').reduce((s, c) => s + c.qty, 0);
-            const isActive = deck.key === currentDeckKey;
+            const isActive = `deck_${deck.name}` === currentDeckKey;
 
             // Obtener imagen de la primera carta del deck
             const firstCard = Object.values(deck.cards)[0];
@@ -437,7 +437,7 @@ const Estadisticas = {
 
             deckListHTML += `
                 <div class="widget-deck-item ${isActive ? 'active' : ''}" 
-                     onclick="event.stopPropagation(); Estadisticas.selectDeckFromWidget('${deck.key}')">
+                     onclick="event.stopPropagation(); Estadisticas.selectDeckFromWidget('${deck.name}')">
                     <img src="${thumbnailUrl}" class="widget-deck-thumbnail" alt="${deck.name}">
                     <div class="widget-deck-info">
                         <span class="widget-deck-name">${deck.name}</span>
@@ -472,21 +472,18 @@ const Estadisticas = {
         }
     },
 
-    selectDeckFromWidget: function (deckKey) {
-        if (Deck && Deck.loadDeck) {
-            Deck.loadDeck(deckKey);
-        }
-        
-        // Cambiar a la pestaña "Mi Deck"
-        if (window.Navigation && typeof Navigation.showTab === 'function') {
-            Navigation.showTab('mideck');   // ✅ nombre correcto del tab
-        }
-        
-        this.updateDeckStats();
-        this.collapseDeckList();
-        setTimeout(() => {
-            this.updateFloatingWidget();
-        }, 100);
+    selectDeckFromWidget: function (deckName) {
+    if (window.Deck && typeof Deck.confirmLoadDeck === 'function') {
+        Deck.confirmLoadDeck(deckName);
+    }
+    if (window.Navigation) {
+        Navigation.showTab('mideck');
+    }
+    this.collapseDeckList();
+    setTimeout(() => {
+        this.updateFloatingWidget();
+        if (window.Estadisticas) Estadisticas.updateDeckStats();
+    }, 100);
     },
     initFloatingDeckWidgetEvents() {
     const widget = document.querySelector('.deck-floating-widget');
