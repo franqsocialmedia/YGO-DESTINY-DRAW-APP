@@ -111,14 +111,25 @@
     border: 2px solid transparent;
 }
 
+.deck-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    border-radius: 8px;
+    transition: all var(--transition-normal);
+    border: 2px solid transparent;
+}
+
 .deck-row:hover {
     border-color: var(--gold-color);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     transform: translateX(5px);
 }
 
-/* Imagen de la carta */
 .deck-img {
+    flex: 0 0 60px;
     width: 60px;
     height: auto;
     border-radius: 4px;
@@ -131,12 +142,15 @@
     transform: scale(1.1);
 }
 
-/* Nombre de la carta */
 .deck-name {
+    flex: 0 0 160px;
+    min-width: 0;
     font-weight: 600;
     color: var(--text-dark);
     font-size: 0.95rem;
-    min-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .deck-name-white {
@@ -144,11 +158,14 @@
 }
 
 /* Roles (badges) */
+/* Roles: flex:1 para siempre ocupar el espacio central */
 .deck-roles {
+    flex: 1;
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
-    min-width: 120px;
+    min-width: 0;
+    align-items: center;
 }
 
 .role-badge {
@@ -161,11 +178,12 @@
     white-space: nowrap;
 }
 
-/* Controles de cantidad */
+/* Qty y botones siempre al extremo derecho */
 .deck-qty {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .deck-qty button {
@@ -173,8 +191,8 @@
     color: white;
     border: none;
     border-radius: 4px;
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     cursor: pointer;
     font-weight: bold;
     transition: all var(--transition-fast);
@@ -192,19 +210,26 @@
 .qty-number {
     font-weight: bold;
     color: var(--text-dark);
-    min-width: 30px;
+    min-width: 28px;
     text-align: center;
+    font-size: 0.9rem;
 }
 
-/* Botón mover (Main <-> Side) */
+.deck-buttons {
+    flex-shrink: 0;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
 .deck-move {
     background: var(--secondary-color);
     color: var(--text-light);
     border: 1px solid var(--border-color);
-    padding: 6px 12px;
+    padding: 5px 10px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     transition: all var(--transition-normal);
     white-space: nowrap;
 }
@@ -212,7 +237,6 @@
 .deck-move:hover {
     background: var(--accent-color);
     border-color: var(--gold-color);
-    transform: translateY(-2px);
 }
 
 /* Contenedor de botones */

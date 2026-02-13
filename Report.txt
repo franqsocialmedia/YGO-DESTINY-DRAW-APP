@@ -5262,3 +5262,74 @@ Main Deck (threshold: >45 cartas). El Extra Deck no penaliza, ya que tiene
 su propio límite natural de 15 y distintas reglas de construcción.
 
 ================================================================================
+================================================================================
+DESTINY DRAW - REPORTE DE SESIÓN
+Desde: Post-Paso 7 / Pre-Paso 8
+================================================================================
+
+1. FIX: Penalización Internal Score — solo Main Deck (stats.js)
+   Se agregó contador separado "mainCards" para el Main Deck.
+   La penalización por exceso (>45 cartas) ahora solo evalúa el Main Deck,
+   ignorando Extra Deck y Side Deck, que tienen sus propias reglas.
+   El campo "mainCards" se expone en el objeto de retorno.
+   Visible: el aviso ⚠️ ya no aparece si el Main es ≤45 aunque el
+   Extra Deck tenga sus 15 cartas.
+
+2. MEJORA: "Total: X cartas" → "Main Deck: X cartas" (estadisticas.js)
+   El contador del footer de Internal Score ahora muestra solo las cartas
+   del Main Deck usando stats.mainCards con fallback a stats.totalCards.
+
+3. MEJORA: Barra compuesta proporcional (estadisticas.js + style_estadisticas.css)
+   Las 3 barras individuales (Consistencia, Potencia, Resiliencia) fueron
+   reemplazadas por una sola barra horizontal segmentada con 3 colores.
+   Cada segmento ocupa espacio proporcional a su contribución real al score:
+     - Verde (#00b894): Consistencia × 0.5
+     - Rojo  (#d63031): Potencia × 0.3
+     - Azul  (#0066cc): Resiliencia × 0.2
+   Hover sobre cada segmento muestra el valor y % exacto.
+   Debajo de la barra, leyenda con puntos de color y valores numéricos.
+   CSS nuevo: .stats-composite-bar-wrap, .stats-composite-bar,
+   .scb-segment, .scb-consistency/power/resilience, .scb-legend, .scb-dot
+
+   BUG INTRODUCIDO Y CORREGIDO: Las variables pctC/pctP/pctR quedaron
+   declaradas después del return al implementarse, causando ReferenceError
+   silencioso que impedía renderizar toda la sección Internal Score.
+   Corregido moviendo los cálculos antes del return.
+
+4. NUEVO: Botón ScrollBottomBtn (index.html + style_global.css + utils.js)
+   Se agrega un segundo botón flotante debajo del scrollTopBtn existente.
+   Posición: bottom 135px, right 20px (45px arriba del scrollTopBtn).
+   Color: igual que scrollTopBtn (#FFD700 sobre #003366).
+   Comportamiento: visible cuando no se está al fondo de la página
+   (margen de 50px). Al clickear hace scroll suave al fondo.
+   utils.js fue reescrito para manejar ambos botones con una sola función
+   updateButtons() que evalúa scrollY y maxScroll en cada evento scroll.
+
+5. MEJORA: Layout de filas de cartas — Mi Deck (style_mideck.css)
+   .deck-row rediseñado con distribución flex fija:
+     - .deck-img:      flex: 0 0 60px  (tamaño fijo)
+     - .deck-name:     flex: 0 0 160px (tamaño fijo, texto truncado)
+     - .deck-roles:    flex: 1         (ocupa todo el espacio central)
+     - .deck-qty:      flex-shrink: 0  (siempre al extremo derecho)
+     - .deck-buttons:  flex-shrink: 0  (siempre al extremo derecho)
+   Con esto, los botones y cantidad siempre están alineados a la derecha
+   independientemente de cuántos roles/subtipos tenga la carta.
+
+6. DOCUMENTACIÓN: Cómo ocultar secciones por defecto
+   Agregar style="display:none;" al div de contenido (no al título h3).
+   El h3 con onclick="toggleSection('id')" ya maneja el toggle.
+   Secciones que arrancan colapsadas en estadisticas:
+   power-scores-sec, counter-cards-sec (y opcionalmente
+   meta-management-sec, meta-decks-sec si se desea).
+
+================================================================================
+ARCHIVOS MODIFICADOS EN ESTA SESIÓN
+================================================================================
+Modules/stats.js           → Fix penalización Main only + mainCards
+Modules/estadisticas.js    → Total→MainDeck, barra compuesta, fix ReferenceError
+Modules/utils.js           → Reescrito para manejar ambos botones scroll
+css/style_estadisticas.css → CSS barra compuesta (.scb-*)
+css/style_global.css       → CSS scrollBottomBtn
+css/style_mideck.css       → Layout flex fijo para deck-row
+index.html                 → Agregar <button id="scrollBottomBtn">▼</button>
+================================================================================

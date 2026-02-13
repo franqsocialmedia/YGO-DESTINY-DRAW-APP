@@ -297,6 +297,15 @@ const Estadisticas = {
     const stats   = Stats.calculateInternalScore(Deck.cards);
     const counter = Stats.calculateCounterDeckScore(Deck.cards, this.powerScoreCache);
 
+    // ← DEBEN IR ANTES DEL RETURN
+    const contC = parseFloat(stats.consistency) * 0.5;
+    const contP = parseFloat(stats.power) * 0.3;
+    const contR = parseFloat(stats.resilience) * 0.2;
+    const total = contC + contP + contR || 1;
+    const pctC  = Math.round((contC / total) * 100);
+    const pctP  = Math.round((contP / total) * 100);
+    const pctR  = 100 - pctC - pctP;
+
     const scoreColor = stats.internalScore >= 7 ? '#00b894'
                      : stats.internalScore >= 5 ? '#fdcb6e' : '#d63031';
 
@@ -327,27 +336,25 @@ const Estadisticas = {
                 </div>
             </div>
 
-            <div class="stats-bars">
-                <div class="stat-bar-row">
-                    <span class="stat-bar-label">Consistencia (50%)</span>
-                    <div class="stat-bar-container">
-                        <div class="stat-bar" style="width:${stats.consistency * 10}%;background:#00b894"></div>
-                    </div>
-                    <span class="stat-bar-value">${stats.consistency}/10</span>
+            <div class="stats-composite-bar-wrap">
+                <div class="stats-composite-bar">
+                    <div class="scb-segment scb-consistency"
+                         style="width:${pctC}%"
+                         title="Consistencia ${stats.consistency}/10 · ${pctC}% del score"></div>
+                    <div class="scb-segment scb-power"
+                         style="width:${pctP}%"
+                         title="Potencia ${stats.power}/10 · ${pctP}% del score"></div>
+                    <div class="scb-segment scb-resilience"
+                         style="width:${pctR}%"
+                         title="Resiliencia ${stats.resilience}/10 · ${pctR}% del score"></div>
                 </div>
-                <div class="stat-bar-row">
-                    <span class="stat-bar-label">Potencia (30%)</span>
-                    <div class="stat-bar-container">
-                        <div class="stat-bar" style="width:${stats.power * 10}%;background:#d63031"></div>
-                    </div>
-                    <span class="stat-bar-value">${stats.power}/10</span>
-                </div>
-                <div class="stat-bar-row">
-                    <span class="stat-bar-label">Resiliencia (20%)</span>
-                    <div class="stat-bar-container">
-                        <div class="stat-bar" style="width:${stats.resilience * 10}%;background:#0066cc"></div>
-                    </div>
-                    <span class="stat-bar-value">${stats.resilience}/10</span>
+                <div class="scb-legend">
+                    <span class="scb-dot" style="background:#00b894"></span>
+                    Consistencia <strong>${stats.consistency}</strong>
+                    <span class="scb-dot" style="background:#d63031;margin-left:8px"></span>
+                    Potencia <strong>${stats.power}</strong>
+                    <span class="scb-dot" style="background:#0066cc;margin-left:8px"></span>
+                    Resiliencia <strong>${stats.resilience}</strong>
                 </div>
             </div>
 
@@ -357,7 +364,6 @@ const Estadisticas = {
             </div>
         </div>
 
-        <!-- COUNTER-DECK SCORE -->
         <div class="counter-deck-card">
             <div class="counter-deck-header">
                 <div>

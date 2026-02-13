@@ -885,12 +885,12 @@ const Deck = {
                 <h3 onclick="Deck.toggleSection('main-sec')">
                     Main Deck (${mainC})
                 </h3>
-                <div id="main-sec" style="display:none;">${this.renderRows('main')}</div>
+                <div id="main-sec">${this.renderRows('main')}</div>
 
                 <h3 onclick="Deck.toggleSection('extra-sec')">
                     Extra Deck (${extraC})
                 </h3>
-                <div id="extra-sec" style="display:none;">${this.renderRows('extra')}</div>
+                <div id="extra-sec">${this.renderRows('extra')}</div>
 
                 <h3 onclick="Deck.toggleSection('side-sec')">
                     Side Deck (${sideC})
