@@ -270,7 +270,7 @@ const Estadisticas = {
     },
 
     selectAndLoadDeck: function (deckKey) {
-        
+
     if (Deck && Deck.confirmLoadDeck) {
         const deckName = deckKey.replace('deck_', '');
         Deck.confirmLoadDeck(deckName);
@@ -352,7 +352,7 @@ const Estadisticas = {
             </div>
 
             <div class="stats-footer">
-                <span>Total: ${stats.totalCards} cartas</span>
+                <span>Main Deck: ${stats.mainCards ?? stats.totalCards} cartas</span>
                 ${stats.penalty > 0 ? `<span style="color:var(--warning-color)">⚠️ Penalización exceso: -${stats.penalty}</span>` : ''}
             </div>
         </div>
