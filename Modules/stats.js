@@ -16,16 +16,19 @@ const Stats = {
         let consistencyCount = 0;
         let powerCount = 0;
         let resilienceCount = 0;
+        
         let totalCards = 0;
-
-        // Iterar sobre todas las cartas
+        let mainCards = 0;
+        
         for (const [id, item] of Object.entries(cards)) {
             const roles = item.roles || [];
             const qty = item.qty || 1;
             
-            // Contar total de cartas (solo Main y Extra)
             if (item.location === 'main' || item.location === 'extra') {
                 totalCards += qty;
+            }
+            if (item.location === 'main') {
+                mainCards += qty;
             }
 
             // Procesar solo cartas del Main y Extra Deck
@@ -68,12 +71,10 @@ const Stats = {
 
         // Penalización por exceso de cartas (> 45)
         let penalty = 0;
-        if (totalCards > 45) {
-            penalty = (totalCards - 45) * 0.5;
+        if (mainCards > 45) {
+            penalty = (mainCards - 45) * 0.5;
             internalScore -= penalty;
         }
-
-        // Asegurar que el score no sea negativo
         if (internalScore < 0) internalScore = 0;
 
         return {
@@ -82,6 +83,7 @@ const Stats = {
             power: power.toFixed(2),
             resilience: resilience.toFixed(2),
             totalCards: totalCards,
+            mainCards: mainCards,
             penalty: penalty.toFixed(2),
             consistencyCount: consistencyCount,
             powerCount: powerCount,

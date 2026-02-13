@@ -5076,3 +5076,189 @@ PRINCIPIOS RESPETADOS:
 - Arquitectura modular sin romper módulos existentes
 
 ================================================================================
+
+## Reporte de las 3 secciones nuevas
+```
+================================================================================
+DESTINY DRAW - REPORTE SECCIONES ESTADÍSTICAS (Paso 5, 6 y 7)
+================================================================================
+
+================================================================================
+SECCIÓN 1: RECURRENCIA DE CARTAS EN EL META
+================================================================================
+
+QUÉ HACE:
+Analiza todos los decks del meta importados y muestra un ranking de las 30
+cartas más usadas, cuantificando su presencia real (copias totales) y su
+popularidad (en cuántos decks aparece).
+
+DATOS QUE MUESTRA POR CARTA:
+- Posición en el ranking (#1, #2... #30)
+- Imagen de la carta (cargada desde YGOPRODeck)
+- Nombre (cargado asincrónicamente en segundo plano vía API)
+- Copias totales: suma de todas las copias en todos los decks del meta
+- Presencia: "X/Y decks (Z%)" — en cuántos decks aparece sobre el total
+- Promedio x deck: media de copias en los decks que la usan
+
+REQUISITOS PARA MOSTRAR DATOS:
+1. Tener al menos una carpeta de meta creada
+2. Tener decks importados como .ydk DESPUÉS del Paso 5
+   (los importados antes no tienen cardFrequency — re-importarlos)
+3. No requiere internet para el ranking (sí para cargar nombres e imágenes)
+
+COMPORTAMIENTO:
+- Se genera automáticamente al cargar la pestaña Estadísticas
+- La sección está visible por defecto (no colapsada)
+- Los nombres se cargan en lotes de 10 en segundo plano sin bloquear la UI
+- El filtro de carpeta (select "Filtrar por carpeta") también afecta esta sección
+
+FUNCIONES INTERNAS:
+- calculateMetaCardStats()     → calcula ranking desde metaDecks + cardFrequency
+- renderMetaCardStats()        → genera el HTML del ranking
+- loadCardNames(cardIds[])     → fetch asincrónico de nombres en lotes
+
+VARIABLES QUE USA:
+- this.metaDecks               → objeto con todos los decks por carpeta
+- this.selectedFolder          → filtro activo de carpeta
+- deck.cardFrequency           → objeto {cardId: copias} por deck importado
+- decksWithData                → decks que tienen cardFrequency válido
+
+DATO CLAVE GENERADO (usado en Paso 6):
+- stats[]                      → array de hasta 30 objetos con:
+  { cardId, totalCopies, deckCount, avgCopies, presencePct }
+
+================================================================================
+SECCIÓN 2: PODER DE CARTAS DEL META (⚡)
+================================================================================
+
+QUÉ HACE:
+Asigna puntos de poder a cada carta del meta basándose en su recurrencia,
+su rol de especialización en el meta y si actúa como counter de otras cartas.
+El resultado es un ranking de poder que refleja qué cartas son más impactantes
+en el meta actual, diferenciando entre cartas de especialización (azul) y
+cartas counter (rojo).
+
+FÓRMULA DE PODER (3 pasadas):
+  Pasada 1 — Base Score (recurrencia pura):
+    baseScore = (presencePct × 0.6) + ((totalCopies / maxCopies) × 100 × 0.4)
+
+  Pasada 2 — Specialization Bonus:
+    specWeight[spec] = suma de baseScore de todas las cartas con esa especialización
+    specBonus = (specWeight / 100) × 15 por cada especialización detectada
+    phase2Score = baseScore + specBonus
+
+  Pasada 3 — Counter Bonus:
+    Para cada función counter de la carta:
+      bonus = suma de phase2Score de las cartas que contrarresta en el meta
+      counterBonus += round(bonus × 0.4)
+    isCounter = true si counterBonus > 0
+
+  Score Final:
+    raw = baseScore + specBonus + counterBonus
+    multi = clamp(avgCopies / 3, min: 0.33, max: 1.0)
+    powerScore = round(raw × multi)
+
+DATOS QUE MUESTRA POR CARTA:
+- Posición con medallas 🥇🥈🥉 para top 3
+- Imagen y nombre de la carta
+- Tags: COUNTER (rojo) / ESPECIALIZACIÓN (azul)
+- Barra de poder proporcional al máximo del ranking
+- Puntos totales y promedio de copias por deck
+- Tooltip (hover) con desglose: Base | Esp | Counter
+
+REQUISITOS PARA MOSTRAR DATOS:
+1. Sección de Recurrencia con datos válidos (decksWithData > 0)
+2. Click manual en el botón "⚡ Calcular Poder de Cartas"
+3. Conexión a internet (consulta la API por cada carta en lotes de 5)
+4. Para bonus de counter: pares configurados en Config → Especialidades y Counters
+   (sin configurar, solo muestra scores de base + especialización)
+
+COMPORTAMIENTO:
+- Sección arranca colapsada (display:none)
+- La primera vez requiere click en el botón para iniciar el cálculo
+- Muestra spinner de carga durante el proceso
+- Una vez calculado, el resultado se guarda en powerScoreCache
+  (no recalcula al navegar entre pestañas, solo al hacer click en "Recalcular"
+  o al importar/eliminar decks del meta)
+- Si no hay pares de Especialidades configurados, muestra aviso pero
+  igual calcula con base + especializaciones
+
+FUNCIONES INTERNAS:
+- loadPowerScores()            → orquesta carga + render
+- calculatePowerScores()       → async, ejecuta las 3 pasadas
+- renderPowerScores({cards, maxPower}) → genera el HTML del ranking
+
+VARIABLES QUE USA:
+- this.powerScoreCache         → guarda el resultado para no recalcular
+- this.powerScoreLoading       → flag para evitar llamadas duplicadas
+- SpecialtyAnalyzer.analyzeCard(cardData) → detecta specs y counters
+- ConfigManager.getSpecialties() → verifica si hay pares configurados
+
+DATO CLAVE GENERADO (usado en Paso 7):
+- powerScoreCache.cards[]      → array de objetos con:
+  { cardId, cardData, specAnalysis, baseScore, specBonus, counterBonus,
+    powerScore, isCounter, avgCopies, presencePct, deckCount }
+
+================================================================================
+SECCIÓN 3: COUNTER-CARDS DEL META (🛡️)
+================================================================================
+
+QUÉ HACE:
+Extrae del resultado de Poder de Cartas únicamente las cartas identificadas
+como counters, ordenadas por su counterBonus. Muestra qué cartas del meta
+actual tienen mayor capacidad de contrarrestar especializaciones, y a qué
+especializaciones específicas hacen counter.
+
+DATOS QUE MUESTRA POR CARTA:
+- Posición con medallas 🥇🥈🥉 para top 3
+- Imagen y nombre
+- "Contrarresta: [nombre de la especialización]"
+- Barra de counter power proporcional al máximo counter del ranking
+- Puntos counter y porcentaje de presencia en el meta
+
+REQUISITOS PARA MOSTRAR DATOS:
+1. Haber ejecutado "⚡ Calcular Poder de Cartas" (requiere powerScoreCache)
+2. Pares de Especialidades y Counters configurados en Config
+   (sin esto, ninguna carta se marca como counter y la sección muestra aviso)
+
+COMPORTAMIENTO:
+- Sección arranca colapsada (display:none)
+- Se llena con los datos de powerScoreCache, sin llamadas adicionales a la API
+- Se actualiza automáticamente si se recalcula el Poder de Cartas
+
+FUNCIONES INTERNAS:
+- renderCounterCardStats()     → filtra powerScoreCache.cards donde isCounter=true,
+                                  genera el HTML ordenado por counterBonus desc
+
+VARIABLES QUE USA:
+- this.powerScoreCache.cards   → fuente de datos (filtrada por isCounter)
+- card.counterBonus            → puntaje counter de la carta
+- card.specAnalysis.counters[] → array con { countersSpec } para mostrar
+                                  qué especializaciones contrarresta
+
+================================================================================
+FLUJO COMPLETO REQUERIDO PARA VER LAS 3 SECCIONES:
+================================================================================
+
+  1. Config → Especialidades y Counters → configurar pares
+     (opcional pero necesario para datos de counter)
+
+  2. Estadísticas → Gestión de Carpetas → Crear carpeta → Importar .ydk
+     (con versión post-Paso 5 del código)
+
+  3. Sección "Recurrencia" se llena automáticamente al importar
+
+  4. Abrir sección "⚡ Poder de Cartas" → click "Calcular Poder de Cartas"
+     → esperar llamadas a API (~5-30 seg según número de cartas)
+
+  5. Abrir sección "🛡️ Counter-Cards" → datos ya disponibles sin acción extra
+
+================================================================================
+NOTA SOBRE PENALIZACIÓN DE EXCESO (fix Paso 7):
+================================================================================
+
+La penalización por exceso de cartas en Internal Score aplica solo al
+Main Deck (threshold: >45 cartas). El Extra Deck no penaliza, ya que tiene
+su propio límite natural de 15 y distintas reglas de construcción.
+
+================================================================================

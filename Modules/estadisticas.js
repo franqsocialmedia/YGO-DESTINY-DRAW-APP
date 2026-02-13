@@ -270,9 +270,11 @@ const Estadisticas = {
     },
 
     selectAndLoadDeck: function (deckKey) {
-        if (Deck && Deck.loadDeck) {
-            Deck.loadDeck(deckKey);
-        }
+        
+    if (Deck && Deck.confirmLoadDeck) {
+        const deckName = deckKey.replace('deck_', '');
+        Deck.confirmLoadDeck(deckName);
+    }
         this.closeModal();
         this.updateDeckStats();
         this.updateFloatingWidget();
