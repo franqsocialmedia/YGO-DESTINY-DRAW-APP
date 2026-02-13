@@ -686,6 +686,58 @@
         transform: translateY(0);
     }
 }
+/* ====================================
+   ESTILOS PARA BADGES DE SUBTIPOS
+   Destiny Draw - Yu-Gi-Oh! App
+   
+   Agregar al final de style_deck.css
+   ==================================== */
+
+/* Badge de subtipo (amarillo con letras negras) */
+.subtype-badge {
+    display: inline-block;
+    background: #FFD700; /* Amarillo dorado */
+    color: #000000; /* Letras negras */
+    padding: 4px 10px;
+    margin: 2px 4px 2px 0;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    border: 1px solid #DAA520; /* Borde dorado oscuro */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Asegurar que los badges de subtipos se vean bien junto a los de roles */
+.deck-roles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Opcional: Efecto hover en badges de subtipos */
+.subtype-badge:hover {
+    background: #FFC700;
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+}
+
+/* Imagen desaturada para Side Deck */
+.deck-img-desaturated {
+    filter: saturate(10%) !important;
+}
+
+/* Letras blancas con sombra */
+.deck-row .deck-name-white {
+    color: white !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Efecto hover */
+.deck-img-desaturated:hover {
+    filter: saturate(30%);
+    transition: filter 0.3s ease;
+}
 
 /* ====================================
    RESPONSIVE

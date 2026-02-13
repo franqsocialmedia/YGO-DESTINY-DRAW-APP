@@ -101,6 +101,26 @@ const Deck = {
     },
 
     // ===============================
+    // DETECCIÓN DE SUBTIPOS AUTOMÁTICOS
+    // ===============================
+    
+    detectSubtypes: function(card) {
+        if (!card || !card.type) return [];
+        
+        const type = card.type.toLowerCase();
+        const subtypes = [];
+        
+        // Detectar subtipos en el tipo de carta
+        if (type.includes('tuner')) subtypes.push('Tuner');
+        if (type.includes('gemini')) subtypes.push('Gemini');
+        if (type.includes('union')) subtypes.push('Union');
+        if (type.includes('flip')) subtypes.push('Flip');
+        if (type.includes('toon')) subtypes.push('Toon');
+        
+        return subtypes;
+    },
+
+    // ===============================
     // AUTO-ASIGNACIÓN DE ROLES
     // ===============================
     autoAssignRoles: function (card) {
@@ -726,35 +746,46 @@ const Deck = {
             let color = '';
             let nameClass = 'deck-name';
             let qtyColor = '#003366'; // Negro por defecto
+            let imgClass = 'deck-img';
 
-            // Determinar color según tipo de carta
-            if (type.includes('monster')) {
-                // Monstruos especiales
-                if (type.includes('synchro')) {
-                    color = '#ffffff'; // Blanco
-                } else if (type.includes('fusion')) {
-                    color = '#d8b5d8'; // Morado claro
-                } else if (type.includes('xyz')) {
-                    color = 'rgba(0, 0, 0, 0.85)'; // Negro 85%
-                    nameClass = 'deck-name deck-name-white';
-                    qtyColor = '#ffffff'; // Blanco para Xyz
-                } else if (type.includes('link')) {
-                    color = '#4169e1'; // Azul
-                    nameClass = 'deck-name deck-name-white';
-                    qtyColor = '#ffffff'; // Blanco para Link
-                } else if (type.includes('ritual')) {
-                    color = '#b3d9ff'; // Azul claro
-                } else if (type.includes('pendulum')) {
-                    color = 'linear-gradient(to right, #d9b38c, #b7f7c3)'; // Degradado
+            // SIDE DECK: Estilos especiales (gris + desaturado)
+            if (location === 'side') {
+                color = 'rgba(128, 128, 128, 0.4)'; // Gris claro 40%
+                nameClass = 'deck-name deck-name-white'; // Letras blancas
+                qtyColor = '#ffffff'; // Cantidad en blanco
+                imgClass = 'deck-img deck-img-desaturated'; // Imagen desaturada
+            } 
+            // MAIN DECK Y EXTRA DECK: Colores según tipo
+            else {
+                // Determinar color según tipo de carta
+                if (type.includes('monster')) {
+                    // Monstruos especiales
+                    if (type.includes('synchro')) {
+                        color = '#ffffff'; // Blanco
+                    } else if (type.includes('fusion')) {
+                        color = '#d8b5d8'; // Morado claro
+                    } else if (type.includes('xyz')) {
+                        color = 'rgba(0, 0, 0, 0.85)'; // Negro 85%
+                        nameClass = 'deck-name deck-name-white';
+                        qtyColor = '#ffffff'; // Blanco para Xyz
+                    } else if (type.includes('link')) {
+                        color = '#4169e1'; // Azul
+                        nameClass = 'deck-name deck-name-white';
+                        qtyColor = '#ffffff'; // Blanco para Link
+                    } else if (type.includes('ritual')) {
+                        color = '#b3d9ff'; // Azul claro
+                    } else if (type.includes('pendulum')) {
+                        color = 'linear-gradient(to right, #d9b38c, #b7f7c3)'; // Degradado
+                    } else {
+                        color = '#d9b38c'; // Marrón claro normal
+                    }
+                } else if (type.includes('spell')) {
+                    color = '#b7f7c3'; // Verde claro
+                } else if (type.includes('trap')) {
+                    color = '#ffb3d9'; // Rosa claro
                 } else {
-                    color = '#d9b38c'; // Marrón claro normal
+                    color = '#d9b38c'; // Default
                 }
-            } else if (type.includes('spell')) {
-                color = '#b7f7c3'; // Verde claro
-            } else if (type.includes('trap')) {
-                color = '#ffb3d9'; // Rosa claro
-            } else {
-                color = '#d9b38c'; // Default
             }
 
             // Si es degradado, usar background en lugar de background-color
@@ -762,7 +793,16 @@ const Deck = {
                 ? `background: ${color}` 
                 : `background: ${color}`;
 
-            // Generar badges de roles
+            // DETECTAR SUBTIPOS AUTOMÁTICOS (Tuner, Gemini, Union, Flip, Toon)
+            const subtypes = this.detectSubtypes(card);
+            
+            // Generar badges de SUBTIPOS (amarillos)
+            let subtypesBadges = '';
+            subtypes.forEach(subtype => {
+                subtypesBadges += `<span class="subtype-badge">${subtype}</span>`;
+            });
+
+            // Generar badges de ROLES (normales)
             let rolesBadges = '';
             if (item.roles && item.roles.length > 0) {
                 item.roles.forEach(role => {
@@ -775,14 +815,14 @@ const Deck = {
                     
                     <img 
                         src="${card.card_images[0].image_url_small}" 
-                        class="deck-img"
+                        class="${imgClass}"
                         onclick="CardViewer.openFromDeck(${id})"
                     >
 
                     <div class="${nameClass}">${card.name}</div>
 
                     <div class="deck-roles">
-                        ${rolesBadges}
+                        ${subtypesBadges}${rolesBadges}
                     </div>
 
                     <div class="deck-qty">
@@ -867,10 +907,186 @@ const Deck = {
                 <button onclick="Deck.exportYDK()" ${isEmpty ? 'disabled' : ''}>Exportar Deck (.ydk)</button>
                 <button onclick="Deck.importYDK()">Importar Deck (.ydk)</button>
                 <button onclick="Deck.exportTXT()" ${isEmpty ? 'disabled' : ''}>Descargar Lista (.txt)</button>
+                <button onclick="Deck.downloadDecklist()" ${isEmpty ? 'disabled' : ''}>📸 Descargar Decklist</button>
             </div>
         `;
 
         this.container.innerHTML = html;
+    },
+
+    // ===============================
+    // DESCARGAR DECKLIST VISUAL
+    // ===============================
+    
+    downloadDecklist: async function() {
+        try {
+            // Verificar si html2canvas está disponible
+            if (typeof html2canvas === 'undefined') {
+                alert('⚠️ La librería html2canvas no está cargada.\n\nPor favor, agrega esta línea a tu index.html antes de los scripts:\n\n<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>');
+                return;
+            }
+
+            // Mostrar mensaje de carga
+            const loadingMsg = document.createElement('div');
+            loadingMsg.id = 'decklist-loading';
+            loadingMsg.innerHTML = '<p style="text-align:center;padding:20px;background:#333;color:white;border-radius:8px;">⏳ Generando Decklist...</p>';
+            loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;';
+            document.body.appendChild(loadingMsg);
+
+            // Crear HTML del decklist
+            const decklistHTML = this.generateDecklistHTML();
+            
+            // Crear contenedor temporal
+            const tempContainer = document.createElement('div');
+            tempContainer.id = 'temp-decklist-container';
+            tempContainer.innerHTML = decklistHTML;
+            tempContainer.style.cssText = 'position:absolute;left:-9999px;top:0;background:white;padding:20px;';
+            document.body.appendChild(tempContainer);
+
+            // Esperar un momento para que las imágenes carguen
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Convertir a imagen con html2canvas
+            const canvas = await html2canvas(tempContainer, {
+                backgroundColor: '#ffffff',
+                scale: 2, // Mejor calidad
+                logging: false,
+                useCORS: true, // Permitir imágenes externas
+                allowTaint: true
+            });
+
+            // Convertir canvas a blob y descargar
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${this.name.replace(/[^a-z0-9]/gi, '_')}_decklist.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                // Limpiar
+                document.body.removeChild(tempContainer);
+                document.body.removeChild(loadingMsg);
+            });
+
+        } catch (error) {
+            console.error('Error generando decklist:', error);
+            alert('❌ Error al generar el decklist. Verifica la consola para más detalles.');
+            const loading = document.getElementById('decklist-loading');
+            if (loading) loading.remove();
+        }
+    },
+
+    generateDecklistHTML: function() {
+        const mainCards = Object.entries(this.cards).filter(([_, c]) => c.location === 'main');
+        const extraCards = Object.entries(this.cards).filter(([_, c]) => c.location === 'extra');
+        const sideCards = Object.entries(this.cards).filter(([_, c]) => c.location === 'side');
+
+        // Contar roles en Main Deck
+        const rolesCount = {};
+        mainCards.forEach(([_, item]) => {
+            if (item.roles && item.roles.length > 0) {
+                item.roles.forEach(role => {
+                    rolesCount[role] = (rolesCount[role] || 0) + item.qty;
+                });
+            }
+        });
+
+        let html = `
+            <div style="font-family: Arial, sans-serif; max-width: 1200px; padding: 20px;">
+                <h1 style="text-align: center; margin-bottom: 30px; color: #333;">${this.name}</h1>
+        `;
+
+        // Main Deck
+        if (mainCards.length > 0) {
+            const mainCount = mainCards.reduce((sum, [_, c]) => sum + c.qty, 0);
+            html += `
+                <h2 style="color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px;">
+                    MAIN DECK (${mainCount})
+                </h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-bottom: 30px;">
+            `;
+            mainCards.forEach(([_, item]) => {
+                html += this.generateCardHTML(item);
+            });
+            html += '</div>';
+        }
+
+        // Extra Deck
+        if (extraCards.length > 0) {
+            const extraCount = extraCards.reduce((sum, [_, c]) => sum + c.qty, 0);
+            html += `
+                <h2 style="color: #2c3e50; border-bottom: 3px solid #9b59b6; padding-bottom: 10px;">
+                    EXTRA DECK (${extraCount})
+                </h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-bottom: 30px;">
+            `;
+            extraCards.forEach(([_, item]) => {
+                html += this.generateCardHTML(item);
+            });
+            html += '</div>';
+        }
+
+        // Side Deck
+        if (sideCards.length > 0) {
+            const sideCount = sideCards.reduce((sum, [_, c]) => sum + c.qty, 0);
+            html += `
+                <h2 style="color: #2c3e50; border-bottom: 3px solid #95a5a6; padding-bottom: 10px;">
+                    SIDE DECK (${sideCount})
+                </h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-bottom: 30px;">
+            `;
+            sideCards.forEach(([_, item]) => {
+                html += this.generateCardHTML(item);
+            });
+            html += '</div>';
+        }
+
+        // Roles
+        if (Object.keys(rolesCount).length > 0) {
+            html += `
+                <h2 style="color: #2c3e50; border-bottom: 3px solid #e74c3c; padding-bottom: 10px;">
+                    ROLES
+                </h2>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
+            `;
+            Object.entries(rolesCount)
+                .sort((a, b) => b[1] - a[1]) // Ordenar por cantidad descendente
+                .forEach(([role, count]) => {
+                    html += `
+                        <div style="background: #3498db; color: white; padding: 8px 15px; border-radius: 20px; font-weight: bold;">
+                            ${role}: ${count}
+                        </div>
+                    `;
+                });
+            html += '</div>';
+        }
+
+        html += '</div>';
+        return html;
+    },
+
+    generateCardHTML: function(item) {
+        const card = item.data;
+        const imgUrl = card.card_images[0].image_url_small;
+        
+        return `
+            <div style="text-align: center; position: relative;">
+                <img src="${imgUrl}" 
+                     style="width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
+                     crossorigin="anonymous">
+                <div style="font-size: 11px; margin-top: 5px; font-weight: bold; color: #333;">
+                    ${card.name}
+                </div>
+                <div style="position: absolute; top: 5px; right: 5px; background: rgba(255, 0, 0, 0.9); 
+                            color: white; font-weight: bold; font-size: 18px; padding: 5px 10px; 
+                            border-radius: 50%; min-width: 30px; text-align: center;">
+                    x${item.qty}
+                </div>
+            </div>
+        `;
     }
 };
 
