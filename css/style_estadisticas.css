@@ -321,6 +321,7 @@
     aspect-ratio: 421/614;
     overflow: hidden;
     border-radius: 6px;
+    opacity: 0.4;
 }
 
 .widget-thumbnail img {

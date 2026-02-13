@@ -383,29 +383,17 @@ const Estadisticas = {
 
 
     updateFloatingWidget: function () {
-        const widget = document.getElementById('deck-floating-widget');
-        if (!widget) return;
+    const widget = document.getElementById('deck-floating-widget');
+    if (!widget) return;
 
-        if (!Deck || !Deck.cards || Object.keys(Deck.cards).length === 0) {
-            widget.innerHTML = `
-                <div class="widget-thumbnail">
-                    <div class="widget-no-deck">Sin Deck</div>
-                </div>
-            `;
-            return;
-        }
-
-        const mostFrequent = Deck.getMostFrequentCard ? Deck.getMostFrequentCard(Deck.cards) : null;
-        const thumbnailUrl = mostFrequent && mostFrequent.data.card_images 
-            ? mostFrequent.data.card_images[0].image_url_small 
-            : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="116"><rect width="80" height="116" fill="%23003366"/><text x="40" y="63" font-family="sans-serif" font-size="11" text-anchor="middle" fill="%23FFD700">Deck</text></svg>';
-
-        widget.innerHTML = `
-            <div class="widget-thumbnail">
-                <img src="${thumbnailUrl}" alt="${Deck.name}">
-            </div>
-        `;
-    },
+    widget.innerHTML = `
+        <div class="widget-thumbnail">
+            <img src="https://images.ygoprodeck.com/images/cards/back.jpg" 
+                 alt="Deck"
+                 onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2292%22><rect width=%2264%22 height=%2292%22 fill=%22%23003366%22/><text x=%2232%22 y=%2251%22 font-family=%22sans-serif%22 font-size=%2210%22 text-anchor=%22middle%22 fill=%22%23FFD700%22>Deck</text></svg>'">
+        </div>
+    `;
+},
 
     toggleDeckList: function () {
         if (this.deckListExpanded) {
