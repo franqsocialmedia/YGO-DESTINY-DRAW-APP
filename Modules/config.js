@@ -117,6 +117,13 @@ const Config = {
                         data-original="${roleName}"
                         onblur="Config.renameRole(this)"
                         onkeydown="if(event.key==='Enter')this.blur()">
+                    <label class="role-weight-label" title="Peso de valor: 1.0 = normal · 0.5 = mitad · 2.0 = doble">
+                        Peso
+                        <input type="number" class="role-weight-input"
+                            min="0.1" max="2.0" step="0.1"
+                            value="${ConfigManager.getRoleWeight('${roleName}')}"
+                            onchange="ConfigManager.setRoleWeight('${roleName}', parseFloat(this.value))">
+                    </label>
                     <button class="btn-delete-role" onclick="Config.deleteRole('${roleName}')" title="Eliminar rol">🗑️</button>
                 </div>
                 <div class="role-card-body">

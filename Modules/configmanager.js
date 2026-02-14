@@ -306,6 +306,22 @@ const ConfigManager = {
     getRoles: function () {
         return this.getConfig().roles || {};
     },
+    setRoleWeight: function (roleName, weight) {
+    const config = this.getConfig();
+    if (!config.roleWeights) config.roleWeights = {};
+    config.roleWeights[roleName] = Math.max(0.1, Math.min(2.0, weight));
+    this.saveConfig(config);
+},
+
+getRoleWeight: function (roleName) {
+    const w = this.getConfig().roleWeights?.[roleName];
+    return (w !== undefined && w > 0) ? w : 1.0;
+},
+
+getRoleWeight: function (roleName) {
+    const w = this.getConfig().roleWeights?.[roleName];
+    return (w !== undefined && w > 0) ? w : 1.0;
+},
 
     getRoleNames: function () {
         return Object.keys(this.getRoles());
@@ -315,11 +331,14 @@ const ConfigManager = {
         return (this.getRoles()[roleName] || []);
     },
 
-    createRole: function (roleName) {
+   createRole: function (roleName) {
         const config = this.getConfig();
         const name = roleName.trim();
         if (name && config.roles[name] === undefined) {
             config.roles[name] = [];
+            // Peso por defecto al crear
+            if (!config.roleWeights) config.roleWeights = {};
+            config.roleWeights[name] = 1.0;
             this.saveConfig(config);
             return true;
         }
@@ -332,6 +351,10 @@ const ConfigManager = {
         if (config.roles[oldName] !== undefined && trimmed && config.roles[trimmed] === undefined) {
             config.roles[trimmed] = config.roles[oldName];
             delete config.roles[oldName];
+            if (config.roleWeights?.[oldName] !== undefined) {
+                config.roleWeights[trimmed] = config.roleWeights[oldName];
+                delete config.roleWeights[oldName];
+            }
             if (config.roleConditions && config.roleConditions[oldName]) {
                 config.roleConditions[trimmed] = config.roleConditions[oldName];
                 delete config.roleConditions[oldName];
@@ -346,7 +369,7 @@ const ConfigManager = {
         const config = this.getConfig();
         if (config.roles[roleName] !== undefined) {
             delete config.roles[roleName];
-            if (config.roleConditions) delete config.roleConditions[roleName];
+            if (config.roleWeights) delete config.roleWeights[roleName];
             this.saveConfig(config);
             return true;
         }

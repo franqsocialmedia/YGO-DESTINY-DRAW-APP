@@ -643,7 +643,23 @@
     color: white;
 }
 
-
+.role-weight-label {
+    font-size: 0.75rem;
+    color: rgba(241,241,241,0.6);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.role-weight-input {
+    width: 52px;
+    padding: 2px 4px;
+    background: rgba(0,51,102,0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-light);
+    font-size: 0.8rem;
+    text-align: center;
+}
 
 /* ====================================
    RESPONSIVE

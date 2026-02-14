@@ -51,23 +51,27 @@ const Stats = {
 
         let contributed = false;
 
-        // Contribución a Consistencia
-        if (roles.some(r => consistencyRoles.includes(r))) {
-            consistencyScore += effectiveQty;
-            contributed = true;
-        }
+        // ── Pilares con peso de rol (weight) ─────────────────────────
+        // Si el rol tiene un peso definido en Config, se usa ese weight.
+        // Si no, el default es 1.0 (comportamiento idéntico al anterior).
+        // Esto permite diferenciar un searcher genérico (weight 1.0) de
+        // uno de arquetipo (weight 0.6) sin cambiar la estructura de roles.
+        const getRoleWeight = (roleName) => {
+            if (!window.ConfigManager) return 1.0;
+            try {
+                const configRoles = ConfigManager.getRoles?.() || {};
+                const rolesArr = Object.values(configRoles);
+                const match = rolesArr.find(r => r.name?.toLowerCase() === roleName.toLowerCase());
+                return (match?.weight > 0) ? match.weight : 1.0;
+            } catch (_) { return 1.0; }
+        };
 
-        // Contribución a Potencia
-        if (roles.some(r => powerRoles.includes(r))) {
-            powerScore += effectiveQty;
-            contributed = true;
-        }
-
-        // Contribución a Resiliencia (negadoras y extensoras van aquí)
-        if (roles.some(r => resilienceRoles.includes(r))) {
-            resilienceScore += effectiveQty;
-            contributed = true;
-        }
+        roles.forEach(r => {
+            const weight = getRoleWeight(r);
+            if (consistencyRoles.includes(r)) consistencyScore += effectiveQty * weight;
+            if (powerRoles.includes(r))       powerScore       += effectiveQty * weight;
+            if (resilienceRoles.includes(r))  resilienceScore  += effectiveQty * weight;
+        });
     }
 
     if (mainCards === 0) mainCards = 1; // evitar división por cero
