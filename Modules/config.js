@@ -350,7 +350,7 @@ const Config = {
         <div class="role-card">
             <div class="role-card-header">
                 <input type="color" value="${cat.color}" title="Color de la categoría"
-                    style="width:50px;height:34px;border:2px solid var(--border-color);border-radius:6px;cursor:pointer;padding:0px;margin-right:3px;background:transparent;"
+                    style="width:36px;height:36px;min-width:36px;border:2px solid var(--border-color);border-radius:6px;cursor:pointer;padding:2px;margin-right:3px;background:transparent;appearance:none;-webkit-appearance:none;"
                     onchange="ConfigManager.updateNomenclatureCategory('${cat.id}',{color:this.value});Config.render()">
                 <input type="text" class="role-name-input" value="${cat.name}"
                     onblur="ConfigManager.updateNomenclatureCategory('${cat.id}',{name:this.value})"

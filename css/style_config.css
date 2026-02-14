@@ -128,7 +128,7 @@
     background: transparent;
     border: 2px solid transparent;
     border-radius: 6px;
-    padding: 6px 10px;
+    padding: 2px 10px;
     transition: all var(--transition-fast);
     outline: none;
 }
@@ -141,8 +141,8 @@
     color: white;
     border: none;
     border-radius: 6px;
-    width: 35px;
-    height: 35px;
+    width: 25px;
+    height: 25px;
     font-size: 1.1rem;
     cursor: pointer;
     transition: all var(--transition-fast);
