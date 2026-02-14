@@ -5333,3 +5333,97 @@ css/style_global.css       → CSS scrollBottomBtn
 css/style_mideck.css       → Layout flex fijo para deck-row
 index.html                 → Agregar <button id="scrollBottomBtn">▼</button>
 ================================================================================
+
+## Mini reporte del Paso 8
+```
+================================================================================
+PASO 8 — ANÁLISIS DEL DECK VS META
+Cómo funciona y qué factores influyen en los resultados
+================================================================================
+
+SECCIÓN: 📊 Análisis del Deck vs Meta
+Aparece en la pestaña Estadísticas, colapsada por defecto.
+Se refresca automáticamente cada vez que se carga un deck en Mi Deck
+o cuando se recalcula el Poder de Cartas.
+
+================================================================================
+COMPONENTES DEL ANÁLISIS
+================================================================================
+
+1. PODER TEÓRICO (Internal Score)
+   Es el Internal Score ya existente del deck. Refleja la calidad interna
+   del deck: consistencia, potencia y resiliencia basadas en roles asignados.
+   No depende del meta, es fijo para ese deck.
+   Fuente: Stats.calculateInternalScore(Deck.cards)
+
+2. PODER VS META (External Score)
+   Refleja qué tan bien sobrevive el deck frente al meta actual.
+   Se calcula así:
+   - Se detectan las especializaciones del deck activo (via SpecialtyAnalyzer)
+   - Se busca en powerScoreCache qué cartas del meta contrarrestan esas specs
+   - Cada carta amenaza aporta: threatLevel = counterBonus × (presencePct / 100)
+   - La suma total de threatLevel se normaliza inversamente a 0–10:
+     externalScore = (1 - min(1, totalThreat / 120)) × 10
+   Resultado: un deck muy amenazado puede tener Internal 8 pero External 2.
+   Requisitos: powerScoreCache calculado + especializaciones configuradas.
+   Sin datos: muestra "—" y un aviso explicativo.
+
+3. CARTAS QUE GOLPEAN ESTE DECK
+   Lista (máx. 8) de cartas del meta que contrarrestan las especializaciones
+   del deck activo, ordenadas por threatLevel descendente.
+   Por cada carta muestra: imagen, nombre, qué especialización contrarresta,
+   presencia en el meta (%) y nivel de amenaza (número).
+
+4. DECKS DEL META QUE MÁS AMENAZAN
+   Cross-reference de las cartas amenaza con el cardFrequency de cada deck
+   del meta. Los decks que más copias de cartas amenaza cargan son los que
+   más puntúan. Se muestran top 5 con carpeta de origen.
+   Requisito: decks importados con cardFrequency (post-Paso 5).
+
+5. STAPLES NO PRESENTES
+   Lista los staples configurados en Config que el deck activo no tiene.
+   Sin priorización — todos se tratan igual. Máximo 6 sugeridos.
+
+================================================================================
+EJEMPLO PRÁCTICO
+================================================================================
+
+Deck activo: "Dragon Link"
+Especialidades detectadas: Dragon × 18, Link × 7
+
+Meta cargado: Febrero 2026 (20 decks)
+
+powerScoreCache detecta en el meta:
+  - "Droll & Lock Bird"   → contrarresta Special Summon (spec de Dragon/Link)
+                          → presencia 85% → counterBonus 45 → threatLevel 38
+  - "Nibiru, the Primal Being" → contrarresta swarm (Dragon Link usa muchas invocaciones)
+                          → presencia 70% → counterBonus 38 → threatLevel 27
+  - "Ash Blossom"         → contrarresta búsqueda (común en Dragon Link)
+                          → presencia 90% → counterBonus 30 → threatLevel 27
+
+totalThreat = 38 + 27 + 27 = 92
+externalScore = (1 - min(1, 92/120)) × 10 = (1 - 0.77) × 10 = 2.3/10
+
+Resultado visible:
+  Poder Teórico: 7.5/10    VS META: 2.3/10
+  "El deck Dragon Link posee un poder teórico de 7.5/10, pero frente al META
+   actual es de 2.3/10 por la presencia de decks como Branded Fusion, Tear
+   Ishiz, Snake-Eye."
+
+Decks que más amenazan: los 5 del meta con más Ash Blossom + Droll + Nibiru
+
+Staples sugeridos: los de Config que no están en el deck
+(Ash Blossom suele ser staple — si no la tiene, aparece aquí como sugerencia)
+
+================================================================================
+FACTORES QUE CAMBIAN LOS RESULTADOS
+================================================================================
+
+- Cambiar el meta (importar nuevos .ydk) → cambia presencePct de cartas amenaza
+- Recalcular ⚡ Poder de Cartas → actualiza counterBonus de todas las cartas
+- Agregar/quitar roles al deck → cambia especializaciones → cambia amenazas
+- Configurar nuevos pares en Config → más cards detectadas como counter
+- Agregar staples a Config → más sugerencias aparecen
+- Cambiar cartas del deck activo → cambia specs → cambia External Score
+
+================================================================================

@@ -356,20 +356,13 @@ calculateExternalScore: function (deckCards, powerScoreCache, metaDecks) {
                 if (!staple || !staple.id) return;
                 if (deckIds.has(String(staple.id))) return;
 
-                // Determinar prioridad: alto si es Trap/QuickEffect (disrupción)
-                const isDisruption = staple.type &&
-                    (staple.type.toLowerCase().includes('trap') ||
-                     staple.type.toLowerCase().includes('quick'));
-
                 result.missingStaples.push({
-                    cardId:    staple.id,
-                    name:      staple.name,
-                    type:      staple.type || '',
-                    priority:  isDisruption ? 2 : 1
+                    cardId: staple.id,
+                    name:   staple.name,
+                    type:   staple.type || ''
                 });
             });
 
-            result.missingStaples.sort((a, b) => b.priority - a.priority);
         } catch (e) {
             console.warn('[ExternalScore] Staples error:', e);
         }

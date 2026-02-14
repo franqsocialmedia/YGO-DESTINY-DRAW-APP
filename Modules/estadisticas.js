@@ -686,11 +686,38 @@ loadPowerScores: async function () {
     try {
         const result = await this.calculatePowerScores();
         this.powerScoreCache = result;
+
+        // Sección principal de poder
         container.innerHTML = this.renderPowerScores(result);
+
+        // Refrescar todas las secciones dependientes del cache
+        this.refreshDependentSections();
+
     } catch (e) {
         container.innerHTML = `<p class="stats-empty">❌ Error al calcular: ${e.message}</p>`;
     } finally {
         this.powerScoreLoading = false;
+    }
+},
+
+// Refresca todas las secciones que dependen de powerScoreCache
+refreshDependentSections: function () {
+    // Counter-Cards del Meta
+    const counterSec = document.getElementById('counter-cards-sec');
+    if (counterSec) {
+        counterSec.innerHTML = this.renderCounterCardStats();
+    }
+
+    // Análisis del Deck vs Meta
+    const analysisSec = document.getElementById('deck-analysis-sec');
+    if (analysisSec) {
+        analysisSec.innerHTML = this.renderDeckAnalysis();
+    }
+
+    // Internal Score + Counter-Deck (usa powerScoreCache para counter bonus)
+    const deckStatsSec = document.getElementById('deck-stats-sec');
+    if (deckStatsSec) {
+        deckStatsSec.innerHTML = this.renderDeckStats();
     }
 },
 
@@ -1000,9 +1027,7 @@ renderDeckAnalysis: function () {
                     <div class="analysis-item-name">${s.name}</div>
                     <div class="analysis-staple-type">${s.type}</div>
                 </div>
-                <span class="analysis-staple-badge ${s.priority >= 2 ? 'badge-disrupt' : 'badge-support'}">
-                    ${s.priority >= 2 ? 'DISRUPCIÓN' : 'SOPORTE'}
-                </span>
+                <span class="analysis-staple-badge badge-support">STAPLE</span>
             </div>`).join('');
     }
 
