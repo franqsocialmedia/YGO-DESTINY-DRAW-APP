@@ -905,20 +905,6 @@ const Estadisticas = {
                </div>`
             : '';
 
-        // --- PÁRRAFO INTRODUCTORIO ---
-        const introText = `
-            <div class="analysis-intro">
-                A continuación encontrarás el poder del deck <strong>${Deck.name}</strong>
-                a nivel técnico y frente al formato del meta actualmente cargado.
-                En <em>Mecánicas detectadas</em> verás las mecánicas de juego que componen el deck
-                y cómo el sistema las identificó. En <em>Cartas que golpean este deck</em>
-                verás qué cartas del meta actual contrarrestan directamente esas mecánicas.
-                En <em>Decks que más amenazan</em> verás qué arquetipos del meta concentran
-                más de esas cartas amenaza. Por último, en <em>Staples sugeridos</em>
-                encontrarás cartas del formato que no tienes en el deck y que podrían
-                ayudarte en el contexto actual.
-            </div>`;
-
         return `
             <div class="deck-analysis-wrap">
                 ${noMetaNote}${noSpecNote}
@@ -963,8 +949,6 @@ const Estadisticas = {
                            <em>${analysis.counterDecks.slice(0,3).map(d=>d.name).join(', ')}</em>.`
                         : '.'}
                 </div>
-
-                ${introText}
 
                 <!-- MECÁNICAS -->
                 <div class="analysis-block">
