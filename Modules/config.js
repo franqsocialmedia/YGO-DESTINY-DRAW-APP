@@ -117,14 +117,6 @@ const Config = {
                         data-original="${roleName}"
                         onblur="Config.renameRole(this)"
                         onkeydown="if(event.key==='Enter')this.blur()">
-                    <label class="role-weight-label" title="Peso de valor: 0.1 = mínimo (arquetípico) · 1.0 = completo (genérico)">
-                        Peso <span class="role-weight-display" id="rw-${roleName}">${ConfigManager.getRoleWeight('${roleName}').toFixed(1)}</span>
-                        <input type="range" class="role-weight-input"
-                            min="0.1" max="1.0" step="0.1"
-                            value="${ConfigManager.getRoleWeight('${roleName}')}"
-                            oninput="document.getElementById('rw-${roleName}').textContent=parseFloat(this.value).toFixed(1)"
-                            onchange="ConfigManager.setRoleWeight('${roleName}', parseFloat(this.value))">
-                    </label>
                     <button class="btn-delete-role" onclick="Config.deleteRole('${roleName}')" title="Eliminar rol">🗑️</button>
                 </div>
                 <div class="role-card-body">
@@ -158,8 +150,19 @@ const Config = {
                             data-role="${roleName}"
                             onkeydown="if(event.key==='Enter')Config.addConditionalFromInput(this)">
                         <button class="btn btn-sm btn-danger" onclick="Config.addConditionalFromInput(this.previousElementSibling)">+ Agregar</button>
+                    
                     </div>
-
+                    <div class="role-weight-row">
+                        <label class="role-weight-label" title="1.0 = genérico (máximo aporte) · 0.1 = arquetípico (aporte reducido)">
+                            Peso del rol
+                            <span class="role-weight-display" id="rw-${roleName}">${ConfigManager.getRoleWeight('${roleName}').toFixed(1)}</span>
+                        </label>
+                        <input type="range" class="role-weight-input"
+                            min="0.1" max="1.0" step="0.1"
+                            value="${ConfigManager.getRoleWeight('${roleName}')}"
+                            oninput="document.getElementById('rw-${roleName}').textContent=parseFloat(this.value).toFixed(1)"
+                            onchange="ConfigManager.setRoleWeight('${roleName}', parseFloat(this.value))">
+                    </div>
                 </div>
             </div>`;
     },
