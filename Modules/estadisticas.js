@@ -3,7 +3,10 @@
    Destiny Draw - Yu-Gi-Oh! App
    Visualizacion de estadisticas y comparacion con meta
    ==================================== */
-
+   
+// VISUAL: "Especialización" renombrado a "Mecánica" para el usuario final.
+// Internamente el código sigue usando specAnalysis, specializations, specBonus, etc.
+// No cambiar los nombres de variables ni claves de objeto — solo los strings visibles.
 const Estadisticas = {
     container: null,
     metaDecks: {},
@@ -123,10 +126,16 @@ const Estadisticas = {
                     cardFrequency[id] = (cardFrequency[id] || 0) + 1;
                 });
                 const deckInfo = {
-                    filename: file.name.replace('.ydk', ''),
+                    filename:        file.name.replace('.ydk', ''),
                     mostFrequentCard: mostFrequentId,
-                    cardCount: deckData.cards.length,
-                    cardFrequency: cardFrequency
+                    cardCount:       deckData.cards.length,
+                    cardFrequency,
+                    // Secciones para poder cargar en Mi Deck
+                    sections: {
+                        main:  deckData.main  || [],
+                        extra: deckData.extra || [],
+                        side:  deckData.side  || []
+                    }
                 };
                 if (!this.metaDecks[folderName]) this.metaDecks[folderName] = [];
                 const existingIndex = this.metaDecks[folderName].findIndex(d => d.filename === deckInfo.filename);
@@ -142,14 +151,33 @@ const Estadisticas = {
     },
 
     parseYDK: function (content) {
-        const lines = content.split('\n').map(l => l.trim()).filter(l => l);
-        const cards = [];
+        const lines   = content.split('\n').map(l => l.trim()).filter(l => l);
+        const cards   = [];   // plano — para cardFrequency (retrocompatible)
+        const main    = [];
+        const extra   = [];
+        const side    = [];
+        let   section = 'main';
+
         for (let line of lines) {
-            if (line.startsWith('#') || line.startsWith('!')) continue;
+            if (line.startsWith('#')) {
+                const l = line.toLowerCase();
+                if (l.includes('extra')) section = 'extra';
+                else if (l.includes('side'))  section = 'side';
+                else                          section = 'main';
+                continue;
+            }
+            if (line.startsWith('!')) { section = 'side'; continue; }
+
             const cardId = line.trim();
-            if (cardId && !isNaN(cardId)) cards.push(cardId);
+            if (cardId && !isNaN(cardId)) {
+                cards.push(cardId);
+                if (section === 'extra')     extra.push(cardId);
+                else if (section === 'side') side.push(cardId);
+                else                         main.push(cardId);
+            }
         }
-        return { cards };
+
+        return { cards, main, extra, side };
     },
 
     getMostFrequentCardId: function (cards) {
@@ -204,7 +232,113 @@ const Estadisticas = {
         });
         return filtered;
     },
+// ===============================
+    // CARGAR DECK DEL META EN MI DECK
+    // Carga el .ydk del meta directamente en la pestaña Mi Deck,
+    // consultando la API para obtener los datos de cada carta.
+    // No requiere que el deck esté guardado en localStorage.
+    // ===============================
+    loadMetaDeckToMiDeck: async function (folderName, deckFilename) {
+        const deckData = (this.metaDecks[folderName] || [])
+            .find(d => d.filename === deckFilename);
+        if (!deckData) return;
 
+        // Fallback para decks importados antes de que sections existiera:
+        // si no tiene sections, trata todo como main
+        const sections = deckData.sections || {
+            main:  Object.keys(deckData.cardFrequency || {}),
+            extra: [],
+            side:  []
+        };
+
+        const allIds = [
+            ...sections.main.map(id => ({ id, loc: 'main' })),
+            ...sections.extra.map(id => ({ id, loc: 'extra' })),
+            ...sections.side.map(id => ({ id, loc: 'side' }))
+        ];
+
+        if (allIds.length === 0) {
+            alert('Este deck no tiene cartas cargadas. Re-importa el .ydk para habilitarlo.');
+            return;
+        }
+
+        // Mostrar loading
+        const loadingEl = document.createElement('div');
+        loadingEl.id = 'meta-deck-loading';
+        loadingEl.style.cssText = `
+            position:fixed;inset:0;background:rgba(0,0,0,0.7);
+            display:flex;align-items:center;justify-content:center;
+            z-index:9999;color:#FFD700;font-size:1.1rem;flex-direction:column;gap:12px;`;
+        loadingEl.innerHTML = `
+            <div class="power-loading-spinner"></div>
+            <span>Cargando ${deckFilename}...</span>`;
+        document.body.appendChild(loadingEl);
+
+        try {
+            const newCards = {};
+
+            // Fetch en lotes de 5 para no saturar la API
+            for (let i = 0; i < allIds.length; i += 5) {
+                const batch = allIds.slice(i, i + 5);
+                await Promise.all(batch.map(async ({ id, loc }) => {
+                    // Si ya lo tenemos en el powerScoreCache, lo usamos directamente
+                    const cached = this.powerScoreCache?.cards
+                        ?.find(c => String(c.cardId) === String(id));
+                    let cardData = cached?.cardData || null;
+
+                    if (!cardData) {
+                        try {
+                            const res  = await fetch(
+                                `https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${id}`
+                            );
+                            const json = await res.json();
+                            cardData   = json.data?.[0] || null;
+                        } catch (_) {}
+                    }
+
+                    if (!cardData) return; // carta no encontrada, la omite
+
+                    // Freq de este id en este deck
+                    const qty = deckData.cardFrequency?.[String(id)] || 1;
+
+                    if (!newCards[id]) {
+                        newCards[id] = {
+                            data:     cardData,
+                            qty,
+                            location: loc,
+                            roles:    []
+                        };
+                    }
+                }));
+            }
+
+            if (Object.keys(newCards).length === 0) {
+                alert('No se pudieron obtener datos de las cartas. Verifica tu conexión.');
+                return;
+            }
+
+            // Cargar en Deck y navegar a Mi Deck
+            if (window.Deck) {
+                // Confirmar si hay deck activo con cartas
+                if (Object.keys(Deck.cards).length > 0) {
+                    const ok = confirm(
+                        `¿Reemplazar el deck activo "${Deck.name}" con "${deckFilename}"?\n` +
+                        `Guarda tu deck primero si no quieres perderlo.`
+                    );
+                    if (!ok) return;
+                }
+                Deck.cards = newCards;
+                Deck.name  = deckFilename;
+                if (Deck.render) Deck.render();
+            }
+
+            if (window.Navigation) Navigation.showTab('mideck');
+
+        } finally {
+            const el = document.getElementById('meta-deck-loading');
+            if (el) el.remove();
+        }
+    },
     // ===============================
     // MODAL VER DECK DEL META
     // ===============================
@@ -338,7 +472,7 @@ const Estadisticas = {
             <div class="counter-deck-card">
                 <div class="counter-deck-header">
                     <div>
-                        <h3>Counter-Deck Score</h3>
+                        <h3>Nivel de poder Anti-META</h3>
                         <div class="counter-deck-level" style="color:${counter.levelColor}">
                             ${counter.level}
                         </div>
@@ -682,7 +816,7 @@ const Estadisticas = {
             const tags      = [
                 card.isCounter ? '<span class="power-tag tag-counter">COUNTER</span>' : '',
                 (card.specAnalysis?.specializations?.length > 0)
-                    ? '<span class="power-tag tag-spec">ESPECIALIZACIÓN</span>' : ''
+                    ? '<span class="power-tag tag-spec">MECÁNICA</span>' : ''
             ].filter(Boolean).join('');
             const breakdown = `Base: ${card.baseScore} | Esp: +${card.specBonus} | Counter: +${card.counterBonus}`;
 
@@ -814,7 +948,7 @@ const Estadisticas = {
             ? analysis.deckSpecs.slice(0, 8).map(s =>
                 `<span class="analysis-spec-tag">${s.name} <em>×${s.count}</em></span>`
               ).join('')
-            : `<span class="analysis-no-data">Sin mecánicas detectadas — configura Especialidades en Config</span>`;
+            : `<span class="analysis-no-data">Sin mecánicas detectadas — configura Mecánicas en Config</span>`;
 
         // --- CARTAS AMENAZA ---
         let threatHTML = '';
@@ -1027,7 +1161,7 @@ const Estadisticas = {
             `  Potencia      : ${stats.power} / 10`,
             `  Resiliencia   : ${stats.resilience} / 10`,
             `External Score  : ${analysis.externalScore !== null ? analysis.externalScore + ' / 10' : 'N/A'}`,
-            `Counter-Deck    : ${counter.finalScore} pts (${counter.level})`,
+            `Anti-META    : ${counter.finalScore} pts (${counter.level})`,
             `Main Deck       : ${stats.mainCards ?? stats.totalCards} cartas`,
         ]);
         txt += section('MECÁNICAS DETECTADAS',
@@ -1189,7 +1323,7 @@ const Estadisticas = {
                 <div class="meta-decks-scroll">
                     ${filteredDecks.length === 0 ? '<p class="stats-empty">No hay decks en esta selección</p>' : ''}
                     ${filteredDecks.map(deck => `
-                        <div class="meta-deck-item" onclick="Estadisticas.viewMetaDeck('${deck.folder}', '${deck.filename}')">
+                        <div class="meta-deck-item" onclick="Estadisticas.loadMetaDeckToMiDeck('${deck.folder}', '${deck.filename}')">
                             <button class="meta-deck-delete"
                                     onclick="event.stopPropagation(); Estadisticas.deleteDeck('${deck.folder}', '${deck.filename}')"
                                     title="Eliminar">X</button>
@@ -1257,7 +1391,7 @@ const Estadisticas = {
                         <div class="export-card-icon">🃏</div>
                         <div class="export-card-title">Reporte del Deck</div>
                         <div class="export-card-desc">
-                            TXT con Internal Score, External Score, Counter-Deck,
+                            TXT con Internal Score, External Score, Anti-META,
                             lista de cartas con roles, amenazas del meta y staples sugeridos.
                         </div>
                         <button class="btn btn-primary export-btn" onclick="Estadisticas.exportDeckReport()">

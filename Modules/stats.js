@@ -10,6 +10,57 @@ const Stats = {
     // CÁLCULO DE INTERNAL SCORE
     // ===============================
     calculateInternalScore: function (cards) {
+        // Mapa de sinónimos: normaliza cualquier forma que el usuario escriba
+// al nombre canónico que el sistema entiende.
+// Acepta español, inglés y formas comunes de escritura.
+const ROLE_SYNONYMS = {
+    // ── CONSISTENCIA ──────────────────────────────────────────
+    'searcher':     ['searcher', 'buscador', 'buscadora', 'search'],
+    'starter':      ['starter', 'iniciador', 'iniciadora', 'inicio',
+                     'arranque', 'openner', 'opener'],
+
+    // ── POTENCIA ──────────────────────────────────────────────
+    'boss monster': ['boss monster', 'boss', 'jefe', 'carta jefe',
+                     'ace monster', 'as', 'finalizadora', 'finalizador',
+                     'cierre', 'closer', 'エース'],
+    'boardbreaker': ['boardbreaker', 'board breaker', 'rompedora',
+                     'rompedor', 'boardbreaker', 'going second',
+                     '破壊'],
+    'booster':      ['booster', 'potenciadora', 'potenciador',
+                     'power boost', 'refuerzo'],
+    'removal':      ['removal', 'remoción', 'removedor', 'removedora',
+                     'eliminador', 'eliminadora', '除去'],
+    'disruption':   ['disruption', 'disrupción', 'disruptora', 'disruptor',
+                     'interrupción', '妨害'],
+
+    // ── RESILIENCIA ───────────────────────────────────────────
+    'negator':      ['negator', 'negadora', 'negador', 'negate',
+                     'negation', 'hand trap', 'handtrap', '無効'],
+    'extender':     ['extender', 'extensora', 'extensor', 'extendedora',
+                     'combo piece', 'combo', '展開'],
+    'recycle':      ['recycle', 'reciclaje', 'recicladora', 'reciclador',
+                     'recovery', 'recuperación', 'recuperadora',
+                     'recursion', '回収'],
+    'undestroyable':['undestroyeble', 'undestroyable', 'indestructible',
+                     'indestructible', '破壊耐性'],
+    'unaffectable': ['unaffectable', 'unaffected', 'inmune', 'inmunidad',
+                     'invulnerable', '効果対象外'],
+    'untargetable': ['untargetable', 'untargeted', 'no seleccionable',
+                     'sin objetivo', '対象耐性'],
+
+    // ── NEUTROS / PENALIZACIÓN ────────────────────────────────
+    'brick':        ['brick', 'ladrillo', 'carta muerta', 'dead card',
+                     'muerta', 'muerto', 'inutilizable', 'dead'],
+};
+
+// Función: convierte cualquier rol del usuario al canónico
+const normalizeRole = (role) => {
+    const r = role.toLowerCase().trim();
+    for (const [canonical, aliases] of Object.entries(ROLE_SYNONYMS)) {
+        if (aliases.includes(r)) return canonical;
+    }
+    return r; // si no hay sinónimo, devuelve tal cual
+};
     // Roles por categoría (ajustados según lógica competitiva)
     const consistencyRoles  = ['searcher', 'starter'];
     const powerRoles        = ['boss monster', 'boardbreaker','booster','removal', 'disruption'];
@@ -31,7 +82,7 @@ const Stats = {
     for (const [, item] of Object.entries(cards)) {
         const loc   = item.location;
         const qty   = item.qty || 1;
-        const roles = (item.roles || []).map(r => r.toLowerCase().trim());
+        const roles = (item.roles || []).map(r => normalizeRole(r));
         const desc  = (item.data?.desc || '').toLowerCase();
 
         if (loc === 'main' || loc === 'extra') totalCards += qty;
@@ -245,11 +296,11 @@ calculateCounterDeckScore: function (cards, powerData) {
 
     // Nivel descriptivo
     let level, levelColor;
-    if (finalScore === 0)       { level = 'Sin Counter';   levelColor = '#636e72'; }
-    else if (finalScore <= 30)  { level = 'Bajo';          levelColor = '#fdcb6e'; }
-    else if (finalScore <= 70)  { level = 'Medio';         levelColor = '#0066cc'; }
-    else if (finalScore <= 120) { level = 'Alto';          levelColor = '#00b894'; }
-    else                        { level = 'Meta Counter';  levelColor = '#ffd700'; }
+   if (finalScore === 0)       { level = 'Sin capacidad Anti-META';  levelColor = '#636e72'; }
+    else if (finalScore <= 30)  { level = 'Anti-META Bajo';           levelColor = '#fdcb6e'; }
+    else if (finalScore <= 70)  { level = 'Anti-META Medio';          levelColor = '#0066cc'; }
+    else if (finalScore <= 120) { level = 'Anti-META Alto';           levelColor = '#00b894'; }
+    else                        { level = '⚡ Anti-META Élite';        levelColor = '#ffd700'; }                    { level = 'Meta Counter';  levelColor = '#ffd700'; }
 
     return {
         finalScore,

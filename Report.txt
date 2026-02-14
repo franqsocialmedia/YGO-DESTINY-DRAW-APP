@@ -6199,3 +6199,17 @@ Los roles ahora tienen un campo de valor de 0.1 a 1.0 que el usuario controla co
 
 Paso 3 — Panel flotante de ayuda
 Un botón ? flotante aparece en todas las pestañas. Al tocarlo abre un panel con dos mini-pestañas: Ayuda (muestra contenido contextual según la pestaña activa donde está el usuario) y FAQ (preguntas frecuentes con acordeón). El HelpPanel detecta la pestaña activa vía Navigation.currentTab y sirve el texto correspondiente. El bloque introductorio que estaba dentro del análisis del deck fue removido de estadisticas.js y su contenido ahora vive en el panel de ayuda bajo la sección de Estadísticas.
+
+==============================================================
+Sistema de sinónimos de roles (stats.js)
+El Internal Score ahora normaliza cualquier nombre de rol escrito por el usuario antes de compararlo contra los pilares. Un usuario que cree el rol "Iniciador", "opener" o "arranque" obtiene exactamente el mismo efecto que "starter". El mapa ROLE_SYNONYMS cubre español, inglés y japonés para todos los roles de consistencia, potencia, resiliencia y brick.
+Renombrado: Counter-Deck Score → Nivel de poder Anti-META (stats.js, estadisticas.js)
+Tanto el label principal como los niveles descriptivos cambiaron. Los niveles ahora son: Sin capacidad Anti-META / Anti-META Bajo / Anti-META Medio / Anti-META Alto / Anti-META Élite. El nombre comunica la dirección correcta: el deck contrarresta al meta, no al revés.
+Favicon de la app (index.html)
+Ícono SVG inline con emoji de carta en fondo azul oscuro. Aparece en la pestaña del navegador sin necesitar archivos externos.
+Carta As (deck.js)
+Rol secreto exclusivo: solo una carta puede tenerlo. Se asigna desde el panel de roles mediante un checkbox independiente. La carta marcada como Carta As se convierte en el thumbnail del deck guardado, con prioridad sobre la carta más repetida. Badge visual dorado ⭐ Carta As en la fila de la carta. assignRoles preserva el rol aunque el usuario no lo vea en los checkboxes normales. removeRoles no lo borra.
+Carga de decks del meta en Mi Deck (estadisticas.js)
+Al hacer click en un deck de la sección "Decks del Meta", en lugar de abrir un modal para comparar, carga las cartas directamente en Mi Deck consultando la API por cada ID. Usa el powerScoreCache como shortcut para cartas ya descargadas. Muestra un spinner durante la carga, confirma antes de reemplazar si hay un deck activo, navega automáticamente a Mi Deck al terminar. parseYDK fue actualizado para preservar las secciones main/extra/side, y processYDKFile las guarda en los datos del deck.
+Renombrado visual: Especialización → Mecánica (estadisticas.js)
+Todos los textos visibles para el usuario usan "Mecánica" en lugar de "Especialización". El código interno (specAnalysis, specializations, specBonus, clases CSS) permanece sin cambios. Se añadió un comentario de código explicando la distinción para futuros mantenedores.
