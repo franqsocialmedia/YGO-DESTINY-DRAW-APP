@@ -152,6 +152,20 @@ const Config = {
                         <button class="btn btn-sm btn-danger" onclick="Config.addConditionalFromInput(this.previousElementSibling)">+ Agregar</button>
                     
                     </div>
+                    <div class="role-nom-filter-row">
+                        <label class="config-label" style="margin-bottom:4px;">
+                            Restringir detección a Nomenclatura
+                            <small style="font-weight:normal;color:rgba(241,241,241,0.45);">
+                                — solo busca keywords dentro de esas oraciones del efecto
+                            </small>
+                        </label>
+                        <select class="role-nom-select"
+                            onchange="ConfigManager.setRoleNomenclatureCategory('${roleName}', this.value)">
+                            ${Config.renderNomCategoryOptions(
+                                (ConfigManager.getRoleCondition('${roleName}') || {}).nomenclatureCategory
+                            )}
+                        </select>
+                    </div>
                     <div class="role-weight-row">
                         <label class="role-weight-label" title="1.0 = genérico (máximo aporte) · 0.1 = arquetípico (aporte reducido)">
                             Peso del rol
@@ -401,7 +415,16 @@ const Config = {
             </div>
         </div>`;
 },
-
+renderNomCategoryOptions: function (selectedId) {
+        const cats = (ConfigManager.getNomenclature().categories || []);
+        const none = `<option value="—" ${!selectedId ? 'selected' : ''}>— Todo el efecto (sin filtro)</option>`;
+        const opts = cats.map(cat =>
+            `<option value="${cat.id}" ${selectedId === cat.id ? 'selected' : ''}>
+                ${cat.name}
+            </option>`
+        ).join('');
+        return none + opts;
+    },
     // ===============================
     // ACCIONES - ROLES
     // ===============================

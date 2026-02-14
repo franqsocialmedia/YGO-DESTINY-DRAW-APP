@@ -453,6 +453,17 @@ getRoleWeight: function (roleName) {
         }
         return false;
     },
+    setRoleNomenclatureCategory: function (roleName, categoryId) {
+        const config = this.getConfig();
+        if (!config.roleConditions) config.roleConditions = {};
+        if (!config.roleConditions[roleName]) {
+            config.roleConditions[roleName] = { conditionals: [], keywords: [] };
+        }
+        // null o '—' = sin filtro (busca en todo el efecto)
+        config.roleConditions[roleName].nomenclatureCategory =
+            (!categoryId || categoryId === '—') ? null : categoryId;
+        this.saveConfig(config);
+    },
 
     removeConditionalFromRole: function (roleName, conditional) {
         const config = this.getConfig();

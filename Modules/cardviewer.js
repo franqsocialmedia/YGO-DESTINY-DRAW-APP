@@ -513,17 +513,32 @@ detectPossibleRoles: function (card) {
         const keywords     = cond.keywords     || [];
         const conditionals = cond.conditionals || [];
 
+        // Determinar el texto donde buscar:
+        // Si el rol tiene nomenclatureCategory definida, buscar SOLO en los
+        // segmentos del efecto clasificados con esa categoría.
+        // Si no (null / '—'), buscar en todo el desc como antes.
+        const nomCatId = cond.nomenclatureCategory || null;
+        let searchText = desc;
+
+        if (nomCatId && window.NomenclatureAnalyzer) {
+            const segments = NomenclatureAnalyzer.analyzeCard(card) || [];
+            const filtered = segments
+                .filter(s => s.category === nomCatId)
+                .map(s => s.text.toLowerCase())
+                .join(' ');
+            // Si la categoría existe pero ningún segmento matchea → no se detecta el rol
+            searchText = filtered || '';
+        }
+
         const kwMatch = keywords.length > 0 &&
-            keywords.some(kw => desc.includes(kw.toLowerCase()));
+            keywords.some(kw => searchText.includes(kw.toLowerCase()));
 
         if (!kwMatch) return;
 
-        // Si hay condicionales, al menos una debe cumplirse también
         if (conditionals.length > 0) {
-            const condMatch = conditionals.some(c => desc.includes(c.toLowerCase()));
+            const condMatch = conditionals.some(c => searchText.includes(c.toLowerCase()));
             if (!condMatch) return;
         }
-
         found.push(roleName);
     });
 
