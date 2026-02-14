@@ -397,8 +397,11 @@ const Estadisticas = {
 
     updateDeckStats: function () {
         const statsSection = document.getElementById('deck-stats-sec');
-        if (statsSection) {
-            statsSection.innerHTML = this.renderDeckStats();
+        if (statsSection) statsSection.innerHTML = this.renderDeckStats();
+
+        const analysisSection = document.getElementById('deck-analysis-sec');
+        if (analysisSection && analysisSection.style.display !== 'none') {
+            analysisSection.innerHTML = this.renderDeckAnalysis();
         }
     },
 
@@ -900,6 +903,196 @@ renderCounterCardStats: function () {
             ${counterCards.length} cartas con función counter detectadas en el meta
         </div>
         <div class="counter-cards-list">${rows}</div>`;
+},// ===============================
+// ANÁLISIS COMPLETO DEL DECK
+// ===============================
+renderDeckAnalysis: function () {
+    if (!Deck || !Deck.cards || Object.keys(Deck.cards).length === 0) {
+        return `<p class="stats-empty">Carga un deck activo para ver el análisis.</p>`;
+    }
+
+    const internalStats   = Stats.calculateInternalScore(Deck.cards);
+    const analysis        = Stats.calculateExternalScore(
+        Deck.cards, this.powerScoreCache, this.metaDecks
+    );
+    const internalScore   = parseFloat(internalStats.internalScore);
+    const externalScore   = analysis.externalScore;
+
+    const iColor = internalScore >= 7 ? '#00b894' : internalScore >= 5 ? '#fdcb6e' : '#d63031';
+    const eColor = externalScore === null ? '#636e72'
+                 : externalScore >= 7 ? '#00b894'
+                 : externalScore >= 4 ? '#fdcb6e' : '#d63031';
+
+    // --- ESPECIALIDADES ---
+    const specsBadges = analysis.deckSpecs.length > 0
+        ? analysis.deckSpecs.slice(0, 8).map(s =>
+            `<span class="analysis-spec-tag">${s.name} <em>×${s.count}</em></span>`
+          ).join('')
+        : `<span class="analysis-no-data">Sin especializaciones detectadas —
+           configura Especialidades en Config</span>`;
+
+    // --- CARTAS AMENAZA ---
+    let threatHTML = '';
+    if (!analysis.hasPowerData) {
+        threatHTML = `<p class="stats-empty">Calcula ⚡ Poder de Cartas para ver amenazas.</p>`;
+    } else if (analysis.threatCards.length === 0) {
+        threatHTML = `<p class="stats-empty">✅ No se detectaron cartas amenaza en el meta actual.</p>`;
+    } else {
+        threatHTML = analysis.threatCards.slice(0, 8).map(c => `
+            <div class="analysis-threat-item">
+                <img class="analysis-card-img"
+                     src="https://images.ygoprodeck.com/images/cards_small/${c.cardId}.jpg"
+                     alt="${c.name}" onerror="this.src='';">
+                <div class="analysis-threat-info">
+                    <div class="analysis-item-name">${c.name}</div>
+                    <div class="analysis-spec-chips">
+                        ${c.countersSpecs.map(s =>
+                            `<span class="analysis-counter-chip">⚡ ${s}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+                <div class="analysis-threat-nums">
+                    <span class="analysis-threat-pct">${c.presencePct}%</span>
+                    <span class="analysis-threat-meta">meta</span>
+                    <span class="analysis-threat-lvl" style="color:#d63031">
+                        ${c.threatLevel} ⚔️
+                    </span>
+                </div>
+            </div>`).join('');
+    }
+
+    // --- DECKS COUNTER ---
+    const medals = ['🥇','🥈','🥉'];
+    let cdecksHTML = '';
+    if (!analysis.hasPowerData || analysis.counterDecks.length === 0) {
+        cdecksHTML = analysis.hasPowerData
+            ? `<p class="stats-empty">✅ Ningún deck del meta detectado como amenaza directa.</p>`
+            : `<p class="stats-empty">Requiere datos de ⚡ Poder de Cartas.</p>`;
+    } else {
+        cdecksHTML = analysis.counterDecks.map((d, i) => `
+            <div class="analysis-cdeck-item">
+                <span class="analysis-cdeck-rank">${i < 3 ? medals[i] : '#'+(i+1)}</span>
+                <div class="analysis-cdeck-info">
+                    <span class="analysis-item-name">${d.name}</span>
+                    <span class="analysis-cdeck-folder">${d.folder}</span>
+                </div>
+                <span class="analysis-cdeck-count">
+                    ${d.unique} cartas amenaza · ${d.copies} copias
+                </span>
+            </div>`).join('');
+    }
+
+    // --- STAPLES SUGERIDOS ---
+    let staplesHTML = '';
+    if (analysis.missingStaples.length === 0) {
+        staplesHTML = `<p class="stats-empty">
+            ${window.ConfigManager
+                ? 'Todos los staples configurados ya están en el deck, o no hay staples guardados en Config.'
+                : 'Configura Staples en la pestaña Config.'}
+        </p>`;
+    } else {
+        staplesHTML = analysis.missingStaples.slice(0, 6).map(s => `
+            <div class="analysis-staple-item">
+                <img class="analysis-card-img"
+                     src="https://images.ygoprodeck.com/images/cards_small/${s.cardId}.jpg"
+                     alt="${s.name}" onerror="this.src='';">
+                <div class="analysis-staple-info">
+                    <div class="analysis-item-name">${s.name}</div>
+                    <div class="analysis-staple-type">${s.type}</div>
+                </div>
+                <span class="analysis-staple-badge ${s.priority >= 2 ? 'badge-disrupt' : 'badge-support'}">
+                    ${s.priority >= 2 ? 'DISRUPCIÓN' : 'SOPORTE'}
+                </span>
+            </div>`).join('');
+    }
+
+    const noMetaNote = !analysis.hasPowerData
+        ? `<div class="analysis-notice">
+               ℹ️ Calcula <strong>⚡ Poder de Cartas</strong> en la sección correspondiente
+               para obtener el External Score y las amenazas específicas del meta.
+           </div>`
+        : '';
+
+    const noSpecNote = analysis.hasPowerData && !analysis.hasSpecData
+        ? `<div class="analysis-notice analysis-notice-warn">
+               ⚠️ No se detectaron especializaciones en este deck. Configura pares de
+               Especialidades en Config para obtener análisis externo preciso.
+           </div>`
+        : '';
+
+    return `
+        <div class="deck-analysis-wrap">
+
+            ${noMetaNote}${noSpecNote}
+
+            <!-- SCORES COMPARATIVOS -->
+            <div class="analysis-scores-row">
+                <div class="analysis-score-box">
+                    <div class="asb-title">Poder Teórico</div>
+                    <div class="asb-value" style="color:${iColor}">${internalScore}</div>
+                    <div class="asb-sub">/ 10</div>
+                    <div class="asb-bar-track">
+                        <div class="asb-bar-fill" style="width:${internalScore*10}%;background:${iColor}"></div>
+                    </div>
+                    <div class="asb-label">Internal Score</div>
+                </div>
+
+                <div class="analysis-vs-divider">
+                    <span>VS</span>
+                    <span class="analysis-vs-meta">META</span>
+                </div>
+
+                <div class="analysis-score-box">
+                    <div class="asb-title">Poder vs Meta</div>
+                    <div class="asb-value" style="color:${eColor}">
+                        ${externalScore !== null ? externalScore : '—'}
+                    </div>
+                    <div class="asb-sub">/ 10</div>
+                    ${externalScore !== null ? `
+                    <div class="asb-bar-track">
+                        <div class="asb-bar-fill" style="width:${externalScore*10}%;background:${eColor}"></div>
+                    </div>` : '<div class="asb-bar-track"></div>'}
+                    <div class="asb-label">External Score</div>
+                </div>
+            </div>
+
+            <!-- VEREDICTO -->
+            <div class="analysis-verdict">
+                El deck <strong>${Deck.name}</strong> posee un poder teórico de
+                <span style="color:${iColor}">${internalScore}/10</span>,
+                pero frente al META actual es de
+                <span style="color:${eColor}">${externalScore !== null ? externalScore+'/10' : 'N/A'}</span>
+                ${analysis.counterDecks.length > 0
+                    ? `por la presencia de decks como
+                       <em>${analysis.counterDecks.slice(0,3).map(d=>d.name).join(', ')}</em>.`
+                    : '.'}
+            </div>
+
+            <!-- ESPECIALIDADES -->
+            <div class="analysis-block">
+                <div class="analysis-block-title">🧬 Especialidades detectadas</div>
+                <div class="analysis-specs-row">${specsBadges}</div>
+            </div>
+
+            <!-- CARTAS QUE GOLPEAN ESTE DECK -->
+            <div class="analysis-block">
+                <div class="analysis-block-title">🎯 Cartas del meta que golpean este deck</div>
+                <div class="analysis-list">${threatHTML}</div>
+            </div>
+
+            <!-- DECKS QUE MÁS AMENAZAN -->
+            <div class="analysis-block">
+                <div class="analysis-block-title">⚔️ Decks del meta que más amenazan</div>
+                <div class="analysis-list">${cdecksHTML}</div>
+            </div>
+
+            <!-- STAPLES SUGERIDOS -->
+            <div class="analysis-block">
+                <div class="analysis-block-title">💡 Staples del formato no presentes en el deck</div>
+                <div class="analysis-list">${staplesHTML}</div>
+            </div>
+
+        </div>`;
 },
     render: function () {
         if (!this.container) return;
@@ -968,6 +1161,14 @@ renderCounterCardStats: function () {
                 </div>
             </div>
         `;
+        html += `
+    <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('deck-analysis-sec')">
+        📊 Análisis del Deck vs Meta
+    </h3>
+    <div id="deck-analysis-sec" class="stats-section" style="display:none;">
+        ${this.renderDeckAnalysis()}
+    </div>
+`;
 html += `
     <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('meta-card-stats-sec')">
         Recurrencia de Cartas en el Meta

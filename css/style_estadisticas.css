@@ -999,6 +999,335 @@
     border-radius: 50%;
 }
 /* ====================================
+   ANÁLISIS DEL DECK VS META
+   ==================================== */
+
+.deck-analysis-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.analysis-notice {
+    background: rgba(0, 102, 204, 0.15);
+    border-left: 3px solid var(--accent-color);
+    border-radius: 6px;
+    padding: var(--spacing-sm);
+    font-size: 0.88rem;
+    color: rgba(241,241,241,0.8);
+}
+
+.analysis-notice-warn {
+    background: rgba(253, 203, 110, 0.12);
+    border-left-color: var(--warning-color);
+    color: var(--warning-color);
+}
+
+/* Fila de scores comparativos */
+.analysis-scores-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    background: var(--bg-dark);
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+}
+
+.analysis-score-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.asb-title {
+    font-size: 0.75rem;
+    color: rgba(241,241,241,0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.asb-value {
+    font-size: 2.6rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.asb-sub {
+    font-size: 0.75rem;
+    color: rgba(241,241,241,0.4);
+}
+
+.asb-bar-track {
+    width: 100%;
+    height: 8px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.asb-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.7s ease;
+}
+
+.asb-label {
+    font-size: 0.72rem;
+    color: rgba(241,241,241,0.4);
+}
+
+.analysis-vs-divider {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.analysis-vs-divider span:first-child {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--gold-color);
+}
+
+.analysis-vs-meta {
+    font-size: 0.65rem;
+    color: rgba(241,241,241,0.45);
+    letter-spacing: 1px;
+}
+
+/* Veredicto */
+.analysis-verdict {
+    background: rgba(0, 51, 102, 0.4);
+    border-radius: 8px;
+    padding: var(--spacing-sm);
+    font-size: 0.9rem;
+    color: rgba(241,241,241,0.85);
+    line-height: 1.6;
+    border-left: 3px solid var(--gold-color);
+}
+
+/* Bloque genérico de sección */
+.analysis-block {
+    background: var(--bg-dark);
+    border-radius: 10px;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--border-color);
+}
+
+.analysis-block-title {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--gold-color);
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255,215,0,0.2);
+}
+
+/* Especialidades */
+.analysis-specs-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.analysis-spec-tag {
+    background: rgba(0,102,204,0.25);
+    border: 1px solid var(--accent-color);
+    color: #74b9ff;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+}
+
+.analysis-spec-tag em {
+    font-style: normal;
+    color: rgba(241,241,241,0.5);
+    margin-left: 3px;
+}
+
+.analysis-no-data {
+    font-size: 0.82rem;
+    color: rgba(241,241,241,0.4);
+    font-style: italic;
+}
+
+/* Lista genérica (amenazas, decks, staples) */
+.analysis-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Imagen común de carta */
+.analysis-card-img {
+    width: 40px;
+    min-width: 40px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.analysis-item-name {
+    font-weight: bold;
+    font-size: 0.88rem;
+    color: var(--text-light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Cartas amenaza */
+.analysis-threat-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 8px;
+    background: rgba(214, 48, 49, 0.08);
+    border-radius: 8px;
+    border: 1px solid rgba(214,48,49,0.25);
+}
+
+.analysis-threat-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.analysis-spec-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 3px;
+}
+
+.analysis-counter-chip {
+    font-size: 0.68rem;
+    background: rgba(214,48,49,0.2);
+    color: #ff7675;
+    border: 1px solid rgba(214,48,49,0.4);
+    border-radius: 8px;
+    padding: 1px 6px;
+}
+
+.analysis-threat-nums {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.analysis-threat-pct {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--text-light);
+}
+
+.analysis-threat-meta {
+    font-size: 0.65rem;
+    color: rgba(241,241,241,0.4);
+}
+
+.analysis-threat-lvl {
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* Decks counter */
+.analysis-cdeck-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 8px;
+    background: rgba(0,51,102,0.4);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.analysis-cdeck-rank {
+    min-width: 28px;
+    text-align: center;
+    font-size: 1rem;
+}
+
+.analysis-cdeck-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.analysis-cdeck-folder {
+    font-size: 0.72rem;
+    color: rgba(241,241,241,0.45);
+}
+
+.analysis-cdeck-count {
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    color: rgba(241,241,241,0.6);
+    text-align: right;
+}
+
+/* Staples sugeridos */
+.analysis-staple-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 8px;
+    background: rgba(0, 184, 148, 0.08);
+    border-radius: 8px;
+    border: 1px solid rgba(0,184,148,0.25);
+}
+
+.analysis-staple-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.analysis-staple-type {
+    font-size: 0.72rem;
+    color: rgba(241,241,241,0.45);
+    margin-top: 2px;
+}
+
+.analysis-staple-badge {
+    flex-shrink: 0;
+    font-size: 0.65rem;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 0.4px;
+}
+
+.badge-disrupt {
+    background: rgba(214,48,49,0.2);
+    color: #ff7675;
+    border: 1px solid #d63031;
+}
+
+.badge-support {
+    background: rgba(0,184,148,0.2);
+    color: #55efc4;
+    border: 1px solid #00b894;
+}
+
+@media (max-width: 768px) {
+    .analysis-scores-row { gap: var(--spacing-sm); padding: var(--spacing-sm); }
+    .asb-value { font-size: 2rem; }
+    .analysis-cdeck-count { display: none; }
+}
+
+@media (max-width: 480px) {
+    .analysis-scores-row { flex-wrap: wrap; }
+    .analysis-vs-divider { flex-direction: row; gap: 6px; }
+    .analysis-score-box { min-width: 40%; }
+}
+/* ====================================
    RESPONSIVE
    ==================================== */
 
