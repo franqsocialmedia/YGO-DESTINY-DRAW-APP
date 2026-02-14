@@ -891,7 +891,69 @@
 .widget-deck-list::-webkit-scrollbar-thumb:hover {
     background: #5dade2;
 }
+/* ====================================
+   BLOQUE DE ESTADÍSTICAS DEL DECK
+   ==================================== */
 
+.deck-stats-block {
+    background: var(--bg-card);
+    border-radius: 10px;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ds-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.ds-group {
+    flex: 1;
+    min-width: 140px;
+}
+
+.ds-group-title {
+    font-size: 0.72rem;
+    color: var(--gold-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.ds-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.ds-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: rgba(0, 51, 102, 0.4);
+    font-size: 0.78rem;
+    color: rgba(241, 241, 241, 0.8);
+    white-space: nowrap;
+}
+
+.ds-chip strong {
+    color: var(--text-light);
+    font-size: 0.85rem;
+}
+
+@media (max-width: 480px) {
+    .ds-row { flex-direction: column; gap: 8px; }
+    .ds-group { min-width: 0; }
+}
 /* ====================================
    RESPONSIVE
    ==================================== */

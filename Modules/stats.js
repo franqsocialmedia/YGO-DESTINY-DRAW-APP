@@ -10,87 +10,96 @@ const Stats = {
     // CÁLCULO DE INTERNAL SCORE
     // ===============================
     calculateInternalScore: function (cards) {
-        // cards es el objeto de cartas del deck: { id: { data, qty, location, roles } }
-        
-        // Contadores por categoría
-        let consistencyCount = 0;
-        let powerCount = 0;
-        let resilienceCount = 0;
-        
-        let totalCards = 0;
-        let mainCards = 0;
-        
-        for (const [id, item] of Object.entries(cards)) {
-            const roles = item.roles || [];
-            const qty = item.qty || 1;
-            
-            if (item.location === 'main' || item.location === 'extra') {
-                totalCards += qty;
-            }
-            if (item.location === 'main') {
-                mainCards += qty;
-            }
+    // Roles por categoría (ajustados según lógica competitiva)
+    const consistencyRoles  = ['searcher', 'starter'];
+    const powerRoles        = ['boss monster', 'boardbreaker','booster','removal', 'disruption'];
+    const resilienceRoles   = ['negator', 'undestroyeble', 'unaffectable', 'untargetable',
+                               'recycle', 'extender'];
 
-            // Procesar solo cartas del Main y Extra Deck
-            if (item.location !== 'main' && item.location !== 'extra') {
-                continue;
-            }
+    // Palabras de restricción en el texto del efecto
+    const restrictionTerms  = [
+        'per turn', 'per duel', 'next turn',
+        'you can only', 'only once', 'cannot be used'
+    ];
 
-            // Contar roles por categoría (cada carta cuenta según su cantidad)
-            roles.forEach(role => {
-                const roleLower = role.toLowerCase();
+    let consistencyScore = 0;
+    let powerScore       = 0;
+    let resilienceScore  = 0;
+    let mainCards        = 0;
+    let totalCards       = 0;
 
-                // CONSISTENCIA: starter, searcher, draw-engine (suma) - brick (resta)
-                if (roleLower === 'starter' || roleLower === 'searcher' || roleLower === 'draw-engine') {
-                    consistencyCount += qty;
-                }
-                if (roleLower === 'brick') {
-                    consistencyCount -= qty; // Brick RESTA de la consistencia
-                }
+    for (const [, item] of Object.entries(cards)) {
+        const loc   = item.location;
+        const qty   = item.qty || 1;
+        const roles = (item.roles || []).map(r => r.toLowerCase().trim());
+        const desc  = (item.data?.desc || '').toLowerCase();
 
-                // POTENCIA: boss-monster, negater, burner, booster
-                if (roleLower === 'boss monster' || roleLower === 'boss-monster' || 
-                    roleLower === 'negater' || roleLower === 'burner' || roleLower === 'booster') {
-                    powerCount += qty;
-                }
+        if (loc === 'main' || loc === 'extra') totalCards += qty;
+        if (loc !== 'main') continue;
 
-                // RESILIENCIA: extender, recovery, bridge
-                if (roleLower === 'extender' || roleLower === 'recovery' || roleLower === 'bridge') {
-                    resilienceCount += qty;
-                }
-            });
+        mainCards += qty;
+
+        // ¿La carta tiene restricción "once per turn / per duel"?
+        const isRestricted = restrictionTerms.some(t => desc.includes(t));
+
+        // Peso efectivo de copia adicional para cartas restringidas:
+        // La primera copia siempre vale 1.0. Copias extra de una carta
+        // restringida valen 0.35 (son "seguros" en mano pero poco más).
+        const effectiveQty = isRestricted
+            ? 1 + (qty - 1) * 0.5
+            : qty;
+
+        let contributed = false;
+
+        // Contribución a Consistencia
+        if (roles.some(r => consistencyRoles.includes(r))) {
+            consistencyScore += effectiveQty;
+            contributed = true;
         }
 
-        // Calcular componentes del score (escala de 0-10)
-        const consistency = this.calculateComponent(consistencyCount, 12);
-        const power = this.calculateComponent(powerCount, 6);
-        const resilience = this.calculateComponent(resilienceCount, 6);
-
-        // Fórmula del Internal Score
-        let internalScore = (consistency * 0.5) + (power * 0.3) + (resilience * 0.2);
-
-        // Penalización por exceso de cartas (> 45)
-        let penalty = 0;
-        if (mainCards > 45) {
-            penalty = (mainCards - 45) * 0.5;
-            internalScore -= penalty;
+        // Contribución a Potencia
+        if (roles.some(r => powerRoles.includes(r))) {
+            powerScore += effectiveQty;
+            contributed = true;
         }
-        if (internalScore < 0) internalScore = 0;
 
-        return {
-            internalScore: internalScore.toFixed(2),
-            consistency: consistency.toFixed(2),
-            power: power.toFixed(2),
-            resilience: resilience.toFixed(2),
-            totalCards: totalCards,
-            mainCards: mainCards,
-            penalty: penalty.toFixed(2),
-            consistencyCount: consistencyCount,
-            powerCount: powerCount,
-            resilienceCount: resilienceCount
-        };
-    },
+        // Contribución a Resiliencia (negadoras y extensoras van aquí)
+        if (roles.some(r => resilienceRoles.includes(r))) {
+            resilienceScore += effectiveQty;
+            contributed = true;
+        }
+    }
 
+    if (mainCards === 0) mainCards = 1; // evitar división por cero
+
+    // Normalizar cada pilar a 0–10
+    const consistency  = Math.min(10, (consistencyScore  / mainCards) * 15);
+    const power        = Math.min(10, (powerScore         / mainCards) * 20);
+    const resilience   = Math.min(10, (resilienceScore    / mainCards) * 18);
+
+    // Pesos iguales (0.33 cada uno, ~0.99 total)
+    const lucky = 1; // multiplicador de azar — siempre 1, existe como concepto
+    const rawScore = (consistency * 0.33 + power * 0.33 + resilience * 0.33) * lucky;
+
+    // Penalización por exceso en Main Deck
+    let penalty = 0;
+    if (mainCards > 45) {
+        penalty = (mainCards - 45) * 0.5;
+    }
+
+    const internalScore = Math.max(0, rawScore - penalty);
+
+    return {
+        internalScore:    internalScore.toFixed(2),
+        consistency:      consistency.toFixed(2),
+        power:            power.toFixed(2),
+        resilience:       resilience.toFixed(2),
+        totalCards,
+        mainCards,
+        penalty:          penalty.toFixed(2),
+        lucky
+    };
+},
     // ===============================
     // CALCULAR COMPONENTE INDIVIDUAL
     // ===============================
@@ -341,32 +350,55 @@ calculateExternalScore: function (deckCards, powerScoreCache, metaDecks) {
         result.counterDecks = allDecks.slice(0, 5);
     }
 
-    // PASO 5: Staples no presentes en el deck
-    if (window.ConfigManager) {
-        try {
-            const staples   = ConfigManager.getStaples() || {};
-            const deckIds   = new Set(Object.keys(deckCards).map(String));
+    // PASO 5 — Staples inteligentes: prioriza los que hacen counter a las amenazas
+if (window.ConfigManager) {
+    try {
+        const staples   = ConfigManager.getStaples() || {};
+        const deckIds   = new Set(Object.keys(deckCards).map(String));
 
-            // Si tenemos threat cards, priorizar staples contra sus specs
-            const threatSpecNames = new Set(
-                result.threatCards.flatMap(c => c.countersSpecs)
-            );
-
-            Object.values(staples).forEach(staple => {
-                if (!staple || !staple.id) return;
-                if (deckIds.has(String(staple.id))) return;
-
-                result.missingStaples.push({
-                    cardId: staple.id,
-                    name:   staple.name,
-                    type:   staple.type || ''
-                });
+        // Specs de las cartas que ME amenazan (specs del enemigo)
+        const threatEnemySpecs = new Set();
+        result.threatCards.forEach(tc => {
+            (tc.specAnalysis?.specializations || []).forEach(s => {
+                threatEnemySpecs.add(s.name);
             });
+        });
 
-        } catch (e) {
-            console.warn('[ExternalScore] Staples error:', e);
-        }
+        Object.values(staples).forEach(staple => {
+            if (!staple || !staple.id) return;
+            if (deckIds.has(String(staple.id))) return;
+
+            // Buscar en powerScoreCache si esta staple hace counter
+            // a las especialidades de las cartas que me amenazan
+            let isCounterOfThreat = false;
+            if (powerScoreCache) {
+                const cached = powerScoreCache.cards?.find(
+                    c => String(c.cardId) === String(staple.id)
+                );
+                if (cached?.isCounter) {
+                    const countersSpecs = (cached.specAnalysis?.counters || [])
+                        .map(c => c.countersSpec);
+                    isCounterOfThreat = countersSpecs.some(s => threatEnemySpecs.has(s));
+                }
+            }
+
+            result.missingStaples.push({
+                cardId:          staple.id,
+                name:            staple.name,
+                type:            staple.type || '',
+                isCounterOfThreat
+            });
+        });
+
+        // Priorizar staples que hacen counter a las amenazas del deck
+        result.missingStaples.sort((a, b) =>
+            (b.isCounterOfThreat ? 1 : 0) - (a.isCounterOfThreat ? 1 : 0)
+        );
+
+    } catch (e) {
+        console.warn('[ExternalScore] Staples error:', e);
     }
+}
 
     return result;
 },
@@ -495,6 +527,73 @@ calculateExternalScore: function (deckCards, powerScoreCache, metaDecks) {
     }
 
     return result;
+},
+// ===============================
+// PROBABILIDAD DE ENCUENTRO EN META
+// ===============================
+calculateEncounterRate: function (cardId, powerScoreCache, metaDecks) {
+    // avgCopies del meta para esta carta
+    let totalCopies = 0;
+    let deckCount   = 0;
+    let totalMainSizes = 0;
+    let decksWith = 0;
+
+    for (const decks of Object.values(metaDecks || {})) {
+        for (const deck of decks) {
+            if (!deck.cardFrequency) continue;
+            const deckTotal = Object.values(deck.cardFrequency)
+                .reduce((s, c) => s + c, 0);
+            totalMainSizes += deckTotal;
+            deckCount++;
+
+            const copies = deck.cardFrequency[String(cardId)] || 0;
+            if (copies > 0) {
+                totalCopies += copies;
+                decksWith++;
+            }
+        }
+    }
+
+    if (deckCount === 0 || decksWith === 0) return null;
+
+    const avgCopies   = totalCopies / decksWith;
+    const avgDeckSize = totalMainSizes / deckCount;
+    const presencePct = decksWith / deckCount;  // probabilidad de enfrentar un deck que la usa
+
+    // P(ver al menos 1 copia en mano inicial de 5) usando hipergeométrica:
+    // P = 1 - C(deckSize-copies, 5) / C(deckSize, 5)
+    const hypergeometric = (N, K, n) => {
+        // P(X=0) = C(N-K,n) / C(N,n)
+        const comb = (a, b) => {
+            if (b > a) return 0;
+            let r = 1;
+            for (let i = 0; i < b; i++) {
+                r = r * (a - i) / (i + 1);
+            }
+            return r;
+        };
+        return comb(N - K, n) / comb(N, n);
+    };
+
+    const deckSize   = Math.round(avgDeckSize);
+    const copies     = Math.min(Math.round(avgCopies), deckSize);
+    const pZero      = hypergeometric(deckSize, copies, 5); // P(no ver ninguna)
+    const pAtLeastOne = 1 - pZero;
+
+    // Probabilidad ajustada: solo si el oponente lleva ese deck
+    const pAdjusted = pAtLeastOne * presencePct;
+
+    // En 10 duelos esperados, cuántas veces verás esta carta en mano inicial del oponente
+    const encountersIn10 = parseFloat((pAdjusted * 10).toFixed(2));
+
+    return {
+        avgCopies:      parseFloat(avgCopies.toFixed(2)),
+        avgDeckSize:    Math.round(avgDeckSize),
+        presencePct:    Math.round(presencePct * 100),
+        pAtLeastOne:    Math.round(pAtLeastOne * 100),
+        pAdjusted:      Math.round(pAdjusted * 100),
+        encountersIn10
+    };
 }
 };
 

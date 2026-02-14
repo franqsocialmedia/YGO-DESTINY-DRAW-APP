@@ -5929,3 +5929,242 @@ FLUJO COMPLETO PARA ACTIVAR TODO:
   9. 📤 Exportar datos según necesidad
 
 ================================================================================
+## Cómo funciona el sistema de puntuación — de punta a punta
+```
+================================================================================
+CÓMO FUNCIONA: DEL BUSCADOR AL ANÁLISIS DEL META
+Recorrido cronológico de una carta en el sistema
+================================================================================
+
+FASE 1 — BUSCAR Y VER UNA CARTA
+
+Buscas "Ash Blossom & Joyous Spring" en el Buscador.
+La app consulta la API de YGOPRODeck y devuelve el objeto de la carta
+con sus campos: id, name, type, desc, atk, def, attribute, card_images[].
+
+Le das click a la imagen → se abre el CardViewer (panel flotante).
+El CardViewer ejecuta highlightNomenclature(card.desc): divide el
+texto del efecto en párrafos (por "." ";" ":") y colorea cada uno
+según las condiciones de Nomenclatura que configuraste en Config.
+Esto es puramente visual — no afecta ninguna estadística.
+
+────────────────────────────────────────────────────────────────────
+
+FASE 2 — AGREGAR CARTAS AL DECK
+
+Decides agregar 2 copias. Das click al botón (+) dos veces en el
+CardViewer, o usas el botón "Añadir" del buscador.
+
+Internamente:
+  Deck.syncFromViewer(card.id, card, qty)
+  → Deck.cards[id] = { data: card, qty: 2, location: 'main', roles: [] }
+  → Deck.autoAssignRoles(card): revisa el type de la carta y asigna
+    roles automáticos si coincide con las Especialidades configuradas.
+
+La carta queda en Deck.cards{} como objeto en memoria.
+Mientras no guardes, el deck es temporal.
+
+────────────────────────────────────────────────────────────────────
+
+FASE 3 — GUARDAR EL DECK
+
+Vas a Mi Deck → Acciones → Guardar Deck.
+Se escribe en localStorage: "yugioh_deck_NombreDelDeck"
+con la estructura completa { cards, savedAt }.
+
+Si el deck tiene cartas de Extra (Fusion/Synchro/Xyz/Link),
+Deck.isExtraDeckCard() las detecta y les asigna location: 'extra'.
+
+────────────────────────────────────────────────────────────────────
+
+FASE 4 — INTERNAL SCORE (poder interno del deck)
+
+Stats.calculateInternalScore(Deck.cards) recorre todas las cartas
+y clasifica cada una según sus roles asignados:
+
+  CONSISTENCIA (peso 50%):
+    Roles que suman: Buscador, Extensor, Starter
+    → consistencyCount += qty
+    → consistency = min(10, (count / mainCards) × 15)
+    Una carta de rol "Buscador" x3 suma 3 al contador.
+
+  POTENCIA (peso 30%):
+    Roles que suman: Negadora, Rompedora, Finalizadora, Boss
+    → powerCount += qty
+    → power = min(10, (count / mainCards) × 20)
+
+  RESILIENCIA (peso 20%):
+    Roles que suman: Extractor, Protectora, Reciclaje
+    → resilienceCount += qty
+    → resilience = min(10, (count / mainCards) × 18)
+
+  SCORE FINAL:
+    internalScore = consistency×0.5 + power×0.3 + resilience×0.2
+
+  PENALIZACIÓN:
+    Si main > 45 cartas: penalty = (main - 45) × 0.5
+
+Las 2 copias de Ash Blossom con rol "Negadora" suman 2 al powerCount.
+Con 40 cartas en main: power += (2/40) × 20 = 1.0 punto de potencia.
+
+────────────────────────────────────────────────────────────────────
+
+FASE 5 — IMPORTAR DECKS DEL META (.ydk)
+
+Vas a Estadísticas → Gestión de Carpetas → Importar .ydk.
+Para cada archivo, parseYDK() extrae los IDs línea por línea.
+
+Se construye cardFrequency{}: { "14558127": 3, "73642296": 2, ... }
+Este objeto cuenta cuántas veces aparece cada ID en ese deck.
+
+El deck queda en metaDecks{ "Febrero 2026": [{ filename, cardFrequency, ... }] }
+y se persiste en localStorage.
+
+────────────────────────────────────────────────────────────────────
+
+FASE 6 — RECURRENCIA (Paso 5)
+
+calculateMetaCardStats() agrupa todos los decks del meta y suma:
+
+  totalCopies[id] = suma de cardFrequency[id] en todos los decks
+  deckUsage[id]   = en cuántos decks aparece ese id
+  presencePct     = deckUsage / decksWithData × 100
+  avgCopies       = totalCopies / deckUsage
+
+Si Ash Blossom (id: 14558127) aparece en 18 de 20 decks, con 2-3 copias:
+  presencePct = 90%
+  totalCopies = 47
+  avgCopies   = 2.61
+
+────────────────────────────────────────────────────────────────────
+
+FASE 7 — POWER SCORE (Paso 6)
+
+calculatePowerScores() ejecuta 6 pasadas sobre las top 30 cartas:
+
+  PASADA 1 — Base Score (recurrencia pura):
+    baseScore = (presencePct × 0.6) + ((totalCopies/maxCopies) × 100 × 0.4)
+    Ash Blossom: (90×0.6) + ((47/60)×100×0.4) = 54 + 31.3 = 85
+
+  PASADA 2 — Fetch API:
+    Descarga card data completo para cada carta en lotes de 5.
+    SpecialtyAnalyzer.analyzeCard(card) detecta en su texto:
+      specializations: qué mecánicas activa ("Mano Trampa", "Negación")
+      counters: qué specs contrarresta ("contrarresta Búsqueda")
+
+  PASADA 3 — specWeight:
+    Por cada especialización, suma los baseScores de todas las cartas
+    que la tienen: specWeight["Mano Trampa"] = 85 + 72 + 60 = 217
+
+  PASADA 4 — Specialization Bonus:
+    specBonus += (specWeight[spec] / 100) × 15
+    Si Ash tiene "Mano Trampa": specBonus = (217/100)×15 = 32.5 → 33
+    phase2Score = 85 + 33 = 118
+
+  PASADA 5 — Counter Bonus:
+    Para cada spec que Ash Blossom contrarresta (ej: "Búsqueda"):
+      Busca todas las cartas del meta con spec "Búsqueda"
+      Suma sus phase2Scores: 118 + 95 + 80 = 293
+      counterBonus += round(293 × 0.4) = 117
+    isCounter = true
+
+  PASADA 6 — Multiplicador de copias:
+    multi = clamp(avgCopies/3, 0.33, 1.0) = clamp(2.61/3, ...) = 0.87
+    powerScore = round((85+33+117) × 0.87) = round(235 × 0.87) = 205
+
+Ash Blossom queda en el ranking con: 205 pts, tag COUNTER, tag ESPECIALIZACIÓN.
+
+────────────────────────────────────────────────────────────────────
+
+FASE 8 — COUNTER-DECK SCORE (Paso 7)
+
+Stats.calculateCounterDeckScore(Deck.cards, powerScoreCache):
+
+Tu deck tiene 2×Ash Blossom (counterBonus=117) y 1×Ghost Ogre (counterBonus=88).
+
+  rawCounter = 117×2 + 88×1 = 322
+
+Si tienes 2 cartas con rol Brick en un deck de 40:
+  brickRatio = 2/40 = 0.05
+  brickPenalty = 322 × 0.05 × 0.6 = 9.66 → 10
+
+  finalScore = 322 - 10 = 312 → nivel "Meta Counter"
+
+────────────────────────────────────────────────────────────────────
+
+FASE 9 — EXTERNAL SCORE Y ANÁLISIS (Paso 8)
+
+Stats.calculateExternalScore(Deck.cards, powerScoreCache, metaDecks):
+
+Tu deck "Dragon Link" tiene specs: Dragon×18, Link×7.
+
+En powerScoreCache, busca cartas con isCounter cuyas countersSpecs
+coincidan con Dragon o Link:
+  Ash Blossom contrarresta "Búsqueda" (Dragon Link busca mucho)
+    → threatLevel = 117 × (90/100) = 105
+  Nibiru contrarresta "Swarm" (Dragon Link invoca mucho)
+    → threatLevel = 95 × (70/100) = 66.5 → 67
+  Droll & Lock Bird contrarresta "Búsqueda en cadena"
+    → threatLevel = 88 × (65/100) = 57
+
+totalThreat = 105 + 67 + 57 = 229
+externalScore = (1 - min(1, 229/120)) × 10 = (1 - 1) × 10 = 0.0/10
+
+← Dragon Link está completamente contrarrestado por el meta actual.
+
+Cross-ref con cardFrequency: los decks del meta que más cargan
+Ash+Nibiru+Droll son los que más amenazan a Dragon Link.
+
+Staples sugeridos: los de Config que no están en tu deck.
+Si "Ghost Ogre" está en Config como staple y no la tienes → aparece.
+
+================================================================================
+RELACIÓN ENTRE SECCIONES:
+
+  Buscador → agrega cartas → Deck.cards{}
+  Deck.cards{} → calculateInternalScore() → Internal Score visible en Estadísticas
+  Deck.cards{} + roles → calculateCounterDeckScore() → Counter-Deck Score
+  .ydk importados → cardFrequency → calculateMetaCardStats() → Recurrencia
+  Recurrencia → calculatePowerScores() → powerScoreCache
+  powerScoreCache + Deck.cards{} → calculateExternalScore() → External Score + Análisis
+  powerScoreCache.cards[isCounter] → renderCounterCardStats() → Counter-Cards del Meta
+
+  TODOS los cálculos son locales y sincrónicos salvo calculatePowerScores()
+  que necesita la API para obtener card data y correr SpecialtyAnalyzer.
+  Una vez calculado y cacheado, el resto funciona sin internet.
+
+================================================================================
+
+ANALISIS OBJETIVO DE LA PARTE LOGICA DE LA APP:
+
+================================================================================
+
+¿Por qué una carta es "Counter" vs "Especialización"?
+Una Especialización es cuando una carta hace algo que encaja con un patrón de juego particular. Por ejemplo, si una carta busca otra carta del deck, eso es "búsqueda", un patrón. El sistema detecta ese patrón en el texto del efecto y etiqueta a la carta con esa especialización. Es descriptivo: dice qué hace la carta.
+Un Counter es cuando una carta interrumpe o anula lo que hace una especialización. Si "búsqueda" es una especialización, entonces una carta que diga "cuando tu oponente agrega una carta desde el deck a la mano, puedes..." es un counter de "búsqueda". Es reactivo: dice a qué se opone la carta.
+La diferencia es dirección: la especialización empuja hacia adelante, el counter empuja hacia atrás.
+
+¿Los staples actuales consideran hacerle counter a los counters del meta?
+No actualmente. Hoy el sistema simplemente lista los staples de Config que no están en tu deck, sin importar si son relevantes para el meta. Para hacer "counter de los counters" habría que: identificar qué specs tienen las cartas que te amenazan (las threat cards), luego buscar en tus staples cuáles hacen counter a esas specs. Sí es implementable. Lo agrego al código abajo.
+
+Opinión honesta sobre el sistema de puntuación:
+El sistema tiene lógica sólida como punto de partida, pero tiene algunas fricciones con la realidad competitiva de Yu-Gi-Oh:
+Lo que funciona bien: La recurrencia como base de poder es correcta. Una carta que aparece en el 90% de los decks del meta claramente es poderosa. El multiplicador de copias (llevar 3 pesa más que llevar 1) es realista. El counter bonus elevado por presencia del amenazado también es coherente.
+Lo que choca con la realidad:
+Primero, el External Score tiene un baseline fijo de 120 para normalizar el threat. Ese número es arbitrario y hace que el score dependa más del número de decks importados que de la amenaza real. Si importas 5 decks el score es diferente que si importas 50. En competitivo real, la representación de un deck en torneos sí importa, pero debería normalizarse relativo al total de decks, no a un número fijo.
+Segundo, el Internal Score actual no distingue entre un "Buscador genérico" y un "Buscador de motor específico". En Yu-Gi-Oh competitivo, una carta que busca cualquier cosa de tu deck vale mucho más que una que solo busca una carta específica del arquetipo. Ambas recibirían el mismo puntaje aquí.
+Tercero, la resiliencia tal como está mide más "capacidad de prolongar el juego" que la definición competitiva real, que es "qué tan bien sobrevive el deck a que le rompan las piezas clave". Un deck resiliente en torneos es uno que puede ganar incluso si le niegán el turno 1.
+Cuarto, el specAnalysis actualmente se basa en palabras del texto del efecto. Yu-Gi-Oh tiene efectos muy complejos con condiciones anidadas donde la misma frase puede significar cosas muy distintas en contexto. Eso genera falsos positivos y falsos negativos.
+Qué lo haría más objetivo: Lo más cercano a la realidad sería incorporar datos reales de torneos (porcentaje de victorias por deck, no solo presencia en meta), pero eso requeriría una fuente externa de datos. Sin eso, la mejor mejora sería ponderar el External Score relativo al porcentaje de decks del meta que te amenazan sobre el total, en lugar del baseline fijo. Y separar la detección de specs en dos niveles: efecto de motor (muy valioso) vs efecto de apoyo (moderadamente valioso).
+
+External Score con baseline relativo: En lugar de dividir el threat total entre 120 (fijo), lo divides entre el "threat máximo teórico posible" que sería si todas las cartas del meta te amenazaran al 100%. Eso se calcula como: suma de counterBonus de todas las cartas del meta que son counters × 1.0 (presencia máxima). Así si el meta actual genera un threat máximo de 800, tu 229 representa un 28.6% del peor caso posible, no del arbitrario 120. El score sería siempre relativo a cuán amenazante ES ese meta específico.
+Internal Score con niveles de roles: Lo más natural y fácil de mantener es que cada rol lleve un "peso" numérico en lugar de simplemente estar o no estar. Por ejemplo en ConfigManager, cada rol podría tener { name: "Buscador", weight: 1.0 } o { name: "Buscador Arquetípico", weight: 0.5 }. Al calcular el score, en lugar de efectiveQty se multiplica por el weight del rol. Así un buscador genérico aporta 1.0 y uno de arquetipo 0.5. El usuario puede ajustarlo desde Config sin tocar código.
+Efectos de motor vs efectos de apoyo: En Yu-Gi-Oh los efectos de "motor" son los que generan acciones directamente (buscar, invocar especialmente, generar plusses). Los de "apoyo" facilitan o potencian pero no generan valor por sí solos. Ejemplo: "Reinforcement of the Army" busca cualquier Warrior del deck → es motor, genera +1 directo. "Equip Spell" que da ATK a un monstruo ya en campo → es apoyo, no genera nada nuevo. La distinción sirve para que el sistema no trate igual una carta que activamente hace cosas con una que solo mejora lo que ya tienes.
+
+External Score baseline relativo: En lugar de BASELINE = 120 fijo, calculas el "máximo threat posible" del meta actual sumando counterBonus × 1.0 de todas las cartas que tienen isCounter = true en el powerScoreCache. Ese total se convierte en tu denominador. Resultado: si el meta tiene pocas counters, el denominador es pequeño y el score baja más rápido. Si el meta es muy agresivo, el denominador crece y te protege de scores de 0 permanentes.
+Internal Score con niveles de roles: Lo más natural y fácil de mantener es que cada rol tenga un campo weight numérico en ConfigManager. Así: { name: "Buscador", weight: 1.0 } o { name: "Buscador Arquetípico", weight: 0.5 }. El calculateInternalScore ya no suma effectiveQty sino effectiveQty × role.weight. El usuario ajusta el peso desde Config sin tocar código.
+Efectos de motor vs apoyo: Motor = genera ventaja directa por sí sola. Apoyo = mejora lo que ya tienes pero no genera nada nuevo. Ejemplo concreto: "Reinforcement of the Army" añade un Warrior desde tu deck a tu mano — eso es motor, generó +1. "Axe of Despair" da 1000 ATK a un monstruo ya en campo — eso es apoyo, no generaste nada nuevo. En código se detectaría buscando en el texto cosas como "add"..."from your deck" para motor vs "gains ATK" para apoyo.
+
+Multi-selección de carpetas: selectedFolder: 'all' → selectedFolders: []. setFolderFilter() ahora hace toggle del array: si la carpeta ya está en el array la quita, si no la agrega. "Todo el Meta" limpia el array. getFilteredDecks() usa el array directamente — si está vacío muestra todos. El <select> fue reemplazado por chips de botones (.folder-chip) con estado activo visual. Cuando hay más de 1 carpeta seleccionada aparece la nota con conteo.
+Análisis del Deck primero: La sección 📊 Análisis del Deck vs Meta ahora es la primera que se renderiza. Arranca expandida (sin display:none). Las demás secciones arrancan colapsadas.
+Párrafo introductorio: Dentro de renderDeckAnalysis(), después del veredicto hay un bloque .analysis-intro con el texto descriptivo de cada sección de la pestaña.

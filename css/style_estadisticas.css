@@ -1395,6 +1395,77 @@
         grid-template-columns: 1fr;
     }
 }
+/* MULTI-FOLDER CHIPS */
+.meta-filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.folder-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-dark);
+    color: rgba(241,241,241,0.7);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.folder-chip:hover {
+    border-color: var(--gold-color);
+    color: var(--text-light);
+}
+
+.folder-chip.chip-active {
+    background: rgba(0, 102, 204, 0.35);
+    border-color: var(--accent-color);
+    color: var(--text-light);
+    font-weight: 600;
+}
+
+.chip-count {
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 1px 6px;
+    font-size: 0.72rem;
+    color: rgba(241,241,241,0.55);
+}
+
+.folder-chip.chip-active .chip-count {
+    background: rgba(255,215,0,0.2);
+    color: var(--gold-color);
+}
+
+.meta-filter-note {
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: var(--gold-color);
+    opacity: 0.8;
+}
+
+@media (max-width: 480px) {
+    .folder-chip { font-size: 0.75rem; padding: 4px 10px; }
+}
+.analysis-intro {
+    background: rgba(0, 51, 102, 0.3);
+    border-radius: 8px;
+    padding: var(--spacing-sm);
+    font-size: 0.85rem;
+    color: rgba(241,241,241,0.7);
+    line-height: 1.7;
+    border-left: 3px solid rgba(255,215,0,0.4);
+    margin-top: var(--spacing-sm);
+}
+
+.analysis-intro strong { color: var(--text-light); }
+.analysis-intro em     { color: var(--gold-color); font-style: normal; }
 /* ====================================
    RESPONSIVE
    ==================================== */

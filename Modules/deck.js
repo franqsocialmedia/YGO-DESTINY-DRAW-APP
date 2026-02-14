@@ -850,7 +850,160 @@ const Deck = {
 
         return html;
     },
+renderDeckStatsBlock: function () {
+    const mainCards  = Object.values(this.cards).filter(c => c.location === 'main');
+    const extraCards = Object.values(this.cards).filter(c => c.location === 'extra');
+    const allCards   = [...mainCards, ...extraCards];
 
+    if (allCards.length === 0) return '';
+
+    // ── Tipos de cartas ──────────────────────────────────────────
+    const cardTypes = {};
+    allCards.forEach(item => {
+        const t = item.data.type || '';
+        const qty = item.qty || 1;
+        if (t.toLowerCase().includes('spell'))       cardTypes['Hechizo']  = (cardTypes['Hechizo']  || 0) + qty;
+        else if (t.toLowerCase().includes('trap'))   cardTypes['Trampa']   = (cardTypes['Trampa']   || 0) + qty;
+        else                                         cardTypes['Monstruo'] = (cardTypes['Monstruo'] || 0) + qty;
+    });
+
+    // ── Atributos de monstruos ───────────────────────────────────
+    const attributes = {};
+    allCards.forEach(item => {
+        const t = item.data.type || '';
+        if (!t.toLowerCase().includes('spell') && !t.toLowerCase().includes('trap')) {
+            const attr = item.data.attribute;
+            if (attr) attributes[attr] = (attributes[attr] || 0) + (item.qty || 1);
+        }
+    });
+
+    // ── Raza/Tipo de monstruos ───────────────────────────────────
+    const races = {};
+    allCards.forEach(item => {
+        const t = item.data.type || '';
+        if (!t.toLowerCase().includes('spell') && !t.toLowerCase().includes('trap')) {
+            const race = item.data.race;
+            if (race) races[race] = (races[race] || 0) + (item.qty || 1);
+        }
+    });
+
+    // ── Niveles / Rangos / Rating Link ───────────────────────────
+    const levels = {};
+    allCards.forEach(item => {
+        const t = (item.data.type || '').toLowerCase();
+        if (t.includes('spell') || t.includes('trap')) return;
+        const qty = item.qty || 1;
+        if (t.includes('link')) {
+            const lv = `Link-${item.data.linkval || '?'}`;
+            levels[lv] = (levels[lv] || 0) + qty;
+        } else if (t.includes('xyz')) {
+            const lv = `Rango ${item.data.level || '?'}`;
+            levels[lv] = (levels[lv] || 0) + qty;
+        } else if (item.data.level) {
+            const lv = `Nivel ${item.data.level}`;
+            levels[lv] = (levels[lv] || 0) + qty;
+        }
+    });
+
+    // ── Tipos secundarios ────────────────────────────────────────
+    const secondaryTypes = {};
+    allCards.forEach(item => {
+        const t = (item.data.type || '').toLowerCase();
+        if (t.includes('spell') || t.includes('trap')) return;
+        const qty = item.qty || 1;
+        const detected = this.detectSubtypes(item.data);
+        detected.forEach(st => {
+            secondaryTypes[st] = (secondaryTypes[st] || 0) + qty;
+        });
+    });
+
+    // ── Subtipos de Hechizos ─────────────────────────────────────
+    const spellTypes = {};
+    const spellSubtypeMap = {
+        'Quick-Play': 'Juego Rápido', 'Continuous': 'Continuo',
+        'Field': 'Campo', 'Equip': 'Equipo', 'Ritual': 'Ritual'
+    };
+    allCards.forEach(item => {
+        const t = item.data.type || '';
+        if (!t.toLowerCase().includes('spell')) return;
+        const qty = item.qty || 1;
+        let matched = false;
+        for (const [key, label] of Object.entries(spellSubtypeMap)) {
+            if (t.includes(key)) {
+                spellTypes[label] = (spellTypes[label] || 0) + qty;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) spellTypes['Normal'] = (spellTypes['Normal'] || 0) + qty;
+    });
+
+    // ── Subtipos de Trampas ──────────────────────────────────────
+    const trapTypes = {};
+    const trapSubtypeMap = {
+        'Counter': 'Counter', 'Continuous': 'Continua'
+    };
+    allCards.forEach(item => {
+        const t = item.data.type || '';
+        if (!t.toLowerCase().includes('trap')) return;
+        const qty = item.qty || 1;
+        let matched = false;
+        for (const [key, label] of Object.entries(trapSubtypeMap)) {
+            if (t.includes(key)) {
+                trapTypes[label] = (trapTypes[label] || 0) + qty;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) trapTypes['Normal'] = (trapTypes['Normal'] || 0) + qty;
+    });
+
+    // ── Helper para renderizar filas ─────────────────────────────
+    const renderRow = (obj, colorFn) => Object.entries(obj)
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, v]) => `
+            <span class="ds-chip" style="${colorFn ? colorFn(k) : ''}">
+                ${k} <strong>(${v})</strong>
+            </span>`).join('');
+
+    const attrColors = {
+        'FIRE':'background:rgba(255,80,0,0.25);border-color:#ff5000',
+        'WATER':'background:rgba(0,120,255,0.25);border-color:#0078ff',
+        'EARTH':'background:rgba(140,100,50,0.25);border-color:#8c6432',
+        'WIND':'background:rgba(0,200,100,0.25);border-color:#00c864',
+        'LIGHT':'background:rgba(255,220,0,0.25);border-color:#ffdc00',
+        'DARK':'background:rgba(100,0,180,0.25);border-color:#6400b4',
+        'DIVINE':'background:rgba(255,215,0,0.25);border-color:#ffd700'
+    };
+
+    const attrColorFn = k => attrColors[k] || '';
+
+    const group = (title, content) => content
+        ? `<div class="ds-group">
+               <div class="ds-group-title">${title}</div>
+               <div class="ds-chips">${content}</div>
+           </div>`
+        : '';
+
+    return `
+        <div class="deck-stats-block">
+            <div class="ds-row">
+                ${group('Tipo de Cartas', renderRow(cardTypes, null))}
+                ${Object.keys(attributes).length ? group('Atributos', renderRow(attributes, attrColorFn)) : ''}
+            </div>
+            <div class="ds-row">
+                ${Object.keys(races).length ? group('Tipo de Monstruo', renderRow(races, null)) : ''}
+                ${Object.keys(secondaryTypes).length ? group('Tipos Secundarios', renderRow(secondaryTypes, null)) : ''}
+            </div>
+            <div class="ds-row">
+                ${Object.keys(levels).length ? group('Niveles / Rangos / Link', renderRow(levels, null)) : ''}
+            </div>
+            <div class="ds-row">
+                ${Object.keys(spellTypes).length ? group('Subtipos Hechizo', renderRow(spellTypes, null)) : ''}
+                ${Object.keys(trapTypes).length ? group('Subtipos Trampa', renderRow(trapTypes, null)) : ''}
+            </div>
+        </div>`;
+},
     // ===============================
     // RENDER GENERAL
     // ===============================
@@ -877,27 +1030,29 @@ const Deck = {
         if (isEmpty) {
             html += `<p>Abra la seccion de Decks Guardados y elija uno o agregue cartas desde la pestaña Buscador.</p>`;
         } else {
-            html += `
-                <h2 onclick="Deck.openRenamePanel()" class="deck-title">
-                    ${this.name} (${mainC})
-                </h2>
+    html += `
+        <h2 onclick="Deck.openRenamePanel()" class="deck-title">
+            ${this.name} (${mainC})
+        </h2>
 
-                <h3 onclick="Deck.toggleSection('main-sec')">
-                    Main Deck (${mainC})
-                </h3>
-                <div id="main-sec">${this.renderRows('main')}</div>
+        ${this.renderDeckStatsBlock()}
 
-                <h3 onclick="Deck.toggleSection('extra-sec')">
-                    Extra Deck (${extraC})
-                </h3>
-                <div id="extra-sec">${this.renderRows('extra')}</div>
+        <h3 onclick="Deck.toggleSection('main-sec')">
+            🃏 Main Deck (${mainC})
+        </h3>
+        <div id="main-sec">${this.renderRows('main')}</div>
 
-                <h3 onclick="Deck.toggleSection('side-sec')">
-                    Side Deck (${sideC})
-                </h3>
-                <div id="side-sec">${this.renderRows('side')}</div>
-            `;
-        }
+        <h3 onclick="Deck.toggleSection('extra-sec')">
+            🃏 Extra Deck (${extraC})
+        </h3>
+        <div id="extra-sec">${this.renderRows('extra')}</div>
+
+        <h3 onclick="Deck.toggleSection('side-sec')">
+            🃏 Side Deck (${sideC})
+        </h3>
+        <div id="side-sec">${this.renderRows('side')}</div>
+    `;
+}
 
         // SECCIÓN DE ACCIONES - SIEMPRE VISIBLE
         html += `
