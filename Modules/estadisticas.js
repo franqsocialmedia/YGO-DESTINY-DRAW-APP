@@ -3,10 +3,14 @@
    Destiny Draw - Yu-Gi-Oh! App
    Visualizacion de estadisticas y comparacion con meta
    ==================================== */
-   
+
 // VISUAL: "Especialización" renombrado a "Mecánica" para el usuario final.
 // Internamente el código sigue usando specAnalysis, specializations, specBonus, etc.
 // No cambiar los nombres de variables ni claves de objeto — solo los strings visibles.
+
+// VISUAL: "Counter-Deck Score" renombrado a "Nivel de poder Anti-META".
+// Las clases CSS (counter-deck-card, counter-deck-header, etc.) y las
+// variables internas (finalScore, counter, breakdown) no cambian.
 const Estadisticas = {
     container: null,
     metaDecks: {},
@@ -388,7 +392,7 @@ const Estadisticas = {
     },
 
     // ===============================
-    // INTERNAL SCORE Y COUNTER-DECK
+    // INTERNAL SCORE Y Anti-META
     // ===============================
     renderDeckStats: function () {
         if (!Deck || !Deck.cards || Object.keys(Deck.cards).length === 0) {
@@ -483,13 +487,13 @@ const Estadisticas = {
                     </div>
                 </div>
                 <div class="counter-deck-meta">
-                    <span>${counter.counterCards} cartas con función counter</span>
+                    <span>${counter.counterCards} cartas con capacidad de interrupción al Meta</span>
                     <span>Raw: ${counter.rawCounter} ${counter.brickPenalty > 0 ? `→ -${counter.brickPenalty}` : ''}</span>
                 </div>
                 ${brickNote}
                 ${counter.breakdown.length > 0 ? `
                     <div class="counter-breakdown">
-                        <div class="counter-breakdown-title">Top contribuidoras:</div>
+                        <div class="counter-breakdown-title">Cartas de tu deck que generan este poder:</div>
                         ${breakdownRows}
                     </div>` : ''}
                 ${noPowerNote}
@@ -920,7 +924,7 @@ const Estadisticas = {
 
         return `
             <div class="counter-cards-header">
-                ${counterCards.length} cartas con función counter detectadas en el meta
+                ${counterCards.length} cartas con función counter contra tu Deck detectadas en el meta
             </div>
             <div class="counter-cards-list">${rows}</div>`;
     },

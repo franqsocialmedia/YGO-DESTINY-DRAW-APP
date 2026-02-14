@@ -71,6 +71,8 @@ const CardViewer = {
                         <button id="cv-plus">▶</button>
                     </div>
 
+                   ${this.renderCardContribution(card)}
+
                     <hr>
 
                     <div>
@@ -493,7 +495,168 @@ const CardViewer = {
         const card = window.Buscador.currentCards[index];
         if (!card) return;
         this.open(card);
+    },// ===============================
+// DETECCIÓN DE POSIBLES ROLES
+// Escanea el texto de la carta contra las keywords y condicionales
+// de cada rol definido en Config. Sin Config, devuelve array vacío.
+// ===============================
+detectPossibleRoles: function (card) {
+    if (!window.ConfigManager) return [];
+    const desc   = (card.desc || '').toLowerCase();
+    const type   = (card.type || '').toLowerCase();
+    const roles  = ConfigManager.getRoleNames();
+    const found  = [];
+
+    roles.forEach(roleName => {
+        const cond     = ConfigManager.getRoleCondition(roleName);
+        if (!cond) return;
+        const keywords     = cond.keywords     || [];
+        const conditionals = cond.conditionals || [];
+
+        const kwMatch = keywords.length > 0 &&
+            keywords.some(kw => desc.includes(kw.toLowerCase()));
+
+        if (!kwMatch) return;
+
+        // Si hay condicionales, al menos una debe cumplirse también
+        if (conditionals.length > 0) {
+            const condMatch = conditionals.some(c => desc.includes(c.toLowerCase()));
+            if (!condMatch) return;
+        }
+
+        found.push(roleName);
+    });
+
+    return found;
+},// ===============================
+// APORTE DE LA CARTA AL DECK ACTIVO
+// Calcula qué cambio habría en cada pilar del Internal Score
+// si esta carta fuera añadida al deck con los roles detectados.
+// ===============================
+calculateCardContribution: function (card, detectedRoles) {
+    if (!window.Deck || !window.Stats) return null;
+    if (Object.keys(Deck.cards).length === 0) return null;
+
+    const cardId = String(card.id);
+
+    // Score actual del deck
+    const before = Stats.calculateInternalScore(Deck.cards);
+
+    // Simular deck con la carta añadida (qty 1, main deck)
+    const simCards = { ...Deck.cards };
+    if (simCards[cardId]) {
+        // Ya está en el deck — simular con una copia más
+        simCards[cardId] = {
+            ...simCards[cardId],
+            qty: simCards[cardId].qty + 1
+        };
+    } else {
+        simCards[cardId] = {
+            data:     card,
+            qty:      1,
+            location: 'main',
+            roles:    detectedRoles
+        };
     }
+
+    const after = Stats.calculateInternalScore(simCards);
+
+    const delta = (a, b) => parseFloat((parseFloat(a) - parseFloat(b)).toFixed(2));
+
+    return {
+        consistency: {
+            before: parseFloat(before.consistency),
+            after:  parseFloat(after.consistency),
+            delta:  delta(after.consistency, before.consistency)
+        },
+        power: {
+            before: parseFloat(before.power),
+            after:  parseFloat(after.power),
+            delta:  delta(after.power, before.power)
+        },
+        resilience: {
+            before: parseFloat(before.resilience),
+            after:  parseFloat(after.resilience),
+            delta:  delta(after.resilience, before.resilience)
+        },
+        internalScore: {
+            before: parseFloat(before.internalScore),
+            after:  parseFloat(after.internalScore),
+            delta:  delta(after.internalScore, before.internalScore)
+        }
+    };
+},// ===============================
+// RENDER DEL BLOQUE DE APORTE
+// ===============================
+renderCardContribution: function (card) {
+    const hasDeck = window.Deck && Object.keys(Deck.cards || {}).length > 0;
+    if (!hasDeck) return '';
+
+    const detectedRoles  = this.detectPossibleRoles(card);
+    const contribution   = this.calculateCardContribution(card, detectedRoles);
+
+    // ── Posibles Roles ────────────────────────────────────────
+    const rolesHTML = detectedRoles.length > 0
+        ? detectedRoles.map(r =>
+            `<span class="cv-role-chip">${r} | </span>`).join('')
+        : `<span class="cv-role-none">No se detectaron roles con la configuración actual</span>`;
+
+    // ── Barras de aporte ──────────────────────────────────────
+    let contribHTML = '';
+    if (contribution) {
+        const row = (label, data, color) => {
+            const sign  = data.delta > 0 ? '+' : '';
+            const dColor = data.delta > 0 ? '#00b894'
+                         : data.delta < 0 ? '#d63031' : '#636e72';
+            const pct   = Math.min(100, (data.after / 10) * 100);
+            return `
+                <div class="cv-contrib-row">
+                    <span class="cv-contrib-label">${label}</span>
+                    <div class="cv-contrib-bar-track">
+                        <div class="cv-contrib-bar"
+                             style="width:${pct}%;background:${color};"></div>
+                    </div>
+                    <span class="cv-contrib-val">${data.after.toFixed(1)}</span>
+                    <span class="cv-contrib-delta" style="color:${dColor}">
+                        ${data.delta !== 0 ? sign + data.delta : '—'}
+                    </span>
+                </div>`;
+        };
+
+        const totalSign  = contribution.internalScore.delta > 0 ? '+' : '';
+        const totalColor = contribution.internalScore.delta > 0 ? '#00b894'
+                         : contribution.internalScore.delta < 0 ? '#d63031' : '#636e72';
+
+        contribHTML = `
+            <div class="cv-contrib-grid">
+                ${row('Consistencia:', contribution.consistency,  '#00b894')}
+                ${row('Potencia:',     contribution.power,        '#d63031')}
+                ${row('Resiliencia:',  contribution.resilience,   '#0066cc')}
+            </div>
+            <div class="cv-contrib-total">
+                Internal Score: <strong>${contribution.internalScore.after.toFixed(2)}</strong>
+                <span style="color:${totalColor};margin-left:6px;">
+                    (${totalSign}${contribution.internalScore.delta})
+                </span>
+            </div>`;
+    } else {
+        contribHTML = `<p class="cv-contrib-empty">Agrega roles a las cartas del deck para ver el impacto.</p>`;
+    }
+
+    return `
+        <hr>
+        <div class="cv-contribution-block">
+            <div class="cv-contrib-section-title">🎯 Posibles Roles</div>
+            <div class="cv-roles-row">${rolesHTML}</div>
+
+            <div class="cv-contrib-section-title" style="margin-top:10px;">
+                📊 Aporte al deck activo
+                <span class="cv-deck-name">${Deck.name}</span>
+            </div>
+            ${contribHTML}
+        </div>`;
+}
+    
 };
 
 window.CardViewer = CardViewer;

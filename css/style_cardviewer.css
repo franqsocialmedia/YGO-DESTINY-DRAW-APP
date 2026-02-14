@@ -57,3 +57,89 @@
     border: none;
     cursor: pointer;
 }
+/* ── Aporte de la carta ────────────────────────────────── */
+.cv-contribution-block {
+    padding: 4px 0;
+}
+.cv-contrib-section-title {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #FFD700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.cv-deck-name {
+    font-weight: normal;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.5);
+}
+.cv-roles-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 4px;
+}
+.cv-role-chip {
+    background: rgba(0,51,102,0.7);
+    border: 1px solid rgba(255,215,0,0.3);
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 0.75rem;
+    color: #f1f1f1;
+}
+.cv-role-none {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.35);
+    font-style: italic;
+}
+.cv-contrib-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+.cv-contrib-row {
+    display: grid;
+    grid-template-columns: 90px 1fr 36px 36px;
+    align-items: center;
+    gap: 6px;
+}
+.cv-contrib-label {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.65);
+}
+.cv-contrib-bar-track {
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.cv-contrib-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+.cv-contrib-val {
+    font-size: 0.75rem;
+    color: #f1f1f1;
+    text-align: right;
+}
+.cv-contrib-delta {
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-align: right;
+}
+.cv-contrib-total {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.65);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 6px;
+}
+.cv-contrib-empty {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.35);
+    font-style: italic;
+    margin: 4px 0;
+}
