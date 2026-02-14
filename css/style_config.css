@@ -660,6 +660,13 @@
     width: 80px;
     accent-color: var(--gold-color);
     cursor: pointer;
+}.role-weight-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
 }
 
 /* ====================================

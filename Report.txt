@@ -6190,3 +6190,12 @@ Paso 7: La seccion de "Poder de cartas del Meta" es algo confuso porque solo da 
 Paso 8: El Counter-Deck Score no es claro a que se refiere. A si el Meta es counteriado por esos puntos delante del deck o es el deck counter del meta con esos puntos. Igual el "Top contribuidoras" no se si se refiere a que esas cartas en el deck ayudan al deck o son amenazas para el mismo. 
 
 Paso 9: Revisar toda la pestaña: Estadisticas. Porque necesito que toda la info se actualice segun el filtro del Meta seleccionado. Porque veo que el Poder vs el Meta y otras secciones mas siguen considerando a "all" (meta) aunque yo seleccione una o dos fechas especificas. Y eso no es conveniente porque arruina la function de analisis contra el meta seleccionado (y no necesariamente con todos).
+
+==========================================================================================
+
+Mini reporte — Pasos 2 y 3
+Paso 2 — Sistema de peso de roles
+Los roles ahora tienen un campo de valor de 0.1 a 1.0 que el usuario controla con un slider desde Config. Un rol con peso 1.0 aporta el 100% de su valor al pilar del Internal Score (ideal para roles genéricos: un Searcher que busca cualquier cosa). Un rol con peso 0.5 aporta la mitad (ideal para roles arquetípicos: un Searcher que solo busca cartas de tu arquetipo específico). La lógica vive en configmanager.js (getRoleWeight, setRoleWeight), se lee en stats.js al calcular el Internal Score, y se migra automáticamente cuando renombras o eliminas un rol.
+
+Paso 3 — Panel flotante de ayuda
+Un botón ? flotante aparece en todas las pestañas. Al tocarlo abre un panel con dos mini-pestañas: Ayuda (muestra contenido contextual según la pestaña activa donde está el usuario) y FAQ (preguntas frecuentes con acordeón). El HelpPanel detecta la pestaña activa vía Navigation.currentTab y sirve el texto correspondiente. El bloque introductorio que estaba dentro del análisis del deck fue removido de estadisticas.js y su contenido ahora vive en el panel de ayuda bajo la sección de Estadísticas.
