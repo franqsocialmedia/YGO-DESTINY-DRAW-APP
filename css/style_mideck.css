@@ -954,6 +954,37 @@
     .ds-row { flex-direction: column; gap: 8px; }
     .ds-group { min-width: 0; }
 }
+.role-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+.role-panel-header h3 { margin: 0; }
+
+.carta-as-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--gold-color);
+    cursor: pointer;
+    font-weight: bold;
+    -webkit-user-select: none;
+}
+.carta-as-toggle input[type="checkbox"] {
+    accent-color: var(--gold-color);
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+/* Badge en la carta row */
+.role-badge.badge-carta-as {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+    font-weight: bold;
+}
 /* ====================================
    RESPONSIVE
    ==================================== */

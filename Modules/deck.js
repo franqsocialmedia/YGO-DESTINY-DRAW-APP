@@ -324,9 +324,20 @@ const Deck = {
             `;
         });
 
+        const isCartaAs = this.getCartaAs() === String(id);
+
         overlay.innerHTML = `
             <div class="deck-modal">
-                <h3>Asignar Roles</h3>
+                <div class="role-panel-header">
+                    <h3>Asignar Roles</h3>
+                    <label class="carta-as-toggle" title="Marcar como carta insignia del deck">
+                        <input type="checkbox"
+                            id="carta-as-checkbox"
+                            ${isCartaAs ? 'checked' : ''}
+                            onchange="Deck.setCartaAs(this.checked ? '${id}' : null);">
+                        ⭐ Carta As
+                    </label>
+                </div>
                 <p class="deck-modal-highlight">${item.data.name}</p>
                 <div class="role-checkboxes">
                     ${checkboxesHTML}
@@ -349,7 +360,11 @@ const Deck = {
         const checkboxes = document.querySelectorAll('.role-checkbox:checked');
         const selectedRoles = Array.from(checkboxes).map(cb => cb.value);
 
+        // Preservar "Carta As" — no es un checkbox normal del panel
+        const hadCartaAs = item.roles?.includes('Carta As');
         item.roles = selectedRoles;
+        if (hadCartaAs) item.roles.push('Carta As');
+
         this.closeModal();
         this.render();
     },
@@ -646,9 +661,14 @@ const Deck = {
         let html = '<div class="deck-list-grid">';
 
         savedDecks.forEach(deck => {
-            const mostRepeatedCard = this.getMostRepeatedCard(deck.cards);
+            // Carta As tiene prioridad sobre la más repetida
+            const cartaAsCard = Object.values(deck.cards)
+                .find(c => c.roles?.includes('Carta As'));
+            const mostRepeatedCard = cartaAsCard || this.getMostRepeatedCard(deck.cards);
             const imgUrl = mostRepeatedCard 
-                ? mostRepeatedCard.card_images[0].image_url_small 
+                ? mostRepeatedCard.data
+                    ? mostRepeatedCard.data.card_images[0].image_url_small
+                    : mostRepeatedCard.card_images[0].image_url_small
                 : 'https://images.ygoprodeck.com/images/cards/6983839.jpg';
 
             const mainCount = Object.values(deck.cards)
@@ -803,11 +823,15 @@ const Deck = {
                 subtypesBadges += `<span class="subtype-badge">${subtype}</span>`;
             });
 
-            // Generar badges de ROLES (normales)
+            // Generar badges de ROLES (Carta As con estilo especial)
             let rolesBadges = '';
             if (item.roles && item.roles.length > 0) {
                 item.roles.forEach(role => {
-                    rolesBadges += `<span class="role-badge">${role}</span>`;
+                    if (role === 'Carta As') {
+                        rolesBadges += `<span class="role-badge badge-carta-as">⭐ Carta As</span>`;
+                    } else {
+                        rolesBadges += `<span class="role-badge">${role}</span>`;
+                    }
                 });
             }
 
@@ -1003,6 +1027,28 @@ renderDeckStatsBlock: function () {
                 ${Object.keys(trapTypes).length ? group('Subtipos Trampa', renderRow(trapTypes, null)) : ''}
             </div>
         </div>`;
+},// ===============================
+// CARTA AS
+// ===============================
+setCartaAs: function (cardId) {
+    // Quitar "Carta As" de cualquier carta que lo tenga
+    for (const [id, item] of Object.entries(this.cards)) {
+        if (item.roles && item.roles.includes('Carta As')) {
+            this.cards[id].roles = item.roles.filter(r => r !== 'Carta As');
+        }
+    }
+    // Asignar al nuevo si se pasó un id (null = solo quitar)
+    if (cardId && this.cards[cardId]) {
+        if (!this.cards[cardId].roles) this.cards[cardId].roles = [];
+        this.cards[cardId].roles.push('Carta As');
+    }
+},
+
+getCartaAs: function () {
+    for (const [id, item] of Object.entries(this.cards)) {
+        if (item.roles?.includes('Carta As')) return id;
+    }
+    return null;
 },
     // ===============================
     // RENDER GENERAL
