@@ -6201,6 +6201,7 @@ Paso 3 — Panel flotante de ayuda
 Un botón ? flotante aparece en todas las pestañas. Al tocarlo abre un panel con dos mini-pestañas: Ayuda (muestra contenido contextual según la pestaña activa donde está el usuario) y FAQ (preguntas frecuentes con acordeón). El HelpPanel detecta la pestaña activa vía Navigation.currentTab y sirve el texto correspondiente. El bloque introductorio que estaba dentro del análisis del deck fue removido de estadisticas.js y su contenido ahora vive en el panel de ayuda bajo la sección de Estadísticas.
 
 ==============================================================
+
 Sistema de sinónimos de roles (stats.js)
 El Internal Score ahora normaliza cualquier nombre de rol escrito por el usuario antes de compararlo contra los pilares. Un usuario que cree el rol "Iniciador", "opener" o "arranque" obtiene exactamente el mismo efecto que "starter". El mapa ROLE_SYNONYMS cubre español, inglés y japonés para todos los roles de consistencia, potencia, resiliencia y brick.
 Renombrado: Counter-Deck Score → Nivel de poder Anti-META (stats.js, estadisticas.js)
@@ -6213,3 +6214,68 @@ Carga de decks del meta en Mi Deck (estadisticas.js)
 Al hacer click en un deck de la sección "Decks del Meta", en lugar de abrir un modal para comparar, carga las cartas directamente en Mi Deck consultando la API por cada ID. Usa el powerScoreCache como shortcut para cartas ya descargadas. Muestra un spinner durante la carga, confirma antes de reemplazar si hay un deck activo, navega automáticamente a Mi Deck al terminar. parseYDK fue actualizado para preservar las secciones main/extra/side, y processYDKFile las guarda en los datos del deck.
 Renombrado visual: Especialización → Mecánica (estadisticas.js)
 Todos los textos visibles para el usuario usan "Mecánica" en lugar de "Especialización". El código interno (specAnalysis, specializations, specBonus, clases CSS) permanece sin cambios. Se añadió un comentario de código explicando la distinción para futuros mantenedores.
+
+---------------------------------------------------------------
+
+Mini reporte — últimas implementaciones
+Paso 8 — Renombrado visual Anti-META (estadisticas.js)
+"Counter-Deck Score" es ahora "Nivel de poder Anti-META" en todos los textos visibles. "Top contribuidoras" pasó a "Cartas de tu deck que generan este poder" para que quede claro que son cartas del propio deck, no amenazas externas. Los niveles descriptivos son ahora: Sin capacidad Anti-META / Anti-META Bajo / Medio / Alto / Élite. Las clases CSS y variables internas no cambiaron.
+Aporte de la carta en CardViewer (cardviewer.js)
+Al abrir cualquier carta en el visor, si hay un deck activo con cartas, aparece una nueva sección con dos partes. Primero "Posibles Roles": el sistema escanea el texto de la carta contra las keywords y condicionales de cada rol configurado en Config y muestra los roles que matchean como chips. Segundo "Aporte al deck activo": simula añadir la carta al deck actual con esos roles detectados, calcula el Internal Score antes y después, y muestra tres barras (Consistencia, Potencia, Resiliencia) con el valor actual del pilar después de agregar la carta y el delta en verde o rojo. Si el deck no tiene roles asignados el delta será siempre cero, lo cual es correcto. Si no hay deck activo la sección no aparece.
+
+===============================================================
+
+Cómo se calcula el Internal Score
+Paso 1 — Detección de roles
+Cada carta del Main Deck tiene un array roles asignado por el usuario. Cuando el sistema los lee, los normaliza primero con el mapa de sinónimos (ROLE_SYNONYMS), entonces "Iniciador" se convierte en "starter" antes de cualquier cálculo.
+Paso 2 — Peso por restricción
+Antes de sumar, el sistema detecta si el texto de la carta contiene términos como "once per turn" o "you can only". Si los tiene, la carta es restringida y sus copias adicionales valen menos:
+
+1 copia restringida → vale 1.0
+2 copias restringidas → vale 1 + (1 × 0.5) = 1.5 en lugar de 2.0
+3 copias restringidas → vale 1 + (2 × 0.5) = 2.0 en lugar de 3.0
+
+Si no está restringida, cada copia vale su cantidad exacta.
+Paso 3 — Peso del rol
+El resultado anterior se multiplica por el weight del rol definido en Config. Un Searcher con weight 1.0 aporta el 100%, uno con weight 0.6 aporta el 60%. Así se distingue un buscador genérico de uno arquetípico.
+La fórmula por carta: effectiveQty × roleWeight
+Paso 4 — Acumulación en pilares
+Esos valores se suman en tres contadores separados según a qué pilar pertenece el rol:
+
+consistencyScore ← searcher, starter y sinónimos
+powerScore ← boss monster, boardbreaker, removal, disruption y sinónimos
+resilienceScore ← negator, extender, recycle y sinónimos
+
+Una carta puede aportar a más de un pilar si tiene múltiples roles.
+Paso 5 — Normalización a escala 0–10
+Los contadores brutos se convierten a escala 0–10 dividiéndolos entre el total de cartas del Main Deck y multiplicando por un factor de amplificación distinto por pilar:
+consistencia = min(10, (consistencyScore / mainCards) × 15)
+potencia     = min(10, (powerScore       / mainCards) × 20)
+resiliencia  = min(10, (resilienceScore  / mainCards) × 18)
+Los factores distintos reflejan que la potencia necesita menos cartas para saturarse (por eso multiplica por 20 y llega a 10 más rápido), mientras la consistencia necesita más masa (multiplica por 15).
+Paso 6 — Internal Score final
+Los tres pilares se suman con peso igual de 0.33 cada uno:
+rawScore = (consistencia × 0.33) + (potencia × 0.33) + (resiliencia × 0.33)
+Si el Main Deck supera 45 cartas, se aplica una penalización de 0.5 por cada carta de exceso. El resultado final se clampea a mínimo 0.
+
+============================================================
+
+Cómo se calcula el External Score
+Este requiere haber calculado el Poder de Cartas del Meta primero.
+Paso 1 — Mecánicas del deck activo
+El SpecialtyAnalyzer escanea el texto de cada carta del deck y detecta mecánicas (búsqueda, invocación especial, negación, etc.). El resultado es una lista como ["special summon", "search", "negate"] con cuántas cartas del deck tienen cada mecánica.
+Paso 2 — Cartas del meta que amenazan
+El sistema cruza esas mecánicas contra el powerScoreCache — las cartas del meta que ya fueron analizadas. Filtra las cartas del meta que tienen isCounter = true y cuyo countersSpec coincide con alguna mecánica del deck activo. Cada match genera una carta amenaza con un threatLevel:
+threatLevel = counterBonus × (presencePct / 100)
+Esto pondera por presencia: una carta muy poderosa pero poco usada amenaza menos que una moderada pero omnipresente.
+Paso 3 — Baseline relativo
+Aquí está el cambio que implementamos. El denominador ya no es 120 fijo sino la suma de todos los counterBonus de todas las cartas counter del meta calculado:
+BASELINE = suma de counterBonus de todas las cartas isCounter del meta
+Esto hace que el External Score sea relativo a ese meta específico. Si importas el meta de Febrero 2026 y tiene pocas counters configuradas, el baseline es pequeño y cualquier amenaza pesa más. Si el meta es agresivo con muchas counters, el baseline crece y protege al score de colapsar injustamente.
+Paso 4 — External Score final
+totalThreat  = suma de threatLevel de todas las cartas amenaza
+externalScore = (1 - min(1, totalThreat / BASELINE)) × 10
+Si el total de amenazas representa el 0% del baseline → External Score = 10. Si representa el 100% o más → External Score = 0. Si no hay datos del meta → External Score = 5 (neutral).
+
+===============================================================
+
