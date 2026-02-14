@@ -1326,6 +1326,74 @@
     .analysis-scores-row { flex-wrap: wrap; }
     .analysis-vs-divider { flex-direction: row; gap: 6px; }
     .analysis-score-box { min-width: 40%; }
+}/* ====================================
+   CLICKABLE CARD IMAGES
+   ==================================== */
+
+.stats-card-clickable {
+    cursor: pointer;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.stats-card-clickable:hover {
+    transform: scale(1.12);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+    border-radius: 4px;
+}
+
+/* ====================================
+   SECCIÓN EXPORTAR DATOS
+   ==================================== */
+
+.export-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.export-card {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    transition: border-color var(--transition-fast);
+}
+
+.export-card:hover {
+    border-color: var(--gold-color);
+}
+
+.export-card-icon {
+    font-size: 2rem;
+    text-align: center;
+}
+
+.export-card-title {
+    font-weight: bold;
+    color: var(--gold-color);
+    text-align: center;
+    font-size: 0.95rem;
+}
+
+.export-card-desc {
+    font-size: 0.8rem;
+    color: rgba(241,241,241,0.6);
+    line-height: 1.5;
+    flex: 1;
+}
+
+.export-btn {
+    width: 100%;
+    margin-top: auto;
+}
+
+@media (max-width: 480px) {
+    .export-grid {
+        grid-template-columns: 1fr;
+    }
 }
 /* ====================================
    RESPONSIVE

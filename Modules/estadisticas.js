@@ -621,11 +621,12 @@ renderMetaCardStats: function () {
     const grid = stats.map((item, i) => `
         <div class="meta-card-stat-item">
             <div class="mcs-rank">#${i + 1}</div>
-            <img class="mcs-img"
-                 src="https://images.ygoprodeck.com/images/cards_small/${item.cardId}.jpg"
-                 alt="${item.cardId}"
-                 id="mcs-img-${item.cardId}"
-                 onerror="this.style.background='#002b4d';this.src='';">
+            <img class="mcs-img stats-card-clickable"
+                src="https://images.ygoprodeck.com/images/cards_small/${item.cardId}.jpg"
+                alt="${item.cardId}"
+                id="mcs-img-${item.cardId}"
+                onclick="Estadisticas.openCardById('${item.cardId}')"
+                onerror="this.style.background='#002b4d';this.src='';">
             <div class="mcs-name" id="mcs-name-${item.cardId}">···</div>
             <div class="mcs-stats">
                 <div class="mcs-stat" title="Total de copias en todos los decks">
@@ -826,10 +827,11 @@ renderPowerScores: function ({ cards, maxPower }) {
         return `
             <div class="power-card-item" title="${breakdown}">
                 <div class="power-rank">${rankLabel}</div>
-                <img class="power-img"
-                     src="https://images.ygoprodeck.com/images/cards_small/${card.cardId}.jpg"
-                     alt="${name}"
-                     onerror="this.src='';">
+                <img class="power-img stats-card-clickable"
+                    src="https://images.ygoprodeck.com/images/cards_small/${card.cardId}.jpg"
+                    alt="${name}"
+                    onclick="Estadisticas.openCachedCard('${card.cardId}')"
+                    onerror="this.src='';">
                 <div class="power-info">
                     <div class="power-name">${name}</div>
                     <div class="power-type">${type}</div>
@@ -906,10 +908,11 @@ renderCounterCardStats: function () {
         return `
             <div class="counter-card-meta-item">
                 <div class="ccm-rank">${rank}</div>
-                <img class="ccm-img"
-                     src="https://images.ygoprodeck.com/images/cards_small/${card.cardId}.jpg"
-                     alt="${name}"
-                     onerror="this.src='';">
+                <img class="ccm-img stats-card-clickable"
+                src="https://images.ygoprodeck.com/images/cards_small/${card.cardId}.jpg"
+                alt="${name}"
+                onclick="Estadisticas.openCachedCard('${card.cardId}')"
+                onerror="this.src='';">
                 <div class="ccm-info">
                     <div class="ccm-name">${name}</div>
                     <div class="ccm-counters">Contrarresta: <em>${countersNames}</em></div>
@@ -967,9 +970,11 @@ renderDeckAnalysis: function () {
     } else {
         threatHTML = analysis.threatCards.slice(0, 8).map(c => `
             <div class="analysis-threat-item">
-                <img class="analysis-card-img"
-                     src="https://images.ygoprodeck.com/images/cards_small/${c.cardId}.jpg"
-                     alt="${c.name}" onerror="this.src='';">
+                <img class="analysis-card-img stats-card-clickable"
+                    src="https://images.ygoprodeck.com/images/cards_small/${c.cardId}.jpg"
+                    alt="${c.name}"
+                    onclick="Estadisticas.openCachedCard('${c.cardId}')"
+                    onerror="this.src='';">
                 <div class="analysis-threat-info">
                     <div class="analysis-item-name">${c.name}</div>
                     <div class="analysis-spec-chips">
@@ -1020,9 +1025,11 @@ renderDeckAnalysis: function () {
     } else {
         staplesHTML = analysis.missingStaples.slice(0, 6).map(s => `
             <div class="analysis-staple-item">
-                <img class="analysis-card-img"
-                     src="https://images.ygoprodeck.com/images/cards_small/${s.cardId}.jpg"
-                     alt="${s.name}" onerror="this.src='';">
+                <img class="analysis-card-img stats-card-clickable"
+                    src="https://images.ygoprodeck.com/images/cards_small/${s.cardId}.jpg"
+                    alt="${s.name}"
+                    onclick="Estadisticas.openCardById('${s.cardId}')"
+                    onerror="this.src='';">
                 <div class="analysis-staple-info">
                     <div class="analysis-item-name">${s.name}</div>
                     <div class="analysis-staple-type">${s.type}</div>
@@ -1118,6 +1125,154 @@ renderDeckAnalysis: function () {
             </div>
 
         </div>`;
+},// ===============================
+// ABRIR CARTA DESDE ESTADÍSTICAS
+// ===============================
+openCachedCard: function (cardId) {
+    if (!window.CardViewer) return;
+    const cached = this.powerScoreCache?.cards?.find(c => String(c.cardId) === String(cardId));
+    if (cached?.cardData) {
+        CardViewer.open(cached.cardData);
+    } else {
+        this.openCardById(cardId);
+    }
+},
+
+openCardById: async function (cardId) {
+    if (!window.CardViewer) return;
+    try {
+        const res  = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${cardId}`);
+        const data = await res.json();
+        if (data.data?.[0]) CardViewer.open(data.data[0]);
+    } catch (e) {
+        console.warn('[Estadisticas] No se pudo abrir carta:', cardId, e);
+    }
+},// ===============================
+// PASO 9: EXPORTACIONES
+// ===============================
+exportDeckReport: function () {
+    if (!Deck || !Deck.cards || Object.keys(Deck.cards).length === 0) {
+        alert('No hay deck activo para exportar.');
+        return;
+    }
+
+    const stats    = Stats.calculateInternalScore(Deck.cards);
+    const analysis = Stats.calculateExternalScore(Deck.cards, this.powerScoreCache, this.metaDecks);
+    const counter  = Stats.calculateCounterDeckScore(Deck.cards, this.powerScoreCache);
+    const now      = new Date().toLocaleDateString('es-ES');
+
+    const section = (title, lines) =>
+        `\n${'='.repeat(60)}\n${title}\n${'='.repeat(60)}\n${lines.join('\n')}`;
+
+    const mainCards = Object.values(Deck.cards).filter(c => c.location === 'main');
+    const extraCards = Object.values(Deck.cards).filter(c => c.location === 'extra');
+    const sideCards  = Object.values(Deck.cards).filter(c => c.location === 'side');
+
+    const cardLine = c => `  x${c.qty}  ${c.data.name}${c.roles?.length ? '  ['+c.roles.join(', ')+']' : ''}`;
+
+    let txt = `REPORTE DE DECK - DESTINY DRAW\n`;
+    txt += `Deck: ${Deck.name}\nFecha: ${now}\n`;
+
+    txt += section('PUNTUACIONES', [
+        `Internal Score  : ${stats.internalScore} / 10`,
+        `  Consistencia  : ${stats.consistency} / 10`,
+        `  Potencia      : ${stats.power} / 10`,
+        `  Resiliencia   : ${stats.resilience} / 10`,
+        `External Score  : ${analysis.externalScore !== null ? analysis.externalScore + ' / 10' : 'N/A (requiere meta)'}`,
+        `Counter-Deck    : ${counter.finalScore} pts (${counter.level})`,
+        `Main Deck       : ${stats.mainCards ?? stats.totalCards} cartas`,
+    ]);
+
+    txt += section('ESPECIALIDADES DETECTADAS',
+        analysis.deckSpecs.length > 0
+            ? analysis.deckSpecs.map(s => `  ${s.name} (×${s.count})`)
+            : ['  Sin especialidades detectadas']
+    );
+
+    txt += section('MAIN DECK', mainCards.map(cardLine));
+    if (extraCards.length) txt += section('EXTRA DECK', extraCards.map(cardLine));
+    if (sideCards.length)  txt += section('SIDE DECK',  sideCards.map(cardLine));
+
+    txt += section('AMENAZAS DEL META',
+        analysis.threatCards.length > 0
+            ? analysis.threatCards.slice(0, 10).map(c =>
+                `  ${c.name} — ${c.presencePct}% presencia | Amenaza: ${c.threatLevel} | Contrarresta: ${c.countersSpecs.join(', ')}`)
+            : ['  Sin amenazas detectadas']
+    );
+
+    txt += section('DECKS DEL META QUE MÁS AMENAZAN',
+        analysis.counterDecks.length > 0
+            ? analysis.counterDecks.map((d, i) =>
+                `  #${i+1} ${d.name} (${d.folder}) — ${d.unique} cartas amenaza`)
+            : ['  Ninguno detectado']
+    );
+
+    txt += section('STAPLES SUGERIDOS',
+        analysis.missingStaples.length > 0
+            ? analysis.missingStaples.slice(0, 10).map(s => `  ${s.name} [${s.type}]`)
+            : ['  Todos los staples ya están en el deck']
+    );
+
+    txt += `\n${'='.repeat(60)}\nGenerado con Destiny Draw\n${'='.repeat(60)}\n`;
+
+    this._downloadTxt(txt, `${Deck.name}_reporte.txt`);
+},
+
+exportMetaPowerRanking: function () {
+    if (!this.powerScoreCache || !this.powerScoreCache.cards.length) {
+        alert('Primero calcula ⚡ Poder de Cartas.');
+        return;
+    }
+
+    const lines = [
+        'Posicion,Nombre,ID,PowerScore,BaseScore,EspecializacionBonus,CounterBonus,CopiasTotales,PresenciaPct,PromedioXDeck,EsCounter'
+    ];
+
+    this.powerScoreCache.cards.forEach((c, i) => {
+        const name = (c.cardData?.name || c.cardId).replace(/,/g, ';');
+        lines.push([
+            i + 1, name, c.cardId, c.powerScore,
+            c.baseScore, c.specBonus, c.counterBonus,
+            c.totalCopies, c.presencePct, c.avgCopies,
+            c.isCounter ? 'SI' : 'NO'
+        ].join(','));
+    });
+
+    this._downloadTxt(lines.join('\n'), 'meta_power_ranking.csv');
+},
+
+exportMetaFrequency: function () {
+    const { stats, decksWithData, totalDecks } = this.calculateMetaCardStats();
+    if (stats.length === 0) {
+        alert('No hay datos de recurrencia. Importa decks del meta.');
+        return;
+    }
+
+    const lines = [
+        `# Recurrencia de Cartas del Meta — ${new Date().toLocaleDateString('es-ES')}`,
+        `# Analizando ${decksWithData} de ${totalDecks} decks`,
+        '',
+        'Posicion,CardID,CopiasTotales,DecksPresente,TotalDecks,PresenciaPct,PromedioXDeck'
+    ];
+
+    stats.forEach((s, i) => {
+        lines.push([
+            i + 1, s.cardId, s.totalCopies,
+            s.deckCount, decksWithData,
+            s.presencePct, s.avgCopies
+        ].join(','));
+    });
+
+    this._downloadTxt(lines.join('\n'), 'meta_frecuencia.csv');
+},
+
+_downloadTxt: function (content, filename) {
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
 },
     render: function () {
         if (!this.container) return;
@@ -1228,6 +1383,54 @@ html += `
     </h3>
     <div id="counter-cards-sec" class="stats-section" style="display:none;">
         ${this.renderCounterCardStats()}
+    </div>
+`;html += `
+    <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('export-sec')">
+        📤 Exportar Datos
+    </h3>
+    <div id="export-sec" class="stats-section" style="display:none;">
+        <div class="export-grid">
+
+            <div class="export-card">
+                <div class="export-card-icon">🃏</div>
+                <div class="export-card-title">Reporte del Deck</div>
+                <div class="export-card-desc">
+                    TXT con Internal Score, External Score, Counter-Deck,
+                    lista de cartas con roles, amenazas del meta y staples sugeridos.
+                </div>
+                <button class="btn btn-primary export-btn"
+                        onclick="Estadisticas.exportDeckReport()">
+                    Descargar .txt
+                </button>
+            </div>
+
+            <div class="export-card">
+                <div class="export-card-icon">⚡</div>
+                <div class="export-card-title">Ranking de Poder</div>
+                <div class="export-card-desc">
+                    CSV con todas las cartas del meta y sus puntos de poder,
+                    desglose de bonuses y datos de presencia.
+                    Requiere calcular Poder de Cartas primero.
+                </div>
+                <button class="btn btn-primary export-btn"
+                        onclick="Estadisticas.exportMetaPowerRanking()">
+                    Descargar .csv
+                </button>
+            </div>
+
+            <div class="export-card">
+                <div class="export-card-icon">📊</div>
+                <div class="export-card-title">Frecuencia de Cartas</div>
+                <div class="export-card-desc">
+                    CSV con las top 30 cartas más usadas en el meta,
+                    copias totales, presencia y promedio por deck.
+                </div>
+                <button class="btn btn-primary export-btn"
+                        onclick="Estadisticas.exportMetaFrequency()">
+                    Descargar .csv
+                </button>
+            </div>
+        </div>
     </div>
 `;
         this.container.innerHTML = html;

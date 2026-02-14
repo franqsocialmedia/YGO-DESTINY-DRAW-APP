@@ -5427,3 +5427,505 @@ FACTORES QUE CAMBIAN LOS RESULTADOS
 - Cambiar cartas del deck activo → cambia specs → cambia External Score
 
 ================================================================================
+================================================================================
+DESTINY DRAW — REPORTE FINAL ETAPA DE ESTADÍSTICAS (PASOS 1–9)
+================================================================================
+
+CONTEXTO: Esta etapa abarca el módulo Estadísticas completo. Desde los fixes
+de infraestructura que desbloquearon el módulo hasta el sistema de análisis
+del deck vs meta con exportación de datos. Estado al cierre: 98% funcional.
+
+================================================================================
+PASO 1 — FIXES DE INFRAESTRUCTURA DEL MÓDULO
+================================================================================
+
+OBJETIVO RESUMIDO:
+- Eliminar dependencia de via.placeholder.com (dominio caído)
+- Reparar selección de deck desde el widget flotante
+- Arreglar imagen del widget cuando está contraído
+
+SE CUMPLIÓ: ✅ Completamente
+
+QUÉ LO COMPONE:
+Tres bugs encadenados todos en estadisticas.js:
+
+Bug 1 — via.placeholder.com sustituido por SVG data URI en:
+  updateFloatingWidget()      → imagen 64×92 del reverso de carta
+  expandDeckList()            → thumbnail 60×87 como fallback
+  render() onerror de <img>   → 100×145 para deck cards del meta
+
+Bug 2 — Selección de deck desde widget no funcionaba:
+  expandDeckList()            → deck.key (undefined) → corregido a deck.name
+  selectDeckFromWidget()      → Deck.loadDeck() (inexistente) → Deck.confirmLoadDeck()
+                              → Navigation.showTab('mi-deck') → showTab('mideck')
+
+Bug 3 — Widget mostraba carta del deck en lugar del reverso oficial:
+  updateFloatingWidget()      → simplificado para mostrar siempre
+                                images.ygoprodeck.com/images/cards/back.jpg
+
+FUNCIONES INVOLUCRADAS:
+  updateFloatingWidget()
+  expandDeckList()
+  selectDeckFromWidget(deckName)
+  Deck.confirmLoadDeck(deckName)
+  Navigation.showTab(tabId)
+
+VARIABLES:
+  deck.name         → identificador correcto para carga
+  currentDeckKey    → `deck_${Deck.name}` para detectar deck activo en lista
+
+REFLEJO VISUAL:
+  - Widget siempre muestra el reverso amarillo/azul de carta yugioh
+  - Al dar click al widget y seleccionar un deck de la lista,
+    carga el deck correctamente y navega a la pestaña Mi Deck
+
+EJEMPLO DE USO:
+  El widget flotante dorado está en la esquina inferior derecha.
+  Dale click → se expande mostrando tus decks guardados.
+  Dale click a cualquier deck de la lista → se carga en Mi Deck
+  automáticamente y la app navega a esa pestaña.
+
+================================================================================
+PASO 2 — MULTI-KEYWORD EN CONDICIONES DE NOMENCLATURA
+================================================================================
+
+OBJETIVO RESUMIDO:
+- Los campos "Contiene" y "NO contiene" de cada categoría de nomenclatura
+  deben aceptar múltiples keywords (chips), no solo una cadena de texto
+- Contiene = lógica OR (al menos una debe estar)
+- NO contiene = lógica AND exclusión (ninguna debe estar)
+- Migración automática de datos anteriores en localStorage
+
+SE CUMPLIÓ: ✅ Completamente
+
+QUÉ LO COMPONE:
+
+configmanager.js:
+  defaultConfig.nomenclature.categories → contains/notContains como arrays
+  addNomenclatureCategory()             → usa [] en lugar de ''
+  getConfig()                           → migración automática string → array
+  addNomCondKw(categoryId, field, kw)   → agrega keyword a array
+  removeNomCondKw(categoryId, field, kw)→ elimina keyword de array
+
+config.js:
+  renderNomenclatureCategory()          → renderiza chips + input + botón Agregar
+  addNomCondKw(catId, field, el)        → bridge a ConfigManager + re-render
+  removeNomCondKw(catId, field, kw)     → bridge a ConfigManager + re-render
+
+nomenclature-analyzer.js:
+  matchesConditions(paragraph, conditions) → maneja array o string con
+    → OR para contains: containsArr.some(kw => p.includes(kw))
+    → AND para notContains: !notContainsArr.some(kw => p.includes(kw))
+
+cardviewer.js:
+  highlightParagraphNew(paragraph, categories) → mismo patrón Array.isArray()
+    (fix derivado: sin esto toda la función open() lanzaba TypeError silencioso)
+
+VARIABLES:
+  cat.conditions.contains[]     → array de keywords OR
+  cat.conditions.notContains[]  → array de keywords exclusión
+  containsArr / notContainsArr  → arrays limpios para evaluación
+
+REFLEJO VISUAL:
+  Config → Nomenclatura → cualquier categoría:
+  Los campos "Contiene" y "NO contiene" muestran chips con botón ×
+  y un input con botón "Agregar" (también Enter funciona).
+  En el CardViewer, los párrafos del efecto se colorean según qué
+  categoría coincide primero.
+
+EJEMPLO DE USO:
+  Entra a Config → Nomenclatura → categoría "Costo de Activación".
+  En "Contiene" escribe "discard" y dale Enter.
+  Luego escribe "send to the gy" y dale Enter.
+  Ahora ambas frases activarán el color de esa categoría al ver una carta.
+  Dale click a cualquier carta del buscador → el efecto se colorea.
+
+================================================================================
+PASO 3 — FIXES DE COMPATIBILIDAD DERIVADOS DEL PASO 2
+================================================================================
+
+OBJETIVO RESUMIDO:
+- El botón "Añadir" del buscador no agregaba cartas al deck
+- El panel flotante del CardViewer no abría tras el cambio de arrays
+
+SE CUMPLIÓ: ✅ Completamente
+
+QUÉ LO COMPONE:
+
+Fix 1 — cardviewer.js → highlightParagraphNew():
+  CAUSA: cond.contains.trim() sobre un array → TypeError silencioso
+  → open() no completaba ejecución → panel no aparecía
+  SOLUCIÓN: Array.isArray() guard + misma lógica de nomenclature-analyzer.js
+
+Fix 2 — buscador.js → addCard(index):
+  CAUSA: Deck.syncFromViewer(card.id, 1) → firma incorrecta
+  FIRMA REAL: syncFromViewer(id, card, qty)
+  SOLUCIÓN: const currentQty = Deck.cards[card.id]?.qty || 0;
+             Deck.syncFromViewer(card.id, card, currentQty + 1);
+
+FUNCIONES INVOLUCRADAS:
+  highlightParagraphNew(paragraph, categories)
+  addCard(index)                   → buscador.js
+  Deck.syncFromViewer(id, card, qty)
+
+REFLEJO VISUAL:
+  - Dar click a una carta en el buscador → el panel flotante abre correctamente
+  - Botón "Añadir" bajo la imagen de la carta → incrementa cantidad en el deck
+
+EJEMPLO DE USO:
+  En el Buscador, busca "Dark Magician".
+  Dale click a la carta → aparece el panel con imagen, descripción y controles.
+  Ciérralo. Ahora dale al botón "Añadir" que aparece al mantener la carta
+  presionada → la carta se agrega al deck activo con su cantidad correcta.
+
+================================================================================
+PASO 4 — CORRECCIÓN DE SELECTANDLOADDECK + PENALIZACIÓN MAIN DECK
+================================================================================
+
+OBJETIVO RESUMIDO:
+- selectAndLoadDeck() usaba Deck.loadDeck() inexistente
+- La penalización de exceso de cartas contaba Extra Deck y Side Deck
+
+SE CUMPLIÓ: ✅ Completamente
+
+QUÉ LO COMPONE:
+
+Fix 1 — estadisticas.js → selectAndLoadDeck():
+  ANTES: Deck.loadDeck(deckKey) → no ejecutaba nada
+  DESPUÉS: const deckName = deckKey.replace('deck_', '');
+           Deck.confirmLoadDeck(deckName);
+
+Fix 2 — stats.js → calculateInternalScore():
+  Contador separado mainCards solo para location === 'main'
+  Penalización: if (mainCards > 45) penalty = (mainCards - 45) * 0.5
+  El objeto de retorno ahora expone mainCards como campo adicional
+
+FUNCIONES INVOLUCRADAS:
+  selectAndLoadDeck(deckKey)
+  calculateInternalScore(cards)   → stats.js
+
+VARIABLES:
+  mainCards                       → contador solo de main deck
+  stats.mainCards                 → expuesto en retorno
+  stats.penalty                   → ahora solo aplica si main > 45
+
+REFLEJO VISUAL:
+  En Estadísticas, al dar click a un deck de la lista de meta y elegir
+  compararlo, ahora sí se carga. El aviso ⚠️ de penalización solo aparece
+  si el Main Deck tiene más de 45 cartas.
+
+EJEMPLO DE USO:
+  Ve a Estadísticas → Decks del Meta → click en un deck.
+  Aparece el modal "Seleccionar Deck para Comparar".
+  Elige uno de tus decks guardados → ahora sí lo carga correctamente.
+
+================================================================================
+PASO 5 — RECURRENCIA DE CARTAS EN EL META
+================================================================================
+
+OBJETIVO RESUMIDO:
+- Contar cada carta del meta (con sus copias) entre todos los decks importados
+- Mostrar ranking de las 30 más usadas
+- Mostrar copias totales, presencia (en cuántos decks) y promedio por deck
+
+SE CUMPLIÓ: ✅ Completamente
+
+QUÉ LO COMPONE:
+
+processYDKFile() → ahora guarda cardFrequency: { cardId: copies }
+calculateMetaCardStats() → suma totalCopies y deckUsage por cardId,
+  calcula presencePct = deckCount / decksWithData × 100
+  retorna: { stats[], decksWithData, totalDecks }
+renderMetaCardStats() → genera HTML con ranking visual + setTimeout para nombres
+loadCardNames(cardIds[]) → fetch asincrónico en lotes de 10 sin bloquear UI
+
+VARIABLES:
+  deck.cardFrequency        → {cardId: copias} por deck importado
+  totalCopies{}             → acumulador global de copias
+  deckUsage{}               → cuántos decks tienen esa carta
+  decksWithData             → decks con cardFrequency válido
+  stats[].cardId            → ID YGOPRODeck
+  stats[].presencePct       → porcentaje de presencia en el meta
+  stats[].avgCopies         → media de copias en los decks que la usan
+
+FUNCIONES DERIVADAS (usadas por pasos 6, 7, 8):
+  calculateMetaCardStats()  → fuente de datos de todos los análisis posteriores
+
+REFLEJO VISUAL:
+  Sección "Recurrencia de Cartas en el Meta" visible al cargar la pestaña.
+  Ranking con posición, imagen clickable, nombre (carga en segundo plano),
+  copias totales, presencia X/Y decks (%) y promedio por deck.
+  Dar click a la imagen de cualquier carta abre el CardViewer.
+
+NOTA: Los decks importados antes del Paso 5 no tienen cardFrequency.
+Deben eliminarse y re-importarse.
+
+EJEMPLO DE USO:
+  Ve a Estadísticas → Gestión de Carpetas → crea "Febrero 2026".
+  Dale click en "Importar .ydk" y selecciona tus archivos de decks del meta.
+  La sección "Recurrencia" se llena automáticamente mostrando las cartas
+  más repetidas entre todos los decks importados. Los nombres aparecen
+  en unos segundos mientras la API responde.
+
+================================================================================
+PASO 6 — SISTEMA DE PUNTOS DE PODER POR CARTA
+================================================================================
+
+OBJETIVO RESUMIDO:
+- Asignar puntos de poder a cada carta del meta
+- Lógica: más usada en el meta = más útil = más poder
+- Bonus por especialización prevalente en el meta
+- Bonus counter: cartas que contrarrestan specs dominantes suben por eso
+- Multiplicador por copias: llevar 3 pesa más que llevar 1
+
+SE CUMPLIÓ: ✅ Completamente
+
+QUÉ LO COMPONE:
+
+loadPowerScores()           → orquesta: loading → cálculo → render → refreshDependentSections()
+calculatePowerScores()      → async, 6 pasadas internas:
+  Pasada 1: baseScore = presencePct×0.6 + (copies/max×100)×0.4
+  Pasada 2: fetch de card data desde YGOPRODeck API en lotes de 5
+  Pasada 3: specWeight[spec] = suma de baseScore de cartas con esa spec
+  Pasada 4: specBonus += (specWeight/100)×15 por especialización
+            phase2Score = baseScore + specBonus
+  Pasada 5: counterBonus += round(suma phase2Score de cartas contrarrestadas × 0.4)
+            isCounter = true si counterBonus > 0
+  Pasada 6: multi = clamp(avgCopies/3, 0.33, 1.0)
+            powerScore = round((base+specBonus+counterBonus) × multi)
+renderPowerScores({cards, maxPower}) → HTML del ranking con barras y tags
+refreshDependentSections()  → refresca counter-cards, análisis y internal score
+                              tras calcular (fix del bug de retraso)
+
+VARIABLES:
+  powerScoreCache           → guarda resultado entre navegaciones
+  powerScoreLoading         → flag anti-doble-click
+  card.baseScore            → puntuación de recurrencia pura
+  card.specBonus            → bonus por especialización en el meta
+  card.counterBonus         → bonus por valor counter
+  card.powerScore           → score final multiplicado
+  card.isCounter            → true si tiene counterBonus > 0
+  card.phase2Score          → score intermedio para calcular counters
+
+FUNCIONES DERIVADAS (usadas en pasos 7 y 8):
+  powerScoreCache.cards[]   → fuente de datos para counter-deck y análisis
+
+REFLEJO VISUAL:
+  Sección "⚡ Poder de Cartas del Meta" arranca colapsada.
+  Al expandirla hay un botón "Calcular Poder de Cartas".
+  Tras calcularse: ranking con medallas 🥇🥈🥉, imagen clickable (abre CardViewer),
+  nombre, tipo, tags COUNTER/ESPECIALIZACIÓN, barra proporcional y puntos.
+  Hover sobre la barra muestra desglose: Base | Esp | Counter.
+  Requiere conexión para consultar la API.
+
+EJEMPLO DE USO:
+  Primero importa decks del meta (Paso 5). Luego ve a la sección
+  "⚡ Poder de Cartas del Meta" → expándela → dale click al botón.
+  Espera unos segundos mientras consulta la API carta por carta.
+  Verás el ranking completo. Dale click a cualquier imagen de carta
+  para ver sus detalles en el panel flotante del CardViewer.
+
+================================================================================
+PASO 7 — SISTEMA DE COUNTER-CARDS Y COUNTER-DECK
+================================================================================
+
+OBJETIVO RESUMIDO:
+- Counter-Card: nivel counter individual de cada carta (ya calculado en Paso 6)
+- Counter-Deck: suma del poder counter de todas las cartas del deck activo
+- Brick reduce el poder counter del deck en proporción a su presencia
+- Sección visual separada para las Counter-Cards del Meta
+
+SE CUMPLIÓ: ✅ Completamente
+
+QUÉ LO COMPONE:
+
+stats.js → calculateCounterDeckScore(cards, powerScoreCache):
+  Recorre Deck.cards (main + extra únicamente)
+  Bricks: se cuentan pero no suman counter → penalización proporcional
+  powerMap{} → lookup rápido de counterBonus por cardId desde cache
+  Sin cache: fallback binario (5pts si SpecialtyAnalyzer detecta counters)
+  brickPenalty = rawCounter × (brickCount/totalCards) × 0.6
+  finalScore = max(0, rawCounter - brickPenalty)
+  Niveles: Sin Counter / Bajo / Medio / Alto / Meta Counter
+  Retorna: { finalScore, rawCounter, brickPenalty, brickCount,
+             counterCards, breakdown[], level, levelColor, hasPowerData }
+
+estadisticas.js → renderCounterCardStats():
+  Filtra powerScoreCache.cards donde isCounter === true
+  Ordenadas por counterBonus descendente
+  Muestra: rank, imagen clickable, nombre, qué specs contrarresta,
+           barra roja, puntos counter, presencia en meta
+
+VARIABLES:
+  powerMap{}                → { cardId: powerScoreData } para lookup O(1)
+  rawCounter                → suma sin penalizar
+  brickRatio                → brickCount / totalCards
+  brickPenalty              → penalización aplicada
+  counter.level             → texto descriptivo del nivel
+  counter.breakdown[]       → top contribuidoras al score con detalle
+
+REFLEJO VISUAL:
+  En "Deck Activo - Internal Score": aparece un segundo bloque
+  "Counter-Deck Score" con nivel (ej: "Alto"), puntos, número de cartas
+  counter, breakdown de las top 5 contribuidoras y nota de bricks si aplica.
+  Sección "🛡️ Counter-Cards del Meta": ranking de las cartas del meta
+  identificadas como counters, con qué especializaciones contrarrestan.
+
+EJEMPLO DE USO:
+  Carga un deck en Mi Deck (que tenga Trampas/Negaciones).
+  Ve a Estadísticas → "Deck Activo".
+  Bajo el Internal Score verás el Counter-Deck Score.
+  Si tienes "Ash Blossom" en el deck y está en el powerScoreCache
+  como counter, su contribución aparecerá en el breakdown.
+  Para la sección Counter-Cards: expande 🛡️, verás las cartas del
+  meta que actúan como counters con sus puntos y qué specs atacan.
+
+================================================================================
+PASO 8 — ANÁLISIS DEL DECK VS META
+================================================================================
+
+OBJETIVO RESUMIDO:
+- Comparar el Internal Score (poder teórico) vs External Score (poder vs meta)
+- Identificar qué cartas del meta golpean específicamente este deck
+- Identificar qué decks del meta son más amenazantes para este deck
+- Sugerir staples del formato que no están en el deck
+
+SE CUMPLIÓ: ✅ Completamente
+
+QUÉ LO COMPONE:
+
+stats.js → calculateExternalScore(deckCards, powerScoreCache, metaDecks):
+  Paso 1: detecta specs del deck activo con SpecialtyAnalyzer (specCount{})
+  Paso 2: busca en powerScoreCache cartas con isCounter cuyas specs
+          contrarresten las del deck → lista threatCards[]
+          threatLevel = counterBonus × (presencePct/100)
+  Paso 3: externalScore = (1 - min(1, totalThreat/120)) × 10
+  Paso 4: cross-ref threatCards con cardFrequency de cada deck del meta
+          → counterDecks[] ordenados por score (unique×3 + copies)
+  Paso 5: staples configurados en Config que no están en el deck
+
+estadisticas.js → renderDeckAnalysis():
+  Sección de scores comparativos (Internal vs External, visual lado a lado)
+  Veredicto en texto natural con nombre del deck y decks amenazantes
+  Bloque de especialidades detectadas (chips)
+  Lista de cartas amenaza (imagen clickable, spec que contrarresta, % meta, nivel)
+  Lista de decks counter del meta (top 5, carpeta, cantidad cartas amenaza)
+  Lista de staples sugeridos (imagen clickable, nombre, tipo)
+
+VARIABLES:
+  analysis.deckSpecs[]       → { name, count } specs del deck activo
+  analysis.threatCards[]     → cartas del meta que contrarrestan al deck
+  analysis.counterDecks[]    → decks del meta más amenazantes
+  analysis.missingStaples[]  → staples no presentes en el deck
+  analysis.externalScore     → 0–10 inverso al threat total
+  BASELINE = 120             → umbral de normalización del threat
+
+REFLEJO VISUAL:
+  Sección "📊 Análisis del Deck vs Meta" arranca colapsada.
+  Al expandir se ven dos cajas grandes lado a lado:
+  "Poder Teórico X/10" vs "Poder vs Meta Y/10" con barras de color.
+  Bajo ellas, un veredicto en texto natural, y 4 bloques:
+  Especialidades | Cartas amenaza | Decks amenaza | Staples sugeridos.
+  Todas las imágenes de carta son clickables y abren el CardViewer.
+
+EJEMPLO DE USO:
+  Teniendo el meta cargado y el Poder de Cartas calculado,
+  carga tu deck en Mi Deck. Ve a Estadísticas → expande "📊 Análisis".
+  Verás algo como: "Dragon Link — Teórico: 7.5/10 vs META: 2.3/10
+  por decks como Branded, Snake-Eye, Tear Ishiz."
+  Bajo eso verás "Ash Blossom, Nibiru, Ghost Ogre" como cartas amenaza.
+  En Staples sugeridos verás las cartas de Config que podrían ayudarte.
+
+================================================================================
+PASO 9 — CARDS CLICKABLES EN ESTADÍSTICAS + EXPORTACIÓN
+================================================================================
+
+OBJETIVO RESUMIDO:
+- Todas las imágenes de cartas en las secciones de estadísticas deben
+  abrir el CardViewer al dar click
+- Exportar datos del deck en .txt, cartas del meta en .csv de frecuencia,
+  y ranking de poder en .csv
+
+SE CUMPLIÓ: ✅ Completamente
+
+QUÉ LO COMPONE:
+
+openCachedCard(cardId):
+  Busca primero en powerScoreCache (sin fetch adicional si ya está)
+  Fallback a openCardById() si no está en cache
+
+openCardById(cardId):
+  Fetch a YGOPRODeck API → CardViewer.open(data)
+
+Cards clickables en:
+  renderMetaCardStats()      → openCardById() (no está en cache)
+  renderPowerScores()        → openCachedCard() (ya tiene data completa)
+  renderCounterCardStats()   → openCachedCard()
+  renderDeckAnalysis()       → openCachedCard() amenazas / openCardById() staples
+
+CSS: .stats-card-clickable → cursor pointer + scale(1.12) + glow dorado en hover
+
+exportDeckReport():
+  TXT con: nombre, fecha, Internal/External/Counter Score,
+  especialidades, lista Main/Extra/Side con roles, amenazas, decks counter,
+  staples sugeridos
+  Archivo: NombreDeck_reporte.txt
+
+exportMetaPowerRanking():
+  CSV: posición, nombre, ID, powerScore, baseScore, specBonus, counterBonus,
+  copias totales, presencia%, promedio/deck, es counter
+  Archivo: meta_power_ranking.csv
+
+exportMetaFrequency():
+  CSV: posición, cardID, copias totales, decks presente, total decks,
+  presencia%, promedio/deck
+  Archivo: meta_frecuencia.csv
+
+_downloadTxt(content, filename):
+  Helper interno: Blob + URL.createObjectURL + a.click()
+
+REFLEJO VISUAL:
+  Sección "📤 Exportar Datos" al final de Estadísticas (colapsada).
+  Al expandir: 3 tarjetas con ícono, título, descripción y botón Descargar.
+  Las imágenes de todas las secciones muestran un glow dorado al hover
+  indicando que son clickables.
+
+EJEMPLO DE USO:
+  En "Recurrencia de Cartas", dale click a la imagen de cualquier carta
+  → se abre el panel con imagen HD, descripción y controles de deck.
+  Para exportar: ve a "📤 Exportar Datos" → expande → "Reporte del Deck"
+  → descarga un .txt con el análisis completo de tu deck actual.
+  "Ranking de Poder" genera un .csv que puedes abrir en Excel para
+  filtrar y ordenar todas las cartas del meta con sus puntuaciones.
+
+================================================================================
+ESTADO FINAL DEL MÓDULO ESTADÍSTICAS
+================================================================================
+
+ARCHIVOS MODIFICADOS EN TODA LA ETAPA:
+  Modules/estadisticas.js         → núcleo del módulo (>1000 líneas)
+  Modules/stats.js                → calculateInternalScore, calculateCounterDeckScore,
+                                    calculateExternalScore
+  Modules/configmanager.js        → addNomCondKw, removeNomCondKw, migración
+  Modules/config.js               → renderNomenclatureCategory, chip system
+  Modules/nomenclature-analyzer.js → matchesConditions con arrays
+  Modules/cardviewer.js           → highlightParagraphNew con arrays
+  Modules/buscador.js             → addCard firma correcta
+  Modules/utils.js                → scrollTopBtn + scrollBottomBtn
+  css/style_estadisticas.css      → +600 líneas de CSS para todos los pasos
+  css/style_mideck.css            → layout flex fijo deck-row
+  css/style_global.css            → scrollBottomBtn
+  index.html                      → scrollBottomBtn HTML
+
+FLUJO COMPLETO PARA ACTIVAR TODO:
+  1. Config → Especialidades y Counters → configurar pares
+  2. Config → Staples → agregar cartas staples del formato
+  3. Estadísticas → Gestión de Carpetas → crear carpeta con mes/año
+  4. Importar .ydk de decks del meta en esa carpeta
+  5. Recurrencia se muestra automáticamente
+  6. Expandir ⚡ Poder de Cartas → Calcular (requiere internet ~15-30 seg)
+  7. 🛡️ Counter-Cards, 📊 Análisis y Counter-Deck Score se actualizan solos
+  8. Cargar deck en Mi Deck → volver a Estadísticas → ver análisis completo
+  9. 📤 Exportar datos según necesidad
+
+================================================================================
