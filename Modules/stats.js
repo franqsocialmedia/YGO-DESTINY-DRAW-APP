@@ -271,10 +271,13 @@ calculateExternalScore: function (deckCards, powerScoreCache, metaDecks) {
         counterDecks:     [],
         missingStaples:   [],
         hasPowerData:     false,
-        hasSpecData:      false
+        hasSpecData:      false,
+        baseline:         null,
+        totalThreat:      0,
+        threatPct:        0
     };
 
-    // PASO 1: Especialidades del deck activo
+    // PASO 1: Mecánicas del deck activo
     if (window.SpecialtyAnalyzer) {
         const specCount = {};
         for (const [, item] of Object.entries(deckCards)) {
@@ -307,6 +310,7 @@ calculateExternalScore: function (deckCards, powerScoreCache, metaDecks) {
                     presencePct:   card.presencePct,
                     counterBonus:  card.counterBonus,
                     countersSpecs: overlap,
+                    specAnalysis:  card.specAnalysis,
                     threatLevel:   Math.round(card.counterBonus * (card.presencePct / 100))
                 });
             }
@@ -314,13 +318,32 @@ calculateExternalScore: function (deckCards, powerScoreCache, metaDecks) {
         result.threatCards.sort((a, b) => b.threatLevel - a.threatLevel);
     }
 
-    // PASO 3: External Score
+    // PASO 3: External Score con BASELINE RELATIVO
+    //
+    // En lugar del número fijo 120, el denominador es la suma del counterBonus
+    // de TODAS las cartas counter del meta actualmente calculado.
+    // Esto calibra el score al formato: si el meta actual es muy agresivo con
+    // counters, la escala se expande; si tiene pocas counters, se comprime.
+    // Un deck no puede ser castigado injustamente por un meta con pocas counters,
+    // ni protegido artificialmente en uno con muchas.
     if (result.hasPowerData && result.hasSpecData) {
-        const BASELINE = 120;
+        const maxTheoreticalThreat = (powerScoreCache.cards || [])
+            .filter(c => c.isCounter && c.counterBonus > 0)
+            .reduce((sum, c) => sum + c.counterBonus, 0);
+
+        // Fallback a 120 solo si el meta no tiene counters configuradas
+        const BASELINE = maxTheoreticalThreat > 0 ? maxTheoreticalThreat : 120;
+
         const totalThreat = result.threatCards.reduce((s, c) => s + c.threatLevel, 0);
         result.externalScore = parseFloat(
             Math.max(0, (1 - Math.min(1, totalThreat / BASELINE)) * 10).toFixed(1)
         );
+
+        // Datos de contexto para que el render pueda mostrar la explicación
+        result.baseline    = BASELINE;
+        result.totalThreat = totalThreat;
+        result.threatPct   = Math.round((totalThreat / BASELINE) * 100);
+
     } else if (result.hasPowerData) {
         result.externalScore = 5.0;
     }
@@ -350,177 +373,49 @@ calculateExternalScore: function (deckCards, powerScoreCache, metaDecks) {
         result.counterDecks = allDecks.slice(0, 5);
     }
 
-    // PASO 5 — Staples inteligentes: prioriza los que hacen counter a las amenazas
-if (window.ConfigManager) {
-    try {
-        const staples   = ConfigManager.getStaples() || {};
-        const deckIds   = new Set(Object.keys(deckCards).map(String));
-
-        // Specs de las cartas que ME amenazan (specs del enemigo)
-        const threatEnemySpecs = new Set();
-        result.threatCards.forEach(tc => {
-            (tc.specAnalysis?.specializations || []).forEach(s => {
-                threatEnemySpecs.add(s.name);
-            });
-        });
-
-        Object.values(staples).forEach(staple => {
-            if (!staple || !staple.id) return;
-            if (deckIds.has(String(staple.id))) return;
-
-            // Buscar en powerScoreCache si esta staple hace counter
-            // a las especialidades de las cartas que me amenazan
-            let isCounterOfThreat = false;
-            if (powerScoreCache) {
-                const cached = powerScoreCache.cards?.find(
-                    c => String(c.cardId) === String(staple.id)
-                );
-                if (cached?.isCounter) {
-                    const countersSpecs = (cached.specAnalysis?.counters || [])
-                        .map(c => c.countersSpec);
-                    isCounterOfThreat = countersSpecs.some(s => threatEnemySpecs.has(s));
-                }
-            }
-
-            result.missingStaples.push({
-                cardId:          staple.id,
-                name:            staple.name,
-                type:            staple.type || '',
-                isCounterOfThreat
-            });
-        });
-
-        // Priorizar staples que hacen counter a las amenazas del deck
-        result.missingStaples.sort((a, b) =>
-            (b.isCounterOfThreat ? 1 : 0) - (a.isCounterOfThreat ? 1 : 0)
-        );
-
-    } catch (e) {
-        console.warn('[ExternalScore] Staples error:', e);
-    }
-}
-
-    return result;
-},
-// ===============================
-// EXTERNAL SCORE Y ANÁLISIS DEL DECK
-// ===============================
-calculateExternalScore: function (deckCards, powerScoreCache, metaDecks) {
-    const result = {
-        externalScore:    null,
-        deckSpecs:        [],
-        threatCards:      [],
-        counterDecks:     [],
-        missingStaples:   [],
-        hasPowerData:     false,
-        hasSpecData:      false
-    };
-
-    // PASO 1: Especialidades del deck activo
-    if (window.SpecialtyAnalyzer) {
-        const specCount = {};
-        for (const [, item] of Object.entries(deckCards)) {
-            if (!item.data) continue;
-            const analysis = SpecialtyAnalyzer.analyzeCard(item.data);
-            (analysis.specializations || []).forEach(s => {
-                specCount[s.name] = (specCount[s.name] || 0) + (item.qty || 1);
-            });
-        }
-        result.deckSpecs = Object.entries(specCount)
-            .sort((a, b) => b[1] - a[1])
-            .map(([name, count]) => ({ name, count }));
-        result.hasSpecData = result.deckSpecs.length > 0;
-    }
-
-    // PASO 2: Cartas del meta que amenazan este deck
-    if (powerScoreCache && powerScoreCache.cards) {
-        result.hasPowerData = true;
-        const deckSpecNames = new Set(result.deckSpecs.map(s => s.name));
-
-        powerScoreCache.cards.forEach(card => {
-            if (!card.isCounter || card.counterBonus <= 0) return;
-            const countersSpecs = (card.specAnalysis?.counters || [])
-                .map(c => c.countersSpec).filter(Boolean);
-            const overlap = countersSpecs.filter(s => deckSpecNames.has(s));
-            if (overlap.length > 0) {
-                result.threatCards.push({
-                    cardId:        card.cardId,
-                    name:          card.cardData?.name || String(card.cardId),
-                    presencePct:   card.presencePct,
-                    counterBonus:  card.counterBonus,
-                    countersSpecs: overlap,
-                    threatLevel:   Math.round(card.counterBonus * (card.presencePct / 100))
-                });
-            }
-        });
-        result.threatCards.sort((a, b) => b.threatLevel - a.threatLevel);
-    }
-
-    // PASO 3: External Score
-    if (result.hasPowerData && result.hasSpecData) {
-        const BASELINE = 120;
-        const totalThreat = result.threatCards.reduce((s, c) => s + c.threatLevel, 0);
-        result.externalScore = parseFloat(
-            Math.max(0, (1 - Math.min(1, totalThreat / BASELINE)) * 10).toFixed(1)
-        );
-    } else if (result.hasPowerData) {
-        result.externalScore = 5.0;
-    }
-
-    // PASO 4: Decks del meta que más amenazan (cross-ref con cardFrequency)
-    if (result.threatCards.length > 0 && metaDecks) {
-        const threatIds = new Set(result.threatCards.map(c => String(c.cardId)));
-        const allDecks  = [];
-
-        for (const [folder, decks] of Object.entries(metaDecks)) {
-            (decks || []).forEach(deck => {
-                if (!deck.cardFrequency) return;
-                let unique = 0, copies = 0;
-                Object.entries(deck.cardFrequency).forEach(([id, qty]) => {
-                    if (threatIds.has(String(id))) { unique++; copies += qty; }
-                });
-                if (unique > 0) {
-                    allDecks.push({
-                        name: deck.filename, folder,
-                        unique, copies,
-                        score: unique * 3 + copies
-                    });
-                }
-            });
-        }
-        allDecks.sort((a, b) => b.score - a.score);
-        result.counterDecks = allDecks.slice(0, 5);
-    }
-
-    // PASO 5: Staples no presentes en el deck
+    // PASO 5: Staples inteligentes — prioriza los que hacen counter a las amenazas
     if (window.ConfigManager) {
         try {
-            const staples   = ConfigManager.getStaples() || {};
-            const deckIds   = new Set(Object.keys(deckCards).map(String));
+            const staples  = ConfigManager.getStaples() || {};
+            const deckIds  = new Set(Object.keys(deckCards).map(String));
 
-            // Si tenemos threat cards, priorizar staples contra sus specs
-            const threatSpecNames = new Set(
-                result.threatCards.flatMap(c => c.countersSpecs)
-            );
+            // Specs de las cartas que ME amenazan (mecánicas del oponente)
+            const threatEnemySpecs = new Set();
+            result.threatCards.forEach(tc => {
+                (tc.specAnalysis?.specializations || []).forEach(s => {
+                    threatEnemySpecs.add(s.name);
+                });
+            });
 
             Object.values(staples).forEach(staple => {
                 if (!staple || !staple.id) return;
                 if (deckIds.has(String(staple.id))) return;
 
-                // Determinar prioridad: alto si es Trap/QuickEffect (disrupción)
-                const isDisruption = staple.type &&
-                    (staple.type.toLowerCase().includes('trap') ||
-                     staple.type.toLowerCase().includes('quick'));
+                // ¿Esta staple hace counter a alguna mecánica de las cartas que me amenazan?
+                let isCounterOfThreat = false;
+                if (powerScoreCache) {
+                    const cached = powerScoreCache.cards?.find(
+                        c => String(c.cardId) === String(staple.id)
+                    );
+                    if (cached?.isCounter) {
+                        const countersSpecs = (cached.specAnalysis?.counters || [])
+                            .map(c => c.countersSpec);
+                        isCounterOfThreat = countersSpecs.some(s => threatEnemySpecs.has(s));
+                    }
+                }
 
                 result.missingStaples.push({
-                    cardId:    staple.id,
-                    name:      staple.name,
-                    type:      staple.type || '',
-                    priority:  isDisruption ? 2 : 1
+                    cardId:           staple.id,
+                    name:             staple.name,
+                    type:             staple.type || '',
+                    isCounterOfThreat
                 });
             });
 
-            result.missingStaples.sort((a, b) => b.priority - a.priority);
+            // Anti-threat primero, luego el resto
+            result.missingStaples.sort((a, b) =>
+                (b.isCounterOfThreat ? 1 : 0) - (a.isCounterOfThreat ? 1 : 0)
+            );
         } catch (e) {
             console.warn('[ExternalScore] Staples error:', e);
         }
