@@ -452,6 +452,7 @@ const Deck = {
             this.name = deckName;
             this.closeModal();
             this.render();
+            this.onDeckLoaded();
         } catch (e) {
             alert('Error al cargar el deck');
         }
@@ -631,6 +632,7 @@ const Deck = {
             this.cards = newCards;
             this.name = filename.replace('.ydk', '');
             this.render();
+            this.onDeckLoaded();
             alert(`Deck importado: ${this.name}`);
 
         } catch (error) {
@@ -1068,6 +1070,17 @@ getCartaAs: function () {
         if (item.roles?.includes('Carta As')) return id;
     }
     return null;
+},
+// Notifica a todos los módulos que el deck activo cambió.
+// Llamar después de cualquier carga de deck.
+onDeckLoaded: function () {
+    if (window.Estadisticas) {
+        Estadisticas.updateDeckStats();
+        if (typeof Estadisticas.updateFloatingWidget === 'function') {
+            Estadisticas.updateFloatingWidget();
+        }
+    }
+    if (window.Winrate) Winrate.refreshSection();
 },
     // ===============================
     // RENDER GENERAL

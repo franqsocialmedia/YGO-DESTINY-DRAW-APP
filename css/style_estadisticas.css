@@ -1466,6 +1466,144 @@
 
 .analysis-intro strong { color: var(--text-light); }
 .analysis-intro em     { color: var(--gold-color); font-style: normal; }
+
+
+/* ====================================
+   WINRATE MODULE
+   ==================================== */
+
+.wr-deck-label {
+    font-size: 0.85rem;
+    color: rgba(241,241,241,0.5);
+    margin-bottom: var(--spacing-sm);
+    text-align: center;
+}
+
+.wr-halves {
+    display: flex;
+    gap: 12px;
+}
+
+.wr-half {
+    flex: 1;
+    background: rgba(0,26,51,0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.wr-going-label {
+    font-size: 0.78rem;
+    font-weight: bold;
+    color: var(--gold-color);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.wr-score-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wr-separator {
+    font-size: 1.4rem;
+    color: rgba(255,255,255,0.2);
+    line-height: 1;
+}
+
+.wr-counter-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.wr-counter-btns {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.wr-number {
+    font-size: 2rem;
+    font-weight: bold;
+    line-height: 1;
+    min-width: 40px;
+    text-align: center;
+}
+
+.wr-btn {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    width: 28px;
+    height: 22px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: background 0.15s;
+}
+.wr-btn:hover { background: rgba(255,215,0,0.15); }
+
+.wr-counter-label {
+    font-size: 0.68rem;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.wr-sub-pct {
+    font-size: 1.1rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wr-sub-duels {
+    font-size: 0.72rem;
+    font-weight: normal;
+    color: rgba(255,255,255,0.35);
+}
+
+.wr-general {
+    margin-top: 14px;
+    background: rgba(0,26,51,0.6);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.wr-general-label {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.wr-general-pct {
+    font-size: 2.4rem;
+    font-weight: bold;
+    line-height: 1.1;
+}
+
+.wr-general-duels {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.35);
+}
 /* ====================================
    RESPONSIVE
    ==================================== */

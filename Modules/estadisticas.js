@@ -336,6 +336,7 @@ const Estadisticas = {
                 if (Deck.render) Deck.render();
             }
 
+            if (window.Deck) Deck.onDeckLoaded();
             if (window.Navigation) Navigation.showTab('mideck');
 
         } finally {
@@ -1294,6 +1295,14 @@ const Estadisticas = {
             <div id="deck-stats-sec" class="stats-section" style="display:none;">
                 ${this.renderDeckStats()}
             </div>`;
+        // ── 2.2 WINRATE DEL DECK (si hay datos) ─────────────────────
+      html += `<h3 class="stats-section-title" onclick="Estadisticas.toggleSection('winrate-sec'); if(window.Winrate) Winrate.refreshSection();">
+                🏆 Winrate del Deck
+            </h3>
+            <div id="winrate-sec" class="stats-section" style="display:none;">
+                <p class="stats-empty">Abre esta sección para ver el winrate.</p>
+            </div>`
+
 
         // ── 3. GESTIÓN DE CARPETAS ────────────────────────────────
         html += `
