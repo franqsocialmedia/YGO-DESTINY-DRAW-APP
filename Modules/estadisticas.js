@@ -316,7 +316,7 @@ const Estadisticas = {
                             data:     cardData,
                             qty,
                             location: loc,
-                            roles:    []
+                            roles: window.Deck?.autoAssignRoles?.(cardData) ?? []
                         };
                     }
                 }));
@@ -779,6 +779,9 @@ const Estadisticas = {
                         item.specAnalysis = window.SpecialtyAnalyzer
                             ? SpecialtyAnalyzer.analyzeCard(item.cardData)
                             : { specializations: [], counters: [] };
+                        // Roles detectados con las keywords del Config del usuario
+                        // — misma vara de medir que los decks guardados
+                        item.detectedRoles = window.Deck?.autoAssignRoles?.(item.cardData) ?? [];
                     }
                 } catch (_) {}
             }));

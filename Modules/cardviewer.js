@@ -84,7 +84,7 @@ const CardViewer = {
                     <hr>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <button id="cv-open-image" style="flex: 1; min-width: 120px;">Ver Imagen HD</button>
-                        <button id="cv-download-test" style="flex: 1; min-width: 120px; background: #4CAF50; color: white;">PRUEBA DECKLIST</button>
+                        <button id="cv-staple-btn" style="flex: 1; min-width: 120px;"></button>
                         <button id="cv-fav-btn" style="flex: 1; min-width: 120px;"></button>
                     </div>
 
@@ -201,10 +201,27 @@ const CardViewer = {
             window.open(imgUrl, '_blank');
         };
 
-        // Botón: PRUEBA DECKLIST - Generar imagen con html2canvas
-        const downloadTestBtn = document.getElementById('cv-download-test');
-        downloadTestBtn.onclick = () => {
-            this.generateCardDecklistHTML2Canvas(card);
+        // Botón: Volver Staple
+        const stapleBtn = document.getElementById('cv-staple-btn');
+        const isStaple  = () => window.ConfigManager?.isStaple?.(card.id);
+        const updateStapleBtn = () => {
+            stapleBtn.textContent      = isStaple() ? '⭐ Es Staple' : '☆ Volver Staple';
+            stapleBtn.style.background = isStaple() ? '#FFD700' : '#4a4a4a';
+            stapleBtn.style.color      = isStaple() ? '#000'    : '#fff';
+        };
+        updateStapleBtn();
+        stapleBtn.onclick = () => {
+            if (!window.ConfigManager) return;
+            if (isStaple()) {
+                ConfigManager.deleteStaple(card.id);
+            } else {
+                ConfigManager.createStaple(card.id, {
+                    name:     card.name,
+                    type:     card.type,
+                    imageUrl: card.card_images?.[0]?.image_url_small || ''
+                });
+            }
+            updateStapleBtn();
         };
 
         // Botón: Marcar / desmarcar Favorita

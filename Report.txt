@@ -6295,3 +6295,31 @@ Sección "Tu nivel como Duelista" (Modules/duelista.js)
 Módulo nuevo independiente que agrega datos de todos los records de Winrate sin importar el deck activo. Muestra: nivel del duelista (9 niveles desde Novato a Legendario según duelos totales), barra de progreso al siguiente nivel, winrate general/going 1st/going 2nd como jugador, y los tres mejores decks (mayor WR general, mejor going 1st, mejor going 2nd) con mínimo de 5 duelos para ser significativo.
 Widget flotante — visibilidad por pestaña (estadisticas.js)
 El widget solo aparece en Buscador y Estadísticas. updateFloatingWidgetVisibility(tabName) se llama desde Navigation.showTab() (ya tenía el hook) y aplica display:none en cualquier otra pestaña.
+
+
+================================================================
+
+últimos avances
+Borrado total rediseñado (config.js)
+borrarTodo deja la app completamente vacía: borra todo el localStorage y guarda una config explícitamente vacía (roles, condiciones, pesos, specialties, staples, nomenclatura — todo {} o []). No restaura defaults. borrarDeck y borrarMeta existen como métodos reales. borrarMeta actualiza Estadísticas en vivo sin necesidad de recargar.
+Botón "Borrar Data" en Config (config.js)
+Aparece antes de "Restaurar Configuración". "Borrar Data" en rojo borra absolutamente todo. "Restaurar Configuración" en verde vuelve a los valores por defecto del sistema.
+Lista de Cartas Favoritas (Modules/favoritas.js, index.html)
+Panel lateral derecho en el Buscador. Oculto cuando está vacío, visible automáticamente al marcar la primera favorita. Cada carta tiene botones Ver/Añadir al hacer click (igual que los resultados del buscador) y un botón ✕ para quitar. Guardado en yugioh_favoritas en localStorage. El CardViewer tiene botón "☆ Favorita" / "★ Favorita" con fondo dorado cuando está activa.
+Match-up activado en Decks Guardados (deck.js)
+externalScore ya no es 0 hardcodeado. Si Estadisticas.powerScoreCache existe, se calcula Stats.calculateExternalScore por cada deck. El cache ahora se persiste en yugioh_power_cache para sobrevivir navegación entre pestañas.
+Roles del usuario como única fuente de verdad (stats.js, estadisticas.js)
+Los pilares de consistencia/potencia/resiliencia ya no son hardcodeados — se construyen leyendo los roles que el usuario tiene en Config y normalizándolos via ROLE_SYNONYMS. Si el usuario borra todos sus roles, los pilares quedan vacíos. Si usa "Iniciador", se normaliza a "starter" y aporta al pilar correcto. Las cartas del meta (loadMetaDeckToMiDeck, calculatePowerScores) reciben roles auto-detectados con autoAssignRoles — la misma función que usa el deck del usuario — garantizando que todo el sistema use la misma vara de medir.
+
+Roles del usuario como única fuente de verdad (stats.js)
+Las listas consistencyRoles, powerRoles, resilienceRoles ya no son hardcodeadas. Se construyen leyendo los roles del Config del usuario y normalizándolos via ROLE_SYNONYMS. Sin roles configurados → pilares vacíos → Internal Score 0.
+Meta valorado con los mismos roles (estadisticas.js)
+loadMetaDeckToMiDeck asigna roles a cada carta del meta via Deck.autoAssignRoles() en lugar de [] vacío. calculatePowerScores también almacena detectedRoles en cada carta via el mismo método.
+External Score gateado correctamente (stats.js)
+Eliminado el fallback de 5.0 y el BASELINE = 120. Si no hay pares de Mecánicas/Counters configurados, externalScore queda null (se muestra como 0). La misma lógica aplica para decks guardados en Mi Deck.
+Botón "Volver Staple" en CardViewer (cardviewer.js)
+Reemplaza "PRUEBA DECKLIST". Actúa como toggle: guarda o elimina la carta de la lista de Staples del Config al momento. Muestra estado visual dorado cuando la carta ya es Staple.
+Botón "Borrar Data" en Config (config.js)
+Borra absolutamente todo el localStorage y deja la config explícitamente vacía (roles {}, specialties [], staples {}, nomenclatura []). No restaura defaults. Actualiza todos los módulos en vivo. El botón "Restaurar Configuración" está en verde, "Borrar Data" en rojo.
+borrarMeta actualiza en vivo (config.js)
+Ahora resetea Estadisticas.metaDecks, metaFolders y llama Estadisticas.render() directamente — sin necesidad de recargar.

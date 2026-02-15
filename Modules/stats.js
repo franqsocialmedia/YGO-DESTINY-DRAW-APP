@@ -61,11 +61,29 @@ const normalizeRole = (role) => {
     }
     return r; // si no hay sinónimo, devuelve tal cual
 };
-    // Roles por categoría (ajustados según lógica competitiva)
-    const consistencyRoles  = ['searcher', 'starter'];
-    const powerRoles        = ['boss monster', 'boardbreaker','booster','removal', 'disruption'];
-    const resilienceRoles   = ['negator', 'undestroyeble', 'unaffectable', 'untargetable',
-                               'recycle', 'extender'];
+    // Pilares construidos desde los roles del usuario en Config.
+    // Cada rol definido por el usuario se normaliza via ROLE_SYNONYMS.
+    // Si el nombre canónico coincide con un pilar conocido, se incluye.
+    // Si el usuario no tiene roles → pilares vacíos → puntuación 0.
+    // Esto garantiza que la misma vara de medir aplique en todo el sistema.
+    const CANONICAL_CONSISTENCY = new Set(['searcher', 'starter']);
+    const CANONICAL_POWER       = new Set(['boss monster', 'boardbreaker', 'booster', 'removal', 'disruption']);
+    const CANONICAL_RESILIENCE  = new Set(['negator', 'negater', 'undestroyeble', 'undestroyable',
+                                           'unaffectable', 'untargetable', 'recycle', 'extender']);
+
+    const userRoleNames = window.ConfigManager
+        ? Object.keys(ConfigManager.getRoles?.() || {})
+        : [];
+
+    const consistencyRoles = userRoleNames
+        .map(r => normalizeRole(r))
+        .filter(r => CANONICAL_CONSISTENCY.has(r));
+    const powerRoles = userRoleNames
+        .map(r => normalizeRole(r))
+        .filter(r => CANONICAL_POWER.has(r));
+    const resilienceRoles = userRoleNames
+        .map(r => normalizeRole(r))
+        .filter(r => CANONICAL_RESILIENCE.has(r));
 
     // Palabras de restricción en el texto del efecto
     const restrictionTerms  = [
@@ -388,21 +406,24 @@ calculateExternalScore: function (deckCards, powerScoreCache, metaDecks) {
             .filter(c => c.isCounter && c.counterBonus > 0)
             .reduce((sum, c) => sum + c.counterBonus, 0);
 
-        // Fallback a 120 solo si el meta no tiene counters configuradas
-        const BASELINE = maxTheoreticalThreat > 0 ? maxTheoreticalThreat : 120;
+        // Si no hay pares de Mecánicas/Counters configurados,
+        // el sistema no tiene base para medir amenazas → score null (0 visible).
+        // Esto asegura que sin configuración no se genera un número falso.
+        if (maxTheoreticalThreat === 0) {
+            result.externalScore = null;
+        } else {
+            const totalThreat = result.threatCards.reduce((s, c) => s + c.threatLevel, 0);
+            result.externalScore = parseFloat(
+                Math.max(0, (1 - Math.min(1, totalThreat / maxTheoreticalThreat)) * 10).toFixed(1)
+            );
+            result.baseline    = maxTheoreticalThreat;
+            result.totalThreat = totalThreat;
+            result.threatPct   = Math.round((totalThreat / maxTheoreticalThreat) * 100);
+        }
 
-        const totalThreat = result.threatCards.reduce((s, c) => s + c.threatLevel, 0);
-        result.externalScore = parseFloat(
-            Math.max(0, (1 - Math.min(1, totalThreat / BASELINE)) * 10).toFixed(1)
-        );
-
-        // Datos de contexto para que el render pueda mostrar la explicación
-        result.baseline    = BASELINE;
-        result.totalThreat = totalThreat;
-        result.threatPct   = Math.round((totalThreat / BASELINE) * 100);
-
-    } else if (result.hasPowerData) {
-        result.externalScore = 5.0;
+    // Sin mecánicas configuradas o sin power data → externalScore queda null
+    }else if (result.hasPowerData) {
+        result.externalScore = 0;
     }
 
     // PASO 4: Decks del meta que más amenazan (cross-ref con cardFrequency)
