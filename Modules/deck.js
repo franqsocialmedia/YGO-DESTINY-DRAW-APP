@@ -823,15 +823,34 @@ const Deck = {
                 subtypesBadges += `<span class="subtype-badge">${subtype}</span>`;
             });
 
-            // Generar badges de ROLES (Carta As con estilo especial)
+           // Generar badges de ROLES
+            // Si el rol tiene restricción de nomenclatura, valida que la carta
+            // la cumpla antes de mostrar el badge — igual que detectPossibleRoles
+            // en CardViewer. Sin restricción: se muestra siempre (comportamiento anterior).
             let rolesBadges = '';
             if (item.roles && item.roles.length > 0) {
                 item.roles.forEach(role => {
                     if (role === 'Carta As') {
                         rolesBadges += `<span class="role-badge badge-carta-as">⭐ Carta As</span>`;
-                    } else {
-                        rolesBadges += `<span class="role-badge">${role}</span>`;
+                        return;
                     }
+
+                    const cond     = window.ConfigManager?.getRoleCondition?.(role);
+                    const nomCatId = cond?.nomenclatureCategory || null;
+
+                    if (nomCatId && window.NomenclatureAnalyzer && item.data) {
+                        const segments  = NomenclatureAnalyzer.analyzeCard(item.data) || [];
+                        const scopeText = segments
+                            .filter(s => s.category === nomCatId)
+                            .map(s => s.text.toLowerCase())
+                            .join(' ');
+                        const keywords  = cond?.keywords || [];
+                        const passes    = keywords.length === 0 ||
+                            keywords.some(kw => scopeText.includes(kw.toLowerCase()));
+                        if (!passes) return;
+                    }
+
+                    rolesBadges += `<span class="role-badge">${role}</span>`;
                 });
             }
 

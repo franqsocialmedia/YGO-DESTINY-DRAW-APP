@@ -162,18 +162,18 @@ const Config = {
                         <select class="role-nom-select"
                             onchange="ConfigManager.setRoleNomenclatureCategory('${roleName}', this.value)">
                             ${Config.renderNomCategoryOptions(
-                                (ConfigManager.getRoleCondition('${roleName}') || {}).nomenclatureCategory
+                                (roleCondition || {}).nomenclatureCategory
                             )}
                         </select>
                     </div>
                     <div class="role-weight-row">
                         <label class="role-weight-label" title="1.0 = genérico (máximo aporte) · 0.1 = arquetípico (aporte reducido)">
                             Peso del rol
-                            <span class="role-weight-display" id="rw-${roleName}">${ConfigManager.getRoleWeight('${roleName}').toFixed(1)}</span>
+                            <span class="role-weight-display" id="rw-${roleName}">${ConfigManager.getRoleWeight(roleName).toFixed(1)}</span>
                         </label>
                         <input type="range" class="role-weight-input"
                             min="0.1" max="1.0" step="0.1"
-                            value="${ConfigManager.getRoleWeight('${roleName}')}"
+                            value="${ConfigManager.getRoleWeight(roleName)}"
                             oninput="document.getElementById('rw-${roleName}').textContent=parseFloat(this.value).toFixed(1)"
                             onchange="ConfigManager.setRoleWeight('${roleName}', parseFloat(this.value))">
                     </div>
