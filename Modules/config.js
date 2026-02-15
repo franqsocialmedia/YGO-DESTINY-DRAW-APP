@@ -118,16 +118,16 @@ const Config = {
         const keywords     = roleCondition ? (roleCondition.keywords || []) : [];
         const conditionals = roleCondition ? (roleCondition.conditionals || []) : [];
 
-        const kwChips = keywords.map(kw => `
+      const kwChips = keywords.map((kw, idx) => `
             <div class="keyword-chip">
                 <span class="chip-text">${kw}</span>
-                <span class="chip-remove" onclick="Config.removeCondKeyword('${roleName}','${kw.replace(/'/g, "\\'")}')">×</span>
+                <span class="chip-remove" onclick="Config.removeCondKeywordByIndex('${roleName}',${idx})">×</span>
             </div>`).join('');
 
-        const condChips = conditionals.map(c => `
+        const condChips = conditionals.map((c, idx) => `
             <div class="keyword-chip conditional-chip">
                 <span class="chip-text">${c}</span>
-                <span class="chip-remove" onclick="Config.removeConditional('${roleName}','${c.replace(/'/g, "\\'")}')">×</span>
+                <span class="chip-remove" onclick="Config.removeConditionalByIndex('${roleName}',${idx})">×</span>
             </div>`).join('');
 
         return `
@@ -199,6 +199,29 @@ const Config = {
                     </div>
                 </div>
             </div>`;
+    },
+    removeCondKeywordByIndex: function (roleName, index) {
+        const cond = ConfigManager.getRoleCondition(roleName);
+        if (!cond?.keywords) return;
+        const kw = cond.keywords[index];
+        if (kw !== undefined) {
+            ConfigManager.removeKeywordFromRoleCondition(roleName, kw);
+            this.render();
+            const sec = document.getElementById('roles-section');
+            if (sec) sec.style.display = 'block';
+        }
+    },
+
+    removeConditionalByIndex: function (roleName, index) {
+        const cond = ConfigManager.getRoleCondition(roleName);
+        if (!cond?.conditionals) return;
+        const c = cond.conditionals[index];
+        if (c !== undefined) {
+            ConfigManager.removeConditionalFromRole(roleName, c);
+            this.render();
+            const sec = document.getElementById('roles-section');
+            if (sec) sec.style.display = 'block';
+        }
     },
 
     // ===============================
@@ -360,81 +383,94 @@ const Config = {
         return html;
     },
 
-    renderNomenclatureCategory: function (cat) {
-    const cond = cat.conditions || {};
+   renderNomenclatureCategory: function (cat) {
+        const cond = cat.conditions || {};
 
-    const containsArr = Array.isArray(cond.contains) ? cond.contains 
-        : (cond.contains ? [cond.contains] : []);
-    const notContainsArr = Array.isArray(cond.notContains) ? cond.notContains 
-        : (cond.notContains ? [cond.notContains] : []);
+        const toArr = (v) => Array.isArray(v) ? v : (v ? [v] : []);
+        const startsArr    = toArr(cond.startsWith);
+        const containsArr  = toArr(cond.contains);
+        const notContArr   = toArr(cond.notContains);
+        const endsArr      = toArr(cond.endsWith);
 
-    const containsChips = containsArr.map(kw => `
-        <div class="keyword-chip">
-            <span class="chip-text">${kw}</span>
-            <span class="chip-remove" onclick="Config.removeNomCondKw('${cat.id}','contains','${kw.replace(/'/g,"\\'")}')">×</span>
-        </div>`).join('');
+        const makeChips = (arr, field, chipClass = '') => arr.map((kw, idx) => `
+            <div class="keyword-chip ${chipClass}">
+                <span class="chip-text">${kw}</span>
+                <span class="chip-remove"
+                    onclick="Config.removeNomCondKwByIndex('${cat.id}','${field}',${idx})">×</span>
+            </div>`).join('');
 
-    const notContainsChips = notContainsArr.map(kw => `
-        <div class="keyword-chip conditional-chip">
-            <span class="chip-text">${kw}</span>
-            <span class="chip-remove" onclick="Config.removeNomCondKw('${cat.id}','notContains','${kw.replace(/'/g,"\\'")}')">×</span>
-        </div>`).join('');
-
-    return `
+        return `
         <div class="role-card">
             <div class="role-card-header">
                 <input type="color" value="${cat.color}" title="Color de la categoría"
-                    style="width:36px;height:36px;min-width:36px;border:2px solid var(--border-color);border-radius:6px;cursor:pointer;padding:2px;margin-right:3px;background:transparent;appearance:none;-webkit-appearance:none;"
+                    style="width:36px;height:36px;min-width:36px;border:2px solid var(--border-color);border-radius:6px;cursor:pointer;padding:2px;background:transparent;appearance:none;-webkit-appearance:none;"
                     onchange="ConfigManager.updateNomenclatureCategory('${cat.id}',{color:this.value});Config.render()">
                 <input type="text" class="role-name-input" value="${cat.name}"
                     onblur="ConfigManager.updateNomenclatureCategory('${cat.id}',{name:this.value})"
                     onkeydown="if(event.key==='Enter')this.blur()">
-                <button class="btn-delete-role" onclick="Config.deleteNomCategory('${cat.id}')">🗑️</button>
+                <button class="btn-delete-role" style="margin-left:auto;"
+                    onclick="Config.deleteNomCategory('${cat.id}')">🗑️</button>
             </div>
             <div class="role-card-body" style="gap:12px;">
 
-                <label class="config-label">Empieza con:</label>
-                <input type="text" class="keyword-input" value="${cond.startsWith || ''}"
-                    placeholder="vacío = cualquiera"
-                    onblur="ConfigManager.updateNomenclatureCategoryCondition('${cat.id}','startsWith',this.value)"
-                    onkeydown="if(event.key==='Enter')this.blur()">
-
                 <label class="config-label">
-                    Contiene: <small style="font-weight:normal;color:rgba(241,241,241,0.55);">— al menos UNA debe cumplirse</small>
+                    Empieza con:
+                    <small style="font-weight:normal;color:rgba(241,241,241,0.55);">— AL MENOS UNA debe cumplirse</small>
                 </label>
                 <div class="keywords-container">
-                    ${containsChips || '<span class="empty-chips">Sin keywords (cualquier texto)</span>'}
+                    ${makeChips(startsArr, 'startsWith') || '<span class="empty-chips">Sin restricción de inicio</span>'}
                 </div>
                 <div class="add-keyword-container">
-                    <input type="text" class="keyword-input" id="nom-contains-${cat.id}" placeholder="Agregar opción..."
-                        onkeydown="if(event.key==='Enter')Config.addNomCondKw('${cat.id}','contains',this)">
-                    <button class="btn btn-sm" onclick="Config.addNomCondKw('${cat.id}','contains',document.getElementById('nom-contains-${cat.id}'))">+ Agregar</button>
+                    <input type="text" class="keyword-input" id="nom-starts-${cat.id}" placeholder="Agregar inicio...">
+                    <button class="btn btn-sm"
+                        onclick="Config.addNomCondKw('${cat.id}','startsWith',document.getElementById('nom-starts-${cat.id}'))">+ Agregar</button>
+                </div>
+
+                <label class="config-label">
+                    Contiene:
+                    <small style="font-weight:normal;color:rgba(241,241,241,0.55);">— AL MENOS UNA debe cumplirse</small>
+                </label>
+                <div class="keywords-container">
+                    ${makeChips(containsArr, 'contains') || '<span class="empty-chips">Sin keywords (cualquier texto)</span>'}
+                </div>
+                <div class="add-keyword-container">
+                    <input type="text" class="keyword-input" id="nom-contains-${cat.id}" placeholder="Agregar opción...">
+                    <button class="btn btn-sm"
+                        onclick="Config.addNomCondKw('${cat.id}','contains',document.getElementById('nom-contains-${cat.id}'))">+ Agregar</button>
                 </div>
 
                 <label class="config-label conditional-label">
-                    NO contiene: <small style="font-weight:normal;">— TODAS deben estar ausentes</small>
+                    NO contiene:
+                    <small style="font-weight:normal;">— NINGUNA debe estar presente</small>
                 </label>
                 <div class="keywords-container">
-                    ${notContainsChips || '<span class="empty-chips">Sin restricciones</span>'}
+                    ${makeChips(notContArr, 'notContains', 'conditional-chip') || '<span class="empty-chips">Sin restricciones</span>'}
                 </div>
                 <div class="add-keyword-container">
-                    <input type="text" class="keyword-input conditional-input" id="nom-notcontains-${cat.id}" placeholder="Agregar exclusión..."
-                        onkeydown="if(event.key==='Enter')Config.addNomCondKw('${cat.id}','notContains',this)">
-                    <button class="btn btn-sm btn-danger" onclick="Config.addNomCondKw('${cat.id}','notContains',document.getElementById('nom-notcontains-${cat.id}'))">+ Agregar</button>
+                    <input type="text" class="keyword-input conditional-input" id="nom-notcontains-${cat.id}" placeholder="Agregar exclusión...">
+                    <button class="btn btn-sm btn-danger"
+                        onclick="Config.addNomCondKw('${cat.id}','notContains',document.getElementById('nom-notcontains-${cat.id}'))">+ Agregar</button>
                 </div>
 
-                <label class="config-label">Termina en:</label>
-                <input type="text" class="keyword-input" value="${cond.endsWith || ''}"
-                    placeholder="por defecto: ."
-                    onblur="ConfigManager.updateNomenclatureCategoryCondition('${cat.id}','endsWith',this.value)"
-                    onkeydown="if(event.key==='Enter')this.blur()">
+                <label class="config-label">
+                    Termina en:
+                    <small style="font-weight:normal;color:rgba(241,241,241,0.55);">— AL MENOS UNA debe cumplirse</small>
+                </label>
+                <div class="keywords-container">
+                    ${makeChips(endsArr, 'endsWith') || '<span class="empty-chips">Sin restricción de cierre</span>'}
+                </div>
+                <div class="add-keyword-container">
+                    <input type="text" class="keyword-input" id="nom-ends-${cat.id}" placeholder="Agregar cierre...">
+                    <button class="btn btn-sm"
+                        onclick="Config.addNomCondKw('${cat.id}','endsWith',document.getElementById('nom-ends-${cat.id}'))">+ Agregar</button>
+                </div>
 
                 <div class="config-help-text" style="margin-top:8px;">
-                    <small><strong>Cómo funciona:</strong> Un párrafo se detecta si: empieza con el texto indicado, contiene AL MENOS UNA de las keywords de "Contiene", NO contiene NINGUNA de las de "NO contiene", y termina con el texto indicado.</small>
+                    <small><strong>Cómo funciona:</strong> Un segmento se detecta si empieza con AL MENOS UNA de "Empieza con", contiene AL MENOS UNA de "Contiene", NO contiene NINGUNA de "NO contiene", y termina con AL MENOS UNA de "Termina en". Los campos vacíos no se verifican.</small>
                 </div>
             </div>
         </div>`;
-},
+    },
 renderNomCategoryOptions: function (selectedId) {
         const cats = (ConfigManager.getNomenclature().categories || []);
         const none = `<option value="—" ${!selectedId ? 'selected' : ''}>— Todo el efecto (sin filtro)</option>`;
@@ -691,12 +727,19 @@ renderNomCategoryOptions: function (selectedId) {
 },
 
 removeNomCondKw: function (catId, field, kw) {
-    if (ConfigManager.removeNomCondKw(catId, field, kw)) {
-        this.render();
-        const sec = document.getElementById('nomenclature-section');
-        if (sec) sec.style.display = 'block';
-    }
-},
+        if (ConfigManager.removeNomCondKw(catId, field, kw)) {
+            this.render();
+            const sec = document.getElementById('nomenclature-section');
+            if (sec) sec.style.display = 'block';
+        }
+    },
+    removeNomCondKwByIndex: function (catId, field, index) {
+        if (ConfigManager.removeNomCondKwByIndex(catId, field, index)) {
+            this.render();
+            const sec = document.getElementById('nomenclature-section');
+            if (sec) sec.style.display = 'block';
+        }
+    },
 
     toggleSection: function (sectionId) {
         const sec = document.getElementById(sectionId);

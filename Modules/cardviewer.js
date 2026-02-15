@@ -420,33 +420,40 @@ const CardViewer = {
         if (!categories || categories.length === 0) return paragraph;
 
         const paraLower = paragraph.toLowerCase().trim();
-        
+        const toArr = (v) => Array.isArray(v) ? v.filter(s => s && s.trim())
+                           : (v && String(v).trim() ? [String(v).trim()] : []);
+
         for (const category of categories) {
             if (!category.conditions) continue;
-
             const cond = category.conditions;
             let matches = true;
 
-            if (cond.startsWith && cond.startsWith.trim() !== '') {
-                if (!paraLower.startsWith(cond.startsWith.toLowerCase().trim())) {
+            // startsWith — array: AL MENOS UNA debe cumplirse
+            const swArr = toArr(cond.startsWith);
+            if (swArr.length > 0 && !swArr.some(sw => paraLower.startsWith(sw.toLowerCase()))) {
+                matches = false;
+            }
+
+            // contains — array: AL MENOS UNA debe cumplirse
+            if (matches) {
+                const cArr = toArr(cond.contains);
+                if (cArr.length > 0 && !cArr.some(kw => paraLower.includes(kw.toLowerCase()))) {
                     matches = false;
                 }
             }
 
+            // notContains — array: NINGUNA debe estar presente
             if (matches) {
-                const containsArr = Array.isArray(cond.contains)
-                    ? cond.contains.filter(c => c.trim())
-                    : (cond.contains && cond.contains.trim() ? [cond.contains.trim()] : []);
-                if (containsArr.length > 0 && !containsArr.some(kw => paraLower.includes(kw.toLowerCase()))) {
+                const ncArr = toArr(cond.notContains);
+                if (ncArr.length > 0 && ncArr.some(kw => paraLower.includes(kw.toLowerCase()))) {
                     matches = false;
                 }
             }
 
+            // endsWith — array: AL MENOS UNA debe cumplirse
             if (matches) {
-                const notContainsArr = Array.isArray(cond.notContains)
-                    ? cond.notContains.filter(c => c.trim())
-                    : (cond.notContains && cond.notContains.trim() ? [cond.notContains.trim()] : []);
-                if (notContainsArr.length > 0 && notContainsArr.some(kw => paraLower.includes(kw.toLowerCase()))) {
+                const ewArr = toArr(cond.endsWith);
+                if (ewArr.length > 0 && !ewArr.some(ew => paraLower.endsWith(ew.toLowerCase()))) {
                     matches = false;
                 }
             }
@@ -454,7 +461,7 @@ const CardViewer = {
             if (matches) {
                 const color = category.color || '#FFFFFF';
                 const categoryName = category.name || category.id;
-                return `<mark style="background-color: ${color}; padding: 2px 4px; border-radius: 3px; cursor: help; opacity: 0.6;" title="${categoryName}">${paragraph}</mark>`;
+                return `<mark style="background-color:${color};padding:2px 4px;border-radius:3px;cursor:help;opacity:0.6;" title="${categoryName}">${paragraph}</mark>`;
             }
         }
 

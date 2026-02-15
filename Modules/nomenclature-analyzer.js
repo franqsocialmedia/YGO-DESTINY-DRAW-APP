@@ -43,35 +43,47 @@ const NomenclatureAnalyzer = {
     },
 
     matchesConditions: function (paragraph, conditions) {
-    if (!conditions) return false;
-    const p = paragraph.toLowerCase().trim();
+        if (!conditions) return false;
+        const p = paragraph.toLowerCase().trim();
 
-    if (conditions.startsWith && conditions.startsWith.trim() !== '') {
-        if (!p.startsWith(conditions.startsWith.toLowerCase().trim())) return false;
-    }
+        // startsWith — array: AL MENOS UNA debe cumplirse
+        const swArr = Array.isArray(conditions.startsWith)
+            ? conditions.startsWith
+            : (conditions.startsWith ? [conditions.startsWith] : []);
+        if (swArr.length > 0) {
+            const ok = swArr.some(sw => sw && p.startsWith(sw.toLowerCase().trim()));
+            if (!ok) return false;
+        }
 
-    // contains: array OR lógica — al menos una debe cumplirse
-    const containsArr = Array.isArray(conditions.contains)
-        ? conditions.contains.filter(c => c.trim())
-        : (conditions.contains && conditions.contains.trim() ? [conditions.contains.trim()] : []);
-    if (containsArr.length > 0) {
-        if (!containsArr.some(kw => p.includes(kw.toLowerCase()))) return false;
-    }
+        // contains — array: AL MENOS UNA debe cumplirse
+        const cArr = Array.isArray(conditions.contains)
+            ? conditions.contains
+            : (conditions.contains ? [conditions.contains] : []);
+        if (cArr.length > 0) {
+            const ok = cArr.some(kw => kw && p.includes(kw.toLowerCase().trim()));
+            if (!ok) return false;
+        }
 
-    // notContains: array AND lógica — ninguna debe estar presente
-    const notContainsArr = Array.isArray(conditions.notContains)
-        ? conditions.notContains.filter(c => c.trim())
-        : (conditions.notContains && conditions.notContains.trim() ? [conditions.notContains.trim()] : []);
-    if (notContainsArr.length > 0) {
-        if (notContainsArr.some(kw => p.includes(kw.toLowerCase()))) return false;
-    }
+        // notContains — array: NINGUNA debe cumplirse
+        const ncArr = Array.isArray(conditions.notContains)
+            ? conditions.notContains
+            : (conditions.notContains ? [conditions.notContains] : []);
+        if (ncArr.length > 0) {
+            const fail = ncArr.some(kw => kw && p.includes(kw.toLowerCase().trim()));
+            if (fail) return false;
+        }
 
-    if (conditions.endsWith && conditions.endsWith.trim() !== '') {
-        if (!p.endsWith(conditions.endsWith.toLowerCase().trim())) return false;
-    }
-    return true;
+        // endsWith — array: AL MENOS UNA debe cumplirse
+        const ewArr = Array.isArray(conditions.endsWith)
+            ? conditions.endsWith
+            : (conditions.endsWith ? [conditions.endsWith] : []);
+        if (ewArr.length > 0) {
+            const ok = ewArr.some(ew => ew && p.endsWith(ew.toLowerCase().trim()));
+            if (!ok) return false;
+        }
+
+        return true;
     },
-
     // ===============================
     // DIVISIÓN EN PÁRRAFOS
     // ===============================

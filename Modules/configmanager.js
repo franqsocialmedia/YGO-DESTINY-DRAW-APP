@@ -709,34 +709,50 @@ getRoleWeight: function (roleName) {
         }
         return false;
     },
-    addNomCondKw: function (categoryId, field, keyword) {
-    const config = this.getConfig();
-    const cat = (config.nomenclature?.categories || []).find(c => c.id === categoryId);
-    if (!cat || !cat.conditions) return false;
-    if (!Array.isArray(cat.conditions[field])) {
-        cat.conditions[field] = cat.conditions[field] ? [cat.conditions[field]] : [];
-    }
-    const kw = keyword.toLowerCase().trim();
-    if (kw && !cat.conditions[field].includes(kw)) {
-        cat.conditions[field].push(kw);
-        this.saveConfig(config);
-        return true;
-    }
-    return false;
-},
+ addNomCondKw: function (categoryId, field, keyword) {
+        const config = this.getConfig();
+        const cat = (config.nomenclature?.categories || []).find(c => c.id === categoryId);
+        if (!cat || !cat.conditions) return false;
+        // Migrar strings sueltos heredados a array
+        if (!Array.isArray(cat.conditions[field])) {
+            cat.conditions[field] = cat.conditions[field]
+                ? [String(cat.conditions[field])]
+                : [];
+        }
+        const kw = keyword.trim();  // no forzar lowercase para preservar exactitud
+        if (kw && !cat.conditions[field].includes(kw)) {
+            cat.conditions[field].push(kw);
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
 
 removeNomCondKw: function (categoryId, field, keyword) {
-    const config = this.getConfig();
-    const cat = (config.nomenclature?.categories || []).find(c => c.id === categoryId);
-    if (!cat || !cat.conditions || !Array.isArray(cat.conditions[field])) return false;
-    const idx = cat.conditions[field].indexOf(keyword);
-    if (idx > -1) {
-        cat.conditions[field].splice(idx, 1);
-        this.saveConfig(config);
-        return true;
-    }
-    return false;
-},
+        const config = this.getConfig();
+        const cat = (config.nomenclature?.categories || []).find(c => c.id === categoryId);
+        if (!cat || !cat.conditions || !Array.isArray(cat.conditions[field])) return false;
+        const idx = cat.conditions[field].indexOf(keyword);
+        if (idx > -1) {
+            cat.conditions[field].splice(idx, 1);
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
+
+    // Eliminar por índice — evita bugs con comillas en el onclick
+    removeNomCondKwByIndex: function (categoryId, field, index) {
+        const config = this.getConfig();
+        const cat = (config.nomenclature?.categories || []).find(c => c.id === categoryId);
+        if (!cat || !cat.conditions || !Array.isArray(cat.conditions[field])) return false;
+        if (index >= 0 && index < cat.conditions[field].length) {
+            cat.conditions[field].splice(index, 1);
+            this.saveConfig(config);
+            return true;
+        }
+        return false;
+    },
 };
 
 window.ConfigManager = ConfigManager;
