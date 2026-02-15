@@ -34,7 +34,7 @@ const ROLE_SYNONYMS = {
                      'interrupción', '妨害'],
 
     // ── RESILIENCIA ───────────────────────────────────────────
-    'negator':      ['negator', 'negadora', 'negador', 'negate',
+    'negator':      ['negator', 'negater', 'negadora', 'negador', 'negate',
                      'negation', 'hand trap', 'handtrap', '無効'],
     'extender':     ['extender', 'extensora', 'extensor', 'extendedora',
                      'combo piece', 'combo', '展開'],
@@ -107,7 +107,7 @@ const normalizeRole = (role) => {
         // Si no, el default es 1.0 (comportamiento idéntico al anterior).
         // Esto permite diferenciar un searcher genérico (weight 1.0) de
         // uno de arquetipo (weight 0.6) sin cambiar la estructura de roles.
-        const getRoleWeight = (roleName) => {
+       /* const getRoleWeight = (roleName) => {
             if (!window.ConfigManager) return 1.0;
             try {
                 const configRoles = ConfigManager.getRoles?.() || {};
@@ -115,7 +115,9 @@ const normalizeRole = (role) => {
                 const match = rolesArr.find(r => r.name?.toLowerCase() === roleName.toLowerCase());
                 return (match?.weight > 0) ? match.weight : 1.0;
             } catch (_) { return 1.0; }
-        };
+        };*/
+            const getRoleWeight = (roleName) =>
+            window.ConfigManager?.getRoleWeight?.(roleName) ?? 1.0;
 
         roles.forEach(r => {
             const weight = getRoleWeight(r);

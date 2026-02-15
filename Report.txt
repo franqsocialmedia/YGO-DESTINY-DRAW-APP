@@ -6279,3 +6279,19 @@ Si el total de amenazas representa el 0% del baseline → External Score = 10. S
 
 ===============================================================
 
+Sistema de sinónimos de roles (stats.js)
+El mapa ROLE_SYNONYMS normaliza cualquier variante escrita por el usuario (español, inglés, japonés) al nombre canónico antes de calcular pilares. "Iniciador", "opener" y "arranque" equivalen a "starter". La normalización ocurre con normalizeRole() aplicado en el loop de calculateInternalScore.
+Restricción de detección por categoría de Nomenclatura (config.js, configmanager.js, cardviewer.js, deck.js)
+Cada rol ahora tiene un selector en Config que permite elegir en qué categoría de nomenclatura deben encontrarse sus keywords para que el rol se detecte. setRoleNomenclatureCategory persiste el categoryId en roleConditions[roleName].nomenclatureCategory. detectPossibleRoles en CardViewer y el render de badges en Mi Deck usan NomenclatureAnalyzer.analyzeCard para filtrar solo los segmentos de esa categoría antes de comparar keywords. Con "—" elegido, el comportamiento es idéntico al anterior.
+Botón de actualizar en Duelista (estadisticas.js)
+La sección "Tu nivel como Duelista" tiene un botón 🔄 que llama a Duelista.refreshSection() sin necesidad de cerrar y volver a abrir la sección.
+Match-up activado en Decks Guardados (deck.js)
+El External Score ya no es 0 hardcodeado. Si Estadisticas.powerScoreCache está disponible (el usuario calculó el Poder de Cartas del Meta), Stats.calculateExternalScore se corre para cada deck guardado y el resultado aparece en el label "Match-up:". Sin cache, mantiene 0.
+Winrate en Decks Guardados (deck.js)
+La tarjeta de cada deck guardado muestra una fila "Winrate:" con porcentaje y conteo de duelos, pero solo si ese deck tiene al menos un duelo registrado. Se omite completamente si no hay datos.
+Botones de borrado en Config (config.js)
+Nueva "Zona de borrado" con tres botones independientes: borrar todos los decks guardados (limpia claves deck_* del localStorage), borrar el meta completo (yugioh_meta_decks), y borrar el historial de winrates (yugioh_winrates). Cada uno pide confirmación antes de ejecutar.
+Sección "Tu nivel como Duelista" (Modules/duelista.js)
+Módulo nuevo independiente que agrega datos de todos los records de Winrate sin importar el deck activo. Muestra: nivel del duelista (9 niveles desde Novato a Legendario según duelos totales), barra de progreso al siguiente nivel, winrate general/going 1st/going 2nd como jugador, y los tres mejores decks (mayor WR general, mejor going 1st, mejor going 2nd) con mínimo de 5 duelos para ser significativo.
+Widget flotante — visibilidad por pestaña (estadisticas.js)
+El widget solo aparece en Buscador y Estadísticas. updateFloatingWidgetVisibility(tabName) se llama desde Navigation.showTab() (ya tenía el hook) y aplica display:none en cualquier otra pestaña.

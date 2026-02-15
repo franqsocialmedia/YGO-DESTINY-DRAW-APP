@@ -65,7 +65,18 @@ const Config = {
             <div class="config-actions">
                 <button class="btn btn-primary" onclick="Config.exportConfig()">📥 Exportar Data</button>
                 <button class="btn btn-primary" onclick="Config.importConfig()">📤 Importar Data</button>
-                <button class="btn btn-danger" onclick="Config.resetToDefault()">🔄 Restaurar por Defecto</button>
+                <button class="btn btn-danger" onclick="Config.resetToDefault()">🔄 Restaurar Configuración</button>
+            </div>
+
+            <!-- Zona de borrado total -->
+            <div class="config-danger-zone">
+                <div class="config-danger-title">⚠️ Zona de borrado</div>
+                <div class="config-danger-buttons">
+                    <button class="btn btn-danger" onclick="Config.deleteAllDecks()">🗑️ Borrar todos los Decks guardados</button>
+                    <button class="btn btn-danger" onclick="Config.deleteMetaData()">🗑️ Borrar Meta completo</button>
+                    <button class="btn btn-danger" onclick="Config.deleteWinrates()">🗑️ Borrar historial de Winrates</button>
+                    <button class="btn btn-danger" onclick="Config.deletePowerCache()">🗑️ Borrar cache de Poder del Meta</button>
+                </div>
             </div>
             
             <input type="file" id="config-import-file" accept=".txt" style="display:none;" onchange="Config.handleFileImport(this)">
@@ -684,7 +695,39 @@ removeNomCondKw: function (catId, field, kw) {
             sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
         }
         
-    }
+    },
+    deleteAllDecks: function () {
+        if (!confirm('¿Borrar TODOS los decks guardados? Esta acción no se puede deshacer.')) return;
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('deck_')) keys.push(k);
+        }
+        keys.forEach(k => localStorage.removeItem(k));
+        alert(`✅ ${keys.length} deck(s) eliminados.`);
+        if (window.Deck) Deck.render();
+    },
+
+    deleteMetaData: function () {
+        if (!confirm('¿Borrar todo el meta (carpetas y decks importados)? Esta acción no se puede deshacer.')) return;
+        localStorage.removeItem('yugioh_meta_decks');
+        alert('✅ Meta eliminado.');
+        if (window.Estadisticas) Estadisticas.init();
+    },
+
+    deleteWinrates: function () {
+        if (!confirm('¿Borrar todo el historial de winrates? Esta acción no se puede deshacer.')) return;
+        localStorage.removeItem('yugioh_winrates');
+        alert('✅ Historial de winrates eliminado.');
+    },
+    
+    deletePowerCache: function () {
+        if (!confirm('¿Borrar el cache de Poder de Cartas del Meta?')) return;
+        localStorage.removeItem('yugioh_power_cache');
+        if (window.Estadisticas) Estadisticas.powerScoreCache = null;
+        alert('✅ Cache eliminado.');
+    },
+
 };
 
 window.Config = Config;

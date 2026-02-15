@@ -710,7 +710,14 @@ const Deck = {
                 }
             }
 
-            const externalScore = 0; // Por ahora en 0, se calculará después
+            // External Score real si hay powerScoreCache disponible en Estadísticas
+            let externalScore = 0;
+            if (window.Stats && window.Estadisticas?.powerScoreCache) {
+                try {
+                    const ext = Stats.calculateExternalScore(deck.cards, Estadisticas.powerScoreCache);
+                    externalScore = parseFloat(ext.externalScore) || 0;
+                } catch (_) {}
+            }
 
             html += `
                 <div class="deck-list-item">

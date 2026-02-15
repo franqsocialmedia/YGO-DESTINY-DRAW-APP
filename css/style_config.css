@@ -689,7 +689,26 @@
     padding-top: 10px;
     border-top: 1px solid var(--border-color);
 }
-
+.config-danger-zone {
+    margin-top: 20px;
+    padding: 14px 16px;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    border-radius: 8px;
+    background: rgba(231, 76, 60, 0.05);
+}
+.config-danger-title {
+    font-size: 0.78rem;
+    font-weight: bold;
+    color: rgba(231, 76, 60, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+}
+.config-danger-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 /* ====================================
    RESPONSIVE
    ==================================== */

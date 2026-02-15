@@ -58,7 +58,13 @@ const Estadisticas = {
     },
 
     saveMetaData: function () {
-        this.powerScoreCache = null;
+        // Recuperar cache persistido si existe
+        try {
+            const cached = localStorage.getItem('yugioh_power_cache');
+            this.powerScoreCache = cached ? JSON.parse(cached) : null;
+        } catch (_) {
+            this.powerScoreCache = null;
+        }
         try {
             localStorage.setItem('yugioh_meta_decks', JSON.stringify({
                 decks: this.metaDecks
@@ -715,8 +721,12 @@ const Estadisticas = {
         try {
             const result = await this.calculatePowerScores();
             this.powerScoreCache = result;
+            this.powerScoreCache = result;
+            // Persistir para que Match-up funcione aunque se navegue a Mi Deck
+            try {
+                localStorage.setItem('yugioh_power_cache', JSON.stringify(result));
+            } catch (_) {}
             container.innerHTML = this.renderPowerScores(result);
-            this.refreshDependentSections();
         } catch (e) {
             container.innerHTML = `<p class="stats-empty">❌ Error al calcular: ${e.message}</p>`;
         } finally {
@@ -725,6 +735,11 @@ const Estadisticas = {
     },
 
     refreshDependentSections: function () {
+        // Si Mi Deck está visible, re-renderizar la lista de decks guardados
+        // para que Power Level y Match-up usen el cache recién calculado
+        if (window.Deck && typeof Deck.render === 'function') {
+            Deck.render();
+        }
         const counterSec = document.getElementById('counter-cards-sec');
         if (counterSec) counterSec.innerHTML = this.renderCounterCardStats();
 
