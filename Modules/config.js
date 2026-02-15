@@ -31,10 +31,10 @@ const Config = {
                 </div>
             </div>
 
-            <!-- Sección: Especialidades y Counters -->
+            <!-- Sección: Mecánicas y Counters -->
             <div class="config-section">
                 <h3 class="config-section-title" onclick="Config.toggleSection('specialties-section')">
-                    ▶ Especialidades y Counters
+                    ▶ Mecánicas y Counters
                 </h3>
                 <div id="specialties-section" class="config-section-content" style="display:none;">
                     ${this.renderSpecialtiesSection()}
@@ -65,7 +65,8 @@ const Config = {
             <div class="config-actions">
                 <button class="btn btn-primary" onclick="Config.exportConfig()">📥 Exportar Data</button>
                 <button class="btn btn-primary" onclick="Config.importConfig()">📤 Importar Data</button>
-                <button class="btn btn-danger" onclick="Config.resetToDefault()">🔄 Restaurar Configuración</button>
+                <button class="btn btn-danger" onclick="Config.borrarTodo()" style="background:#c0392b;">🗑️ Borrar Data</button>
+                <button class="btn btn-success" onclick="Config.resetToDefault()" style="background:#27ae60;border-color:#27ae60;">🔄 Restaurar Configuración</button>
             </div>
 
             <!-- Zona de borrado -->
@@ -704,9 +705,10 @@ removeNomCondKw: function (catId, field, kw) {
         }
         
     },
+    
     borrarDeck: function () {
         if (!confirm(
-            '¿Borrar TODOS los decks guardados, winrates, notas y cache de scores?\n' +
+            '¿Borrar TODOS los decks guardados, winrates y cache de scores?\n' +
             'El META y la configuración no se tocarán.\n' +
             'Esta acción no se puede deshacer.'
         )) return;
@@ -732,10 +734,10 @@ removeNomCondKw: function (catId, field, kw) {
             if (typeof Estadisticas.updateFloatingWidget === 'function')
                 Estadisticas.updateFloatingWidget();
         }
-        if (window.Winrate)   Winrate.refreshSection();
-        if (window.Duelista)  Duelista.refreshSection();
+        if (window.Winrate)  Winrate.refreshSection();
+        if (window.Duelista) Duelista.refreshSection();
 
-        alert(`✅ Borrado completo. ${deckKeys.length} deck(s) eliminados.`);
+        alert(`✅ ${deckKeys.length} deck(s) y datos relacionados eliminados.`);
     },
 
     borrarMeta: function () {
@@ -748,12 +750,78 @@ removeNomCondKw: function (catId, field, kw) {
         localStorage.removeItem('yugioh_meta_decks');
         localStorage.removeItem('yugioh_power_cache');
 
+        // Resetear estado en memoria
         if (window.Estadisticas) {
             Estadisticas.powerScoreCache = null;
-            Estadisticas.init();
+            Estadisticas.metaDecks       = {};
+            Estadisticas.metaFolders     = [];
+            // Re-renderizar estadisticas en vivo
+            const statsEl = document.getElementById('estadisticas-content');
+            if (statsEl) Estadisticas.render();
+            if (typeof Estadisticas.updateFloatingWidget === 'function')
+                Estadisticas.updateFloatingWidget();
         }
 
         alert('✅ META eliminado completamente.');
+    },
+
+    borrarTodo: function () {
+        if (!confirm(
+            '⚠️ BORRAR TODO ⚠️\n\n' +
+            'Esto eliminará:\n' +
+            '• Todos los decks guardados\n' +
+            '• Meta completo (carpetas e importados)\n' +
+            '• Winrates e historial\n' +
+            '• Cartas favoritas\n' +
+            '• Cache de poder de cartas\n' +
+            '• Roles, Mecánicas, Counters, Staples y Nomenclatura\n\n' +
+            'La app quedará completamente vacía.\n' +
+            'Esta acción NO se puede deshacer.'
+        )) return;
+
+        // Borrar absolutamente todo el localStorage
+        const allKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k) allKeys.push(k);
+        }
+        allKeys.forEach(k => localStorage.removeItem(k));
+
+        // Guardar config vacía explícitamente (sin roles, sin pares, sin nada)
+        const emptyConfig = {
+            roles:            {},
+            roleConditions:   {},
+            roleWeights:      {},
+            specialties:      [],
+            staples:          {},
+            nomenclature:     { categories: [] }
+        };
+        if (window.ConfigManager) ConfigManager.saveConfig(emptyConfig);
+
+        // Resetear módulos en memoria
+        if (window.Deck) {
+            Deck.cards = {};
+            Deck.name  = 'Mi Deck';
+            Deck.notes = '';
+            Deck.render();
+        }
+        if (window.Estadisticas) {
+            Estadisticas.powerScoreCache = null;
+            Estadisticas.metaDecks       = {};
+            Estadisticas.metaFolders     = [];
+            const statsEl = document.getElementById('estadisticas-content');
+            if (statsEl) Estadisticas.render();
+            if (typeof Estadisticas.updateFloatingWidget === 'function')
+                Estadisticas.updateFloatingWidget();
+        }
+        if (window.Favoritas) Favoritas.render();
+        if (window.Winrate)   Winrate.refreshSection();
+        if (window.Duelista)  Duelista.refreshSection();
+
+        // Re-renderizar config para reflejar los campos vacíos
+        this.render();
+
+        alert('✅ Todo borrado. La app está completamente vacía.');
     }
 
 };
