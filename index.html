@@ -100,54 +100,58 @@
              ==================================== -->
         <section id="buscador-content" class="tab-content active">
             <h2>Buscador de Cartas</h2>
-            
-            <!-- Contenedor de búsqueda -->
-            <div class="search-container">
-                <!-- Barra de búsqueda principal -->
-                <div class="search-bar">
-                    <!-- Input para nombre de carta -->
-                    <input 
-                        type="text" 
-                        id="card-search-input" 
-                        class="search-input" 
-                        placeholder="Buscar carta por nombre..."
-                        autocomplete="off"
-                    >
-                    <!-- Botón Buscar -->
-                    <button id="search-btn" class="btn btn-primary">
-                        <span class="btn-icon">🔍</span>
-                        <span class="btn-text">Buscar</span>
-                    </button>
-                    <!-- Botón Limpiar -->
-                    <button id="clear-btn" class="btn btn-secondary">
-                        <span class="btn-icon">✖</span>
-                        <span class="btn-text">Limpiar</span>
-                    </button>
+
+            <div class="buscador-layout">
+
+                <!-- Columna izquierda: búsqueda + resultados -->
+                <div class="buscador-main">
+                    <div class="search-container">
+                        <div class="search-bar">
+                            <input 
+                                type="text" 
+                                id="card-search-input" 
+                                class="search-input" 
+                                placeholder="Buscar carta por nombre..."
+                                autocomplete="off"
+                            >
+                            <button id="search-btn" class="btn btn-primary">
+                                <span class="btn-icon">🔍</span>
+                                <span class="btn-text">Buscar</span>
+                            </button>
+                            <button id="clear-btn" class="btn btn-secondary">
+                                <span class="btn-icon">✖</span>
+                                <span class="btn-text">Limpiar</span>
+                            </button>
+                        </div>
+                        <div class="filters-container">
+                            <label for="additional-filters" class="filter-label">
+                                Filtrar por palabras clave (separadas por coma):
+                            </label>
+                            <input 
+                                type="text" 
+                                id="additional-filters" 
+                                class="filter-input" 
+                                placeholder="Ejemplo: dragón, oscuro, efecto"
+                                autocomplete="off"
+                            >
+                            <small class="filter-help">
+                                Ingresa palabras clave separadas por comas para refinar la búsqueda
+                            </small>
+                            <div id="filter-chips-container" class="filter-chips"></div>
+                        </div>
+                    </div>
+
+                    <div id="search-results" class="results-container">
+                        <p class="results-placeholder">Utiliza el buscador para encontrar cartas de Yu-Gi-Oh!</p>
+                    </div>
                 </div>
 
-                <!-- Filtros adicionales por palabras clave -->
-                <div class="filters-container">
-                    <label for="additional-filters" class="filter-label">
-                        Filtrar por palabras clave (separadas por coma):
-                    </label>
-                    <input 
-                        type="text" 
-                        id="additional-filters" 
-                        class="filter-input" 
-                        placeholder="Ejemplo: dragón, oscuro, efecto"
-                        autocomplete="off"
-                    >
-                    <small class="filter-help">
-                        Ingresa palabras clave separadas por comas para refinar la búsqueda
-                    </small>
-                    <!-- Contenedor de chips de palabras clave -->
-                    <div id="filter-chips-container" class="filter-chips"></div>
+                <!-- Columna derecha: cartas favoritas (oculta si está vacía) -->
+                <div id="favoritas-panel" class="favoritas-panel" style="display:none;">
+                    <div class="favoritas-header">⭐ Favoritas</div>
+                    <div id="favoritas-list" class="favoritas-list"></div>
                 </div>
-            </div>
 
-            <!-- Área donde se muestran los resultados de búsqueda -->
-            <div id="search-results" class="results-container">
-                <p class="results-placeholder">Utiliza el buscador para encontrar cartas de Yu-Gi-Oh!</p>
             </div>
         </section>
 
@@ -245,7 +249,7 @@
     <script src="Modules/help.js"></script>
     <script src="Modules/winrate.js"></script>
     <script src="Modules/duelista.js"></script>
-
+    <script src="Modules/favoritas.js"></script>
 
     <button id="scrollTopBtn">▲</button>
     <button id="scrollBottomBtn">▼</button>

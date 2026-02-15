@@ -535,6 +535,119 @@
     background: linear-gradient(135deg, #00d9a5, #00b894);
     transform: scale(1.05);
 }
+
+/* ── Layout Buscador con Favoritas ── */
+.buscador-layout {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+.buscador-main {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ── Panel Favoritas ── */
+.favoritas-panel {
+    width: 200px;
+    min-width: 180px;
+    max-width: 200px;
+    background: rgba(0, 20, 40, 0.7);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    /* scroll interno — misma altura que el área de resultados */
+    max-height: calc(100vh - 220px);
+    display: flex;
+    flex-direction: column;
+}
+.favoritas-header {
+    padding: 8px 12px;
+    font-size: 0.78rem;
+    font-weight: bold;
+    color: var(--gold-color);
+    background: rgba(255, 215, 0, 0.07);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+.favoritas-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* ── Carta en Favoritas ── */
+.fav-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(0, 26, 51, 0.6);
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    padding: 5px 6px;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.15s;
+}
+.fav-item:hover { border-color: rgba(255,215,0,0.4); }
+.fav-item.fav-item-active { border-color: var(--gold-color); }
+
+.fav-img {
+    width: 34px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+.fav-info {
+    flex: 1;
+    min-width: 0;
+}
+.fav-name {
+    font-size: 0.72rem;
+    color: var(--text-light);
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fav-type {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.4);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fav-remove {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.3);
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 2px 4px;
+    flex-shrink: 0;
+    transition: color 0.15s;
+}
+.fav-remove:hover { color: #d63031; }
+
+/* overlay de acciones — igual que buscador */
+.fav-actions-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    z-index: 10;
+}
 /* ====================================
    RESPONSIVE - TABLET
    ==================================== */

@@ -85,6 +85,7 @@ const CardViewer = {
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <button id="cv-open-image" style="flex: 1; min-width: 120px;">Ver Imagen HD</button>
                         <button id="cv-download-test" style="flex: 1; min-width: 120px; background: #4CAF50; color: white;">PRUEBA DECKLIST</button>
+                        <button id="cv-fav-btn" style="flex: 1; min-width: 120px;"></button>
                     </div>
 
                 </div>
@@ -204,6 +205,22 @@ const CardViewer = {
         const downloadTestBtn = document.getElementById('cv-download-test');
         downloadTestBtn.onclick = () => {
             this.generateCardDecklistHTML2Canvas(card);
+        };
+
+        // Botón: Marcar / desmarcar Favorita
+        const favBtn    = document.getElementById('cv-fav-btn');
+        const isFav     = () => window.Favoritas?.has(card.id);
+        const updateFav = () => {
+            favBtn.textContent      = isFav() ? '★ Favorita' : '☆ Favorita';
+            favBtn.style.background = isFav() ? '#FFD700' : '';
+            favBtn.style.color      = isFav() ? '#000'    : '';
+        };
+        updateFav();
+        favBtn.onclick = () => {
+            if (window.Favoritas) {
+                Favoritas.toggle(card);
+                updateFav();
+            }
         };
     },
 
