@@ -175,7 +175,7 @@ const Duelista = {
     },
 
     refreshSection: function () {
-        const el = document.getElementById('duelista-sec');
+        const el = document.getElementById('duelista-content');
         if (el) el.innerHTML = this.renderSection();
     }
 };

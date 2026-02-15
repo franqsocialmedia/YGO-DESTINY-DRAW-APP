@@ -729,6 +729,10 @@ const Deck = {
                         </p>
                         <div class="deck-scores">
                             <div class="deck-score-row">
+                                <span class="deck-score-label">Power Level:</span>
+                                <span class="deck-score-value deck-score-internal">${internalScore.toFixed(1)}</span>
+                            </div>
+                            <div class="deck-score-row">
                                 <span class="deck-score-label">Match-up:</span>
                                 <span class="deck-score-value deck-score-external">${externalScore.toFixed(1)}</span>
                             </div>
@@ -744,10 +748,6 @@ const Deck = {
                                     <span class="deck-score-value" style="color:${col}">${pct}% <span style="font-size:0.7rem;opacity:0.5">(${total})</span></span>
                                 </div>`;
                             })()}
-                            <div class="deck-score-row">
-                                <span class="deck-score-label">Match-up:</span>
-                                <span class="deck-score-value deck-score-external">${externalScore.toFixed(1)}</span>
-                            </div>
                         </div>
                     </div>
                     <button class="btn btn-primary deck-load-btn" onclick="Deck.openLoadDeckPanel('${deck.name}')">
