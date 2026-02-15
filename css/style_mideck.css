@@ -985,6 +985,31 @@
     color: #000;
     font-weight: bold;
 }
+
+.deck-notes-textarea {
+    width: 100%;
+    min-height: 120px;
+    background: rgba(0, 26, 51, 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-light);
+    font-size: 0.85rem;
+    padding: 10px 12px;
+    resize: vertical;
+    line-height: 1.6;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+.deck-notes-textarea:focus {
+    outline: none;
+    border-color: var(--gold-color);
+}
+.deck-notes-hint {
+    font-size: 0.72rem;
+    color: rgba(241,241,241,0.35);
+    margin-top: 6px;
+    text-align: right;
+}
 /* ====================================
    RESPONSIVE
    ==================================== */

@@ -8,6 +8,7 @@ const Deck = {
 
     cards: {},
     name: "Mi Deck",
+    notes: "",
 
     init: function () {
         this.container = document.getElementById('deck-container');
@@ -383,7 +384,8 @@ const Deck = {
     // ===============================
     saveDeck: function () {
         const deckData = {
-            cards: this.cards,
+            cards:   this.cards,
+            notes:   this.notes || '',
             savedAt: new Date().getTime()
         };
         localStorage.setItem(`deck_${this.name}`, JSON.stringify(deckData));
@@ -449,7 +451,8 @@ const Deck = {
         try {
             const data = JSON.parse(localStorage.getItem(`deck_${deckName}`));
             this.cards = data.cards || data;
-            this.name = deckName;
+            this.name  = deckName;
+            this.notes = data.notes || '';
             this.closeModal();
             this.render();
             this.onDeckLoaded();
@@ -1131,6 +1134,24 @@ onDeckLoaded: function () {
         <div id="side-sec">${this.renderRows('side')}</div>
     `;
 }
+// SECCIÓN DE NOTAS - solo visible con cartas cargadas
+        if (!isEmpty) {
+            html += `
+                <h3 class="deck-section-title" onclick="Deck.toggleSection('notes-sec')">
+                    📝 Notas del Deck
+                </h3>
+                <div id="notes-sec" class="deck-section-content" style="display:none;">
+                    <textarea
+                        class="deck-notes-textarea"
+                        placeholder="Anota estrategias, combos clave, mulligan ideal, matchups difíciles..."
+                        oninput="Deck.notes = this.value"
+                    >${this.notes || ''}</textarea>
+                    <div class="deck-notes-hint">
+                        Las notas se guardan al presionar "Guardar Deck".
+                    </div>
+                </div>
+            `;
+        }
 
         // SECCIÓN DE ACCIONES - SIEMPRE VISIBLE
         html += `
