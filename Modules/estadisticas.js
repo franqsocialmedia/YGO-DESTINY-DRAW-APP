@@ -531,6 +531,12 @@ const Estadisticas = {
                      alt="Deck"
                      onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2292%22><rect width=%2264%22 height=%2292%22 fill=%22%23003366%22/><text x=%2232%22 y=%2251%22 font-family=%22sans-serif%22 font-size=%2210%22 text-anchor=%22middle%22 fill=%22%23FFD700%22>Deck</text></svg>'">
             </div>`;
+    },// Pestañas donde el widget debe aparecer
+    updateFloatingWidgetVisibility: function (tabName) {
+        const widget = document.getElementById('deck-floating-widget');
+        if (!widget) return;
+        const VISIBLE_IN = ['buscador', 'estadisticas'];
+        widget.style.display = VISIBLE_IN.includes(tabName) ? '' : 'none';
     },
 
     toggleDeckList: function () {
@@ -1436,7 +1442,14 @@ const Estadisticas = {
                     </div>
                 </div>
             </div>`;
-
+            html += `
+                <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('duelista-sec'); if(window.Duelista) Duelista.refreshSection();">
+                    🎖️ Tu nivel como Duelista
+                </h3>
+                <div id="duelista-sec" class="stats-section" style="display:none;">
+                    <p class="stats-empty">Abre esta sección para ver tu perfil.</p>
+                </div>
+            `;
         this.container.innerHTML = html;
     },
 
