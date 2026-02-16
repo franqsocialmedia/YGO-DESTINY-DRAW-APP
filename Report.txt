@@ -6323,3 +6323,208 @@ Botón "Borrar Data" en Config (config.js)
 Borra absolutamente todo el localStorage y deja la config explícitamente vacía (roles {}, specialties [], staples {}, nomenclatura []). No restaura defaults. Actualiza todos los módulos en vivo. El botón "Restaurar Configuración" está en verde, "Borrar Data" en rojo.
 borrarMeta actualiza en vivo (config.js)
 Ahora resetea Estadisticas.metaDecks, metaFolders y llama Estadisticas.render() directamente — sin necesidad de recargar.
+
+--------------------------------------------
+
+================================================================================
+IMPLEMENTACIÓN: SISTEMA DE RENDIMIENTOS DECRECIENTES
+Destiny Draw - Yu-Gi-Oh! App
+Fecha: 15/02/2026
+================================================================================
+
+PROBLEMA IDENTIFICADO
+--------------------------------------------------------------------------------
+El sistema actual de Internal Score suma linealmente las cartas con roles:
+- 10 starters = 10 puntos
+- 20 starters = 20 puntos (el doble)
+
+Esto es poco realista porque:
+1. Cartas adicionales del mismo rol tienen menor valor marginal
+2. Decks especializados (D/D/D, Sky Striker) son penalizados injustamente
+3. No refleja la realidad competitiva: carta #1 > carta #20
+
+FILOSOFÍA DE DISEÑO
+--------------------------------------------------------------------------------
+"Es mejor enfocarse en una sola cosa y hacerlo bien que ser bueno en todo"
+
+Decks tier 1 que se especializan:
+- D/D/D: 35+ combo pieces
+- Sky Striker: 25+ quick-play spells  
+- Eldlich: 30+ control cards
+
+No deben ser penalizados por especializarse.
+
+SOLUCIÓN: RENDIMIENTOS DECRECIENTES
+--------------------------------------------------------------------------------
+Implementar curva de diminishing returns usando raíz cuadrada:
+
+Fórmula: aporte = √(cantidad)
+
+Ejemplos:
+- 1 carta  = √1  = 1.0   (100%)
+- 4 cartas = √4  = 2.0   (50% promedio)
+- 9 cartas = √9  = 3.0   (33% promedio)
+- 16 cartas = √16 = 4.0  (25% promedio)
+- 25 cartas = √25 = 5.0  (20% promedio)
+
+Ventajas:
+✓ Curva suave y natural
+✓ No es punitiva
+✓ Respeta especialización
+✓ Refleja realidad del juego
+✓ Carta #1 siempre más valiosa que carta #N
+
+IMPLEMENTACIÓN FASE 1
+--------------------------------------------------------------------------------
+
+ARCHIVO MODIFICADO: stats.js
+
+1. Nueva función calculateDiminishingReturns()
+   - Usa Math.sqrt() para curva
+   - Retorna valor ajustado
+
+2. Modificación en calculateInternalScore()
+   - Acumula conteo por rol normalizado
+   - Aplica raíz cuadrada ANTES de multiplicar por weight
+   - Mantiene compatibilidad con sistema de roles actual
+
+3. Acumulación por rol:
+   ANTES: consistencyScore += effectiveQty * weight
+   AHORA: 
+   - roleCounters[rol] += effectiveQty
+   - Después del loop: consistencyScore += √(roleCounter) * avgWeight
+
+CÁLCULO DETALLADO
+--------------------------------------------------------------------------------
+
+Paso 1: Acumular cartas por rol (considerando restricciones)
+- 12 Starters restringidos → effectiveQty = 1 + (11 × 0.5) = 6.5
+- roleCounters['starter'] = 6.5
+
+Paso 2: Aplicar raíz cuadrada
+- diminishedValue = √6.5 = 2.55
+
+Paso 3: Multiplicar por peso promedio del rol
+- Si weight = 1.0 → 2.55 × 1.0 = 2.55
+
+Paso 4: Sumar a pilar
+- consistencyScore += 2.55
+
+Paso 5: Normalizar a 0-10
+- consistency = min(10, (2.55 / mainCards) × 15)
+
+IMPACTO EN DECKS REALES
+--------------------------------------------------------------------------------
+
+DECK BALANCEADO (40 cartas):
+12 Starters, 6 Bosses, 9 Handtraps, 8 Extenders, 5 Searchers
+
+Sin rendimientos:
+- Consistencia: ~10/10
+- Potencia: ~8/10
+- Resiliencia: ~9/10
+- Internal Score: 9.0/10
+
+Con rendimientos:
+- Consistencia: ~8.5/10 (√12 + √5 = 5.7)
+- Potencia: ~7/10 (√6 = 2.45)
+- Resiliencia: ~8/10 (√9 + √8 = 5.83)
+- Internal Score: 7.8/10
+
+DECK ESPECIALIZADO - D/D/D (40 cartas):
+20 Extenders, 12 Starters, 8 Bosses
+
+Sin rendimientos:
+- Consistencia: 10/10
+- Potencia: 10/10
+- Resiliencia: 5/10
+- Internal Score: 8.3/10
+
+Con rendimientos:
+- Consistencia: 9/10 (√20 + √12 = 7.94)
+- Potencia: 8.5/10 (√8 = 2.83)
+- Resiliencia: 5/10
+- Internal Score: 7.5/10
+
+Diferencia: -0.8 puntos (razonable, no punitivo)
+
+DECK MONOFUNCIONAL PURO (40 cartas):
+40 Starters, 0 otros roles
+
+Sin rendimientos:
+- Consistencia: 10/10
+- Potencia: 0/10
+- Resiliencia: 0/10
+- Internal Score: 3.3/10
+
+Con rendimientos:
+- Consistencia: 10/10 (√40 = 6.32)
+- Potencia: 0/10
+- Resiliencia: 0/10
+- Internal Score: 3.3/10
+
+Diferencia: 0 puntos (consistencia satura en 10 de todas formas)
+
+VENTAJAS DEL SISTEMA
+--------------------------------------------------------------------------------
+✓ Automático - no requiere configuración del usuario
+✓ Matemáticamente elegante - raíz cuadrada es curva natural
+✓ No punitivo - decks especializados siguen siendo viables
+✓ Educativo - muestra valor marginal decreciente
+✓ Compatible - no rompe sistema de roles actual
+✓ Realista - refleja construcción competitiva
+
+COMPATIBILIDAD
+--------------------------------------------------------------------------------
+✓ Sistema de roles del usuario (Config)
+✓ Pesos de roles (roleWeight)
+✓ Detección de restricciones (once per turn)
+✓ Pilares de consistencia/potencia/resiliencia
+✓ Cálculo de External Score
+✓ CardViewer (aporte al deck)
+✓ Decks guardados
+
+PRÓXIMAS FASES (FUTURAS)
+--------------------------------------------------------------------------------
+
+FASE 2: Configuración de umbrales (manual)
+- Nueva sección en Config
+- Usuario define óptimos por rol
+- Curva configurable (lineal, logarítmica, etc)
+
+FASE 3: Penalización cruzada (opcional)
+- Checkbox por rol
+- Exceso en un pilar reduce otros
+- Solo si usuario activa
+
+ESTADO ACTUAL
+--------------------------------------------------------------------------------
+✅ FASE 1 IMPLEMENTADA
+⏳ FASE 2 PENDIENTE
+⏳ FASE 3 PENDIENTE
+
+ARCHIVOS MODIFICADOS
+--------------------------------------------------------------------------------
+1. stats.js - Sistema de rendimientos decrecientes
+
+ARCHIVOS A CREAR (Fases futuras)
+--------------------------------------------------------------------------------
+1. config.js - Sección de configuración de umbrales
+2. configmanager.js - Persistencia de configuración
+
+NOTAS TÉCNICAS
+--------------------------------------------------------------------------------
+- La raíz cuadrada es suficientemente suave para no ser punitiva
+- Si en el futuro se desea más control, se puede agregar exponente configurable: count^(1/n)
+- El sistema respeta la filosofía de especialización del Yu-Gi-Oh competitivo
+- Los valores permanecen dentro del rango esperado (0-10)
+
+CONCLUSIÓN
+--------------------------------------------------------------------------------
+El sistema de rendimientos decrecientes implementa una mecánica más realista
+sin penalizar decks especializados. La curva de raíz cuadrada es matemáticamente
+elegante y refleja el valor marginal decreciente de cartas adicionales del mismo
+rol, mejorando la precisión del Internal Score sin cambiar drásticamente los
+valores existentes.
+
+================================================================================
