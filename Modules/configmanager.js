@@ -769,15 +769,16 @@ getDiminishingReturns: function() {
 getDefaultDiminishingReturns: function() {
     return {
         enabled: true,
+        crossPenalty: false,
         roleThresholds: {
-            'starter': { optimal: 12, max: 18, curve: 0.5 },
-            'searcher': { optimal: 10, max: 15, curve: 0.5 },
-            'boss monster': { optimal: 6, max: 10, curve: 0.7 },
-            'boardbreaker': { optimal: 8, max: 12, curve: 0.6 },
-            'removal': { optimal: 8, max: 12, curve: 0.6 },
-            'negator': { optimal: 9, max: 15, curve: 0.5 },
-            'extender': { optimal: 8, max: 12, curve: 0.6 },
-            'recycle': { optimal: 6, max: 10, curve: 0.7 }
+            'starter': { optimal: 13, max: 16, curve: 0.5, crossPenalty: false },
+            'searcher': { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+            'boss monster': { optimal: 6, max: 10, curve: 0.7, crossPenalty: false },
+            'boardbreaker': { optimal: 8, max: 13, curve: 0.6, crossPenalty: false },
+            'removal': { optimal: 8, max: 12, curve: 0.6, crossPenalty: false },
+            'negator': { optimal: 9, max: 15, curve: 0.5, crossPenalty: false },
+            'extender': { optimal: 9, max: 12, curve: 0.6, crossPenalty: false },
+            'recycle': { optimal: 6, max: 10, curve: 0.7, crossPenalty: false }
         }
     };
 },

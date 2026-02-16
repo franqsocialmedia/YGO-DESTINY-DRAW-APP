@@ -852,46 +852,59 @@ const Deck = {
             // la cumpla antes de mostrar el badge — igual que detectPossibleRoles
             // en CardViewer. Sin restricción: se muestra siempre (comportamiento anterior).
             let rolesBadges = '';
-            if (item.roles && item.roles.length > 0) {
-                item.roles.forEach(role => {
-                    if (role === 'Carta As') {
-                        rolesBadges += `<span class="role-badge badge-carta-as">⭐ Carta As</span>`;
-                        return;
-                    }
+if (item.roles && item.roles.length > 0) {
+    item.roles.forEach(role => {
+        if (role === 'Carta As') {
+            rolesBadges += `<span class="role-badge badge-carta-as">⭐ Carta As</span>`;
+            return;
+        }
 
-                    const cond     = window.ConfigManager?.getRoleCondition?.(role);
-                    const nomCatId = cond?.nomenclatureCategory || null;
+        const cond     = window.ConfigManager?.getRoleCondition?.(role);
+        const nomCatId = cond?.nomenclatureCategory || null;
 
-                    if (nomCatId && window.NomenclatureAnalyzer && item.data) {
-                        const segments  = NomenclatureAnalyzer.analyzeCard(item.data) || [];
-                        const scopeText = segments
-                            .filter(s => s.category === nomCatId)
-                            .map(s => s.text.toLowerCase())
-                            .join(' ');
-                        const keywords  = cond?.keywords || [];
-                        const passes    = keywords.length === 0 ||
-                            keywords.some(kw => scopeText.includes(kw.toLowerCase()));
-                        if (!passes) return;
-                    }
+        if (nomCatId && window.NomenclatureAnalyzer && item.data) {
+            const segments  = NomenclatureAnalyzer.analyzeCard(item.data) || [];
+            const scopeText = segments
+                .filter(s => s.category === nomCatId)
+                .map(s => s.text.toLowerCase())
+                .join(' ');
+            const keywords  = cond?.keywords || [];
+            const passes    = keywords.length === 0 ||
+                keywords.some(kw => scopeText.includes(kw.toLowerCase()));
+            if (!passes) return;
+        }
 
-                    rolesBadges += `<span class="role-badge">${role}</span>`;
-                });
-            }
+        rolesBadges += `<span class="role-badge">${role}</span>`;
+    });
+}
 
-            html += `
-                <div class="deck-row" style="${backgroundStyle}">
-                    
-                    <img 
-                        src="${card.card_images[0].image_url_small}" 
-                        class="${imgClass}"
-                        onclick="CardViewer.openFromDeck(${id})"
-                    >
+// ⭐ ADVERTENCIA DE SATURACIÓN (líneas 885-902, MANTENER)
+let saturationWarning = '';
+const config = window.ConfigManager?.getDiminishingReturns?.();
+if (config && config.enabled) {
+    item.roles.forEach(role => {
+        const threshold = config.roleThresholds?.[role];
+        if (!threshold) return;
+        
+        const roleCount = Object.values(Deck.cards)
+            .filter(c => c.location === 'main' && c.roles.includes(role))
+            .reduce((sum, c) => sum + c.qty, 0);
+        
+        if (roleCount > threshold.max) {
+            saturationWarning += `<span class="role-warning">⚠️ ${role} saturado (${roleCount}/${threshold.max})</span>`;
+        }
+    });
+}
 
-                    <div class="${nameClass}">${card.name}</div>
-
-                    <div class="deck-roles">
-                        ${subtypesBadges}${rolesBadges}
-                    </div>
+html += `
+    <div class="deck-row" style="${backgroundStyle}">
+        <img src="${card.card_images[0].image_url_small}" 
+             class="${imgClass}"
+             onclick="CardViewer.openFromDeck(${id})">
+        <div class="${nameClass}">${card.name}</div>
+        <div class="deck-roles">
+            ${subtypesBadges}${rolesBadges}${saturationWarning}
+        </div>
 
                     <div class="deck-qty">
                         <button onclick="Deck.changeQty(${id}, -1)">◀</button>
@@ -916,7 +929,7 @@ const Deck = {
         });
 
         return html;
-    },
+            },
 renderDeckStatsBlock: function () {
     const mainCards  = Object.values(this.cards).filter(c => c.location === 'main');
     const extraCards = Object.values(this.cards).filter(c => c.location === 'extra');

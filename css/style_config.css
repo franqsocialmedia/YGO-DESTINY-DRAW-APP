@@ -98,6 +98,7 @@
    ==================================== */
 
 .role-card {
+    position: relative; /* Para que botones con position absolute se posicionen correctamente */
     background: linear-gradient(135deg, rgba(0, 51, 102, 0.4), rgba(0, 43, 77, 0.6));
     border: 2px solid var(--border-color);
     border-radius: 12px;

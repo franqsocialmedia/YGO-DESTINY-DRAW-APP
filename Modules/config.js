@@ -61,6 +61,16 @@ const Config = {
                 </div>
             </div>
 
+            <!-- Sección: Rendimientos Decrecientes -->
+            <div class="config-section">
+                <h3 class="config-section-title" onclick="Config.toggleSection('diminishing-section')">
+                    ▶ Rendimientos Decrecientes
+                </h3>
+                <div id="diminishing-section" class="config-section-content" style="display:none;">
+                    ${this.renderDiminishingSection()}
+                </div>
+            </div>
+
             <!-- Botones de acción -->
             <div class="config-actions">
                 <button class="btn btn-primary" onclick="Config.exportConfig()">📥 Exportar Data</button>
@@ -90,7 +100,6 @@ const Config = {
             
             <input type="file" id="config-import-file" accept=".txt" style="display:none;" onchange="Config.handleFileImport(this)">
         `;
-        html += this.renderDiminishingSection();
     },
 
     // ===============================
@@ -411,33 +420,38 @@ renderDiminishingSection: function() {
     `;
     
     roles.forEach(role => {
-        const threshold = config.roleThresholds[role] || { optimal: 10, max: 15, curve: 0.5 };
-        html += `
-            <div class="diminishing-role-card">
-                <h4>${role}</h4>
-                <div class="diminishing-inputs">
-                    <label>
-                        Cantidad óptima: 
-                        <input type="number" min="1" max="40" value="${threshold.optimal}" 
-                            id="dim-optimal-${role}">
-                    </label>
-                    <label>
-                        Umbral máximo: 
-                        <input type="number" min="1" max="40" value="${threshold.max}" 
-                            id="dim-max-${role}">
-                    </label>
-                    <label>
-                        Severidad curva (0.1-1.0): 
-                        <input type="number" min="0.1" max="1" step="0.1" value="${threshold.curve}" 
-                            id="dim-curve-${role}">
-                    </label>
-                    <button class="btn btn-success" onclick="Config.saveDiminishingRole('${role}')">
-                        Guardar
-                    </button>
-                </div>
+    const threshold = config.roleThresholds[role] || { optimal: 10, max: 15, curve: 0.5, crossPenalty: false };
+    html += `
+        <div class="diminishing-role-card">
+            <h4>${role}</h4>
+            <div class="diminishing-inputs">
+                <label>
+                    Cantidad óptima: 
+                    <input type="number" min="1" max="40" value="${threshold.optimal}" 
+                        id="dim-optimal-${role}">
+                </label>
+                <label>
+                    Umbral máximo: 
+                    <input type="number" min="1" max="40" value="${threshold.max}" 
+                        id="dim-max-${role}">
+                </label>
+                <label>
+                    Severidad curva (0.1-1.0): 
+                    <input type="number" min="0.1" max="1" step="0.1" value="${threshold.curve}" 
+                        id="dim-curve-${role}">
+                </label>
+                <label class="config-checkbox" style="grid-column: 1 / -1;">
+                    <input type="checkbox" id="dim-cross-${role}" 
+                        ${threshold.crossPenalty ? 'checked' : ''}>
+                    ⚠️ Exceso reduce otros pilares (penalización cruzada)
+                </label>
+                <button class="btn btn-success" onclick="Config.saveDiminishingRole('${role}')">
+                    Guardar
+                </button>
             </div>
-        `;
-    });
+        </div>
+    `;
+});
     
     html += `
             </div>
@@ -461,8 +475,9 @@ saveDiminishingRole: function(role) {
     const optimal = parseFloat(document.getElementById(`dim-optimal-${role}`).value);
     const max = parseFloat(document.getElementById(`dim-max-${role}`).value);
     const curve = parseFloat(document.getElementById(`dim-curve-${role}`).value);
+    const crossPenalty = document.getElementById(`dim-cross-${role}`).checked;
     
-    ConfigManager.updateRoleThreshold(role, { optimal, max, curve });
+    ConfigManager.updateRoleThreshold(role, { optimal, max, curve, crossPenalty });
     alert(`✓ Configuración de ${role} guardada`);
 },
    renderNomenclatureCategory: function (cat) {

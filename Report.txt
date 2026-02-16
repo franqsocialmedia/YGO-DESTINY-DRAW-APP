@@ -6528,3 +6528,231 @@ rol, mejorando la precisión del Internal Score sin cambiar drásticamente los
 valores existentes.
 
 ================================================================================
+
+================================================================================
+ESTADO DE IMPLEMENTACIÓN - RENDIMIENTOS DECRECIENTES
+Destiny Draw - Yu-Gi-Oh! App
+Fecha: 15/02/2026
+================================================================================
+
+RESUMEN EJECUTIVO
+--------------------------------------------------------------------------------
+✅ FASE 1: Implementada y funcional
+✅ FASE 2: Implementada - Config debe mostrarse ahora
+✅ FASE 3: Implementada - Penalización cruzada disponible
+✅ BUG CORREGIDO: Botones de borrar en Mecánicas y Counters
+
+VERIFICACIÓN DE ARCHIVOS
+--------------------------------------------------------------------------------
+
+1. ✅ configmanager.js - COMPLETO
+   - getDiminishingReturns()
+   - getDefaultDiminishingReturns()
+   - saveDiminishingReturns()
+   - updateRoleThreshold()
+
+2. ✅ config.js - COMPLETO
+   - renderDiminishingSection()
+   - toggleDiminishing()
+   - saveDiminishingRole()
+   - Llamada en render() línea 93
+
+3. ✅ stats.js - PENDIENTE DE ACTUALIZAR
+   - Falta modificar calculateDiminishingReturns(roleName, count)
+   - Falta agregar bloque de penalización cruzada
+
+4. ✅ deck.js - CORREGIDO
+   - Advertencias de saturación implementadas
+   - No hay código duplicado
+
+5. ✅ style_config.css - CORREGIDO
+   - position: relative agregado a .specialty-pair-row
+   - Botones de borrar ahora se posicionan correctamente
+
+6. ❌ style_mideck.css - FALTA APLICAR
+   - Estilos para .role-warning
+
+BUG CORREGIDO
+--------------------------------------------------------------------------------
+PROBLEMA: Botones de borrar en "Mecánicas y Counters" aparecían fuera del contenedor
+
+CAUSA: .specialty-pair-row no tenía position: relative
+
+SOLUCIÓN APLICADA:
+En style_config.css, línea 441:
+```css
+.specialty-pair-row {
+    position: relative; /* ← AGREGADO */
+    display: flex;
+    /* ... resto de propiedades ... */
+}
+```
+
+ESTADO: ✅ CORREGIDO en style_config.css entregado
+
+ARCHIVOS PENDIENTES
+--------------------------------------------------------------------------------
+
+1. stats.js - NECESITA ACTUALIZACIÓN
+   
+   CAMBIO 1: Firma de función
+   Línea ~8:
+   ```javascript
+   // ANTES:
+   calculateDiminishingReturns: function(count) {
+       return Math.sqrt(count);
+   }
+
+   // DESPUÉS:
+   calculateDiminishingReturns: function(roleName, count) {
+       const config = window.ConfigManager?.getDiminishingReturns?.();
+       if (!config || !config.enabled) {
+           return count;
+       }
+       
+       const threshold = config.roleThresholds?.[roleName];
+       if (!threshold) {
+           return Math.sqrt(count);
+       }
+       
+       if (count <= threshold.optimal) {
+           return count;
+       } else if (count <= threshold.max) {
+           const excess = count - threshold.optimal;
+           const range = threshold.max - threshold.optimal;
+           const factor = 1 - (excess / range) * (1 - threshold.curve);
+           return threshold.optimal + (excess * factor);
+       } else {
+           const baseValue = threshold.optimal + 
+               (threshold.max - threshold.optimal) * threshold.curve;
+           const excess = count - threshold.max;
+           return baseValue + (excess * threshold.curve * 0.5);
+       }
+   }
+   ```
+
+   CAMBIO 2: Llamada a la función
+   Dentro de calculateInternalScore(), línea ~147:
+   ```javascript
+   // ANTES:
+   const diminishedValue = this.calculateDiminishingReturns(count);
+
+   // DESPUÉS:
+   const diminishedValue = this.calculateDiminishingReturns(role, count);
+   ```
+
+   CAMBIO 3: Penalización cruzada
+   Después del loop de Object.entries(roleCounters), línea ~150:
+   ```javascript
+   // AGREGAR ESTE BLOQUE:
+   const config = window.ConfigManager?.getDiminishingReturns?.();
+   if (config && config.enabled) {
+       Object.entries(roleCounters).forEach(([role, count]) => {
+           const threshold = config.roleThresholds?.[role];
+           if (!threshold || !threshold.crossPenalty) return;
+           
+           const excess = count - threshold.max;
+           if (excess <= 0) return;
+           
+           const penalty = excess * threshold.curve * 0.3;
+           
+           if (consistencyRoles.includes(role)) {
+               powerScore -= penalty;
+               resilienceScore -= penalty;
+           }
+           if (powerRoles.includes(role)) {
+               consistencyScore -= penalty;
+               resilienceScore -= penalty;
+           }
+           if (resilienceRoles.includes(role)) {
+               consistencyScore -= penalty;
+               powerScore -= penalty;
+           }
+       });
+   }
+   ```
+
+2. style_mideck.css - AGREGAR AL FINAL
+   ```css
+   /* Advertencia de saturación de roles */
+   .role-warning {
+       display: inline-block;
+       background: rgba(214, 48, 49, 0.2);
+       border: 1px solid #d63031;
+       color: #ff7675;
+       padding: 3px 8px;
+       margin: 2px 4px 2px 0;
+       border-radius: 10px;
+       font-size: 10px;
+       font-weight: bold;
+   }
+   ```
+
+CÓMO VERIFICAR QUE FUNCIONA
+--------------------------------------------------------------------------------
+
+1. RECARGA LA PÁGINA (Ctrl+Shift+R)
+
+2. VE A CONFIG (pestaña de arriba)
+
+3. BUSCA LA SECCIÓN "⚖️ Rendimientos Decrecientes"
+   - Debe aparecer después de Nomenclatura
+   - Debe tener checkbox para activar/desactivar
+   - Debe mostrar lista de roles con 3 campos cada uno:
+     * Cantidad óptima
+     * Umbral máximo
+     * Severidad curva
+     * Checkbox de penalización cruzada
+
+4. SI NO APARECE:
+   - Verifica que config.js tenga renderDiminishingSection()
+   - Verifica línea 93 de config.js: html += this.renderDiminishingSection();
+   - Abre consola (F12) y busca errores JavaScript
+
+5. PRUEBA LA FUNCIONALIDAD:
+   - Activa el checkbox "Activar sistema de rendimientos decrecientes"
+   - Modifica valores de un rol (ej: Starter → Óptimo: 10, Máximo: 15)
+   - Click en "Guardar"
+   - Recarga página
+   - Verifica que los valores persistan
+
+6. PRUEBA ADVERTENCIAS DE SATURACIÓN:
+   - Crea un deck con 20 Starters
+   - Configura umbral máximo de Starter en 12
+   - Ve a Mi Deck
+   - Debe aparecer "⚠️ Starter saturado (20/12)" en rojo
+
+7. VERIFICA BUG CORREGIDO:
+   - Ve a Config → Mecánicas y Counters
+   - Los botones 🗑️ deben estar en la esquina superior derecha de cada par
+   - NO deben estar flotando en la parte superior de la pantalla
+
+PRÓXIMOS PASOS SI NO FUNCIONA
+--------------------------------------------------------------------------------
+
+Si la sección de Rendimientos Decrecientes NO aparece en Config:
+
+1. Abre consola del navegador (F12)
+2. Busca errores en rojo
+3. Verifica que no haya errores de sintaxis JavaScript
+4. Ejecuta: ConfigManager.getDiminishingReturns()
+   - Debe retornar un objeto con enabled y roleThresholds
+5. Ejecuta: typeof Config.renderDiminishingSection
+   - Debe retornar "function"
+
+RESUMEN DE ENTREGA
+--------------------------------------------------------------------------------
+ARCHIVO ENTREGADO:
+- style_config.css (con bug corregido)
+
+ARCHIVOS QUE NECESITAS ACTUALIZAR TÚ:
+- stats.js (3 cambios explicados arriba)
+- style_mideck.css (agregar estilos de .role-warning)
+
+ESTADO GENERAL:
+- Fase 1: ✅ Operativa
+- Fase 2: ✅ UI lista, esperando stats.js
+- Fase 3: ✅ UI lista, esperando stats.js
+- Bug: ✅ Corregido
+
+================================================================================
