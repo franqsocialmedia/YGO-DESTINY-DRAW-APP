@@ -7,6 +7,15 @@
 const Stats = {
 
     // ===============================
+    // RENDIMIENTOS DECRECIENTES
+    // ===============================
+    calculateDiminishingReturns: function(count) {
+        // Raíz cuadrada para curva suave de rendimientos decrecientes
+        // 1 carta = 1.0, 4 cartas = 2.0, 9 cartas = 3.0, etc.
+        return Math.sqrt(count);
+    },
+
+    // ===============================
     // CÁLCULO DE INTERNAL SCORE
     // ===============================
     calculateInternalScore: function (cards) {
@@ -62,10 +71,6 @@ const normalizeRole = (role) => {
     return r; // si no hay sinónimo, devuelve tal cual
 };
     // Pilares construidos desde los roles del usuario en Config.
-    // Cada rol definido por el usuario se normaliza via ROLE_SYNONYMS.
-    // Si el nombre canónico coincide con un pilar conocido, se incluye.
-    // Si el usuario no tiene roles → pilares vacíos → puntuación 0.
-    // Esto garantiza que la misma vara de medir aplique en todo el sistema.
     const CANONICAL_CONSISTENCY = new Set(['searcher', 'starter']);
     const CANONICAL_POWER       = new Set(['boss monster', 'boardbreaker', 'booster', 'removal', 'disruption']);
     const CANONICAL_RESILIENCE  = new Set(['negator', 'negater', 'undestroyeble', 'undestroyable',
@@ -85,15 +90,15 @@ const normalizeRole = (role) => {
         .map(r => normalizeRole(r))
         .filter(r => CANONICAL_RESILIENCE.has(r));
 
-    // Palabras de restricción en el texto del efecto
     const restrictionTerms  = [
         'per turn', 'per duel', 'next turn',
         'you can only', 'only once', 'cannot be used'
     ];
 
-    let consistencyScore = 0;
-    let powerScore       = 0;
-    let resilienceScore  = 0;
+    // Contadores por rol para aplicar rendimientos decrecientes
+    const roleCounters = {};
+    const roleWeights = {};
+    
     let mainCards        = 0;
     let totalCards       = 0;
 
@@ -108,44 +113,42 @@ const normalizeRole = (role) => {
 
         mainCards += qty;
 
-        // ¿La carta tiene restricción "once per turn / per duel"?
         const isRestricted = restrictionTerms.some(t => desc.includes(t));
 
-        // Peso efectivo de copia adicional para cartas restringidas:
-        // La primera copia siempre vale 1.0. Copias extra de una carta
-        // restringida valen 0.35 (son "seguros" en mano pero poco más).
         const effectiveQty = isRestricted
             ? 1 + (qty - 1) * 0.5
             : qty;
 
-        let contributed = false;
-
-        // ── Pilares con peso de rol (weight) ─────────────────────────
-        // Si el rol tiene un peso definido en Config, se usa ese weight.
-        // Si no, el default es 1.0 (comportamiento idéntico al anterior).
-        // Esto permite diferenciar un searcher genérico (weight 1.0) de
-        // uno de arquetipo (weight 0.6) sin cambiar la estructura de roles.
-       /* const getRoleWeight = (roleName) => {
-            if (!window.ConfigManager) return 1.0;
-            try {
-                const configRoles = ConfigManager.getRoles?.() || {};
-                const rolesArr = Object.values(configRoles);
-                const match = rolesArr.find(r => r.name?.toLowerCase() === roleName.toLowerCase());
-                return (match?.weight > 0) ? match.weight : 1.0;
-            } catch (_) { return 1.0; }
-        };*/
-            const getRoleWeight = (roleName) =>
+        const getRoleWeight = (roleName) =>
             window.ConfigManager?.getRoleWeight?.(roleName) ?? 1.0;
 
+        // Acumular por rol normalizado
         roles.forEach(r => {
             const weight = getRoleWeight(r);
-            if (consistencyRoles.includes(r)) consistencyScore += effectiveQty * weight;
-            if (powerRoles.includes(r))       powerScore       += effectiveQty * weight;
-            if (resilienceRoles.includes(r))  resilienceScore  += effectiveQty * weight;
+            if (!roleCounters[r]) {
+                roleCounters[r] = 0;
+                roleWeights[r] = weight;
+            }
+            roleCounters[r] += effectiveQty;
         });
     }
 
-    if (mainCards === 0) mainCards = 1; // evitar división por cero
+    // Aplicar rendimientos decrecientes y sumar a pilares
+    let consistencyScore = 0;
+    let powerScore       = 0;
+    let resilienceScore  = 0;
+
+    Object.entries(roleCounters).forEach(([role, count]) => {
+        const diminishedValue = this.calculateDiminishingReturns(count);
+        const weight = roleWeights[role];
+        const contribution = diminishedValue * weight;
+
+        if (consistencyRoles.includes(role)) consistencyScore += contribution;
+        if (powerRoles.includes(role))       powerScore       += contribution;
+        if (resilienceRoles.includes(role))  resilienceScore  += contribution;
+    });
+
+    if (mainCards === 0) mainCards = 1;
 
     // Normalizar cada pilar a 0–10
     const consistency  = Math.min(10, (consistencyScore  / mainCards) * 15);
