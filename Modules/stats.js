@@ -9,11 +9,35 @@ const Stats = {
     // ===============================
     // RENDIMIENTOS DECRECIENTES
     // ===============================
-    calculateDiminishingReturns: function(count) {
-        // Raíz cuadrada para curva suave de rendimientos decrecientes
-        // 1 carta = 1.0, 4 cartas = 2.0, 9 cartas = 3.0, etc.
-        return Math.sqrt(count);
-    },
+  // DESPUÉS:
+calculateDiminishingReturns: function(roleName, count) {
+    const config = window.ConfigManager?.getDiminishingReturns?.();
+    if (!config || !config.enabled) {
+        return count; // Sin rendimientos decrecientes
+    }
+    
+    const threshold = config.roleThresholds?.[roleName];
+    if (!threshold) {
+        return Math.sqrt(count); // Default: raíz cuadrada
+    }
+    
+    // Aplicar curva según configuración
+    if (count <= threshold.optimal) {
+        return count; // 100% eficiencia
+    } else if (count <= threshold.max) {
+        // Rendimientos decrecientes entre optimal y max
+        const excess = count - threshold.optimal;
+        const range = threshold.max - threshold.optimal;
+        const factor = 1 - (excess / range) * (1 - threshold.curve);
+        return threshold.optimal + (excess * factor);
+    } else {
+        // Más allá del máximo: curva más agresiva
+        const baseValue = threshold.optimal + 
+            (threshold.max - threshold.optimal) * threshold.curve;
+        const excess = count - threshold.max;
+        return baseValue + (excess * threshold.curve * 0.5);
+    }
+},
 
     // ===============================
     // CÁLCULO DE INTERNAL SCORE
@@ -139,7 +163,7 @@ const normalizeRole = (role) => {
     let resilienceScore  = 0;
 
     Object.entries(roleCounters).forEach(([role, count]) => {
-        const diminishedValue = this.calculateDiminishingReturns(count);
+        const diminishedValue = this.calculateDiminishingReturns(role, count);
         const weight = roleWeights[role];
         const contribution = diminishedValue * weight;
 

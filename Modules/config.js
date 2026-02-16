@@ -90,6 +90,7 @@ const Config = {
             
             <input type="file" id="config-import-file" accept=".txt" style="display:none;" onchange="Config.handleFileImport(this)">
         `;
+        html += this.renderDiminishingSection();
     },
 
     // ===============================
@@ -382,7 +383,88 @@ const Config = {
         html += '</div>';
         return html;
     },
+// ===============================
+// RENDIMIENTOS DECRECIENTES
+// ===============================
 
+renderDiminishingSection: function() {
+    const config = ConfigManager.getDiminishingReturns();
+    const roles = Object.keys(ConfigManager.getRoles() || {});
+    
+    let html = `
+        <div class="config-section">
+            <h3>⚖️ Rendimientos Decrecientes</h3>
+            <p class="config-help-text">
+                Define cuántas cartas de cada rol aportan de manera óptima antes de 
+                que su valor marginal disminuya. Esto no penaliza especialización, 
+                solo refleja que carta #1 vale más que carta #20.
+            </p>
+            
+            <label class="config-checkbox">
+                <input type="checkbox" id="diminishing-enabled" 
+                    ${config.enabled ? 'checked' : ''} 
+                    onchange="Config.toggleDiminishing()">
+                Activar sistema de rendimientos decrecientes
+            </label>
+            
+            <div id="diminishing-roles-config" style="${config.enabled ? '' : 'display:none'}">
+    `;
+    
+    roles.forEach(role => {
+        const threshold = config.roleThresholds[role] || { optimal: 10, max: 15, curve: 0.5 };
+        html += `
+            <div class="diminishing-role-card">
+                <h4>${role}</h4>
+                <div class="diminishing-inputs">
+                    <label>
+                        Cantidad óptima: 
+                        <input type="number" min="1" max="40" value="${threshold.optimal}" 
+                            id="dim-optimal-${role}">
+                    </label>
+                    <label>
+                        Umbral máximo: 
+                        <input type="number" min="1" max="40" value="${threshold.max}" 
+                            id="dim-max-${role}">
+                    </label>
+                    <label>
+                        Severidad curva (0.1-1.0): 
+                        <input type="number" min="0.1" max="1" step="0.1" value="${threshold.curve}" 
+                            id="dim-curve-${role}">
+                    </label>
+                    <button class="btn btn-success" onclick="Config.saveDiminishingRole('${role}')">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `
+            </div>
+        </div>
+    `;
+    
+    return html;
+},
+
+toggleDiminishing: function() {
+    const enabled = document.getElementById('diminishing-enabled').checked;
+    const config = ConfigManager.getDiminishingReturns();
+    config.enabled = enabled;
+    ConfigManager.saveDiminishingReturns(config);
+    
+    document.getElementById('diminishing-roles-config').style.display = 
+        enabled ? '' : 'none';
+},
+
+saveDiminishingRole: function(role) {
+    const optimal = parseFloat(document.getElementById(`dim-optimal-${role}`).value);
+    const max = parseFloat(document.getElementById(`dim-max-${role}`).value);
+    const curve = parseFloat(document.getElementById(`dim-curve-${role}`).value);
+    
+    ConfigManager.updateRoleThreshold(role, { optimal, max, curve });
+    alert(`✓ Configuración de ${role} guardada`);
+},
    renderNomenclatureCategory: function (cat) {
         const cond = cat.conditions || {};
 

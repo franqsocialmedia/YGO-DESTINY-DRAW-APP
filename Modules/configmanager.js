@@ -753,6 +753,47 @@ removeNomCondKw: function (categoryId, field, keyword) {
         }
         return false;
     },
+    // ===============================
+// RENDIMIENTOS DECRECIENTES
+// ===============================
+
+getDiminishingReturns: function() {
+    try {
+        const data = JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || {};
+        return data.diminishingReturns || this.getDefaultDiminishingReturns();
+    } catch (_) {
+        return this.getDefaultDiminishingReturns();
+    }
+},
+
+getDefaultDiminishingReturns: function() {
+    return {
+        enabled: true,
+        roleThresholds: {
+            'starter': { optimal: 12, max: 18, curve: 0.5 },
+            'searcher': { optimal: 10, max: 15, curve: 0.5 },
+            'boss monster': { optimal: 6, max: 10, curve: 0.7 },
+            'boardbreaker': { optimal: 8, max: 12, curve: 0.6 },
+            'removal': { optimal: 8, max: 12, curve: 0.6 },
+            'negator': { optimal: 9, max: 15, curve: 0.5 },
+            'extender': { optimal: 8, max: 12, curve: 0.6 },
+            'recycle': { optimal: 6, max: 10, curve: 0.7 }
+        }
+    };
+},
+
+saveDiminishingReturns: function(config) {
+    const data = JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || {};
+    data.diminishingReturns = config;
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+    return true;
+},
+
+updateRoleThreshold: function(roleName, threshold) {
+    const config = this.getDiminishingReturns();
+    config.roleThresholds[roleName] = threshold;
+    return this.saveDiminishingReturns(config);
+}
 };
 
 window.ConfigManager = ConfigManager;
