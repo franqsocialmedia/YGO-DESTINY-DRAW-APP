@@ -815,7 +815,7 @@ const Estadisticas = {
                 if (bonus > 0) card.isCounter = true;
             });
         });
-
+        
         // PASO 6: power final × multiplicador de copias
         cards.forEach(card => {
             const raw   = card.baseScore + card.specBonus + card.counterBonus;

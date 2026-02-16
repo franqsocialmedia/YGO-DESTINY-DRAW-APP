@@ -246,7 +246,7 @@ const Config = {
 
         let html = `
             <div class="config-help-text">
-                <p><strong>Especialidades:</strong> Pares de Especialización y Counter asociado.</p>
+                <p><strong>Especialidades:</strong> Pares de Mecánica y Counter asociado.</p>
                 <small>Los keywords son internos — no se exponen en texto. Se usan para análisis automático de cartas.</small>
             </div>
             <div style="margin-bottom:var(--spacing-md);">
@@ -273,10 +273,10 @@ const Config = {
 
             html += `
                 <div class="specialty-pair-row">
-                    <!-- Lado Especialización -->
+                    <!-- Lado Mecánica -->
                     <div class="specialty-half spec-side">
                         <div class="specialty-half-header">
-                            <span class="spec-badge">Especialización</span>
+                            <span class="spec-badge">Mecánica</span>
                         </div>
                         <input type="text" class="role-name-input" value="${pair.specialization.name}"
                             style="margin-bottom:6px;"
@@ -405,7 +405,7 @@ renderDiminishingSection: function() {
             <h3>⚖️ Rendimientos Decrecientes</h3>
             <p class="config-help-text">
                 Define cuántas cartas de cada rol aportan de manera óptima antes de 
-                que su valor marginal disminuya. Esto no penaliza especialización, 
+                que su valor marginal disminuya. Esto no penaliza mecánicas, 
                 solo refleja que carta #1 vale más que carta #20.
             </p>
             
@@ -656,10 +656,10 @@ renderNomCategoryOptions: function (selectedId) {
     },
 
     // ===============================
-    // ACCIONES - ESPECIALIDADES
+    // ACCIONES - MECANICAS
     // ===============================
     createSpecialtyPair: function () {
-        ConfigManager.createSpecialtyPair('Nueva Especialización', '', 'Nuevo Counter', '');
+        ConfigManager.createSpecialtyPair('Nueva Mecánica', '', 'Nuevo Counter', '');
         const sec = document.getElementById('specialties-section');
         if (sec && sec.style.display === 'none') sec.style.display = 'block';
         this.render();

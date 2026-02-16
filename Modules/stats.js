@@ -95,10 +95,9 @@
         return r; // si no hay sinónimo, devuelve tal cual
     };
         // Pilares construidos desde los roles del usuario en Config.
-        const CANONICAL_CONSISTENCY = new Set(['searcher', 'starter']);
-        const CANONICAL_POWER       = new Set(['boss monster', 'boardbreaker', 'booster', 'removal', 'disruption']);
-        const CANONICAL_RESILIENCE  = new Set(['negator', 'negater', 'undestroyeble', 'undestroyable',
-                                            'unaffectable', 'untargetable', 'recycle', 'extender']);
+        const CANONICAL_CONSISTENCY = new Set(['searcher', 'starter','extender']);
+        const CANONICAL_POWER       = new Set(['boardbreaker', 'booster', 'disruption']);
+        const CANONICAL_RESILIENCE  = new Set(['protector','handtrap','recycle']);
 
         const userRoleNames = window.ConfigManager
             ? Object.keys(ConfigManager.getRoles?.() || {})
