@@ -365,20 +365,44 @@ getRoleWeight: function (roleName) {
         return (this.getRoles()[roleName] || []);
     },
 
-   createRole: function (roleName) {
-        const config = this.getConfig();
-        const name = roleName.trim();
-        if (name && config.roles[name] === undefined) {
-            config.roles[name] = [];
-            // Peso por defecto al crear
-            if (!config.roleWeights) config.roleWeights = {};
-            config.roleWeights[name] = 1.0;
-            this.saveConfig(config);
-            return true;
-        }
-        return false;
-    },
+   createRole: function(roleName) {
+    const config = this.getConfig();
+    const name = roleName.trim();
+    if (!name || config.roles[name] !== undefined) return false;
+    // Insertar al inicio reconstruyendo el objeto
+    config.roles = Object.assign({ [name]: [] }, config.roles);
+    if (!config.roleWeights) config.roleWeights = {};
+    config.roleWeights[name] = 1.0;
+    this.saveConfig(config);
+    return true;
+},
+duplicateRole: function(roleName) {
+    const config   = this.getConfig();
+    const original = config.roles[roleName];
+    if (original === undefined) return null;
 
+    let copyName = roleName + ' (copia)';
+    let counter  = 2;
+    while (config.roles[copyName] !== undefined) {
+        copyName = roleName + ` (copia ${counter++})`;
+    }
+
+    // Insertar al inicio
+    config.roles = Object.assign({ [copyName]: [...original] }, config.roles);
+
+    if (!config.roleWeights) config.roleWeights = {};
+    config.roleWeights[copyName] = config.roleWeights[roleName] ?? 1.0;
+
+    if (config.roleConditions?.[roleName]) {
+        if (!config.roleConditions) config.roleConditions = {};
+        config.roleConditions[copyName] = JSON.parse(
+            JSON.stringify(config.roleConditions[roleName])
+        );
+    }
+
+    this.saveConfig(config);
+    return copyName;
+},
     renameRole: function (oldName, newName) {
         const config = this.getConfig();
         const trimmed = newName.trim();
@@ -595,7 +619,7 @@ removeRoleNomenclatureCategory: function(roleName, catId) {
         mechanicRole: mechanicRole || '',
         counterRole:  counterRole  || ''
     };
-    config.specialties.push(newPair);
+    config.specialties.unshift(newPair);
     this.saveConfig(config);
     return newPair.id;
 },
@@ -746,7 +770,7 @@ updateSpecialtyPair: function(id, mechanicRole, counterRole) {
         if (!config.nomenclature || !config.nomenclature.categories) {
             config.nomenclature = JSON.parse(JSON.stringify(this.defaultConfig.nomenclature));
         }
-        config.nomenclature.categories.push({
+       config.nomenclature.categories.unshift({
             id: 'custom_' + Date.now(),
             name: 'Nueva Categoría',
             color: '#FFFFFF',

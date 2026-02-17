@@ -151,12 +151,13 @@ const Config = {
             </div>`).join('');
 
         return `
-            <div class="role-card" data-role="${roleName}">
+            <div class="role-card" data-role="${roleName}" id="role-anchor-${roleName}">
                 <div class="role-card-header">
                     <input type="text" class="role-name-input" value="${roleName}"
                         data-original="${roleName}"
                         onblur="Config.renameRole(this)"
                         onkeydown="if(event.key==='Enter')this.blur()">
+                    <button class="btn-duplicate-role" onclick="Config.duplicateRole('${roleName}')" title="Duplicar rol" style="background:none;border:none;cursor:pointer;font-size:1rem;margin-right:4px;">⧉</button>
                     <button class="btn-delete-role" onclick="Config.deleteRole('${roleName}')" title="Eliminar rol">🗑️</button>
                 </div>
                 <div class="role-card-body">
@@ -243,8 +244,7 @@ const Config = {
         if (kw !== undefined) {
             ConfigManager.removeKeywordFromRoleCondition(roleName, kw);
             this.render();
-            const sec = document.getElementById('roles-section');
-            if (sec) sec.style.display = 'block';
+            this._restoreAndScroll('roles-section', `role-anchor-${roleName}`);
         }
     },
 
@@ -255,8 +255,7 @@ const Config = {
         if (c !== undefined) {
             ConfigManager.removeConditionalFromRole(roleName, c);
             this.render();
-            const sec = document.getElementById('roles-section');
-            if (sec) sec.style.display = 'block';
+            this._restoreAndScroll('roles-section', `role-anchor-${roleName}`);
         }
     },
 
@@ -286,7 +285,7 @@ const Config = {
 
     pairs.forEach(pair => {
         html += `
-            <div class="specialty-pair-row" style="position:relative;">
+            <div class="specialty-pair-row" id="spec-anchor-${pair.id}" style="position:relative;">
                 <div class="specialty-half spec-side">
                     <div class="specialty-half-header">
                         <span class="spec-badge">Mecánica</span>
@@ -480,7 +479,7 @@ saveDiminishingRole: function(role) {
             </div>`).join('');
 
         return `
-        <div class="role-card">
+        <div class="role-card" id="nom-anchor-${cat.id}">
             <div class="role-card-header">
                 <input type="color" value="${cat.color}" title="Color de la categoría"
                     style="width:36px;height:36px;min-width:36px;border:2px solid var(--border-color);border-radius:6px;cursor:pointer;padding:2px;background:transparent;appearance:none;-webkit-appearance:none;"
@@ -642,11 +641,10 @@ renderNomCategoryOptions: function (selectedId) {
     // ACCIONES - ESPECIALIDADES
     // ===============================
     createSpecialtyPair: function() {
-        ConfigManager.createSpecialtyPair('', '');
-        this.render();
-        const sec = document.getElementById('specialties-section');
-        if (sec) sec.style.display = 'block';
-    },
+    const id = ConfigManager.createSpecialtyPair('', '');
+    this.render();
+    this._restoreAndScroll('specialties-section', `spec-anchor-${id}`);
+},
 
     deleteSpecialtyPair: function (id) {
         if (!confirm('¿Eliminar este par?')) return;
@@ -705,8 +703,7 @@ renderNomCategoryOptions: function (selectedId) {
             });
             input.value = '';
             this.render();
-            const sec = document.getElementById('staples-section');
-            if (sec) sec.style.display = 'block';
+            this._restoreAndScroll('roles-section', `role-anchor-${roleName}`);
         } catch (e) {
             alert('❌ No se encontró la carta. Verifica el ID.');
         } finally {
@@ -741,12 +738,16 @@ renderNomCategoryOptions: function (selectedId) {
     // ===============================
     // ACCIONES - NOMENCLATURA
     // ===============================
-    addNomenclatureCategory: function () {
-        ConfigManager.addNomenclatureCategory();
-        this.render();
+    addNomenclatureCategory: function() {
+    ConfigManager.addNomenclatureCategory();
+    this.render();
+    // La nueva categoría queda primera — scroll al inicio de la sección
+    this._restoreAndScroll('nomenclature-section', null);
+    requestAnimationFrame(() => {
         const sec = document.getElementById('nomenclature-section');
-        if (sec) sec.style.display = 'block';
-    },
+        if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+},
 
     deleteNomCategory: function (categoryId) {
         if (!confirm('¿Eliminar esta categoría?')) return;
@@ -791,14 +792,15 @@ renderNomCategoryOptions: function (selectedId) {
             alert('❌ Error al importar: ' + err);
         }
         el.value = '';
-    },addNomCondKw: function (catId, field, el) {
+    },
+    
+    addNomCondKw: function (catId, field, el) {
     const kw = el.value.trim().toLowerCase();
     if (!kw) { alert('⚠️ Escribe una keyword'); return; }
     if (ConfigManager.addNomCondKw(catId, field, kw)) {
         el.value = '';
         this.render();
-        const sec = document.getElementById('nomenclature-section');
-        if (sec) sec.style.display = 'block';
+        this._restoreAndScroll('nomenclature-section', `nomenclature-category-anchor-${catId}`);
     } else {
         alert('❌ Ya existe esa keyword');
     }
@@ -807,15 +809,13 @@ renderNomCategoryOptions: function (selectedId) {
 removeNomCondKw: function (catId, field, kw) {
         if (ConfigManager.removeNomCondKw(catId, field, kw)) {
             this.render();
-            const sec = document.getElementById('nomenclature-section');
-            if (sec) sec.style.display = 'block';
+            this._restoreAndScroll('nomenclature-section', `nomenclature-category-anchor-${catId}`);
         }
     },
     removeNomCondKwByIndex: function (catId, field, index) {
         if (ConfigManager.removeNomCondKwByIndex(catId, field, index)) {
             this.render();
-            const sec = document.getElementById('nomenclature-section');
-            if (sec) sec.style.display = 'block';
+            this._restoreAndScroll('nomenclature-section', `nomenclature-category-anchor-${catId}`);
         }
     },renderNomCategoryOptionsAdd: function(roleName) {
     const cats     = ConfigManager.getNomenclature().categories || [];
@@ -832,19 +832,26 @@ addRoleNomCat: function(roleName) {
     if (!sel || !sel.value) return;
     if (ConfigManager.addRoleNomenclatureCategory(roleName, sel.value)) {
         this.render();
-        const sec = document.getElementById('roles-section');
-        if (sec) sec.style.display = 'block';
+        this._restoreAndScroll('roles-section', `role-anchor-${roleName}`);
     }
 },
 
 removeRoleNomCat: function(roleName, catId) {
     if (ConfigManager.removeRoleNomenclatureCategory(roleName, catId)) {
         this.render();
-        const sec = document.getElementById('roles-section');
-        if (sec) sec.style.display = 'block';
+        this._restoreAndScroll('roles-section', `role-anchor-${roleName}`);
     }
 },
-
+_restoreAndScroll: function(sectionId, anchorId) {
+    requestAnimationFrame(() => {
+        const sec = document.getElementById(sectionId);
+        if (sec) sec.style.display = 'block';
+        if (anchorId) {
+            const el = document.getElementById(anchorId);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+},
     toggleSection: function (sectionId) {
         const sec = document.getElementById(sectionId);
         if (sec) {
@@ -1034,17 +1041,21 @@ addPillarRole: function(pillar) {
     if (!sel || !sel.value) return;
     if (ConfigManager.addRoleToPillar(pillar, sel.value)) {
         this.render();
-        const sec = document.getElementById('pillars-section');
-        if (sec) sec.style.display = 'block';
+    this._restoreAndScroll('pillar-section', `pillar-anchor-${pillar}`);
     }
 },
 
 removePillarRole: function(pillar, role) {
     if (ConfigManager.removeRoleFromPillar(pillar, role)) {
         this.render();
-        const sec = document.getElementById('pillars-section');
-        if (sec) sec.style.display = 'block';
+        this._restoreAndScroll('pillar-section', `pillar-anchor-${pillar}`);
     }
+},
+duplicateRole: function(roleName) {
+    const newName = ConfigManager.duplicateRole(roleName);
+    if (!newName) return;
+    this.render();
+    this._restoreAndScroll('roles-section', `role-anchor-${CSS.escape(newName)}`);
 }
 };
 
