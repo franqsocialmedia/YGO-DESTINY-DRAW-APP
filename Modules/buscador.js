@@ -132,6 +132,8 @@ const Buscador = {
                 const data = await response.json();
                 cards = data.data || [];
             } else {
+                this.showMessage('🔍 Buscando en la base de datos. Puede tardar unos segundos...');
+await new Promise(resolve => setTimeout(resolve, 0));
                 // Búsqueda solo por filtros (obtener todas las cartas y filtrar)
                 // Usamos un nombre genérico para obtener un conjunto amplio
                 const url = `${this.apiUrl}`;
@@ -188,6 +190,8 @@ const Buscador = {
                 const data = await response.json();
                 cards = data.data || [];
             } else {
+                this.showMessage('🔍 Buscando en la base de datos. Puede tardar unos segundos...');
+await new Promise(resolve => setTimeout(resolve, 0));
                 // Búsqueda solo por filtros (obtener todas las cartas)
                 const url = `${this.apiUrl}`;
                 const response = await fetch(url);

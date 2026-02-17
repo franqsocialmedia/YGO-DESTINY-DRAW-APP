@@ -1,33 +1,36 @@
 .card-viewer-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
-
-.card-viewer {
-    background: #002b4d;
+    background: #001a33;
     color: #f1f1f1;
     width: 400px;
     max-height: 90vh;
     overflow-y: auto;
     border-radius: 12px;
-    padding: 15px;
+    padding: 20px;
     position: relative;
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
 .cv-close {
     position: absolute;
-    right: 10px;
-    top: 10px;
-    background: red;
+    right: 12px;
+    top: 12px;
+    background: rgba(192, 57, 43, 0.85);
     color: white;
     border: none;
     border-radius: 50%;
     cursor: pointer;
+    width: 26px;
+    height: 26px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: background 0.2s;
+}
+.cv-close:hover {
+    background: #c0392b;
 }
 
 .cv-image-section img {
@@ -57,7 +60,7 @@
     border: none;
     cursor: pointer;
 }
-/* ── Aporte de la carta ────────────────────────────────── */
+/* ── Aporte de la carta ────────────────────────────────────────── */
 .cv-contribution-block {
     padding: 4px 0;
 }
@@ -142,4 +145,16 @@
     color: rgba(255,255,255,0.35);
     font-style: italic;
     margin: 4px 0;
+}
+
+/* ── Saturación de roles en Mi Deck ─────────────────────────────── */
+/* Cerca del máximo (entre optimal y max) → borde naranja   */
+.role-badge.badge-near-saturated {
+    border: 1px solid #e67e22 !important;
+    box-shadow: 0 0 4px rgba(230, 126, 34, 0.5);
+}
+/* Por encima del máximo → borde rojo                        */
+.role-badge.badge-over-saturated {
+    border: 1px solid #e74c3c !important;
+    box-shadow: 0 0 4px rgba(231, 76, 60, 0.6);
 }

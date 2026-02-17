@@ -33,59 +33,49 @@ const CardViewer = {
         const highlightedDesc = this.highlightNomenclature(card.desc);
 
         const html = `
-            <div id="cv-overlay"
-                 style="position:fixed;top:0;left:0;width:100%;height:100%;
-                        background:rgba(0,0,0,0.75);z-index:99998;">
+           <div id="cv-overlay" class="cv-overlay-bg" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:99998;display:flex;align-items:center;justify-content:center;">
+                <div id="cv-modal" class="card-viewer-overlay">
 
-                <div id="cv-modal"
-                     style="position:absolute;top:50%;left:50%;
-                            transform:translate(-50%,-50%);
-                            background:#111;color:white;
-                            padding:20px;border:2px solid yellow;
-                            width:350px;max-height:90%;overflow:auto;">
+                    <button id="cv-close" class="cv-close">✕</button>
 
-                    <button id="cv-close"
-                            style="float:right;background:red;color:white;border:none;cursor:pointer;">X</button>
+                    <h2 class="cv-header">${card.name}</h2>
 
-                    <h2>${card.name}</h2>
+                    <div class="cv-image-section">
+                        <img id="cv-main-img" src="${mainImg}" alt="${card.name}">
+                        <div class="cv-alt-images">${thumbsHtml}</div>
+                    </div>
 
-                    <img id="cv-main-img"
-                         src="${mainImg}"
-                         style="width:100%;margin-bottom:10px;">
+                    <hr class="cv-divider">
 
-                    <div id="cv-thumbs">${thumbsHtml}</div>
+                    <div class="cv-stats">
+                        <p><b>Tipo:</b> ${card.type}</p>
+                        ${statsHtml}
+                    </div>
 
-                    <hr>
+                    <div class="cv-desc">${highlightedDesc}</div>
 
-                    <p><b>Tipo:</b> ${card.type}</p>
-                    ${statsHtml}
+                    <hr class="cv-divider">
 
-                    <div style="white-space:pre-wrap; line-height: 1.8;">${highlightedDesc}</div>
-
-                    <hr>
-
-                    <div>
-                        <b>Cantidad en Deck:</b><br>
+                    <div class="cv-qty-label">Cantidad en Deck:</div>
+                    <div class="cv-quantity">
                         <button id="cv-minus">◀</button>
-                        <span id="cv-count">${quantity}</span>
+                        <span id="cv-count" class="cv-qty-number">${quantity}</span>
                         <button id="cv-plus">▶</button>
                     </div>
 
-                   ${this.renderCardContribution(card)}
+                    ${this.renderCardContribution(card)}
 
-                    <hr>
+                    <hr class="cv-divider">
 
-                    <div>
-                        <b>Limitaciones:</b><br>
-                        TCG: ${ban.ban_tcg || 'Free'}<br>
-                        OCG: ${ban.ban_ocg || 'Free'}<br>
+                    <div class="cv-ban">
+                        <b>TCG:</b> ${ban.ban_tcg || 'Free'} &nbsp;|&nbsp;
+                        <b>OCG:</b> ${ban.ban_ocg || 'Free'}
                     </div>
 
-                    <hr>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button id="cv-open-image" style="flex: 1; min-width: 120px;">Ver Imagen HD</button>
-                        <button id="cv-staple-btn" style="flex: 1; min-width: 120px;"></button>
-                        <button id="cv-fav-btn" style="flex: 1; min-width: 120px;"></button>
+                    <div class="cv-actions">
+                        <button id="cv-open-image">Ver HD</button>
+                        <button id="cv-staple-btn"></button>
+                        <button id="cv-fav-btn"></button>
                     </div>
 
                 </div>
@@ -205,9 +195,8 @@ const CardViewer = {
         const stapleBtn = document.getElementById('cv-staple-btn');
         const isStaple  = () => window.ConfigManager?.isStaple?.(card.id);
         const updateStapleBtn = () => {
-            stapleBtn.textContent      = isStaple() ? '⭐ Es Staple' : '☆ Volver Staple';
-            stapleBtn.style.background = isStaple() ? '#FFD700' : '#4a4a4a';
-            stapleBtn.style.color      = isStaple() ? '#000'    : '#fff';
+            stapleBtn.textContent = isStaple() ? '⭐ Es Staple' : '☆ Staple';
+            stapleBtn.classList.toggle('cv-btn-active', isStaple());
         };
         updateStapleBtn();
         stapleBtn.onclick = () => {
@@ -227,10 +216,9 @@ const CardViewer = {
         // Botón: Marcar / desmarcar Favorita
         const favBtn    = document.getElementById('cv-fav-btn');
         const isFav     = () => window.Favoritas?.has(card.id);
-        const updateFav = () => {
-            favBtn.textContent      = isFav() ? '★ Favorita' : '☆ Favorita';
-            favBtn.style.background = isFav() ? '#FFD700' : '';
-            favBtn.style.color      = isFav() ? '#000'    : '';
+      const updateFav = () => {
+            favBtn.textContent = isFav() ? '★ Favorita' : '☆ Favorita';
+            favBtn.classList.toggle('cv-btn-active', isFav());
         };
         updateFav();
         favBtn.onclick = () => {
@@ -536,9 +524,7 @@ const CardViewer = {
         const card = window.Buscador.currentCards[index];
         if (!card) return;
         this.open(card);
-    },
-
-// ===============================
+    },// ===============================
 // DETECCIÓN DE POSIBLES ROLES
 // Escanea el texto de la carta contra las keywords y condicionales
 // de cada rol definido en Config. Sin Config, devuelve array vacío.
@@ -556,6 +542,10 @@ detectPossibleRoles: function (card) {
         const keywords     = cond.keywords     || [];
         const conditionals = cond.conditionals || [];
 
+        // Determinar el texto donde buscar:
+        // Si el rol tiene nomenclatureCategory definida, buscar SOLO en los
+        // segmentos del efecto clasificados con esa categoría.
+        // Si no (null / '—'), buscar en todo el desc como antes.
         const nomCatId = cond.nomenclatureCategory || null;
         let searchText = desc;
 
@@ -565,6 +555,7 @@ detectPossibleRoles: function (card) {
                 .filter(s => s.category === nomCatId)
                 .map(s => s.text.toLowerCase())
                 .join(' ');
+            // Si la categoría existe pero ningún segmento matchea → no se detecta el rol
             searchText = filtered || '';
         }
 
@@ -581,10 +572,10 @@ detectPossibleRoles: function (card) {
     });
 
     return found;
-},
-
-// ===============================
+},// ===============================
 // APORTE DE LA CARTA AL DECK ACTIVO
+// Calcula qué cambio habría en cada pilar del Internal Score
+// si esta carta fuera añadida al deck con los roles detectados.
 // ===============================
 calculateCardContribution: function (card, detectedRoles) {
     if (!window.Deck || !window.Stats) return null;
@@ -592,10 +583,13 @@ calculateCardContribution: function (card, detectedRoles) {
 
     const cardId = String(card.id);
 
+    // Score actual del deck
     const before = Stats.calculateInternalScore(Deck.cards);
 
+    // Simular deck con la carta añadida (qty 1, main deck)
     const simCards = { ...Deck.cards };
     if (simCards[cardId]) {
+        // Ya está en el deck — simular con una copia más
         simCards[cardId] = {
             ...simCards[cardId],
             qty: simCards[cardId].qty + 1
@@ -635,9 +629,7 @@ calculateCardContribution: function (card, detectedRoles) {
             delta:  delta(after.internalScore, before.internalScore)
         }
     };
-},
-
-// ===============================
+},// ===============================
 // RENDER DEL BLOQUE DE APORTE
 // ===============================
 renderCardContribution: function (card) {
@@ -647,11 +639,13 @@ renderCardContribution: function (card) {
     const detectedRoles  = this.detectPossibleRoles(card);
     const contribution   = this.calculateCardContribution(card, detectedRoles);
 
+    // ── Posibles Roles ────────────────────────────────────────
     const rolesHTML = detectedRoles.length > 0
         ? detectedRoles.map(r =>
             `<span class="cv-role-chip">${r} | </span>`).join('')
         : `<span class="cv-role-none">No se detectaron roles con la configuración actual</span>`;
 
+    // ── Barras de aporte ──────────────────────────────────────
     let contribHTML = '';
     if (contribution) {
         const row = (label, data, color) => {
