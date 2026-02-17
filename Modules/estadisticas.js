@@ -507,13 +507,15 @@ const Estadisticas = {
             </div>`;
     },
 
-    updateDeckStats: function () {
-        const statsSection = document.getElementById('deck-stats-sec');
-        if (statsSection) statsSection.innerHTML = this.renderDeckStats();
+        updateDeckStats: function () {
+            const analysisSec = document.getElementById('deck-analysis-sec');
+            if (analysisSec) analysisSec.innerHTML = this.renderDeckAnalysis();
 
-        const analysisSec = document.getElementById('deck-analysis-sec');
-        if (analysisSec) analysisSec.innerHTML = this.renderDeckAnalysis();
-    },
+            const statsSec = document.getElementById('deck-stats-sec');
+            if (statsSec) statsSec.innerHTML = this.renderDeckStats();
+
+            this.updateFloatingWidget();
+        },
 
     // ===============================
     // WIDGET FLOTANTE DE DECK
@@ -1346,7 +1348,34 @@ const Estadisticas = {
                         </div>`).join('')}
                 </div>
             </div>`;
-
+            
+let metaExtScore = null;
+if (this.powerScoreCache?.cards && window.Stats) {
+    try {
+        const fakeCards = {};
+        const mainIds  = deck.sections?.main  || [];
+        const extraIds = deck.sections?.extra || [];
+        [...mainIds.map(id => ({id, loc:'main'})),
+         ...extraIds.map(id => ({id, loc:'extra'}))]
+        .forEach(({id, loc}) => {
+            const cached = this.powerScoreCache.cards
+                .find(c => String(c.cardId) === String(id));
+            if (cached?.cardData) {
+                if (!fakeCards[id]) fakeCards[id] = {
+                    data: cached.cardData, qty: 0,
+                    location: loc, roles: cached.detectedRoles || []
+                };
+                fakeCards[id].qty++;
+            }
+        });
+        if (Object.keys(fakeCards).length > 0) {
+            const ext = Stats.calculateExternalScore(
+                fakeCards, this.powerScoreCache, this.metaDecks
+            );
+            metaExtScore = ext.externalScore;
+        }
+    } catch (_) {}
+}
         // ── 4. DECKS DEL META (con multi-selección de carpetas) ───
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('meta-decks-sec')">
@@ -1372,7 +1401,13 @@ const Estadisticas = {
                             <div class="meta-deck-info">
                                 <div class="meta-deck-name">${deck.filename}</div>
                                 <div class="meta-deck-folder">${deck.folder}</div>
-                                <div class="meta-deck-score">External: 0.0</div>
+                                <div class="meta-deck-score" style="color:${
+                                    metaExtScore === null ? '#636e72'
+                                    : metaExtScore >= 7 ? '#00b894'
+                                    : metaExtScore >= 4 ? '#fdcb6e' : '#d63031'}">
+                                    External: ${metaExtScore !== null ? parseFloat(metaExtScore).toFixed(1) : '—'}
+                                    ${metaExtScore === null && !this.powerScoreCache ? '<small style="opacity:0.5">⚡</small>' : ''}
+                                </div>
                             </div>
                         </div>`).join('')}
                 </div>

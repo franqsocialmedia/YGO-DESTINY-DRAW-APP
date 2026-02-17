@@ -711,13 +711,17 @@ const Deck = {
             }
 
             // External Score real si hay powerScoreCache disponible en Estadísticas
-            let externalScore = 0;
-            if (window.Stats && window.Estadisticas?.powerScoreCache) {
-                try {
-                    const ext = Stats.calculateExternalScore(deck.cards, Estadisticas.powerScoreCache);
-                    externalScore = parseFloat(ext.externalScore) || 0;
-                } catch (_) {}
-            }
+            let externalScore = null;
+                if (window.Stats && window.Estadisticas?.powerScoreCache) {
+                    try {
+                        const ext = Stats.calculateExternalScore(
+                            deck.cards,
+                            Estadisticas.powerScoreCache,
+                            Estadisticas.metaDecks || {}
+                        );
+                        externalScore = ext.externalScore;
+                    } catch (_) {}
+                }
 
             html += `
                 <div class="deck-list-item">
@@ -741,7 +745,9 @@ const Deck = {
                             </div>
                             <div class="deck-score-row">
                                 <span class="deck-score-label">Match-up:</span>
-                                <span class="deck-score-value deck-score-external">${externalScore.toFixed(1)}</span>
+                                <span class="deck-score-value deck-score-external">
+                                    ${externalScore !== null ? parseFloat(externalScore).toFixed(1) : '—'}
+                                </span>
                             </div>
                             ${(() => {
                                 if (!window.Winrate) return '';
@@ -875,7 +881,7 @@ const Deck = {
 
                     // Nivel de saturación → clase visual en el badge
                     let satClass = '';
-                    if (dimConfig && dimConfig.enabled) {
+                    if (dimConfig && dimConfig.enabled && location === 'main') {
                         const threshold = dimConfig.roleThresholds?.[role];
                         if (threshold) {
                             const roleCount = Object.values(Deck.cards)
