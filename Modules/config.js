@@ -61,6 +61,16 @@ const Config = {
                 </div>
             </div>
 
+            <!-- Sección: Pilares del Internal Score -->
+            <div class="config-section">
+                <h3 class="config-section-title" onclick="Config.toggleSection('pillars-section')">
+                    ▶ Pilares del Internal Score
+                </h3>
+                <div id="pillars-section" class="config-section-content" style="display:none;">
+                    ${this.renderPillarsSection()}
+                </div>
+            </div>
+
             <!-- Sección: Rendimientos Decrecientes -->
             <div class="config-section">
                 <h3 class="config-section-title" onclick="Config.toggleSection('diminishing-section')">
@@ -959,8 +969,83 @@ removeRoleNomCat: function(roleName, catId) {
         this.render();
 
         alert('✅ Todo borrado. La app está completamente vacía.');
-    }
+    },
+renderPillarsSection: function() {
+    const pillars   = ConfigManager.getPillars();
+    const allRoles  = ConfigManager.getRoleNames();
 
+    const pillarDefs = [
+        { key: 'consistency', label: '🎯 Consistencia', color: '#00b894',
+          hint: 'Arranque y búsqueda — roles que garantizan la mano inicial.' },
+        { key: 'power',       label: '⚡ Potencia',      color: '#d63031',
+          hint: 'Cierre y rompedoras — roles que ganan el juego.' },
+        { key: 'resilience',  label: '🛡️ Resiliencia',   color: '#0066cc',
+          hint: 'Negación y extensión — roles que sostienen la estrategia.' }
+    ];
+
+    const pillarCard = (def) => {
+        const assigned = pillars[def.key] || [];
+        const available = allRoles.filter(r => !assigned.includes(r));
+
+        const chips = assigned.length > 0
+            ? assigned.map(role => {
+                const w = ConfigManager.getRoleWeight(role).toFixed(1);
+                return `<div class="keyword-chip" style="border-color:${def.color}">
+                    <span class="chip-text">${role} <small style="opacity:0.6">(${w})</small></span>
+                    <span class="chip-remove"
+                        onclick="Config.removePillarRole('${def.key}','${role}')">×</span>
+                </div>`;
+            }).join('')
+            : '<span class="empty-chips">Sin roles asignados</span>';
+
+        const opts = available.length > 0
+            ? '<option value="">-- Agregar rol --</option>' +
+              available.map(r => `<option value="${r}">${r}</option>`).join('')
+            : '<option value="">Sin roles disponibles</option>';
+
+        return `
+            <div class="role-card" style="border-top:3px solid ${def.color}">
+                <div class="role-card-header" style="background:${def.color}22">
+                    <span style="font-weight:bold;color:${def.color}">${def.label}</span>
+                </div>
+                <div class="role-card-body">
+                    <small class="config-help-text" style="display:block;margin-bottom:8px;">${def.hint}</small>
+                    <div class="keywords-container">${chips}</div>
+                    <div class="add-keyword-container" style="margin-top:8px;">
+                        <select class="keyword-input" id="pillar-add-${def.key}">${opts}</select>
+                        <button class="btn btn-sm"
+                            onclick="Config.addPillarRole('${def.key}')">+ Agregar</button>
+                    </div>
+                </div>
+            </div>`;
+    };
+
+    return `
+        <div class="config-help-text">
+            <p>Define qué roles de tu configuración aportan a cada pilar. El <strong>peso del rol</strong> (definido en Roles) determina cuánto aporta cada uno. Un mismo rol puede estar en varios pilares.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--spacing-md);">
+            ${pillarDefs.map(d => pillarCard(d)).join('')}
+        </div>`;
+},
+
+addPillarRole: function(pillar) {
+    const sel = document.getElementById(`pillar-add-${pillar}`);
+    if (!sel || !sel.value) return;
+    if (ConfigManager.addRoleToPillar(pillar, sel.value)) {
+        this.render();
+        const sec = document.getElementById('pillars-section');
+        if (sec) sec.style.display = 'block';
+    }
+},
+
+removePillarRole: function(pillar, role) {
+    if (ConfigManager.removeRoleFromPillar(pillar, role)) {
+        this.render();
+        const sec = document.getElementById('pillars-section');
+        if (sec) sec.style.display = 'block';
+    }
+}
 };
 
 window.Config = Config;

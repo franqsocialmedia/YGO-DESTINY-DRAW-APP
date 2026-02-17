@@ -43,42 +43,14 @@
         // CÁLCULO DE INTERNAL SCORE
         // ===============================
         calculateInternalScore: function (cards) {
-    const ROLE_SYNONYMS = {
-        'searcher':      ['searcher', 'buscador', 'buscadora', 'search'],
-        'starter':       ['starter', 'iniciador', 'iniciadora', 'inicio', 'arranque', 'openner', 'opener'],
-        'boss monster':  ['boss monster', 'boss', 'jefe', 'carta jefe', 'ace monster', 'as', 'finalizadora', 'finalizador', 'cierre', 'closer', 'エース'],
-        'boardbreaker':  ['boardbreaker', 'board breaker', 'rompedora', 'rompedor', 'going second', '破壊'],
-        'booster':       ['booster', 'potenciadora', 'potenciador', 'power boost', 'refuerzo'],
-        'removal':       ['removal', 'remoción', 'removedor', 'removedora', 'eliminador', 'eliminadora', '除去'],
-        'disruption':    ['disruption', 'disrupción', 'disruptora', 'disruptor', 'interrupción', '妨害'],
-        'negator':       ['negator', 'negater', 'negadora', 'negador', 'negate', 'negation', 'hand trap', 'handtrap', '無効'],
-        'extender':      ['extender', 'extensora', 'extensor', 'extendedora', 'combo piece', 'combo', '展開'],
-        'recycle':       ['recycle', 'reciclaje', 'recicladora', 'reciclador', 'recovery', 'recuperación', 'recuperadora', 'recursion', '回収'],
-        'undestroyable': ['undestroyeble', 'undestroyable', 'indestructible', '破壊耐性'],
-        'unaffectable':  ['unaffectable', 'unaffected', 'inmune', 'inmunidad', 'invulnerable', '効果対象外'],
-        'untargetable':  ['untargetable', 'untargeted', 'no seleccionable', 'sin objetivo', '対象耐性'],
-        'brick':         ['brick', 'ladrillo', 'carta muerta', 'dead card', 'muerta', 'muerto', 'inutilizable', 'dead'],
-    };
+    // Pilares desde Config (usuario configura qué roles aportan a cada uno)
+            const pillars = window.ConfigManager?.getPillars?.()
+                || { consistency: [], power: [], resilience: [] };
 
-    const normalizeRole = (role) => {
-        const r = role.toLowerCase().trim();
-        for (const [canonical, aliases] of Object.entries(ROLE_SYNONYMS)) {
-            if (aliases.includes(r)) return canonical;
-        }
-        return r;
-    };
-
-    const CANONICAL_CONSISTENCY = new Set(['searcher', 'starter']);
-    const CANONICAL_POWER       = new Set(['boss monster', 'boardbreaker', 'booster', 'removal', 'disruption']);
-    const CANONICAL_RESILIENCE  = new Set(['negator', 'negater', 'undestroyeble', 'undestroyable', 'unaffectable', 'untargetable', 'recycle', 'extender']);
-
-    const userRoleNames = window.ConfigManager ? Object.keys(ConfigManager.getRoles?.() || {}) : [];
-
-    const consistencyRoles = userRoleNames.map(r => normalizeRole(r)).filter(r => CANONICAL_CONSISTENCY.has(r));
-    const powerRoles       = userRoleNames.map(r => normalizeRole(r)).filter(r => CANONICAL_POWER.has(r));
-    const resilienceRoles  = userRoleNames.map(r => normalizeRole(r)).filter(r => CANONICAL_RESILIENCE.has(r));
-
-    const restrictionTerms = ['per turn', 'per duel', 'next turn', 'you can only', 'only once', 'cannot be used'];
+            const consistencyRoles = pillars.consistency.map(r => r.toLowerCase());
+            const powerRoles       = pillars.power.map(r => r.toLowerCase());
+            const resilienceRoles  = pillars.resilience.map(r => r.toLowerCase());
+            const restrictionTerms = ['per turn', 'per duel', 'next turn', 'you can only', 'only once', 'cannot be used'];
 
     const roleCounters = {};
     const roleWeights  = {};
@@ -91,7 +63,7 @@
     for (const [, item] of Object.entries(cards)) {
         const loc   = item.location;
         const qty   = item.qty || 1;
-        const roles = (item.roles || []).map(r => normalizeRole(r));
+        const roles = (item.roles || []).map(r => r.toLowerCase());
         const desc  = (item.data?.desc || '').toLowerCase();
 
         if (loc === 'main' || loc === 'extra') totalCards += qty;

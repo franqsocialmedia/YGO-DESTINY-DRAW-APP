@@ -737,3 +737,6 @@ Igual que el Internal, todo eso podría exponerse a Config. Actualmente solo la 
 
 --------------------------------------------------------------------------
 
+Se procedio luego a ajustar el mecanismo de Mecanicas (antes llamado especialidad) y Counters para que puedan ponerse de forma mas directa.
+
+Los roles ahora pueden tener mas de 1 nomenclatura asignada a buscar dicha palabra clave.

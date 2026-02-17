@@ -197,7 +197,13 @@ const ConfigManager = {
                 'extender':     { optimal: 9,  max: 12, curve: 0.6, crossPenalty: false },
                 'recycle':      { optimal: 6,  max: 10, curve: 0.7, crossPenalty: false }
             }
-        }
+        },
+        pillars: {
+                    consistency: ['Searcher', 'Starter'],
+                    power:       ['Boss Monster', 'Boardbreaker', 'Booster', 'Removal', 'Disruption'],
+                    resilience:  ['Negater', 'Handtrap', 'Extender', 'Recycle']
+                }
+        
     },
 
     // ===============================
@@ -840,7 +846,31 @@ updateRoleThreshold: function (roleName, threshold) {
     const config = this.getDiminishingReturns();
     config.roleThresholds[roleName] = threshold;
     return this.saveDiminishingReturns(config);
-}
+},
+getPillars: function() {
+    const config = this.getConfig();
+    return config.pillars || JSON.parse(JSON.stringify(this.defaultConfig.pillars));
+},
+
+addRoleToPillar: function(pillar, role) {
+    const config = this.getConfig();
+    if (!config.pillars) config.pillars = { consistency: [], power: [], resilience: [] };
+    if (!config.pillars[pillar]) config.pillars[pillar] = [];
+    if (config.pillars[pillar].includes(role)) return false;
+    config.pillars[pillar].push(role);
+    this.saveConfig(config);
+    return true;
+},
+
+removeRoleFromPillar: function(pillar, role) {
+    const config = this.getConfig();
+    if (!config.pillars?.[pillar]) return false;
+    const idx = config.pillars[pillar].indexOf(role);
+    if (idx === -1) return false;
+    config.pillars[pillar].splice(idx, 1);
+    this.saveConfig(config);
+    return true;
+},
 };
 
 window.ConfigManager = ConfigManager;
