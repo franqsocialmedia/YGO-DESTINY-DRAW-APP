@@ -252,6 +252,19 @@ const ConfigManager = {
                         }
                     });
                 }
+                // Migración: specialty formato antiguo (con specialization.keywords) → nuevo (solo roles)
+                if (Array.isArray(parsed.specialties)) {
+                    parsed.specialties = parsed.specialties.map(pair => {
+                        if (pair.specialization !== undefined) {
+                            return {
+                                id:           pair.id,
+                                mechanicRole: pair.specialization?.rol || '',
+                                counterRole:  pair.counter?.rol        || ''
+                            };
+                        }
+                        return pair;
+                    });
+                }
                 return parsed;
             }
         } catch (err) {
@@ -479,7 +492,41 @@ getRoleWeight: function (roleName) {
             (!categoryId || categoryId === '—') ? null : categoryId;
         this.saveConfig(config);
     },
+getRoleNomenclatureCategories: function(roleName) {
+    const cond = this.getRoleCondition(roleName);
+    if (!cond) return [];
+    if (Array.isArray(cond.nomenclatureCategories)) return cond.nomenclatureCategories;
+    // Backward compat: single value → array
+    if (cond.nomenclatureCategory && cond.nomenclatureCategory !== '—')
+        return [cond.nomenclatureCategory];
+    return [];
+},
 
+addRoleNomenclatureCategory: function(roleName, catId) {
+    if (!catId || catId === '—') return false;
+    const config = this.getConfig();
+    if (!config.roleConditions) config.roleConditions = {};
+    if (!config.roleConditions[roleName])
+        config.roleConditions[roleName] = { conditionals: [], keywords: [] };
+    const cats = config.roleConditions[roleName].nomenclatureCategories || [];
+    if (cats.includes(catId)) return false;
+    cats.push(catId);
+    config.roleConditions[roleName].nomenclatureCategories = cats;
+    this.saveConfig(config);
+    return true;
+},
+
+removeRoleNomenclatureCategory: function(roleName, catId) {
+    const config = this.getConfig();
+    if (!config.roleConditions?.[roleName]) return false;
+    const cats = config.roleConditions[roleName].nomenclatureCategories || [];
+    const idx  = cats.indexOf(catId);
+    if (idx === -1) return false;
+    cats.splice(idx, 1);
+    config.roleConditions[roleName].nomenclatureCategories = cats;
+    this.saveConfig(config);
+    return true;
+},
     removeConditionalFromRole: function (roleName, conditional) {
         const config = this.getConfig();
         if (config.roleConditions && config.roleConditions[roleName]) {
@@ -534,26 +581,28 @@ getRoleWeight: function (roleName) {
         return this.getSpecialties().find(p => p.id === id) || null;
     },
 
-    createSpecialtyPair: function (specName, specRol, counterName, counterRol) {
-        const config = this.getConfig();
-        if (!Array.isArray(config.specialties)) config.specialties = [];
-        const newPair = {
-            id: 'spec_' + Date.now(),
-            specialization: {
-                name: specName || 'Nueva Mecánica',
-                rol: specRol || '',
-                keywords: []
-            },
-            counter: {
-                name: counterName || 'Nuevo Counter',
-                rol: counterRol || '',
-                keywords: []
-            }
-        };
-        config.specialties.push(newPair);
-        this.saveConfig(config);
-        return newPair.id;
-    },
+    createSpecialtyPair: function(mechanicRole, counterRole) {
+    const config = this.getConfig();
+    if (!Array.isArray(config.specialties)) config.specialties = [];
+    const newPair = {
+        id: 'spec_' + Date.now(),
+        mechanicRole: mechanicRole || '',
+        counterRole:  counterRole  || ''
+    };
+    config.specialties.push(newPair);
+    this.saveConfig(config);
+    return newPair.id;
+},
+
+updateSpecialtyPair: function(id, mechanicRole, counterRole) {
+    const config = this.getConfig();
+    const pair = (config.specialties || []).find(p => p.id === id);
+    if (!pair) return false;
+    pair.mechanicRole = mechanicRole;
+    pair.counterRole  = counterRole;
+    this.saveConfig(config);
+    return true;
+},
 
     deleteSpecialtyPair: function (id) {
         const config = this.getConfig();

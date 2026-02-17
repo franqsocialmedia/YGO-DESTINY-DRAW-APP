@@ -858,17 +858,17 @@ const Deck = {
                         return;
                     }
 
-                    const cond     = window.ConfigManager?.getRoleCondition?.(role);
-                    const nomCatId = cond?.nomenclatureCategory || null;
+                    const cond      = window.ConfigManager?.getRoleCondition?.(role);
+                    const nomCatIds = window.ConfigManager?.getRoleNomenclatureCategories?.(role) || [];
 
-                    if (nomCatId && window.NomenclatureAnalyzer && item.data) {
+                    if (nomCatIds.length > 0 && window.NomenclatureAnalyzer && item.data) {
                         const segments  = NomenclatureAnalyzer.analyzeCard(item.data) || [];
                         const scopeText = segments
-                            .filter(s => s.category === nomCatId)
+                            .filter(s => nomCatIds.includes(s.category))
                             .map(s => s.text.toLowerCase())
                             .join(' ');
-                        const keywords  = cond?.keywords || [];
-                        const passes    = keywords.length === 0 ||
+                        const keywords = cond?.keywords || [];
+                        const passes   = keywords.length === 0 ||
                             keywords.some(kw => scopeText.includes(kw.toLowerCase()));
                         if (!passes) return;
                     }

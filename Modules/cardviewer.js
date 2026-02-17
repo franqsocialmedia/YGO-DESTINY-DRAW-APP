@@ -417,56 +417,55 @@ const CardViewer = {
     },
 
     highlightParagraphNew: function(paragraph, categories) {
-        if (!categories || categories.length === 0) return paragraph;
+    if (!categories || categories.length === 0) return paragraph;
 
-        const paraLower = paragraph.toLowerCase().trim();
-        const toArr = (v) => Array.isArray(v) ? v.filter(s => s && s.trim())
-                           : (v && String(v).trim() ? [String(v).trim()] : []);
+    const paraLower = paragraph.toLowerCase().trim();
+    const toArr = (v) => Array.isArray(v) ? v.filter(s => s && s.trim())
+                       : (v && String(v).trim() ? [String(v).trim()] : []);
 
-        for (const category of categories) {
-            if (!category.conditions) continue;
-            const cond = category.conditions;
-            let matches = true;
+    for (const category of categories) {
+        if (!category.conditions) continue;
+        const cond = category.conditions;
+        let matches = true;
 
-            // startsWith — array: AL MENOS UNA debe cumplirse
-            const swArr = toArr(cond.startsWith);
-            if (swArr.length > 0 && !swArr.some(sw => paraLower.startsWith(sw.toLowerCase()))) {
+        const swArr = toArr(cond.startsWith);
+        if (swArr.length > 0 && !swArr.some(sw => paraLower.startsWith(sw.toLowerCase()))) {
+            matches = false;
+        }
+
+        if (matches) {
+            const cArr = toArr(cond.contains);
+            if (cArr.length > 0 && !cArr.some(kw => paraLower.includes(kw.toLowerCase()))) {
                 matches = false;
-            }
-
-            // contains — array: AL MENOS UNA debe cumplirse
-            if (matches) {
-                const cArr = toArr(cond.contains);
-                if (cArr.length > 0 && !cArr.some(kw => paraLower.includes(kw.toLowerCase()))) {
-                    matches = false;
-                }
-            }
-
-            // notContains — array: NINGUNA debe estar presente
-            if (matches) {
-                const ncArr = toArr(cond.notContains);
-                if (ncArr.length > 0 && ncArr.some(kw => paraLower.includes(kw.toLowerCase()))) {
-                    matches = false;
-                }
-            }
-
-            // endsWith — array: AL MENOS UNA debe cumplirse
-            if (matches) {
-                const ewArr = toArr(cond.endsWith);
-                if (ewArr.length > 0 && !ewArr.some(ew => paraLower.endsWith(ew.toLowerCase()))) {
-                    matches = false;
-                }
-            }
-
-            if (matches) {
-                const color = category.color || '#FFFFFF';
-                const categoryName = category.name || category.id;
-                return `<mark style="background-color:${color};padding:2px 4px;border-radius:3px;cursor:help;opacity:0.6;" title="${categoryName}">${paragraph}</mark>`;
             }
         }
 
-        return paragraph;
-    },
+        if (matches) {
+            const ncArr = toArr(cond.notContains);
+            if (ncArr.length > 0 && ncArr.some(kw => paraLower.includes(kw.toLowerCase()))) {
+                matches = false;
+            }
+        }
+
+        if (matches) {
+            const ewArr = toArr(cond.endsWith);
+            if (ewArr.length > 0) {
+                // Strip trailing quotes/decorative chars before checking
+                const stripped = paraLower.replace(/["""''\u2018\u2019\u201C\u201D\s]+$/, '');
+                if (!ewArr.some(ew => stripped.endsWith(ew.toLowerCase()))) {
+                    matches = false;
+                }
+            }
+        }
+
+        if (matches) {
+            const color = category.color || '#FFFFFF';
+            const categoryName = category.name || category.id;
+            return `<mark style="background-color:${color};padding:2px 4px;border-radius:3px;cursor:help;opacity:0.6;" title="${categoryName}">${paragraph}</mark>`;
+        }
+    }
+    return paragraph;
+},
 
     highlightParagraphOld: function(paragraph, nomenclature, colors) {
         const categoryNames = {
@@ -543,26 +542,25 @@ const CardViewer = {
 // Escanea el texto de la carta contra las keywords y condicionales
 // de cada rol definido en Config. Sin Config, devuelve array vacío.
 // ===============================
-detectPossibleRoles: function (card) {
+detectPossibleRoles: function(card) {
     if (!window.ConfigManager) return [];
-    const desc   = (card.desc || '').toLowerCase();
-    const type   = (card.type || '').toLowerCase();
-    const roles  = ConfigManager.getRoleNames();
-    const found  = [];
+    const desc  = (card.desc || '').toLowerCase();
+    const roles = ConfigManager.getRoleNames();
+    const found = [];
 
     roles.forEach(roleName => {
-        const cond     = ConfigManager.getRoleCondition(roleName);
+        const cond = ConfigManager.getRoleCondition(roleName);
         if (!cond) return;
         const keywords     = cond.keywords     || [];
         const conditionals = cond.conditionals || [];
 
-        const nomCatId = cond.nomenclatureCategory || null;
+        // Multi-nomenclature filter
+        const nomCatIds = window.ConfigManager?.getRoleNomenclatureCategories?.(roleName) || [];
         let searchText = desc;
-
-        if (nomCatId && window.NomenclatureAnalyzer) {
+        if (nomCatIds.length > 0 && window.NomenclatureAnalyzer) {
             const segments = NomenclatureAnalyzer.analyzeCard(card) || [];
             const filtered = segments
-                .filter(s => s.category === nomCatId)
+                .filter(s => nomCatIds.includes(s.category))
                 .map(s => s.text.toLowerCase())
                 .join(' ');
             searchText = filtered || '';
@@ -570,7 +568,6 @@ detectPossibleRoles: function (card) {
 
         const kwMatch = keywords.length > 0 &&
             keywords.some(kw => searchText.includes(kw.toLowerCase()));
-
         if (!kwMatch) return;
 
         if (conditionals.length > 0) {

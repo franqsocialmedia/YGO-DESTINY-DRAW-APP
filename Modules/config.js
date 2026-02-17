@@ -186,15 +186,31 @@ const Config = {
                         <label class="config-label" style="margin-bottom:4px;">
                             Restringir detección a Nomenclatura
                             <small style="font-weight:normal;color:rgba(241,241,241,0.45);">
-                                — solo busca keywords dentro de esas oraciones del efecto
+                                — busca keywords solo en esas oraciones del efecto (vacío = todo el efecto)
                             </small>
                         </label>
-                        <select class="role-nom-select"
-                            onchange="ConfigManager.setRoleNomenclatureCategory('${roleName}', this.value)">
-                            ${Config.renderNomCategoryOptions(
-                                (roleCondition || {}).nomenclatureCategory
-                            )}
-                        </select>
+                        <div class="keywords-container">
+                            ${(() => {
+                                const selected = ConfigManager.getRoleNomenclatureCategories(roleName);
+                                const cats = ConfigManager.getNomenclature().categories || [];
+                                if (selected.length === 0) return '<span class="empty-chips">Sin restricción (todo el efecto)</span>';
+                                return selected.map(catId => {
+                                    const cat = cats.find(c => c.id === catId);
+                                    const label = cat ? cat.name : catId;
+                                    const borderColor = cat?.color || '#888';
+                                    return `<div class="keyword-chip" style="border-color:${borderColor}">
+                                        <span class="chip-text">${label}</span>
+                                        <span class="chip-remove" onclick="Config.removeRoleNomCat('${roleName}','${catId}')">×</span>
+                                    </div>`;
+                                }).join('');
+                            })()}
+                        </div>
+                        <div class="add-keyword-container">
+                            <select class="role-nom-select" id="nom-cat-select-${roleName}">
+                                ${Config.renderNomCategoryOptionsAdd(roleName)}
+                            </select>
+                            <button class="btn btn-sm" onclick="Config.addRoleNomCat('${roleName}')">+ Agregar</button>
+                        </div>
                     </div>
                     <div class="role-weight-row">
                         <label class="role-weight-label" title="1.0 = genérico (máximo aporte) · 0.1 = arquetípico (aporte reducido)">
@@ -237,100 +253,57 @@ const Config = {
     // ===============================
     // SECCIÓN DE ESPECIALIDADES (pares horizontales)
     // ===============================
-    renderSpecialtiesSection: function () {
-        const pairs = ConfigManager.getSpecialties();
-        const roles = ConfigManager.getRoleNames();
-        const roleOpts = (sel) => ['', ...roles].map(r =>
-            `<option value="${r}" ${r === sel ? 'selected' : ''}>${r || '-- Sin rol --'}</option>`
-        ).join('');
+    renderSpecialtiesSection: function() {
+    const pairs = ConfigManager.getSpecialties();
+    const roles = ConfigManager.getRoleNames();
+    const roleOpts = (selected) => ['', ...roles].map(r =>
+        `<option value="${r}" ${r === (selected||'') ? 'selected' : ''}>${r || '-- Sin rol --'}</option>`
+    ).join('');
 
-        let html = `
-            <div class="config-help-text">
-                <p><strong>Especialidades:</strong> Pares de Mecánica y Counter asociado.</p>
-                <small>Los keywords son internos — no se exponen en texto. Se usan para análisis automático de cartas.</small>
-            </div>
-            <div style="margin-bottom:var(--spacing-md);">
-                <button class="btn btn-primary" onclick="Config.createSpecialtyPair()">➕ Nuevo Par</button>
-            </div>
-            <div class="specialty-pairs-list">`;
+    let html = `
+        <div class="config-help-text">
+            <p><strong>Mecánicas y Counters:</strong> Conecta roles entre sí. El sistema detectará automáticamente qué cartas ejecutan cada mecánica y cuáles la contrarrestan según los roles asignados.</p>
+            <small>Ejemplo: <em>Searcher ⟷ Handtrap</em> — cualquier carta con rol Handtrap countera a cualquier carta con rol Searcher.</small>
+        </div>
+        <div style="margin-bottom:var(--spacing-md);">
+            <button class="btn btn-primary" onclick="Config.createSpecialtyPair()">➕ Nuevo Par</button>
+        </div>
+        <div class="specialty-pairs-list">`;
 
-        if (pairs.length === 0) {
-            html += '<p class="empty-chips" style="padding:var(--spacing-md);">No hay pares configurados</p>';
-        }
+    if (pairs.length === 0) {
+        html += '<p class="empty-chips" style="padding:var(--spacing-md);">No hay pares configurados</p>';
+    }
 
-        pairs.forEach(pair => {
-            const specKwChips = (pair.specialization.keywords || []).map(kw =>
-                `<div class="keyword-chip spec-kw-chip">
-                    <span class="chip-text">${kw}</span>
-                    <span class="chip-remove" onclick="Config.removeSpecKw('${pair.id}','specialization','${kw.replace(/'/g, "\\'")}')">×</span>
-                </div>`).join('');
-
-            const counterKwChips = (pair.counter.keywords || []).map(kw =>
-                `<div class="keyword-chip counter-kw-chip">
-                    <span class="chip-text">${kw}</span>
-                    <span class="chip-remove" onclick="Config.removeSpecKw('${pair.id}','counter','${kw.replace(/'/g, "\\'")}')">×</span>
-                </div>`).join('');
-
-            html += `
-                <div class="specialty-pair-row">
-                    <!-- Lado Mecánica -->
-                    <div class="specialty-half spec-side">
-                        <div class="specialty-half-header">
-                            <span class="spec-badge">Mecánica</span>
-                        </div>
-                        <input type="text" class="role-name-input" value="${pair.specialization.name}"
-                            style="margin-bottom:6px;"
-                            onblur="ConfigManager.updateSpecialtyPairField('${pair.id}','specialization','name',this.value)"
-                            onkeydown="if(event.key==='Enter')this.blur()">
-                        <label class="config-label" style="font-size:0.8rem;margin-bottom:2px;">Rol asociado:</label>
-                        <select class="keyword-input" style="margin-bottom:8px;"
-                            onchange="ConfigManager.updateSpecialtyPairField('${pair.id}','specialization','rol',this.value)">
-                            ${roleOpts(pair.specialization.rol)}
-                        </select>
-                        <label class="config-label" style="font-size:0.8rem;">Keywords:</label>
-                        <div class="keywords-container" style="min-height:34px;">
-                            ${specKwChips || '<span class="empty-chips" style="font-size:0.75rem;">Sin keywords</span>'}
-                        </div>
-                        <div class="add-keyword-container">
-                            <input type="text" id="spec-kw-${pair.id}" class="keyword-input" placeholder="Keyword...">
-                            <button class="btn btn-sm" onclick="Config.addSpecKw('${pair.id}','specialization',document.getElementById('spec-kw-${pair.id}'))">+</button>
-                        </div>
+    pairs.forEach(pair => {
+        html += `
+            <div class="specialty-pair-row" style="position:relative;">
+                <div class="specialty-half spec-side">
+                    <div class="specialty-half-header">
+                        <span class="spec-badge">Mecánica</span>
                     </div>
-
-                    <div class="specialty-connector">⟷</div>
-
-                    <!-- Lado Counter -->
-                    <div class="specialty-half counter-side">
-                        <div class="specialty-half-header">
-                            <span class="counter-badge">Counter</span>
-                        </div>
-                        <input type="text" class="role-name-input" value="${pair.counter.name}"
-                            style="margin-bottom:6px;"
-                            onblur="ConfigManager.updateSpecialtyPairField('${pair.id}','counter','name',this.value)"
-                            onkeydown="if(event.key==='Enter')this.blur()">
-                        <label class="config-label" style="font-size:0.8rem;margin-bottom:2px;">Rol asociado:</label>
-                        <select class="keyword-input" style="margin-bottom:8px;"
-                            onchange="ConfigManager.updateSpecialtyPairField('${pair.id}','counter','rol',this.value)">
-                            ${roleOpts(pair.counter.rol)}
-                        </select>
-                        <label class="config-label" style="font-size:0.8rem;">Keywords:</label>
-                        <div class="keywords-container" style="min-height:34px;">
-                            ${counterKwChips || '<span class="empty-chips" style="font-size:0.75rem;">Sin keywords</span>'}
-                        </div>
-                        <div class="add-keyword-container">
-                            <input type="text" id="counter-kw-${pair.id}" class="keyword-input" placeholder="Keyword...">
-                            <button class="btn btn-sm btn-counter" onclick="Config.addSpecKw('${pair.id}','counter',document.getElementById('counter-kw-${pair.id}'))">+</button>
-                        </div>
+                    <select class="keyword-input" id="mech-role-${pair.id}"
+                        onchange="ConfigManager.updateSpecialtyPair('${pair.id}', this.value, document.getElementById('ctr-role-${pair.id}').value)">
+                        ${roleOpts(pair.mechanicRole)}
+                    </select>
+                </div>
+                <div class="specialty-connector">⟷</div>
+                <div class="specialty-half counter-side">
+                    <div class="specialty-half-header">
+                        <span class="counter-badge">Counter</span>
                     </div>
+                    <select class="keyword-input" id="ctr-role-${pair.id}"
+                        onchange="ConfigManager.updateSpecialtyPair('${pair.id}', document.getElementById('mech-role-${pair.id}').value, this.value)">
+                        ${roleOpts(pair.counterRole)}
+                    </select>
+                </div>
+                <button class="btn-delete-role" onclick="Config.deleteSpecialtyPair('${pair.id}')"
+                    style="position:absolute;top:8px;right:8px;" title="Eliminar par">🗑️</button>
+            </div>`;
+    });
 
-                    <button class="btn-delete-role" onclick="Config.deleteSpecialtyPair('${pair.id}')" 
-                        style="position:absolute;top:8px;right:8px;" title="Eliminar par">🗑️</button>
-                </div>`;
-        });
-
-        html += '</div>';
-        return html;
-    },
+    html += '</div>';
+    return html;
+},
 
     // ===============================
     // SECCIÓN DE STAPLES (grid de imágenes)
@@ -658,13 +631,11 @@ renderNomCategoryOptions: function (selectedId) {
     // ===============================
     // ACCIONES - ESPECIALIDADES
     // ===============================
-    createSpecialtyPair: function () {
-        ConfigManager.createSpecialtyPair('Nueva Mecánica', '', 'Nuevo Counter', '');
-        const sec = document.getElementById('specialties-section');
-        if (sec && sec.style.display === 'none') sec.style.display = 'block';
+    createSpecialtyPair: function() {
+        ConfigManager.createSpecialtyPair('', '');
         this.render();
-        const sec2 = document.getElementById('specialties-section');
-        if (sec2) sec2.style.display = 'block';
+        const sec = document.getElementById('specialties-section');
+        if (sec) sec.style.display = 'block';
     },
 
     deleteSpecialtyPair: function (id) {
@@ -836,7 +807,33 @@ removeNomCondKw: function (catId, field, kw) {
             const sec = document.getElementById('nomenclature-section');
             if (sec) sec.style.display = 'block';
         }
-    },
+    },renderNomCategoryOptionsAdd: function(roleName) {
+    const cats     = ConfigManager.getNomenclature().categories || [];
+    const selected = ConfigManager.getRoleNomenclatureCategories(roleName);
+    const available = cats.filter(c => !selected.includes(c.id));
+    if (available.length === 0)
+        return '<option value="">Sin más categorías</option>';
+    return '<option value="">-- Seleccionar --</option>' +
+        available.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+},
+
+addRoleNomCat: function(roleName) {
+    const sel = document.getElementById(`nom-cat-select-${roleName}`);
+    if (!sel || !sel.value) return;
+    if (ConfigManager.addRoleNomenclatureCategory(roleName, sel.value)) {
+        this.render();
+        const sec = document.getElementById('roles-section');
+        if (sec) sec.style.display = 'block';
+    }
+},
+
+removeRoleNomCat: function(roleName, catId) {
+    if (ConfigManager.removeRoleNomenclatureCategory(roleName, catId)) {
+        this.render();
+        const sec = document.getElementById('roles-section');
+        if (sec) sec.style.display = 'block';
+    }
+},
 
     toggleSection: function (sectionId) {
         const sec = document.getElementById(sectionId);
