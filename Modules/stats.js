@@ -43,196 +43,128 @@
         // CÁLCULO DE INTERNAL SCORE
         // ===============================
         calculateInternalScore: function (cards) {
-            // Mapa de sinónimos: normaliza cualquier forma que el usuario escriba
-    // al nombre canónico que el sistema entiende.
-    // Acepta español, inglés y formas comunes de escritura.
     const ROLE_SYNONYMS = {
-        // ── CONSISTENCIA ──────────────────────────────────────────
-        'searcher':     ['searcher', 'buscador', 'buscadora', 'search'],
-        'starter':      ['starter', 'iniciador', 'iniciadora', 'inicio',
-                        'arranque', 'openner', 'opener'],
-
-        // ── POTENCIA ──────────────────────────────────────────────
-        'boss monster': ['boss monster', 'boss', 'jefe', 'carta jefe',
-                        'ace monster', 'as', 'finalizadora', 'finalizador',
-                        'cierre', 'closer', 'エース'],
-        'boardbreaker': ['boardbreaker', 'board breaker', 'rompedora',
-                        'rompedor', 'boardbreaker', 'going second',
-                        '破壊'],
-        'booster':      ['booster', 'potenciadora', 'potenciador',
-                        'power boost', 'refuerzo'],
-        'removal':      ['removal', 'remoción', 'removedor', 'removedora',
-                        'eliminador', 'eliminadora', '除去'],
-        'disruption':   ['disruption', 'disrupción', 'disruptora', 'disruptor',
-                        'interrupción', '妨害'],
-
-        // ── RESILIENCIA ───────────────────────────────────────────
-        'negator':      ['negator', 'negater', 'negadora', 'negador', 'negate',
-                        'negation', 'hand trap', 'handtrap', '無効'],
-        'extender':     ['extender', 'extensora', 'extensor', 'extendedora',
-                        'combo piece', 'combo', '展開'],
-        'recycle':      ['recycle', 'reciclaje', 'recicladora', 'reciclador',
-                        'recovery', 'recuperación', 'recuperadora',
-                        'recursion', '回収'],
-        'undestroyable':['undestroyeble', 'undestroyable', 'indestructible',
-                        'indestructible', '破壊耐性'],
-        'unaffectable': ['unaffectable', 'unaffected', 'inmune', 'inmunidad',
-                        'invulnerable', '効果対象外'],
-        'untargetable': ['untargetable', 'untargeted', 'no seleccionable',
-                        'sin objetivo', '対象耐性'],
-
-        // ── NEUTROS / PENALIZACIÓN ────────────────────────────────
-        'brick':        ['brick', 'ladrillo', 'carta muerta', 'dead card',
-                        'muerta', 'muerto', 'inutilizable', 'dead'],
+        'searcher':      ['searcher', 'buscador', 'buscadora', 'search'],
+        'starter':       ['starter', 'iniciador', 'iniciadora', 'inicio', 'arranque', 'openner', 'opener'],
+        'boss monster':  ['boss monster', 'boss', 'jefe', 'carta jefe', 'ace monster', 'as', 'finalizadora', 'finalizador', 'cierre', 'closer', 'エース'],
+        'boardbreaker':  ['boardbreaker', 'board breaker', 'rompedora', 'rompedor', 'going second', '破壊'],
+        'booster':       ['booster', 'potenciadora', 'potenciador', 'power boost', 'refuerzo'],
+        'removal':       ['removal', 'remoción', 'removedor', 'removedora', 'eliminador', 'eliminadora', '除去'],
+        'disruption':    ['disruption', 'disrupción', 'disruptora', 'disruptor', 'interrupción', '妨害'],
+        'negator':       ['negator', 'negater', 'negadora', 'negador', 'negate', 'negation', 'hand trap', 'handtrap', '無効'],
+        'extender':      ['extender', 'extensora', 'extensor', 'extendedora', 'combo piece', 'combo', '展開'],
+        'recycle':       ['recycle', 'reciclaje', 'recicladora', 'reciclador', 'recovery', 'recuperación', 'recuperadora', 'recursion', '回収'],
+        'undestroyable': ['undestroyeble', 'undestroyable', 'indestructible', '破壊耐性'],
+        'unaffectable':  ['unaffectable', 'unaffected', 'inmune', 'inmunidad', 'invulnerable', '効果対象外'],
+        'untargetable':  ['untargetable', 'untargeted', 'no seleccionable', 'sin objetivo', '対象耐性'],
+        'brick':         ['brick', 'ladrillo', 'carta muerta', 'dead card', 'muerta', 'muerto', 'inutilizable', 'dead'],
     };
 
-    // Función: convierte cualquier rol del usuario al canónico
     const normalizeRole = (role) => {
         const r = role.toLowerCase().trim();
         for (const [canonical, aliases] of Object.entries(ROLE_SYNONYMS)) {
             if (aliases.includes(r)) return canonical;
         }
-        return r; // si no hay sinónimo, devuelve tal cual
+        return r;
     };
-        // Pilares construidos desde los roles del usuario en Config.
-        const CANONICAL_CONSISTENCY = new Set(['searcher', 'starter']);
-        const CANONICAL_POWER       = new Set(['boss monster', 'boardbreaker', 'booster', 'removal', 'disruption']);
-        const CANONICAL_RESILIENCE  = new Set(['negator', 'negater', 'undestroyeble', 'undestroyable',
-                                            'unaffectable', 'untargetable', 'recycle', 'extender']);
 
-        const userRoleNames = window.ConfigManager
-            ? Object.keys(ConfigManager.getRoles?.() || {})
-            : [];
+    const CANONICAL_CONSISTENCY = new Set(['searcher', 'starter']);
+    const CANONICAL_POWER       = new Set(['boss monster', 'boardbreaker', 'booster', 'removal', 'disruption']);
+    const CANONICAL_RESILIENCE  = new Set(['negator', 'negater', 'undestroyeble', 'undestroyable', 'unaffectable', 'untargetable', 'recycle', 'extender']);
 
-        const consistencyRoles = userRoleNames
-            .map(r => normalizeRole(r))
-            .filter(r => CANONICAL_CONSISTENCY.has(r));
-        const powerRoles = userRoleNames
-            .map(r => normalizeRole(r))
-            .filter(r => CANONICAL_POWER.has(r));
-        const resilienceRoles = userRoleNames
-            .map(r => normalizeRole(r))
-            .filter(r => CANONICAL_RESILIENCE.has(r));
+    const userRoleNames = window.ConfigManager ? Object.keys(ConfigManager.getRoles?.() || {}) : [];
 
-        const restrictionTerms  = [
-            'per turn', 'per duel', 'next turn',
-            'you can only', 'only once', 'cannot be used'
-        ];
+    const consistencyRoles = userRoleNames.map(r => normalizeRole(r)).filter(r => CANONICAL_CONSISTENCY.has(r));
+    const powerRoles       = userRoleNames.map(r => normalizeRole(r)).filter(r => CANONICAL_POWER.has(r));
+    const resilienceRoles  = userRoleNames.map(r => normalizeRole(r)).filter(r => CANONICAL_RESILIENCE.has(r));
 
-        // Contadores por rol para aplicar rendimientos decrecientes
-        const roleCounters = {};
-        const roleWeights = {};
-        
-        let mainCards        = 0;
-        let totalCards       = 0;
+    const restrictionTerms = ['per turn', 'per duel', 'next turn', 'you can only', 'only once', 'cannot be used'];
 
-        for (const [, item] of Object.entries(cards)) {
-            const loc   = item.location;
-            const qty   = item.qty || 1;
-            const roles = (item.roles || []).map(r => normalizeRole(r));
-            const desc  = (item.data?.desc || '').toLowerCase();
+    const roleCounters = {};
+    const roleWeights  = {};
+    let mainCards = 0;
+    let totalCards = 0;
 
-            if (loc === 'main' || loc === 'extra') totalCards += qty;
-            if (loc !== 'main') continue;
+    const getRoleWeight = (roleName) => window.ConfigManager?.getRoleWeight?.(roleName) ?? 1.0;
 
-            mainCards += qty;
+    // ── Acumular contadores por rol ──────────────────────────────
+    for (const [, item] of Object.entries(cards)) {
+        const loc   = item.location;
+        const qty   = item.qty || 1;
+        const roles = (item.roles || []).map(r => normalizeRole(r));
+        const desc  = (item.data?.desc || '').toLowerCase();
 
-            const isRestricted = restrictionTerms.some(t => desc.includes(t));
+        if (loc === 'main' || loc === 'extra') totalCards += qty;
+        if (loc !== 'main') continue;
 
-            const effectiveQty = isRestricted
-                ? 1 + (qty - 1) * 0.5
-                : qty;
+        mainCards += qty;
 
-            const getRoleWeight = (roleName) =>
-                window.ConfigManager?.getRoleWeight?.(roleName) ?? 1.0;
+        const isRestricted  = restrictionTerms.some(t => desc.includes(t));
+        const effectiveQty  = isRestricted ? 1 + (qty - 1) * 0.5 : qty;
 
-    // ⭐ NUEVO: PENALIZACIÓN CRUZADA
-    const config = window.ConfigManager?.getDiminishingReturns?.();
-    if (config && config.enabled) {
+        roles.forEach(r => {
+            const weight = getRoleWeight(r);
+            if (!roleCounters[r]) { roleCounters[r] = 0; roleWeights[r] = weight; }
+            roleCounters[r] += effectiveQty;
+        });
+    }
+
+    // ── Sumar a pilares con rendimientos decrecientes ────────────
+    let consistencyScore = 0;
+    let powerScore       = 0;
+    let resilienceScore  = 0;
+
+    Object.entries(roleCounters).forEach(([role, count]) => {
+        const diminishedValue = this.calculateDiminishingReturns(role, count);
+        const weight          = roleWeights[role] ?? 1.0;
+        const contribution    = diminishedValue * weight;
+
+        if (consistencyRoles.includes(role)) consistencyScore += contribution;
+        if (powerRoles.includes(role))       powerScore       += contribution;
+        if (resilienceRoles.includes(role))  resilienceScore  += contribution;
+    });
+
+    // ── Penalización cruzada (opcional, por rol) ─────────────────
+    const dimCfg = window.ConfigManager?.getDiminishingReturns?.();
+    if (dimCfg && dimCfg.enabled) {
         Object.entries(roleCounters).forEach(([role, count]) => {
-            const threshold = config.roleThresholds?.[role];
+            const threshold = dimCfg.roleThresholds?.[role];
             if (!threshold || !threshold.crossPenalty) return;
-            
-            // Calcular exceso
             const excess = count - threshold.max;
             if (excess <= 0) return;
-            
-            // Penalización = exceso × severidad × 0.3
             const penalty = excess * threshold.curve * 0.3;
-            
-            // Aplicar penalización a otros pilares
-            if (consistencyRoles.includes(role)) {
-                powerScore -= penalty;
-                resilienceScore -= penalty;
-            }
-            if (powerRoles.includes(role)) {
-                consistencyScore -= penalty;
-                resilienceScore -= penalty;
-            }
-            if (resilienceRoles.includes(role)) {
-                consistencyScore -= penalty;
-                powerScore -= penalty;
-            }
+            if (consistencyRoles.includes(role)) { powerScore      -= penalty; resilienceScore -= penalty; }
+            if (powerRoles.includes(role))       { consistencyScore -= penalty; resilienceScore -= penalty; }
+            if (resilienceRoles.includes(role))  { consistencyScore -= penalty; powerScore      -= penalty; }
         });
     }
 
     if (mainCards === 0) mainCards = 1;
-            // Acumular por rol normalizado
-            roles.forEach(r => {
-                const weight = getRoleWeight(r);
-                if (!roleCounters[r]) {
-                    roleCounters[r] = 0;
-                    roleWeights[r] = weight;
-                }
-                roleCounters[r] += effectiveQty;
-            });
-        }
 
-        // Aplicar rendimientos decrecientes y sumar a pilares
-        let consistencyScore = 0;
-        let powerScore       = 0;
-        let resilienceScore  = 0;
+    // ── Normalizar a 0–10 ────────────────────────────────────────
+    const consistency = Math.min(10, (consistencyScore / mainCards) * 15);
+    const power       = Math.min(10, (powerScore        / mainCards) * 20);
+    const resilience  = Math.min(10, (resilienceScore   / mainCards) * 18);
 
-        Object.entries(roleCounters).forEach(([role, count]) => {
-            const diminishedValue = this.calculateDiminishingReturns(role, count);
-            const weight = roleWeights[role];
-            const contribution = diminishedValue * weight;
+    const lucky    = 1;
+    const rawScore = (consistency * 0.33 + power * 0.33 + resilience * 0.33) * lucky;
 
-            if (consistencyRoles.includes(role)) consistencyScore += contribution;
-            if (powerRoles.includes(role))       powerScore       += contribution;
-            if (resilienceRoles.includes(role))  resilienceScore  += contribution;
-        });
+    let penalty = 0;
+    if (mainCards > 43) penalty = (mainCards - 43) * 0.5;
 
-        if (mainCards === 0) mainCards = 1;
+    const internalScore = Math.max(0, rawScore - penalty);
 
-        // Normalizar cada pilar a 0–10
-        const consistency  = Math.min(10, (consistencyScore  / mainCards) * 15);
-        const power        = Math.min(10, (powerScore         / mainCards) * 20);
-        const resilience   = Math.min(10, (resilienceScore    / mainCards) * 18);
-
-        // Pesos iguales (0.33 cada uno, ~0.99 total)
-        const lucky = 1; // multiplicador de azar — siempre 1, existe como concepto
-        const rawScore = (consistency * 0.33 + power * 0.33 + resilience * 0.33) * lucky;
-
-        // Penalización por exceso en Main Deck
-        let penalty = 0;
-        if (mainCards > 43) {
-            penalty = (mainCards - 43) * 0.5;
-        }
-
-        const internalScore = Math.max(0, rawScore - penalty);
-
-        return {
-            internalScore:    internalScore.toFixed(2),
-            consistency:      consistency.toFixed(2),
-            power:            power.toFixed(2),
-            resilience:       resilience.toFixed(2),
-            totalCards,
-            mainCards,
-            penalty:          penalty.toFixed(2),
-            lucky
-        };
-    },
+    return {
+        internalScore: internalScore.toFixed(2),
+        consistency:   consistency.toFixed(2),
+        power:         power.toFixed(2),
+        resilience:    resilience.toFixed(2),
+        totalCards,
+        mainCards,
+        penalty:       penalty.toFixed(2),
+        lucky
+    };
+},
         // ===============================
         // CALCULAR COMPONENTE INDIVIDUAL
         // ===============================

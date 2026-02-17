@@ -182,7 +182,22 @@ const ConfigManager = {
             conditions: { startsWith: 'you can only', contains: [], notContains: [], endsWith: 'that turn' }
         }
     ]
-}
+},
+// ⭐ RENDIMIENTOS DECRECIENTES - parte de la config principal
+        diminishingReturns: {
+            enabled: true,
+            crossPenalty: false,
+            roleThresholds: {
+                'starter':      { optimal: 13, max: 16, curve: 0.5, crossPenalty: false },
+                'searcher':     { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'boss monster': { optimal: 6,  max: 10, curve: 0.7, crossPenalty: false },
+                'boardbreaker': { optimal: 8,  max: 13, curve: 0.6, crossPenalty: false },
+                'removal':      { optimal: 8,  max: 12, curve: 0.6, crossPenalty: false },
+                'negator':      { optimal: 9,  max: 15, curve: 0.5, crossPenalty: false },
+                'extender':     { optimal: 9,  max: 12, curve: 0.6, crossPenalty: false },
+                'recycle':      { optimal: 6,  max: 10, curve: 0.7, crossPenalty: false }
+            }
+        }
     },
 
     // ===============================
@@ -525,7 +540,7 @@ getRoleWeight: function (roleName) {
         const newPair = {
             id: 'spec_' + Date.now(),
             specialization: {
-                name: specName || 'Nueva Especialización',
+                name: specName || 'Nueva Mecánica',
                 rol: specRol || '',
                 keywords: []
             },
@@ -757,40 +772,22 @@ removeNomCondKw: function (categoryId, field, keyword) {
 // RENDIMIENTOS DECRECIENTES
 // ===============================
 
-getDiminishingReturns: function() {
-    try {
-        const data = JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || {};
-        return data.diminishingReturns || this.getDefaultDiminishingReturns();
-    } catch (_) {
-        return this.getDefaultDiminishingReturns();
-    }
+getDiminishingReturns: function () {
+    const config = this.getConfig();
+    return config.diminishingReturns || this.getDefaultDiminishingReturns();
 },
 
-getDefaultDiminishingReturns: function() {
-    return {
-        enabled: true,
-        crossPenalty: false,
-        roleThresholds: {
-            'starter': { optimal: 13, max: 16, curve: 0.5, crossPenalty: false },
-            'searcher': { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-            'boss monster': { optimal: 6, max: 10, curve: 0.7, crossPenalty: false },
-            'boardbreaker': { optimal: 8, max: 13, curve: 0.6, crossPenalty: false },
-            'removal': { optimal: 8, max: 12, curve: 0.6, crossPenalty: false },
-            'negator': { optimal: 9, max: 15, curve: 0.5, crossPenalty: false },
-            'extender': { optimal: 9, max: 12, curve: 0.6, crossPenalty: false },
-            'recycle': { optimal: 6, max: 10, curve: 0.7, crossPenalty: false }
-        }
-    };
+getDefaultDiminishingReturns: function () {
+    return JSON.parse(JSON.stringify(this.defaultConfig.diminishingReturns));
 },
 
-saveDiminishingReturns: function(config) {
-    const data = JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || {};
-    data.diminishingReturns = config;
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
-    return true;
+saveDiminishingReturns: function (diminishing) {
+    const config = this.getConfig();
+    config.diminishingReturns = diminishing;
+    return this.saveConfig(config);
 },
 
-updateRoleThreshold: function(roleName, threshold) {
+updateRoleThreshold: function (roleName, threshold) {
     const config = this.getDiminishingReturns();
     config.roleThresholds[roleName] = threshold;
     return this.saveDiminishingReturns(config);
