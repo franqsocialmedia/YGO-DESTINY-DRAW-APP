@@ -711,3 +711,29 @@ Según el HTML de index.html, las siguientes pestañas existen en la navegación
 
 ===================================================================
 
+Sobre el Internal Score en ambos:
+La base es la misma: roles asignados a cartas → se agrupan en 3 pilares (Consistencia, Potencia, Resiliencia) → cada pilar se normaliza a 0-10 → promedio ponderado igual entre los tres.
+Lo que lo regula desde Config sin tocar código:
+
+El peso de cada rol (0.1 a 2.0) — cuánto "vale" ese rol al acumularse
+Los umbrales de rendimientos decrecientes (optimal, max, curve) — cuándo empieza a castigar tener demasiados de ese rol
+La penalización cruzada — si saturar un rol también baja los otros pilares
+
+Lo que solo se puede cambiar en código:
+
+A qué pilar pertenece cada rol (eso está hardcodeado en stats.js en los Sets CANONICAL_CONSISTENCY, CANONICAL_POWER, CANONICAL_RESILIENCE)
+Los factores de escala fijos (15, 20, 18) que multiplican cada pilar
+La penalización por deck de más de 43 cartas (fija en 0.5 por carta)
+
+Sí es posible exponer todo eso al usuario desde Config — simplemente habría que agregar en la configuración de cada rol un campo "Pilar" y en la configuración general los factores de escala. No es un cambio estructural, solo mover constantes de código a Config.
+
+Sobre el External Score en ambos:
+No modifica el Internal — son scores independientes. El External mide exposición al meta. Sus bases:
+
+Lo que cambia desde afuera (sin código): los pares Especialidad/Counter en Config — si no configuras qué mecánicas existen y qué las contrarresta, el External Score da cero información útil. También depende de qué decks del meta hayas importado.
+Lo que está fijo en código: la fórmula de baseline relativo, el peso × 3 para cartas únicas vs copias totales al identificar decks amenazantes, el coeficiente 0.6 de penalización por bricks en el Counter-Deck Score.
+
+Igual que el Internal, todo eso podría exponerse a Config. Actualmente solo la capa de "qué es una especialidad y qué la countera" es configurable; la matemática de cómo eso se convierte en número es código puro.
+
+--------------------------------------------------------------------------
+
