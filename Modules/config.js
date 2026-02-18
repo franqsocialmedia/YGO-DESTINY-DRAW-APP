@@ -364,6 +364,18 @@ const Config = {
                 <p><strong>Nomenclatura de Efectos:</strong> Define cómo se detecta y colorea cada parte del efecto de una carta.</p>
                 <small>Cada categoría tiene UNA configuración con 4 campos. Los campos vacíos no se verifican.</small>
             </div>
+            <div class="config-help-text" style="margin-bottom:var(--spacing-md);padding:var(--spacing-sm);background:rgba(255,215,0,0.07);border-left:3px solid var(--gold-color);border-radius:4px;">
+    <p style="margin:0 0 6px 0;"><strong>¿Qué es la Nomenclatura?</strong></p>
+    <p style="margin:0;line-height:1.6;opacity:0.85;">
+        El texto de cada carta YGO sigue una estructura fija: primero indica 
+        <em>cuándo</em> se activa (Timing), luego <em>qué necesitas</em> (Requisito/Costo), 
+        y finalmente <em>qué hace</em> (Efecto). Las nomenclaturas te permiten colorear 
+        cada parte del texto para leerla más rápido.<br>
+        <strong>Ejemplo:</strong> <em>"During your opponent's turn (Timing) · send 1 card from your hand (Costo): negate the activation (Efecto)"</em><br>
+        Usa <code>contains</code> para detectar palabras clave dentro de una cláusula, 
+        <code>startsWith</code> si siempre empieza igual, y <code>notContains</code> para excluir falsos positivos.
+    </p>
+</div>
             <button class="btn btn-primary" onclick="Config.addNomenclatureCategory()" 
                 style="margin-bottom:var(--spacing-md);">➕ Nueva Categoría</button>
             <div class="roles-list">`;

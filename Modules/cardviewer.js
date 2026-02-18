@@ -227,7 +227,7 @@ const CardViewer = {
             // Actualizar panel de staples en buscador
             ConfigManager.renderStaplesPanel();
 
-            
+
         // Botón: Marcar / desmarcar Favorita
         const favBtn    = document.getElementById('cv-fav-btn');
         const isFav     = () => window.Favoritas?.has(card.id);
@@ -395,32 +395,52 @@ const CardViewer = {
     },
 
     splitIntoParagraphs: function(text) {
-        const paragraphs = [];
-        let currentStart = 0;
-        
-        for (let i = 0; i < text.length; i++) {
-            if (text[i] === '.' || text[i] === ':' || text[i] === ';') {
+    const paragraphs = [];
+    let currentStart = 0;
+
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+
+        // Corte duro en newline — cada línea es su propio segmento
+        if (ch === '\n') {
+            if (i > currentStart) {
                 paragraphs.push({
-                    text: text.substring(currentStart, i + 1),
+                    text:  text.substring(currentStart, i),
                     start: currentStart,
-                    end: i + 1
+                    end:   i
                 });
-                currentStart = i + 1;
             }
+            // Añadir el \n como segmento propio para preservar el pre-wrap visual
+            paragraphs.push({ text: '\n', start: i, end: i + 1 });
+            currentStart = i + 1;
+            continue;
         }
 
-        if (currentStart < text.length) {
+        // Corte en delimitadores de oración
+        if (ch === '.' || ch === ':' || ch === ';') {
             paragraphs.push({
-                text: text.substring(currentStart),
+                text:  text.substring(currentStart, i + 1),
                 start: currentStart,
-                end: text.length
+                end:   i + 1
             });
+            currentStart = i + 1;
         }
+    }
 
-        return paragraphs;
-    },
+    // Resto final sin delimitador
+    if (currentStart < text.length) {
+        paragraphs.push({
+            text:  text.substring(currentStart),
+            start: currentStart,
+            end:   text.length
+        });
+    }
+
+    return paragraphs;
+},
 
     highlightParagraphNew: function(paragraph, categories) {
+    if (!paragraph || paragraph.trim() === '') return paragraph;
     if (!categories || categories.length === 0) return paragraph;
 
     const paraLower = paragraph.toLowerCase().trim();
