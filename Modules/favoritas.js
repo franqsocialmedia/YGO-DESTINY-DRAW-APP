@@ -46,7 +46,7 @@ const Favoritas = {
         if (!panel || !list) return;
 
         const all   = this.getAll();
-        const cards = Object.values(all);
+        const cards = Object.values(all).sort((a, b) => a.name.localeCompare(b.name));
 
         if (cards.length === 0) {
             panel.style.display = 'none';

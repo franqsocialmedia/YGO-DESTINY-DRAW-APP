@@ -4,6 +4,7 @@
    Visualizacion de estadisticas y comparacion con meta
    ==================================== */
 
+   
 // VISUAL: "Especialización" renombrado a "Mecánica" para el usuario final.
 // Internamente el código sigue usando specAnalysis, specializations, specBonus, etc.
 // No cambiar los nombres de variables ni claves de objeto — solo los strings visibles.
@@ -20,6 +21,8 @@ const Estadisticas = {
     deckListExpanded: false,
     powerScoreCache: null,
     powerScoreLoading: false,
+    metaCardLibrary: {},   // cardId → { id, name, type, roles }
+    metaDeckScores:  {},   // "folder|||deckname" → { internalScore, externalScore, calculatedAt }
 
     init: function () {
         this.container = document.getElementById('estadisticas-content');
@@ -29,24 +32,37 @@ const Estadisticas = {
         this.createDeckFloatingWidget();
     },
 
-    loadMetaData: function () {
-        try {
-            const saved = localStorage.getItem('yugioh_meta_decks');
-            if (saved) {
-                const data = JSON.parse(saved);
-                this.metaDecks = data.decks || {};
-                this.metaFolders = Object.keys(this.metaDecks).sort((a, b) => {
-                    const [mA, yA] = a.split(' ');
-                    const [mB, yB] = b.split(' ');
-                    const dateA = new Date(parseInt(yA), this.getMonthNumber(mA));
-                    const dateB = new Date(parseInt(yB), this.getMonthNumber(mB));
-                    return dateB - dateA;
-                });
-            }
-        } catch (error) {
-            console.error('Error cargando meta data:', error);
+   loadMetaData: function () {
+    try {
+        const saved = localStorage.getItem('yugioh_meta_decks');
+        if (saved) {
+            const data = JSON.parse(saved);
+            this.metaDecks = data.decks || {};
+            this.metaFolders = Object.keys(this.metaDecks).sort((a, b) => {
+                const [mA, yA] = a.split(' ');
+                const [mB, yB] = b.split(' ');
+                const dateA = new Date(parseInt(yA), this.getMonthNumber(mA));
+                const dateB = new Date(parseInt(yB), this.getMonthNumber(mB));
+                return dateB - dateA;
+            });
         }
-    },
+    } catch (e) { console.error('Error cargando meta data:', e); }
+
+    try {
+        const cached = localStorage.getItem('yugioh_power_cache');
+        this.powerScoreCache = cached ? JSON.parse(cached) : null;
+    } catch (_) { this.powerScoreCache = null; }
+
+    try {
+        const lib = localStorage.getItem('yugioh_meta_card_library');
+        this.metaCardLibrary = lib ? JSON.parse(lib) : {};
+    } catch (_) { this.metaCardLibrary = {}; }
+
+    try {
+        const sc = localStorage.getItem('yugioh_meta_deck_scores');
+        this.metaDeckScores = sc ? JSON.parse(sc) : {};
+    } catch (_) { this.metaDeckScores = {}; }
+},
 
     getMonthNumber: function (monthName) {
         const months = {
@@ -57,23 +73,130 @@ const Estadisticas = {
         return months[monthName] || 0;
     },
 
-    saveMetaData: function () {
-        // Recuperar cache persistido si existe
-        try {
-            const cached = localStorage.getItem('yugioh_power_cache');
-            this.powerScoreCache = cached ? JSON.parse(cached) : null;
-        } catch (_) {
-            this.powerScoreCache = null;
-        }
-        try {
-            localStorage.setItem('yugioh_meta_decks', JSON.stringify({
-                decks: this.metaDecks
-            }));
-        } catch (error) {
-            console.error('Error guardando meta data:', error);
-        }
-    },
+ saveMetaData: function () {
+    try {
+        localStorage.setItem('yugioh_meta_decks', JSON.stringify({ decks: this.metaDecks }));
+    } catch (e) { console.error('Error guardando meta data:', e); }
+},
+_saveMetaCardLibrary: function () {
+    try {
+        localStorage.setItem('yugioh_meta_card_library', JSON.stringify(this.metaCardLibrary));
+    } catch (_) {}
+},
 
+_saveMetaDeckScores: function () {
+    try {
+        localStorage.setItem('yugioh_meta_deck_scores', JSON.stringify(this.metaDeckScores));
+    } catch (_) {}
+},
+
+// Fetcha las cartas faltantes de un deck del meta, analiza roles y guarda en biblioteca.
+// Luego calcula y persiste internal+external score para ese deck.
+enrichAndScoreMetaDeck: async function (folderName, deckFilename) {
+    const deckData = (this.metaDecks[folderName] || []).find(d => d.filename === deckFilename);
+    if (!deckData) return;
+
+    const sections  = deckData.sections || { main: [], extra: [], side: [] };
+    const allIds    = [
+        ...sections.main.map(id => ({ id: String(id), loc: 'main' })),
+        ...sections.extra.map(id => ({ id: String(id), loc: 'extra' }))
+    ];
+    const uniqueIds = [...new Set(allIds.map(e => e.id))];
+    const missing   = uniqueIds.filter(id => !this.metaCardLibrary[id]);
+
+    // Fetch en lotes de 10 — solo las que no están en la biblioteca
+    for (let i = 0; i < missing.length; i += 10) {
+        const batch = missing.slice(i, i + 10);
+        try {
+            const res  = await fetch(
+                `https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${batch.join(',')}`
+            );
+            const json = await res.json();
+            (json.data || []).forEach(card => {
+                const roles = window.Deck?.autoAssignRoles?.(card) ?? [];
+                this.metaCardLibrary[String(card.id)] = {
+                    id:    String(card.id),
+                    name:  card.name,
+                    type:  card.type,
+                    roles
+                };
+            });
+        } catch (_) {}
+    }
+    this._saveMetaCardLibrary();
+    this._computeAndSaveMetaDeckScore(folderName, deckFilename);
+},
+
+// Construye fakeCards desde la biblioteca y calcula scores del deck del meta.
+_computeAndSaveMetaDeckScore: function (folderName, deckFilename) {
+    const deckData = (this.metaDecks[folderName] || []).find(d => d.filename === deckFilename);
+    if (!deckData) return;
+
+    const sections  = deckData.sections || { main: [], extra: [], side: [] };
+    const fakeCards = {};
+
+    const addSec = (ids, loc) => ids.forEach(id => {
+        const entry = this.metaCardLibrary[String(id)];
+        if (!entry) return;
+        if (!fakeCards[id]) {
+            fakeCards[id] = {
+                data:     { id, name: entry.name, type: entry.type, roles: entry.roles },
+                qty:      0,
+                location: loc,
+                roles:    entry.roles
+            };
+        }
+        fakeCards[id].qty++;
+    });
+    addSec(sections.main,  'main');
+    addSec(sections.extra, 'extra');
+    // side: excluido del scoring (ya pedido)
+
+    if (Object.keys(fakeCards).length === 0) return;
+
+    const key            = `${folderName}|||${deckFilename}`;
+    const internalResult = window.Stats ? Stats.calculateInternalScore(fakeCards) : null;
+    let   externalScore  = null;
+
+    if (window.Stats && this.powerScoreCache) {
+        try {
+            const ext = Stats.calculateExternalScore(
+                fakeCards, this.powerScoreCache, this.metaDecks
+            );
+            externalScore = ext.externalScore;
+        } catch (_) {}
+    }
+
+    this.metaDeckScores[key] = {
+        internalScore: internalResult ? parseFloat(internalResult.internalScore) : null,
+        externalScore,
+        calculatedAt:  Date.now()
+    };
+    this._saveMetaDeckScores();
+},
+
+// Recalcula external scores de todos los decks que ya tienen datos en la biblioteca.
+recalculateAllMetaDeckScores: function () {
+    let count = 0;
+    for (const [folder, decks] of Object.entries(this.metaDecks)) {
+        (decks || []).forEach(deck => {
+            const secs = deck.sections || { main: [], extra: [] };
+            const hasData = [...(secs.main || []), ...(secs.extra || [])]
+                .some(id => this.metaCardLibrary[String(id)]);
+            if (hasData) {
+                this._computeAndSaveMetaDeckScore(folder, deck.filename);
+                count++;
+            }
+        });
+    }
+    this.render();
+    // Mantener sección abierta
+    requestAnimationFrame(() => {
+        const sec = document.getElementById('meta-decks-sec');
+        if (sec) sec.style.display = 'block';
+    });
+    return count;
+},
     // ===============================
     // GESTIÓN DE CARPETAS
     // ===============================
@@ -345,6 +468,22 @@ const Estadisticas = {
             if (window.Deck) Deck.onDeckLoaded();
             if (window.Navigation) Navigation.showTab('mideck');
 
+
+            // Enriquecer en segundo plano — no bloquea la carga del deck
+            this.enrichAndScoreMetaDeck(folderName, deckFilename).then(() => {
+                // Actualizar scores en la sección si está abierta
+                const sec = document.getElementById('meta-decks-sec');
+                if (sec && sec.style.display !== 'none') {
+                    // Re-render solo los items de scores sin colapsar la sección
+                    document.querySelectorAll('[data-meta-score-key]').forEach(el => {
+                        const [f, n] = el.dataset.metaScoreKey.split('|||');
+                        const cached = this.metaDeckScores[el.dataset.metaScoreKey];
+                        if (cached) {
+                            el.innerHTML = this._renderMetaDeckScoreHTML(cached);
+                        }
+                    });
+                }
+            });
         } finally {
             const el = document.getElementById('meta-deck-loading');
             if (el) el.remove();
@@ -397,7 +536,19 @@ const Estadisticas = {
         const overlay = document.querySelector('.deck-overlay');
         if (overlay) overlay.remove();
     },
-
+_renderMetaDeckScoreHTML: function (cached) {
+    const iScore = (cached?.internalScore != null) ? cached.internalScore : null;
+    const eScore = (cached?.externalScore != null) ? cached.externalScore : null;
+    const iColor = iScore === null ? '#636e72' : iScore >= 7 ? '#00b894' : iScore >= 5 ? '#fdcb6e' : '#d63031';
+    const eColor = eScore === null ? '#636e72' : eScore >= 7 ? '#00b894' : eScore >= 4 ? '#fdcb6e' : '#d63031';
+    return `
+        <div class="meta-deck-score-row">
+            <span style="color:${iColor}">⚡ ${iScore !== null ? parseFloat(iScore).toFixed(1) : '—'}</span>
+            <span style="color:${eColor}">🛡️ ${eScore !== null ? parseFloat(eScore).toFixed(1) : '—'}</span>
+        </div>
+        ${cached ? '<div class="meta-deck-score-hint">Internal · External</div>' : ''}
+    `;
+},
     // ===============================
     // INTERNAL SCORE Y Anti-META
     // ===============================
@@ -1348,34 +1499,8 @@ const Estadisticas = {
                         </div>`).join('')}
                 </div>
             </div>`;
-            
-let metaExtScore = null;
-if (this.powerScoreCache?.cards && window.Stats) {
-    try {
-        const fakeCards = {};
-        const mainIds  = deck.sections?.main  || [];
-        const extraIds = deck.sections?.extra || [];
-        [...mainIds.map(id => ({id, loc:'main'})),
-         ...extraIds.map(id => ({id, loc:'extra'}))]
-        .forEach(({id, loc}) => {
-            const cached = this.powerScoreCache.cards
-                .find(c => String(c.cardId) === String(id));
-            if (cached?.cardData) {
-                if (!fakeCards[id]) fakeCards[id] = {
-                    data: cached.cardData, qty: 0,
-                    location: loc, roles: cached.detectedRoles || []
-                };
-                fakeCards[id].qty++;
-            }
-        });
-        if (Object.keys(fakeCards).length > 0) {
-            const ext = Stats.calculateExternalScore(
-                fakeCards, this.powerScoreCache, this.metaDecks
-            );
-            metaExtScore = ext.externalScore;
-        }
-    } catch (_) {}
-}
+
+
         // ── 4. DECKS DEL META (con multi-selección de carpetas) ───
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('meta-decks-sec')">
@@ -1386,30 +1511,37 @@ if (this.powerScoreCache?.cards && window.Stats) {
                     <label>Filtrar por carpeta:</label>
                     ${folderChips}
                 </div>
+<div style="display:flex;gap:8px;margin-bottom:var(--spacing-sm);align-items:center;">
+    <button class="btn btn-sm btn-secondary" onclick="Estadisticas.recalculateAllMetaDeckScores()">
+        🔄 Actualizar Scores
+    </button>
+    <small style="opacity:0.5;">Solo actualiza decks que ya fueron abiertos al menos una vez.</small>
+</div>
+
                 <div class="meta-decks-scroll">
                     ${filteredDecks.length === 0 ? '<p class="stats-empty">No hay decks en esta selección</p>' : ''}
-                    ${filteredDecks.map(deck => `
-                        <div class="meta-deck-item" onclick="Estadisticas.loadMetaDeckToMiDeck('${deck.folder}', '${deck.filename}')">
-                            <button class="meta-deck-delete"
-                                    onclick="event.stopPropagation(); Estadisticas.deleteDeck('${deck.folder}', '${deck.filename}')"
-                                    title="Eliminar">X</button>
-                            <div class="meta-deck-thumbnail">
-                                <img src="https://images.ygoprodeck.com/images/cards_small/${deck.mostFrequentCard || '0'}.jpg"
-                                     onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22145%22><rect width=%22100%22 height=%22145%22 fill=%22%23003366%22/><text x=%2250%22 y=%2278%22 font-family=%22sans-serif%22 font-size=%2212%22 text-anchor=%22middle%22 fill=%22%23FFD700%22>Deck</text></svg>'"
-                                     alt="${deck.filename}">
-                            </div>
-                            <div class="meta-deck-info">
-                                <div class="meta-deck-name">${deck.filename}</div>
-                                <div class="meta-deck-folder">${deck.folder}</div>
-                                <div class="meta-deck-score" style="color:${
-                                    metaExtScore === null ? '#636e72'
-                                    : metaExtScore >= 7 ? '#00b894'
-                                    : metaExtScore >= 4 ? '#fdcb6e' : '#d63031'}">
-                                    External: ${metaExtScore !== null ? parseFloat(metaExtScore).toFixed(1) : '—'}
-                                    ${metaExtScore === null && !this.powerScoreCache ? '<small style="opacity:0.5">⚡</small>' : ''}
-                                </div>
-                            </div>
-                        </div>`).join('')}
+                    ${filteredDecks.map(deck => {
+    const key    = `${deck.folder}|||${deck.filename}`;
+    const cached = this.metaDeckScores[key] || null;
+    return `
+        <div class="meta-deck-item" onclick="Estadisticas.loadMetaDeckToMiDeck('${deck.folder}', '${deck.filename}')">
+            <button class="meta-deck-delete"
+                    onclick="event.stopPropagation(); Estadisticas.deleteDeck('${deck.folder}', '${deck.filename}')"
+                    title="Eliminar">X</button>
+            <div class="meta-deck-thumbnail">
+                <img src="https://images.ygoprodeck.com/images/cards_small/${deck.mostFrequentCard || '0'}.jpg"
+                     onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22145%22><rect width=%22100%22 height=%22145%22 fill=%22%23003366%22/><text x=%2250%22 y=%2278%22 font-family=%22sans-serif%22 font-size=%2212%22 text-anchor=%22middle%22 fill=%22%23FFD700%22>Deck</text></svg>'"
+                     alt="${deck.filename}">
+            </div>
+            <div class="meta-deck-info">
+                <div class="meta-deck-name">${deck.filename}</div>
+                <div class="meta-deck-folder">${deck.folder}</div>
+                <div data-meta-score-key="${key}">
+                    ${this._renderMetaDeckScoreHTML(cached)}
+                </div>
+            </div>
+        </div>`;
+}).join('')}
                 </div>
             </div>`;
 

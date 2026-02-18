@@ -222,8 +222,12 @@ const CardViewer = {
                 });
             }
             updateStapleBtn();
+            
         };
+            // Actualizar panel de staples en buscador
+            ConfigManager.renderStaplesPanel();
 
+            
         // Botón: Marcar / desmarcar Favorita
         const favBtn    = document.getElementById('cv-fav-btn');
         const isFav     = () => window.Favoritas?.has(card.id);

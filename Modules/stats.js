@@ -66,7 +66,7 @@
         const roles = (item.roles || []).map(r => r.toLowerCase());
         const desc  = (item.data?.desc || '').toLowerCase();
 
-        if (loc === 'main' || loc === 'extra') totalCards += qty;
+       if (loc === 'main' || loc === 'extra') totalCards += qty;
         if (loc !== 'main') continue;
 
         mainCards += qty;

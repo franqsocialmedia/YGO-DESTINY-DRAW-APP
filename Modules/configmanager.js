@@ -895,6 +895,92 @@ removeRoleFromPillar: function(pillar, role) {
     this.saveConfig(config);
     return true;
 },
-};
+renderStaplesPanel: function () {
+    const panel = document.getElementById('staples-panel');
+    const list  = document.getElementById('staples-list');
+    if (!panel || !list) return;
 
+    const staples = this.getStaples();
+    const cards   = Object.values(staples)
+        .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+    if (cards.length === 0) {
+        panel.style.display = 'none';
+        return;
+    }
+
+    panel.style.display = '';
+
+    // Guardar para índice igual que Favoritas
+    this._staplePanelCards = cards;
+
+    list.innerHTML = cards.map((c, i) => `
+        <div class="fav-item" onclick="ConfigManager.showStapleActions(${i}, this)">
+            <img src="${c.imageUrl || ''}" class="fav-img" alt="${c.name}"
+                 onerror="this.style.background='#002b4d';this.src='';">
+            <div class="fav-info">
+                <div class="fav-name">${c.name}</div>
+                <div class="fav-type">${c.type || ''}</div>
+            </div>
+            <button class="fav-remove"
+                onclick="event.stopPropagation(); ConfigManager.deleteStaple('${c.id}'); ConfigManager.renderStaplesPanel();"
+                title="Quitar staple">✕</button>
+        </div>
+    `).join('');
+},
+
+showStapleActions: function (index, el) {
+    document.querySelectorAll('.fav-actions-overlay').forEach(o => o.remove());
+    document.querySelectorAll('.fav-item-active').forEach(i => i.classList.remove('fav-item-active'));
+
+    const cards = this._staplePanelCards;
+    if (!cards) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'fav-actions-overlay';
+    overlay.innerHTML = `
+        <button class="card-action-btn btn-view"
+            onclick="event.stopPropagation(); ConfigManager.openStapleCard(${index});">Ver</button>
+        <button class="card-action-btn btn-add"
+            onclick="event.stopPropagation(); ConfigManager.addStapleToDeck(${index});">Añadir</button>
+    `;
+    el.appendChild(overlay);
+    el.classList.add('fav-item-active');
+},
+
+openStapleCard: function (index) {
+    document.querySelectorAll('.fav-actions-overlay').forEach(o => o.remove());
+    document.querySelectorAll('.fav-item-active').forEach(i => i.classList.remove('fav-item-active'));
+    const c = this._staplePanelCards?.[index];
+    if (!c?.id || !window.CardViewer) return;
+    // Buscar datos completos en el powerCache o hacer fetch
+    const cached = window.Estadisticas?.powerScoreCache?.cards
+        ?.find(pc => String(pc.cardId) === String(c.id));
+    if (cached?.cardData) {
+        CardViewer.open(cached.cardData);
+    } else {
+        fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${c.id}`)
+            .then(r => r.json())
+            .then(d => { if (d.data?.[0]) CardViewer.open(d.data[0]); })
+            .catch(() => {});
+    }
+},
+
+addStapleToDeck: function (index) {
+    document.querySelectorAll('.fav-actions-overlay').forEach(o => o.remove());
+    document.querySelectorAll('.fav-item-active').forEach(i => i.classList.remove('fav-item-active'));
+    const c = this._staplePanelCards?.[index];
+    if (!c?.id || !window.Deck) return;
+    const cached = window.Estadisticas?.powerScoreCache?.cards
+        ?.find(pc => String(pc.cardId) === String(c.id));
+    if (cached?.cardData) {
+        Deck.syncFromViewer(c.id, cached.cardData, 1);
+    } else {
+        fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${c.id}`)
+            .then(r => r.json())
+            .then(d => { if (d.data?.[0]) Deck.syncFromViewer(c.id, d.data[0], 1); })
+            .catch(() => {});
+    }
+},
+};
 window.ConfigManager = ConfigManager;

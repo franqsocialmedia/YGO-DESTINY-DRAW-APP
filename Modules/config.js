@@ -13,6 +13,7 @@ const Config = {
             return; 
         }
         this.render();
+        if (window.ConfigManager) ConfigManager.renderStaplesPanel();
     },
 
     render: function () {
@@ -920,63 +921,66 @@ _restoreAndScroll: function(sectionId, anchorId) {
     },
 
     borrarTodo: function () {
-        if (!confirm(
-            '⚠️ BORRAR TODO ⚠️\n\n' +
-            'Esto eliminará:\n' +
-            '• Todos los decks guardados\n' +
-            '• Meta completo (carpetas e importados)\n' +
-            '• Winrates e historial\n' +
-            '• Cartas favoritas\n' +
-            '• Cache de poder de cartas\n' +
-            '• Roles, Mecánicas, Counters, Staples y Nomenclatura\n\n' +
-            'La app quedará completamente vacía.\n' +
-            'Esta acción NO se puede deshacer.'
-        )) return;
+    if (!confirm(
+        '⚠️ BORRAR TODO ⚠️\n\n' +
+        'Esto eliminará:\n' +
+        '• Todos los decks guardados\n' +
+        '• Meta completo (carpetas e importados)\n' +
+        '• Winrates e historial\n' +
+        '• Cartas favoritas\n' +
+        '• Cache de poder de cartas\n' +
+        '• Biblioteca de cartas del meta\n' +
+        '• Scores calculados de decks del meta\n' +
+        '• Roles, Mecánicas, Counters, Staples y Nomenclatura\n\n' +
+        'La app quedará completamente vacía.\n' +
+        'Esta acción NO se puede deshacer.'
+    )) return;
 
-        // Borrar absolutamente todo el localStorage
-        const allKeys = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const k = localStorage.key(i);
-            if (k) allKeys.push(k);
-        }
-        allKeys.forEach(k => localStorage.removeItem(k));
+    // Borrar absolutamente todo el localStorage
+    const allKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k) allKeys.push(k);
+    }
+    allKeys.forEach(k => localStorage.removeItem(k));
 
-        // Guardar config vacía explícitamente (sin roles, sin pares, sin nada)
-        const emptyConfig = {
-            roles:            {},
-            roleConditions:   {},
-            roleWeights:      {},
-            specialties:      [],
-            staples:          {},
-            nomenclature:     { categories: [] }
-        };
-        if (window.ConfigManager) ConfigManager.saveConfig(emptyConfig);
+    // Guardar config vacía explícitamente
+    const emptyConfig = {
+        roles:          {},
+        roleConditions: {},
+        roleWeights:    {},
+        specialties:    [],
+        staples:        {},
+        nomenclature:   { categories: [] },
+        pillars:        { consistency: [], power: [], resilience: [] }
+    };
+    if (window.ConfigManager) ConfigManager.saveConfig(emptyConfig);
 
-        // Resetear módulos en memoria
-        if (window.Deck) {
-            Deck.cards = {};
-            Deck.name  = 'Mi Deck';
-            Deck.notes = '';
-            Deck.render();
-        }
-        if (window.Estadisticas) {
-            Estadisticas.powerScoreCache = null;
-            Estadisticas.metaDecks       = {};
-            Estadisticas.metaFolders     = [];
-            const statsEl = document.getElementById('estadisticas-content');
-            if (statsEl) Estadisticas.render();
-            if (typeof Estadisticas.updateFloatingWidget === 'function')
-                Estadisticas.updateFloatingWidget();
-        }
-        if (window.Favoritas) Favoritas.render();
-        if (window.Winrate)   Winrate.refreshSection();
-        if (window.Duelista)  Duelista.refreshSection();
+    // Resetear módulos en memoria
+    if (window.Deck) {
+        Deck.cards = {};
+        Deck.name  = 'Mi Deck';
+        Deck.notes = '';
+        Deck.render();
+    }
+    if (window.Estadisticas) {
+        Estadisticas.powerScoreCache  = null;
+        Estadisticas.metaDecks        = {};
+        Estadisticas.metaFolders      = [];
+        Estadisticas.metaCardLibrary  = {};
+        Estadisticas.metaDeckScores   = {};
+        const statsEl = document.getElementById('estadisticas-content');
+        if (statsEl) Estadisticas.render();
+        if (typeof Estadisticas.updateFloatingWidget === 'function')
+            Estadisticas.updateFloatingWidget();
+    }
+    if (window.Favoritas) Favoritas.render();
+    if (window.Winrate)   Winrate.refreshSection();
+    if (window.Duelista)  Duelista.refreshSection();
+    this.render();
 
-        // Re-renderizar config para reflejar los campos vacíos
-        this.render();
-
-        alert('✅ Todo borrado. La app está completamente vacía.');
-    },
+    alert('✅ Todo borrado. La app está completamente vacía.');
+},
 renderPillarsSection: function() {
     const pillars   = ConfigManager.getPillars();
     const allRoles  = ConfigManager.getRoleNames();
