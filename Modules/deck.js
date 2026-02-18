@@ -125,71 +125,15 @@ const Deck = {
     // AUTO-ASIGNACIÓN DE ROLES
     // ===============================
     autoAssignRoles: function (card) {
-        const roles = [];
-        const desc = card.desc ? card.desc.toLowerCase() : '';
-        const type = card.type ? card.type.toLowerCase() : '';
-        
-        // AJUSTE: Ignorar Monstruos Normales (sin efecto)
-        // Los Monstruos Normales tienen type que incluye "normal monster"
-        if (type.includes('normal monster')) {
-            return roles; // Retorna array vacío, sin roles asignados
-        }
-        
-        // PASO 3: Obtener roleConditions para roles compuestos
-        const config = ConfigManager.getConfig();
-        const roleConditions = config.roleConditions || {};
-        const roleKeywords = config.roles || {};
-
-        // Verificar cada rol
-        for (const [roleName, keywords] of Object.entries(roleKeywords)) {
-            let shouldAssign = false;
-            
-            // PASO 3: Verificar si este rol tiene condicionales
-            if (roleConditions[roleName]) {
-                const condition = roleConditions[roleName];
-                const conditionals = condition.conditionals || [];
-                const condKeywords = condition.keywords || [];
-                
-                // Si hay condicionales, TODAS deben estar presentes
-                let allConditionsMet = true;
-                if (conditionals.length > 0) {
-                    for (const conditional of conditionals) {
-                        if (!conditional || typeof conditional !== 'string' || !desc.includes(conditional.toLowerCase())) {
-                            allConditionsMet = false;
-                            break;
-                        }
-                    }
-                }
-                
-                // Si todas las condicionales se cumplen, verificar keywords
-                // Si todas las condicionales se cumplen, verificar keywords
-            if (allConditionsMet) {
-                // Al menos UNA keyword debe estar presente
-                for (const keyword of condKeywords) {
-                    if (keyword && typeof keyword === 'string' && desc.includes(keyword.toLowerCase())) {
-                        shouldAssign = true;
-                        break;
-                    }
-                }
-            }
-            } else {
-                // NO tiene condicionales, usar lógica normal
-                for (const keyword of keywords) {
-                    if (keyword && typeof keyword === 'string' && desc.includes(keyword.toLowerCase())) {
-                        shouldAssign = true;
-                        break;
-                    }
-                }
-            }
-            
-            // Asignar rol si cumple
-            if (shouldAssign && !roles.includes(roleName)) {
-                roles.push(roleName);
-            }
-        }
-
-        return roles;
-    },
+    const type = (card.type || '').toLowerCase();
+    if (type.includes('normal monster')) return [];
+    // Usa exactamente la misma lógica que CardViewer.detectPossibleRoles
+    // para garantizar consistencia entre badges y panel de Posibles Roles
+    if (window.CardViewer && typeof CardViewer.detectPossibleRoles === 'function') {
+        return CardViewer.detectPossibleRoles(card);
+    }
+    return [];
+},
 
     // ===============================
     // SINCRONIZAR DESDE CARDVIEWER
@@ -872,20 +816,9 @@ const Deck = {
                         return;
                     }
 
-                    const cond      = window.ConfigManager?.getRoleCondition?.(role);
-                    const nomCatIds = window.ConfigManager?.getRoleNomenclatureCategories?.(role) || [];
-
-                    if (nomCatIds.length > 0 && window.NomenclatureAnalyzer && item.data) {
-                        const segments  = NomenclatureAnalyzer.analyzeCard(item.data) || [];
-                        const scopeText = segments
-                            .filter(s => nomCatIds.includes(s.category))
-                            .map(s => s.text.toLowerCase())
-                            .join(' ');
-                        const keywords = cond?.keywords || [];
-                        const passes   = keywords.length === 0 ||
-                            keywords.some(kw => scopeText.includes(kw.toLowerCase()));
-                        if (!passes) return;
-                    }
+                   // Roles manuales (vía botón Rol) siempre se muestran sin filtro adicional.
+                    // Roles auto-asignados ya pasaron por detectPossibleRoles que incluye
+                    // el filtro de NomenclatureAnalyzer desde el origen.
 
                     // Nivel de saturación → clase visual en el badge
                     let satClass = '';
