@@ -315,45 +315,89 @@
         };
 
         // PASO 1: Mecánicas del deck activo
-        if (window.SpecialtyAnalyzer) {
-            const specCount = {};
-            for (const [, item] of Object.entries(deckCards)) {
-                if (!item.data) continue;
-                const analysis = SpecialtyAnalyzer.analyzeCard(item.data);
-                (analysis.specializations || []).forEach(s => {
-                    specCount[s.name] = (specCount[s.name] || 0) + (item.qty || 1);
-                });
+if (window.SpecialtyAnalyzer) {
+    const pairs     = ConfigManager.getSpecialties();
+    const specCount = {};
+
+    for (const [, item] of Object.entries(deckCards)) {
+        if (!item.data) continue;
+        const cardRoles = (item.roles || []).map(r => r.toLowerCase());
+
+        // Método 1: keywords (pares con estructura antigua — defaultConfig)
+        const analysis = SpecialtyAnalyzer.analyzeCard(item.data);
+        (analysis.specializations || []).forEach(s => {
+            specCount[s.name] = (specCount[s.name] || 0) + (item.qty || 1);
+        });
+
+        // Método 2: roles (pares con estructura nueva {mechanicRole, counterRole})
+        pairs.forEach(pair => {
+            if (!pair.mechanicRole) return;
+            const pairRoleLower = pair.mechanicRole.toLowerCase();
+            if (cardRoles.includes(pairRoleLower)) {
+                const label = pair.mechanicRole;
+                specCount[label] = (specCount[label] || 0) + (item.qty || 1);
             }
-            result.deckSpecs = Object.entries(specCount)
-                .sort((a, b) => b[1] - a[1])
-                .map(([name, count]) => ({ name, count }));
-            result.hasSpecData = result.deckSpecs.length > 0;
+        });
+    }
+
+    result.deckSpecs = Object.entries(specCount)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, count]) => ({ name, count }));
+    result.hasSpecData = result.deckSpecs.length > 0;
+}
+
+     // PASO 2: Cartas del meta que amenazan este deck
+if (powerScoreCache && powerScoreCache.cards) {
+    result.hasPowerData = true;
+    const deckSpecNames = new Set(result.deckSpecs.map(s => s.name));
+    const pairs         = ConfigManager.getSpecialties();
+
+    // Roles del deck activo (para cruzar con counterRole de pares nuevos)
+    const deckRoles = new Set();
+    for (const [, item] of Object.entries(deckCards)) {
+        (item.roles || []).forEach(r => deckRoles.add(r.toLowerCase()));
+    }
+
+    powerScoreCache.cards.forEach(card => {
+        const overlap = [];
+
+        // Método 1: keywords — countersSpec vs deckSpecNames (pares antiguos)
+        if (card.isCounter && card.counterBonus > 0) {
+            const countersSpecs = (card.specAnalysis?.counters || [])
+                .map(c => c.countersSpec).filter(Boolean);
+            countersSpecs.filter(s => deckSpecNames.has(s))
+                .forEach(s => overlap.push(s));
         }
 
-        // PASO 2: Cartas del meta que amenazan este deck
-        if (powerScoreCache && powerScoreCache.cards) {
-            result.hasPowerData = true;
-            const deckSpecNames = new Set(result.deckSpecs.map(s => s.name));
+        // Método 2: roles — pares nuevos {mechanicRole, counterRole}
+        const cardRoles = (card.detectedRoles || []).map(r => r.toLowerCase());
+        pairs.forEach(pair => {
+            if (!pair.counterRole || !pair.mechanicRole) return;
+            const counterRoleLower  = pair.counterRole.toLowerCase();
+            const mechanicRoleLower = pair.mechanicRole.toLowerCase();
+            // Esta carta del meta tiene el rol counter Y el deck tiene el rol mecánica
+            if (cardRoles.includes(counterRoleLower) && deckRoles.has(mechanicRoleLower)) {
+                const label = pair.mechanicRole;
+                if (!overlap.includes(label)) overlap.push(label);
+            }
+        });
 
-            powerScoreCache.cards.forEach(card => {
-                if (!card.isCounter || card.counterBonus <= 0) return;
-                const countersSpecs = (card.specAnalysis?.counters || [])
-                    .map(c => c.countersSpec).filter(Boolean);
-                const overlap = countersSpecs.filter(s => deckSpecNames.has(s));
-                if (overlap.length > 0) {
-                    result.threatCards.push({
-                        cardId:        card.cardId,
-                        name:          card.cardData?.name || String(card.cardId),
-                        presencePct:   card.presencePct,
-                        counterBonus:  card.counterBonus,
-                        countersSpecs: overlap,
-                        specAnalysis:  card.specAnalysis,
-                        threatLevel:   Math.round(card.counterBonus * (card.presencePct / 100))
-                    });
-                }
+        if (overlap.length > 0) {
+            const counterBonus = card.counterBonus || 0;
+            result.threatCards.push({
+                cardId:       card.cardId,
+                name:         card.cardData?.name || String(card.cardId),
+                presencePct:  card.presencePct,
+                counterBonus,
+                countersSpecs: overlap,
+                specAnalysis:  card.specAnalysis,
+                threatLevel:   Math.round(counterBonus * (card.presencePct / 100))
             });
-            result.threatCards.sort((a, b) => b.threatLevel - a.threatLevel);
         }
+    });
+
+    result.threatCards.sort((a, b) => b.threatLevel - a.threatLevel);
+}
 
         // PASO 3: External Score con BASELINE RELATIVO
         //

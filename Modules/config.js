@@ -955,6 +955,7 @@ _restoreAndScroll: function(sectionId, anchorId) {
         if (k) allKeys.push(k);
     }
     allKeys.forEach(k => localStorage.removeItem(k));
+    if (window.Welcome) Welcome.dismissed = false;
 
     // Guardar config vacía explícitamente
     const emptyConfig = {
@@ -989,8 +990,11 @@ _restoreAndScroll: function(sectionId, anchorId) {
     if (window.Favoritas) Favoritas.render();
     if (window.Winrate)   Winrate.refreshSection();
     if (window.Duelista)  Duelista.refreshSection();
+    
     this.render();
 
+    // Mostrar welcome panel de nuevo
+if (window.Welcome) Welcome.init();
     alert('✅ Todo borrado. La app está completamente vacía.');
 },
 renderPillarsSection: function() {
