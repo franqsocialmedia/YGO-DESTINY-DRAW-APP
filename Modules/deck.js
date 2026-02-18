@@ -453,6 +453,14 @@ const Deck = {
             this.cards = data.cards || data;
             this.name  = deckName;
             this.notes = data.notes || '';
+            
+            // Recalcular roles automáticos para cada carta al cargar
+            Object.entries(this.cards).forEach(([id, item]) => {
+                if (item.data) {
+                    item.roles = this.autoAssignRoles(item.data);
+                }
+            });
+
             this.closeModal();
             this.render();
             this.onDeckLoaded();

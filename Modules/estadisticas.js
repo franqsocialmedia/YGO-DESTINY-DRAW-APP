@@ -118,6 +118,7 @@ enrichAndScoreMetaDeck: async function (folderName, deckFilename) {
                     id:    String(card.id),
                     name:  card.name,
                     type:  card.type,
+                    desc:  card.desc || '',
                     roles
                 };
             });
@@ -136,11 +137,11 @@ _computeAndSaveMetaDeckScore: function (folderName, deckFilename) {
     const fakeCards = {};
 
     const addSec = (ids, loc) => ids.forEach(id => {
-        const entry = this.metaCardLibrary[String(id)];
-        if (!entry) return;
-        if (!fakeCards[id]) {
-            fakeCards[id] = {
-                data:     { id, name: entry.name, type: entry.type, roles: entry.roles },
+    const entry = this.metaCardLibrary[String(id)];
+    if (!entry) return;
+    if (!fakeCards[id]) {
+        fakeCards[id] = {
+            data:     { id, name: entry.name, type: entry.type, desc: entry.desc || '', roles: entry.roles },
                 qty:      0,
                 location: loc,
                 roles:    entry.roles
