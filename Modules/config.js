@@ -717,8 +717,11 @@ renderNomCategoryOptions: function (selectedId) {
             input.value = '';
             this.render();
             this._restoreAndScroll('roles-section', `role-anchor-${roleName}`);
+            console.log(`✅ Carta agregada: ${card.name} (ID: ${card.id})`);
         } catch (e) {
-            alert('❌ No se encontró la carta. Verifica el ID.');
+            
+            console.error('❌ No se encontró la carta. Verifica el ID.' + card.name);
+            
         } finally {
             btn.textContent = originalText;
             btn.disabled    = false;

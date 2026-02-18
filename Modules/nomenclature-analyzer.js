@@ -88,14 +88,16 @@ const NomenclatureAnalyzer = {
     // DIVISIÓN EN PÁRRAFOS
     // ===============================
 
-    splitIntoParagraphs: function (text) {
-        if (!text) return [];
-        // Dividir por . : ; manteniendo el delimitador al final de cada segmento
-        const parts = text.split(/(?<=[.;:])\s+/);
-        return parts
-            .map(p => p.trim())
-            .filter(p => p.length > 0);
-    },
+   splitIntoParagraphs: function (text) {
+    if (!text) return [];
+    // Normalizar saltos de línea de la API (\n, \r\n) a un separador uniforme
+    // antes de dividir por . ; : para que no interrumpan la detección de categoría
+    const normalized = text.replace(/\r\n/g, '\n').replace(/\n+/g, ' ');  // \n múltiples → espacio simple
+    const parts = normalized.split(/(?<=[.;:])\s+/);
+    return parts
+        .map(p => p.trim())
+        .filter(p => p.length > 0);
+},
 
     // ===============================
     // UTILIDADES

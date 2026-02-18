@@ -79,6 +79,7 @@ const CardViewer = {
                         <b>Limitaciones:</b><br>
                         TCG: ${ban.ban_tcg || 'Free'}<br>
                         OCG: ${ban.ban_ocg || 'Free'}<br>
+                        <b>ID:</b> ${card.id}
                     </div>
 
                     <hr>
