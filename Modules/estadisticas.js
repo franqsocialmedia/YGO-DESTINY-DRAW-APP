@@ -22,7 +22,8 @@ const Estadisticas = {
     powerScoreCache: null,
     powerScoreLoading: false,
     metaCardLibrary: {},   // cardId → { id, name, type, roles }
-    metaDeckScores:  {},   // "folder|||deckname" → { internalScore, externalScore, calculatedAt }
+    metaDeckScores:  {},   // "folder|||deckname" → { internalScore, externalScore, pillars, calculatedAt }
+    crossScores:     {},   // "folder|||deckname" → { crossExternalScore, matchups }
 
     init: function () {
         this.container = document.getElementById('estadisticas-content');
@@ -58,10 +59,15 @@ const Estadisticas = {
         this.metaCardLibrary = lib ? JSON.parse(lib) : {};
     } catch (_) { this.metaCardLibrary = {}; }
 
-    try {
+   try {
         const sc = localStorage.getItem('yugioh_meta_deck_scores');
         this.metaDeckScores = sc ? JSON.parse(sc) : {};
     } catch (_) { this.metaDeckScores = {}; }
+
+    try {
+        const cx = localStorage.getItem('yugioh_cross_scores');
+        this.crossScores = cx ? JSON.parse(cx) : {};
+    } catch (_) { this.crossScores = {}; }
 },
 
     getMonthNumber: function (monthName) {
@@ -88,6 +94,133 @@ _saveMetaDeckScores: function () {
     try {
         localStorage.setItem('yugioh_meta_deck_scores', JSON.stringify(this.metaDeckScores));
     } catch (_) {}
+},
+// ===============================
+// CROSS EXTERNAL SCORE (N×N)
+// Calcula cuánto amenaza el meta completo a cada deck del meta.
+// Usa metaCardLibrary (specializations + counters) y metaDeckScores (pillars).
+// Todo en memoria — sin API calls.
+// ===============================
+calculateCrossExternalScores: function () {
+    // ── 1. Construir perfil de cada deck ──────────────────────────
+    const profiles = [];
+
+    for (const [folder, decks] of Object.entries(this.metaDecks)) {
+        (decks || []).forEach(deck => {
+            const key      = `${folder}|||${deck.filename}`;
+            const sections = deck.sections || {};
+            const allIds   = [...(sections.main || []), ...(sections.extra || [])];
+            if (allIds.length === 0) return;
+
+            // Mecánicas que HACE este deck (acumuladas por copias)
+            const ownMechanics   = {};  // mechName → copias
+            // Counters que TIENE este deck contra mecánicas ajenas
+            const ownCounters    = {};  // countersSpec → copias
+
+            allIds.forEach(id => {
+                const entry = this.metaCardLibrary[String(id)];
+                if (!entry) return;
+                (entry.specializations || []).forEach(s => {
+                    ownMechanics[s.name] = (ownMechanics[s.name] || 0) + 1;
+                });
+                (entry.counters || []).forEach(c => {
+                    const spec = c.countersSpec || c.name;
+                    if (spec) ownCounters[spec] = (ownCounters[spec] || 0) + 1;
+                });
+            });
+
+            const scoreData     = this.metaDeckScores[key] || {};
+            const dominantPillar = window.Stats?.getDominantPillar?.(scoreData.pillars
+                ? { consistency: scoreData.pillars.consistency,
+                    power:       scoreData.pillars.power,
+                    resilience:  scoreData.pillars.resilience }
+                : { consistency: 0, power: 0, resilience: 0 }) ?? null;
+
+            profiles.push({
+                key,
+                folder,
+                name:          deck.filename,
+                ownMechanics,
+                ownCounters,
+                internalScore: scoreData.internalScore ?? 0,
+                pillars:       scoreData.pillars ?? null,
+                dominantPillar
+            });
+        });
+    }
+
+    if (profiles.length === 0) return {};
+
+    const maxInternalScore = Math.max(...profiles.map(p => p.internalScore), 1);
+
+    // ── 2. N×N: para cada deck A medir la amenaza de cada deck B ──
+    const result = {};
+
+    profiles.forEach(deckA => {
+        let totalThreat  = 0;
+        let baseline     = 0;
+        const matchups   = [];
+
+        profiles.forEach(deckB => {
+            if (deckB.key === deckA.key) return;
+
+            // ¿Cuánto countera B a A?
+            // → copias de counters de B que apuntan a mecánicas de A
+            let threat = 0;
+            Object.entries(deckB.ownCounters).forEach(([spec, copies]) => {
+                if (deckA.ownMechanics[spec]) {
+                    // Peso = copias del counter × relevancia de la mecánica en A
+                    threat += copies * Math.sqrt(deckA.ownMechanics[spec]);
+                }
+            });
+
+            // Escalar por internal score de B (un deck más fuerte golpea más fuerte)
+            const bStrength = deckB.internalScore / maxInternalScore;
+            threat *= (0.5 + bStrength * 0.5);   // rango 0.5–1.0
+
+            // Modificador RPS (pilares)
+            let rpsModifier = 1.0;
+            if (deckA.dominantPillar && deckB.dominantPillar && window.Stats?.calculateRPSModifier) {
+                // Desde perspectiva de B vs A: si B tiene ventaja pilar sobre A,
+                // el daño de B a A aumenta → rpsModifier > 1 significa más amenaza
+                const rps = Stats.calculateRPSModifier(deckB.dominantPillar, deckA.dominantPillar);
+                rpsModifier = rps.modifier;   // 1.25 si B vence a A, 0.75 si A vence a B
+            }
+            threat *= rpsModifier;
+
+            const maxPossible = Object.values(deckB.ownCounters).reduce((s, v) => s + v, 0)
+                              * (0.5 + bStrength * 0.5) * 1.25;
+
+            baseline    += maxPossible;
+            totalThreat += threat;
+
+            if (threat > 0) {
+                matchups.push({
+                    opponentKey:  deckB.key,
+                    opponentName: deckB.name,
+                    folder:       deckB.folder,
+                    threat:       parseFloat(threat.toFixed(2)),
+                    rpsModifier
+                });
+            }
+        });
+
+        matchups.sort((a, b) => b.threat - a.threat);
+
+        const crossExternalScore = baseline > 0
+            ? parseFloat(Math.max(0, (1 - Math.min(1, totalThreat / baseline)) * 10).toFixed(1))
+            : null;
+
+        result[deckA.key] = {
+            crossExternalScore,
+            totalThreat:  parseFloat(totalThreat.toFixed(2)),
+            baseline:     parseFloat(baseline.toFixed(2)),
+            matchups:     matchups.slice(0, 5),  // top 5 amenazas
+            calculatedAt: Date.now()
+        };
+    });
+
+    return result;
 },
 // Suma los pilares de todos los decks del meta con datos y devuelve el dominante global
     getMetaDominantPillar: function () {
@@ -215,8 +348,16 @@ recalculateAllMetaDeckScores: function () {
             }
         });
     }
+
+    // Cross External Score N×N — solo si hay al menos 2 decks con datos
+    if (count >= 2) {
+        this.crossScores = this.calculateCrossExternalScores();
+        try {
+            localStorage.setItem('yugioh_cross_scores', JSON.stringify(this.crossScores));
+        } catch (_) {}
+    }
+
     this.render();
-    // Mantener sección abierta
     requestAnimationFrame(() => {
         const sec = document.getElementById('meta-decks-sec');
         if (sec) sec.style.display = 'block';
@@ -599,8 +740,8 @@ recalculateAllMetaDeckScores: function () {
                     document.querySelectorAll('[data-meta-score-key]').forEach(el => {
                         const [f, n] = el.dataset.metaScoreKey.split('|||');
                         const cached = this.metaDeckScores[el.dataset.metaScoreKey];
-                        if (cached) {
-                            el.innerHTML = this._renderMetaDeckScoreHTML(cached);
+                       if (cached) {
+                            el.innerHTML = this._renderMetaDeckScoreHTML(cached, el.dataset.metaScoreKey);
                         }
                     });
                 }
@@ -657,17 +798,30 @@ recalculateAllMetaDeckScores: function () {
         const overlay = document.querySelector('.deck-overlay');
         if (overlay) overlay.remove();
     },
-_renderMetaDeckScoreHTML: function (cached) {
+_renderMetaDeckScoreHTML: function (cached, key) {
     const iScore = (cached?.internalScore != null) ? cached.internalScore : null;
     const eScore = (cached?.externalScore != null) ? cached.externalScore : null;
+    const cross  = key ? (this.crossScores[key] ?? null) : null;
+    const cScore = cross?.crossExternalScore ?? null;
+
     const iColor = iScore === null ? '#636e72' : iScore >= 20 ? '#00b894' : iScore >= 10 ? '#fdcb6e' : '#d63031';
-    const eColor = eScore === null ? '#636e72' : eScore >= 7 ? '#00b894' : eScore >= 4 ? '#fdcb6e' : '#d63031';
+    const eColor = eScore === null ? '#636e72' : eScore >= 7  ? '#00b894' : eScore >= 4  ? '#fdcb6e' : '#d63031';
+    const cColor = cScore === null ? '#636e72' : cScore >= 7  ? '#00b894' : cScore >= 4  ? '#fdcb6e' : '#d63031';
+
+    // Top amenaza del cross si existe
+    const topThreat = cross?.matchups?.[0];
+    const threatNote = topThreat
+        ? `<div class="meta-deck-cross-threat">⚔️ ${topThreat.opponentName}</div>`
+        : '';
+
     return `
         <div class="meta-deck-score-row">
-            <span style="color:${iColor}">⚡ ${iScore !== null ? parseFloat(iScore).toFixed(1) : '—'}</span>
-            <span style="color:${eColor}">🛡️ ${eScore !== null ? parseFloat(eScore).toFixed(1) : '—'}</span>
+            <span title="Internal Score" style="color:${iColor}">⚡ ${iScore !== null ? parseFloat(iScore).toFixed(1) : '—'}</span>
+            <span title="External Score vs Meta general" style="color:${eColor}">🛡️ ${eScore !== null ? parseFloat(eScore).toFixed(1) : '—'}</span>
+            <span title="Score cross-deck vs otros decks del meta" style="color:${cColor}">⚔️ ${cScore !== null ? cScore.toFixed(1) : '—'}</span>
         </div>
-        ${cached ? '<div class="meta-deck-score-hint">Internal · External</div>' : ''}
+        <div class="meta-deck-score-hint">Internal · External · Cross</div>
+        ${threatNote}
     `;
 },
     // ===============================
@@ -1702,7 +1856,7 @@ _renderMetaDeckScoreHTML: function (cached) {
                 <div class="meta-deck-name">${deck.filename}</div>
                 <div class="meta-deck-folder">${deck.folder}</div>
                 <div data-meta-score-key="${key}">
-                    ${this._renderMetaDeckScoreHTML(cached)}
+                    ${this._renderMetaDeckScoreHTML(cached, key)}
                 </div>
             </div>
         </div>`;

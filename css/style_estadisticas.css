@@ -1765,6 +1765,29 @@
 }
 .rps-advantage .rps-mod  { color: #00b894; }
 .rps-disadvantage .rps-mod { color: #d63031; }
+
+/* ── Cross External Score en deck cards ─────────────────────────── */
+.meta-deck-score-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
+    font-weight: bold;
+}
+.meta-deck-score-hint {
+    font-size: 0.68rem;
+    opacity: 0.45;
+    margin-top: 2px;
+}
+.meta-deck-cross-threat {
+    font-size: 0.72rem;
+    color: rgba(214, 48, 49, 0.75);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
 /* ====================================
    RESPONSIVE
    ==================================== */
