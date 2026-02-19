@@ -751,6 +751,10 @@
     grid-column: 1 / -1;
     margin-top: 10px;
 }
+.rps-config-grid { display: flex; flex-direction: column; gap: 8px; }
+.rps-config-row  { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rps-arrow       { font-size: 0.8rem; color: rgba(255,255,255,0.5); white-space: nowrap; }
+.rps-select      { width: auto; min-width: 130px; }
 /* ====================================
    RESPONSIVE
    ==================================== */
@@ -802,4 +806,5 @@
         flex-direction: column;
         align-items: stretch;
     }
+
 }

@@ -362,6 +362,7 @@ recalculateAllMetaDeckScores: function () {
         const sec = document.getElementById('meta-decks-sec');
         if (sec) sec.style.display = 'block';
     });
+    
     return count;
 },
     // ===============================

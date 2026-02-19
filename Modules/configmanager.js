@@ -199,10 +199,17 @@ const ConfigManager = {
             }
         },
         pillars: {
-                    consistency: ['Searcher', 'Starter'],
-                    power:       ['Boss Monster', 'Boardbreaker', 'Booster', 'Removal', 'Disruption'],
-                    resilience:  ['Negater', 'Handtrap', 'Extender', 'Recycle']
-                }
+            consistency: ['Searcher', 'Starter'],
+            power:       ['Boss Monster', 'Boardbreaker', 'Booster', 'Removal', 'Disruption'],
+            resilience:  ['Negater', 'Handtrap', 'Extender', 'Recycle']
+        },
+        // Ciclo RPS: cada pilar vence al siguiente en la lista (circular)
+        // Formato: [pilar que vence, pilar que pierde]
+        pillarRPS: [
+            ['resilience',  'power'],
+            ['power',       'consistency'],
+            ['consistency', 'resilience']
+        ]
         
     },
 
@@ -894,6 +901,16 @@ removeRoleFromPillar: function(pillar, role) {
     config.pillars[pillar].splice(idx, 1);
     this.saveConfig(config);
     return true;
+},
+getPillarRPS: function () {
+    const config = this.getConfig();
+    return config.pillarRPS || JSON.parse(JSON.stringify(this.defaultConfig.pillarRPS));
+},
+
+savePillarRPS: function (rps) {
+    const config = this.getConfig();
+    config.pillarRPS = rps;
+    this.saveConfig(config);
 },
 renderStaplesPanel: function () {
     const panel = document.getElementById('staples-panel');

@@ -984,7 +984,8 @@ _restoreAndScroll: function(sectionId, anchorId) {
         Estadisticas.metaDecks        = {};
         Estadisticas.metaFolders      = [];
         Estadisticas.metaCardLibrary  = {};
-        Estadisticas.metaDeckScores   = {};
+       Estadisticas.metaDeckScores   = {};
+        Estadisticas.crossScores      = {};
         const statsEl = document.getElementById('estadisticas-content');
         if (statsEl) Estadisticas.render();
         if (typeof Estadisticas.updateFloatingWidget === 'function')
@@ -1050,12 +1051,36 @@ renderPillarsSection: function() {
             </div>`;
     };
 
+   const PILLAR_LABELS = { consistency: 'Consistencia', power: 'Potencia', resilience: 'Resiliencia' };
+    const rps = ConfigManager.getPillarRPS();
+
+    const rpsRows = rps.map((pair, i) => `
+        <div class="rps-config-row">
+            <select class="keyword-input rps-select" onchange="Config.updateRPSRule(${i}, 0, this.value)">
+                ${['consistency','power','resilience'].map(p =>
+                    `<option value="${p}" ${pair[0]===p?'selected':''}>${PILLAR_LABELS[p]}</option>`
+                ).join('')}
+            </select>
+            <span class="rps-arrow">vence a</span>
+            <select class="keyword-input rps-select" onchange="Config.updateRPSRule(${i}, 1, this.value)">
+                ${['consistency','power','resilience'].map(p =>
+                    `<option value="${p}" ${pair[1]===p?'selected':''}>${PILLAR_LABELS[p]}</option>`
+                ).join('')}
+            </select>
+        </div>`).join('');
+
     return `
         <div class="config-help-text">
-            <p>Define qué roles de tu configuración aportan a cada pilar. El <strong>peso del rol</strong> (definido en Roles) determina cuánto aporta cada uno. Un mismo rol puede estar en varios pilares.</p>
+            <p>Define qué roles de tu configuración aportan a cada pilar. El <strong>peso del rol</strong> (definido en Roles) determina cuánto aporta cada uno.</p>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--spacing-md);">
             ${pillarDefs.map(d => pillarCard(d)).join('')}
+        </div>
+        <div style="margin-top:var(--spacing-md);">
+            <div class="config-help-text" style="margin-bottom:8px;">
+                <strong>Relación entre pilares (RPS)</strong> — define qué pilar vence a cuál en match-ups. Afecta el External Score cuando los pilares dominantes se enfrentan.
+            </div>
+            <div class="rps-config-grid">${rpsRows}</div>
         </div>`;
 },
 
@@ -1073,6 +1098,13 @@ removePillarRole: function(pillar, role) {
         this.render();
         this._restoreAndScroll('pillar-section', `pillar-anchor-${pillar}`);
     }
+},
+updateRPSRule: function (index, position, value) {
+    const rps = ConfigManager.getPillarRPS();
+    if (!rps[index]) return;
+    rps[index][position] = value;
+    ConfigManager.savePillarRPS(rps);
+    // No re-render completo — los selects ya tienen el valor correcto
 },
 duplicateRole: function(roleName) {
     const newName = ConfigManager.duplicateRole(roleName);

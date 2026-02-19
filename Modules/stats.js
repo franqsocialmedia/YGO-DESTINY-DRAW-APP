@@ -153,12 +153,12 @@
         if (!deckPillar || !metaPillar || deckPillar === metaPillar) {
             return { modifier: 1.0, relation: 'neutral' };
         }
-        // BEATS[X] = pilar al que X le gana
-        const BEATS = {
-            resilience:  'power',
-            power:       'consistency',
-            consistency: 'resilience'
-        };
+        // Leer ciclo desde Config — permite al usuario reordenarlo
+        const rpsRules = window.ConfigManager?.getPillarRPS?.()
+            || [['resilience','power'],['power','consistency'],['consistency','resilience']];
+        const BEATS = {};
+        rpsRules.forEach(([winner, loser]) => { BEATS[winner] = loser; });
+
         if (BEATS[deckPillar] === metaPillar) return { modifier: 1.25, relation: 'advantage' };
         if (BEATS[metaPillar] === deckPillar) return { modifier: 0.75, relation: 'disadvantage' };
         return { modifier: 1.0, relation: 'neutral' };
