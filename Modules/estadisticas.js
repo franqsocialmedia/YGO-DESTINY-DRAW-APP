@@ -977,15 +977,28 @@ _renderMetaDeckScoreHTML: function (cached) {
             card.phase2Score = card.baseScore + card.specBonus;
         });
 
-        // PASO 5: counter bonus basado en phase2Score de las cartas que contrarresta
+        // PASO 5: counter bonus amplificado por frecuencia de la mecánica countered
+        // Si la mecánica X es muy usada en el meta (alto specWeight), la carta que
+        // la countera es más peligrosa → mayor counterBonus → mayor threatLevel en External Score.
         cards.forEach(card => {
+            card.counterDetails = [];
             (card.specAnalysis?.counters || []).forEach(ctr => {
                 const countered = cards.filter(c =>
                     (c.specAnalysis?.specializations || []).some(s => s.name === ctr.countersSpec)
                 );
                 const bonus = countered.reduce((sum, c) => sum + c.phase2Score, 0);
-                card.counterBonus += Math.round(bonus * 0.4);
+                // freqMultiplier: 1.0 base (mecánica ignorada en el meta) → hasta 2.0 (mecánica omnipresente)
+                const mechFreq       = specWeight[ctr.countersSpec] || 0;
+                const freqMultiplier = Math.min(2.0, 1 + (mechFreq / 200));
+                const weightedBonus  = Math.round(bonus * 0.4 * freqMultiplier);
+                card.counterBonus += weightedBonus;
                 if (bonus > 0) card.isCounter = true;
+                card.counterDetails.push({
+                    mechanic:       ctr.countersSpec,
+                    mechFreq:       Math.round(mechFreq),
+                    freqMultiplier: parseFloat(freqMultiplier.toFixed(2)),
+                    bonus:          weightedBonus
+                });
             });
         });
 
@@ -998,7 +1011,7 @@ _renderMetaDeckScoreHTML: function (cached) {
 
         cards.sort((a, b) => b.powerScore - a.powerScore);
         const maxPower = cards[0]?.powerScore || 1;
-        return { cards, maxPower, decksWithData };
+        return { cards, maxPower, decksWithData, specWeight };
     },
 
     renderPowerScores: function ({ cards, maxPower, decksWithData }) {
@@ -1094,8 +1107,11 @@ _renderMetaDeckScoreHTML: function (cached) {
         const rows = counterCards.map((card, i) => {
             const pct  = Math.round((card.counterBonus / maxBonus) * 100);
             const name = card.cardData?.name || card.cardId;
-            const countersNames = (card.specAnalysis?.counters || [])
-                .map(c => c.countersSpec).filter(Boolean).join(', ') || '—';
+            const countersNames = (card.counterDetails && card.counterDetails.length > 0)
+                ? card.counterDetails.map(d =>
+                    `${d.mechanic} <em style="opacity:0.6;font-size:0.75rem">(×${d.freqMultiplier} freq)</em>`
+                  ).join(', ')
+                : (card.specAnalysis?.counters || []).map(c => c.countersSpec).filter(Boolean).join(', ') || '—';
             const rank = i < 3 ? medals[i] : `#${i + 1}`;
             return `
                 <div class="counter-card-meta-item">
