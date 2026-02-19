@@ -648,6 +648,100 @@
     gap: 6px;
     z-index: 10;
 }
+
+/* ── Filtros Avanzados ──────────────────────────────── */
+.adv-filters-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+.adv-filters-toggle-btn {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #bbb;
+    padding: 5px 13px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.83rem;
+    transition: background 0.2s;
+}
+.adv-filters-toggle-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+.adv-filters-summary { font-size: 0.78rem; color: #7ab4f5; font-style: italic; }
+.adv-reset-btn {
+    background: none;
+    border: 1px solid #d63031;
+    color: #d63031;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.78rem;
+}
+.adv-reset-btn:hover { background: rgba(214,48,49,0.12); }
+
+.advanced-filters-panel {
+    background: rgba(0,0,0,0.28);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+}
+.adv-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.adv-row-inputs { gap: 22px; }
+.adv-label {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.42);
+    min-width: 120px;
+    padding-top: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+}
+.adv-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 1;
+}
+.adv-chip {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #bbb;
+    padding: 3px 11px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-user-select: none;
+}
+.adv-chip:hover { background: rgba(255,255,255,0.13); color: #fff; }
+.adv-chip-active {
+    background: rgba(90,160,255,0.22);
+    border-color: #5aa0ff;
+    color: #7ab4ff;
+    font-weight: 600;
+}
+.adv-input-group { display: flex; align-items: center; gap: 8px; }
+.adv-input {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.83rem;
+    width: 90px;
+    outline: none;
+}
+.adv-input:focus { border-color: #5aa0ff; }
 /* ====================================
    RESPONSIVE - TABLET
    ==================================== */

@@ -146,6 +146,16 @@
                 </small>
                 <div id="filter-chips-container" class="filter-chips"></div>
             </div>
+            <!-- FILTROS AVANZADOS -->
+            <div class="adv-filters-toggle-row">
+                <button class="adv-filters-toggle-btn" onclick="Buscador.toggleFilterPanel()">
+                    ⚙ Filtros avanzados <span id="adv-filters-arrow">▼</span>
+                </button>
+                <span id="adv-filters-summary" class="adv-filters-summary"></span>
+                <button id="adv-reset-btn" class="adv-reset-btn"
+                        onclick="Buscador.resetAdvancedFilters()" style="display:none">✕ Limpiar</button>
+            </div>
+            <div id="advanced-filters-panel" class="advanced-filters-panel" style="display:none"></div>
         </div>
 
         <div id="search-results" class="results-container">
