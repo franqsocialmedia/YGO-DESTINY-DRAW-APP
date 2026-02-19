@@ -295,7 +295,7 @@
     bottom: 80px;
     left: 20px;
     width: 64px;
-    background: rgba(0, 51, 102, 0.7);
+    background: rgba(1, 17, 33, 0.7);
     -webkit-backdrop-filter: blur(10px);
     border: 2px solid var(--gold-color);
     border-radius: 8px;
