@@ -246,58 +246,116 @@ const CardViewer = {
             }
         };
         // ── Botones de Banlist ──────────────────────────────────────
+// ── Botones de Banlist / Genesys ────────────────────────────
 const banContainer = document.getElementById('cv-ban-btns');
 if (banContainer && window.Banlist) {
-    const BAN_BTNS = [
-        { label: 'Free',       status: 'free',         activeColor: '#dfe6e9', activeText: '#000' },
-        { label: 'Semi-Limit', status: 'semi-limited', activeColor: '#fdcb6e', activeText: '#000' },
-        { label: 'Limit',      status: 'limited',      activeColor: '#e17055', activeText: '#fff' },
-        { label: 'Ban',        status: 'forbidden',    activeColor: '#d63031', activeText: '#fff' },
-    ];
+    const data          = Banlist.getData();
+    const genesysActive = data.activeFormats.some(f => data.formats[f]?.isGenesys);
 
-    // Formato de escritura = primer formato activo
-    const activeFormats  = Banlist.getActiveFormats();
-    const writeFormat    = activeFormats[0] || 'TCG';
-    const effectiveStatus = Banlist.getEffectiveBanStatus(card.id);
+    if (genesysActive) {
+        // ── Modo Genesys: contador de puntos ────────────────
+        const genFmtName = Banlist.getGenesysFormatName();
 
-    const renderBanBtns = () => {
-        const current = Banlist.getEffectiveBanStatus(card.id);
-        banContainer.innerHTML = BAN_BTNS.map(b => {
-            const isActive = b.status === current;
-            const bg       = isActive ? b.activeColor : 'rgba(255,255,255,0.08)';
-            const color    = isActive ? b.activeText  : '#aaa';
-            const border   = isActive ? b.activeColor : 'rgba(255,255,255,0.2)';
-            return `<button
-                class="cv-ban-btn"
-                style="background:${bg};color:${color};border:1px solid ${border};
-                       padding:4px 10px;border-radius:5px;cursor:pointer;font-size:0.78rem;"
-                onclick="window._cvBanClick('${card.id}','${writeFormat}','${b.status}',${JSON.stringify({name: card.name, img: card.card_images?.[0]?.image_url_small || ''})})">
-                ${b.label}
-            </button>`;
-        }).join('');
-        banContainer.insertAdjacentHTML('afterbegin',
-            `<div style="font-size:0.7rem;color:rgba(255,255,255,0.35);width:100%;margin-bottom:2px;">
-                Banlist: ${writeFormat}
-             </div>`);
-    };
+        const renderGPts = () => {
+            const pts = Banlist.getCardPoints(card.id);
+            banContainer.innerHTML = `
+                <div style="font-size:0.7rem;color:rgba(255,255,255,0.35);width:100%;margin-bottom:5px;">
+                    ⚙ Genesys — Puntos de costo
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <button onclick="(()=>{const i=document.getElementById('cv-gpts');i.value=Math.max(0,(parseInt(i.value)||0)-1);})()"
+                            style="width:30px;height:30px;background:rgba(255,255,255,0.1);
+                                   border:1px solid rgba(255,255,255,0.2);color:#fff;
+                                   border-radius:5px;cursor:pointer;font-size:1.1rem;line-height:1;">−</button>
+                    <input id="cv-gpts" type="number" min="0" value="${pts}"
+                           style="width:64px;text-align:center;background:rgba(255,255,255,0.08);
+                                  border:1px solid rgba(255,255,255,0.2);color:#fff;
+                                  border-radius:5px;padding:5px;font-size:0.95rem;">
+                    <button onclick="(()=>{const i=document.getElementById('cv-gpts');i.value=(parseInt(i.value)||0)+1;})()"
+                            style="width:30px;height:30px;background:rgba(255,255,255,0.1);
+                                   border:1px solid rgba(255,255,255,0.2);color:#fff;
+                                   border-radius:5px;cursor:pointer;font-size:1.1rem;line-height:1;">＋</button>
+                    <button onclick="window._cvSaveGPts()"
+                            style="padding:5px 14px;background:#0066cc;border:none;
+                                   color:#fff;border-radius:5px;cursor:pointer;font-size:0.82rem;">
+                        Guardar
+                    </button>
+                    <span id="cv-gpts-saved" style="font-size:0.72rem;color:#00b894;display:none;">✓ Guardado</span>
+                </div>`;
+        };
 
-    window._cvBanClick = (cardId, fmtName, status, meta) => {
-        Banlist.setCardStatus(fmtName, cardId, meta, status);
-        // Actualizar lista si está visible
-        const listEl = document.getElementById(`banlist-cards-${fmtName}`);
-        if (listEl) listEl.innerHTML = Banlist.renderFormatList(fmtName);
-        const countEl = document.getElementById(`ban-count-${fmtName}`);
-        if (countEl) {
-            const d = Banlist.getData();
-            countEl.textContent = Object.keys(d.formats[fmtName]?.cards || {}).length + ' cartas';
-        }
+        window._cvSaveGPts = () => {
+            const inp = document.getElementById('cv-gpts');
+            if (!inp) return;
+            const pts = Math.max(0, parseInt(inp.value) || 0);
+            Banlist.setCardPoints(genFmtName, card.id,
+                { name: card.name, img: card.card_images?.[0]?.image_url_small || '' }, pts);
+            const listEl  = document.getElementById(`banlist-cards-${genFmtName}`);
+            if (listEl) listEl.innerHTML = Banlist.renderFormatList(genFmtName);
+            const countEl = document.getElementById(`ban-count-${genFmtName}`);
+            if (countEl) {
+                const d = Banlist.getData();
+                countEl.textContent = Object.keys(d.formats[genFmtName]?.cards || {}).length + ' cartas';
+            }
+            const saved = document.getElementById('cv-gpts-saved');
+            if (saved) { saved.style.display = 'inline'; setTimeout(() => { saved.style.display = 'none'; }, 1800); }
+        };
+
+        renderGPts();
+
+    } else {
+        // ── Modo normal: botones de ban status ──────────────
+        const BAN_BTNS = [
+            { label: 'Free',       status: 'free',         activeColor: '#dfe6e9', activeText: '#000' },
+            { label: 'Semi-Limit', status: 'semi-limited', activeColor: '#fdcb6e', activeText: '#000' },
+            { label: 'Limit',      status: 'limited',      activeColor: '#e17055', activeText: '#fff' },
+            { label: 'Ban',        status: 'forbidden',    activeColor: '#d63031', activeText: '#fff' },
+        ];
+
+        const activeFormats  = Banlist.getActiveFormats();
+        const writeFormat    = activeFormats[0] || 'TCG';
+
+        const renderBanBtns = () => {
+            const current = Banlist.getEffectiveBanStatus(card.id);
+            banContainer.innerHTML = `
+                <div style="font-size:0.7rem;color:rgba(255,255,255,0.35);width:100%;margin-bottom:3px;">
+                    Banlist: ${writeFormat}
+                </div>
+                ${BAN_BTNS.map(b => {
+                    const isActive = b.status === current;
+                    const bg    = isActive ? b.activeColor : 'rgba(255,255,255,0.08)';
+                    const color = isActive ? b.activeText  : '#aaa';
+                    const border = isActive ? b.activeColor : 'rgba(255,255,255,0.2)';
+                    return `<button
+                        class="cv-ban-btn"
+                        data-status="${b.status}"
+                        style="background:${bg};color:${color};border:1px solid ${border};
+                               padding:4px 10px;border-radius:5px;cursor:pointer;font-size:0.78rem;">
+                        ${b.label}
+                    </button>`;
+                }).join('')}`;
+
+            banContainer.querySelectorAll('.cv-ban-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const status = btn.dataset.status;
+                    const meta   = { name: card.name, img: card.card_images?.[0]?.image_url_small || '' };
+                    Banlist.setCardStatus(writeFormat, card.id, meta, status);
+                    const listEl  = document.getElementById(`banlist-cards-${writeFormat}`);
+                    if (listEl) listEl.innerHTML = Banlist.renderFormatList(writeFormat);
+                    const countEl = document.getElementById(`ban-count-${writeFormat}`);
+                    if (countEl) {
+                        const d = Banlist.getData();
+                        countEl.textContent = Object.keys(d.formats[writeFormat]?.cards || {}).length + ' cartas';
+                    }
+                    renderBanBtns();
+                });
+            });
+        };
+
         renderBanBtns();
-    };
-
-    renderBanBtns();
+    }
 }
     },
-
     // Método 1: html2canvas (recomendado - igual que downloadDecklist)
     generateCardDecklistHTML2Canvas: async function(card) {
         try {
@@ -779,8 +837,14 @@ renderCardContribution: function (card) {
             </div>
             ${contribHTML}
         </div>`;
-},// ── Mini buscador para agregar cartas a banlist custom ────────
-openCardSearch: function (formatName, prefillName) {
+},
+
+// ── Mini buscador para agregar cartas a banlist / Genesys ────────
+openCardSearch: function (formatName, prefillName, mode) {
+    // mode: 'points' para Genesys; auto-detecta si el formato es isGenesys
+    const isPointsMode = mode === 'points' ||
+        !!(window.Banlist?.getData?.()?.formats?.[formatName]?.isGenesys);
+
     if (document.getElementById('cv-search-overlay')) return;
 
     const STATUS_OPTS = [
@@ -802,150 +866,115 @@ openCardSearch: function (formatName, prefillName) {
             <button onclick="document.getElementById('cv-search-overlay').remove()"
                     style="position:absolute;top:10px;right:10px;background:none;
                            border:none;color:#fff;font-size:1.2rem;cursor:pointer;">✕</button>
-            <h4 style="margin:0 0 12px;color:#FFD700;">Agregar carta a ${formatName}</h4>
+            <h4 style="margin:0 0 12px;color:#FFD700;">
+                ${isPointsMode ? '⚙ Genesys — ' : ''}Agregar carta a ${formatName}
+            </h4>
             <div style="display:flex;gap:6px;margin-bottom:10px;">
                 <input id="cvs-input" type="text" placeholder="Nombre de carta..."
                        style="flex:1;padding:6px 10px;background:rgba(255,255,255,0.08);
-                              border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:#fff;font-size:0.9rem;"
+                              border:1px solid rgba(255,255,255,0.2);border-radius:6px;
+                              color:#fff;font-size:0.9rem;"
                        autocomplete="off">
                 <button id="cvs-btn"
                         style="padding:6px 12px;background:#0066cc;border:none;
                                border-radius:6px;color:#fff;cursor:pointer;">🔍</button>
             </div>
-            <div id="cvs-status-row" style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
-                ${STATUS_OPTS.map(s => `
-            <button class="cvs-status-btn"
-                    data-status="${s.val}"
-                    style="padding:3px 10px;border-radius:14px;
-                        border:1px solid rgba(255,255,255,0.25);
-                        background:rgba(0,0,0,0);color:#ccc;
-                        cursor:pointer;font-size:0.78rem;"
-                    data-activecolor="${s.color}">
-                ${s.label}
-            </button>`).join('')}
+            <div id="cvs-status-row"
+                 style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+                ${isPointsMode
+                    ? `<span style="font-size:0.78rem;color:rgba(255,255,255,0.4);">Puntos:</span>
+                       <button id="cvs-pts-minus"
+                               style="width:26px;height:26px;background:rgba(255,255,255,0.08);
+                                      border:1px solid rgba(255,255,255,0.2);color:#fff;
+                                      border-radius:5px;cursor:pointer;">−</button>
+                       <input id="cvs-pts-input" type="number" min="0" value="1"
+                              style="width:56px;text-align:center;background:rgba(255,255,255,0.08);
+                                     border:1px solid rgba(255,255,255,0.2);color:#fff;
+                                     border-radius:5px;padding:3px;font-size:0.9rem;">
+                       <button id="cvs-pts-plus"
+                               style="width:26px;height:26px;background:rgba(255,255,255,0.08);
+                                      border:1px solid rgba(255,255,255,0.2);color:#fff;
+                                      border-radius:5px;cursor:pointer;">＋</button>`
+                    : STATUS_OPTS.map(s => `
+                        <button class="cvs-status-btn"
+                                data-status="${s.val}"
+                                data-activecolor="${s.color}"
+                                style="padding:3px 10px;border-radius:14px;
+                                       border:1px solid rgba(255,255,255,0.25);
+                                       background:rgba(0,0,0,0);color:#ccc;
+                                       cursor:pointer;font-size:0.78rem;">
+                            ${s.label}
+                        </button>`).join('')}
             </div>
-            <i style="color:#FFD700;">Establece una restriccion y selecciona la carta.</i>
-            <div id="cvs-results" style="display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;"></div>
+            <i style="font-size:0.78rem;color:rgba(255,255,255,0.35);">
+                ${isPointsMode
+                    ? 'Ajusta los puntos y haz clic en la carta.'
+                    : 'Selecciona una restricción y haz clic en la carta.'}
+            </i>
+            <div id="cvs-results"
+                 style="display:flex;flex-direction:column;gap:6px;
+                        max-height:50vh;overflow:auto;margin-top:8px;"></div>
         </div>`;
 
     document.body.appendChild(overlay);
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
-    // Estado de status seleccionado
+    // ── Status chips (modo normal) ────────────────────────────────
     let selectedStatus = 'forbidden';
-    const statusBtns = overlay.querySelectorAll('.cvs-status-btn');
-    const updateStatusUI = () => {
+    if (!isPointsMode) {
+        const statusBtns = overlay.querySelectorAll('.cvs-status-btn');
+        const updateStatusUI = () => {
+            statusBtns.forEach(btn => {
+                const active      = btn.dataset.status === selectedStatus;
+                const activeColor = btn.dataset.activecolor || '#fff';
+                btn.style.color       = active ? activeColor : '#ccc';
+                btn.style.borderColor = active ? activeColor : 'rgba(255,255,255,0.25)';
+                btn.style.background  = active ? `${activeColor}22` : 'rgba(0,0,0,0)';
+                btn.style.fontWeight  = active ? '700' : '400';
+            });
+        };
         statusBtns.forEach(btn => {
-            const active     = btn.dataset.status === selectedStatus;
-            const activeColor = btn.dataset.activecolor || '#fff';
-            btn.style.color       = active ? activeColor : '#ccc';
-            btn.style.borderColor = active ? activeColor : 'rgba(255,255,255,0.25)';
-            btn.style.background  = active ? `${activeColor}22` : 'rgba(0,0,0,0)';
-            btn.style.fontWeight  = active ? '700' : '400';
-        });
-    };
-    statusBtns.forEach(btn => {
-        btn.addEventListener('click', () => { selectedStatus = btn.dataset.status; updateStatusUI(); });
-    });
-    updateStatusUI();
-
-    // Búsqueda
-    const doSearch = async () => {
-        const term = document.getElementById('cvs-input')?.value?.trim();
-        if (!term) return;
-        const res   = document.getElementById('cvs-results');
-        if (!res) return;
-        res.innerHTML = '<p style="color:#aaa;font-size:0.85rem;">⏳ Buscando...</p>';
-        try {
-            const r    = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(term)}`);
-            const json = await r.json();
-            const cards = (json.data || []).slice(0, 15);
-            if (!cards.length) { res.innerHTML = '<p style="color:#aaa;font-size:0.85rem;">Sin resultados.</p>'; return; }
-            res.innerHTML = cards.map(c => `
-                <div style="display:flex;align-items:center;gap:8px;padding:6px;
-                            border-radius:7px;cursor:pointer;background:rgba(255,255,255,0.04);"
-                     onclick="
-                        if(window.Banlist){
-                            Banlist.setCardStatus('${formatName}','${c.id}',
-                                {name:'${c.name.replace(/'/g,"\\'")}',
-                                 img:'${c.card_images?.[0]?.image_url_small || ''}'},
-                                document.getElementById('cvs-selected-status')?.value || 'forbidden');
-                            const listEl = document.getElementById('banlist-cards-${formatName}');
-                            if(listEl) listEl.innerHTML = Banlist.renderFormatList('${formatName}');
-                            const countEl = document.getElementById('ban-count-${formatName}');
-                            if(countEl){ const d=Banlist.getData(); countEl.textContent=Object.keys(d.formats['${formatName}']?.cards||{}).length+' cartas'; }
-                        }
-                        this.style.background='rgba(255,215,0,0.15)';
-                        setTimeout(()=>this.style.background='rgba(255,255,255,0.04)',800);
-                     "
-                     onmouseenter="this.style.background='rgba(255,255,255,0.09)'"
-                     onmouseleave="this.style.background='rgba(255,255,255,0.04)'">
-                    <img src="${c.card_images?.[0]?.image_url_small || ''}"
-                         style="width:36px;border-radius:3px;" onerror="this.style.display='none'">
-                    <div>
-                        <div style="font-size:0.83rem;color:#fff;">${c.name}</div>
-                        <div style="font-size:0.72rem;color:#aaa;">${c.type}</div>
-                    </div>
-                    <input type="hidden" id="cvs-selected-status" value="">
-                </div>`).join('');
-        } catch (_) {
-            res.innerHTML = '<p style="color:#d63031;font-size:0.85rem;">Error de red.</p>';
-        }
-    };
-
-    // El status seleccionado lo lee el onclick via closure — injectarlo en un input oculto
-    // Reemplazar onclick para leer selectedStatus dinámicamente
-    const btn = document.getElementById('cvs-btn');
-    const inp = document.getElementById('cvs-input');
-    const searchAndInject = async () => {
-        await doSearch();
-        // Reemplazar cada onclick para que use selectedStatus en vivo
-        document.querySelectorAll('#cvs-results > div').forEach(row => {
-            const orig = row.getAttribute('onclick') || '';
-            row.removeAttribute('onclick');
-            row.addEventListener('click', () => {
-                eval(orig.replace("document.getElementById('cvs-selected-status')?.value || 'forbidden'",
-                    `'${selectedStatus}'`));
+            btn.addEventListener('click', () => {
+                selectedStatus = btn.dataset.status;
+                updateStatusUI();
             });
         });
-    };
+        updateStatusUI();
+    }
 
-    // Más limpio: usar event delegation
-    document.getElementById('cvs-results').addEventListener('click', e => {
-        const row = e.target.closest('[data-cardid]');
-        if (!row) return;
-        const cid  = row.dataset.cardid;
-        const name = row.dataset.name;
-        const img  = row.dataset.img;
-        if (window.Banlist) {
-            Banlist.setCardStatus(formatName, cid, { name, img }, selectedStatus);
-            const listEl  = document.getElementById(`banlist-cards-${formatName}`);
-            if (listEl) listEl.innerHTML = Banlist.renderFormatList(formatName);
-            const countEl = document.getElementById(`ban-count-${formatName}`);
-            if (countEl) {
-                const d = Banlist.getData();
-                countEl.textContent = Object.keys(d.formats[formatName]?.cards || {}).length + ' cartas';
-            }
-            row.style.background = 'rgba(255,215,0,0.18)';
-            setTimeout(() => { row.style.background = 'rgba(255,255,255,0.04)'; }, 900);
-        }
-    });
+    // ── Contador de puntos (modo Genesys) ─────────────────────────
+    if (isPointsMode) {
+        const pInp = document.getElementById('cvs-pts-input');
+        document.getElementById('cvs-pts-minus')?.addEventListener('click', () => {
+            pInp.value = Math.max(0, (parseInt(pInp.value) || 0) - 1);
+        });
+        document.getElementById('cvs-pts-plus')?.addEventListener('click', () => {
+            pInp.value = (parseInt(pInp.value) || 0) + 1;
+        });
+    }
 
-    // Rebuild doSearch limpio con data-attributes
+    // ── Búsqueda limpia con data-attributes ───────────────────────
+    const inp   = document.getElementById('cvs-input');
+    const btn   = document.getElementById('cvs-btn');
+    const resEl = document.getElementById('cvs-results');
+
     const cleanSearch = async () => {
         const term = inp?.value?.trim();
         if (!term) return;
-        const resEl = document.getElementById('cvs-results');
-        if (!resEl) return;
         resEl.innerHTML = '<p style="color:#aaa;font-size:0.85rem;">⏳ Buscando...</p>';
         try {
-            const r     = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(term)}`);
+            const r     = await fetch(
+                `https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(term)}`
+            );
             const json  = await r.json();
             const cards = (json.data || []).slice(0, 15);
-            if (!cards.length) { resEl.innerHTML = '<p style="color:#aaa;font-size:0.85rem;">Sin resultados.</p>'; return; }
+            if (!cards.length) {
+                resEl.innerHTML = '<p style="color:#aaa;font-size:0.85rem;">Sin resultados.</p>';
+                return;
+            }
             resEl.innerHTML = cards.map(c => `
                 <div data-cardid="${c.id}"
-                     data-name="${(c.name||'').replace(/"/g,'&quot;')}"
+                     data-name="${(c.name || '').replace(/"/g, '&quot;')}"
                      data-img="${c.card_images?.[0]?.image_url_small || ''}"
                      style="display:flex;align-items:center;gap:8px;padding:7px;
                             border-radius:7px;cursor:pointer;background:rgba(255,255,255,0.04);"
@@ -963,14 +992,114 @@ openCardSearch: function (formatName, prefillName) {
         }
     };
 
+    // ── Event delegation sobre resultados ─────────────────────────
+    resEl.addEventListener('click', e => {
+        const row = e.target.closest('[data-cardid]');
+        if (!row) return;
+        const cid  = row.dataset.cardid;
+        const name = row.dataset.name;
+        const img  = row.dataset.img;
+        if (!window.Banlist) return;
+
+        if (isPointsMode) {
+            const pInp = document.getElementById('cvs-pts-input');
+            const pts  = Math.max(0, parseInt(pInp?.value) || 1);
+            Banlist.setCardPoints(formatName, cid, { name, img }, pts);
+        } else {
+            Banlist.setCardStatus(formatName, cid, { name, img }, selectedStatus);
+        }
+
+        const listEl  = document.getElementById(`banlist-cards-${formatName}`);
+        if (listEl) listEl.innerHTML = Banlist.renderFormatList(formatName);
+        const countEl = document.getElementById(`ban-count-${formatName}`);
+        if (countEl) {
+            const d = Banlist.getData();
+            countEl.textContent =
+                Object.keys(d.formats[formatName]?.cards || {}).length + ' cartas';
+        }
+
+        row.style.background = 'rgba(255,215,0,0.18)';
+        setTimeout(() => { row.style.background = 'rgba(255,255,255,0.04)'; }, 900);
+    });
+
     btn.addEventListener('click', cleanSearch);
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') cleanSearch(); });
     inp.focus();
-    
+
     if (prefillName) {
         inp.value = prefillName;
         cleanSearch();
     }
+},
+
+openPointsEditor: function (formatName, cardId, cardName, currentPoints) {
+    if (document.getElementById('cv-pts-overlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'cv-pts-overlay';
+    overlay.style.cssText = `
+        position:fixed;inset:0;background:rgba(0,0,0,0.82);
+        z-index:99999;display:flex;align-items:center;justify-content:center;`;
+
+    overlay.innerHTML = `
+        <div style="background:#111;border:1px solid rgba(255,255,255,0.15);
+                    border-radius:12px;padding:24px;width:300px;position:relative;">
+            <button onclick="document.getElementById('cv-pts-overlay').remove()"
+                    style="position:absolute;top:10px;right:12px;background:none;
+                           border:none;color:#fff;font-size:1.2rem;cursor:pointer;">✕</button>
+            <div style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin-bottom:6px;
+                        text-transform:uppercase;letter-spacing:0.05em;">⚙ Genesys · ${formatName}</div>
+            <div style="font-size:0.98rem;color:#fff;margin-bottom:16px;font-weight:600;">
+                ${cardName}
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;justify-content:center;">
+                <button id="pts-minus"
+                        style="width:36px;height:36px;background:rgba(255,255,255,0.1);
+                               border:1px solid rgba(255,255,255,0.2);color:#fff;
+                               border-radius:6px;cursor:pointer;font-size:1.3rem;line-height:1;">−</button>
+                <input id="pts-input" type="number" min="0" value="${currentPoints || 0}"
+                       style="width:80px;text-align:center;font-size:1.3rem;font-weight:700;
+                              background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.25);
+                              color:#fff;border-radius:7px;padding:6px;">
+                <button id="pts-plus"
+                        style="width:36px;height:36px;background:rgba(255,255,255,0.1);
+                               border:1px solid rgba(255,255,255,0.2);color:#fff;
+                               border-radius:6px;cursor:pointer;font-size:1.3rem;line-height:1;">＋</button>
+            </div>
+            <button id="pts-save"
+                    style="margin-top:18px;width:100%;padding:9px;background:#0066cc;border:none;
+                           color:#fff;border-radius:7px;cursor:pointer;font-size:0.9rem;font-weight:600;">
+                Guardar puntos
+            </button>
+            <div id="pts-feedback" style="text-align:center;font-size:0.78rem;color:#00b894;
+                                          min-height:18px;margin-top:6px;"></div>
+        </div>`;
+
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+    const inp  = document.getElementById('pts-input');
+    document.getElementById('pts-minus').addEventListener('click', () => {
+        inp.value = Math.max(0, (parseInt(inp.value) || 0) - 1);
+    });
+    document.getElementById('pts-plus').addEventListener('click', () => {
+        inp.value = (parseInt(inp.value) || 0) + 1;
+    });
+    document.getElementById('pts-save').addEventListener('click', () => {
+        const pts = Math.max(0, parseInt(inp.value) || 0);
+        Banlist.setCardPoints(formatName, cardId,
+            { name: cardName, img: '' }, pts);
+        const listEl  = document.getElementById(`banlist-cards-${formatName}`);
+        if (listEl) listEl.innerHTML = Banlist.renderFormatList(formatName);
+        const countEl = document.getElementById(`ban-count-${formatName}`);
+        if (countEl) {
+            const d = Banlist.getData();
+            countEl.textContent = Object.keys(d.formats[formatName]?.cards || {}).length + ' cartas';
+        }
+        const fb = document.getElementById('pts-feedback');
+        if (fb) fb.textContent = '✓ Guardado';
+        setTimeout(() => overlay.remove(), 900);
+    });
 },
     
 };

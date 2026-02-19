@@ -16,18 +16,27 @@ const Banlist = {
 
     // ── Persistencia ─────────────────────────────────────────────
     getData: function () {
-        try {
-            const raw = localStorage.getItem(this.STORAGE_KEY);
-            if (raw) return JSON.parse(raw);
-        } catch (_) {}
-        return {
-            activeFormats: ['TCG'],
-            formats: {
-                TCG: { cards: {}, lastUpdated: null, isCustom: false },
-                OCG: { cards: {}, lastUpdated: null, isCustom: false }
+    try {
+        const raw = localStorage.getItem(this.STORAGE_KEY);
+        if (raw) {
+            const data = JSON.parse(raw);
+            // Migración: agregar Genesys si no existe
+            if (!data.formats.Genesys) {
+                data.formats.Genesys = { cards: {}, isCustom: false, isGenesys: true };
+                this.saveData(data);
             }
-        };
-    },
+            return data;
+        }
+    } catch (_) {}
+    return {
+        activeFormats: ['TCG'],
+        formats: {
+            TCG:     { cards: {}, lastUpdated: null, isCustom: false },
+            OCG:     { cards: {}, lastUpdated: null, isCustom: false },
+            Genesys: { cards: {}, isCustom: false, isGenesys: true }
+        }
+    };
+},
 
     saveData: function (data) {
         try { localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
@@ -39,17 +48,26 @@ const Banlist = {
     },
 
     toggleActiveFormat: function (formatName) {
-        const data = this.getData();
-        const idx  = data.activeFormats.indexOf(formatName);
-        if (idx > -1) {
-            if (data.activeFormats.length === 1) return;
-            data.activeFormats.splice(idx, 1);
+    const data      = this.getData();
+    const isGenesys = !!data.formats[formatName]?.isGenesys;
+    const idx       = data.activeFormats.indexOf(formatName);
+
+    if (idx > -1) {
+        if (data.activeFormats.length === 1) return; // no deseleccionar el último
+        data.activeFormats.splice(idx, 1);
+    } else {
+        if (isGenesys) {
+            // Genesys excluye todos los demás
+            data.activeFormats = [formatName];
         } else {
+            // Si Genesys estaba activo, quitarlo
+            data.activeFormats = data.activeFormats.filter(f => !data.formats[f]?.isGenesys);
             data.activeFormats.push(formatName);
         }
-        this.saveData(data);
-        this.refreshFormatChips();
-    },
+    }
+    this.saveData(data);
+    this.refreshFormatChips();
+},
 
     // ── Status efectivo ──────────────────────────────────────────
     getEffectiveBanStatus: function (cardId) {
@@ -75,13 +93,22 @@ const Banlist = {
 
     // Badge para usar en Mi Deck
     getBadgeHTML: function (cardId) {
-        const status = this.getEffectiveBanStatus(cardId);
-        if (!status || status === 'free') return '';
-        const c = this.STATUS_COLOR[status];
-        const t = this.STATUS_TEXT[status];
-        const l = this.STATUS_LABEL[status];
-        return `<span class="ban-badge" style="background:${c};color:${t};">${l}</span>`;
-    },
+    const data         = this.getData();
+    const genesysActive = data.activeFormats.some(f => data.formats[f]?.isGenesys);
+
+    if (genesysActive) {
+        const pts = this.getCardPoints(cardId);
+        if (!pts || pts === 0) return '';
+        return `<span class="ban-badge" style="background:#1a1a1a;color:#fff;border:1px solid #555;">${pts} pts</span>`;
+    }
+
+    const status = this.getEffectiveBanStatus(cardId);
+    if (!status || status === 'free') return '';
+    const c = this.STATUS_COLOR[status];
+    const t = this.STATUS_TEXT[status];
+    const l = this.STATUS_LABEL[status];
+    return `<span class="ban-badge" style="background:${c};color:${t};">${l}</span>`;
+},
 
     // ── Operaciones sobre cartas ─────────────────────────────────
     setCardStatus: function (formatName, cardId, cardMeta, status) {
@@ -240,84 +267,119 @@ const Banlist = {
     },
 
     _buildTabContent: function (formatName, data) {
-        const fmt = data?.formats?.[formatName];
-        if (!fmt) return '<p class="stats-empty">Formato no encontrado.</p>';
+    const fmt = data?.formats?.[formatName];
+    if (!fmt) return '<p class="stats-empty">Formato no encontrado.</p>';
 
-        const isCustom   = fmt.isCustom;
-        const isInverted = fmt.inverted || false;
-        const lastUpd    = fmt.lastUpdated || '—';
-        const cardCount  = Object.keys(fmt.cards).length;
+    const isCustom   = fmt.isCustom;
+    const isGenesys  = fmt.isGenesys || false;
+    const isInverted = fmt.inverted || false;
+    const lastUpd    = fmt.lastUpdated || '—';
+    const cardCount  = Object.keys(fmt.cards).length;
 
-        const officialBtns = !isCustom ? `
-            <button class="btn btn-sm btn-primary" id="ban-update-btn-${formatName}"
-                    onclick="Banlist.updateOfficialList('${formatName}')">🔄 Actualizar</button>
-            <span class="ban-last-update">
-                Última actualización: <span id="ban-date-${formatName}">${lastUpd}</span>
-            </span>` : '';
+    const officialBtns = (!isCustom && !isGenesys) ? `
+        <button class="btn btn-sm btn-primary" id="ban-update-btn-${formatName}"
+                onclick="Banlist.updateOfficialList('${formatName}')">🔄 Actualizar</button>
+        <span class="ban-last-update">
+            Última actualización: <span id="ban-date-${formatName}">${lastUpd}</span>
+        </span>` : '';
 
-        const customBtns = isCustom ? `
-            <button class="btn btn-sm btn-secondary"
-                    id="ban-invert-btn-${formatName}"
-                    style="${isInverted ? 'color:#fdcb6e;border-color:#fdcb6e;' : ''}"
-                    onclick="Banlist.toggleInverted('${formatName}')">
-                🔄 ${isInverted ? 'Lista invertida (activa)' : 'Invertir lista'}
-            </button>
-            <button class="btn btn-sm btn-primary"
-                    onclick="CardViewer.openCardSearch('${formatName}')">＋ Agregar carta</button>
-            <button class="btn btn-sm btn-danger"
-                    onclick="Banlist.deleteCustomFormat('${formatName}')">🗑️ Eliminar</button>` : '';
+    const customBtns = (isCustom && !isGenesys) ? `
+        <button class="btn btn-sm btn-secondary"
+                id="ban-invert-btn-${formatName}"
+                style="${isInverted ? 'color:#fdcb6e;border-color:#fdcb6e;' : ''}"
+                onclick="Banlist.toggleInverted('${formatName}')">
+            🔄 ${isInverted ? 'Lista invertida (activa)' : 'Invertir lista'}
+        </button>
+        <button class="btn btn-sm btn-primary"
+                onclick="CardViewer.openCardSearch('${formatName}')">＋ Agregar carta</button>
+        <button class="btn btn-sm btn-danger"
+                onclick="Banlist.deleteCustomFormat('${formatName}')">🗑️ Eliminar</button>` : '';
 
-        return `
-            <div class="ban-tab-header">
-                ${officialBtns}
-                ${customBtns}
-                <span class="ban-card-count" id="ban-count-${formatName}">${cardCount} cartas</span>
-            </div>
-            <div id="banlist-cards-${formatName}" class="ban-cards-list">
-                ${this.renderFormatList(formatName)}
-            </div>`;
-    },
+    const genesisBtns = isGenesys ? `
+        <button class="btn btn-sm btn-primary"
+                onclick="CardViewer.openCardSearch('${formatName}', '', 'points')">
+            ＋ Agregar carta
+        </button>` : '';
 
+    return `
+        <div class="ban-tab-header">
+            ${officialBtns}${customBtns}${genesisBtns}
+            <span class="ban-card-count" id="ban-count-${formatName}">${cardCount} cartas</span>
+        </div>
+        <div id="banlist-cards-${formatName}" class="ban-cards-list">
+            ${this.renderFormatList(formatName)}
+        </div>`;
+},
     renderFormatList: function (formatName) {
-        const data = this.getData();
-        const fmt  = data.formats[formatName];
-        if (!fmt) return '';
+    const data = this.getData();
+    const fmt  = data.formats[formatName];
+    if (!fmt) return '';
 
-        const entries = Object.entries(fmt.cards)
-            .sort((a, b) =>
-                (this.STATUS_ORDER[a[1].status] ?? 9) - (this.STATUS_ORDER[b[1].status] ?? 9)
-                || a[1].name.localeCompare(b[1].name)
-            );
+    const isGenesys = fmt.isGenesys || false;
 
-        if (entries.length === 0) {
-            return `<p class="stats-empty">
-                ${fmt.isCustom
-                    ? 'Sin cartas. Usa "Agregar carta" para poblar este formato.'
-                    : 'Sin datos. Usa "Actualizar" para descargar la lista oficial.'}
-            </p>`;
-        }
+    const entries = Object.entries(fmt.cards).sort((a, b) => {
+        if (isGenesys) return (b[1].points || 0) - (a[1].points || 0);
+        return (this.STATUS_ORDER[a[1].status] ?? 9) - (this.STATUS_ORDER[b[1].status] ?? 9)
+               || a[1].name.localeCompare(b[1].name);
+    });
 
-        return entries.map(([id, card]) => {
-            const c          = this.STATUS_COLOR[card.status] || '#666';
-            const t          = this.STATUS_TEXT[card.status]  || '#fff';
-            const lbl        = this.STATUS_LABEL[card.status] || card.status;
-            const isStaple   = window.ConfigManager?.isStaple?.(id);
-            const stapleBadge = isStaple
-                ? '<span class="ban-staple-badge">📌 Staple</span>' : '';
+    if (entries.length === 0) {
+        return `<p class="stats-empty">
+            ${fmt.isCustom || isGenesys
+                ? 'Sin cartas. Usa "Agregar carta" para poblar este formato.'
+                : 'Sin datos. Usa "Actualizar" para descargar la lista oficial.'}
+        </p>`;
+    }
 
+    return entries.map(([id, card]) => {
+        const isStaple    = window.ConfigManager?.isStaple?.(id);
+        const stapleBadge = isStaple ? '<span class="ban-staple-badge">📌 Staple</span>' : '';
+
+        if (isGenesys) {
+            const pts = card.points || 0;
             return `
                 <div class="ban-card-row">
                     <img class="ban-card-img"
                          src="${card.img}"
-                         onerror="this.style.display='none'"
-                         alt="${card.name}">
+                         onerror="this.style.display='none'" alt="${card.name}">
                     <div class="ban-card-info">
                         <div class="ban-card-name">${card.name} ${stapleBadge}</div>
-                        <span class="ban-status-badge" style="background:${c};color:${t};">${lbl}</span>
+                        <span class="ban-status-badge"
+                              style="background:#1a1a1a;color:#fff;border:1px solid #555;">
+                            ${pts} pts
+                        </span>
                     </div>
                     <div class="ban-card-actions">
+                        <button class="btn btn-sm btn-secondary"
+                                onclick="Banlist.openChangeBan('${formatName}','${id}','${card.name.replace(/'/g,"\\'")}')">
+                            Cambiar Puntos
+                        </button>
+                        <button class="btn btn-sm btn-secondary"
+                                onclick="Banlist.viewCard('${id}')">Ver</button>
+                        <button class="btn btn-sm btn-danger"
+                                onclick="Banlist.removeCardFromFormat('${formatName}','${id}')">
+                            Sacar
+                        </button>
+                    </div>
+                </div>`;
+        }
+
+        const c   = this.STATUS_COLOR[card.status] || '#666';
+        const t   = this.STATUS_TEXT[card.status]  || '#fff';
+        const lbl = this.STATUS_LABEL[card.status] || card.status;
+
+        return `
+            <div class="ban-card-row">
+                <img class="ban-card-img"
+                     src="${card.img}"
+                     onerror="this.style.display='none'" alt="${card.name}">
+                <div class="ban-card-info">
+                    <div class="ban-card-name">${card.name} ${stapleBadge}</div>
+                    <span class="ban-status-badge" style="background:${c};color:${t};">${lbl}</span>
+                </div>
+                <div class="ban-card-actions">
                     <button class="btn btn-sm btn-secondary"
-                            onclick="Banlist.openChangeBan('${formatName}','${id}','${card.name.replace(/'/g, "\\'")}')">
+                            onclick="Banlist.openChangeBan('${formatName}','${id}','${card.name.replace(/'/g,"\\'")}')">
                         Cambiar Ban
                     </button>
                     <button class="btn btn-sm btn-secondary"
@@ -327,12 +389,17 @@ const Banlist = {
                         Sacar
                     </button>
                 </div>
-                </div>`;
-        }).join('');
-    },
+            </div>`;
+    }).join('');
+},
 openChangeBan: function (formatName, cardId, cardName) {
-    if (window.CardViewer) {
-        CardViewer.openCardSearch(formatName, cardName);
+    const data      = this.getData();
+    const isGenesys = data.formats[formatName]?.isGenesys;
+    if (isGenesys) {
+        const currentPts = this.getCardPoints(cardId);
+        CardViewer.openPointsEditor(formatName, cardId, cardName, currentPts);
+    } else {
+        if (window.CardViewer) CardViewer.openCardSearch(formatName, cardName);
     }
 },
     viewCard: function (cardId) {
@@ -361,7 +428,72 @@ openChangeBan: function (formatName, cardId, cardName) {
             `<span class="ban-format-chip ${active.includes(name) ? 'ban-chip-active' : ''}"
                    onclick="Banlist.toggleActiveFormat('${name}')">${name}</span>`
         ).join('');
+    },
+    // ── Genesys ──────────────────────────────────────────────────
+
+isGenesysActive: function () {
+    const data = this.getData();
+    return data.activeFormats.some(f => data.formats[f]?.isGenesys);
+},
+
+getGenesysFormatName: function () {
+    const data = this.getData();
+    return Object.keys(data.formats).find(k => data.formats[k].isGenesys) || 'Genesys';
+},
+
+getCardPoints: function (cardId) {
+    const data = this.getData();
+    const id   = String(cardId);
+    for (const fmt of Object.values(data.formats)) {
+        if (fmt.isGenesys) return fmt.cards[id]?.points || 0;
     }
+    return 0;
+},
+
+setCardPoints: function (formatName, cardId, cardMeta, points) {
+    const data = this.getData();
+    if (!data.formats[formatName]) return;
+    const id  = String(cardId);
+    const pts = Math.max(0, parseInt(points) || 0);
+    if (pts === 0) {
+        delete data.formats[formatName].cards[id];
+    } else {
+        data.formats[formatName].cards[id] = {
+            name:   cardMeta.name || '',
+            img:    cardMeta.img  || '',
+            points: pts
+        };
+    }
+    this.saveData(data);
+},
+
+getDeckPoints: function (cards) {
+    // Main + Extra únicamente (Side no cuenta en Genesys)
+    if (!cards) return 0;
+    const data   = this.getData();
+    let   genFmt = null;
+    for (const fmt of Object.values(data.formats)) {
+        if (fmt.isGenesys) { genFmt = fmt; break; }
+    }
+    if (!genFmt) return 0;
+    let total = 0;
+    Object.entries(cards).forEach(([id, item]) => {
+        if (item.location === 'side') return;
+        const pts = genFmt.cards[String(id)]?.points || 0;
+        total += pts * (item.qty || 1);
+    });
+    return total;
+},
+
+renderDeckPointsIndicator: function (cards) {
+    const total = this.getDeckPoints(cards);
+    return `
+        <div class="genesys-points-indicator">
+            <span class="gpi-label">⚙ Puntos Genesys</span>
+            <span class="gpi-value">${total} pts</span>
+            <span class="gpi-note">Main + Extra</span>
+        </div>`;
+},
 };
 
 window.Banlist = Banlist;

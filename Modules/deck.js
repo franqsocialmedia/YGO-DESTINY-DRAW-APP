@@ -1095,6 +1095,7 @@ onDeckLoaded: function () {
 
         ${this.renderDeckStatsBlock()}
 
+        ${window.Banlist?.isGenesysActive?.() ? Banlist.renderDeckPointsIndicator(this.cards) : ''}
         <h3 onclick="Deck.toggleSection('main-sec')">
             🃏 Main Deck (${mainC})
         </h3>
