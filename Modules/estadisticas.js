@@ -22,8 +22,10 @@ const Estadisticas = {
     powerScoreCache: null,
     powerScoreLoading: false,
     metaCardLibrary: {},   // cardId → { id, name, type, roles }
-    metaDeckScores:  {},   // "folder|||deckname" → { internalScore, externalScore, pillars, calculatedAt }
-    crossScores:     {},   // "folder|||deckname" → { crossExternalScore, matchups }
+    metaDeckScores:    {},   // "folder|||deckname" → { internalScore, externalScore, pillars, calculatedAt }
+    crossScores:       {},   // "folder|||deckname" → { crossExternalScore, matchups }
+    topTierFilter:     'powercreep',   // 'powercreep' | 'consistency' | 'power' | 'resilience'
+    topTierPCMode:     'internal',     // 'internal' | 'external'  (solo aplica a powercreep)
 
     init: function () {
         this.container = document.getElementById('estadisticas-content');
@@ -1398,7 +1400,228 @@ _renderMetaDeckScoreHTML: function (cached, key) {
             </div>
             <div class="counter-cards-list">${rows}</div>`;
     },
+// ===============================
+// TOP TIER
+// ===============================
+_getTopTierScore: function (scoreData) {
+    const f = this.topTierFilter;
+    const p = scoreData?.pillars;
+    if (f === 'consistency') return p?.consistency ?? null;
+    if (f === 'power')       return p?.power       ?? null;
+    if (f === 'resilience')  return p?.resilience  ?? null;
+    // powercreep
+    return this.topTierPCMode === 'external'
+        ? (scoreData?.externalScore ?? null)
+        : (scoreData?.internalScore ?? null);
+},
 
+setTopTierFilter: function (filter) {
+    this.topTierFilter = filter;
+    this._refreshTopTier();
+},
+
+setTopTierPCMode: function (mode) {
+    this.topTierPCMode = mode;
+    this._refreshTopTier();
+},
+
+_refreshTopTier: function () {
+    const el = document.getElementById('top-tier-sec');
+    if (el && el.style.display !== 'none') {
+        el.innerHTML = this.renderTopTier();
+    }
+},
+
+renderTopTier: function () {
+    // ── Recoger todos los decks con datos ────────────────────────
+    const allDecks = [];
+    for (const [folder, decks] of Object.entries(this.metaDecks)) {
+        (decks || []).forEach(deck => {
+            const key   = `${folder}|||${deck.filename}`;
+            const sd    = this.metaDeckScores[key] || null;
+            const score = this._getTopTierScore(sd);
+            if (score === null) return;
+            allDecks.push({
+                key,
+                name:            deck.filename,
+                folder,
+                img:             deck.mostFrequentCard || '0',
+                score,
+                internalScore:   sd?.internalScore   ?? null,
+                externalScore:   sd?.externalScore   ?? null,
+                consistency:     sd?.pillars?.consistency ?? null,
+                power:           sd?.pillars?.power       ?? null,
+                resilience:      sd?.pillars?.resilience  ?? null,
+            });
+        });
+    }
+
+    if (allDecks.length === 0) {
+        return `<p class="stats-empty">
+            No hay decks con scores calculados.<br>
+            <small>Importa decks del meta y usa "Actualizar Scores".</small>
+        </p>`;
+    }
+
+    // ── Ordenar descendente por score activo ─────────────────────
+    allDecks.sort((a, b) => b.score - a.score);
+    const N = allDecks.length;
+
+    // ── Estadísticas globales ────────────────────────────────────
+    const totalPower   = allDecks.reduce((s, d) => s + d.score, 0);
+    const avgPower     = totalPower / N;
+
+    // ── Asignar tier por percentil de posición ───────────────────
+    // Tier 1 = top 20%  |  Tier 2 = 21-50%  |  Tier 3 = 51-80%  |  Fun = 81-100%
+    const tierOf = (i) => {
+        const pct = ((i + 1) / N) * 100;
+        if (pct <= 20) return 1;
+        if (pct <= 50) return 2;
+        if (pct <= 80) return 3;
+        return 4;
+    };
+
+    // ── Labels según filtro activo ───────────────────────────────
+    const FILTER_LABEL = {
+        powercreep:   this.topTierPCMode === 'external' ? 'External Score' : 'Internal Score',
+        consistency:  'Consistencia',
+        power:        'Potencia',
+        resilience:   'Resiliencia'
+    };
+    const activeLabel = FILTER_LABEL[this.topTierFilter];
+
+    const TIER_META = {
+        1: { label: 'Tier 1', color: '#FFD700', bg: 'rgba(255,215,0,0.08)',   border: 'rgba(255,215,0,0.35)' },
+        2: { label: 'Tier 2', color: '#00b894', bg: 'rgba(0,184,148,0.08)',   border: 'rgba(0,184,148,0.35)' },
+        3: { label: 'Tier 3', color: '#0066cc', bg: 'rgba(0,102,204,0.08)',   border: 'rgba(0,102,204,0.35)' },
+        4: { label: 'Fun',    color: '#636e72', bg: 'rgba(99,110,114,0.08)',  border: 'rgba(99,110,114,0.3)' }
+    };
+
+    // ── Agrupar por tier ─────────────────────────────────────────
+    const tierGroups = { 1: [], 2: [], 3: [], 4: [] };
+    allDecks.forEach((deck, i) => tierGroups[tierOf(i)].push({ ...deck, rank: i + 1 }));
+
+    // ── Filtros activos ──────────────────────────────────────────
+    const f  = this.topTierFilter;
+    const pm = this.topTierPCMode;
+    const filterBtns = ['powercreep', 'consistency', 'power', 'resilience'].map(key => {
+        const labels = { powercreep: '⚡ PowerCreep', consistency: '🎯 Consistencia',
+                         power: '💥 Potencia', resilience: '🛡️ Resiliencia' };
+        const active = f === key;
+        return `<button class="tt-filter-btn ${active ? 'tt-filter-active' : ''}"
+                    onclick="Estadisticas.setTopTierFilter('${key}')">
+                    ${labels[key]}
+                </button>`;
+    }).join('');
+
+    const pcToggle = f === 'powercreep' ? `
+        <div class="tt-pc-toggle">
+            <button class="tt-pc-btn ${pm === 'internal' ? 'tt-pc-active' : ''}"
+                    onclick="Estadisticas.setTopTierPCMode('internal')">Internal</button>
+            <button class="tt-pc-btn ${pm === 'external' ? 'tt-pc-active' : ''}"
+                    onclick="Estadisticas.setTopTierPCMode('external')">External</button>
+        </div>` : '';
+
+    // ── Render de una tarjeta de deck ────────────────────────────
+    const scoreColor = (s, isExternal) => {
+        if (s === null) return '#636e72';
+        if (isExternal) return s >= 7 ? '#00b894' : s >= 4 ? '#fdcb6e' : '#d63031';
+        return s >= 20 ? '#00b894' : s >= 10 ? '#fdcb6e' : '#d63031';
+    };
+
+    const deckCard = (deck, tierColor) => {
+        const isExt     = f === 'powercreep' && pm === 'external';
+        const isPillar  = f !== 'powercreep';
+        const mainColor = isPillar
+            ? (deck.score >= 15 ? '#00b894' : deck.score >= 7 ? '#fdcb6e' : '#636e72')
+            : scoreColor(deck.score, isExt);
+
+        const pillarsHTML = `
+            <div class="tt-pillars">
+                <span class="tt-pillar-chip" style="color:#00b894"
+                    title="Consistencia">C: ${deck.consistency !== null ? deck.consistency.toFixed(1) : '—'}</span>
+                <span class="tt-pillar-chip" style="color:#d63031"
+                    title="Potencia">P: ${deck.power !== null ? deck.power.toFixed(1) : '—'}</span>
+                <span class="tt-pillar-chip" style="color:#0066cc"
+                    title="Resiliencia">R: ${deck.resilience !== null ? deck.resilience.toFixed(1) : '—'}</span>
+            </div>`;
+
+        const scoresHTML = f === 'powercreep' ? `
+            <div class="tt-score-pair">
+                <span class="tt-score-label">INT</span>
+                <span class="tt-score-val" style="color:${scoreColor(deck.internalScore, false)}">
+                    ${deck.internalScore !== null ? deck.internalScore.toFixed(1) : '—'}
+                </span>
+                <span class="tt-score-label" style="margin-left:8px">EXT</span>
+                <span class="tt-score-val" style="color:${scoreColor(deck.externalScore, true)}">
+                    ${deck.externalScore !== null ? deck.externalScore.toFixed(1) : '—'}
+                </span>
+            </div>` : `
+            <div class="tt-score-pair">
+                <span class="tt-score-label">${activeLabel}</span>
+                <span class="tt-score-val" style="color:${mainColor}">
+                    ${deck.score.toFixed(1)}
+                </span>
+            </div>`;
+
+        return `
+            <div class="tt-deck-card" onclick="Estadisticas.loadMetaDeckToMiDeck('${deck.folder}', '${deck.name}')">
+                <div class="tt-rank" style="color:${tierColor}">#${deck.rank}</div>
+                <img class="tt-deck-img"
+                    src="https://images.ygoprodeck.com/images/cards_small/${deck.img}.jpg"
+                    onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2287%22><rect width=%2260%22 height=%2287%22 fill=%22%23003366%22/><text x=%2230%22 y=%2248%22 font-family=%22sans-serif%22 font-size=%228%22 text-anchor=%22middle%22 fill=%22%23FFD700%22>Deck</text></svg>'"
+                    alt="${deck.name}">
+                <div class="tt-deck-info">
+                    <div class="tt-deck-name">${deck.name}</div>
+                    <div class="tt-deck-folder">${deck.folder}</div>
+                    ${scoresHTML}
+                    ${pillarsHTML}
+                </div>
+            </div>`;
+    };
+
+    // ── Render de cada grupo de tier ─────────────────────────────
+    const tierSections = [1, 2, 3, 4].map(t => {
+        const decks = tierGroups[t];
+        if (decks.length === 0) return '';
+        const meta = TIER_META[t];
+        return `
+            <div class="tt-tier-block" style="border-color:${meta.border};background:${meta.bg}">
+                <div class="tt-tier-label" style="color:${meta.color}">${meta.label}</div>
+                <div class="tt-tier-decks">
+                    ${decks.map(d => deckCard(d, meta.color)).join('')}
+                </div>
+            </div>`;
+    }).join('');
+
+    return `
+        <!-- Estadísticas del meta -->
+        <div class="tt-meta-stats">
+            <div class="tt-meta-stat">
+                <span class="tt-meta-stat-label">Poder del Meta</span>
+                <span class="tt-meta-stat-value">${totalPower.toFixed(1)} pts</span>
+            </div>
+            <div class="tt-meta-stat">
+                <span class="tt-meta-stat-label">Poder Promedio</span>
+                <span class="tt-meta-stat-value">${avgPower.toFixed(1)} pts</span>
+            </div>
+            <div class="tt-meta-stat">
+                <span class="tt-meta-stat-label">Decks analizados</span>
+                <span class="tt-meta-stat-value">${N}</span>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="tt-filters">
+            ${filterBtns}
+        </div>
+        ${pcToggle}
+
+        <!-- Tiers -->
+        <div class="tt-tiers">
+            ${tierSections}
+        </div>`;
+},
     // ===============================
     // ANÁLISIS COMPLETO DEL DECK
     // ===============================
@@ -1799,7 +2022,14 @@ _renderMetaDeckScoreHTML: function (cached, key) {
             <div id="winrate-sec" class="stats-section" style="display:none;">
                 <p class="stats-empty">Abre esta sección para ver el winrate.</p>
             </div>`
-
+// ── 2.5 TOP TIER ──────────────────────────────────────────────
+        html += `
+            <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('top-tier-sec'); Estadisticas._refreshTopTier()">
+                🏆 Top Tier
+            </h3>
+            <div id="top-tier-sec" class="stats-section" style="display:none;">
+                ${this.renderTopTier()}
+            </div>`;
 
         // ── 3. GESTIÓN DE CARPETAS ────────────────────────────────
         html += `

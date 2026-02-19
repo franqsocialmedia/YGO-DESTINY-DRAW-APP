@@ -1788,6 +1788,166 @@
     text-overflow: ellipsis;
     max-width: 140px;
 }
+/* ══════════════════════════════════════════
+   TOP TIER
+══════════════════════════════════════════ */
+.tt-meta-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+.tt-meta-stat {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 10px 16px;
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+}
+.tt-meta-stat-label {
+    display: block;
+    font-size: 0.72rem;
+    opacity: 0.5;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.tt-meta-stat-value {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #FFD700;
+}
+
+/* Filtros */
+.tt-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+.tt-filter-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    font-size: 0.82rem;
+    transition: all 0.15s;
+}
+.tt-filter-btn:hover  { border-color: #FFD700; color: #FFD700; }
+.tt-filter-active     { background: rgba(255,215,0,0.15); border-color: #FFD700 !important; color: #FFD700 !important; font-weight: bold; }
+
+/* Toggle PowerCreep */
+.tt-pc-toggle {
+    display: inline-flex;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+.tt-pc-btn {
+    padding: 4px 12px;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.45);
+    cursor: pointer;
+    font-size: 0.78rem;
+    transition: all 0.15s;
+}
+.tt-pc-active { background: rgba(255,215,0,0.2); color: #FFD700; font-weight: bold; }
+
+/* Tiers */
+.tt-tiers { display: flex; flex-direction: column; gap: 14px; }
+.tt-tier-block {
+    border: 1px solid;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.tt-tier-label {
+    padding: 6px 14px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: rgba(0,0,0,0.2);
+}
+.tt-tier-decks {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* Deck card */
+.tt-deck-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.tt-deck-card:first-child { border-top: none; }
+.tt-deck-card:hover { background: rgba(255,255,255,0.04); }
+
+.tt-rank {
+    font-size: 0.8rem;
+    font-weight: bold;
+    min-width: 28px;
+    text-align: right;
+    opacity: 0.8;
+}
+.tt-deck-img {
+    width: 38px;
+    height: 55px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+    background: #002b4d;
+}
+.tt-deck-info { flex: 1; min-width: 0; }
+.tt-deck-name {
+    font-size: 0.85rem;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #f1f1f1;
+}
+.tt-deck-folder {
+    font-size: 0.7rem;
+    opacity: 0.4;
+    margin-bottom: 4px;
+}
+
+/* Scores */
+.tt-score-pair {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+.tt-score-label {
+    font-size: 0.65rem;
+    opacity: 0.45;
+    text-transform: uppercase;
+}
+.tt-score-val {
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+/* Pilares */
+.tt-pillars { display: flex; gap: 8px; flex-wrap: wrap; }
+.tt-pillar-chip {
+    font-size: 0.7rem;
+    font-weight: bold;
+    opacity: 0.75;
+}
 /* ====================================
    RESPONSIVE
    ==================================== */

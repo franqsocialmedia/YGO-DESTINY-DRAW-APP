@@ -199,6 +199,6 @@ const HelpPanel = {
         this.isOpen ? this.close() : this.open();
     }
 };
-
+console.log('ESTADO: Actualizacion de lo que se esta haciendo')
 window.HelpPanel = HelpPanel;
 document.addEventListener('DOMContentLoaded', () => HelpPanel.init());
