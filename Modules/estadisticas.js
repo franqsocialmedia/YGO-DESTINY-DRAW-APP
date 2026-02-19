@@ -127,13 +127,19 @@ enrichAndScoreMetaDeck: async function (folderName, deckFilename) {
             );
             const json = await res.json();
             (json.data || []).forEach(card => {
-                const roles = window.Deck?.autoAssignRoles?.(card) ?? [];
+                const roles       = window.Deck?.autoAssignRoles?.(card) ?? [];
+                const cardWithRoles = { ...card, roles };
+                const specAnalysis = window.SpecialtyAnalyzer
+                    ? SpecialtyAnalyzer.analyzeCard(cardWithRoles)
+                    : { specializations: [], counters: [] };
                 this.metaCardLibrary[String(card.id)] = {
-                    id:    String(card.id),
-                    name:  card.name,
-                    type:  card.type,
-                    desc:  card.desc || '',
-                    roles
+                    id:              String(card.id),
+                    name:            card.name,
+                    type:            card.type,
+                    desc:            card.desc || '',
+                    roles,
+                    specializations: specAnalysis.specializations || [],
+                    counters:        specAnalysis.counters        || []
                 };
             });
         } catch (_) {}
@@ -255,14 +261,109 @@ recalculateAllMetaDeckScores: function () {
         input.accept = '.ydk';
         input.multiple = true;
         input.onchange = async (e) => {
-            const files = e.target.files;
-            if (!files || files.length === 0) return;
-            for (let file of files) {
-                await this.processYDKFile(file, folderName);
+            const files = Array.from(e.target.files || []);
+            if (files.length === 0) return;
+
+            // ── Progress overlay ───────────────────────────────────────
+            const overlay = document.createElement('div');
+            overlay.id = 'import-progress-overlay';
+            overlay.style.cssText = `
+                position:fixed;inset:0;background:rgba(0,0,0,0.78);
+                display:flex;align-items:center;justify-content:center;
+                z-index:9999;flex-direction:column;gap:14px;`;
+            overlay.innerHTML = `
+                <div class="power-loading-spinner"></div>
+                <div id="import-progress-label"
+                     style="color:#FFD700;font-size:1rem;text-align:center;padding:0 20px;"></div>
+                <div style="width:260px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;">
+                    <div id="import-progress-bar"
+                         style="height:100%;background:#FFD700;border-radius:3px;width:0%;transition:width 0.3s;"></div>
+                </div>`;
+            document.body.appendChild(overlay);
+
+            const setProgress = (label, pct) => {
+                const lbl = document.getElementById('import-progress-label');
+                const bar = document.getElementById('import-progress-bar');
+                if (lbl) lbl.textContent = label;
+                if (bar) bar.style.width = pct + '%';
+            };
+
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    setProgress(
+                        `Importando "${file.name.replace('.ydk', '')}" (${i + 1} / ${files.length})...`,
+                        Math.round(((i) / files.length) * 50)   // 0–50% = parse
+                    );
+                    await this.processYDKFile(file, folderName);
+                }
+
+                // ── Análisis de mecánicas carta por carta ──────────────
+                // Tras parsear todos los YDK, fetch+analizar las cartas faltantes.
+                // Esto alimenta metaCardLibrary con specializations y counters.
+                const allIds = [];
+                files.forEach(file => {
+                    const deckName = file.name.replace('.ydk', '');
+                    const deck = (this.metaDecks[folderName] || []).find(d => d.filename === deckName);
+                    if (!deck) return;
+                    const secs = deck.sections || {};
+                    [...(secs.main || []), ...(secs.extra || [])].forEach(id => {
+                        if (!this.metaCardLibrary[String(id)]) allIds.push(String(id));
+                    });
+                });
+                const uniqueMissing = [...new Set(allIds)];
+                const batchSize = 10;
+                for (let i = 0; i < uniqueMissing.length; i += batchSize) {
+                    const batch = uniqueMissing.slice(i, i + batchSize);
+                    const pct   = 50 + Math.round(((i) / Math.max(uniqueMissing.length, 1)) * 45);
+                    setProgress(
+                        `Analizando cartas... (${Math.min(i + batchSize, uniqueMissing.length)} / ${uniqueMissing.length})`,
+                        pct
+                    );
+                    try {
+                        const res  = await fetch(
+                            `https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${batch.join(',')}`
+                        );
+                        const json = await res.json();
+                        (json.data || []).forEach(card => {
+                            const roles        = window.Deck?.autoAssignRoles?.(card) ?? [];
+                            const cardWithRoles = { ...card, roles };
+                            const specAnalysis = window.SpecialtyAnalyzer
+                                ? SpecialtyAnalyzer.analyzeCard(cardWithRoles)
+                                : { specializations: [], counters: [] };
+                            this.metaCardLibrary[String(card.id)] = {
+                                id:              String(card.id),
+                                name:            card.name,
+                                type:            card.type,
+                                desc:            card.desc || '',
+                                roles,
+                                specializations: specAnalysis.specializations || [],
+                                counters:        specAnalysis.counters        || []
+                            };
+                        });
+                    } catch (_) {}
+                }
+                this._saveMetaCardLibrary();
+
+                // ── Calcular scores de todos los decks recién importados ─
+                setProgress('Calculando scores...', 96);
+                files.forEach(file => {
+                    const deckName = file.name.replace('.ydk', '');
+                    this._computeAndSaveMetaDeckScore(folderName, deckName);
+                });
+
+                this.saveMetaData();
+                setProgress('¡Listo!', 100);
+                await new Promise(r => setTimeout(r, 400));
+                this.render();
+                requestAnimationFrame(() => {
+                    const sec = document.getElementById('meta-decks-sec');
+                    if (sec) sec.style.display = 'block';
+                });
+            } finally {
+                const el = document.getElementById('import-progress-overlay');
+                if (el) el.remove();
             }
-            this.saveMetaData();
-            this.render();
-            alert(files.length + ' deck(s) importado(s) a ' + folderName);
         };
         input.click();
     },
@@ -1579,7 +1680,7 @@ _renderMetaDeckScoreHTML: function (cached) {
     <button class="btn btn-sm btn-secondary" onclick="Estadisticas.recalculateAllMetaDeckScores()">
         🔄 Actualizar Scores
     </button>
-    <small style="opacity:0.5;">Solo actualiza decks que ya fueron abiertos al menos una vez.</small>
+    <small style="opacity:0.5;">Recalcula internal + external score de todos los decks con datos en biblioteca.</small>
 </div>
 
                 <div class="meta-decks-scroll">
