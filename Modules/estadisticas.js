@@ -1471,14 +1471,28 @@ renderTopTier: function () {
     const totalPower   = allDecks.reduce((s, d) => s + d.score, 0);
     const avgPower     = totalPower / N;
 
-    // ── Asignar tier por percentil de posición ───────────────────
-    // Tier 1 = top 20%  |  Tier 2 = 21-50%  |  Tier 3 = 51-80%  |  Fun = 81-100%
+    // ── Asignar tier por promedio + distribución interna ─────────
+    // Decks por debajo del promedio → Fun
+    // Decks en el promedio o por encima → divididos en 3 bloques:
+    //   Tier 1 = top 20% de ese grupo
+    //   Tier 2 = siguiente 30%
+    //   Tier 3 = último 50%
+    const aboveAvg = allDecks.filter(d => d.score >= avgPower);
+    const nAbove   = aboveAvg.length;
+
+    // Construir un Set con las keys de los decks sobre el promedio
+    const aboveKeys = new Set(aboveAvg.map(d => d.key));
+
+    // Para los decks sobre el promedio, ¿en qué posición relativa están?
+    // allDecks ya está ordenado desc, así que los primeros nAbove son los above-avg
     const tierOf = (i) => {
-        const pct = ((i + 1) / N) * 100;
-        if (pct <= 20) return 1;
-        if (pct <= 50) return 2;
-        if (pct <= 80) return 3;
-        return 4;
+        if (!aboveKeys.has(allDecks[i].key)) return 4; // Fun
+        // Posición relativa dentro del grupo above-avg (0-based)
+        const relPos = i; // ya están primeros en el array ordenado desc
+        const relPct = ((relPos + 1) / nAbove) * 100;
+        if (relPct <= 20) return 1;
+        if (relPct <= 50) return 2;
+        return 3;
     };
 
     // ── Labels según filtro activo ───────────────────────────────
