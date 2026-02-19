@@ -92,6 +92,16 @@ const Config = {
                 </div>
             </div>
 
+            <!-- Sección: Banlist del Formato -->
+            <div class="config-section">
+                <h3 class="config-section-title" onclick="Config.toggleSection('banlist-section'); if(window.Banlist) Banlist.renderSection();">
+                    ▶ Banlist del Formato
+                </h3>
+                <div id="banlist-section" class="config-section-content" style="display:none;">
+                    <p class="stats-empty">Abre la sección para ver la banlist.</p>
+                </div>
+            </div>
+            
             <!-- Botones de acción -->
             <div class="config-actions">
                 <button class="btn btn-primary" onclick="Config.exportConfig()">📥 Exportar Data</button>

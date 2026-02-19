@@ -54,6 +54,7 @@ const CardViewer = {
                          style="width:100%;margin-bottom:10px;">
 
                     <div id="cv-thumbs">${thumbsHtml}</div>
+                    <div id="cv-ban-btns" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;"></div>
 
                     <hr>
 
@@ -244,6 +245,57 @@ const CardViewer = {
                 updateFav();
             }
         };
+        // ── Botones de Banlist ──────────────────────────────────────
+const banContainer = document.getElementById('cv-ban-btns');
+if (banContainer && window.Banlist) {
+    const BAN_BTNS = [
+        { label: 'Free',       status: 'free',         activeColor: '#dfe6e9', activeText: '#000' },
+        { label: 'Semi-Limit', status: 'semi-limited', activeColor: '#fdcb6e', activeText: '#000' },
+        { label: 'Limit',      status: 'limited',      activeColor: '#e17055', activeText: '#fff' },
+        { label: 'Ban',        status: 'forbidden',    activeColor: '#d63031', activeText: '#fff' },
+    ];
+
+    // Formato de escritura = primer formato activo
+    const activeFormats  = Banlist.getActiveFormats();
+    const writeFormat    = activeFormats[0] || 'TCG';
+    const effectiveStatus = Banlist.getEffectiveBanStatus(card.id);
+
+    const renderBanBtns = () => {
+        const current = Banlist.getEffectiveBanStatus(card.id);
+        banContainer.innerHTML = BAN_BTNS.map(b => {
+            const isActive = b.status === current;
+            const bg       = isActive ? b.activeColor : 'rgba(255,255,255,0.08)';
+            const color    = isActive ? b.activeText  : '#aaa';
+            const border   = isActive ? b.activeColor : 'rgba(255,255,255,0.2)';
+            return `<button
+                class="cv-ban-btn"
+                style="background:${bg};color:${color};border:1px solid ${border};
+                       padding:4px 10px;border-radius:5px;cursor:pointer;font-size:0.78rem;"
+                onclick="window._cvBanClick('${card.id}','${writeFormat}','${b.status}',${JSON.stringify({name: card.name, img: card.card_images?.[0]?.image_url_small || ''})})">
+                ${b.label}
+            </button>`;
+        }).join('');
+        banContainer.insertAdjacentHTML('afterbegin',
+            `<div style="font-size:0.7rem;color:rgba(255,255,255,0.35);width:100%;margin-bottom:2px;">
+                Banlist: ${writeFormat}
+             </div>`);
+    };
+
+    window._cvBanClick = (cardId, fmtName, status, meta) => {
+        Banlist.setCardStatus(fmtName, cardId, meta, status);
+        // Actualizar lista si está visible
+        const listEl = document.getElementById(`banlist-cards-${fmtName}`);
+        if (listEl) listEl.innerHTML = Banlist.renderFormatList(fmtName);
+        const countEl = document.getElementById(`ban-count-${fmtName}`);
+        if (countEl) {
+            const d = Banlist.getData();
+            countEl.textContent = Object.keys(d.formats[fmtName]?.cards || {}).length + ' cartas';
+        }
+        renderBanBtns();
+    };
+
+    renderBanBtns();
+}
     },
 
     // Método 1: html2canvas (recomendado - igual que downloadDecklist)
@@ -727,7 +779,199 @@ renderCardContribution: function (card) {
             </div>
             ${contribHTML}
         </div>`;
-}
+},// ── Mini buscador para agregar cartas a banlist custom ────────
+openCardSearch: function (formatName, prefillName) {
+    if (document.getElementById('cv-search-overlay')) return;
+
+    const STATUS_OPTS = [
+        { val: 'forbidden',    label: 'Ban',        color: '#d63031' },
+        { val: 'limited',      label: 'Limitada',   color: '#e17055' },
+        { val: 'semi-limited', label: 'Semi-Limit', color: '#fdcb6e' },
+    ];
+
+    const overlay = document.createElement('div');
+    overlay.id = 'cv-search-overlay';
+    overlay.style.cssText = `
+        position:fixed;inset:0;background:rgba(0,0,0,0.82);
+        z-index:99999;display:flex;align-items:center;justify-content:center;`;
+
+    overlay.innerHTML = `
+        <div style="background:#111;border:1px solid rgba(255,255,255,0.15);
+                    border-radius:12px;padding:20px;width:340px;max-height:85vh;
+                    overflow:auto;position:relative;">
+            <button onclick="document.getElementById('cv-search-overlay').remove()"
+                    style="position:absolute;top:10px;right:10px;background:none;
+                           border:none;color:#fff;font-size:1.2rem;cursor:pointer;">✕</button>
+            <h4 style="margin:0 0 12px;color:#FFD700;">Agregar carta a ${formatName}</h4>
+            <div style="display:flex;gap:6px;margin-bottom:10px;">
+                <input id="cvs-input" type="text" placeholder="Nombre de carta..."
+                       style="flex:1;padding:6px 10px;background:rgba(255,255,255,0.08);
+                              border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:#fff;font-size:0.9rem;"
+                       autocomplete="off">
+                <button id="cvs-btn"
+                        style="padding:6px 12px;background:#0066cc;border:none;
+                               border-radius:6px;color:#fff;cursor:pointer;">🔍</button>
+            </div>
+            <div id="cvs-status-row" style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+                ${STATUS_OPTS.map(s => `
+            <button class="cvs-status-btn"
+                    data-status="${s.val}"
+                    style="padding:3px 10px;border-radius:14px;
+                        border:1px solid rgba(255,255,255,0.25);
+                        background:rgba(0,0,0,0);color:#ccc;
+                        cursor:pointer;font-size:0.78rem;"
+                    data-activecolor="${s.color}">
+                ${s.label}
+            </button>`).join('')}
+            </div>
+            <i style="color:#FFD700;">Establece una restriccion y selecciona la carta.</i>
+            <div id="cvs-results" style="display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;"></div>
+        </div>`;
+
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+    // Estado de status seleccionado
+    let selectedStatus = 'forbidden';
+    const statusBtns = overlay.querySelectorAll('.cvs-status-btn');
+    const updateStatusUI = () => {
+        statusBtns.forEach(btn => {
+            const active     = btn.dataset.status === selectedStatus;
+            const activeColor = btn.dataset.activecolor || '#fff';
+            btn.style.color       = active ? activeColor : '#ccc';
+            btn.style.borderColor = active ? activeColor : 'rgba(255,255,255,0.25)';
+            btn.style.background  = active ? `${activeColor}22` : 'rgba(0,0,0,0)';
+            btn.style.fontWeight  = active ? '700' : '400';
+        });
+    };
+    statusBtns.forEach(btn => {
+        btn.addEventListener('click', () => { selectedStatus = btn.dataset.status; updateStatusUI(); });
+    });
+    updateStatusUI();
+
+    // Búsqueda
+    const doSearch = async () => {
+        const term = document.getElementById('cvs-input')?.value?.trim();
+        if (!term) return;
+        const res   = document.getElementById('cvs-results');
+        if (!res) return;
+        res.innerHTML = '<p style="color:#aaa;font-size:0.85rem;">⏳ Buscando...</p>';
+        try {
+            const r    = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(term)}`);
+            const json = await r.json();
+            const cards = (json.data || []).slice(0, 15);
+            if (!cards.length) { res.innerHTML = '<p style="color:#aaa;font-size:0.85rem;">Sin resultados.</p>'; return; }
+            res.innerHTML = cards.map(c => `
+                <div style="display:flex;align-items:center;gap:8px;padding:6px;
+                            border-radius:7px;cursor:pointer;background:rgba(255,255,255,0.04);"
+                     onclick="
+                        if(window.Banlist){
+                            Banlist.setCardStatus('${formatName}','${c.id}',
+                                {name:'${c.name.replace(/'/g,"\\'")}',
+                                 img:'${c.card_images?.[0]?.image_url_small || ''}'},
+                                document.getElementById('cvs-selected-status')?.value || 'forbidden');
+                            const listEl = document.getElementById('banlist-cards-${formatName}');
+                            if(listEl) listEl.innerHTML = Banlist.renderFormatList('${formatName}');
+                            const countEl = document.getElementById('ban-count-${formatName}');
+                            if(countEl){ const d=Banlist.getData(); countEl.textContent=Object.keys(d.formats['${formatName}']?.cards||{}).length+' cartas'; }
+                        }
+                        this.style.background='rgba(255,215,0,0.15)';
+                        setTimeout(()=>this.style.background='rgba(255,255,255,0.04)',800);
+                     "
+                     onmouseenter="this.style.background='rgba(255,255,255,0.09)'"
+                     onmouseleave="this.style.background='rgba(255,255,255,0.04)'">
+                    <img src="${c.card_images?.[0]?.image_url_small || ''}"
+                         style="width:36px;border-radius:3px;" onerror="this.style.display='none'">
+                    <div>
+                        <div style="font-size:0.83rem;color:#fff;">${c.name}</div>
+                        <div style="font-size:0.72rem;color:#aaa;">${c.type}</div>
+                    </div>
+                    <input type="hidden" id="cvs-selected-status" value="">
+                </div>`).join('');
+        } catch (_) {
+            res.innerHTML = '<p style="color:#d63031;font-size:0.85rem;">Error de red.</p>';
+        }
+    };
+
+    // El status seleccionado lo lee el onclick via closure — injectarlo en un input oculto
+    // Reemplazar onclick para leer selectedStatus dinámicamente
+    const btn = document.getElementById('cvs-btn');
+    const inp = document.getElementById('cvs-input');
+    const searchAndInject = async () => {
+        await doSearch();
+        // Reemplazar cada onclick para que use selectedStatus en vivo
+        document.querySelectorAll('#cvs-results > div').forEach(row => {
+            const orig = row.getAttribute('onclick') || '';
+            row.removeAttribute('onclick');
+            row.addEventListener('click', () => {
+                eval(orig.replace("document.getElementById('cvs-selected-status')?.value || 'forbidden'",
+                    `'${selectedStatus}'`));
+            });
+        });
+    };
+
+    // Más limpio: usar event delegation
+    document.getElementById('cvs-results').addEventListener('click', e => {
+        const row = e.target.closest('[data-cardid]');
+        if (!row) return;
+        const cid  = row.dataset.cardid;
+        const name = row.dataset.name;
+        const img  = row.dataset.img;
+        if (window.Banlist) {
+            Banlist.setCardStatus(formatName, cid, { name, img }, selectedStatus);
+            const listEl  = document.getElementById(`banlist-cards-${formatName}`);
+            if (listEl) listEl.innerHTML = Banlist.renderFormatList(formatName);
+            const countEl = document.getElementById(`ban-count-${formatName}`);
+            if (countEl) {
+                const d = Banlist.getData();
+                countEl.textContent = Object.keys(d.formats[formatName]?.cards || {}).length + ' cartas';
+            }
+            row.style.background = 'rgba(255,215,0,0.18)';
+            setTimeout(() => { row.style.background = 'rgba(255,255,255,0.04)'; }, 900);
+        }
+    });
+
+    // Rebuild doSearch limpio con data-attributes
+    const cleanSearch = async () => {
+        const term = inp?.value?.trim();
+        if (!term) return;
+        const resEl = document.getElementById('cvs-results');
+        if (!resEl) return;
+        resEl.innerHTML = '<p style="color:#aaa;font-size:0.85rem;">⏳ Buscando...</p>';
+        try {
+            const r     = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(term)}`);
+            const json  = await r.json();
+            const cards = (json.data || []).slice(0, 15);
+            if (!cards.length) { resEl.innerHTML = '<p style="color:#aaa;font-size:0.85rem;">Sin resultados.</p>'; return; }
+            resEl.innerHTML = cards.map(c => `
+                <div data-cardid="${c.id}"
+                     data-name="${(c.name||'').replace(/"/g,'&quot;')}"
+                     data-img="${c.card_images?.[0]?.image_url_small || ''}"
+                     style="display:flex;align-items:center;gap:8px;padding:7px;
+                            border-radius:7px;cursor:pointer;background:rgba(255,255,255,0.04);"
+                     onmouseenter="this.style.background='rgba(255,255,255,0.09)'"
+                     onmouseleave="this.style.background='rgba(255,255,255,0.04)'">
+                    <img src="${c.card_images?.[0]?.image_url_small || ''}"
+                         style="width:36px;border-radius:3px;" onerror="this.style.display='none'">
+                    <div>
+                        <div style="font-size:0.83rem;color:#fff;">${c.name}</div>
+                        <div style="font-size:0.72rem;color:#aaa;">${c.type}</div>
+                    </div>
+                </div>`).join('');
+        } catch (_) {
+            resEl.innerHTML = '<p style="color:#d63031;font-size:0.85rem;">Error de red.</p>';
+        }
+    };
+
+    btn.addEventListener('click', cleanSearch);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') cleanSearch(); });
+    inp.focus();
+    
+    if (prefillName) {
+        inp.value = prefillName;
+        cleanSearch();
+    }
+},
     
 };
 

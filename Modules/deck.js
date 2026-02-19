@@ -848,6 +848,7 @@ html += `
         <div class="${nameClass}">${card.name}</div>
         <div class="deck-roles">
             ${subtypesBadges}${rolesBadges}
+            ${window.Banlist ? Banlist.getBadgeHTML(id) : ''}
         </div>
 
                     <div class="deck-qty">
