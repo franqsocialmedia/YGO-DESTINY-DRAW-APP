@@ -1,160 +1,359 @@
+/* ====================================
+   CARD VIEWER - Destiny Draw
+   Visor de cartas Yu-Gi-Oh!
+==================================== */
+
+/* ── Overlay de fondo ────────────────────────────────────────────── */
+.cv-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 99998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Panel principal ─────────────────────────────────────────────── */
 .card-viewer-overlay {
-    background: #001a33;
-    color: #f1f1f1;
+    background: var(--bg-card, #002b4d);
+    color: var(--text-light, #f1f1f1);
     width: 400px;
     max-height: 90vh;
     overflow-y: auto;
     border-radius: 12px;
-    padding: 20px;
+    padding: var(--spacing-sm, 1rem);
     position: relative;
-    border: 1px solid rgba(255, 215, 0, 0.25);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
 
+.card-viewer-overlay::-webkit-scrollbar        { width: 5px; }
+.card-viewer-overlay::-webkit-scrollbar-track  { background: transparent; }
+.card-viewer-overlay::-webkit-scrollbar-thumb  {
+    background: rgba(255, 215, 0, 0.2);
+    border-radius: 3px;
+}
+
+/* ── Nombre de la carta ──────────────────────────────────────────── */
+.cv-card-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--gold-color, #FFD700);
+    margin-bottom: 10px;
+    padding-right: 32px;
+    line-height: 1.3;
+}
+
+/* ── Botón cerrar ────────────────────────────────────────────────── */
 .cv-close {
     position: absolute;
     right: 12px;
     top: 12px;
-    background: rgba(192, 57, 43, 0.85);
-    color: white;
+    background: rgba(214, 48, 49, 0.8);
+    color: #fff;
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    width: 26px;
-    height: 26px;
-    font-size: 0.85rem;
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+    font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
-    transition: background 0.2s;
+    transition: background var(--transition-fast, 0.2s ease),
+                transform  var(--transition-fast, 0.2s ease);
+    z-index: 2;
 }
 .cv-close:hover {
-    background: #c0392b;
+    background: var(--danger-color, #d63031);
+    transform: scale(1.1);
 }
 
+/* ── Imagen principal ────────────────────────────────────────────── */
+.cv-image-section {
+    margin-bottom: var(--spacing-xs, 0.5rem);
+}
 .cv-image-section img {
     width: 100%;
+    border-radius: 8px;
+    display: block;
+    border: 1px solid rgba(255, 215, 0, 0.15);
 }
 
 .cv-alt-images {
     display: flex;
-    gap: 5px;
-    margin-top: 5px;
+    gap: 6px;
+    margin-top: 6px;
+    flex-wrap: wrap;
 }
-
 .cv-thumb {
-    width: 40px;
+    width: 44px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 4px;
     cursor: pointer;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    opacity: 0.7;
+    transition: opacity      var(--transition-fast, 0.2s ease),
+                border-color var(--transition-fast, 0.2s ease);
+}
+.cv-thumb:hover {
+    opacity: 1;
+    border-color: var(--gold-color, #FFD700);
 }
 
+/* ── Divisor ─────────────────────────────────────────────────────── */
+.cv-divider {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin: 10px 0;
+}
+
+/* ── Meta info ───────────────────────────────────────────────────── */
+.cv-meta {
+    font-size: 0.85rem;
+    color: rgba(241, 241, 241, 0.8);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 8px;
+}
+.cv-meta p { margin: 0; }
+
+/* ── Descripción / efecto ────────────────────────────────────────── */
+.cv-desc {
+    white-space: pre-wrap;
+    line-height: 1.75;
+    font-size: 0.85rem;
+    color: rgba(241, 241, 241, 0.9);
+    margin-bottom: 4px;
+}
+
+/* Highlight de nomenclatura — background-color viene inline desde Config */
+.cv-highlight {
+    opacity: 0.75;
+    padding: 2px 4px;
+    border-radius: 3px;
+    cursor: help;
+}
+
+/* ── Cantidad en deck ────────────────────────────────────────────── */
 .cv-quantity {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin: 10px 0;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 215, 0, 0.12);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 4px 0;
 }
-
-.cv-quantity button {
-    background: #FFD700;
+.cv-qty-btn {
+    background: linear-gradient(135deg, var(--accent-color, #0066cc), var(--secondary-color, #004080));
     border: none;
     cursor: pointer;
+    color: var(--text-light, #f1f1f1);
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background var(--transition-fast, 0.2s ease),
+                transform  var(--transition-fast, 0.2s ease);
 }
-/* ── Aporte de la carta ────────────────────────────────────────── */
+.cv-qty-btn:hover {
+    background: linear-gradient(135deg, #0080ff, var(--accent-color, #0066cc));
+    transform: scale(1.08);
+}
+.cv-qty-count {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gold-color, #FFD700);
+    min-width: 24px;
+    text-align: center;
+}
+
+/* ── Ban info y ID ───────────────────────────────────────────────── */
+.cv-ban-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: rgba(241, 241, 241, 0.7);
+}
+.cv-card-id {
+    margin-left: auto;
+    opacity: 0.45;
+    font-size: 0.75rem;
+}
+
+/* ── Botones de acción ───────────────────────────────────────────── */
+.cv-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.cv-action-btn {
+    flex: 1;
+    min-width: 110px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(241, 241, 241, 0.8);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    text-align: center;
+    transition: background    var(--transition-fast, 0.2s ease),
+                border-color  var(--transition-fast, 0.2s ease),
+                color         var(--transition-fast, 0.2s ease);
+}
+.cv-action-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 215, 0, 0.35);
+    color: #f1f1f1;
+}
+/* Estado activo — staple marcado o favorita marcada */
+.cv-action-btn--active {
+    background: rgba(255, 215, 0, 0.18);
+    border-color: var(--gold-color, #FFD700);
+    color: var(--gold-color, #FFD700);
+    font-weight: 600;
+}
+.cv-action-btn--active:hover {
+    background: rgba(255, 215, 0, 0.26);
+}
+
+/* ── Bloque de aporte al Internal Score ─────────────────────────── */
 .cv-contribution-block {
     padding: 4px 0;
 }
 .cv-contrib-section-title {
-    font-size: 0.8rem;
-    font-weight: bold;
-    color: #FFD700;
-    margin-bottom: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--gold-color, #FFD700);
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
     gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.cv-contrib-section-title--spaced {
+    margin-top: 12px;
 }
 .cv-deck-name {
-    font-weight: normal;
-    font-size: 0.75rem;
-    color: rgba(255,255,255,0.5);
+    font-weight: 400;
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: none;
+    letter-spacing: 0;
 }
+
 .cv-roles-row {
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
-    margin-bottom: 4px;
+    margin-bottom: 10px;
 }
 .cv-role-chip {
-    background: rgba(0,51,102,0.7);
-    border: 1px solid rgba(255,215,0,0.3);
-    border-radius: 12px;
-    padding: 2px 10px;
-    font-size: 0.75rem;
-    color: #f1f1f1;
+    background: rgba(0, 51, 102, 0.6);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    color: rgba(241, 241, 241, 0.85);
+    letter-spacing: 0.02em;
 }
 .cv-role-none {
-    font-size: 0.75rem;
-    color: rgba(255,255,255,0.35);
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.3);
     font-style: italic;
 }
+
 .cv-contrib-grid {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    margin-bottom: 8px;
+    gap: 7px;
+    margin-bottom: 10px;
 }
 .cv-contrib-row {
     display: grid;
-    grid-template-columns: 90px 1fr 36px 36px;
+    grid-template-columns: 90px 1fr 40px 40px;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 .cv-contrib-label {
-    font-size: 0.75rem;
-    color: rgba(255,255,255,0.65);
+    font-size: 0.74rem;
+    color: rgba(255, 255, 255, 0.55);
 }
 .cv-contrib-bar-track {
-    height: 6px;
-    background: rgba(255,255,255,0.1);
+    height: 5px;
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 3px;
     overflow: hidden;
 }
 .cv-contrib-bar {
     height: 100%;
     border-radius: 3px;
-    transition: width 0.3s;
+    transition: width 0.35s ease;
+    /* width y background son dinámicos → vienen inline desde JS */
 }
 .cv-contrib-val {
-    font-size: 0.75rem;
-    color: #f1f1f1;
+    font-size: 0.73rem;
+    color: rgba(241, 241, 241, 0.85);
     text-align: right;
+    font-variant-numeric: tabular-nums;
 }
 .cv-contrib-delta {
-    font-size: 0.75rem;
-    font-weight: bold;
+    font-size: 0.73rem;
+    font-weight: 700;
     text-align: right;
-}
-.cv-contrib-total {
-    font-size: 0.8rem;
-    color: rgba(255,255,255,0.65);
-    border-top: 1px solid rgba(255,255,255,0.1);
-    padding-top: 6px;
-}
-.cv-contrib-empty {
-    font-size: 0.75rem;
-    color: rgba(255,255,255,0.35);
-    font-style: italic;
-    margin: 4px 0;
+    font-variant-numeric: tabular-nums;
+    /* color es dinámico → viene inline desde JS */
 }
 
-/* ── Saturación de roles en Mi Deck ─────────────────────────────── */
-/* Cerca del máximo (entre optimal y max) → borde naranja   */
+.cv-contrib-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.5);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 8px;
+    margin-top: 2px;
+}
+.cv-contrib-total strong {
+    color: var(--text-light, #f1f1f1);
+}
+/* El color del delta de total es dinámico → viene inline */
+
+.cv-contrib-empty {
+    font-size: 0.74rem;
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+    margin: 6px 0;
+}
+
+/* ── Saturación de roles (badges en Mi Deck) ─────────────────────── */
 .role-badge.badge-near-saturated {
     border: 1px solid #e67e22 !important;
-    box-shadow: 0 0 4px rgba(230, 126, 34, 0.5);
+    box-shadow: 0 0 5px rgba(230, 126, 34, 0.45);
 }
-/* Por encima del máximo → borde rojo                        */
 .role-badge.badge-over-saturated {
-    border: 1px solid #e74c3c !important;
-    box-shadow: 0 0 4px rgba(231, 76, 60, 0.6);
+    border: 1px solid var(--danger-color, #d63031) !important;
+    box-shadow: 0 0 5px rgba(214, 48, 49, 0.5);
 }
