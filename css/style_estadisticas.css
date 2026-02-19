@@ -1736,6 +1736,35 @@
     font-size: 0.7rem;
     color: rgba(255,255,255,0.3);
 }
+/* ── RPS Pillar Indicator ───────────────────────────────────────── */
+.analysis-rps-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    margin: 8px 0 4px;
+    font-size: 0.82rem;
+    flex-wrap: wrap;
+}
+.analysis-rps-indicator.rps-advantage {
+    background: rgba(0, 184, 148, 0.12);
+    border: 1px solid rgba(0, 184, 148, 0.35);
+}
+.analysis-rps-indicator.rps-disadvantage {
+    background: rgba(214, 48, 49, 0.12);
+    border: 1px solid rgba(214, 48, 49, 0.35);
+}
+.rps-icon { font-size: 1rem; flex-shrink: 0; }
+.rps-text { flex: 1; color: rgba(241,241,241,0.8); line-height: 1.4; }
+.rps-text strong { color: #f1f1f1; }
+.rps-mod {
+    font-weight: bold;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+.rps-advantage .rps-mod  { color: #00b894; }
+.rps-disadvantage .rps-mod { color: #d63031; }
 /* ====================================
    RESPONSIVE
    ==================================== */

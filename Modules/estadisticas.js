@@ -89,7 +89,21 @@ _saveMetaDeckScores: function () {
         localStorage.setItem('yugioh_meta_deck_scores', JSON.stringify(this.metaDeckScores));
     } catch (_) {}
 },
-
+// Suma los pilares de todos los decks del meta con datos y devuelve el dominante global
+    getMetaDominantPillar: function () {
+        let totC = 0, totP = 0, totR = 0, count = 0;
+        Object.values(this.metaDeckScores).forEach(s => {
+            if (!s || !s.pillars) return;
+            totC += s.pillars.consistency || 0;
+            totP += s.pillars.power       || 0;
+            totR += s.pillars.resilience  || 0;
+            count++;
+        });
+        if (count === 0) return null;
+        if (totC >= totP && totC >= totR) return 'consistency';
+        if (totP >= totC && totP >= totR) return 'power';
+        return 'resilience';
+    },
 // Fetcha las cartas faltantes de un deck del meta, analiza roles y guarda en biblioteca.
 // Luego calcula y persiste internal+external score para ese deck.
 enrichAndScoreMetaDeck: async function (folderName, deckFilename) {
@@ -170,6 +184,11 @@ _computeAndSaveMetaDeckScore: function (folderName, deckFilename) {
 
     this.metaDeckScores[key] = {
         internalScore: internalResult ? parseFloat(internalResult.internalScore) : null,
+        pillars: internalResult ? {
+            consistency: parseFloat(internalResult.consistency),
+            power:       parseFloat(internalResult.power),
+            resilience:  parseFloat(internalResult.resilience)
+        } : null,
         externalScore,
         calculatedAt:  Date.now()
     };
@@ -1119,12 +1138,40 @@ _renderMetaDeckScoreHTML: function (cached) {
         const internalStats = Stats.calculateInternalScore(Deck.cards);
         const analysis      = Stats.calculateExternalScore(Deck.cards, this.powerScoreCache, this.metaDecks);
         const internalScore = parseFloat(internalStats.internalScore);
-        const externalScore = analysis.externalScore;
+
+        // ── RPS: pilar dominante del deck vs pilar dominante del meta ─────
+        const PILLAR_ES = { consistency: 'Consistencia', power: 'Potencia', resilience: 'Resiliencia' };
+        const WEAK_TO   = { resilience: 'Consistencia', power: 'Resiliencia', consistency: 'Potencia' };
+        const BEATS_ES  = { resilience: 'Potencia',     power: 'Consistencia', consistency: 'Resiliencia' };
+
+        const deckPillar = window.Stats?.getDominantPillar?.(internalStats) ?? null;
+        const metaPillar = this.getMetaDominantPillar();
+        const rps = (window.Stats && deckPillar && metaPillar)
+            ? Stats.calculateRPSModifier(deckPillar, metaPillar)
+            : { modifier: 1.0, relation: 'neutral' };
+
+        const externalScoreRaw = analysis.externalScore;
+        const externalScore = externalScoreRaw !== null
+            ? parseFloat(Math.min(10, externalScoreRaw * rps.modifier).toFixed(1))
+            : null;
 
         const iColor = internalScore >= 20 ? '#00b894' : internalScore >= 10 ? '#fdcb6e' : '#d63031';
         const eColor = externalScore === null ? '#636e72'
                      : externalScore >= 7 ? '#00b894'
                      : externalScore >= 4 ? '#fdcb6e' : '#d63031';
+
+        // ── Indicador RPS ─────────────────────────────────────────────────
+        const rpsHTML = (deckPillar && metaPillar && rps.relation !== 'neutral') ? `
+            <div class="analysis-rps-indicator rps-${rps.relation}">
+                <span class="rps-icon">${rps.relation === 'advantage' ? '✅' : '⚠️'}</span>
+                <span class="rps-text">
+                    Tu pilar <strong>${PILLAR_ES[deckPillar]}</strong>
+                    ${rps.relation === 'advantage'
+                        ? `vence al pilar dominante del meta (<strong>${PILLAR_ES[metaPillar]}</strong>)`
+                        : `es débil frente al pilar dominante del meta (<strong>${PILLAR_ES[metaPillar]}</strong>)`}
+                </span>
+                <span class="rps-mod">${rps.relation === 'advantage' ? '+25%' : '-25%'} External Score</span>
+            </div>` : '';
 
         // --- MECÁNICAS DEL DECK (especialidades) ---
         const specsBadges = analysis.deckSpecs.length > 0
@@ -1246,7 +1293,7 @@ _renderMetaDeckScoreHTML: function (cached) {
                         <div class="asb-value" style="color:${eColor}">
                             ${externalScore !== null ? externalScore : '—'}
                         </div>
-                        <div class="asb-sub">/ 10</div>
+                        <div class="asb-sub">/ 10${rps.relation !== 'neutral' && externalScore !== null ? ` <em style="font-size:0.7rem;opacity:0.6">(${rps.relation === 'advantage' ? '+25%' : '-25%'})</em>` : ''}</div>
                         ${externalScore !== null ? `
                         <div class="asb-bar-track">
                             <div class="asb-bar-fill" style="width:${externalScore*10}%;background:${eColor}"></div>
@@ -1255,15 +1302,15 @@ _renderMetaDeckScoreHTML: function (cached) {
                     </div>
                 </div>
 
+                ${rpsHTML}
+
                 <!-- VEREDICTO -->
                 <div class="analysis-verdict">
-                    El deck <strong>${Deck.name}</strong> posee un poder teórico de
-                    <span style="color:${iColor}">${internalScore} pts</span>,
-                    pero frente al META actual es de
-                    <span style="color:${eColor}">${externalScore !== null ? externalScore+'/10' : 'N/A'}</span>
-                    ${analysis.counterDecks.length > 0
-                        ? `por la presencia de decks como
-                           <em>${analysis.counterDecks.slice(0,3).map(d=>d.name).join(', ')}</em>.`
+                    El deck <strong>${Deck.name}</strong> tiene un poder teórico de
+                    <span style="color:${iColor}">${internalScore} pts</span>
+                    y frente al META actual un score de
+                    <span style="color:${eColor}">${externalScore !== null ? externalScore+'/10' : 'N/A'}</span>${rps.relation !== 'neutral' && deckPillar && metaPillar ? `, ajustado por ventaja/desventaja de pilar (${PILLAR_ES[deckPillar]} vs ${PILLAR_ES[metaPillar]})` : ''}${analysis.counterDecks.length > 0
+                        ? `. Mayor amenaza: <em>${analysis.counterDecks.slice(0,3).map(d=>d.name).join(', ')}</em>.`
                         : '.'}
                 </div>
 

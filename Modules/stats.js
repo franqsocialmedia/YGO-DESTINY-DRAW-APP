@@ -132,7 +132,37 @@
         mainCards,
         penalty:       parseFloat(penalty.toFixed(2))
     };
-},
+},// ===============================
+    // PILAR DOMINANTE
+    // ===============================
+    getDominantPillar: function (internalResult) {
+        const c = parseFloat(internalResult.consistency) || 0;
+        const p = parseFloat(internalResult.power)       || 0;
+        const r = parseFloat(internalResult.resilience)  || 0;
+        if (c === 0 && p === 0 && r === 0) return null;
+        if (c >= p && c >= r) return 'consistency';
+        if (p >= c && p >= r) return 'power';
+        return 'resilience';
+    },
+
+    // ===============================
+    // MODIFICADOR RPS (piedra-papel-tijeras de pilares)
+    // Ciclo: resiliencia vence a potencia → potencia vence a consistencia → consistencia vence a resiliencia
+    // ===============================
+    calculateRPSModifier: function (deckPillar, metaPillar) {
+        if (!deckPillar || !metaPillar || deckPillar === metaPillar) {
+            return { modifier: 1.0, relation: 'neutral' };
+        }
+        // BEATS[X] = pilar al que X le gana
+        const BEATS = {
+            resilience:  'power',
+            power:       'consistency',
+            consistency: 'resilience'
+        };
+        if (BEATS[deckPillar] === metaPillar) return { modifier: 1.25, relation: 'advantage' };
+        if (BEATS[metaPillar] === deckPillar) return { modifier: 0.75, relation: 'disadvantage' };
+        return { modifier: 1.0, relation: 'neutral' };
+    },
         // ===============================
         // CALCULAR COMPONENTE INDIVIDUAL
         // ===============================
