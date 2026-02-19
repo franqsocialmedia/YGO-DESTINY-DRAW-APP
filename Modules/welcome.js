@@ -113,7 +113,7 @@ startMusic: function (path) {
     if (this.audio && !this.audio.paused && this.audio._path === path) return;
     // Detener la anterior si era distinta
     if (this.audio) {
-        this.audio.pause();
+        this.audio.stop();
         this.audio.currentTime = 0;
     }
     try {
@@ -205,7 +205,7 @@ const MusicPlayer = {
         const btn     = document.createElement('button');
         btn.id        = 'music-float-btn';
         btn.className = 'music-float-btn';
-        btn.onclick   = () => this.toggle();
+        btn.onclick = function () { MusicPlayer.toggle(); };
         document.body.appendChild(btn);
         this._updateButton();
     },

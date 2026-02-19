@@ -117,7 +117,10 @@ const Navigation = {
         if (window.Estadisticas && typeof Estadisticas.updateFloatingWidgetVisibility === 'function') {
             Estadisticas.updateFloatingWidgetVisibility(tabName);
         }
-
+        // Inicializar Torneo lazy al entrar a Simuladores
+        if (tabName === 'simuladores' && window.Torneo) {
+            Torneo.init();
+        }
         SafeLogger.functionEnd('Navigation', 'showTab', { success: true, currentTab: tabName });
 
         // PASO 6: Hacer scroll al inicio del contenido (smooth)
