@@ -1435,26 +1435,38 @@ _refreshTopTier: function () {
 renderTopTier: function () {
     // ── Recoger todos los decks con datos ────────────────────────
     const allDecks = [];
-    for (const [folder, decks] of Object.entries(this.metaDecks)) {
-        (decks || []).forEach(deck => {
-            const key   = `${folder}|||${deck.filename}`;
-            const sd    = this.metaDeckScores[key] || null;
-            const score = this._getTopTierScore(sd);
-            if (score === null) return;
-            allDecks.push({
-                key,
-                name:            deck.filename,
-                folder,
-                img:             deck.mostFrequentCard || '0',
-                score,
-                internalScore:   sd?.internalScore   ?? null,
-                externalScore:   sd?.externalScore   ?? null,
-                consistency:     sd?.pillars?.consistency ?? null,
-                power:           sd?.pillars?.power       ?? null,
-                resilience:      sd?.pillars?.resilience  ?? null,
-            });
+for (const [folder, decks] of Object.entries(this.metaDecks)) {
+    (decks || []).forEach(deck => {
+        const key   = `${folder}|||${deck.filename}`;
+        const sd    = this.metaDeckScores[key] || null;
+        const score = this._getTopTierScore(sd);
+        if (score === null) return;
+        allDecks.push({
+            key,
+            name:            deck.filename,
+            folder,
+            img:             deck.mostFrequentCard || '0',
+            score,
+            internalScore:   sd?.internalScore        ?? null,
+            externalScore:   sd?.externalScore        ?? null,
+            consistency:     sd?.pillars?.consistency ?? null,
+            power:           sd?.pillars?.power       ?? null,
+            resilience:      sd?.pillars?.resilience  ?? null,
+            isMine:          false,
         });
-    }
+    });
+}
+
+// Agregar decks guardados del usuario
+this._getSavedDecksForTopTier().forEach(mine => {
+    const sd = { internalScore: mine.internalScore, externalScore: mine.externalScore,
+                 pillars: { consistency: mine.consistency, power: mine.power, resilience: mine.resilience } };
+    const score = this._getTopTierScore(sd);
+    if (score === null) return;
+    // Si ya existe un deck del meta con el mismo nombre, no duplicar
+    if (allDecks.some(d => d.name === mine.name && !d.isMine)) return;
+    allDecks.push({ ...mine, score });
+});
 
     if (allDecks.length === 0) {
         return `<p class="stats-empty">
@@ -1578,20 +1590,30 @@ renderTopTier: function () {
                 </span>
             </div>`;
 
-        return `
-            <div class="tt-deck-card" onclick="Estadisticas.loadMetaDeckToMiDeck('${deck.folder}', '${deck.name}')">
-                <div class="tt-rank" style="color:${tierColor}">#${deck.rank}</div>
-                <img class="tt-deck-img"
-                    src="https://images.ygoprodeck.com/images/cards_small/${deck.img}.jpg"
-                    onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2287%22><rect width=%2260%22 height=%2287%22 fill=%22%23003366%22/><text x=%2230%22 y=%2248%22 font-family=%22sans-serif%22 font-size=%228%22 text-anchor=%22middle%22 fill=%22%23FFD700%22>Deck</text></svg>'"
-                    alt="${deck.name}">
-                <div class="tt-deck-info">
-                    <div class="tt-deck-name">${deck.name}</div>
-                    <div class="tt-deck-folder">${deck.folder}</div>
-                    ${scoresHTML}
-                    ${pillarsHTML}
-                </div>
-            </div>`;
+        const mineStyle  = deck.isMine
+    ? 'background:rgba(255,230,100,0.10);border-color:rgba(255,210,60,0.55);'
+    : '';
+const mineBadge  = deck.isMine
+    ? '<span class="tt-mine-badge">🃏 Mi Deck</span>'
+    : '';
+const clickAction = deck.isMine
+    ? `Deck.confirmLoadDeck('${deck.savedName}'); Navigation.showTab('mideck');`
+    : `Estadisticas.loadMetaDeckToMiDeck('${deck.folder}', '${deck.name}')`;
+
+return `
+    <div class="tt-deck-card" style="${mineStyle}" onclick="${clickAction}">
+        <div class="tt-rank" style="color:${tierColor}">#${deck.rank}</div>
+        <img class="tt-deck-img"
+            src="https://images.ygoprodeck.com/images/cards_small/${deck.img}.jpg"
+            onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2287%22><rect width=%2260%22 height=%2287%22 fill=%22%23003366%22/><text x=%2230%22 y=%2248%22 font-family=%22sans-serif%22 font-size=%228%22 text-anchor=%22middle%22 fill=%22%23FFD700%22>Deck</text></svg>'"
+            alt="${deck.name}">
+        <div class="tt-deck-info">
+            <div class="tt-deck-name">${deck.name} ${mineBadge}</div>
+            <div class="tt-deck-folder">${deck.folder}</div>
+            ${scoresHTML}
+            ${pillarsHTML}
+        </div>
+    </div>`;
     };
 
     // ── Render de cada grupo de tier ─────────────────────────────
@@ -2208,7 +2230,57 @@ renderTopTier: function () {
         `;
         this.container.innerHTML = html;
     },
+// Devuelve los decks guardados del usuario con scores calculados al vuelo
+_getSavedDecksForTopTier: function () {
+    const result = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith('deck_')) continue;
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) continue;
+            const saved = JSON.parse(raw);
+            if (!saved || !saved.cards || Object.keys(saved.cards).length === 0) continue;
 
+            const name          = key.replace('deck_', '');
+            const internalResult = window.Stats ? Stats.calculateInternalScore(saved.cards) : null;
+            let   externalScore  = null;
+            if (window.Stats && this.powerScoreCache) {
+                try {
+                    const ext = Stats.calculateExternalScore(saved.cards, this.powerScoreCache, this.metaDecks);
+                    externalScore = ext.externalScore ?? null;
+                } catch (_) {}
+            }
+
+            const internalScore  = internalResult ? parseFloat(internalResult.internalScore) : null;
+            const consistency    = internalResult ? parseFloat(internalResult.consistency)   : null;
+            const power          = internalResult ? parseFloat(internalResult.power)         : null;
+            const resilience     = internalResult ? parseFloat(internalResult.resilience)    : null;
+
+            // Carta As como thumbnail
+            let img = '0';
+            const cartaAs = Object.entries(saved.cards).find(([, v]) => v.isCartaAs);
+            if (cartaAs) img = cartaAs[0];
+
+            result.push({
+                key:           `__mine__|||${name}`,
+                name,
+                folder:        'Mis Decks',
+                img,
+                internalScore,
+                externalScore,
+                consistency,
+                power,
+                resilience,
+                isMine:        true,
+                savedKey:      key,
+                savedCards:    saved.cards,
+                savedName:     name
+            });
+        } catch (_) {}
+    }
+    return result;
+},
     // ===============================
     // UTILIDADES
     // ===============================

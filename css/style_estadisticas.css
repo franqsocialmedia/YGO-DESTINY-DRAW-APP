@@ -296,7 +296,7 @@
     left: 20px;
     width: 64px;
     background: rgba(1, 17, 33, 0.7);
-    -webkit-backdrop-filter: blur(10px);
+    /*-webkit-backdrop-filter: blur(10px);*/
     border: 2px solid var(--gold-color);
     border-radius: 8px;
     cursor: pointer;
@@ -531,6 +531,22 @@
         justify-content: space-around;
     }
 }
+
+/* ── Top Tier: deck propio ── */
+.tt-mine-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: rgba(255,210,60,0.18);
+    border: 1px solid rgba(255,210,60,0.5);
+    color: #ffe066;
+    border-radius: 10px;
+    padding: 1px 7px;
+    margin-left: 5px;
+    vertical-align: middle;
+    letter-spacing: 0.03em;
+}
+
 /* ====================================
    PUNTOS DE PODER DEL META
    ==================================== */
