@@ -47,7 +47,7 @@ const Config = {
                 <h3 class="config-section-title" onclick="Config.toggleSection('staples-section')">
                     ▶ Lista de Staples
                 </h3>
-                <div id="staples-section" class="config-section-content">
+                <div id="staples-section" class="config-section-content" style="display:none;">
                     ${this.renderStaplesSection()}
                 </div>
             </div>
@@ -79,6 +79,16 @@ const Config = {
                 </h3>
                 <div id="diminishing-section" class="config-section-content" style="display:none;">
                     ${this.renderDiminishingSection()}
+                </div>
+            </div>
+
+            <!-- Sección: Atajos Rápidos -->
+            <div class="config-section">
+                <h3 class="config-section-title" onclick="Config.toggleSection('shortcuts-section')">
+                    ▶ Atajos Rápidos
+                </h3>
+                <div id="shortcuts-section" class="config-section-content" style="display:none;">
+                    ${this.renderShortcutsSection()}
                 </div>
             </div>
 
@@ -1083,7 +1093,84 @@ renderPillarsSection: function() {
             <div class="rps-config-grid">${rpsRows}</div>
         </div>`;
 },
+renderShortcutsSection: function () {
+    const shortcuts = window.ConfigManager?.getShortcuts?.() || [];
+    const catalog   = window.Shortcuts?.CATALOG || [];
+    const MAX       = 6;
 
+    const rows = shortcuts.map((s, i) => `
+        <div class="shortcut-row">
+            <span class="shortcut-label">⚡ ${s.label}</span>
+            <div class="shortcut-row-actions">
+                ${i > 0 ? `<button class="btn btn-sm" onclick="Config.moveShortcut(${i}, -1)" title="Subir">↑</button>` : '<span style="width:32px"></span>'}
+                ${i < shortcuts.length - 1 ? `<button class="btn btn-sm" onclick="Config.moveShortcut(${i}, 1)" title="Bajar">↓</button>` : '<span style="width:32px"></span>'}
+                <button class="btn btn-sm btn-danger" onclick="Config.removeShortcut(${i})" title="Quitar">✕</button>
+            </div>
+        </div>`).join('');
+
+    const available = catalog.filter(c => !shortcuts.some(s => s.label === c.label));
+    const opts = available.length > 0
+        ? '<option value="">-- Agregar atajo --</option>' +
+          available.map((c, i) => `<option value="${i}">${c.label}</option>`).join('')
+        : '<option value="">Todos los atajos ya están agregados</option>';
+
+    const canAdd = shortcuts.length < MAX && available.length > 0;
+
+    return `
+        <div class="config-help-text">
+            <p>Configura hasta <strong>${MAX} atajos</strong> para el botón flotante ⚡. El orden determina cómo aparecen en el menú.</p>
+        </div>
+        <div class="shortcuts-config-list">
+            ${rows || '<p class="stats-empty" style="margin:0">No hay atajos configurados.</p>'}
+        </div>
+        ${canAdd ? `
+        <div class="add-keyword-container" style="margin-top:12px;">
+            <select class="keyword-input" id="shortcut-add-select">${opts}</select>
+            <button class="btn btn-sm" onclick="Config.addShortcut()">+ Agregar</button>
+        </div>` : `<p style="opacity:0.4;font-size:0.8rem;margin-top:8px;">Máximo de ${MAX} atajos alcanzado.</p>`}`;
+},
+
+addShortcut: function () {
+    const sel = document.getElementById('shortcut-add-select');
+    if (!sel || !sel.value) return;
+    const catalog   = window.Shortcuts?.CATALOG || [];
+    const shortcuts = window.ConfigManager?.getShortcuts?.() || [];
+    const available = catalog.filter(c => !shortcuts.some(s => s.label === c.label));
+    const entry     = available[parseInt(sel.value)];
+    if (!entry || shortcuts.length >= 6) return;
+    shortcuts.push(entry);
+    window.ConfigManager.saveShortcuts(shortcuts);
+    this.render();
+    this._restoreAndScroll('shortcuts-section', null);
+    requestAnimationFrame(() => {
+        const sec = document.getElementById('shortcuts-section');
+        if (sec) sec.style.display = 'block';
+    });
+},
+
+removeShortcut: function (index) {
+    const shortcuts = window.ConfigManager?.getShortcuts?.() || [];
+    shortcuts.splice(index, 1);
+    window.ConfigManager.saveShortcuts(shortcuts);
+    this.render();
+    requestAnimationFrame(() => {
+        const sec = document.getElementById('shortcuts-section');
+        if (sec) sec.style.display = 'block';
+    });
+},
+
+moveShortcut: function (index, dir) {
+    const shortcuts = window.ConfigManager?.getShortcuts?.() || [];
+    const newIndex  = index + dir;
+    if (newIndex < 0 || newIndex >= shortcuts.length) return;
+    [shortcuts[index], shortcuts[newIndex]] = [shortcuts[newIndex], shortcuts[index]];
+    window.ConfigManager.saveShortcuts(shortcuts);
+    this.render();
+    requestAnimationFrame(() => {
+        const sec = document.getElementById('shortcuts-section');
+        if (sec) sec.style.display = 'block';
+    });
+},
 addPillarRole: function(pillar) {
     const sel = document.getElementById(`pillar-add-${pillar}`);
     if (!sel || !sel.value) return;

@@ -192,3 +192,105 @@ if (document.readyState === 'loading') {
 // ====================================
 window.Navigation = Navigation;
 window.switchTab = switchTab;
+
+// ====================================
+// SHORTCUTS
+// ====================================
+const Shortcuts = {
+    CATALOG: [
+        { label: 'Buscador',             tab: 'buscador',     sectionId: null,                    module: null },
+        { label: 'Decks Guardados',      tab: 'mideck',       sectionId: 'saved-decks-sec',       module: 'Deck' },
+        { label: 'Mi Deck - Notas',      tab: 'mideck',       sectionId: 'notes-sec',             module: 'Deck' },
+        { label: 'Análisis vs Meta',     tab: 'estadisticas', sectionId: 'deck-analysis-sec',     module: 'Estadisticas' },
+        { label: 'Internal Score',       tab: 'estadisticas', sectionId: 'deck-stats-sec',        module: 'Estadisticas' },
+        { label: 'Winrate',              tab: 'estadisticas', sectionId: 'winrate-sec',           module: 'Estadisticas' },
+        { label: 'Top Tier',             tab: 'estadisticas', sectionId: 'top-tier-sec',          module: 'Estadisticas' },
+        { label: 'Decks del Meta',       tab: 'estadisticas', sectionId: 'meta-decks-sec',        module: 'Estadisticas' },
+        { label: 'Poder de Cartas',      tab: 'estadisticas', sectionId: 'power-scores-sec',      module: 'Estadisticas' },
+        { label: 'Counter-Cards',        tab: 'estadisticas', sectionId: 'counter-cards-sec',     module: 'Estadisticas' },
+        { label: 'Exportar Datos',       tab: 'estadisticas', sectionId: 'export-sec',            module: 'Estadisticas' },
+        { label: 'Nivel Duelista',       tab: 'estadisticas', sectionId: 'duelista-sec',          module: 'Estadisticas' },
+        { label: 'Roles',                tab: 'config',       sectionId: 'roles-section',         module: 'Config' },
+        { label: 'Mecánicas y Counters', tab: 'config',       sectionId: 'specialties-section',   module: 'Config' },
+        { label: 'Staples',              tab: 'config',       sectionId: 'staples-section',       module: 'Config' },
+        { label: 'Nomenclatura',         tab: 'config',       sectionId: 'nomenclature-section',  module: 'Config' },
+        { label: 'Pilares',              tab: 'config',       sectionId: 'pillars-section',       module: 'Config' }
+    ],
+
+    init: function () {
+        this._createButton();
+    },
+
+    _createButton: function () {
+        if (document.getElementById('shortcuts-float-btn')) return;
+        const btn = document.createElement('button');
+        btn.id        = 'shortcuts-float-btn';
+        btn.className = 'shortcuts-float-btn';
+        btn.innerHTML = '⚡';
+        btn.title     = 'Accesos rápidos';
+        btn.onclick   = (e) => { e.stopPropagation(); this.toggleMenu(); };
+        document.body.appendChild(btn);
+    },
+
+    toggleMenu: function () {
+        document.getElementById('shortcuts-overlay') ? this.closeMenu() : this.openMenu();
+    },
+
+    openMenu: function () {
+        this.closeMenu();
+
+        const shortcuts = window.ConfigManager?.getShortcuts?.() || this.CATALOG.slice(0, 4);
+
+        // Overlay con fondo oscuro
+        const overlay = document.createElement('div');
+        overlay.id        = 'shortcuts-overlay';
+        overlay.className = 'shortcuts-overlay';
+        overlay.onclick   = () => this.closeMenu();
+
+        // Panel centrado
+        const menu = document.createElement('div');
+        menu.className = 'shortcuts-menu';
+        menu.onclick   = (e) => e.stopPropagation();
+
+        menu.innerHTML = `
+            <div class="shortcuts-menu-title">Accesos Rápidos</div>
+            ${shortcuts.map((s, i) => `
+                <button class="shortcuts-menu-item" onclick="Shortcuts.go(${i})">
+                    ${s.label}
+                </button>`).join('')}`;
+
+        overlay.appendChild(menu);
+        document.body.appendChild(overlay);
+    },
+
+    closeMenu: function () {
+        const o = document.getElementById('shortcuts-overlay');
+        if (o) o.remove();
+    },
+
+    go: function (index) {
+        const shortcuts = window.ConfigManager?.getShortcuts?.() || this.CATALOG.slice(0, 4);
+        const s = shortcuts[index];
+        if (!s) return;
+        this.closeMenu();
+
+        if (window.Navigation) Navigation.showTab(s.tab);
+
+        if (s.sectionId) {
+            setTimeout(() => {
+                const el = document.getElementById(s.sectionId);
+                if (!el) return;
+                if (el.style.display === 'none' || el.style.display === '') {
+                    el.style.display = 'block';
+                }
+                if (s.sectionId === 'winrate-sec'    && window.Winrate)      Winrate.refreshSection();
+                if (s.sectionId === 'duelista-sec'   && window.Duelista)     Duelista.refreshSection();
+                if (s.sectionId === 'top-tier-sec'   && window.Estadisticas) Estadisticas._refreshTopTier();
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 80);
+        }
+    }
+};
+
+window.Shortcuts = Shortcuts;
+document.addEventListener('DOMContentLoaded', () => Shortcuts.init());

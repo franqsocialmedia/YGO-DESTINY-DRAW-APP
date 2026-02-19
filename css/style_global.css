@@ -363,10 +363,12 @@ body {
     z-index: 1000;
     box-shadow: 0 2px 10px rgba(0,0,0,0.4);
     transition: transform 0.15s, box-shadow 0.15s;
+    opacity:0.4;
 }
 .help-float-btn:hover {
     transform: scale(1.1);
     box-shadow: 0 4px 16px rgba(255,215,0,0.4);
+    opacity:1;
 }
 
 .help-panel-overlay {
@@ -500,6 +502,117 @@ body {
     color: rgba(241,241,241,0.7);
     line-height: 1.65;
     border-top: 1px solid var(--border-color, rgba(255,215,0,0.1));
+}
+/* ══════════════════════════════════════════
+   SHORTCUTS FLOAT BUTTON
+══════════════════════════════════════════ */
+.shortcuts-float-btn {
+    position: fixed;
+    top: 80px;
+    left: 16px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--gold-color, #FFD700);
+    color: #000;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+    opacity:0.4;
+}
+.shortcuts-float-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(255,215,0,0.4);
+    opacity:1;
+}
+
+/* Overlay oscuro — igual que cardviewer */
+.shortcuts-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity:1;
+}
+
+/* Panel centrado */
+.shortcuts-menu {
+    background: #12122a;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 14px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 220px;
+    max-width: 90vw;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    opacity:1;
+}
+.shortcuts-menu-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.4;
+    padding: 4px 12px 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 2px;
+    opacity:1;
+}
+.shortcuts-menu-item {
+    background: transparent;
+    border: none;
+    color: rgba(241, 241, 241, 0.85);
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 0.9rem;
+    transition: background 0.12s, color 0.12s;
+    width: 100%;
+    opacity:1;
+}
+.shortcuts-menu-item:hover {
+    background: rgba(255, 215, 0, 0.15);
+    color: #FFD700;
+    opacity:1;
+}
+
+/* ── Shortcuts config en Config ─────────── */
+.shortcuts-config-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+    opacity:1;
+}
+.shortcut-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 8px 12px;
+    opacity:1;
+}
+.shortcut-label {
+    font-size: 0.85rem;
+    color: rgba(241,241,241,0.8);
+    opacity:1;
+}
+.shortcut-row-actions {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    opacity:1;
 }
 /* ====================================
    RESPONSIVE - TABLET

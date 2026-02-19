@@ -209,9 +209,15 @@ const ConfigManager = {
             ['resilience',  'power'],
             ['power',       'consistency'],
             ['consistency', 'resilience']
+        ],
+        shortcuts: [
+            { label: 'Decks Guardados', tab: 'mideck',       sectionId: 'saved-decks-sec',  module: 'Deck' },
+            { label: 'Winrate',          tab: 'estadisticas', sectionId: 'winrate-sec',       module: 'Estadisticas' },
+            { label: 'Staples',          tab: 'config',       sectionId: 'staples-section',   module: 'Config' },
+            { label: 'Buscador',         tab: 'buscador',     sectionId: null,                module: null }
         ]
-        
     },
+    
 
     // ===============================
     // CORE: CARGAR / GUARDAR
@@ -910,6 +916,16 @@ getPillarRPS: function () {
 savePillarRPS: function (rps) {
     const config = this.getConfig();
     config.pillarRPS = rps;
+    this.saveConfig(config);
+},
+getShortcuts: function () {
+    const config = this.getConfig();
+    return config.shortcuts || JSON.parse(JSON.stringify(this.defaultConfig.shortcuts));
+},
+
+saveShortcuts: function (shortcuts) {
+    const config = this.getConfig();
+    config.shortcuts = shortcuts;
     this.saveConfig(config);
 },
 renderStaplesPanel: function () {
