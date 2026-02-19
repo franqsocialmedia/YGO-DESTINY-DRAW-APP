@@ -540,7 +540,7 @@ recalculateAllMetaDeckScores: function () {
 _renderMetaDeckScoreHTML: function (cached) {
     const iScore = (cached?.internalScore != null) ? cached.internalScore : null;
     const eScore = (cached?.externalScore != null) ? cached.externalScore : null;
-    const iColor = iScore === null ? '#636e72' : iScore >= 7 ? '#00b894' : iScore >= 5 ? '#fdcb6e' : '#d63031';
+    const iColor = iScore === null ? '#636e72' : iScore >= 20 ? '#00b894' : iScore >= 10 ? '#fdcb6e' : '#d63031';
     const eColor = eScore === null ? '#636e72' : eScore >= 7 ? '#00b894' : eScore >= 4 ? '#fdcb6e' : '#d63031';
     return `
         <div class="meta-deck-score-row">
@@ -566,16 +566,16 @@ _renderMetaDeckScoreHTML: function (cached) {
         const counter = Stats.calculateCounterDeckScore(Deck.cards, this.powerScoreCache);
 
         // Proporciones para barra compuesta (pesos iguales 0.33 cada uno)
-        const contC = parseFloat(stats.consistency) * 0.33;
-        const contP = parseFloat(stats.power) * 0.33;
-        const contR = parseFloat(stats.resilience) * 0.33;
+        const contC = parseFloat(stats.consistency);
+        const contP = parseFloat(stats.power);
+        const contR = parseFloat(stats.resilience);
         const total = contC + contP + contR || 1;
         const pctC  = Math.round((contC / total) * 100);
         const pctP  = Math.round((contP / total) * 100);
         const pctR  = 100 - pctC - pctP;
 
-        const scoreColor = stats.internalScore >= 7 ? '#00b894'
-                         : stats.internalScore >= 5 ? '#fdcb6e' : '#d63031';
+        const scoreColor = stats.internalScore >= 20 ? '#00b894'
+                         : stats.internalScore >= 10 ? '#fdcb6e' : '#d63031';
 
         const breakdownRows = counter.breakdown.slice(0, 5).map(c => `
             <div class="counter-breakdown-row">
@@ -599,8 +599,8 @@ _renderMetaDeckScoreHTML: function (cached) {
             <div class="stats-card">
                 <div class="stats-header">
                     <h3>Internal Score — ${Deck.name}</h3>
-                    <div class="stats-score" style="color:${scoreColor}">
-                        ${stats.internalScore} / 10
+                   <div class="stats-score" style="color:${scoreColor}">
+                        ${stats.internalScore} pts
                     </div>
                 </div>
 
@@ -608,14 +608,14 @@ _renderMetaDeckScoreHTML: function (cached) {
                     <div class="stats-composite-bar">
                         <div class="scb-segment scb-consistency"
                              style="width:${pctC}%"
-                             title="Consistencia ${stats.consistency}/10 · ${pctC}% del score"></div>
+                             title="Consistencia ${stats.consistency} pts · ${pctC}% del score"></div>
                         <div class="scb-segment scb-power"
                              style="width:${pctP}%"
-                             title="Potencia ${stats.power}/10 · ${pctP}% del score"></div>
+                             title="Potencia ${stats.power} pts · ${pctP}% del score"></div>
                         <div class="scb-segment scb-resilience"
                              style="width:${pctR}%"
-                             title="Resiliencia ${stats.resilience}/10 · ${pctR}% del score"></div>
-                    </div>
+                             title="Resiliencia ${stats.resilience} pts · ${pctR}% del score"></div>
+                        </div>
                     <div class="scb-legend">
                         <span class="scb-dot" style="background:#00b894"></span>
                         Consistencia <strong>${stats.consistency}</strong>
@@ -1121,7 +1121,7 @@ _renderMetaDeckScoreHTML: function (cached) {
         const internalScore = parseFloat(internalStats.internalScore);
         const externalScore = analysis.externalScore;
 
-        const iColor = internalScore >= 7 ? '#00b894' : internalScore >= 5 ? '#fdcb6e' : '#d63031';
+        const iColor = internalScore >= 20 ? '#00b894' : internalScore >= 10 ? '#fdcb6e' : '#d63031';
         const eColor = externalScore === null ? '#636e72'
                      : externalScore >= 7 ? '#00b894'
                      : externalScore >= 4 ? '#fdcb6e' : '#d63031';
@@ -1231,9 +1231,9 @@ _renderMetaDeckScoreHTML: function (cached) {
                     <div class="analysis-score-box">
                         <div class="asb-title">Poder Teórico</div>
                         <div class="asb-value" style="color:${iColor}">${internalScore}</div>
-                        <div class="asb-sub">/ 10</div>
+                        <div class="asb-sub">pts</div>
                         <div class="asb-bar-track">
-                            <div class="asb-bar-fill" style="width:${internalScore*10}%;background:${iColor}"></div>
+                            <div class="asb-bar-fill" style="width:${Math.min(100,(internalScore/30)*100)}%;background:${iColor}"></div>
                         </div>
                         <div class="asb-label">Internal Score</div>
                     </div>
@@ -1258,7 +1258,7 @@ _renderMetaDeckScoreHTML: function (cached) {
                 <!-- VEREDICTO -->
                 <div class="analysis-verdict">
                     El deck <strong>${Deck.name}</strong> posee un poder teórico de
-                    <span style="color:${iColor}">${internalScore}/10</span>,
+                    <span style="color:${iColor}">${internalScore} pts</span>,
                     pero frente al META actual es de
                     <span style="color:${eColor}">${externalScore !== null ? externalScore+'/10' : 'N/A'}</span>
                     ${analysis.counterDecks.length > 0
@@ -1339,10 +1339,10 @@ _renderMetaDeckScoreHTML: function (cached) {
         let txt = `REPORTE DE DECK - DESTINY DRAW\n`;
         txt += `Deck: ${Deck.name}\nFecha: ${now}\n`;
         txt += section('PUNTUACIONES', [
-            `Internal Score  : ${stats.internalScore} / 10`,
-            `  Consistencia  : ${stats.consistency} / 10`,
-            `  Potencia      : ${stats.power} / 10`,
-            `  Resiliencia   : ${stats.resilience} / 10`,
+            `Internal Score  : ${stats.internalScore} pts`,
+            `  Consistencia  : ${stats.consistency} pts`,
+            `  Potencia      : ${stats.power} pts`,
+            `  Resiliencia   : ${stats.resilience} pts`,
             `External Score  : ${analysis.externalScore !== null ? analysis.externalScore + ' / 10' : 'N/A'}`,
             `Anti-META    : ${counter.finalScore} pts (${counter.level})`,
             `Main Deck       : ${stats.mainCards ?? stats.totalCards} cartas`,

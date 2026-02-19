@@ -113,28 +113,24 @@
 
     if (mainCards === 0) mainCards = 1;
 
-    // ── Normalizar a 0–10 ────────────────────────────────────────
-    const consistency = Math.min(10, (consistencyScore / mainCards) * 15);
-    const power       = Math.min(10, (powerScore        / mainCards) * 20);
-    const resilience  = Math.min(10, (resilienceScore   / mainCards) * 18);
-
-    const lucky    = 1;
-    const rawScore = (consistency * 0.33 + power * 0.33 + resilience * 0.33) * lucky;
+    // ── Scores absolutos (sin normalización ni ponderación) ──────
+    const consistency = Math.max(0, consistencyScore);
+    const power       = Math.max(0, powerScore);
+    const resilience  = Math.max(0, resilienceScore);
 
     let penalty = 0;
     if (mainCards > 43) penalty = (mainCards - 43) * 0.5;
 
-    const internalScore = Math.max(0, rawScore - penalty);
+    const internalScore = Math.max(0, consistency + power + resilience - penalty);
 
     return {
-        internalScore: internalScore.toFixed(2),
-        consistency:   consistency.toFixed(2),
-        power:         power.toFixed(2),
-        resilience:    resilience.toFixed(2),
+        internalScore: parseFloat(internalScore.toFixed(2)),
+        consistency:   parseFloat(consistency.toFixed(2)),
+        power:         parseFloat(power.toFixed(2)),
+        resilience:    parseFloat(resilience.toFixed(2)),
         totalCards,
         mainCards,
-        penalty:       penalty.toFixed(2),
-        lucky
+        penalty:       parseFloat(penalty.toFixed(2))
     };
 },
         // ===============================

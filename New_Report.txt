@@ -740,3 +740,34 @@ Igual que el Internal, todo eso podría exponerse a Config. Actualmente solo la 
 Se procedio luego a ajustar el mecanismo de Mecanicas (antes llamado especialidad) y Counters para que puedan ponerse de forma mas directa.
 
 Los roles ahora pueden tener mas de 1 nomenclatura asignada a buscar dicha palabra clave.
+
+========================================================================
+
+Etapas de cambio
+Etapa 1 — Internal Score: pilares absolutos
+
+Archivo: stats.js
+Cambio: eliminar la normalización × factor / totalCards, limitada a 10. Retornar la suma acumulada real de cada pilar (con rendimientos decrecientes aplicados). El score total es la suma de los 3 pilares sin ponderar.
+Impacto en UI: estadisticas.js y el widget flotante muestran el número absoluto. Los labels "Consistencia / Potencia / Resiliencia" se mantienen.
+
+Etapa 2 — RPS entre pilares en External Score
+
+Archivo: stats.js (función calculateExternalScore)
+Cambio: agregar un modificador que penalice el External Score según qué pilar es dominante en el deck activo vs. el pilar dominante del meta. Necesita una función auxiliar getDominantPillar(internalScore).
+Esto es nuevo lógica, no toca nada existente del Internal Score.
+
+Etapa 3 — Counter fortalecido por frecuencia de mecánica countered
+
+Archivo: estadisticas.js (función calculatePowerScore)
+Cambio: dos pases — primero acumular frecuencia de mecánicas en el meta, luego multiplicar el counterBonus de cada carta contra el peso de la mecánica que countera.
+Archivo secundario: stats.js (calculateExternalScore) — usar el nuevo counterBonus ponderado al cruzar amenazas.
+
+Etapa 4 — Análisis de mecánicas al importar decks del meta + UX de carga
+
+Archivo: estadisticas.js (función processYDKFile)
+Cambio: ejecutar SpecialtyAnalyzer.analyzeCard() por cada carta al importar, guardar el resultado junto al deck en yugioh_meta_decks. Agregar barra de progreso "Analizando carta X de Y..." durante el proceso. El botón "Actualizar" usa estos datos pre-calculados para cruzar todo.
+
+Etapa 5 — External Score cross-deck (N×N)
+
+Archivo: estadisticas.js (nuevo método calculateCrossExternalScores())
+Cambio: al presionar "Actualizar", iterar todos los decks del meta, comparar internal scores + mecánicas + counters de cada uno contra los demás, y guardar en una nueva clave de localStorage (yugioh_cross_scores). Esto es el cambio más grande y se puede construir sobre los datos de la Etapa 4.

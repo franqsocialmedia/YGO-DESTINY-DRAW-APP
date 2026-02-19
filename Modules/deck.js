@@ -650,13 +650,13 @@ const Deck = {
                 internalScore = parseFloat(stats.internalScore);
                 
                 // Determinar tier según Internal Score
-                if (internalScore >= 7.5) {
+                if (internalScore >= 20) {
                     tierLabel = 'Tier 1';
                     tierClass = 'tier-1';
-                } else if (internalScore >= 6) {
+                } else if (internalScore >= 12) {
                     tierLabel = 'Tier 2';
                     tierClass = 'tier-2';
-                } else if (internalScore >= 4) {
+                } else if (internalScore >= 6) {
                     tierLabel = 'Tier 3';
                     tierClass = 'tier-3';
                 }

@@ -680,7 +680,7 @@ renderCardContribution: function (card) {
             const sign  = data.delta > 0 ? '+' : '';
             const dColor = data.delta > 0 ? '#00b894'
                          : data.delta < 0 ? '#d63031' : '#636e72';
-            const pct   = Math.min(100, (data.after / 10) * 100);
+            const pct   = Math.min(100, (data.after / 20) * 100);
             return `
                 <div class="cv-contrib-row">
                     <span class="cv-contrib-label">${label}</span>
