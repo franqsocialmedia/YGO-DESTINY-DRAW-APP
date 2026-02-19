@@ -40,21 +40,21 @@ init: function () {
                 <div class="welcome-buttons">
 
                     <button class="welcome-btn welcome-btn-novato"
-                        onclick="Welcome.enter('formacion', 'ots/Climax Theme 5.mp3')">
+                        onclick="Welcome.enter('formacion', 'novato')"
                     <span class="wb-icon">🌱</span>
                     <span class="wb-label">Novato</span>
                     <span class="wb-desc">Aprende las bases del juego y la app</span>
                 </button>
 
                 <button class="welcome-btn welcome-btn-casual"
-                        onclick="Welcome.enter('mideck', 'ots/Climax Theme 5.mp3')">
+                        onclick="Welcome.enter('mideck', 'casual')"
                     <span class="wb-icon">🃏</span>
                     <span class="wb-label">Casual</span>
                     <span class="wb-desc">Construye decks y juega por diversión</span>
                 </button>
 
                 <button class="welcome-btn welcome-btn-competitivo"
-                        onclick="Welcome.enter('buscador', 'ots/Climax Theme 5.mp3')">
+                        onclick="Welcome.enter('buscador', 'competitivo')"
                     <span class="wb-icon">⚔️</span>
                     <span class="wb-label">Competitivo</span>
                     <span class="wb-desc">Analiza el meta y optimiza tu estrategia</span>
@@ -62,7 +62,7 @@ init: function () {
 
                 </div>
 
-               <button class="welcome-skip" onclick="Welcome.enter('buscador', 'ots/Climax Theme 5.mp3')">
+               <button class="welcome-skip" onclick="Welcome.enter('buscador', 'default')">
                     Entrar sin seleccionar
                 </button>
 
@@ -97,8 +97,13 @@ init: function () {
             if (btn) btn.textContent = '🔇';
         }
     },
-enter: function (tabName, musicPath) {
-    this.startMusic(musicPath);
+enter: function (tabName, levelKey) {
+    // levelKey: 'novato' | 'casual' | 'competitivo' | 'default'
+    if (window.MusicPlayer) {
+        const cfg   = window.ConfigManager ? ConfigManager.getMusicConfig() : {};
+        const path  = cfg.tracks?.[levelKey] || 'ots/Climax Theme 2.mp3';
+        MusicPlayer.setTrack(path);
+    }
     this.dismiss();
     if (window.Navigation) Navigation.showTab(tabName);
 },
@@ -143,6 +148,79 @@ dismiss: function () {
     }, 500);
 },
 };
+const MusicPlayer = {
+    audio:       null,
+    currentPath: null,
+
+    init: function () {
+        const cfg = window.ConfigManager ? ConfigManager.getMusicConfig() : { enabled: true, volume: 0.40, tracks: {} };
+        this.currentPath = cfg.tracks?.default || 'ots/Climax Theme 2.mp3';
+        this._buildAudio(this.currentPath, cfg.volume ?? 0.40);
+        if (cfg.enabled !== false) this._createButton();
+    },
+
+    setTrack: function (path) {
+        const cfg      = window.ConfigManager ? ConfigManager.getMusicConfig() : {};
+        if (cfg.enabled === false) return;
+        const playing  = this.audio && !this.audio.paused;
+        this.currentPath = path;
+        this._buildAudio(path, cfg.volume ?? 0.40);
+        if (playing) this.audio.play().catch(() => {});
+        this._updateButton();
+    },
+
+    _buildAudio: function (path, volume) {
+        if (this.audio) { this.audio.pause(); this.audio = null; }
+        try {
+            this.audio        = new Audio(path);
+            this.audio.loop   = true;
+            this.audio.volume = Math.min(1, Math.max(0, volume ?? 0.40));
+        } catch (_) {}
+    },
+
+    toggle: function () {
+        const cfg = window.ConfigManager ? ConfigManager.getMusicConfig() : {};
+        if (cfg.enabled === false || !this.audio) return;
+        if (this.audio.paused) {
+            this.audio.play().catch(() => {});
+        } else {
+            this.audio.pause();
+        }
+        this._updateButton();
+    },
+
+    setVolume: function (vol) {
+        if (this.audio) this.audio.volume = Math.min(1, Math.max(0, parseFloat(vol)));
+    },
+
+    setEnabled: function (enabled) {
+        if (!enabled && this.audio) this.audio.pause();
+        const btn = document.getElementById('music-float-btn');
+        if (btn) btn.style.display = enabled ? '' : 'none';
+        this._updateButton();
+    },
+
+    _createButton: function () {
+        if (document.getElementById('music-float-btn')) return;
+        const btn     = document.createElement('button');
+        btn.id        = 'music-float-btn';
+        btn.className = 'music-float-btn';
+        btn.onclick   = () => this.toggle();
+        document.body.appendChild(btn);
+        this._updateButton();
+    },
+
+    _updateButton: function () {
+        const btn = document.getElementById('music-float-btn');
+        if (!btn) return;
+        const playing   = this.audio && !this.audio.paused;
+        btn.textContent = playing ? '⏸' : '▶';
+        btn.title       = playing ? 'Pausar música' : 'Reproducir música';
+    }
+};
+
+window.MusicPlayer = MusicPlayer;
+document.addEventListener('DOMContentLoaded', () => MusicPlayer.init());
 
 window.Welcome = Welcome;
 //document.addEventListener('DOMContentLoaded', () => Welcome.init());

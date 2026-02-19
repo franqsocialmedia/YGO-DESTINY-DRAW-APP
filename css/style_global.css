@@ -614,6 +614,36 @@ body {
     align-items: center;
     opacity:1;
 }
+
+/* ── BOTÓN FLOTANTE DE MÚSICA ── */
+#music-float-btn {
+    position: fixed;
+    bottom: 183px;   /* encima de scrollBottomBtn (135px + 40px + 8px) */
+    right: 20px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #c0c0c0;
+    color: #222;
+    border: none;
+    cursor: pointer;
+    font-size: 0.6rem;
+    line-height: 1;
+    z-index: 9999;
+    opacity: 0.4;
+    transition: opacity 0.2s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    padding: 0;
+}
+#music-float-btn:hover {
+    opacity: 1;
+    transform: scale(1.12);
+}
+
+
 /* ====================================
    RESPONSIVE - TABLET
    Adaptaciones para tablets (max-width: 768px)

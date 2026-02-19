@@ -101,7 +101,17 @@ const Config = {
                     <p class="stats-empty">Abre la sección para ver la banlist.</p>
                 </div>
             </div>
-            
+
+            <!-- Sección: Ajustes de Música -->
+            <div class="config-section">
+                <h3 class="config-section-title" onclick="Config.toggleSection('music-section')">
+                    ▶ Ajustes de Música
+                </h3>
+                <div id="music-section" class="config-section-content" style="display:none;">
+                    ${this.renderMusicSection()}
+                </div>
+            </div>
+
             <!-- Botones de acción -->
             <div class="config-actions">
                 <button class="btn btn-primary" onclick="Config.exportConfig()">📥 Exportar Data</button>
@@ -1208,7 +1218,77 @@ duplicateRole: function(roleName) {
     if (!newName) return;
     this.render();
     this._restoreAndScroll('roles-section', `role-anchor-${CSS.escape(newName)}`);
-}
+},
+renderMusicSection: function () {
+    const cfg    = window.ConfigManager ? ConfigManager.getMusicConfig() : ConfigManager.defaultMusicConfig;
+    const tracks = cfg.tracks || {};
+    const volume = cfg.volume ?? 0.40;
+    const enabled = cfg.enabled !== false;
+
+    const row = (key, label) => `
+        <div class="music-track-row">
+            <label class="music-track-label">${label}</label>
+            <input type="text" class="config-input music-track-input"
+                   id="music-track-${key}"
+                   value="${tracks[key] || ''}"
+                   placeholder="ots/nombre.mp3">
+        </div>`;
+
+    return `
+        <div class="music-config-block">
+            <label class="music-enable-label">
+                <input type="checkbox" id="music-enabled-cb" ${enabled ? 'checked' : ''}>
+                Activar música de fondo
+            </label>
+
+            <div class="music-volume-row">
+                <span class="music-track-label">Volumen</span>
+                <input type="range" id="music-volume-slider"
+                       min="0" max="1" step="0.05" value="${volume}"
+                       oninput="Config.onVolumeChange(this.value)">
+                <span id="music-volume-display" class="music-volume-display">
+                    ${Math.round(volume * 100)}%
+                </span>
+            </div>
+
+            <div class="music-tracks-block">
+                <div class="music-tracks-title">Pistas por Perfil</div>
+                ${row('default',     '🎵 Por defecto')}
+                ${row('novato',      '🌱 Novato')}
+                ${row('casual',      '🃏 Casual')}
+                ${row('competitivo', '⚔️ Competitivo')}
+            </div>
+
+            <button class="btn btn-primary" onclick="Config.saveMusicConfig()" style="margin-top:12px;">
+                Guardar Ajustes de Música
+            </button>
+        </div>`;
+},
+
+saveMusicConfig: function () {
+    const enabled = document.getElementById('music-enabled-cb')?.checked !== false;
+    const volume  = parseFloat(document.getElementById('music-volume-slider')?.value ?? 0.40);
+    const tracks  = {
+        default:     (document.getElementById('music-track-default')?.value     || 'ots/Climax Theme 2.mp3').trim(),
+        novato:      (document.getElementById('music-track-novato')?.value      || 'ots/Climax Theme 5.mp3').trim(),
+        casual:      (document.getElementById('music-track-casual')?.value      || 'ots/Climax Theme 5.mp3').trim(),
+        competitivo: (document.getElementById('music-track-competitivo')?.value || 'ots/Climax Theme 5.mp3').trim()
+    };
+    const cfg = { enabled, volume, tracks };
+    if (window.ConfigManager) ConfigManager.saveMusicConfig(cfg);
+    if (window.MusicPlayer) {
+        MusicPlayer.setVolume(volume);
+        MusicPlayer.setEnabled(enabled);
+    }
+    const disp = document.getElementById('music-volume-display');
+    if (disp) disp.textContent = Math.round(volume * 100) + '%';
+},
+
+onVolumeChange: function (val) {
+    const disp = document.getElementById('music-volume-display');
+    if (disp) disp.textContent = Math.round(parseFloat(val) * 100) + '%';
+    if (window.MusicPlayer) MusicPlayer.setVolume(parseFloat(val));
+},
 };
 
 window.Config = Config;

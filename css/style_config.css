@@ -923,6 +923,61 @@
     color: rgba(255,255,255,0.25);
     margin-left: auto;
 }
+
+/* ── AJUSTES DE MÚSICA ── */
+.music-config-block { display: flex; flex-direction: column; gap: 14px; }
+
+.music-enable-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    color: var(--text-light);
+    cursor: pointer;
+}
+.music-enable-label input[type="checkbox"] { accent-color: var(--gold-color); width: 15px; height: 15px; }
+
+.music-volume-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.music-volume-slider { flex: 1; accent-color: var(--gold-color); }
+.music-volume-display {
+    font-size: 0.8rem;
+    color: var(--gold-color);
+    min-width: 36px;
+    text-align: right;
+}
+
+.music-tracks-block { display: flex; flex-direction: column; gap: 8px; }
+.music-tracks-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: rgba(255,215,0,0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+.music-track-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.music-track-label {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.65);
+    min-width: 130px;
+    flex-shrink: 0;
+}
+.music-track-input { flex: 1; font-size: 0.8rem; }
+
+@media (max-width: 480px) {
+    .music-track-row    { flex-direction: column; align-items: flex-start; }
+    .music-track-label  { min-width: unset; }
+    .music-track-input  { width: 100%; }
+}
+
 /* ====================================
    RESPONSIVE
    ==================================== */

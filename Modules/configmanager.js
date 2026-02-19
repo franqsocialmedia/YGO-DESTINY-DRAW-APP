@@ -1015,5 +1015,34 @@ addStapleToDeck: function (index) {
             .catch(() => {});
     }
 },
+
+// ===============================
+// MÚSICA CONFIG
+// ===============================
+MUSIC_KEY: 'yugioh_music_config',
+
+defaultMusicConfig: {
+    enabled: true,
+    volume: 0.40,
+    tracks: {
+        default:     'ots/Climax Theme 2.mp3',
+        novato:      'ots/Climax Theme 5.mp3',
+        casual:      'ots/Climax Theme 5.mp3',
+        competitivo: 'ots/Climax Theme 5.mp3'
+    }
+},
+
+getMusicConfig: function () {
+    try {
+        const saved = JSON.parse(localStorage.getItem(this.MUSIC_KEY));
+        if (!saved) return { ...this.defaultMusicConfig };
+        // Merge tracks para no perder defaults si faltan claves
+        return { ...this.defaultMusicConfig, ...saved, tracks: { ...this.defaultMusicConfig.tracks, ...(saved.tracks || {}) } };
+    } catch (_) { return { ...this.defaultMusicConfig }; }
+},
+
+saveMusicConfig: function (cfg) {
+    localStorage.setItem(this.MUSIC_KEY, JSON.stringify(cfg));
+},
 };
 window.ConfigManager = ConfigManager;
