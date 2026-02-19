@@ -335,6 +335,11 @@ const Deck = {
         localStorage.setItem(`deck_${this.name}`, JSON.stringify(deckData));
         alert('Deck guardado');
         this.render();
+        // Notificar a Estadísticas para actualizar el selector de decks
+        if (window.Estadisticas) {
+            const panel = document.getElementById('deck-selector-panel');
+            if (panel) panel.innerHTML = Estadisticas.renderDeckSelectorPanel();
+        }
     },
 
     getSavedDecks: function () {

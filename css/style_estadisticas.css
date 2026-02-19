@@ -1964,6 +1964,72 @@
     font-weight: bold;
     opacity: 0.75;
 }
+
+/* ── DECK ANALYSIS LAYOUT ── */
+.deck-analysis-layout {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+.deck-analysis-main { flex: 1; min-width: 0; }
+.deck-selector-panel {
+    width: 175px;
+    min-width: 155px;
+    flex-shrink: 0;
+    background: rgba(0,26,51,0.65);
+    border: 1px solid rgba(255,215,0,0.18);
+    border-radius: 8px;
+    padding: 10px 8px;
+    max-height: 520px;
+    overflow-y: auto;
+}
+.dsp-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: rgba(255,215,0,0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+    padding-left: 3px;
+}
+.dsp-row { display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; }
+.dsp-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.15s;
+}
+.dsp-item:hover { background: rgba(255,215,0,0.08); border-color: rgba(255,215,0,0.25); }
+.dsp-selected { background: rgba(255,215,0,0.15) !important; border-color: rgba(255,215,0,0.55) !important; }
+.dsp-thumb { width: 24px; height: 34px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
+.dsp-thumb-placeholder {
+    width: 24px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem; flex-shrink: 0;
+}
+.dsp-name {
+    font-size: 0.68rem; color: rgba(255,255,255,0.82);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    flex: 1; min-width: 0;
+}
+.dsp-folder { font-size: 0.58rem; color: rgba(255,255,255,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dsp-meta-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.dsp-check { color: #00b894; font-weight: 700; font-size: 0.72rem; flex-shrink: 0; }
+.dsp-empty { font-size: 0.63rem; color: rgba(255,255,255,0.3); text-align: center; padding: 4px; margin: 0; }
+
+@media (max-width: 640px) {
+    .deck-analysis-layout { flex-direction: column; }
+    .deck-selector-panel { width: 100%; max-height: 110px; }
+    .dsp-row { flex-direction: row; flex-wrap: wrap; }
+    .dsp-item { flex-direction: column; align-items: center; gap: 1px; padding: 3px 4px; }
+    .dsp-folder, .dsp-thumb-placeholder { display: none; }
+    .dsp-name { font-size: 0.6rem; text-align: center; }
+}
+
 /* ====================================
    RESPONSIVE
    ==================================== */

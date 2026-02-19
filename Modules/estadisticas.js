@@ -1658,13 +1658,178 @@ return `
             ${tierSections}
         </div>`;
 },
+
+// ===============================
+// SELECTOR DE DECK PARA ANÁLISIS
+// ===============================
+renderDeckSelectorPanel: function () {
+    const activeName = window.Deck?.name || '';
+    const hasCards   = window.Deck && Object.keys(Deck.cards || {}).length > 0;
+
+    // Row 1: Mis Decks guardados (alfabético)
+    const savedNames = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('deck_')) savedNames.push(k.replace('deck_', ''));
+    }
+    savedNames.sort((a, b) => a.localeCompare(b));
+
+    const savedHTML = savedNames.length > 0 ? savedNames.map(name => {
+        const isSelected = hasCards && activeName === name;
+        let img = null;
+        try {
+            const raw = localStorage.getItem(`deck_${name}`);
+            if (raw) {
+                const d = JSON.parse(raw);
+                const ca = Object.entries(d.cards || {}).find(([, v]) => v.roles?.includes('Carta As'));
+                if (ca) img = ca[0];
+            }
+        } catch(_) {}
+        return `
+            <div class="dsp-item ${isSelected ? 'dsp-selected' : ''}"
+                 onclick="Estadisticas.loadSavedDeckForAnalysis('${name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">
+                ${img
+                    ? `<img class="dsp-thumb" src="https://images.ygoprodeck.com/images/cards_small/${img}.jpg" onerror="this.style.display='none'">`
+                    : '<div class="dsp-thumb-placeholder">🃏</div>'}
+                <span class="dsp-name">${name}</span>
+                ${isSelected ? '<span class="dsp-check">✓</span>' : ''}
+            </div>`;
+    }).join('') : `<p class="dsp-empty">Sin decks guardados</p>`;
+
+    // Row 2: Decks del Meta (alfabético)
+    const metaList = [];
+    for (const [folder, decks] of Object.entries(this.metaDecks)) {
+        (decks || []).forEach(d => metaList.push({ name: d.filename, folder }));
+    }
+    metaList.sort((a, b) => a.name.localeCompare(b.name));
+
+    const metaHTML = metaList.length > 0 ? metaList.map(({ name, folder }) => {
+        const isSelected = hasCards && activeName === name;
+        return `
+            <div class="dsp-item dsp-meta ${isSelected ? 'dsp-selected' : ''}"
+                 onclick="Estadisticas.loadMetaDeckForAnalysis('${folder}', '${name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">
+                <div class="dsp-thumb-placeholder">⚔️</div>
+                <div class="dsp-meta-info">
+                    <span class="dsp-name">${name}</span>
+                    <span class="dsp-folder">${folder}</span>
+                </div>
+                ${isSelected ? '<span class="dsp-check">✓</span>' : ''}
+            </div>`;
+    }).join('') : '';
+
+    return `
+        <div class="dsp-label">🃏 Mis Decks</div>
+        <div class="dsp-row">${savedHTML}</div>
+        ${metaList.length > 0 ? `<div class="dsp-label">⚔️ Decks del Meta</div><div class="dsp-row">${metaHTML}</div>` : ''}`;
+},
+
+loadSavedDeckForAnalysis: function (deckName) {
+    if (!window.Deck) return;
+    if (Object.keys(Deck.cards).length > 0 && Deck.name !== deckName) {
+        if (!confirm(`¿Reemplazar "${Deck.name}" con "${deckName}"?\nGuarda tu deck si no quieres perderlo.`)) return;
+    }
+    Deck.confirmLoadDeck(deckName);
+    // updateDeckStats se dispara vía onDeckLoaded → re-render automático del panel
+},
+
+loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
+    const deckData = (this.metaDecks[folderName] || []).find(d => d.filename === deckFilename);
+    if (!deckData) return;
+
+    const sections = deckData.sections || {
+        main:  Object.keys(deckData.cardFrequency || {}),
+        extra: [], side: []
+    };
+    const allIds = [
+        ...sections.main.map(id => ({ id, loc: 'main' })),
+        ...sections.extra.map(id => ({ id, loc: 'extra' })),
+        ...sections.side.map(id => ({ id, loc: 'side' }))
+    ];
+    if (allIds.length === 0) {
+        alert('Este deck no tiene cartas cargadas. Re-importa el .ydk para habilitarlo.');
+        return;
+    }
+
+    const loadingEl = document.createElement('div');
+    loadingEl.id = 'meta-deck-loading';
+    loadingEl.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.7);
+        display:flex;align-items:center;justify-content:center;
+        z-index:9999;color:#FFD700;font-size:1.1rem;flex-direction:column;gap:12px;`;
+    loadingEl.innerHTML = `<div class="power-loading-spinner"></div><span>Cargando ${deckFilename}...</span>`;
+    document.body.appendChild(loadingEl);
+
+    try {
+        const newCards = {};
+        for (let i = 0; i < allIds.length; i += 5) {
+            const batch = allIds.slice(i, i + 5);
+            await Promise.all(batch.map(async ({ id, loc }) => {
+                const cached = this.powerScoreCache?.cards?.find(c => String(c.cardId) === String(id));
+                let cardData = cached?.cardData || null;
+                if (!cardData) {
+                    try {
+                        const res  = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${id}`);
+                        const json = await res.json();
+                        cardData   = json.data?.[0] || null;
+                    } catch(_) {}
+                }
+                if (!cardData) return;
+                const qty = deckData.cardFrequency?.[String(id)] || 1;
+                if (!newCards[id]) {
+                    newCards[id] = {
+                        data: cardData, qty, location: loc,
+                        roles: window.Deck?.autoAssignRoles?.(cardData) ?? []
+                    };
+                }
+            }));
+        }
+
+        if (Object.keys(newCards).length === 0) {
+            alert('No se pudieron obtener datos de las cartas. Verifica tu conexión.');
+            return;
+        }
+
+        if (window.Deck) {
+            if (Object.keys(Deck.cards).length > 0) {
+                if (!confirm(`¿Reemplazar el deck activo "${Deck.name}" con "${deckFilename}"?\nGuarda tu deck primero si no quieres perderlo.`)) return;
+            }
+            Deck.cards = newCards;
+            Deck.name  = deckFilename;
+            if (Deck.render) Deck.render();
+        }
+        if (window.Deck) Deck.onDeckLoaded();
+        // Sin Navigation.showTab — permanece en Estadísticas
+
+        this.enrichAndScoreMetaDeck(folderName, deckFilename).then(() => {
+            const sec = document.getElementById('meta-decks-sec');
+            if (sec && sec.style.display !== 'none') {
+                document.querySelectorAll('[data-meta-score-key]').forEach(el => {
+                    const cached = this.metaDeckScores[el.dataset.metaScoreKey];
+                    if (cached) el.innerHTML = this._renderMetaDeckScoreHTML(cached, el.dataset.metaScoreKey);
+                });
+            }
+        });
+    } finally {
+        const el = document.getElementById('meta-deck-loading');
+        if (el) el.remove();
+    }
+},
     // ===============================
     // ANÁLISIS COMPLETO DEL DECK
     // ===============================
     renderDeckAnalysis: function () {
-        if (!Deck || !Deck.cards || Object.keys(Deck.cards).length === 0) {
-            return `<p class="stats-empty">Carga un deck activo para ver el análisis.</p>`;
-        }
+    const selectorPanel = `
+        <div class="deck-selector-panel" id="deck-selector-panel">
+            ${this.renderDeckSelectorPanel()}
+        </div>`;
+
+    if (!Deck || !Deck.cards || Object.keys(Deck.cards).length === 0) {
+        return `<div class="deck-analysis-layout">
+            ${selectorPanel}
+            <div class="deck-analysis-main">
+                <p class="stats-empty">Selecciona un deck de la lista para ver el análisis.</p>
+            </div>
+        </div>`;
+    }
 
         const internalStats = Stats.calculateInternalScore(Deck.cards);
         const analysis      = Stats.calculateExternalScore(Deck.cards, this.powerScoreCache, this.metaDecks);
@@ -1800,8 +1965,11 @@ return `
                </div>`
             : '';
 
-        return `
+        return `<div class="deck-analysis-layout">
+            ${selectorPanel}
+            <div class="deck-analysis-main">
             <div class="deck-analysis-wrap">
+
                 ${noMetaNote}${noSpecNote}
 
                 <!-- SCORES COMPARATIVOS -->
@@ -1868,8 +2036,10 @@ return `
                     <div class="analysis-block-title">💡 Staples del formato no presentes en el deck</div>
                     <div class="analysis-list">${staplesHTML}</div>
                 </div>
-            </div>`;
-    },
+                </div></div>
+            </div>
+    \n`    
+},
 
     // ===============================
     // ABRIR CARTA DESDE ESTADÍSTICAS
