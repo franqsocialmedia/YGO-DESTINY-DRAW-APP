@@ -1297,7 +1297,159 @@
     font-weight: 700 !important;
     margin-top: 4px;
 }
+/* ============================================================
+   DECK STATS GRÁFICA — añadir al FINAL de css/style_mideck.css
+   ============================================================ */
 
+/* ─── SUB-TABS (Composición / Gráfica) ───────────────────── */
+.dstab-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding-bottom: 4px;
+}
+.dstab-btn {
+    padding: 5px 16px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px 6px 0 0;
+    color: rgba(255,255,255,0.45);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.dstab-btn:hover  { background: rgba(255,215,0,0.08); color: rgba(255,255,255,0.8); }
+.dstab-btn.active {
+    background: rgba(255,215,0,0.13);
+    border-color: rgba(255,215,0,0.35);
+    color: var(--gold-color);
+}
+
+/* ─── SECCIONES DE LA GRÁFICA ────────────────────────────── */
+.dsg-section {
+    margin-bottom: 18px;
+}
+.dsg-section-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: rgba(255,215,0,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+/* ─── GRUPO DE BARRAS ────────────────────────────────────── */
+.dsg-group {
+    background: rgba(0,0,0,0.15);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    min-width: 180px;
+    flex-shrink: 0;
+}
+.dsg-group-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 10px;
+}
+
+/* Fila de scroll horizontal para el grupo 2 */
+.dsg-scroll-row {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    /* scrollbar fina estilizada */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,215,0,0.2) transparent;
+}
+.dsg-scroll-row::-webkit-scrollbar { height: 4px; }
+.dsg-scroll-row::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.2); border-radius: 2px; }
+
+/* ─── ÍTEM DE BARRA ──────────────────────────────────────── */
+.dsg-bar-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+}
+.dsg-bar-item:last-child { margin-bottom: 0; }
+
+.dsg-bar-label {
+    width: 80px;
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
+}
+.dsg-bar-track {
+    flex: 1;
+    height: 10px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+    min-width: 60px;
+}
+.dsg-bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.35s ease;
+    min-width: 2px;
+}
+.dsg-bar-pct {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: rgba(0,0,0,0.7);
+    pointer-events: none;
+}
+.dsg-bar-val {
+    width: 22px;
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.55);
+    text-align: left;
+}
+
+/* ─── VARIANTE GRANDE (M/H/T) ────────────────────────────── */
+.dsg-group-mht {
+    padding: 16px 18px;
+}
+.dsg-bar-item-lg { margin-bottom: 12px; gap: 12px; }
+.dsg-bar-label-lg {
+    width: 90px;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+.dsg-bar-track-lg {
+    height: 18px;
+    border-radius: 9px;
+}
+.dsg-bar-val-lg { font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.75); width: 28px; }
+
+/* ─── RESPONSIVE ─────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .dsg-bar-label { width: 64px; font-size: 0.65rem; }
+    .dsg-bar-label-lg { width: 72px; font-size: 0.72rem; }
+    .dsg-group { min-width: 150px; padding: 10px; }
+}
 /* ─── RESPONSIVE ─────────────────────────────────────────── */
 @media (max-width: 600px) {
     .matchup-row-main { gap: 6px; }

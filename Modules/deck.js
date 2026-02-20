@@ -880,6 +880,24 @@ html += `
 
         return html;
             },
+/* ====================================
+   REEMPLAZO DE renderDeckStatsBlock en deck.js
+   
+   INSTRUCCIONES:
+   Busca en deck.js la función:
+       renderDeckStatsBlock: function () {
+   
+   Reemplaza TODA la función (desde "renderDeckStatsBlock: function () {"
+   hasta el cierre "}" que la termina, ANTES de la línea:
+       },// ===============================
+       // CARTA AS
+   )
+   con el contenido de este bloque.
+   
+   TAMBIÉN añade la función switchDeckStatsTab() en el mismo objeto Deck,
+   después del cierre de renderDeckStatsBlock (antes de setCartaAs).
+   ==================================== */
+
 renderDeckStatsBlock: function () {
     const mainCards  = Object.values(this.cards).filter(c => c.location === 'main');
     const extraCards = Object.values(this.cards).filter(c => c.location === 'extra');
@@ -892,12 +910,12 @@ renderDeckStatsBlock: function () {
     allCards.forEach(item => {
         const t = item.data.type || '';
         const qty = item.qty || 1;
-        if (t.toLowerCase().includes('spell'))       cardTypes['Hechizo']  = (cardTypes['Hechizo']  || 0) + qty;
-        else if (t.toLowerCase().includes('trap'))   cardTypes['Trampa']   = (cardTypes['Trampa']   || 0) + qty;
-        else                                         cardTypes['Monstruo'] = (cardTypes['Monstruo'] || 0) + qty;
+        if (t.toLowerCase().includes('spell'))     cardTypes['Hechizo']  = (cardTypes['Hechizo']  || 0) + qty;
+        else if (t.toLowerCase().includes('trap')) cardTypes['Trampa']   = (cardTypes['Trampa']   || 0) + qty;
+        else                                       cardTypes['Monstruo'] = (cardTypes['Monstruo'] || 0) + qty;
     });
 
-    // ── Atributos de monstruos ───────────────────────────────────
+    // ── Atributos ────────────────────────────────────────────────
     const attributes = {};
     allCards.forEach(item => {
         const t = item.data.type || '';
@@ -907,7 +925,7 @@ renderDeckStatsBlock: function () {
         }
     });
 
-    // ── Raza/Tipo de monstruos ───────────────────────────────────
+    // ── Raza ─────────────────────────────────────────────────────
     const races = {};
     allCards.forEach(item => {
         const t = item.data.type || '';
@@ -917,7 +935,7 @@ renderDeckStatsBlock: function () {
         }
     });
 
-    // ── Niveles / Rangos / Rating Link ───────────────────────────
+    // ── Niveles / Rangos / Link ───────────────────────────────────
     const levels = {};
     allCards.forEach(item => {
         const t = (item.data.type || '').toLowerCase();
@@ -941,13 +959,12 @@ renderDeckStatsBlock: function () {
         const t = (item.data.type || '').toLowerCase();
         if (t.includes('spell') || t.includes('trap')) return;
         const qty = item.qty || 1;
-        const detected = this.detectSubtypes(item.data);
-        detected.forEach(st => {
+        this.detectSubtypes(item.data).forEach(st => {
             secondaryTypes[st] = (secondaryTypes[st] || 0) + qty;
         });
     });
 
-    // ── Subtipos de Hechizos ─────────────────────────────────────
+    // ── Subtipos Hechizo ─────────────────────────────────────────
     const spellTypes = {};
     const spellSubtypeMap = {
         'Quick-Play': 'Juego Rápido', 'Continuous': 'Continuo',
@@ -959,42 +976,30 @@ renderDeckStatsBlock: function () {
         const qty = item.qty || 1;
         let matched = false;
         for (const [key, label] of Object.entries(spellSubtypeMap)) {
-            if (t.includes(key)) {
-                spellTypes[label] = (spellTypes[label] || 0) + qty;
-                matched = true;
-                break;
-            }
+            if (t.includes(key)) { spellTypes[label] = (spellTypes[label] || 0) + qty; matched = true; break; }
         }
         if (!matched) spellTypes['Normal'] = (spellTypes['Normal'] || 0) + qty;
     });
 
-    // ── Subtipos de Trampas ──────────────────────────────────────
+    // ── Subtipos Trampa ──────────────────────────────────────────
     const trapTypes = {};
-    const trapSubtypeMap = {
-        'Counter': 'Counter', 'Continuous': 'Continua'
-    };
+    const trapSubtypeMap = { 'Counter': 'Counter', 'Continuous': 'Continua' };
     allCards.forEach(item => {
         const t = item.data.type || '';
         if (!t.toLowerCase().includes('trap')) return;
         const qty = item.qty || 1;
         let matched = false;
         for (const [key, label] of Object.entries(trapSubtypeMap)) {
-            if (t.includes(key)) {
-                trapTypes[label] = (trapTypes[label] || 0) + qty;
-                matched = true;
-                break;
-            }
+            if (t.includes(key)) { trapTypes[label] = (trapTypes[label] || 0) + qty; matched = true; break; }
         }
         if (!matched) trapTypes['Normal'] = (trapTypes['Normal'] || 0) + qty;
     });
 
-    // ── Helper para renderizar filas ─────────────────────────────
-    const renderRow = (obj, colorFn) => Object.entries(obj)
+    // ── Helpers chips (vista original) ───────────────────────────
+    const renderChipRow = (obj, colorFn) => Object.entries(obj)
         .sort((a, b) => b[1] - a[1])
-        .map(([k, v]) => `
-            <span class="ds-chip" style="${colorFn ? colorFn(k) : ''}">
-                ${k} <strong>(${v})</strong>
-            </span>`).join('');
+        .map(([k, v]) => `<span class="ds-chip" style="${colorFn ? colorFn(k) : ''}">${k} <strong>(${v})</strong></span>`)
+        .join('');
 
     const attrColors = {
         'FIRE':'background:rgba(255,80,0,0.25);border-color:#ff5000',
@@ -1005,35 +1010,154 @@ renderDeckStatsBlock: function () {
         'DARK':'background:rgba(100,0,180,0.25);border-color:#6400b4',
         'DIVINE':'background:rgba(255,215,0,0.25);border-color:#ffd700'
     };
-
     const attrColorFn = k => attrColors[k] || '';
 
     const group = (title, content) => content
-        ? `<div class="ds-group">
-               <div class="ds-group-title">${title}</div>
-               <div class="ds-chips">${content}</div>
-           </div>`
+        ? `<div class="ds-group"><div class="ds-group-title">${title}</div><div class="ds-chips">${content}</div></div>`
         : '';
 
-    return `
-        <div class="deck-stats-block">
-            <div class="ds-row">
-                ${group('Tipo de Cartas', renderRow(cardTypes, null))}
-                ${Object.keys(attributes).length ? group('Atributos', renderRow(attributes, attrColorFn)) : ''}
-            </div>
-            <div class="ds-row">
-                ${Object.keys(races).length ? group('Tipo de Monstruo', renderRow(races, null)) : ''}
-                ${Object.keys(secondaryTypes).length ? group('Tipos Secundarios', renderRow(secondaryTypes, null)) : ''}
-            </div>
-            <div class="ds-row">
-                ${Object.keys(levels).length ? group('Niveles / Rangos / Link', renderRow(levels, null)) : ''}
-            </div>
-            <div class="ds-row">
-                ${Object.keys(spellTypes).length ? group('Subtipos Hechizo', renderRow(spellTypes, null)) : ''}
-                ${Object.keys(trapTypes).length ? group('Subtipos Trampa', renderRow(trapTypes, null)) : ''}
-            </div>
+    // ── Helpers barras (vista gráfica) ────────────────────────────
+    // barColor: string CSS para el color de la barra
+    const renderBarGroup = (title, data, barColor, labelColor) => {
+        if (!Object.keys(data).length) return '';
+        const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]);
+        const maxVal = sorted[0][1];
+        const bars   = sorted.map(([label, val]) => {
+            const pct = Math.round((val / maxVal) * 100);
+            return `
+            <div class="dsg-bar-item">
+                <div class="dsg-bar-label" style="color:${labelColor || 'rgba(255,255,255,0.75)'}">${label}</div>
+                <div class="dsg-bar-track">
+                    <div class="dsg-bar-fill" style="width:${pct}%;background:${barColor}"></div>
+                </div>
+                <div class="dsg-bar-val">${val}</div>
+            </div>`;
+        }).join('');
+
+        return `
+        <div class="dsg-group">
+            <div class="dsg-group-title">${title}</div>
+            ${bars}
         </div>`;
-},// ===============================
+    };
+
+    const attrBarColor = (attr) => ({
+        'FIRE':  '#ff5000', 'WATER': '#0078ff', 'EARTH': '#8c6432',
+        'WIND':  '#00c864', 'LIGHT': '#ffdc00', 'DARK':  '#9b59b6',
+        'DIVINE':'#ffd700'
+    })[attr] || 'rgba(255,215,0,0.7)';
+
+    // Atributos: barra por atributo con su color propio
+    const renderAttrBars = (data) => {
+        if (!Object.keys(data).length) return '';
+        const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]);
+        const maxVal = sorted[0][1];
+        const bars   = sorted.map(([label, val]) => {
+            const pct   = Math.round((val / maxVal) * 100);
+            const color = attrBarColor(label);
+            return `
+            <div class="dsg-bar-item">
+                <div class="dsg-bar-label" style="color:${color}">${label}</div>
+                <div class="dsg-bar-track">
+                    <div class="dsg-bar-fill" style="width:${pct}%;background:${color}"></div>
+                </div>
+                <div class="dsg-bar-val">${val}</div>
+            </div>`;
+        }).join('');
+        return `<div class="dsg-group"><div class="dsg-group-title">Atributos</div>${bars}</div>`;
+    };
+
+    // ── Vista gráfica grupo 1: M / H / T ─────────────────────────
+    const typeColors = { 'Monstruo': '#d9b38c', 'Hechizo': '#00b894', 'Trampa': '#ff6b9d' };
+    const totalMHT  = Object.values(cardTypes).reduce((s, v) => s + v, 0);
+    const mhtBars   = Object.entries(cardTypes)
+        .sort((a, b) => b[1] - a[1])
+        .map(([label, val]) => {
+            const pct = totalMHT > 0 ? Math.round((val / totalMHT) * 100) : 0;
+            const col = typeColors[label] || 'rgba(255,215,0,0.6)';
+            return `
+            <div class="dsg-bar-item dsg-bar-item-lg">
+                <div class="dsg-bar-label dsg-bar-label-lg" style="color:${col}">${label}</div>
+                <div class="dsg-bar-track dsg-bar-track-lg">
+                    <div class="dsg-bar-fill" style="width:${pct}%;background:${col}"></div>
+                    <span class="dsg-bar-pct">${pct}%</span>
+                </div>
+                <div class="dsg-bar-val dsg-bar-val-lg">${val}</div>
+            </div>`;
+        }).join('');
+
+    const chartGroup1 = `
+    <div class="dsg-section">
+        <div class="dsg-section-title">Monstruos · Hechizos · Trampas</div>
+        <div class="dsg-group dsg-group-mht">${mhtBars}</div>
+    </div>`;
+
+    // ── Vista gráfica grupo 2: todo lo demás ─────────────────────
+    const chartGroup2 = `
+    <div class="dsg-section">
+        <div class="dsg-section-title">Desglose detallado</div>
+        <div class="dsg-scroll-row">
+            ${renderAttrBars(attributes)}
+            ${renderBarGroup('Tipo de Monstruo', races,         'rgba(108,92,231,0.75)', '#a29bfe')}
+            ${renderBarGroup('Niveles / Rangos / Link', levels, 'rgba(0,184,148,0.75)',  '#00b894')}
+            ${Object.keys(secondaryTypes).length ? renderBarGroup('Tipos Secundarios', secondaryTypes, 'rgba(253,203,110,0.75)', '#fdcb6e') : ''}
+            ${Object.keys(spellTypes).length     ? renderBarGroup('Subtipos Hechizo',  spellTypes,    'rgba(0,200,150,0.65)',   '#00b894') : ''}
+            ${Object.keys(trapTypes).length      ? renderBarGroup('Subtipos Trampa',   trapTypes,     'rgba(255,107,157,0.65)', '#ff6b9d') : ''}
+        </div>
+    </div>`;
+
+    // ── HTML final con sub-pestañas ───────────────────────────────
+    return `
+    <div class="deck-stats-block">
+        <div class="dstab-tabs">
+            <button class="dstab-btn active" id="dstab-chips" onclick="Deck.switchDeckStatsTab('chips')">
+                📋 Composición
+            </button>
+            <button class="dstab-btn" id="dstab-chart" onclick="Deck.switchDeckStatsTab('chart')">
+                📊 Gráfica
+            </button>
+        </div>
+
+        <!-- VISTA CHIPS (original) -->
+        <div id="dstab-pane-chips">
+            <div class="ds-row">
+                ${group('Tipo de Cartas', renderChipRow(cardTypes, null))}
+                ${Object.keys(attributes).length ? group('Atributos', renderChipRow(attributes, attrColorFn)) : ''}
+            </div>
+            <div class="ds-row">
+                ${Object.keys(races).length ? group('Tipo de Monstruo', renderChipRow(races, null)) : ''}
+                ${Object.keys(secondaryTypes).length ? group('Tipos Secundarios', renderChipRow(secondaryTypes, null)) : ''}
+            </div>
+            <div class="ds-row">
+                ${Object.keys(levels).length ? group('Niveles / Rangos / Link', renderChipRow(levels, null)) : ''}
+            </div>
+            <div class="ds-row">
+                ${Object.keys(spellTypes).length ? group('Subtipos Hechizo', renderChipRow(spellTypes, null)) : ''}
+                ${Object.keys(trapTypes).length  ? group('Subtipos Trampa',  renderChipRow(trapTypes,  null)) : ''}
+            </div>
+        </div>
+
+        <!-- VISTA GRÁFICA -->
+        <div id="dstab-pane-chart" style="display:none;">
+            ${chartGroup1}
+            ${chartGroup2}
+        </div>
+    </div>`;
+},
+
+// ── Cambio de sub-pestaña en deck-stats-block ─────────────────
+switchDeckStatsTab: function (tab) {
+    const chips = document.getElementById('dstab-pane-chips');
+    const chart = document.getElementById('dstab-pane-chart');
+    const btnC  = document.getElementById('dstab-chips');
+    const btnG  = document.getElementById('dstab-chart');
+    if (!chips || !chart) return;
+    const showChips = tab === 'chips';
+    chips.style.display = showChips ? '' : 'none';
+    chart.style.display = showChips ? 'none' : '';
+    btnC?.classList.toggle('active', showChips);
+    btnG?.classList.toggle('active', !showChips);
+},
 // CARTA AS
 // ===============================
 setCartaAs: function (cardId) {
