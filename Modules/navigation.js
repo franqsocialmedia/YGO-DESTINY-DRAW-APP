@@ -120,7 +120,10 @@ const Navigation = {
         // Inicializar Torneo lazy al entrar a Simuladores
         if (tabName === 'simuladores' && window.Torneo) {
             Torneo.init();
-        }
+            }
+            if (tabName === 'simuladores' && window.Hipergeometria) {
+                Hipergeometria.init();
+            }
         SafeLogger.functionEnd('Navigation', 'showTab', { success: true, currentTab: tabName });
 
         // PASO 6: Hacer scroll al inicio del contenido (smooth)
