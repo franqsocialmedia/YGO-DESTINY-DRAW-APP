@@ -18,6 +18,13 @@ const Hipergeometria = {
     _drawnCards:      [],   // [{ isTarget: bool }]
     _deckRemaining:   0,
     _selectedDeckIdx: null,
+    // Estado Mulligan
+_mul: {
+    pool:      [],   // cartas restantes en deck (una entrada por copia)
+    hand:      [],   // cartas en mano
+    outside:   [],   // cementerio / banishment
+    deckMeta:  null  // { name, totalMain }
+},
 
     // ═══════════════════════════════════════════════════
     //  MATEMÁTICA HIPERGEOMÉTRICA
@@ -86,10 +93,9 @@ const Hipergeometria = {
     </p>
 
     <div class="hiper-tabs">
-        <button class="hiper-tab-btn active" id="hiper-tb-quick"
-                onclick="Hipergeometria.switchTab('quick')">⚡ Cálculo Rápido</button>
-        <button class="hiper-tab-btn"        id="hiper-tb-deck"
-                onclick="Hipergeometria.switchTab('deck')">🗂️ Con Mis Decks</button>
+        <button class="hiper-tab-btn active" id="hiper-tb-quick" onclick="Hipergeometria.switchTab('quick')">⚡ Cálculo Rápido</button>
+        <button class="hiper-tab-btn" id="hiper-tb-deck" onclick="Hipergeometria.switchTab('deck')">🗂️ Calculo con Mis Decks</button>
+        <button class="hiper-tab-btn" id="hiper-tb-mul" onclick="Hipergeometria.switchTab('mul')">🃏 Prueba Mulligan</button>
     </div>
 
     <!-- ══════════ TAB CÁLCULO RÁPIDO ══════════ -->
@@ -201,7 +207,58 @@ const Hipergeometria = {
         </div>
     </div>
 </div>
+<!-- ══════════ TAB PRUEBA MULLIGAN ══════════ -->
+    <div id="hiper-pane-mul" class="hiper-pane" style="display:none">
+        <div class="hiper-deck-layout">
 
+            <!-- Lista de decks -->
+            <div class="hiper-deck-sidebar">
+                <div class="hiper-deck-sidebar-title">Selecciona un Deck</div>
+                <div id="hiper-mul-deck-list" class="hiper-deck-list">
+                    <div class="hiper-deck-empty">Cargando decks...</div>
+                </div>
+            </div>
+
+            <!-- Panel mulligan -->
+            <div id="hiper-mul-panel" class="hiper-deck-panel" style="display:none">
+
+                <div class="mul-deck-info" id="mul-deck-info"></div>
+
+                <!-- Deck (carta boca abajo clickeable) + mano -->
+                <div class="mul-play-area">
+
+                    <div class="mul-col-deck">
+                        <div class="mul-zone-title">Deck</div>
+                        <img src="https://images.ygoprodeck.com/images/cards/back.jpg"
+                             class="mul-deck-pile"
+                             onclick="Hipergeometria.mulDrawOne()"
+                             title="Robar una carta">
+                        <div class="mul-pile-count" id="mul-pile-count">0</div>
+                    </div>
+
+                    <div class="mul-col-hand">
+                        <div class="mul-zone-title">Mano (<span id="mul-hand-count">0</span>)</div>
+                        <div id="mul-hand-area" class="mul-hand-area"></div>
+                    </div>
+
+                </div>
+
+                <!-- Zona fuera de juego -->
+                <div class="mul-outside-wrap">
+                    <div class="mul-zone-title">
+                        Cementerio / Banishment
+                        <span class="mul-outside-hint">(toca una carta para devolverla al deck)</span>
+                    </div>
+                    <div id="mul-outside-area" class="mul-outside-area">
+                        <div class="hiper-hand-empty">Vacío</div>
+                    </div>
+                </div>
+
+                <button class="hiper-reset-btn" style="margin-top:10px"
+                        onclick="Hipergeometria.mulReset()">🔄 Resetear</button>
+            </div>
+        </div>
+    </div>
 <!-- ══════════ MODAL BUSCADOR ══════════ -->
 <div id="hiper-modal" class="hiper-modal" style="display:none"
      onclick="Hipergeometria._modalBgClose(event)">
@@ -235,13 +292,16 @@ const Hipergeometria = {
     },
 
     switchTab: function (tab) {
-        const isQuick = tab === 'quick';
-        document.getElementById('hiper-pane-quick').style.display = isQuick ? '' : 'none';
-        document.getElementById('hiper-pane-deck').style.display  = isQuick ? 'none' : '';
-        document.getElementById('hiper-tb-quick').classList.toggle('active', isQuick);
-        document.getElementById('hiper-tb-deck').classList.toggle('active', !isQuick);
-        if (!isQuick) this._loadDeckList();
-    },
+    const tabs = ['quick', 'deck', 'mul'];
+    tabs.forEach(t => {
+        const pane = document.getElementById(`hiper-pane-${t}`);
+        const btn  = document.getElementById(`hiper-tb-${t}`);
+        if (pane) pane.style.display = (t === tab) ? '' : 'none';
+        if (btn)  btn.classList.toggle('active', t === tab);
+    });
+    if (tab === 'deck') this._loadDeckList();
+    if (tab === 'mul')  this._loadMulDeckList();
+},
 
     // ═══════════════════════════════════════════════════
     //  CÁLCULO RÁPIDO
@@ -466,7 +526,7 @@ const Hipergeometria = {
                 addCards(deck.sections.extra || [], 'extra');
                 addCards(deck.sections.side  || [], 'side');
                 result.push({
-                    name:   `[${folder}] ${deck.filename}`,
+                    name:   `${deck.filename}`,
                     cards,
                     tag:    '🌐',
                     isMeta: true,
@@ -666,7 +726,227 @@ const Hipergeometria = {
         }
 
         this._renderResults('hd-results', 'hd-chart', N, n, Math.max(M, 1), x);
+    },
+    // ═══════════════════════════════════════════════════
+//  PRUEBA MULLIGAN
+// ═══════════════════════════════════════════════════
+
+_loadMulDeckList: function () {
+    const container = document.getElementById('hiper-mul-deck-list');
+    if (!container) return;
+
+    const saved = window.Deck ? Deck.getSavedDecks() : [];
+    const meta  = this._getMetaDeckList();
+    const all   = [
+        ...saved.map(d => ({ name: d.name, cards: d.cards, tag: '💾', isMeta: false })),
+        ...meta
+    ];
+    this._allDecks = this._allDecks?.length ? this._allDecks : all;
+
+    if (!all.length) {
+        container.innerHTML = '<div class="hiper-deck-empty">No hay decks disponibles</div>';
+        return;
     }
+
+    container.innerHTML = all.map((deck, i) => {
+        const mainN = Object.values(deck.cards || {})
+            .filter(c => c.location === 'main')
+            .reduce((s, c) => s + (c.qty || 1), 0);
+        return `
+<div class="hiper-deck-item" onclick="Hipergeometria.mulSelectDeck(${i})">
+    <span class="hiper-deck-tag">${deck.tag}</span>
+    <span class="hiper-dname">${deck.name}</span>
+    <span class="hiper-dtag">${mainN}</span>
+</div>`;
+    }).join('');
+},
+
+mulSelectDeck: async function (idx) {
+    // Reusar allDecks ya cargado (puede venir de _loadDeckList o _loadMulDeckList)
+    if (!this._allDecks?.length) this._loadMulDeckList();
+    const deck = this._allDecks[idx];
+    if (!deck) return;
+
+    document.getElementById('hiper-mul-panel').style.display = '';
+    document.querySelectorAll('#hiper-mul-deck-list .hiper-deck-item')
+        .forEach((el, i) => el.classList.toggle('hiper-deck-item-active', i === idx));
+
+    // Construir pool: una entrada por copia
+    const pool = [];
+    Object.entries(deck.cards || {}).forEach(([id, item]) => {
+        if (item.location !== 'main') return;
+        const qty  = item.qty || 1;
+        const data = item.data || { id, name: `#${id}`,
+                        card_images: [{ image_url_small: this.CARD_BACK }] };
+        for (let i = 0; i < qty; i++) pool.push({ ...data });
+    });
+
+    // Meta deck: fetchear imágenes
+    if (deck.isMeta && pool.length) {
+        const missing = pool.filter(c => !c.card_images?.[0]?.image_url_small ||
+                                         c.card_images[0].image_url_small === this.CARD_BACK);
+        if (missing.length) {
+            const ids = [...new Set(missing.map(c => String(c.id)))];
+            try {
+                const chunks = [];
+                for (let i = 0; i < ids.length; i += 50) chunks.push(ids.slice(i, i+50));
+                for (const chunk of chunks) {
+                    const res  = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${chunk.join(',')}`);
+                    const data = await res.json();
+                    (data.data || []).forEach(card => {
+                        pool.forEach(c => { if (String(c.id) === String(card.id)) Object.assign(c, card); });
+                    });
+                }
+            } catch (e) { console.warn('[Mulligan] Error fetch:', e); }
+        }
+    }
+
+    this._mulShuffle(pool);
+    this._mul.pool    = pool;
+    this._mul.hand    = [];
+    this._mul.outside = [];
+    this._mul.deckMeta = { name: deck.name, totalMain: pool.length };
+
+    // Robar 5 iniciales
+    for (let i = 0; i < Math.min(5, pool.length); i++) {
+        this._mul.hand.push(this._mul.pool.shift());
+    }
+
+    document.getElementById('mul-deck-info').textContent = deck.name;
+    this._mulRenderAll();
+},
+
+_mulShuffle: function (arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+},
+
+mulDrawOne: function () {
+    if (!this._mul.pool.length) return;
+    const card = this._mul.pool.shift();
+    this._mul.hand.push(card);
+    this._mulRenderAll();
+},
+
+mulTapCard: function (zone, idx) {
+    // Cerrar cualquier overlay previo
+    document.querySelectorAll('.mul-card-overlay').forEach(o => o.remove());
+    document.querySelectorAll('.mul-card-active').forEach(c => c.classList.remove('mul-card-active'));
+
+    const el = document.querySelector(`[data-mul-zone="${zone}"][data-mul-idx="${idx}"]`);
+    if (!el) return;
+
+    el.classList.add('mul-card-active');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'mul-card-overlay';
+
+    if (zone === 'hand') {
+        overlay.innerHTML = `
+<button class="mul-action-btn mul-btn-return"
+        onclick="Hipergeometria.mulReturn('hand',${idx}); event.stopPropagation();">Devolver</button>
+<button class="mul-action-btn mul-btn-discard"
+        onclick="Hipergeometria.mulDiscard(${idx}); event.stopPropagation();">Descartar</button>`;
+    } else if (zone === 'outside') {
+        overlay.innerHTML = `
+<button class="mul-action-btn mul-btn-return"
+        onclick="Hipergeometria.mulReturn('outside',${idx}); event.stopPropagation();">↩ Al Deck</button>`;
+    }
+
+    el.appendChild(overlay);
+
+    // Cerrar al tocar fuera
+    setTimeout(() => {
+        document.addEventListener('click', function close(e) {
+            if (!el.contains(e.target)) {
+                overlay.remove();
+                el.classList.remove('mul-card-active');
+                document.removeEventListener('click', close);
+            }
+        });
+    }, 10);
+},
+
+mulReturn: function (zone, idx) {
+    const arr  = zone === 'hand' ? this._mul.hand : this._mul.outside;
+    const card = arr.splice(idx, 1)[0];
+    if (card) {
+        this._mul.pool.push(card);
+        this._mulShuffle(this._mul.pool);
+    }
+    document.querySelectorAll('.mul-card-overlay').forEach(o => o.remove());
+    document.querySelectorAll('.mul-card-active').forEach(c => c.classList.remove('mul-card-active'));
+    this._mulRenderAll();
+},
+
+mulDiscard: function (idx) {
+    const card = this._mul.hand.splice(idx, 1)[0];
+    if (card) this._mul.outside.push(card);
+    document.querySelectorAll('.mul-card-overlay').forEach(o => o.remove());
+    document.querySelectorAll('.mul-card-active').forEach(c => c.classList.remove('mul-card-active'));
+    this._mulRenderAll();
+},
+
+mulReset: function () {
+    if (!this._mul.deckMeta) return;
+    // Reunir todas las cartas
+    const all = [...this._mul.pool, ...this._mul.hand, ...this._mul.outside];
+    this._mulShuffle(all);
+    this._mul.pool    = all;
+    this._mul.hand    = [];
+    this._mul.outside = [];
+    // Repartir 5
+    for (let i = 0; i < Math.min(5, this._mul.pool.length); i++) {
+        this._mul.hand.push(this._mul.pool.shift());
+    }
+    this._mulRenderAll();
+},
+
+_mulRenderAll: function () {
+    // Contador deck
+    const pileEl = document.getElementById('mul-pile-count');
+    if (pileEl) pileEl.textContent = this._mul.pool.length;
+
+    // Contador mano
+    const handCountEl = document.getElementById('mul-hand-count');
+    if (handCountEl) handCountEl.textContent = this._mul.hand.length;
+
+    // Mano
+    const handEl = document.getElementById('mul-hand-area');
+    if (handEl) {
+        if (!this._mul.hand.length) {
+            handEl.innerHTML = '<div class="hiper-hand-empty">Sin cartas en mano</div>';
+        } else {
+            handEl.innerHTML = this._mul.hand.map((card, i) => {
+                const img = card.card_images?.[0]?.image_url_small || this.CARD_BACK;
+                return `
+<div class="mul-card" data-mul-zone="hand" data-mul-idx="${i}"
+     onclick="Hipergeometria.mulTapCard('hand',${i})" title="${card.name || ''}">
+    <img src="${img}" class="mul-card-img">
+</div>`;
+            }).join('');
+        }
+    }
+
+    // Cementerio / Banishment
+    const outsideEl = document.getElementById('mul-outside-area');
+    if (outsideEl) {
+        if (!this._mul.outside.length) {
+            outsideEl.innerHTML = '<div class="hiper-hand-empty">Vacío</div>';
+        } else {
+            outsideEl.innerHTML = this._mul.outside.map((card, i) => {
+                const img = card.card_images?.[0]?.image_url_small || this.CARD_BACK;
+                return `
+<div class="mul-card mul-card-outside" data-mul-zone="outside" data-mul-idx="${i}"
+     onclick="Hipergeometria.mulTapCard('outside',${i})" title="${card.name || ''}">
+    <img src="${img}" class="mul-card-img">
+</div>`;
+            }).join('');
+        }
+    }
+},
 };
 
 window.Hipergeometria = Hipergeometria;

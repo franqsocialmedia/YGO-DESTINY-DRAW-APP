@@ -1966,6 +1966,145 @@
 .herr-lose { color: #ff7675; font-weight: 700; }
 .herr-total { color: var(--gold-color, #FFD700); font-size: 1.1rem; }
 
+/* ── PRUEBA MULLIGAN ──────────────────────────────────────── */
+.mul-deck-info {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--gold-color, #FFD700);
+    margin-bottom: 14px;
+    word-break: break-word;
+}
+
+.mul-play-area {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.mul-col-deck {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.mul-col-hand { flex: 1; min-width: 200px; }
+
+.mul-zone-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: rgba(241,241,241,0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+}
+
+.mul-outside-hint {
+    font-size: 0.7rem;
+    color: rgba(241,241,241,0.35);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-left: 6px;
+}
+
+.mul-deck-pile {
+    width: 62px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.2);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.55);
+    transition: border-color 0.2s, transform 0.15s;
+}
+.mul-deck-pile:hover {
+    border-color: var(--gold-color, #FFD700);
+    transform: translateY(-3px);
+}
+
+.mul-pile-count {
+    font-size: 0.75rem;
+    color: rgba(241,241,241,0.5);
+    font-weight: 700;
+}
+
+.mul-hand-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 80px;
+    padding: 6px;
+    background: rgba(0,0,0,0.2);
+    border: 1px dashed rgba(255,255,255,0.12);
+    border-radius: 8px;
+    align-content: flex-start;
+}
+
+.mul-card {
+    position: relative;
+    border-radius: 5px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.15s, transform 0.15s;
+}
+.mul-card:hover { border-color: var(--gold-color, #FFD700); transform: scale(1.06); }
+.mul-card-active { border-color: var(--gold-color, #FFD700) !important; z-index: 10; }
+
+.mul-card-img {
+    width: 52px;
+    display: block;
+    border-radius: 4px;
+}
+
+.mul-card-overlay {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(0,10,26,0.96);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 7px;
+    padding: 6px;
+    z-index: 50;
+    white-space: nowrap;
+}
+
+.mul-action-btn {
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: none;
+    transition: opacity 0.15s;
+}
+.mul-action-btn:hover { opacity: 0.85; }
+.mul-btn-return  { background: #00b894; color: #001a33; }
+.mul-btn-discard { background: #d63031; color: #fff; }
+
+.mul-outside-wrap { margin-top: 10px; }
+
+.mul-outside-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 64px;
+    padding: 6px;
+    background: rgba(100,0,30,0.15);
+    border: 1px dashed rgba(255,100,100,0.25);
+    border-radius: 8px;
+    align-content: flex-start;
+}
+
+.mul-card-outside { opacity: 0.75; filter: saturate(0.6); }
+.mul-card-outside:hover { opacity: 1; filter: none; }
+
 /* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 500px) {
     .herr-two-col { flex-direction: column; }
