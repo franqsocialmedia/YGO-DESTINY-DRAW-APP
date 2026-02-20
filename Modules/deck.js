@@ -1135,7 +1135,10 @@ onDeckLoaded: function () {
                 </div>
             `;
         }
-
+// SECCIÓN DE HISTORIAL DE ENFRENTAMIENTOS
+        if (!isEmpty && window.Matchups) {
+            html += Matchups.renderSection();
+        }
         // SECCIÓN DE ACCIONES - SIEMPRE VISIBLE
         html += `
             <h3 onclick="Deck.toggleSection('actions-sec')"></h3>
