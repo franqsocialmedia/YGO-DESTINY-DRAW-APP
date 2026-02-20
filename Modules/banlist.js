@@ -277,29 +277,41 @@ const Banlist = {
     const cardCount  = Object.keys(fmt.cards).length;
 
     const officialBtns = (!isCustom && !isGenesys) ? `
-        <button class="btn btn-sm btn-primary" id="ban-update-btn-${formatName}"
-                onclick="Banlist.updateOfficialList('${formatName}')">🔄 Actualizar</button>
-        <span class="ban-last-update">
-            Última actualización: <span id="ban-date-${formatName}">${lastUpd}</span>
-        </span>` : '';
+    <button class="btn btn-sm btn-primary" id="ban-update-btn-${formatName}"
+            onclick="Banlist.updateOfficialList('${formatName}')">🔄 Actualizar</button>
+    <span class="ban-last-update">
+        Última actualización: <span id="ban-date-${formatName}">${lastUpd}</span>
+    </span>
+    <button class="btn btn-sm btn-secondary"
+            onclick="Banlist.copyFormat('${formatName}')">📋 Copiar Banlist</button>
+    <button class="btn btn-sm btn-secondary"
+            onclick="Banlist.downloadTXT('${formatName}')">⬇️ .txt</button>` : '';
 
-    const customBtns = (isCustom && !isGenesys) ? `
-        <button class="btn btn-sm btn-secondary"
-                id="ban-invert-btn-${formatName}"
-                style="${isInverted ? 'color:#fdcb6e;border-color:#fdcb6e;' : ''}"
-                onclick="Banlist.toggleInverted('${formatName}')">
-            🔄 ${isInverted ? 'Lista invertida (activa)' : 'Invertir lista'}
-        </button>
-        <button class="btn btn-sm btn-primary"
-                onclick="CardViewer.openCardSearch('${formatName}')">＋ Agregar carta</button>
-        <button class="btn btn-sm btn-danger"
-                onclick="Banlist.deleteCustomFormat('${formatName}')">🗑️ Eliminar</button>` : '';
+const customBtns = (isCustom && !isGenesys) ? `
+    <button class="btn btn-sm btn-secondary"
+            id="ban-invert-btn-${formatName}"
+            style="${isInverted ? 'color:#fdcb6e;border-color:#fdcb6e;' : ''}"
+            onclick="Banlist.toggleInverted('${formatName}')">
+        🔄 ${isInverted ? 'Lista invertida (activa)' : 'Invertir lista'}
+    </button>
+    <button class="btn btn-sm btn-primary"
+            onclick="CardViewer.openCardSearch('${formatName}')">＋ Agregar carta</button>
+    <button class="btn btn-sm btn-secondary"
+            onclick="Banlist.copyFormat('${formatName}')">📋 Copiar Banlist</button>
+    <button class="btn btn-sm btn-secondary"
+            onclick="Banlist.downloadTXT('${formatName}')">⬇️ .txt</button>
+    <button class="btn btn-sm btn-danger"
+            onclick="Banlist.deleteCustomFormat('${formatName}')">🗑️ Eliminar</button>` : '';
 
-    const genesisBtns = isGenesys ? `
-        <button class="btn btn-sm btn-primary"
-                onclick="CardViewer.openCardSearch('${formatName}', '', 'points')">
-            ＋ Agregar carta
-        </button>` : '';
+const genesisBtns = isGenesys ? `
+    <button class="btn btn-sm btn-primary"
+            onclick="CardViewer.openCardSearch('${formatName}', '', 'points')">
+        ＋ Agregar carta
+    </button>
+    <button class="btn btn-sm btn-secondary"
+            onclick="Banlist.copyFormat('${formatName}')">📋 Copiar Banlist</button>
+    <button class="btn btn-sm btn-secondary"
+            onclick="Banlist.downloadTXT('${formatName}')">⬇️ .txt</button>` : '';
 
     return `
         <div class="ban-tab-header">
@@ -493,6 +505,88 @@ renderDeckPointsIndicator: function (cards) {
             <span class="gpi-value">${total} pts</span>
             <span class="gpi-note">Main + Extra</span>
         </div>`;
+},
+
+// ── Copiar formato ────────────────────────────────────────────
+copyFormat: function (sourceFormat) {
+    const name = prompt(`Nombre para la copia de "${sourceFormat}":`);
+    if (!name || !name.trim()) return;
+    const key  = name.trim();
+    const data = this.getData();
+    if (data.formats[key]) { alert('Ya existe un formato con ese nombre.'); return; }
+
+    const src = data.formats[sourceFormat];
+    // Copia profunda de las cartas
+    data.formats[key] = {
+        cards:     JSON.parse(JSON.stringify(src.cards || {})),
+        isCustom:  true,
+        isGenesys: src.isGenesys || false,
+        inverted:  src.inverted  || false
+    };
+    this.saveData(data);
+    this.currentTab = key;
+    this.renderSection();
+},
+
+// ── Descargar .txt ────────────────────────────────────────────
+downloadTXT: function (formatName) {
+    const data = this.getData();
+    const fmt  = data.formats[formatName];
+    if (!fmt) return;
+
+    const entries = Object.entries(fmt.cards);
+    if (!entries.length) { alert('Este formato no tiene cartas.'); return; }
+
+    let txt = '';
+
+    if (fmt.isGenesys) {
+        // Orden descendente por puntos, bloques por rango
+        const sorted = entries
+            .map(([id, c]) => ({ name: c.name, pts: c.points || 0 }))
+            .filter(c => c.pts > 0)
+            .sort((a, b) => b.pts - a.pts);
+
+        const high = sorted.filter(c => c.pts >= 51);
+        const mid  = sorted.filter(c => c.pts >= 34 && c.pts <= 50);
+        const low  = sorted.filter(c => c.pts >= 1  && c.pts <= 33);
+
+        const block = (title, list) => list.length
+            ? `${title}\n${'─'.repeat(title.length)}\n` +
+              list.map(c => `${c.pts.toString().padStart(3)} pts  ${c.name}`).join('\n') + '\n\n'
+            : '';
+
+        txt += `GENESYS — ${formatName}\n${'═'.repeat(30)}\n\n`;
+        txt += block('ALTO IMPACTO (51+ pts)',  high);
+        txt += block('IMPACTO MEDIO (34–50 pts)', mid);
+        txt += block('IMPACTO BAJO (1–33 pts)',  low);
+
+    } else {
+        // Banlist estándar por grupos
+        const byStatus = { forbidden: [], limited: [], 'semi-limited': [] };
+        entries.forEach(([_, c]) => {
+            if (byStatus[c.status]) byStatus[c.status].push(c.name);
+        });
+        Object.values(byStatus).forEach(arr => arr.sort());
+
+        const block = (title, list) => list.length
+            ? `${title}\n${'─'.repeat(title.length)}\n` +
+              list.map(n => `  ${n}`).join('\n') + '\n\n'
+            : '';
+
+        txt += `BANLIST — ${formatName}\n${'═'.repeat(30)}\n\n`;
+        txt += block('PROHIBIDAS',     byStatus.forbidden);
+        txt += block('LIMITADAS',      byStatus.limited);
+        txt += block('SEMI-LIMITADAS', byStatus['semi-limited']);
+    }
+
+    txt += `Exportado desde Destiny Draw — ${new Date().toLocaleDateString('es-ES')}`;
+
+    const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = `banlist_${formatName.replace(/[^a-z0-9]/gi, '_')}.txt`;
+    a.click();
+    URL.revokeObjectURL(a.href);
 },
 };
 
