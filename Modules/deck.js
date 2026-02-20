@@ -965,6 +965,7 @@ renderDeckStatsBlock: function () {
     });
 
     // ── Subtipos Hechizo ─────────────────────────────────────────
+    // YGOProDeck devuelve el subtipo en card.race, no en card.type
     const spellTypes = {};
     const spellSubtypeMap = {
         'Quick-Play': 'Juego Rápido', 'Continuous': 'Continuo',
@@ -973,24 +974,27 @@ renderDeckStatsBlock: function () {
     allCards.forEach(item => {
         const t = item.data.type || '';
         if (!t.toLowerCase().includes('spell')) return;
+        const race = item.data.race || '';
         const qty = item.qty || 1;
         let matched = false;
         for (const [key, label] of Object.entries(spellSubtypeMap)) {
-            if (t.includes(key)) { spellTypes[label] = (spellTypes[label] || 0) + qty; matched = true; break; }
+            if (race.includes(key)) { spellTypes[label] = (spellTypes[label] || 0) + qty; matched = true; break; }
         }
         if (!matched) spellTypes['Normal'] = (spellTypes['Normal'] || 0) + qty;
     });
 
     // ── Subtipos Trampa ──────────────────────────────────────────
+    // Ídem: subtipo en card.race
     const trapTypes = {};
     const trapSubtypeMap = { 'Counter': 'Counter', 'Continuous': 'Continua' };
     allCards.forEach(item => {
         const t = item.data.type || '';
         if (!t.toLowerCase().includes('trap')) return;
+        const race = item.data.race || '';
         const qty = item.qty || 1;
         let matched = false;
         for (const [key, label] of Object.entries(trapSubtypeMap)) {
-            if (t.includes(key)) { trapTypes[label] = (trapTypes[label] || 0) + qty; matched = true; break; }
+            if (race.includes(key)) { trapTypes[label] = (trapTypes[label] || 0) + qty; matched = true; break; }
         }
         if (!matched) trapTypes['Normal'] = (trapTypes['Normal'] || 0) + qty;
     });
