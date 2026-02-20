@@ -670,7 +670,497 @@
     font-size: 0.78rem !important;
     border-radius: 6px;
 }
+/* ============================================================
+   DUELO EN VIVO — añadir al FINAL de css/style_simuladores.css
+   ============================================================ */
 
+/* ────────────────────────────────────
+   TABS NIVEL SIMULADORES (Torneo / Duelo en Vivo)
+   ──────────────────────────────────── */
+.sim-main-tabs {
+    display: flex;
+    gap: 6px;
+    margin: 8px 0 14px;
+    flex-wrap: wrap;
+}
+.sim-tab-btn {
+    padding: 9px 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    color: rgba(255,255,255,0.55);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.sim-tab-btn:hover {
+    background: rgba(255,215,0,0.1);
+    color: rgba(255,255,255,0.85);
+}
+.sim-tab-btn.active {
+    background: rgba(255,215,0,0.18);
+    border-color: rgba(255,215,0,0.5);
+    color: var(--gold-color);
+}
+
+/* ────────────────────────────────────
+   CONTENEDOR GENERAL DUELO
+   ──────────────────────────────────── */
+.duelo-section {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,215,0,0.15);
+    border-radius: 12px;
+    padding: 20px 18px;
+    margin-top: 4px;
+}
+
+/* Sub-tabs Estándar / Master Duel */
+.duelo-sub-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.duelo-sub-tab {
+    padding: 7px 18px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px 6px 0 0;
+    color: rgba(255,255,255,0.55);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.duelo-sub-tab:hover  { background: rgba(255,215,0,0.08); color: rgba(255,255,255,0.85); }
+.duelo-sub-tab.active {
+    background: rgba(255,215,0,0.14);
+    border-color: rgba(255,215,0,0.4);
+    color: var(--gold-color);
+}
+
+/* ────────────────────────────────────
+   CRONÓMETRO ESTÁNDAR — PANE
+   ──────────────────────────────────── */
+.duelo-std-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    padding: 24px 0 10px;
+}
+
+.duelo-std-display {
+    font-size: 5rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    color: var(--gold-color);
+    text-shadow: 0 0 30px rgba(255,215,0,0.4);
+    letter-spacing: 4px;
+    line-height: 1;
+}
+.duelo-std-display-md {
+    font-size: 2.8rem;
+    letter-spacing: 2px;
+}
+
+.duelo-std-config-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.duelo-std-config-row-sm {
+    gap: 6px;
+}
+
+.duelo-label {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.5);
+}
+.duelo-time-input {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    padding: 6px 10px;
+    width: 80px;
+    text-align: center;
+}
+.duelo-time-input-sm { width: 60px; font-size: 0.78rem; padding: 4px 6px; }
+
+.duelo-duel-btn {
+    font-size: 0.95rem !important;
+    padding: 9px 22px !important;
+    letter-spacing: 0.5px;
+}
+.duelo-duel-btn-sm  { font-size: 0.78rem !important; padding: 6px 12px !important; }
+.duelo-ctrl-btn     { font-size: 0.82rem !important; padding: 7px 14px !important; }
+.duelo-ctrl-btn-sm  { font-size: 0.78rem !important; padding: 5px 10px !important; }
+
+/* ────────────────────────────────────
+   MASTER DUEL — WRAP
+   ──────────────────────────────────── */
+.duelo-md-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Cronómetro estándar centrado en MD */
+.duelo-md-std-row {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255,215,0,0.1);
+}
+.duelo-md-std-display-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ────────────────────────────────────
+   TIMERS DE JUGADOR (rotados)
+   ──────────────────────────────────── */
+.duelo-md-players-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 200px;
+    padding: 10px 0;
+}
+
+.duelo-md-player-col {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* overflow visible para que el elemento rotado no se corte */
+    overflow: visible;
+}
+
+.duelo-md-center-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Bloque rotado: el jugador lo lee desde el costado */
+.duelo-md-player-rotated {
+    transform: rotate(90deg);
+    transform-origin: center center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    /* El ancho en DOM se convierte en altura visual */
+    width: 180px;
+}
+.duelo-md-player-rotated-b {
+    transform: rotate(-90deg);
+}
+
+.duelo-timer-player {
+    font-size: 2.2rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    color: var(--gold-color);
+    text-shadow: 0 0 20px rgba(255,215,0,0.35);
+    letter-spacing: 3px;
+    line-height: 1;
+}
+
+.duelo-player-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.duelo-player-ctrl-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: nowrap;
+}
+.duelo-ptimer-btn {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 4px;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.7rem;
+    padding: 3px 7px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.duelo-ptimer-btn:hover { background: rgba(255,215,0,0.15); color: var(--gold-color); }
+
+/* ────────────────────────────────────
+   TURNO (center)
+   ──────────────────────────────────── */
+.duelo-turn-indicator {
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 8px 20px;
+    border-radius: 20px;
+    color: #fff;
+    text-align: center;
+    transition: background 0.3s;
+    white-space: nowrap;
+}
+.duelo-turn-count {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.45);
+    text-align: center;
+}
+.duelo-change-turn-btn {
+    font-size: 0.82rem !important;
+    padding: 7px 18px !important;
+    background: rgba(255,255,255,0.07) !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    border-radius: 8px !important;
+}
+.duelo-change-turn-btn:hover {
+    background: rgba(255,215,0,0.12) !important;
+    border-color: rgba(255,215,0,0.35) !important;
+}
+
+/* ────────────────────────────────────
+   BOTONES DE INTERACCIÓN
+   ──────────────────────────────────── */
+.duelo-md-interact-row {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    padding: 6px 0;
+}
+.duelo-interact-spacer { flex: 1; }
+
+.duelo-interact-btn {
+    flex: 0 0 auto;
+    width: 110px;
+    min-height: 90px;
+    background: rgba(255,215,0,0.12);
+    border: 2px solid rgba(255,215,0,0.35);
+    border-radius: 14px;
+    color: var(--gold-color);
+    font-size: 1.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: opacity 0.2s, background 0.2s, border-color 0.2s, transform 0.1s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    line-height: 1.2;
+    -webkit-user-select: none;
+}
+.duelo-interact-btn span { font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.6); }
+.duelo-interact-btn:hover { opacity: 0.65; }
+.duelo-interact-btn.duelo-interact-active {
+    opacity: 1;
+    background: rgba(255,215,0,0.22);
+    border-color: var(--gold-color);
+    box-shadow: 0 0 18px rgba(255,215,0,0.25);
+    transform: scale(1.03);
+}
+
+/* ────────────────────────────────────
+   LIFE POINTS
+   ──────────────────────────────────── */
+.duelo-lp-section {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 24px;
+    padding: 16px 0 6px;
+    border-top: 1px solid rgba(255,215,0,0.1);
+}
+.duelo-lp-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    max-width: 220px;
+}
+.duelo-lp-vs {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: rgba(255,255,255,0.2);
+    align-self: center;
+    padding-top: 14px;
+}
+.duelo-lp-name {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.duelo-lp-val {
+    font-size: 3rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    color: var(--gold-color);
+    text-shadow: 0 0 20px rgba(255,215,0,0.3);
+    line-height: 1;
+}
+.duelo-lp-ops {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.duelo-op-btn {
+    padding: 5px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid;
+    transition: opacity 0.15s, transform 0.1s;
+}
+.duelo-op-btn:hover { opacity: 0.8; transform: scale(1.04); }
+.duelo-op-gain   { background: rgba(0,184,148,0.18);  border-color: rgba(0,184,148,0.5);  color: #00b894; }
+.duelo-op-damage { background: rgba(214,48,49,0.18);  border-color: rgba(214,48,49,0.5);  color: #d63031; }
+.duelo-op-multi  { background: rgba(108,92,231,0.18); border-color: rgba(108,92,231,0.5); color: #a29bfe; }
+.duelo-op-half   { background: rgba(253,203,110,0.18);border-color: rgba(253,203,110,0.5);color: #fdcb6e; }
+
+.duelo-lp-reset-row {
+    display: flex;
+    justify-content: center;
+    padding-top: 4px;
+}
+
+/* ────────────────────────────────────
+   PANEL FLOTANTE DE LP
+   ──────────────────────────────────── */
+.duelo-lp-panel-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.72);
+    z-index: 99998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.duelo-lp-panel-box {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,215,0,0.25);
+    border-radius: 14px;
+    padding: 24px 20px 20px;
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+}
+.duelo-lp-panel-close {
+    position: absolute;
+    top: 10px; right: 12px;
+    background: rgba(214,48,49,0.8);
+    border: none;
+    color: #fff;
+    border-radius: 50%;
+    width: 26px; height: 26px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+}
+.duelo-lp-panel-close:hover { background: #d63031; }
+.duelo-lp-panel-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gold-color);
+    padding-right: 30px;
+}
+.duelo-lp-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+.duelo-lp-preset {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 7px;
+    color: rgba(255,255,255,0.75);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.duelo-lp-preset:hover {
+    background: rgba(255,215,0,0.15);
+    border-color: rgba(255,215,0,0.4);
+    color: var(--gold-color);
+}
+.duelo-lp-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.duelo-lp-input-row .duelo-time-input {
+    width: auto;
+    flex: 1;
+    font-size: 1rem;
+    padding: 8px 12px;
+}
+.duelo-lp-calc-btn {
+    width: 100%;
+    padding: 10px !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+}
+
+/* ────────────────────────────────────
+   FLASH ALERT
+   ──────────────────────────────────── */
+.duelo-alert-flash {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.9);
+    border: 1px solid rgba(255,215,0,0.5);
+    color: var(--gold-color);
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 12px 28px;
+    border-radius: 10px;
+    z-index: 99999;
+    animation: duelo-flash-in 0.2s ease, duelo-flash-out 0.3s ease 3.2s forwards;
+    pointer-events: none;
+}
+@keyframes duelo-flash-in  { from { opacity:0; transform: translateX(-50%) translateY(-8px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+@keyframes duelo-flash-out { from { opacity:1; } to { opacity:0; } }
+
+/* ────────────────────────────────────
+   RESPONSIVE
+   ──────────────────────────────────── */
+@media (max-width: 600px) {
+    .duelo-std-display { font-size: 3.5rem; }
+    .duelo-timer-player { font-size: 1.6rem; }
+    .duelo-lp-val { font-size: 2.2rem; }
+    .duelo-interact-btn { width: 80px; min-height: 70px; font-size: 1.2rem; }
+    .duelo-md-player-rotated { width: 140px; }
+    .duelo-md-players-row { min-height: 150px; }
+}
 /* ────────────────────────────────────
    RESPONSIVE
    ──────────────────────────────────── */

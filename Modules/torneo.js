@@ -9,6 +9,7 @@ const Torneo = {
     data:        null,
     viewRound:   1,
     _pendingYDK: null,   // datos de .ydk esperando ser asignados a un participante
+    simTab: 'torneo',
 
     // ─────────────────────────────────────────────
     // ESTRUCTURA VACÍA
@@ -68,8 +69,25 @@ const Torneo = {
                 R${r.number}${r.finalized ? ' ✓' : ''}
             </button>`).join('');
 
+        // Shell de Simuladores: se crea una sola vez para no destruir DueloEnVivo
+    if (!document.getElementById('sim-torneo-content')) {
         this.container.innerHTML = `
             <h2>Simuladores</h2>
+            <div class="sim-main-tabs">
+                <button class="sim-tab-btn active" data-simtab="torneo"
+                        onclick="Torneo.showSimTab('torneo')">🏆 Torneo</button>
+                <button class="sim-tab-btn" data-simtab="duelo"
+                        onclick="Torneo.showSimTab('duelo')">⚔️ Duelo en Vivo</button>
+            </div>
+            <div id="sim-torneo-content"></div>
+            <div id="sim-duelo-content" style="display:none;"></div>`;
+    }
+    document.querySelectorAll('.sim-tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.simtab === this.simTab);
+    });
+    const torneoEl = document.getElementById('sim-torneo-content');
+    if (!torneoEl) return;
+    torneoEl.innerHTML = `
             <div class="torneo-section">
 
                 <div class="torneo-top-bar">
@@ -121,6 +139,19 @@ const Torneo = {
         if (roundTabsEl) roundTabsEl.style.display = (tab === 'matches' || tab === 'brackets') ? 'flex' : 'none';
     },
 
+    showSimTab: function (tab) {
+    this.simTab = tab;
+    document.querySelectorAll('.sim-tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.simtab === tab);
+    });
+    const torneoEl = document.getElementById('sim-torneo-content');
+    const dueloEl  = document.getElementById('sim-duelo-content');
+    if (torneoEl) torneoEl.style.display = tab === 'torneo' ? '' : 'none';
+    if (dueloEl) {
+        dueloEl.style.display = tab === 'duelo' ? '' : 'none';
+        if (tab === 'duelo' && window.DueloEnVivo) DueloEnVivo.renderInto(dueloEl);
+    }
+},
     setViewRound: function (num) {
         this.viewRound = num;
         const matchEl  = document.getElementById('torneo-tab-matches');
