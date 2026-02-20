@@ -1166,16 +1166,29 @@ renderDeckStatsBlock: function () {
     return `
     <div class="deck-stats-block">
         <div class="dstab-tabs">
-            <button class="dstab-btn active" id="dstab-chips" onclick="Deck.switchDeckStatsTab('chips')">
+            <button class="dstab-btn" id="dstab-main"  onclick="Deck.switchDeckStatsTab('main')">
+                🃏 Main
+            </button>
+            <button class="dstab-btn" id="dstab-extra" onclick="Deck.switchDeckStatsTab('extra')">
+                ✨ Extra
+            </button>
+            <button class="dstab-btn" id="dstab-side"  onclick="Deck.switchDeckStatsTab('side')">
+                🔄 Side
+            </button>
+            <button class="dstab-btn" id="dstab-chips" onclick="Deck.switchDeckStatsTab('chips')">
                 📋 Composición
             </button>
-            <button class="dstab-btn" id="dstab-chart" onclick="Deck.switchDeckStatsTab('chart')">
+            <button class="dstab-btn active" id="dstab-chart" onclick="Deck.switchDeckStatsTab('chart')">
                 📊 Gráfica
             </button>
         </div>
+        <!-- VISTAS DE CARTAS POR ZONA -->
+        <div id="dstab-pane-main"  style="display:none;">${this._buildDeckViewPane('main')}</div>
+        <div id="dstab-pane-extra" style="display:none;">${this._buildDeckViewPane('extra')}</div>
+        <div id="dstab-pane-side"  style="display:none;">${this._buildDeckViewPane('side')}</div>
 
        <!-- VISTA CHIPS (original) -->
-        <div id="dstab-pane-chips">
+        <div id="dstab-pane-chips" style="display:none;">
             ${totalMonsters > 0 ? `<div class="ds-row">
                 ${group('Tipos de Monstruo', monsterTypeOrder
                     .filter(mt => monsterTypeCounts[mt.key] > 0)
@@ -1200,7 +1213,7 @@ renderDeckStatsBlock: function () {
         </div>
 
         <!-- VISTA GRÁFICA -->
-        <div id="dstab-pane-chart" style="display:none;">
+        <div id="dstab-pane-chart">
             ${chartGroup1}
             ${chartGroup2}
         </div>
@@ -1209,16 +1222,13 @@ renderDeckStatsBlock: function () {
 
 // ── Cambio de sub-pestaña en deck-stats-block ─────────────────
 switchDeckStatsTab: function (tab) {
-    const chips = document.getElementById('dstab-pane-chips');
-    const chart = document.getElementById('dstab-pane-chart');
-    const btnC  = document.getElementById('dstab-chips');
-    const btnG  = document.getElementById('dstab-chart');
-    if (!chips || !chart) return;
-    const showChips = tab === 'chips';
-    chips.style.display = showChips ? '' : 'none';
-    chart.style.display = showChips ? 'none' : '';
-    btnC?.classList.toggle('active', showChips);
-    btnG?.classList.toggle('active', !showChips);
+    const panes = ['main', 'extra', 'side', 'chips', 'chart'];
+    panes.forEach(p => {
+        const pane = document.getElementById(`dstab-pane-${p}`);
+        const btn  = document.getElementById(`dstab-${p}`);
+        if (pane) pane.style.display = (p === tab) ? '' : 'none';
+        if (btn)  btn.classList.toggle('active', p === tab);
+    });
 },
 // CARTA AS
 // ===============================
@@ -1520,7 +1530,59 @@ onDeckLoaded: function () {
                 </div>
             </div>
         `;
+    },
+    // ── Vista de cartas por zona (solo lectura) ───────────────
+_buildDeckViewPane: function (location) {
+    const entries = Object.entries(this.cards).filter(([, c]) => c.location === location);
+    if (!entries.length) return `<p class="stats-empty">Sin cartas en esta sección.</p>`;
+
+    // Definir grupos según zona
+    let groups;
+    if (location === 'extra') {
+        groups = [
+            { label: 'Link',     test: t => t.includes('link') },
+            { label: 'Fusión',   test: t => t.includes('fusion') },
+            { label: 'Sincronía',test: t => t.includes('synchro') },
+            { label: 'Xyz',      test: t => t.includes('xyz') }
+        ];
+    } else {
+        groups = [
+            { label: 'Monstruos Normales', test: t => t.includes('normal monster') && !t.includes('pendulum') },
+            { label: 'Monstruos de Efecto',test: t => t.includes('monster') && !t.includes('normal monster') && !t.includes('ritual') && !t.includes('pendulum') && !t.includes('fusion') && !t.includes('synchro') && !t.includes('xyz') && !t.includes('link') },
+            { label: 'Monstruos Rituales', test: t => t.includes('ritual monster') },
+            { label: 'Monstruos Péndulo',  test: t => t.includes('pendulum') },
+            { label: 'Mágicas',            test: t => t.includes('spell') },
+            { label: 'Trampas',            test: t => t.includes('trap') }
+        ];
     }
+
+    let html = '<div class="dv-pane">';
+
+    groups.forEach(group => {
+        const cards = entries
+            .filter(([, c]) => group.test((c.data?.type || '').toLowerCase()))
+            .sort(([, a], [, b]) => (a.data?.name || '').localeCompare(b.data?.name || ''));
+
+        if (!cards.length) return;
+
+        html += `<div class="dv-group-label">${group.label}</div>`;
+        html += '<div class="tdp-cards-grid">';
+        cards.forEach(([, item]) => {
+            const img = item.data?.card_images?.[0]?.image_url_small || '';
+            const qty = item.qty || 1;
+            html += `
+<div class="tdp-card">
+    <img src="${img}" alt="${item.data?.name || ''}"
+         onerror="this.style.opacity='0.3'">
+    <span class="tdp-qty">x${qty}</span>
+</div>`;
+        });
+        html += '</div>';
+    });
+
+    html += '</div>';
+    return html;
+},
 };
 
 window.Deck = Deck;
