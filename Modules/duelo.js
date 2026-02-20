@@ -38,7 +38,12 @@ const DueloEnVivo = {
         winsA: 0,
         winsB: 0
     },
-
+// ─── ESTADO HERRAMIENTAS ──────────────────────────────────
+herr: {
+    coinSide: null,
+    diceCount: 1,
+    rolling: false
+},
     // ─── ENTRY POINT ─────────────────────────────────────────
     renderInto: function (container) {
         if (!container) return;
@@ -54,28 +59,40 @@ const DueloEnVivo = {
                         onclick="DueloEnVivo.showSubTab('estandar')">⏱ Cronómetro Estándar</button>
                 <button class="duelo-sub-tab ${this.subTab === 'masterduel' ? 'active' : ''}"
                         onclick="DueloEnVivo.showSubTab('masterduel')">👑 Cronómetro Master Duel</button>
+                <button class="duelo-sub-tab ${this.subTab === 'herramientas' ? 'active' : ''}"
+        onclick="DueloEnVivo.showSubTab('herramientas')">🎲 Herramientas</button>
             </div>
+            
             <div id="duelo-pane-estandar"   style="${this.subTab !== 'estandar'   ? 'display:none' : ''}">
                 ${this._buildStdPane()}
             </div>
             <div id="duelo-pane-masterduel" style="${this.subTab !== 'masterduel' ? 'display:none' : ''}">
                 ${this._buildMDPane()}
             </div>
+            <div id="duelo-pane-herramientas" style="${this.subTab !== 'herramientas' ? 'display:none' : ''}">
+    ${this._buildHerrPane()}
+            </div>
         </div>`;
     },
 
     showSubTab: function (tab) {
-        this.subTab = tab;
-        document.querySelectorAll('.duelo-sub-tab').forEach(b => {
-            b.classList.toggle('active',
-                (tab === 'estandar'   && b.textContent.includes('Estándar')) ||
-                (tab === 'masterduel' && b.textContent.includes('Master')));
-        });
-        const estEl = document.getElementById('duelo-pane-estandar');
-        const mdEl  = document.getElementById('duelo-pane-masterduel');
-        if (estEl) estEl.style.display = tab === 'estandar'   ? '' : 'none';
-        if (mdEl)  mdEl.style.display  = tab === 'masterduel' ? '' : 'none';
-    },
+    this.subTab = tab;
+    document.querySelectorAll('.duelo-sub-tab').forEach((b, i) => {
+        b.classList.toggle('active',
+            (tab === 'estandar'     && b.textContent.includes('Estándar'))  ||
+            (tab === 'masterduel'   && b.textContent.includes('Master'))    ||
+            (tab === 'herramientas' && b.textContent.includes('Herramientas')));
+    });
+    const panes = {
+        'estandar':     'duelo-pane-estandar',
+        'masterduel':   'duelo-pane-masterduel',
+        'herramientas': 'duelo-pane-herramientas'
+    };
+    Object.entries(panes).forEach(([key, id]) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = (tab === key) ? '' : 'none';
+    });
+},
 
     // ─── HELPERS ─────────────────────────────────────────────
     _fmt: function (secs) {
@@ -501,7 +518,130 @@ const DueloEnVivo = {
         const elB = document.getElementById('lp-b');
         if (elA) elA.textContent = '8,000';
         if (elB) elB.textContent = '8,000';
-    }
+    },
+    // ═══════════════════════════════════════════════════════
+// HERRAMIENTAS — MONEDA Y DADOS
+// ═══════════════════════════════════════════════════════
+_buildHerrPane: function () {
+    return `
+    <div class="herr-two-col">
+
+        <!-- MONEDA -->
+        <div class="herr-panel">
+            <div class="herr-panel-title">🪙 Lanzamiento de Moneda</div>
+            <div class="herr-coin-choice">
+                <button class="herr-side-btn" id="herr-btn-cara"
+                        onclick="DueloEnVivo.chooseSide('cara')">Cara</button>
+                <button class="herr-side-btn" id="herr-btn-sello"
+                        onclick="DueloEnVivo.chooseSide('sello')">Sello</button>
+            </div>
+            <div class="herr-choice-label" id="herr-choice-label">Sin elección</div>
+            <div class="herr-coin-area">
+                <div class="herr-coin" id="herr-coin">
+                    <div class="herr-coin-face herr-coin-front">☀️</div>
+                    <div class="herr-coin-face herr-coin-back">🌙</div>
+                </div>
+            </div>
+            <button class="herr-launch-btn" onclick="DueloEnVivo.flipCoin()">Lanzar</button>
+            <div class="herr-result" id="herr-coin-result"></div>
+        </div>
+
+        <!-- DADOS -->
+        <div class="herr-panel">
+            <div class="herr-panel-title">🎲 Tirar Dados</div>
+            <div class="herr-dice-choice">
+                <label class="herr-label">¿Cuántos dados?</label>
+                <div class="herr-dice-stepper">
+                    <button class="herr-step-btn" onclick="DueloEnVivo.changeDice(-1)">◀</button>
+                    <span class="herr-dice-count" id="herr-dice-count">1</span>
+                    <button class="herr-step-btn" onclick="DueloEnVivo.changeDice(1)">▶</button>
+                </div>
+            </div>
+            <div class="herr-dice-area" id="herr-dice-area">
+                <div class="herr-die herr-die-idle">⚀</div>
+            </div>
+            <button class="herr-launch-btn" onclick="DueloEnVivo.rollDice()">Tirar</button>
+            <div class="herr-result" id="herr-dice-result"></div>
+        </div>
+
+    </div>`;
+},
+
+chooseSide: function (side) {
+    this.herr.coinSide = side;
+    document.getElementById('herr-btn-cara').classList.toggle('herr-side-active', side === 'cara');
+    document.getElementById('herr-btn-sello').classList.toggle('herr-side-active', side === 'sello');
+    document.getElementById('herr-choice-label').textContent =
+        `Tu elección: ${side.charAt(0).toUpperCase() + side.slice(1)}`;
+    document.getElementById('herr-coin-result').innerHTML = '';
+},
+
+flipCoin: function () {
+    const coin  = document.getElementById('herr-coin');
+    const resEl = document.getElementById('herr-coin-result');
+    if (!coin || this.herr.rolling) return;
+    this.herr.rolling = true;
+    resEl.innerHTML   = '';
+    coin.classList.remove('herr-coin-heads', 'herr-coin-tails', 'herr-coin-spin');
+    void coin.offsetWidth;
+    coin.classList.add('herr-coin-spin');
+
+    setTimeout(() => {
+        const result = Math.random() < 0.5 ? 'cara' : 'sello';
+        coin.classList.remove('herr-coin-spin');
+        coin.classList.add(result === 'cara' ? 'herr-coin-heads' : 'herr-coin-tails');
+        const chosen = this.herr.coinSide;
+        const won    = chosen === null || chosen === result;
+        const label  = result.charAt(0).toUpperCase() + result.slice(1);
+        resEl.innerHTML = chosen === null
+            ? `Resultado: <strong>${label}</strong>`
+            : won
+                ? `<span class="herr-win">✅ ${label} — ¡Ganaste el lanzamiento!</span>`
+                : `<span class="herr-lose">❌ ${label} — Tu rival decide.</span>`;
+        this.herr.rolling = false;
+    }, 900);
+},
+
+changeDice: function (delta) {
+    this.herr.diceCount = Math.min(6, Math.max(1, this.herr.diceCount + delta));
+    document.getElementById('herr-dice-count').textContent = this.herr.diceCount;
+    const faces = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+    const area  = document.getElementById('herr-dice-area');
+    if (area) area.innerHTML = Array.from({ length: this.herr.diceCount })
+        .map(() => `<div class="herr-die herr-die-idle">${faces[0]}</div>`).join('');
+    document.getElementById('herr-dice-result').innerHTML = '';
+},
+
+rollDice: function () {
+    const area  = document.getElementById('herr-dice-area');
+    const resEl = document.getElementById('herr-dice-result');
+    if (!area || this.herr.rolling) return;
+    const faces = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+    const count = this.herr.diceCount;
+    this.herr.rolling = true;
+    resEl.innerHTML   = '';
+    area.innerHTML    = Array.from({ length: count })
+        .map(() => `<div class="herr-die herr-die-rolling">${faces[Math.floor(Math.random()*6)]}</div>`).join('');
+
+    let ticks = 0;
+    const rattle = setInterval(() => {
+        ticks++;
+        area.querySelectorAll('.herr-die').forEach(d => {
+            d.textContent = faces[Math.floor(Math.random() * 6)];
+        });
+        if (ticks >= 8) {
+            clearInterval(rattle);
+            const results = Array.from({ length: count }).map(() => Math.floor(Math.random() * 6) + 1);
+            area.innerHTML = results
+                .map(v => `<div class="herr-die herr-die-result">${faces[v - 1]}</div>`).join('');
+            const total = results.reduce((s, v) => s + v, 0);
+            resEl.innerHTML = count > 1
+                ? `Valores: <strong>${results.join(' + ')}</strong> · Total: <strong class="herr-total">${total}</strong>`
+                : `Resultado: <strong class="herr-total">${total}</strong>`;
+            this.herr.rolling = false;
+        }
+    }, 80);
+},
 };
 
 window.DueloEnVivo = DueloEnVivo;

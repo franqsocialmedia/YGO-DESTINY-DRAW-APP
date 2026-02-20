@@ -1721,7 +1721,256 @@
     flex-direction: column;
     gap: 12px;
 }
+/* ====================================
+   HERRAMIENTAS — MONEDA Y DADOS
+   Destiny Draw - Yu-Gi-Oh! App
+   Añadir al final de style_simuladores.css
+   ==================================== */
 
+#herr-wrapper {
+    margin-top: var(--spacing-lg, 24px);
+}
+
+.herr-header {
+    background: var(--secondary-color, rgba(0,26,51,0.9));
+    color: var(--text-light, #f1f1f1);
+    padding: 14px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.05rem;
+    font-weight: 600;
+    border-left: 4px solid var(--accent-color, #003366);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+    -webkit-user-select: none;
+}
+.herr-header:hover {
+    background: var(--accent-color, #003366);
+    border-left-color: var(--gold-color, #FFD700);
+}
+
+#herr-sec {
+    background: var(--bg-card, rgba(0,26,51,0.6));
+    border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+    border-radius: 0 0 10px 10px;
+    padding: 20px;
+    animation: fadeIn 0.25s ease;
+}
+
+/* ── LAYOUT DOS COLUMNAS ──────────────────────────────────── */
+.herr-two-col {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.herr-panel {
+    flex: 1;
+    min-width: 220px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 12px;
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.herr-panel-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gold-color, #FFD700);
+    letter-spacing: 0.03em;
+}
+
+/* ── MONEDA ───────────────────────────────────────────────── */
+.herr-coin-choice {
+    display: flex;
+    gap: 10px;
+}
+.herr-side-btn {
+    padding: 7px 20px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(241,241,241,0.7);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.herr-side-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.herr-side-active {
+    background: var(--accent-color, #003366) !important;
+    border-color: var(--gold-color, #FFD700) !important;
+    color: var(--gold-color, #FFD700) !important;
+}
+
+.herr-choice-label {
+    font-size: 0.78rem;
+    color: rgba(241,241,241,0.45);
+}
+
+/* Moneda 3D */
+.herr-coin-area {
+    perspective: 600px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.herr-coin {
+    width: 72px;
+    height: 72px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.3s;
+}
+.herr-coin-face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffd700, #b8860b);
+    border: 3px solid #a07800;
+    backface-visibility: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.herr-coin-back {
+    transform: rotateY(180deg);
+    background: radial-gradient(circle at 65% 35%, #e8c84a, #8b6914);
+}
+.herr-coin-heads { transform: rotateY(0deg);   }
+.herr-coin-tails  { transform: rotateY(180deg); }
+
+@keyframes coinSpin {
+    0%   { transform: rotateY(0deg); }
+    100% { transform: rotateY(1080deg); }
+}
+.herr-coin-spin {
+    animation: coinSpin 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ── DADOS ────────────────────────────────────────────────── */
+.herr-label {
+    font-size: 0.82rem;
+    color: rgba(241,241,241,0.6);
+    font-weight: 500;
+}
+
+.herr-dice-stepper {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 4px;
+}
+.herr-step-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(241,241,241,0.7);
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+.herr-step-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+
+.herr-dice-count {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--gold-color, #FFD700);
+    min-width: 24px;
+    text-align: center;
+}
+
+.herr-dice-choice {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.herr-dice-area {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    min-height: 60px;
+    align-items: center;
+}
+
+.herr-die {
+    font-size: 2.6rem;
+    line-height: 1;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.6));
+    transition: transform 0.1s;
+}
+.herr-die-idle   { opacity: 0.45; }
+.herr-die-rolling { animation: dieShake 0.08s infinite alternate; }
+.herr-die-result  {
+    animation: diePop 0.3s ease;
+    opacity: 1;
+}
+
+@keyframes dieShake {
+    from { transform: translate(-2px, -1px) rotate(-5deg); }
+    to   { transform: translate(2px,   1px) rotate(5deg);  }
+}
+@keyframes diePop {
+    0%   { transform: scale(0.6); opacity: 0; }
+    60%  { transform: scale(1.25); }
+    100% { transform: scale(1);   opacity: 1; }
+}
+
+/* ── BOTÓN LANZAR ─────────────────────────────────────────── */
+.herr-launch-btn {
+    width: 100%;
+    padding: 11px;
+    background: linear-gradient(135deg, #003366, #004080);
+    border: 1px solid var(--gold-color, #FFD700);
+    color: var(--gold-color, #FFD700);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+}
+.herr-launch-btn:hover {
+    background: linear-gradient(135deg, #004080, #0055a5);
+    box-shadow: 0 0 12px rgba(255,215,0,0.3);
+}
+.herr-launch-btn:active { transform: scale(0.97); }
+
+/* ── RESULTADOS ───────────────────────────────────────────── */
+.herr-result {
+    font-size: 0.88rem;
+    color: rgba(241,241,241,0.8);
+    text-align: center;
+    min-height: 24px;
+    line-height: 1.5;
+}
+.herr-result strong { color: #fff; }
+.herr-win  { color: #00b894; font-weight: 700; }
+.herr-lose { color: #ff7675; font-weight: 700; }
+.herr-total { color: var(--gold-color, #FFD700); font-size: 1.1rem; }
+
+/* ── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 500px) {
+    .herr-two-col { flex-direction: column; }
+    .herr-panel   { min-width: unset; width: 100%; }
+}
 /* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 600px) {
     .hiper-quick-layout    { flex-direction: column; align-items: center; }
