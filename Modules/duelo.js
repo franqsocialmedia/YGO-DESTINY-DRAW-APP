@@ -11,7 +11,7 @@ const DueloEnVivo = {
     subTab: 'estandar',
     _container: null,
 
-    // Cronómetro Estándar independiente
+    // Cronómetro Estándar (pestaña independiente)
     std: {
         defaultMins: 50,
         remaining:   50 * 60,
@@ -21,24 +21,22 @@ const DueloEnVivo = {
 
     // Estado Master Duel (todo en memoria)
     md: {
-        // Cronómetro estándar dentro de Master Duel (independiente del de arriba)
         std: {
             defaultMins: 50,
             remaining:   50 * 60,
             running:     false,
             _interval:   null
         },
-        // Timers de jugador
-        timerA: { defaultSecs: 300, remaining: 300, running: false, _interval: null },
-        timerB: { defaultSecs: 300, remaining: 300, running: false, _interval: null },
-        // Turno de juego
-        currentTurn:     'A',
-        turnNumber:      1,
-        // Interacción (switch visual, independiente de turno)
-        activeInteract:  null,   // 'A' | 'B' | null
-        // Life Points
+        timerA: { remaining: 300, running: false, _interval: null },
+        timerB: { remaining: 300, running: false, _interval: null },
+        defaultPlayerSecs: 300,
+        currentTurn:    'A',
+        turnNumber:     1,
+        activeInteract: null,   // 'A' | 'B' | null
         lpA: 8000,
-        lpB: 8000
+        lpB: 8000,
+        winsA: 0,
+        winsB: 0
     },
 
     // ─── ENTRY POINT ─────────────────────────────────────────
@@ -52,12 +50,12 @@ const DueloEnVivo = {
         return `
         <div class="duelo-section">
             <div class="duelo-sub-tabs">
-                <button class="duelo-sub-tab ${this.subTab === 'estandar' ? 'active' : ''}"
+                <button class="duelo-sub-tab ${this.subTab === 'estandar'   ? 'active' : ''}"
                         onclick="DueloEnVivo.showSubTab('estandar')">⏱ Cronómetro Estándar</button>
                 <button class="duelo-sub-tab ${this.subTab === 'masterduel' ? 'active' : ''}"
                         onclick="DueloEnVivo.showSubTab('masterduel')">👑 Cronómetro Master Duel</button>
             </div>
-            <div id="duelo-pane-estandar" style="${this.subTab !== 'estandar' ? 'display:none' : ''}">
+            <div id="duelo-pane-estandar"   style="${this.subTab !== 'estandar'   ? 'display:none' : ''}">
                 ${this._buildStdPane()}
             </div>
             <div id="duelo-pane-masterduel" style="${this.subTab !== 'masterduel' ? 'display:none' : ''}">
@@ -68,10 +66,10 @@ const DueloEnVivo = {
 
     showSubTab: function (tab) {
         this.subTab = tab;
-        document.querySelectorAll('.duelo-sub-tab').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.duelo-sub-tab').forEach(b => {
-            if (b.textContent.includes('Estándar') && tab === 'estandar') b.classList.add('active');
-            if (b.textContent.includes('Master')   && tab === 'masterduel') b.classList.add('active');
+            b.classList.toggle('active',
+                (tab === 'estandar'   && b.textContent.includes('Estándar')) ||
+                (tab === 'masterduel' && b.textContent.includes('Master')));
         });
         const estEl = document.getElementById('duelo-pane-estandar');
         const mdEl  = document.getElementById('duelo-pane-masterduel');
@@ -81,9 +79,9 @@ const DueloEnVivo = {
 
     // ─── HELPERS ─────────────────────────────────────────────
     _fmt: function (secs) {
-        const s = Math.max(0, secs);
-        const h = Math.floor(s / 3600);
-        const m = Math.floor((s % 3600) / 60);
+        const s  = Math.max(0, Math.floor(secs));
+        const h  = Math.floor(s / 3600);
+        const m  = Math.floor((s % 3600) / 60);
         const ss = s % 60;
         if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
         return `${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
@@ -94,12 +92,12 @@ const DueloEnVivo = {
         if (el) el.textContent = this._fmt(secs);
     },
 
-    _flashAlert: function (msg) {
+    _flashAlert: function (msg, duration) {
         const el = document.createElement('div');
         el.className = 'duelo-alert-flash';
         el.textContent = msg;
         document.body.appendChild(el);
-        setTimeout(() => el.remove(), 3500);
+        setTimeout(() => el.remove(), duration || 3500);
     },
 
     // ═══════════════════════════════════════════════════════
@@ -123,44 +121,57 @@ const DueloEnVivo = {
         </div>`;
     },
 
+    // ─── CRONÓMETRO ESTÁNDAR (lógica compartida main/md) ─────
     stdStart: function (scope) {
         const state   = scope === 'md' ? this.md.std : this.std;
-        const inputId = scope === 'md' ? 'std-mins-md' : 'std-mins-main';
-        const dispId  = scope === 'md' ? 'std-md-display' : 'std-main-display';
+        const inputId = scope === 'md' ? 'std-mins-md'    : 'std-mins-main';
+        const dispId  = scope === 'md' ? 'std-md-display'  : 'std-main-display';
         if (state.running) return;
+
         const inp = document.getElementById(inputId);
         if (inp) {
             const m = Math.max(1, parseInt(inp.value) || state.defaultMins);
             state.defaultMins = m;
             if (state.remaining <= 0) state.remaining = m * 60;
         }
+
         state.running   = true;
         state._interval = setInterval(() => {
             if (state.remaining <= 0) {
                 clearInterval(state._interval);
                 state.running = false;
                 this._setDisplay(dispId, 0);
-                this._flashAlert('⏰ ¡Tiempo agotado!');
+                this._flashAlert('⏰ ¡Tiempo de ronda agotado!');
                 return;
             }
             state.remaining--;
             this._setDisplay(dispId, state.remaining);
         }, 1000);
+
+        // Si es MD, también reanudar el timer del jugador activo
+        if (scope === 'md' && this.md.activeInteract) {
+            this._startPlayerTimer(this.md.activeInteract);
+        }
     },
 
     stdStop: function (scope) {
         const state = scope === 'md' ? this.md.std : this.std;
         clearInterval(state._interval);
         state.running = false;
+
+        // Si es MD, también pausar el timer del jugador activo
+        if (scope === 'md' && this.md.activeInteract) {
+            this._stopPlayerTimer(this.md.activeInteract);
+        }
     },
 
     stdReset: function (scope) {
         this.stdStop(scope);
         const state   = scope === 'md' ? this.md.std : this.std;
-        const inputId = scope === 'md' ? 'std-mins-md' : 'std-mins-main';
-        const dispId  = scope === 'md' ? 'std-md-display' : 'std-main-display';
+        const inputId = scope === 'md' ? 'std-mins-md'    : 'std-mins-main';
+        const dispId  = scope === 'md' ? 'std-md-display'  : 'std-main-display';
         const inp = document.getElementById(inputId);
-        const m = inp ? (Math.max(1, parseInt(inp.value) || state.defaultMins)) : state.defaultMins;
+        const m = inp ? Math.max(1, parseInt(inp.value) || state.defaultMins) : state.defaultMins;
         state.remaining = m * 60;
         this._setDisplay(dispId, state.remaining);
     },
@@ -171,16 +182,24 @@ const DueloEnVivo = {
     _buildMDPane: function () {
         const md      = this.md;
         const turnCol = md.currentTurn === 'A' ? '#1a6bbd' : '#bd1a1a';
-        const iA      = md.activeInteract === 'A';
-        const iB      = md.activeInteract === 'B';
 
         return `
         <div class="duelo-md-wrap">
 
-            <!-- Cronómetro Estándar centrado arriba -->
+            <!-- Fila superior: Cronómetro Estándar + Marcador -->
             <div class="duelo-md-std-row">
-                <div class="duelo-md-std-display-wrap">
-                    <div class="duelo-std-display duelo-std-display-md" id="std-md-display">${this._fmt(md.std.remaining)}</div>
+                <div class="duelo-md-std-main">
+                    <div class="duelo-md-clock-score-row">
+                        <div class="duelo-std-display duelo-std-display-md" id="std-md-display">${this._fmt(md.std.remaining)}</div>
+                        <div class="duelo-md-scoreboard">
+                            <span class="md-score-label">B</span>
+                            <span class="md-score-val" id="md-score-b">${md.winsB}</span>
+                            <span class="md-score-dash">–</span>
+                            <span class="md-score-val" id="md-score-a">${md.winsA}</span>
+                            <span class="md-score-label">A</span>
+                        </div>
+                    </div>
+                    <!-- Controles del cronómetro estándar MD -->
                     <div class="duelo-std-config-row duelo-std-config-row-sm">
                         <label class="duelo-label">Mins:</label>
                         <input type="number" id="std-mins-md" class="duelo-time-input duelo-time-input-sm"
@@ -188,73 +207,70 @@ const DueloEnVivo = {
                         <button class="btn btn-primary duelo-duel-btn duelo-duel-btn-sm"
                                 onclick="DueloEnVivo.stdStart('md')">⚔️ Duelo!</button>
                         <button class="btn btn-secondary duelo-ctrl-btn-sm"
-                                onclick="DueloEnVivo.stdStop('md')">⏹</button>
+                                onclick="DueloEnVivo.stdStop('md')">⏹ Detener</button>
                         <button class="btn btn-secondary duelo-ctrl-btn-sm"
-                                onclick="DueloEnVivo.stdReset('md')">↺</button>
+                                onclick="DueloEnVivo.stdReset('md')">↺ Resetear</button>
+                    </div>
+                    <!-- Config de segundos de jugadores (compartida) -->
+                    <div class="duelo-player-secs-row">
+                        <label class="duelo-label">Segs. por jugador:</label>
+                        <input type="number" id="ptimer-player-secs" class="duelo-time-input duelo-time-input-sm"
+                               value="${md.defaultPlayerSecs}" min="10" max="9999">
+                        <button class="btn btn-secondary duelo-ctrl-btn-sm"
+                                onclick="DueloEnVivo.resetPlayerTimers()">↺ Resetear contadores</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Timers de jugador (rotados) + fila de interacción -->
+            <!-- Fila de jugadores: timers rotados + centro -->
             <div class="duelo-md-players-row">
 
                 <!-- Jugador A (izquierda, rotado 90°) -->
-                <div class="duelo-md-player-col duelo-md-player-col-a">
+                <div class="duelo-md-player-col">
                     <div class="duelo-md-player-rotated">
                         <div class="duelo-timer-player" id="md-timer-a">${this._fmt(md.timerA.remaining)}</div>
                         <div class="duelo-player-tag">Jugador A</div>
-                        <div class="duelo-player-ctrl-row">
-                            <button class="duelo-ptimer-btn" onclick="DueloEnVivo.playerTimerStart('A')">▶</button>
-                            <button class="duelo-ptimer-btn" onclick="DueloEnVivo.playerTimerStop('A')">⏹</button>
-                            <button class="duelo-ptimer-btn" onclick="DueloEnVivo.playerTimerReset('A')">↺</button>
-                            <input type="number" id="ptimer-a-secs" class="duelo-time-input duelo-time-input-sm"
-                                   value="${md.timerA.defaultSecs}" min="10" max="9999">s
-                        </div>
                     </div>
                 </div>
 
-                <!-- Centro: botón de turno -->
+                <!-- Centro: turno + rendirse + cambiar turno -->
                 <div class="duelo-md-center-col">
-                    <div class="duelo-turn-indicator" id="duelo-turn-ind"
-                         style="background:${turnCol}">
-                        Turno: Jugador ${md.currentTurn}
+                    <div class="duelo-turn-row">
+                        <button class="btn duelo-surrender-btn"
+                                onclick="DueloEnVivo.surrender('A')" title="Jugador A se rinde">🏳 A</button>
+                        <div class="duelo-turn-block">
+                            <div class="duelo-turn-indicator" id="duelo-turn-ind"
+                                 style="background:${turnCol}">Turno: Jugador ${md.currentTurn}</div>
+                            <div class="duelo-turn-count" id="duelo-turn-count">Turno ${md.turnNumber}</div>
+                        </div>
+                        <button class="btn duelo-surrender-btn"
+                                onclick="DueloEnVivo.surrender('B')" title="Jugador B se rinde">🏳 B</button>
                     </div>
-                    <div class="duelo-turn-count" id="duelo-turn-count">Turno ${md.turnNumber}</div>
-                    <button class="btn duelo-change-turn-btn" onclick="DueloEnVivo.nextTurn()">
-                        ⇄ Cambiar Turno
-                    </button>
+                    <button class="btn btn-primary duelo-change-turn-btn"
+                            onclick="DueloEnVivo.nextTurn()">⇄ Cambiar Turno</button>
                 </div>
 
                 <!-- Jugador B (derecha, rotado -90°) -->
-                <div class="duelo-md-player-col duelo-md-player-col-b">
+                <div class="duelo-md-player-col">
                     <div class="duelo-md-player-rotated duelo-md-player-rotated-b">
                         <div class="duelo-timer-player" id="md-timer-b">${this._fmt(md.timerB.remaining)}</div>
                         <div class="duelo-player-tag">Jugador B</div>
-                        <div class="duelo-player-ctrl-row">
-                            <button class="duelo-ptimer-btn" onclick="DueloEnVivo.playerTimerStart('B')">▶</button>
-                            <button class="duelo-ptimer-btn" onclick="DueloEnVivo.playerTimerStop('B')">⏹</button>
-                            <button class="duelo-ptimer-btn" onclick="DueloEnVivo.playerTimerReset('B')">↺</button>
-                            <input type="number" id="ptimer-b-secs" class="duelo-time-input duelo-time-input-sm"
-                                   value="${md.timerB.defaultSecs}" min="10" max="9999">s
-                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Fila de interacción (botones amarillos grandes) -->
+            <!-- Fila de interacción (chess clock) -->
             <div class="duelo-md-interact-row">
-                <button class="duelo-interact-btn ${iA ? 'duelo-interact-active' : ''}"
+                <button class="duelo-interact-btn ${md.activeInteract === 'A' ? 'duelo-interact-active' : ''}"
                         id="duelo-ibtn-a"
                         onclick="DueloEnVivo.setInteraction('A')">
-                    ⚡<br><span>Jugador A</span>
+                    <br><span>¿Algo ahí?</span>
                 </button>
-
                 <div class="duelo-interact-spacer"></div>
-
-                <button class="duelo-interact-btn ${iB ? 'duelo-interact-active' : ''}"
+                <button class="duelo-interact-btn ${md.activeInteract === 'B' ? 'duelo-interact-active' : ''}"
                         id="duelo-ibtn-b"
                         onclick="DueloEnVivo.setInteraction('B')">
-                    ⚡<br><span>Jugador B</span>
+                    <br><span>¿Algo ahí?</span>
                 </button>
             </div>
 
@@ -266,21 +282,15 @@ const DueloEnVivo = {
                     <div class="duelo-lp-ops">
                         <button class="duelo-op-btn duelo-op-gain"   onclick="DueloEnVivo.openLP('A','gain')">Gain</button>
                         <button class="duelo-op-btn duelo-op-damage" onclick="DueloEnVivo.openLP('A','damage')">Damage</button>
-                        <button class="duelo-op-btn duelo-op-multi"  onclick="DueloEnVivo.openLP('A','multi')">Multi</button>
-                        <button class="duelo-op-btn duelo-op-half"   onclick="DueloEnVivo.openLP('A','half')">Half</button>
                     </div>
                 </div>
-
                 <div class="duelo-lp-vs">VS</div>
-
                 <div class="duelo-lp-block">
                     <div class="duelo-lp-name">Jugador B</div>
                     <div class="duelo-lp-val" id="lp-b">${md.lpB.toLocaleString()}</div>
                     <div class="duelo-lp-ops">
                         <button class="duelo-op-btn duelo-op-gain"   onclick="DueloEnVivo.openLP('B','gain')">Gain</button>
                         <button class="duelo-op-btn duelo-op-damage" onclick="DueloEnVivo.openLP('B','damage')">Damage</button>
-                        <button class="duelo-op-btn duelo-op-multi"  onclick="DueloEnVivo.openLP('B','multi')">Multi</button>
-                        <button class="duelo-op-btn duelo-op-half"   onclick="DueloEnVivo.openLP('B','half')">Half</button>
                     </div>
                 </div>
             </div>
@@ -293,25 +303,19 @@ const DueloEnVivo = {
         </div>`;
     },
 
-    // ─── PLAYER TIMERS ───────────────────────────────────────
-    playerTimerStart: function (p) {
+    // ─── PLAYER TIMERS (controlados por botones de interacción) ──
+    _startPlayerTimer: function (p) {
         const state  = p === 'A' ? this.md.timerA : this.md.timerB;
-        const dispId = p === 'A' ? 'md-timer-a' : 'md-timer-b';
-        const inpId  = p === 'A' ? 'ptimer-a-secs' : 'ptimer-b-secs';
+        const dispId = p === 'A' ? 'md-timer-a'   : 'md-timer-b';
         if (state.running) return;
-        const inp = document.getElementById(inpId);
-        if (inp) {
-            const s = Math.max(10, parseInt(inp.value) || state.defaultSecs);
-            state.defaultSecs = s;
-            if (state.remaining <= 0) state.remaining = s;
-        }
         state.running   = true;
         state._interval = setInterval(() => {
             if (state.remaining <= 0) {
                 clearInterval(state._interval);
-                state.running = false;
+                state.running   = false;
+                state.remaining = 0;
                 this._setDisplay(dispId, 0);
-                this._flashAlert(`⏰ ¡Tiempo agotado — Jugador ${p}!`);
+                this._declareWinner(p === 'A' ? 'B' : 'A', 'tiempo');
                 return;
             }
             state.remaining--;
@@ -319,62 +323,131 @@ const DueloEnVivo = {
         }, 1000);
     },
 
-    playerTimerStop: function (p) {
+    _stopPlayerTimer: function (p) {
         const state = p === 'A' ? this.md.timerA : this.md.timerB;
         clearInterval(state._interval);
         state.running = false;
     },
 
-    playerTimerReset: function (p) {
-        this.playerTimerStop(p);
-        const state  = p === 'A' ? this.md.timerA : this.md.timerB;
-        const dispId = p === 'A' ? 'md-timer-a'    : 'md-timer-b';
-        const inpId  = p === 'A' ? 'ptimer-a-secs' : 'ptimer-b-secs';
-        const inp = document.getElementById(inpId);
-        const s = inp ? (Math.max(10, parseInt(inp.value) || state.defaultSecs)) : state.defaultSecs;
-        state.remaining = s;
-        this._setDisplay(dispId, s);
+    resetPlayerTimers: function () {
+        this._stopPlayerTimer('A');
+        this._stopPlayerTimer('B');
+        this.md.activeInteract = null;
+        this._updateInteractButtons();
+        const inp = document.getElementById('ptimer-player-secs');
+        const s   = inp ? Math.max(10, parseInt(inp.value) || this.md.defaultPlayerSecs) : this.md.defaultPlayerSecs;
+        this.md.defaultPlayerSecs = s;
+        this.md.timerA.remaining  = s;
+        this.md.timerB.remaining  = s;
+        this._setDisplay('md-timer-a', s);
+        this._setDisplay('md-timer-b', s);
     },
 
-    // ─── TURNO ───────────────────────────────────────────────
-    nextTurn: function () {
-        const md = this.md;
-        md.currentTurn  = md.currentTurn === 'A' ? 'B' : 'A';
-        md.turnNumber++;
-        const color = md.currentTurn === 'A' ? '#1a6bbd' : '#bd1a1a';
-        const indEl   = document.getElementById('duelo-turn-ind');
-        const countEl = document.getElementById('duelo-turn-count');
-        if (indEl)   { indEl.textContent = `Turno: Jugador ${md.currentTurn}`; indEl.style.background = color; }
-        if (countEl) countEl.textContent = `Turno ${md.turnNumber}`;
-    },
-
-    // ─── INTERACCIÓN (switch visual, sin conteo) ─────────────
+    // ─── INTERACCIÓN — Chess clock ────────────────────────────
+    // Presionar tu botón ACTIVO → pasas al rival (+30s si aplica al turno)
+    // Presionar tu botón INACTIVO → tomas el turno de interacción
     setInteraction: function (p) {
-        this.md.activeInteract = this.md.activeInteract === p ? null : p;
-        const ia = this.md.activeInteract;
+        const md    = this.md;
+        const other = p === 'A' ? 'B' : 'A';
+
+        if (md.activeInteract === p) {
+            // Terminas tu interacción → pasa al rival
+            this._stopPlayerTimer(p);
+            md.activeInteract = other;
+            this._startPlayerTimer(other);
+        } else if (md.activeInteract === other) {
+            // El rival estaba activo → tomas el turno
+            this._stopPlayerTimer(other);
+            md.activeInteract = p;
+            this._startPlayerTimer(p);
+        } else {
+            // Nadie activo → te activas
+            md.activeInteract = p;
+            this._startPlayerTimer(p);
+        }
+        this._updateInteractButtons();
+    },
+
+    _updateInteractButtons: function () {
+        const ia   = this.md.activeInteract;
         const btnA = document.getElementById('duelo-ibtn-a');
         const btnB = document.getElementById('duelo-ibtn-b');
         if (btnA) btnA.classList.toggle('duelo-interact-active', ia === 'A');
         if (btnB) btnB.classList.toggle('duelo-interact-active', ia === 'B');
     },
 
+    // ─── TURNO DE JUEGO ──────────────────────────────────────
+    // +30s al jugador que acaba de terminar su turno
+    nextTurn: function () {
+        const md           = this.md;
+        const justFinished = md.currentTurn;
+
+        // +30s al jugador cuyo turno termina
+        if (justFinished === 'A') {
+            md.timerA.remaining += 30;
+            this._setDisplay('md-timer-a', md.timerA.remaining);
+        } else {
+            md.timerB.remaining += 30;
+            this._setDisplay('md-timer-b', md.timerB.remaining);
+        }
+
+        md.currentTurn = justFinished === 'A' ? 'B' : 'A';
+        md.turnNumber++;
+
+        const color   = md.currentTurn === 'A' ? '#1a6bbd' : '#bd1a1a';
+        const indEl   = document.getElementById('duelo-turn-ind');
+        const countEl = document.getElementById('duelo-turn-count');
+        if (indEl)   { indEl.textContent = `Turno: Jugador ${md.currentTurn}`; indEl.style.background = color; }
+        if (countEl) countEl.textContent = `Turno ${md.turnNumber}`;
+    },
+
+    // ─── RENDIRSE ────────────────────────────────────────────
+    surrender: function (loser) {
+        this._declareWinner(loser === 'A' ? 'B' : 'A', 'rendición');
+
+    },
+
+    // ─── DECLARAR GANADOR ─────────────────────────────────────
+    _declareWinner: function (winner, reason) {
+        const md = this.md;
+        this._stopPlayerTimer('A');
+        this._stopPlayerTimer('B');
+        md.activeInteract = null;
+        this._updateInteractButtons();
+
+        if (winner === 'A') md.winsA++;
+        else                md.winsB++;
+
+        const sA = document.getElementById('md-score-a');
+        const sB = document.getElementById('md-score-b');
+        if (sA) sA.textContent = md.winsA;
+        if (sB) sB.textContent = md.winsB;
+
+        const reasonText = { tiempo: 'por tiempo', 'rendición': 'por rendición', LP: 'por LP' }[reason] || '';
+        this._flashAlert(`🏆 ¡Jugador ${winner} gana ${reasonText}!  (B ${md.winsB} – ${md.winsA} A)`, 5000);
+        
+
+        // Reiniciar para el próximo duelo
+        this.resetPlayerTimers();
+        DueloEnVivo.resetLP();
+        md.turnNumber = 1;
+        document.getElementById('duelo-turn-count').textContent = `Turno ${md.turnNumber}`;
+        },
+
     // ─── LIFE POINTS ─────────────────────────────────────────
     openLP: function (player, type) {
         document.getElementById('duelo-lp-panel')?.remove();
-
-        const presets  = [100, 300, 500, 1000, 1500, 2000, 4000, 8000];
-        const labels   = { gain: 'Gain ＋', damage: 'Damage －', multi: 'Multi ×', half: 'Half ÷' };
-        const opLabel  = labels[type] || type;
+        const presets = [100, 300, 500, 1000, 1500, 2000, 4000, 8000];
+        const labels  = { gain: 'Gain ＋', damage: 'Damage －' };
 
         const panel = document.createElement('div');
         panel.id    = 'duelo-lp-panel';
         panel.className = 'duelo-lp-panel-overlay';
         panel.innerHTML = `
             <div class="duelo-lp-panel-box">
-                <button class="duelo-lp-panel-close" onclick="document.getElementById('duelo-lp-panel').remove()">✕</button>
-                <div class="duelo-lp-panel-title">
-                    ${opLabel} — Jugador ${player}
-                </div>
+                <button class="duelo-lp-panel-close"
+                        onclick="document.getElementById('duelo-lp-panel').remove()">✕</button>
+                <div class="duelo-lp-panel-title">${labels[type]} — Jugador ${player}</div>
                 <div class="duelo-lp-presets">
                     ${presets.map(v => `
                         <button class="duelo-lp-preset"
@@ -383,17 +456,13 @@ const DueloEnVivo = {
                         </button>`).join('')}
                 </div>
                 <div class="duelo-lp-input-row">
-                    <input type="number" id="duelo-lp-input" class="duelo-time-input" 
+                    <input type="number" id="duelo-lp-input" class="duelo-time-input"
                            placeholder="Ingresa cifra..." min="0" style="flex:1">
                     <button class="btn btn-secondary duelo-ctrl-btn"
-                            onclick="document.getElementById('duelo-lp-input').value=''">
-                        ✕ Borrar
-                    </button>
+                            onclick="document.getElementById('duelo-lp-input').value=''">✕ Borrar</button>
                 </div>
                 <button class="btn btn-primary duelo-lp-calc-btn"
-                        onclick="DueloEnVivo.calcLP('${player}','${type}')">
-                    ✓ Calcular
-                </button>
+                        onclick="DueloEnVivo.calcLP('${player}','${type}')">✓ Calcular</button>
             </div>`;
 
         panel.addEventListener('click', e => { if (e.target === panel) panel.remove(); });
@@ -411,17 +480,18 @@ const DueloEnVivo = {
 
         if (type === 'gain')   current = current + val;
         if (type === 'damage') current = Math.max(0, current - val);
-        if (type === 'multi')  current = current * val;
-        if (type === 'half')   current = val === 0 ? current : Math.floor(current / val);
 
         if (player === 'A') md.lpA = current;
         else                md.lpB = current;
 
-        const dispId = player === 'A' ? 'lp-a' : 'lp-b';
-        const dispEl = document.getElementById(dispId);
-        if (dispEl) dispEl.textContent = current.toLocaleString();
+        const el = document.getElementById(player === 'A' ? 'lp-a' : 'lp-b');
+        if (el) el.textContent = current.toLocaleString();
 
         document.getElementById('duelo-lp-panel')?.remove();
+
+        if (current <= 0) {
+            this._declareWinner(player === 'A' ? 'B' : 'A', 'LP');
+        }
     },
 
     resetLP: function () {
