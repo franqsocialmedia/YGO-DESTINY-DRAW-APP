@@ -124,6 +124,9 @@ const Navigation = {
             if (tabName === 'simuladores' && window.Hipergeometria) {
                 Hipergeometria.init();
             }
+            if (tabName === 'mideck' && window.Engines) {
+                Engines.init();
+            }
         SafeLogger.functionEnd('Navigation', 'showTab', { success: true, currentTab: tabName });
 
         // PASO 6: Hacer scroll al inicio del contenido (smooth)
