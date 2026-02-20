@@ -964,6 +964,57 @@ renderDeckStatsBlock: function () {
         });
     });
 
+// ── Tipos de Monstruo (desglose visual) ──────────────────
+    const monsterTypeOrder = [
+        { key: 'ritual',   label: 'Ritual',         color: '#b3d9ff' },
+        { key: 'fusion',   label: 'Fusión',          color: '#d8b5d8' },
+        { key: 'synchro',  label: 'Sincronía',       color: '#f0f0f0' },
+        { key: 'xyz',      label: 'Xyz',             color: '#9b59b6' },
+        { key: 'link',     label: 'Link',            color: '#4169e1' },
+        { key: 'pendulum', label: 'Péndulo',         color: '#7bed9f' },
+        { key: 'normal',   label: 'Normal',          color: '#f9ca74' },
+        { key: 'effect',   label: 'Efecto',          color: '#d9b38c' }
+    ];
+    const monsterTypeCounts = {};
+    allCards.forEach(item => {
+        const t = (item.data.type || '').toLowerCase();
+        if (t.includes('spell') || t.includes('trap')) return;
+        const qty = item.qty || 1;
+        let assigned = false;
+        for (const mt of monsterTypeOrder) {
+            if (mt.key !== 'normal' && mt.key !== 'effect' && t.includes(mt.key)) {
+                monsterTypeCounts[mt.key] = (monsterTypeCounts[mt.key] || 0) + qty;
+                assigned = true;
+                break;
+            }
+        }
+        if (!assigned) {
+            const bucket = t.includes('normal monster') ? 'normal' : 'effect';
+            monsterTypeCounts[bucket] = (monsterTypeCounts[bucket] || 0) + qty;
+        }
+    });
+
+    const totalMonsters = Object.values(monsterTypeCounts).reduce((s, v) => s + v, 0);
+    const renderMonsterTypeBar = () => {
+        if (!totalMonsters) return '';
+        const bars = monsterTypeOrder
+            .filter(mt => monsterTypeCounts[mt.key] > 0)
+            .map(mt => {
+                const val = monsterTypeCounts[mt.key];
+                const pct = Math.round((val / totalMonsters) * 100);
+                return `
+            <div class="dsg-bar-item">
+                <div class="dsg-bar-label" style="color:${mt.color}">${mt.label}</div>
+                <div class="dsg-bar-track">
+                    <div class="dsg-bar-fill" style="width:${pct}%;background:${mt.color}"></div>
+                </div>
+                <div class="dsg-bar-val">${val}</div>
+            </div>`;
+            }).join('');
+        return `<div class="dsg-group"><div class="dsg-group-title">Tipos de Monstruo</div>${bars}</div>`;
+    };
+
+
     // ── Subtipos Hechizo ─────────────────────────────────────────
     // YGOProDeck devuelve el subtipo en card.race, no en card.type
     const spellTypes = {};
@@ -1101,6 +1152,7 @@ renderDeckStatsBlock: function () {
     <div class="dsg-section">
         <div class="dsg-section-title">Desglose detallado</div>
         <div class="dsg-scroll-row">
+            ${renderMonsterTypeBar()}
             ${renderAttrBars(attributes)}
             ${renderBarGroup('Tipo de Monstruo', races,         'rgba(108,92,231,0.75)', '#a29bfe')}
             ${renderBarGroup('Niveles / Rangos / Link', levels, 'rgba(0,184,148,0.75)',  '#00b894')}
@@ -1122,8 +1174,14 @@ renderDeckStatsBlock: function () {
             </button>
         </div>
 
-        <!-- VISTA CHIPS (original) -->
+       <!-- VISTA CHIPS (original) -->
         <div id="dstab-pane-chips">
+            ${totalMonsters > 0 ? `<div class="ds-row">
+                ${group('Tipos de Monstruo', monsterTypeOrder
+                    .filter(mt => monsterTypeCounts[mt.key] > 0)
+                    .map(mt => `<span class="ds-chip" style="border-color:${mt.color}">${mt.label} <strong>(${monsterTypeCounts[mt.key]})</strong></span>`)
+                    .join(''))}
+            </div>` : ''}
             <div class="ds-row">
                 ${group('Tipo de Cartas', renderChipRow(cardTypes, null))}
                 ${Object.keys(attributes).length ? group('Atributos', renderChipRow(attributes, attrColorFn)) : ''}
@@ -1222,11 +1280,17 @@ onDeckLoaded: function () {
             html += `<p>Abra la seccion de Decks Guardados y elija uno o agregue cartas desde la pestaña Buscador.</p>`;
         } else {
     html += `
-        <h2 onclick="Deck.openRenamePanel()" class="deck-title">
-            ${this.name} (${mainC})
-        </h2>
+    <h2 onclick="Deck.openRenamePanel()" class="deck-title">
+        ${this.name}
+    </h2>
 
-        ${this.renderDeckStatsBlock()}
+    <div class="deck-zone-counts">
+        <span class="dzc-chip dzc-main">🃏 Main <strong>${mainC}</strong></span>
+        <span class="dzc-chip dzc-extra">✨ Extra <strong>${extraC}</strong></span>
+        <span class="dzc-chip dzc-side">🔄 Side <strong>${sideC}</strong></span>
+    </div>
+
+    ${this.renderDeckStatsBlock()}
 
         ${window.Banlist?.isGenesysActive?.() ? Banlist.renderDeckPointsIndicator(this.cards) : ''}
         <h3 onclick="Deck.toggleSection('main-sec')">

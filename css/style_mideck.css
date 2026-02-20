@@ -2001,6 +2001,26 @@
 }
 .eng-item-edit:hover { opacity: 1; }
 
+/* ── CONTADOR DE ZONAS ────────────────────────────────────── */
+.deck-zone-counts {
+    display: flex;
+    gap: 8px;
+    margin: 6px 0 10px;
+    flex-wrap: wrap;
+}
+.dzc-chip {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    color: rgba(241,241,241,0.75);
+}
+.dzc-chip strong { font-size: 1rem; margin-left: 4px; color: #fff; }
+.dzc-main  { border-color: rgba(0,184,148,0.4); }
+.dzc-extra { border-color: rgba(155,89,182,0.4); }
+.dzc-side  { border-color: rgba(255,255,255,0.2); }
+
 /* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 700px) {
     .engines-sidebar { flex: none; width: 100%; max-width: none; position: static; }
