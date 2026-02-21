@@ -3194,6 +3194,80 @@
 }
 .pz-dice-roll-btn:hover  { background: rgba(0, 100, 210, .55); }
 .pz-dice-roll-btn:disabled { opacity: .45; cursor: default; }
+
+
+/* ── LP en Zona de Práctica ────────────────────────────── */
+.pz-lp-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    background: rgba(180, 0, 0, .1);
+    border: 1px solid rgba(214, 48, 49, .22);
+    border-radius: 7px;
+    flex-wrap: wrap;
+}
+.pz-lp-label {
+    font-size: .72rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, .45);
+    flex-shrink: 0;
+}
+.pz-lp-val {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #ff8080;
+    letter-spacing: .04em;
+    flex-shrink: 0;
+    min-width: 60px;
+}
+.pz-lp-ops { display: flex; gap: 5px; flex-wrap: wrap; }
+.pz-lp-btn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid;
+    cursor: pointer;
+    font-size: .72rem;
+    font-weight: 700;
+    transition: background .13s;
+}
+.pz-lp-gain  { background: rgba(26,122,46,.25);  border-color: rgba(26,122,46,.5);  color: #80e898; }
+.pz-lp-gain:hover  { background: rgba(26,122,46,.45); }
+.pz-lp-dmg   { background: rgba(214,48,49,.22);  border-color: rgba(214,48,49,.45); color: #ff8080; }
+.pz-lp-dmg:hover   { background: rgba(214,48,49,.4); }
+.pz-lp-reset { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.15); color: rgba(255,255,255,.5); }
+.pz-lp-reset:hover { background: rgba(255,255,255,.12); }
+.pz-lp-presets {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px;
+}
+.pz-lp-preset-btn {
+    padding: 4px 10px; border-radius: 6px;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+    color: rgba(255,255,255,.7); cursor: pointer; font-size: .75rem; font-weight: 600;
+    transition: background .12s;
+}
+.pz-lp-preset-btn:hover { background: rgba(255,215,0,.15); border-color: rgba(255,215,0,.3); color: #FFD700; }
+
+/* ── Like / Prosigue en Log ─────────────────────────────── */
+.pz-log-like-btn {
+    padding: 5px 9px;
+    background: rgba(0, 80, 160, .35);
+    border: 1px solid rgba(0, 120, 200, .5);
+    color: #80c8ff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: .9rem;
+    flex-shrink: 0;
+    transition: background .13s;
+}
+.pz-log-like-btn:hover { background: rgba(0, 100, 210, .55); }
+
+/* Colores especiales en entradas del Log */
+.pz-log-prosigue      .pz-log-entry-msg { color: #80e898; font-weight: 700; }
+.pz-log-chain-resolve .pz-log-entry-msg { color: #87CEEB; font-weight: 700; }
+.pz-log-activate      .pz-log-entry-msg { color: #80e898; }
+
+
 /* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 500px) {
     .herr-two-col { flex-direction: column; }

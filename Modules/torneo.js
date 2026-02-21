@@ -171,6 +171,12 @@ const Torneo = {
         practicaEl.style.display = tab === 'practica' ? '' : 'none';
         if (tab === 'practica' && window.ZonaPractica) ZonaPractica.renderInto(practicaEl);
     }
+    // Botones flotantes: solo visibles en Zona de Práctica
+    if (window.ZonaPractica) {
+        tab === 'practica'
+            ? ZonaPractica._updateFloatingBtns()
+            : ZonaPractica._cleanupFloatBtns();
+    }
 },
     setViewRound: function (num) {
         this.viewRound = num;

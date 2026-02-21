@@ -135,6 +135,30 @@ herr: {
                 <button class="btn btn-secondary duelo-ctrl-btn"
                         onclick="DueloEnVivo.stdReset('main')">↺ Resetear</button>
             </div>
+
+            <div class="duelo-lp-section" style="margin-top:14px">
+            <div class="duelo-lp-block">
+                <div class="duelo-lp-name">Jugador A</div>
+                <div class="duelo-lp-val" id="std-lp-a">8,000</div>
+                <div class="duelo-lp-ops">
+                    <button class="duelo-op-btn duelo-op-gain"   onclick="DueloEnVivo.openLPStd('A','gain')">Gain</button>
+                    <button class="duelo-op-btn duelo-op-damage" onclick="DueloEnVivo.openLPStd('A','damage')">Damage</button>
+                </div>
+            </div>
+            <div class="duelo-lp-vs">VS</div>
+            <div class="duelo-lp-block">
+                <div class="duelo-lp-name">Jugador B</div>
+                <div class="duelo-lp-val" id="std-lp-b">8,000</div>
+                <div class="duelo-lp-ops">
+                    <button class="duelo-op-btn duelo-op-gain"   onclick="DueloEnVivo.openLPStd('B','gain')">Gain</button>
+                    <button class="duelo-op-btn duelo-op-damage" onclick="DueloEnVivo.openLPStd('B','damage')">Damage</button>
+                </div>
+            </div>
+        </div>
+        <div class="duelo-lp-reset-row">
+            <button class="btn btn-secondary duelo-ctrl-btn"
+                    onclick="DueloEnVivo.resetLPStd()">↺ Resetear LPs (8000)</button>
+        </div>
         </div>`;
     },
 
@@ -519,6 +543,61 @@ herr: {
         if (elA) elA.textContent = '8,000';
         if (elB) elB.textContent = '8,000';
     },
+    // ── LP Cronómetro Estándar ───────────────────────────────
+    openLPStd: function (player, type) {
+        document.getElementById('duelo-lp-panel')?.remove();
+        const presets = [100, 300, 500, 1000, 1500, 2000, 4000, 8000];
+        const labels  = { gain: 'Gain ＋', damage: 'Damage －' };
+        const panel   = document.createElement('div');
+        panel.id      = 'duelo-lp-panel';
+        panel.className = 'duelo-lp-panel-overlay';
+        panel.innerHTML = `
+            <div class="duelo-lp-panel-box">
+                <button class="duelo-lp-panel-close"
+                        onclick="document.getElementById('duelo-lp-panel').remove()">✕</button>
+                <div class="duelo-lp-panel-title">${labels[type]} — Jugador ${player}</div>
+                <div class="duelo-lp-presets">
+                    ${presets.map(v => `
+                        <button class="duelo-lp-preset"
+                                onclick="document.getElementById('duelo-lp-input').value='${v}'">
+                            ${v.toLocaleString()}
+                        </button>`).join('')}
+                </div>
+                <div class="duelo-lp-input-row">
+                    <input type="number" id="duelo-lp-input" class="duelo-time-input"
+                        placeholder="Ingresa cifra..." min="0" style="flex:1">
+                    <button class="btn btn-secondary duelo-ctrl-btn"
+                            onclick="document.getElementById('duelo-lp-input').value=''">✕ Borrar</button>
+                </div>
+                <button class="btn btn-primary duelo-lp-calc-btn"
+                        onclick="DueloEnVivo.calcLPStd('${player}','${type}')">✓ Calcular</button>
+            </div>`;
+        panel.addEventListener('click', e => { if (e.target === panel) panel.remove(); });
+        document.body.appendChild(panel);
+        document.getElementById('duelo-lp-input')?.focus();
+    },
+
+    calcLPStd: function (player, type) {
+        const val = parseInt(document.getElementById('duelo-lp-input')?.value);
+        if (isNaN(val) || val < 0) return;
+        let current = player === 'A' ? this.std.lpA : this.std.lpB;
+        if (type === 'gain')   current = current + val;
+        if (type === 'damage') current = Math.max(0, current - val);
+        if (player === 'A') this.std.lpA = current;
+        else                this.std.lpB = current;
+        const el = document.getElementById(player === 'A' ? 'std-lp-a' : 'std-lp-b');
+        if (el) el.textContent = current.toLocaleString();
+        document.getElementById('duelo-lp-panel')?.remove();
+    },
+
+    resetLPStd: function () {
+        this.std.lpA = 8000;
+        this.std.lpB = 8000;
+        const elA = document.getElementById('std-lp-a');
+        const elB = document.getElementById('std-lp-b');
+        if (elA) elA.textContent = '8,000';
+        if (elB) elB.textContent = '8,000';
+    },
     // ═══════════════════════════════════════════════════════
 // HERRAMIENTAS — MONEDA Y DADOS
 // ═══════════════════════════════════════════════════════
@@ -641,6 +720,14 @@ rollDice: function () {
             this.herr.rolling = false;
         }
     }, 80);
+},
+std: {
+    defaultMins: 50,
+    remaining:   50 * 60,
+    running:     false,
+    _interval:   null,
+    lpA: 8000,
+    lpB: 8000
 },
 };
 

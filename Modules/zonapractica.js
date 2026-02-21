@@ -31,6 +31,7 @@ const ZonaPractica = {
     _chainedCards: [],   // [{zone, slotIndex, zoneType}]
     // Junto a: _chainCounter: 0,
     _tokenCounter: 0,
+    lp: 8000,
     
 
     field: {
@@ -86,23 +87,33 @@ const ZonaPractica = {
     _buildShell: function () {
         return `<div class="pz-wrap">
 
-           <div class="pz-controls-bar">
-                <button class="pz-ctrl-btn pz-ctrl-search"
-                        onclick="ZonaPractica.openCardSearch()">🔍 Buscar Carta</button>
-                <button class="pz-ctrl-btn pz-ctrl-deck"
-                        onclick="ZonaPractica.openDeckSelector()">🃏 Usar Deck</button>
-                <button class="pz-ctrl-btn pz-ctrl-historia"
-                        onclick="ZonaPractica.openStateNavigator()">📜 Historial</button>
-                <button class="pz-ctrl-btn pz-ctrl-widget"
-                        id="pz-sw-toggle-btn"
-                        onclick="ZonaPractica.toggleStatusWidget()"
-                        style="display:none">📊 Estado</button>
-                
-                <button class="pz-ctrl-btn pz-ctrl-clear"
-                        onclick="ZonaPractica.clearBoard()">🗑 Limpiar</button>
-            </div>
+            <div class="pz-controls-bar">
+                    <button class="pz-ctrl-btn pz-ctrl-search"
+                            onclick="ZonaPractica.openCardSearch()">🔍 Buscar Carta</button>
+                    <button class="pz-ctrl-btn pz-ctrl-deck"
+                            onclick="ZonaPractica.openDeckSelector()">🃏 Usar Deck</button>
+                    <button class="pz-ctrl-btn pz-ctrl-historia"
+                            onclick="ZonaPractica.openStateNavigator()">📜 Historial</button>
+                    <button class="pz-ctrl-btn pz-ctrl-widget"
+                            id="pz-sw-toggle-btn"
+                            onclick="ZonaPractica.toggleStatusWidget()"
+                            style="display:none">📊 Estado</button>
+                    
+                    <button class="pz-ctrl-btn pz-ctrl-clear"
+                            onclick="ZonaPractica.clearBoard()">🗑 Limpiar</button>
+                </div>
 
-            <div class="pz-phase-bar">
+                <div class="pz-lp-bar">
+                    <span class="pz-lp-label">❤️ LP</span>
+                    <span class="pz-lp-val" id="pz-lp-val">8,000</span>
+                    <div class="pz-lp-ops">
+                        <button class="pz-lp-btn pz-lp-gain"  onclick="ZonaPractica._openPzLP('gain')">＋ Gain</button>
+                        <button class="pz-lp-btn pz-lp-dmg"   onclick="ZonaPractica._openPzLP('damage')">－ Damage</button>
+                        <button class="pz-lp-btn pz-lp-reset" onclick="ZonaPractica._resetPzLP()">↺ 8000</button>
+                    </div>
+                </div>
+
+                <div class="pz-phase-bar">
                 <button class="pz-phase-btn pz-phase-draw pz-phase-active" data-phase="draw"
                         onclick="ZonaPractica.setPhase('draw')">Draw</button>
                 <button class="pz-phase-btn pz-phase-standby" data-phase="standby"
@@ -716,6 +727,9 @@ const ZonaPractica = {
     this._chainCounter = 0;
     this._chainedCards = [];
     this._tokenCounter = 0;
+    this.lp = 8000;
+    const lpEl = document.getElementById('pz-lp-val');
+    if (lpEl) lpEl.textContent = '8,000';
     // Cerrar paneles abiertos
     document.getElementById('pz-log-panel')?.remove();
     document.getElementById('pz-nav-panel')?.remove();
@@ -973,7 +987,7 @@ const ZonaPractica = {
                 name: `Token ${this._tokenCounter}`,
                 type: 'Token',
                 desc: 'Token',
-                card_images: [{ image_url_small: this.CARD_BACK, image_url: this.CARD_BACK }],
+                card_images: [{ image_url_small: 'https://images.ygoprodeck.com/images/cards_small/60764582.jpg', image_url: 'https://images.ygoprodeck.com/images/cards/60764582.jpg' }],
                 _isToken: true
             };
             this.other.push({ card: tokenCard, faceUp: true, rotation: 0, _isToken: true });
@@ -1606,8 +1620,9 @@ dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
             </div>
 
             <div class="pz-log-input-row">
+                <button class="pz-log-like-btn" onclick="ZonaPractica._logLike()" title="Jugador A: Prosigue!">👍</button>
                 <input type="text" id="pz-log-custom-input" class="pz-log-custom-input"
-                       placeholder="Entrada manual..." autocomplete="off">
+                    placeholder="Entrada manual..." autocomplete="off">
                 <button class="pz-log-add-btn" onclick="ZonaPractica._addCustomLog()">+</button>
             </div>
 
@@ -1993,13 +2008,14 @@ dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
     // BOTONES FLOTANTES CONTEXTUALES
     // ═══════════════════════════════════════════════════════
     _updateFloatingBtns: function () {
-        const inSim = window.Navigation?.currentTab === 'simuladores';
+        const inSim      = window.Navigation?.currentTab === 'simuladores';
+const inPractica = inSim && (window.Torneo?.simTab === 'practica');
 
         // Ajustar posición del shortcuts-float-btn para hacer hueco
         const scBtn = document.getElementById('shortcuts-float-btn');
-        if (scBtn) scBtn.style.bottom = inSim ? '260px' : '';
+        if (scBtn) scBtn.style.bottom = inPractica ? '260px' : '';
 
-        if (!inSim) { this._cleanupFloatBtns(); return; }
+        if (!inPractica) { this._cleanupFloatBtns(); return; }
 
         // ── Log flotante (solo si hay entradas) ─────────────
         let logBtn = document.getElementById('pz-float-log-btn');
@@ -2167,7 +2183,7 @@ dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
             else if (entry.rotation) img.style.transform = `rotate(${entry.rotation}deg)`;
 
             slot.appendChild(img);
-            if (entry._isToken) img.style.filter = 'saturate(0) opacity(0.7)';
+            
 
             // Re-añadir badge de cadena si corresponde
             if (entry._chainNum) {
@@ -2180,11 +2196,11 @@ dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
         });
     },
 
-    _addLog: function (msg, card, isManual) {
-        const now  = new Date();
-        const time = now.toLocaleTimeString('es-ES', { hour12:false });
-        const imgUrl = card?.card_images?.[0]?.image_url_small || null;
-        this.logEntries.push({ msg, time, turn: this.turnNumber, imgUrl, isManual: !!isManual });
+    _addLog: function (msg, card, isManual, isLike) {
+    const now  = new Date();
+    const time = now.toLocaleTimeString('es-ES', { hour12:false });
+    const imgUrl = card?.card_images?.[0]?.image_url_small || null;
+    this.logEntries.push({ msg, time, turn: this.turnNumber, imgUrl, isManual: !!isManual, isLike: !!isLike });
         console.info(`[PZ] T${this.turnNumber} ${time} — ${isManual ? '[Jugador A] ' : ''}${msg}`);
         // Actualizar Log en tiempo real si está abierto
         const el = document.getElementById('pz-log-entries');
@@ -2197,12 +2213,15 @@ dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
             return '<p class="pz-log-empty">Sin entradas aún.</p>';
         }
         return this.logEntries.map((e, i) => {
-        const isChainRes = e.msg.startsWith('⛓ Cadena resuelta');
-        const isActivate = e.msg.includes('activa efecto [en la zona:');
-        const extraClass = isChainRes ? 'pz-log-chain-resolve' : isActivate ? 'pz-log-activate' : '';
-        return `
-        <div class="pz-log-entry ${e.msg.startsWith('---') ? 'pz-log-turn-sep' : ''} ${extraClass}"
-                 id="pz-log-entry-${i}">
+            const isChainRes = e.msg.startsWith('⛓ Cadena resuelta');
+            const isActivate = e.msg.includes('activa efecto [en la zona:');
+            let extraClass = '';
+            if (e.msg.startsWith('---'))  extraClass = 'pz-log-turn-sep';
+            else if (e.isLike)             extraClass = 'pz-log-prosigue';
+            else if (isChainRes)           extraClass = 'pz-log-chain-resolve';
+            else if (isActivate)           extraClass = 'pz-log-activate';
+            return `
+            <div class="pz-log-entry ${extraClass}" id="pz-log-entry-${i}">
                 <span class="pz-log-entry-idx">${i + 1}</span>
                 <span class="pz-log-entry-meta">T${e.turn}&nbsp;${e.time}</span>
                 ${e.isManual ? '<span class="pz-log-player-tag">Jugador A:</span>' : ''}
@@ -2210,7 +2229,61 @@ dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
                     onerror="this.style.display='none'" title="${e.msg}">` : ''}
                 <span class="pz-log-entry-msg">${e.msg}</span>
             </div>`}).join('');
-    }
+
+            
+    },
+    // ── Like / Prosigue ──────────────────────────────────────
+_logLike: function () {
+    this._addLog('✅ Jugador A: Prosigue!', null, false, true);
+},
+
+// ── LP de Zona de Práctica ───────────────────────────────
+_openPzLP: function (type) {
+    document.getElementById('pz-lp-panel')?.remove();
+    const presets = [100, 300, 500, 1000, 1500, 2000, 4000, 8000];
+    const label   = type === 'gain' ? 'Gain ＋' : 'Damage －';
+    const panel   = document.createElement('div');
+    panel.id      = 'pz-lp-panel';
+    panel.className = 'pz-modal-overlay';
+    panel.addEventListener('click', e => { if (e.target === panel) panel.remove(); });
+    panel.innerHTML = `
+        <div class="pz-modal-box" style="max-width:320px;text-align:center">
+            <button class="pz-modal-close" onclick="document.getElementById('pz-lp-panel').remove()">✕</button>
+            <div class="pz-modal-title">${label} — Life Points</div>
+            <div class="pz-lp-presets">
+                ${presets.map(v => `<button class="pz-lp-preset-btn"
+                    onclick="document.getElementById('pz-lp-input').value='${v}'">${v.toLocaleString()}</button>`).join('')}
+            </div>
+            <div style="display:flex;gap:6px;margin-top:10px">
+                <input type="number" id="pz-lp-input" class="pz-search-input"
+                       placeholder="Cantidad..." min="0" style="flex:1">
+                <button class="pz-zmenu-ver" style="padding:7px 12px;border-radius:6px;border:none;cursor:pointer"
+                        onclick="document.getElementById('pz-lp-input').value=''">✕</button>
+            </div>
+            <button class="pz-ctrl-btn pz-ctrl-deck" style="width:100%;margin-top:10px"
+                    onclick="ZonaPractica._calcPzLP('${type}')">✓ Aplicar</button>
+        </div>`;
+    document.body.appendChild(panel);
+    setTimeout(() => document.getElementById('pz-lp-input')?.focus(), 50);
+},
+
+_calcPzLP: function (type) {
+    const val = parseInt(document.getElementById('pz-lp-input')?.value);
+    if (isNaN(val) || val < 0) return;
+    if (type === 'gain')   this.lp = this.lp + val;
+    if (type === 'damage') this.lp = Math.max(0, this.lp - val);
+    const el = document.getElementById('pz-lp-val');
+    if (el) el.textContent = this.lp.toLocaleString();
+    this._addLog(`❤️ LP ${type === 'gain' ? '+' : '-'}${val} → ${this.lp.toLocaleString()}`);
+    document.getElementById('pz-lp-panel')?.remove();
+},
+
+_resetPzLP: function () {
+    this.lp = 8000;
+    const el = document.getElementById('pz-lp-val');
+    if (el) el.textContent = '8,000';
+},
+
 };
 
 window.ZonaPractica = ZonaPractica;
