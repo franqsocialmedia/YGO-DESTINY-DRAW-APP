@@ -58,19 +58,18 @@ _mul: {
     // ═══════════════════════════════════════════════════
 
     init: function () {
-        if (document.getElementById('hiper-wrapper')) return;
-        this._render();
-    },
+    // Mantenido por compatibilidad con navigation.js — no hace nada más
+},
 
-    _render: function () {
-        const container = document.getElementById('simuladores-content');
-        if (!container) return;
-        const wrapper = document.createElement('div');
-        wrapper.id = 'hiper-wrapper';
-        wrapper.innerHTML = this._buildHTML();
-        container.appendChild(wrapper);
-        this._calcQuick();
-    },
+renderInto: function (container) {
+    if (!container) return;
+    if (container.querySelector('#hiper-wrapper')) return;
+    const wrapper = document.createElement('div');
+    wrapper.id = 'hiper-wrapper';
+    wrapper.innerHTML = this._buildHTML();
+    container.appendChild(wrapper);
+    this._calcQuick();
+},
 
     // ═══════════════════════════════════════════════════
     //  HTML
@@ -80,7 +79,7 @@ _mul: {
         const back = this.CARD_BACK;
         return `
 <div class="hiper-header" onclick="Hipergeometria.toggleSection()">
-    🎲 Probabilidad de Robo <span id="hiper-arrow">▼</span>
+    🎲 Probabilidad de Robo — Calculadora de Hipergeometria <span id="hiper-arrow">▼</span>
 </div>
 <div id="hiper-sec" style="display:none">
 
@@ -93,7 +92,7 @@ _mul: {
     </p>
 
     <div class="hiper-tabs">
-        <button class="hiper-tab-btn active" id="hiper-tb-quick" onclick="Hipergeometria.switchTab('quick')">⚡ Cálculo Rápido</button>
+        <button class="hiper-tab-btn active" id="hiper-tb-quick" onclick="Hipergeometria.switchTab('quick')">⚡ Cálculo Estandar</button>
         <button class="hiper-tab-btn" id="hiper-tb-deck" onclick="Hipergeometria.switchTab('deck')">🗂️ Calculo con Mis Decks</button>
         <button class="hiper-tab-btn" id="hiper-tb-mul" onclick="Hipergeometria.switchTab('mul')">🃏 Prueba Mulligan</button>
     </div>

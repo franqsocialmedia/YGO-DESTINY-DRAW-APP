@@ -72,15 +72,18 @@ const Torneo = {
         // Shell de Simuladores: se crea una sola vez para no destruir DueloEnVivo
     if (!document.getElementById('sim-torneo-content')) {
         this.container.innerHTML = `
-            <h2>Simuladores</h2>
-            <div class="sim-main-tabs">
-                <button class="sim-tab-btn active" data-simtab="torneo"
-                        onclick="Torneo.showSimTab('torneo')">🏆 Torneo</button>
-                <button class="sim-tab-btn" data-simtab="duelo"
+        <h2>Simuladores</h2>
+        <div class="sim-main-tabs">
+            <button class="sim-tab-btn" data-simtab="mulligan"
+                    onclick="Torneo.showSimTab('mulligan')">🎲 Mulligan</button>
+            <button class="sim-tab-btn active" data-simtab="torneo"
+                    onclick="Torneo.showSimTab('torneo')">🏆 Torneo</button>
+            <button class="sim-tab-btn" data-simtab="duelo"
                     onclick="Torneo.showSimTab('duelo')">⚔️ Duelo en Vivo</button>
             <button class="sim-tab-btn" data-simtab="practica"
                     onclick="Torneo.showSimTab('practica')">🎴 Zona de Práctica</button>
         </div>
+        <div id="sim-mulligan-content" style="display:none;"></div>
         <div id="sim-torneo-content"></div>
         <div id="sim-duelo-content" style="display:none;"></div>
         <div id="sim-practica-content" style="display:none;"></div>`;
@@ -143,23 +146,28 @@ const Torneo = {
     },
 
     showSimTab: function (tab) {
-        this.simTab = tab;
-        document.querySelectorAll('.sim-tab-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.simtab === tab);
-        });
-        const torneoEl   = document.getElementById('sim-torneo-content');
-        const dueloEl    = document.getElementById('sim-duelo-content');
-        const practicaEl = document.getElementById('sim-practica-content');
-        if (torneoEl)   torneoEl.style.display   = tab === 'torneo'   ? '' : 'none';
-        if (dueloEl) {
-            dueloEl.style.display = tab === 'duelo' ? '' : 'none';
-            if (tab === 'duelo' && window.DueloEnVivo) DueloEnVivo.renderInto(dueloEl);
-        }
-        if (practicaEl) {
-            practicaEl.style.display = tab === 'practica' ? '' : 'none';
-            if (tab === 'practica' && window.ZonaPractica) ZonaPractica.renderInto(practicaEl);
-        }
-    },
+    this.simTab = tab;
+    document.querySelectorAll('.sim-tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.simtab === tab);
+    });
+    const mulliganEl = document.getElementById('sim-mulligan-content');
+    const torneoEl   = document.getElementById('sim-torneo-content');
+    const dueloEl    = document.getElementById('sim-duelo-content');
+    const practicaEl = document.getElementById('sim-practica-content');
+    if (mulliganEl) {
+        mulliganEl.style.display = tab === 'mulligan' ? '' : 'none';
+        if (tab === 'mulligan' && window.Hipergeometria) Hipergeometria.renderInto(mulliganEl);
+    }
+    if (torneoEl)   torneoEl.style.display = tab === 'torneo' ? '' : 'none';
+    if (dueloEl) {
+        dueloEl.style.display = tab === 'duelo' ? '' : 'none';
+        if (tab === 'duelo' && window.DueloEnVivo) DueloEnVivo.renderInto(dueloEl);
+    }
+    if (practicaEl) {
+        practicaEl.style.display = tab === 'practica' ? '' : 'none';
+        if (tab === 'practica' && window.ZonaPractica) ZonaPractica.renderInto(practicaEl);
+    }
+},
     setViewRound: function (num) {
         this.viewRound = num;
         const matchEl  = document.getElementById('torneo-tab-matches');

@@ -118,13 +118,21 @@ const ZonaPractica = {
 
                 <!-- ── CAMPO + LATERAL (GY / BANISH) ── -->
                 <div class="pz-field-area-wrap">
-
-                    <!-- Campo escalado al 60% -->
-                    <div class="pz-field-grid-wrap">
+                <!-- ── COLUMNA OTHER (izquierda) ── -->
+                <div class="pz-field-other-side">
+                    <div class="pz-multi-zone pz-other-zone pz-side-zone" id="pz-zone-other"
+                        onclick="ZonaPractica._onMultiZoneClick(event,'other')"></div>
+                    <div class="pz-field-side-btns">
+                        <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('other')">👁</button>
+                        <span class="pz-row-label">Other</span>
+                    </div>
+                </div>
+                <!-- Campo escalado al 60% -->
+                <div class="pz-field-grid-wrap">
                         <div class="pz-field-grid">
 
                             <!-- Fila EMZ -->
-                            <div class="pz-fg-emz-spacer"></div>
+                            
                             <div class="pz-zone pz-zone-emz pz-fg-emz-a" id="pz-zone-A" data-zone="A"
                                  onclick="ZonaPractica.onZoneClick('A')"><span class="pz-zone-lbl">A</span></div>
                             <div class="pz-logo-cell pz-fg-logo">
@@ -134,7 +142,7 @@ const ZonaPractica = {
                             </div>
                             <div class="pz-zone pz-zone-emz pz-fg-emz-b" id="pz-zone-B" data-zone="B"
                                  onclick="ZonaPractica.onZoneClick('B')"><span class="pz-zone-lbl">B</span></div>
-                            <div class="pz-fg-emz-spacer"></div>
+                            
 
                             <!-- Fila Monstruos + Zona C (izquierda) -->
                             <div class="pz-zone pz-zone-field pz-fg-c" id="pz-zone-C" data-zone="C"
@@ -219,13 +227,7 @@ const ZonaPractica = {
                          onclick="ZonaPractica._onMultiZoneClick(event,'extra')"></div>
                 </div>
 
-                <!-- Other Options -->
-                <div class="pz-zone-row pz-other-row">
-                    <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('other')">👁</button>
-                    <span class="pz-row-label">Other</span>
-                    <div class="pz-multi-zone pz-other-zone" id="pz-zone-other"
-                         onclick="ZonaPractica._onMultiZoneClick(event,'other')"></div>
-                </div>
+                
 
             </div>
 
@@ -692,18 +694,34 @@ const ZonaPractica = {
     },
 
     clearBoard: function () {
-        this._resetState(); this._cancelMoveMode();
-        if (this.changePositionMode) this.toggleChangePosition();
-        if (this.cardsHidden)        this.toggleHideCards();
-        this.hiddenHand  = false;
-        this.hiddenMain  = false;
-        this.hiddenExtra = false;
-        this._syncZoneHideBtns();
-        this.phase='draw'; this.turnNumber=1;
-        document.querySelectorAll('.pz-phase-btn').forEach(b => b.classList.toggle('pz-phase-active', b.dataset.phase==='draw'));
-        this._renderAllZones();
-        this._addLog('Tablero limpiado.');
-    },
+    this._resetState(); this._cancelMoveMode();
+    if (this.changePositionMode) this.toggleChangePosition();
+    if (this.cardsHidden)        this.toggleHideCards();
+    this.hiddenHand  = false;
+    this.hiddenMain  = false;
+    this.hiddenExtra = false;
+    this._syncZoneHideBtns();
+    this.phase='draw'; this.turnNumber=1;
+    // Limpiar Log, Historial y cadena
+    this.logEntries    = [];
+    this.gameStates    = [];
+    this._chainCounter = 0;
+    this._chainedCards = [];
+    // Cerrar paneles abiertos
+    document.getElementById('pz-log-panel')?.remove();
+    document.getElementById('pz-nav-panel')?.remove();
+    document.getElementById('pz-chain-resolve-btn')?.remove();
+    // Ocultar/cerrar widget de estado
+    if (this.statusWidgetVisible) {
+        this.statusWidgetVisible = false;
+        document.getElementById('pz-status-widget')?.remove();
+    }
+    const swBtn = document.getElementById('pz-sw-toggle-btn');
+    if (swBtn) swBtn.style.display = 'none';
+    document.querySelectorAll('.pz-phase-btn').forEach(b => b.classList.toggle('pz-phase-active', b.dataset.phase==='draw'));
+    this._renderAllZones();
+    this._addLog('Tablero limpiado.');
+},
 
     _resetState: function () {
         Object.keys(this.field).forEach(k => this.field[k]=null);
@@ -1179,7 +1197,8 @@ const ZonaPractica = {
         arr.splice(idx, 1);
 
         const dest = this._getMultiArray(target);
-        dest.push({ ...entry, faceUp: (target === 'hand' || target === 'other'), rotation: 0 });
+        const forceFaceUp = target === 'hand' || target === 'other';
+dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
 
         this._addLog(`${entry.card?.name||'?'}: ${zone} → ${target}`, entry.card);
         this._renderZone(zone);
@@ -1388,13 +1407,20 @@ const ZonaPractica = {
     },
 // Voltear todas las cartas de una zona (equivale a flip individual en masa)
     _flipAllInZone: function (zone) {
-        const arr = this._getMultiArray(zone);
-        if (!arr.length) { this._showToast(`${zone} está vacío.`, 1400); return; }
-        const allFaceUp = arr.every(e => e.faceUp);
-        arr.forEach(e => { e.faceUp = !allFaceUp; });
-        this._renderZone(zone);
-        this._addLog(`${zone}: ${allFaceUp ? 'todas boca abajo' : 'todas boca arriba'}.`);
-    },
+    const arr = this._getMultiArray(zone);
+    if (!arr.length) { this._showToast(`${zone} está vacío.`, 1400); return; }
+    const allFaceUp = arr.every(e => e.faceUp);
+    // Si es Main y se va a ocultar (todas boca abajo), barajar primero
+    if (zone === 'main' && allFaceUp) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+    }
+    arr.forEach(e => { e.faceUp = !allFaceUp; });
+    this._renderZone(zone);
+    this._addLog(`${zone}: ${allFaceUp ? 'todas boca abajo (barajado)' : 'todas boca arriba'}.`);
+},
     // Sincroniza el ícono de los botones de ojo por zona
     _syncZoneHideBtns: function () {
         const map = { hand:'hiddenHand', main:'hiddenMain', extra:'hiddenExtra' };
@@ -1653,82 +1679,58 @@ const ZonaPractica = {
     },
 
     _renderNavFieldPreview: function (s) {
-    // Estructura igual al campo real: EMZ (A,B), Monstruos (C,1-5), S/T (6-10)
-    const emzZones      = ['A','B'];
-    const monsterZones  = ['C','1','2','3','4','5'];
-    const stZones       = ['6','7','8','9','10'];
-    const stOnlyZones   = ['6','7','8','9','10'];
-
+    const BACK = this.CARD_BACK;
     const buildZone = (z) => {
+        if (!z) return `<div class="pz-nav-fz pz-nav-fz-empty"></div>`;
         const entry = s.field[z];
-        if (!entry?.card) return `<div class="pz-nav-fz pz-nav-fz-empty" title="${z}">${z}</div>`;
-        const img  = entry.card.card_images?.[0]?.image_url_small || this.CARD_BACK;
+        if (!entry?.card) return `<div class="pz-nav-fz pz-nav-fz-empty"><span class="pz-nav-fz-lbl">${z}</span></div>`;
+        const img = entry.card.card_images?.[0]?.image_url_small || BACK;
         const isMonster = ['1','2','3','4','5','A','B'].includes(String(z));
         let pos, posClass;
         if (isMonster) {
-            if (entry.faceUp && !entry.rotation)       { pos = 'ATK'; posClass = 'pz-nav-fz-atk'; }
-            else if (entry.faceUp && entry.rotation)   { pos = 'DEF'; posClass = 'pz-nav-fz-def'; }
-            else                                        { pos = 'SET'; posClass = 'pz-nav-fz-set'; }
+            if (entry.faceUp && !entry.rotation)     { pos = 'ATK';    posClass = 'pz-nav-fz-atk'; }
+            else if (entry.faceUp && entry.rotation) { pos = 'DEF';    posClass = 'pz-nav-fz-def'; }
+            else                                     { pos = 'SET';    posClass = 'pz-nav-fz-set'; }
         } else {
             pos      = entry.faceUp ? 'Face-up' : 'Set';
             posClass = entry.faceUp ? 'pz-nav-fz-atk' : 'pz-nav-fz-set';
         }
-        const rotation = entry.rotation ? `rotate(${entry.rotation}deg)` : '';
         return `<div class="pz-nav-fz ${posClass}" title="${entry.card.name} · ${pos}">
             <span class="pz-nav-fz-lbl">${z}</span>
-            <img src="${entry.faceUp ? img : this.CARD_BACK}"
-                 class="pz-nav-fz-img"
-                 style="${rotation ? `transform:${rotation}` : ''}"
-                 onerror="this.src='${this.CARD_BACK}'">
+            <img src="${entry.faceUp ? img : BACK}" class="pz-nav-fz-img"
+                 ${entry.rotation ? `style="transform:rotate(${entry.rotation}deg)"` : ''}
+                 onerror="this.src='${BACK}'">
             <span class="pz-nav-fz-pos">${pos}</span>
         </div>`;
     };
 
-    const emzRow      = emzZones.map(buildZone).join('');
-    const monsterRow  = monsterZones.map(buildZone).join('');
-    const stRow       = stOnlyZones.map(buildZone).join('');
-
+    // Grid 5 cols: col1=C/1/6, col2=A/2/7, col3=_/3/8, col4=B/4/9, col5=_/5/10
     return `
-        <div class="pz-nav-field-preview">
-            <div class="pz-nav-field-row pz-nav-field-emz">${emzRow}</div>
-            <div class="pz-nav-field-row">${monsterRow}</div>
-            <div class="pz-nav-field-row">${stRow}</div>
+        <div class="pz-nav-field-preview pz-nav-field-grid5">
+            ${buildZone('C')}${buildZone('A')}<div class="pz-nav-fz pz-nav-fz-empty"></div>${buildZone('B')}<div class="pz-nav-fz pz-nav-fz-empty"></div>
+            ${['1','2','3','4','5'].map(buildZone).join('')}
+            <div class="pz-nav-fz pz-nav-fz-empty"></div>${['6','7','8','9','10'].map(buildZone).join('')}
         </div>
         <div class="pz-nav-extra-zones">
             <div class="pz-nav-zone-block">
                 <span class="pz-nav-zone-title">✋ Mano (${s.hand.length})</span>
                 <div class="pz-nav-hand-imgs">
-                    ${s.hand.slice(0, 8).map(e => {
-                        const img = e.card?.card_images?.[0]?.image_url_small || this.CARD_BACK;
-                        return `<img src="${img}" class="pz-nav-hand-img"
-                                    onerror="this.src='${this.CARD_BACK}'"
-                                    title="${e.card?.name||'?'}">`;
-                    }).join('')}
-                    ${s.hand.length > 8 ? `<span class="pz-nav-hand-more">+${s.hand.length - 8}</span>` : ''}
+                    ${s.hand.slice(0,8).map(e=>{const img=e.card?.card_images?.[0]?.image_url_small||BACK;return`<img src="${img}" class="pz-nav-hand-img" onerror="this.src='${BACK}'" title="${e.card?.name||'?'}">`;}).join('')}
+                    ${s.hand.length>8?`<span class="pz-nav-hand-more">+${s.hand.length-8}</span>`:''}
                 </div>
             </div>
             <div class="pz-nav-zone-block">
                 <span class="pz-nav-zone-title">🪦 GY (${s.gy.length})</span>
                 <div class="pz-nav-hand-imgs">
-                    ${s.gy.slice(0, 6).map(e => {
-                        const img = e.card?.card_images?.[0]?.image_url_small || this.CARD_BACK;
-                        return `<img src="${img}" class="pz-nav-hand-img"
-                                    onerror="this.src='${this.CARD_BACK}'"
-                                    title="${e.card?.name||'?'}">`;
-                    }).join('')}
-                    ${s.gy.length > 6 ? `<span class="pz-nav-hand-more">+${s.gy.length - 6}</span>` : ''}
+                    ${s.gy.slice(0,6).map(e=>{const img=e.card?.card_images?.[0]?.image_url_small||BACK;return`<img src="${img}" class="pz-nav-hand-img" onerror="this.src='${BACK}'" title="${e.card?.name||'?'}">`;}).join('')}
+                    ${s.gy.length>6?`<span class="pz-nav-hand-more">+${s.gy.length-6}</span>`:''}
                 </div>
             </div>
             <div class="pz-nav-zone-block">
                 <span class="pz-nav-zone-title">🚀 Banish (${s.banish.length})</span>
                 <div class="pz-nav-hand-imgs">
-                    ${s.banish.slice(0, 6).map(e => {
-                        const img = e.card?.card_images?.[0]?.image_url_small || this.CARD_BACK;
-                        return `<img src="${img}" class="pz-nav-hand-img"
-                                    onerror="this.src='${this.CARD_BACK}'"
-                                    title="${e.card?.name||'?'}">`;
-                    }).join('')}
-                    ${s.banish.length > 6 ? `<span class="pz-nav-hand-more">+${s.banish.length - 6}</span>` : ''}
+                    ${s.banish.slice(0,6).map(e=>{const img=e.card?.card_images?.[0]?.image_url_small||BACK;return`<img src="${img}" class="pz-nav-hand-img" onerror="this.src='${BACK}'" title="${e.card?.name||'?'}">`;}).join('')}
+                    ${s.banish.length>6?`<span class="pz-nav-hand-more">+${s.banish.length-6}</span>`:''}
                 </div>
             </div>
         </div>`;
@@ -2106,8 +2108,12 @@ const ZonaPractica = {
         if (!this.logEntries.length) {
             return '<p class="pz-log-empty">Sin entradas aún.</p>';
         }
-        return this.logEntries.map((e, i) => `
-            <div class="pz-log-entry ${e.msg.startsWith('---') ? 'pz-log-turn-sep' : ''}"
+        return this.logEntries.map((e, i) => {
+        const isChainRes = e.msg.startsWith('⛓ Cadena resuelta');
+        const isActivate = e.msg.includes('activa efecto [en la zona:');
+        const extraClass = isChainRes ? 'pz-log-chain-resolve' : isActivate ? 'pz-log-activate' : '';
+        return `
+        <div class="pz-log-entry ${e.msg.startsWith('---') ? 'pz-log-turn-sep' : ''} ${extraClass}"
                  id="pz-log-entry-${i}">
                 <span class="pz-log-entry-idx">${i + 1}</span>
                 <span class="pz-log-entry-meta">T${e.turn}&nbsp;${e.time}</span>
@@ -2115,7 +2121,7 @@ const ZonaPractica = {
                 ${e.imgUrl ? `<img src="${e.imgUrl}" class="pz-log-card-thumb"
                     onerror="this.style.display='none'" title="${e.msg}">` : ''}
                 <span class="pz-log-entry-msg">${e.msg}</span>
-            </div>`).join('');
+            </div>`}).join('');
     }
 };
 

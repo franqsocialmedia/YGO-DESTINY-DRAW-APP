@@ -121,9 +121,7 @@ const Navigation = {
         if (tabName === 'simuladores' && window.Torneo) {
             Torneo.init();
             }
-            if (tabName === 'simuladores' && window.Hipergeometria) {
-                Hipergeometria.init();
-            }
+            
             if (tabName === 'mideck' && window.Engines) {
                 Engines.init();
             }

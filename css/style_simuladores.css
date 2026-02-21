@@ -2221,16 +2221,15 @@
 }
 
 /* EMZ row — span completo, centrar A/Logo/B en las 6 columnas */
-.pz-fg-emz-spacer { /* columna vacía extra a la derecha/izquierda de A y B */ }
-.pz-fg-emz-a  { grid-column: 2; }
-.pz-fg-logo   { grid-column: 3 / span 2; display:flex; align-items:center; justify-content:center;
-                background:rgba(0,80,20,.2); border:1px solid rgba(0,180,60,.18);
-                border-radius:var(--pz-r); min-height:calc(var(--pz-ch) * 0.75); }
-.pz-fg-emz-b  { grid-column: 5; }
-/* zona C: col 1 en la fila de monstruos */
-.pz-fg-c      { grid-column: 1; }
-/* ST spacer bajo C: vacío */
-.pz-fg-st-spacer { grid-column: 1; }
+.pz-fg-emz-a     { grid-column: 3; grid-row: 1; }
+.pz-fg-logo      { grid-column: 4; grid-row: 1; display:flex; align-items:center; justify-content:center;
+                   background:rgba(0,80,20,.2); border:1px solid rgba(0,180,60,.18);
+                   border-radius:var(--pz-r); min-height:calc(var(--pz-ch) * 0.75); }
+.pz-fg-emz-b     { grid-column: 5; grid-row: 1; }
+.pz-fg-c         { grid-column: 1; grid-row: 2; }
+.pz-zone-monster { grid-row: 2; }
+.pz-fg-st-spacer { grid-column: 1; grid-row: 3; }
+.pz-zone-st, .pz-zone-pendulum { grid-row: 3; }
 
 /* ── Modo cambiar posición ────────────────────────── */
 .pz-board-outer.pz-chgpos-mode .pz-zone:not(:empty):hover { outline:2px solid rgba(255,200,0,.7); cursor:crosshair; }
@@ -2787,6 +2786,10 @@
 .pz-sw-nav-btn { padding:3px 8px; background:rgba(255,215,0,.1); border:1px solid rgba(255,215,0,.3); border-radius:5px; color:rgba(255,215,0,.75); font-size:.65rem; font-weight:700; cursor:pointer; transition:background .12s; white-space:nowrap; }
 .pz-sw-nav-btn:hover { background:rgba(255,215,0,.2); color:#FFD700; }
 
+/* Colores especiales en entradas del Log */
+.pz-log-chain-resolve .pz-log-entry-msg { color: #87CEEB; font-weight: 700; }
+.pz-log-activate      .pz-log-entry-msg { color: #80e898; }
+
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width:600px) {
     .pz-field-grid { gap:2px; }
@@ -2810,8 +2813,8 @@
 
 /* Campo: variables propias para tamaño fijo (40% original +15% = ~46%) */
 .pz-field-grid-wrap {
-    --pz-cw:    84px;
-    --pz-ch:    99px;
+    --pz-cw:    90px;
+    --pz-ch:    120px;
     flex-shrink: 0;
 }
 /* Fijar las columnas del grid a tamaño exacto para evitar expansión al insertar carta */
@@ -2829,7 +2832,7 @@
     flex-shrink: 0;
 }
 .pz-field-grid-wrap .pz-logo-cell {
-    min-height: calc(var(--pz-ch) * 0.75);
+    width:  var(--pz-cw);
 }
 .pz-field-grid-wrap .pz-zone-lbl {
     font-size: .48rem;
@@ -2874,7 +2877,27 @@
     flex-shrink: 0;
 }
 .pz-field-side-btns .pz-row-label { width: auto; }
-
+/* Columna Other — espejo izquierdo del panel GY/Banish */
+.pz-field-other-side {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 0 0 130px;
+    min-width: 0;
+}
+.pz-field-other-side .pz-side-zone {
+    flex: 1;
+    flex-wrap: wrap;
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-content: flex-start;
+    align-items: flex-start;
+    min-height: 0;
+    border-color: rgba(120,0,200,.25);
+}
+.pz-field-other-side .pz-field-side-btns {
+    flex-shrink: 0;
+}
 /* ── Botón descarga en nav de estados ───────────── */
 .pz-nav-download-btn {
     padding: 5px 10px;
@@ -3129,7 +3152,12 @@
     flex-direction: column;
     gap: 4px;
 }
-
+.pz-nav-field-grid5 {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
+    margin-bottom: 6px;
+}
 /* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 500px) {
     .herr-two-col { flex-direction: column; }
