@@ -518,6 +518,7 @@
 .btn-view {
     background: linear-gradient(135deg, #0066cc, #004080);
     color: white;
+    transform: scale(0.85);
 }
 
 .btn-view:hover {
@@ -529,6 +530,7 @@
 .btn-add {
     background: linear-gradient(135deg, #00b894, #00a383);
     color: white;
+    transform: scale(0.85);
 }
 
 .btn-add:hover {
