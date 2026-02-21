@@ -2263,9 +2263,18 @@
     font-size:.6rem; font-weight:700; color:rgba(255,255,255,.22);
     pointer-events:none; position:absolute; bottom:2px; right:3px;
 }
+/* Imagen de carta en zonas del campo: reducida 20% */
 .pz-zone .pz-card-img {
-    width:100%; height:100%; object-fit:cover; border-radius:3px;
-    transition:transform .15s; pointer-events:none;
+    width: 80%;          /* era 100% o valor fijo */
+    height: auto;
+    max-height: 80%;
+    object-fit: contain;
+    position: relative;
+    z-index: 1;
+}
+/* Asegurar que los botones del menú no queden cortados */
+.pz-zone {
+    overflow: visible;
 }
 .pz-zone:hover .pz-card-img { transform:scale(1.05); }
 
@@ -2788,7 +2797,338 @@
     .pz-log-shortcuts { grid-template-columns:repeat(3,1fr); }
 }
 
+/* ════════════════════════════════════════════════════
+   ZONA DE PRÁCTICA — ACTUALIZACIONES (Fase 6)
+   ════════════════════════════════════════════════════ */
 
+/* ── Field area: campo + panel lateral ─────────── */
+.pz-field-area-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+/* Campo: variables propias para tamaño fijo (40% original +15% = ~46%) */
+.pz-field-grid-wrap {
+    --pz-cw:    84px;
+    --pz-ch:    99px;
+    flex-shrink: 0;
+}
+/* Fijar las columnas del grid a tamaño exacto para evitar expansión al insertar carta */
+.pz-field-grid-wrap .pz-field-grid {
+    grid-template-columns: repeat(6, var(--pz-cw));
+    gap: 2px;
+    width: auto;
+}
+/* Fijar tamaño explícito de zona de campo — suprime aspect-ratio dinámico */
+.pz-field-grid-wrap .pz-zone {
+    width:  var(--pz-cw);
+    height: var(--pz-ch);
+    min-height: unset;
+    aspect-ratio: unset;
+    flex-shrink: 0;
+}
+.pz-field-grid-wrap .pz-logo-cell {
+    min-height: calc(var(--pz-ch) * 0.75);
+}
+.pz-field-grid-wrap .pz-zone-lbl {
+    font-size: .48rem;
+}
+
+/* Panel lateral GY + Banish */
+.pz-field-side {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 0 0 130px;
+    min-width: 0;
+}
+.pz-field-side-zone {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 0;
+}
+.pz-field-side-zone .pz-side-zone {
+    flex: 1;
+    flex-wrap: wrap;
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-content: flex-start;
+    align-items: flex-start;
+    min-height: 0;
+}
+/* Anular rotación visual de banish en panel lateral */
+.pz-field-side-zone .pz-banish-zone .pz-card-slot {
+    width: auto;
+    height: auto;
+}
+.pz-field-side-zone .pz-banish-zone .pz-card-slot img {
+    transform: none;
+}
+.pz-field-side-btns {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.pz-field-side-btns .pz-row-label { width: auto; }
+
+/* ── Botón descarga en nav de estados ───────────── */
+.pz-nav-download-btn {
+    padding: 5px 10px;
+    background: rgba(0, 80, 160, .3);
+    border: 1px solid rgba(0, 120, 200, .4);
+    color: #80c8ff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: .72rem;
+    font-weight: 700;
+    transition: background .13s;
+}
+.pz-nav-download-btn:hover { background: rgba(0, 100, 210, .5); }
+
+/* ── Botón descarga dentro del Log ──────────────── */
+.pz-log-dl-btn {
+    padding: 4px 10px;
+    background: rgba(0, 80, 160, .25);
+    border: 1px solid rgba(0, 120, 200, .4);
+    color: #80c8ff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: .72rem;
+    font-weight: 700;
+    transition: background .13s;
+    white-space: nowrap;
+}
+.pz-log-dl-btn:hover { background: rgba(0, 100, 210, .45); }
+
+/* ── Tag "Jugador A:" en entradas manuales ──────── */
+.pz-log-player-tag {
+    color: #FFD700;
+    font-weight: 700;
+    font-size: .75rem;
+    margin-right: 3px;
+    flex-shrink: 0;
+}
+
+/* ── Badge de número de cadena ──────────────────── */
+.pz-chain-badge {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    z-index: 30;
+    background: rgba(255, 200, 0, .95);
+    color: #001a33;
+    font-size: .68rem;
+    font-weight: 900;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #FFD700;
+    box-shadow: 0 2px 6px rgba(0,0,0,.5);
+    pointer-events: none;
+    animation: pz-badge-pop .25s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+@keyframes pz-badge-pop {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+/* ── Stack de botones flotantes (columna derecha) ── */
+/* Resolver Cadena — debajo de shortcuts (ajustado por JS) */
+.pz-chain-resolve-btn {
+    position: fixed;
+    bottom: 205px;
+    right: 16px;
+    z-index: 9900;
+    padding: 7px 12px;
+    background: linear-gradient(135deg, rgba(26,122,46,.85), rgba(0,180,80,.75));
+    border: 1px solid #00b894;
+    color: #80e898;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: .78rem;
+    font-weight: 700;
+    box-shadow: 0 4px 14px rgba(0,180,80,.35);
+    animation: pz-chain-pulse 1.2s ease-in-out infinite alternate;
+    white-space: nowrap;
+}
+.pz-chain-resolve-btn:hover { background: linear-gradient(135deg, rgba(26,122,46,1), rgba(0,200,90,.9)); color: #fff; }
+@keyframes pz-chain-pulse {
+    from { box-shadow: 0 4px 14px rgba(0,180,80,.3); }
+    to   { box-shadow: 0 4px 24px rgba(0,220,100,.6); }
+}
+
+/* Botones flotantes genéricos (iconos) */
+.pz-float-btn {
+    position: fixed;
+    right: 16px;
+    z-index: 9800;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, .15);
+    background: rgba(0, 20, 50, .82);
+    color: rgba(241, 241, 241, .72);
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,.4);
+    transition: background .14s, border-color .14s, color .14s;
+    -webkit-backdrop-filter: blur(4px);
+}
+.pz-float-btn:hover {
+    background: rgba(0, 40, 100, .9);
+    border-color: rgba(255, 215, 0, .4);
+    color: #FFD700;
+}
+.pz-float-btn-active {
+    background: rgba(255, 215, 0, .18) !important;
+    border-color: #FFD700 !important;
+    color: #FFD700 !important;
+}
+
+/* Posiciones individuales (de abajo hacia arriba) */
+#pz-float-log-btn       { bottom: 62px;  }
+#pz-float-chgpos-btn    { bottom: 155px; }
+#pz-float-markstate-btn { bottom: 108px; background: rgba(80,40,0,.82); border-color: rgba(255,165,0,.3); }
+#pz-float-markstate-btn:hover { border-color: rgba(255,165,0,.7); color: #FFA500; }
+/* ── Historial de Estados — panel y scroll ──────── */
+.pz-nav-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 320px;
+    max-width: 92vw;
+    height: 100vh;
+    background: var(--bg-card, #002b4d);
+    border-right: 1px solid rgba(255, 215, 0, .2);
+    z-index: 98000;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    box-shadow: 4px 0 24px rgba(0,0,0,.55);
+}
+.pz-nav-panel-open { transform: translateX(0) !important; }
+
+.pz-nav-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,215,0,.12);
+    flex-shrink: 0;
+}
+.pz-nav-hint {
+    padding: 8px 14px;
+    font-size: .72rem;
+    color: rgba(255,255,255,.35);
+    line-height: 1.5;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    flex-shrink: 0;
+}
+
+/* Lista de estados: scroll independiente, ocupa el resto del panel */
+#pz-nav-list {
+    flex: 1 1 0;
+    overflow-y: scroll;   /* siempre visible */
+    overflow-x: hidden;
+    padding: 8px 10px 16px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,215,0,.25) transparent;
+    min-height: 0;        /* necesario en flex para que el scroll funcione */
+}
+#pz-nav-list::-webkit-scrollbar { width: 5px; }
+#pz-nav-list::-webkit-scrollbar-thumb { background: rgba(255,215,0,.22); border-radius: 3px; }
+
+/* Cada card de estado: sin altura máxima, se expande libremente */
+.pz-nav-card {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 9px;
+    margin-bottom: 8px;
+    overflow: visible;     /* no cortar el contenido expandido */
+}
+.pz-nav-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    cursor: pointer;
+    border-radius: 9px;
+    transition: background .13s;
+}
+.pz-nav-card-header:hover { background: rgba(255,215,0,.05); }
+
+/* Detalle expandible: sin max-height limitante */
+.pz-nav-detail {
+    padding: 8px 10px 10px;
+    border-top: 1px solid rgba(255,255,255,.06);
+}
+
+/* Log panel: scroll siempre visible */
+.pz-log-entries {
+    flex: 1 1 0;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    min-height: 0;
+    padding: 6px 10px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,215,0,.22) transparent;
+}
+.pz-log-entries::-webkit-scrollbar { width: 5px; }
+.pz-log-entries::-webkit-scrollbar-thumb { background: rgba(255,215,0,.2); border-radius: 3px; }
+
+/* Chip de estado clickeable */
+.pz-log-state-chip-link {
+    cursor: pointer;
+    transition: border-color .13s, background .13s;
+}
+.pz-log-state-chip-link:hover {
+    border-color: rgba(255,215,0,.5) !important;
+    background: rgba(255,215,0,.08) !important;
+    color: #FFD700 !important;
+}
+
+/* Imagen dentro de zona del campo en historial */
+.pz-nav-fz-img {
+    width: 100%;
+    height: 52px;
+    object-fit: cover;
+    border-radius: 3px;
+    display: block;
+    margin: 2px auto;
+}
+.pz-nav-fz {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 44px;
+}
+.pz-nav-field-emz {
+    justify-content: center;
+    gap: 8px;
+}
+/* Bloques GY / Banish debajo de Mano */
+.pz-nav-extra-zones {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+.pz-nav-zone-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
 
 /* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 500px) {

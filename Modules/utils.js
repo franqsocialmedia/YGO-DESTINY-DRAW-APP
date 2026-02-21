@@ -6,15 +6,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!scrollTopBtn || !scrollBottomBtn) return;
 
     const updateButtons = () => {
-        const scrolled  = window.scrollY;
-        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-
-        // Top: visible si scrolled > 300
-        scrollTopBtn.style.display = scrolled > 300 ? 'block' : 'none';
-
-        // Bottom: visible si no estamos al fondo (margen 50px)
-        scrollBottomBtn.style.display = scrolled < maxScroll - 50 ? 'block' : 'none';
-    };
+    const inSim = window.Navigation?.currentTab === 'simuladores';
+    if (inSim) {
+        scrollTopBtn.style.display    = 'none';
+        scrollBottomBtn.style.display = 'none';
+        return;
+    }
+    const scrolled  = window.scrollY;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    scrollTopBtn.style.display    = scrolled > 300 ? 'block' : 'none';
+    scrollBottomBtn.style.display = scrolled < maxScroll - 50 ? 'block' : 'none';
+};
 
     window.addEventListener('scroll', updateButtons);
     updateButtons(); // estado inicial

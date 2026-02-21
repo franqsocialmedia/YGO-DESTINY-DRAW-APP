@@ -27,6 +27,8 @@ const ZonaPractica = {
     statusWidgetVisible: false,
     logEntries:          [],
     gameStates:          [],
+    _chainCounter: 0,
+    _chainedCards: [],   // [{zone, slotIndex, zoneType}]
 
     field: {
         'A':null,'B':null,'C':null,
@@ -81,7 +83,7 @@ const ZonaPractica = {
     _buildShell: function () {
         return `<div class="pz-wrap">
 
-            <div class="pz-controls-bar">
+           <div class="pz-controls-bar">
                 <button class="pz-ctrl-btn pz-ctrl-search"
                         onclick="ZonaPractica.openCardSearch()">🔍 Buscar Carta</button>
                 <button class="pz-ctrl-btn pz-ctrl-deck"
@@ -90,7 +92,9 @@ const ZonaPractica = {
                         onclick="ZonaPractica.openStateNavigator()">📜 Historial</button>
                 <button class="pz-ctrl-btn pz-ctrl-widget"
                         id="pz-sw-toggle-btn"
-                        onclick="ZonaPractica.toggleStatusWidget()">📊 Estado</button>
+                        onclick="ZonaPractica.toggleStatusWidget()"
+                        style="display:none">📊 Estado</button>
+                
                 <button class="pz-ctrl-btn pz-ctrl-clear"
                         onclick="ZonaPractica.clearBoard()">🗑 Limpiar</button>
             </div>
@@ -112,41 +116,68 @@ const ZonaPractica = {
 
             <div class="pz-board-outer" id="pz-board-outer">
 
-                <!-- ── CAMPO (GRID 6 COLUMNAS) ── -->
-                <div class="pz-field-grid">
+                <!-- ── CAMPO + LATERAL (GY / BANISH) ── -->
+                <div class="pz-field-area-wrap">
 
-                    <!-- Fila EMZ -->
-                    <div class="pz-fg-emz-spacer"></div>
-                    <div class="pz-zone pz-zone-emz pz-fg-emz-a" id="pz-zone-A" data-zone="A"
-                         onclick="ZonaPractica.onZoneClick('A')"><span class="pz-zone-lbl">A</span></div>
-                    <div class="pz-logo-cell pz-fg-logo">
-                        <img src="img/LOGO - Destiny Draw Yugioh APP.png" class="pz-logo-img"
-                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                        <div class="pz-logo-fallback" style="display:none">🃏</div>
+                    <!-- Campo escalado al 60% -->
+                    <div class="pz-field-grid-wrap">
+                        <div class="pz-field-grid">
+
+                            <!-- Fila EMZ -->
+                            <div class="pz-fg-emz-spacer"></div>
+                            <div class="pz-zone pz-zone-emz pz-fg-emz-a" id="pz-zone-A" data-zone="A"
+                                 onclick="ZonaPractica.onZoneClick('A')"><span class="pz-zone-lbl">A</span></div>
+                            <div class="pz-logo-cell pz-fg-logo">
+                                <img src="img/LOGO - Destiny Draw Yugioh APP.png" class="pz-logo-img"
+                                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                                <div class="pz-logo-fallback" style="display:none">🃏</div>
+                            </div>
+                            <div class="pz-zone pz-zone-emz pz-fg-emz-b" id="pz-zone-B" data-zone="B"
+                                 onclick="ZonaPractica.onZoneClick('B')"><span class="pz-zone-lbl">B</span></div>
+                            <div class="pz-fg-emz-spacer"></div>
+
+                            <!-- Fila Monstruos + Zona C (izquierda) -->
+                            <div class="pz-zone pz-zone-field pz-fg-c" id="pz-zone-C" data-zone="C"
+                                 onclick="ZonaPractica.onZoneClick('C')"><span class="pz-zone-lbl">C</span></div>
+                            ${[1,2,3,4,5].map(n=>`
+                            <div class="pz-zone pz-zone-monster" id="pz-zone-${n}" data-zone="${n}"
+                                 onclick="ZonaPractica.onZoneClick('${n}')"><span class="pz-zone-lbl">${n}</span></div>`).join('')}
+
+                            <!-- Fila S/T -->
+                            <div class="pz-fg-st-spacer"></div>
+                            <div class="pz-zone pz-zone-pendulum" id="pz-zone-6" data-zone="6"
+                                 onclick="ZonaPractica.onZoneClick('6')"><span class="pz-zone-lbl">6</span></div>
+                            <div class="pz-zone pz-zone-st" id="pz-zone-7" data-zone="7"
+                                 onclick="ZonaPractica.onZoneClick('7')"><span class="pz-zone-lbl">7</span></div>
+                            <div class="pz-zone pz-zone-st" id="pz-zone-8" data-zone="8"
+                                 onclick="ZonaPractica.onZoneClick('8')"><span class="pz-zone-lbl">8</span></div>
+                            <div class="pz-zone pz-zone-st" id="pz-zone-9" data-zone="9"
+                                 onclick="ZonaPractica.onZoneClick('9')"><span class="pz-zone-lbl">9</span></div>
+                            <div class="pz-zone pz-zone-pendulum" id="pz-zone-10" data-zone="10"
+                                 onclick="ZonaPractica.onZoneClick('10')"><span class="pz-zone-lbl">10</span></div>
+
+                        </div>
                     </div>
-                    <div class="pz-zone pz-zone-emz pz-fg-emz-b" id="pz-zone-B" data-zone="B"
-                         onclick="ZonaPractica.onZoneClick('B')"><span class="pz-zone-lbl">B</span></div>
-                    <div class="pz-fg-emz-spacer"></div>
 
-                    <!-- Fila Monstruos + Zona C (izquierda) -->
-                    <div class="pz-zone pz-zone-field pz-fg-c" id="pz-zone-C" data-zone="C"
-                         onclick="ZonaPractica.onZoneClick('C')"><span class="pz-zone-lbl">C</span></div>
-                    ${[1,2,3,4,5].map(n=>`
-                    <div class="pz-zone pz-zone-monster" id="pz-zone-${n}" data-zone="${n}"
-                         onclick="ZonaPractica.onZoneClick('${n}')"><span class="pz-zone-lbl">${n}</span></div>`).join('')}
-
-                    <!-- Fila S/T (vacío bajo C, luego 6-10) -->
-                    <div class="pz-fg-st-spacer"></div>
-                    <div class="pz-zone pz-zone-pendulum" id="pz-zone-6" data-zone="6"
-                         onclick="ZonaPractica.onZoneClick('6')"><span class="pz-zone-lbl">6</span></div>
-                    <div class="pz-zone pz-zone-st" id="pz-zone-7" data-zone="7"
-                         onclick="ZonaPractica.onZoneClick('7')"><span class="pz-zone-lbl">7</span></div>
-                    <div class="pz-zone pz-zone-st" id="pz-zone-8" data-zone="8"
-                         onclick="ZonaPractica.onZoneClick('8')"><span class="pz-zone-lbl">8</span></div>
-                    <div class="pz-zone pz-zone-st" id="pz-zone-9" data-zone="9"
-                         onclick="ZonaPractica.onZoneClick('9')"><span class="pz-zone-lbl">9</span></div>
-                    <div class="pz-zone pz-zone-pendulum" id="pz-zone-10" data-zone="10"
-                         onclick="ZonaPractica.onZoneClick('10')"><span class="pz-zone-lbl">10</span></div>
+                    <!-- Panel lateral: GY + Banish -->
+                    <div class="pz-field-side">
+                        <div class="pz-field-side-zone">
+                            <div class="pz-multi-zone pz-gy-zone pz-side-zone" id="pz-zone-gy"
+                                 onclick="ZonaPractica._onMultiZoneClick(event,'gy')"></div>
+                            <div class="pz-field-side-btns">
+                                <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('gy')">👁</button>
+                                <span class="pz-row-label">GY</span>
+                            </div>
+                        </div>
+                        <div class="pz-field-side-zone">
+                            <div class="pz-multi-zone pz-banish-zone pz-side-zone" id="pz-zone-banish"
+                                 onclick="ZonaPractica._onMultiZoneClick(event,'banish')"></div>
+                            <div class="pz-field-side-btns">
+                                <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('banish')">👁</button>
+                                <span class="pz-row-label">Banish</span>
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
 
@@ -162,14 +193,16 @@ const ZonaPractica = {
                             onclick="ZonaPractica.toggleHideZone('hand')">🙈</button>
                     <button class="pz-mini-btn" title="Barajar mano"
                             onclick="ZonaPractica.shuffleHand()">🔀</button>
+                    <button class="pz-mini-btn" title="Robar carta"
+                            onclick="ZonaPractica.drawCard()">⬆</button>
                 </div>
 
                 <!-- Main Deck -->
                 <div class="pz-zone-row pz-deck-row">
                     <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('main')">👁</button>
                     <button class="pz-mini-btn pz-zone-eye-btn"
-                            id="pz-hide-btn-main" title="Ocultar/Mostrar Main"
-                            onclick="ZonaPractica.toggleHideZone('main')">🙈</button>
+                            id="pz-hide-btn-main" title="Voltear todas (Main)"
+                            onclick="ZonaPractica._flipAllInZone('main')">🔄</button>
                     <span class="pz-row-label">Main</span>
                     <div class="pz-multi-zone pz-main-zone" id="pz-zone-main"
                          onclick="ZonaPractica._onMultiZoneClick(event,'main')"></div>
@@ -179,30 +212,14 @@ const ZonaPractica = {
                 <div class="pz-zone-row pz-deck-row">
                     <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('extra')">👁</button>
                     <button class="pz-mini-btn pz-zone-eye-btn"
-                            id="pz-hide-btn-extra" title="Ocultar/Mostrar Extra"
-                            onclick="ZonaPractica.toggleHideZone('extra')">🙈</button>
+                            id="pz-hide-btn-extra" title="Voltear todas (Extra)"
+                            onclick="ZonaPractica._flipAllInZone('extra')">🔄</button>
                     <span class="pz-row-label">Extra</span>
                     <div class="pz-multi-zone pz-extra-zone" id="pz-zone-extra"
                          onclick="ZonaPractica._onMultiZoneClick(event,'extra')"></div>
                 </div>
 
-                <!-- Banishment (horizontal scroll) -->
-                <div class="pz-zone-row pz-banish-row">
-                    <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('banish')">👁</button>
-                    <span class="pz-row-label">Banish</span>
-                    <div class="pz-multi-zone pz-banish-zone" id="pz-zone-banish"
-                         onclick="ZonaPractica._onMultiZoneClick(event,'banish')"></div>
-                </div>
-
-                <!-- Cementerio (crece hacia abajo) -->
-                <div class="pz-zone-row pz-gy-row">
-                    <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('gy')">👁</button>
-                    <span class="pz-row-label">GY</span>
-                    <div class="pz-multi-zone pz-gy-zone" id="pz-zone-gy"
-                         onclick="ZonaPractica._onMultiZoneClick(event,'gy')"></div>
-                </div>
-
-                <!-- Other Options (crece hacia abajo) -->
+                <!-- Other Options -->
                 <div class="pz-zone-row pz-other-row">
                     <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('other')">👁</button>
                     <span class="pz-row-label">Other</span>
@@ -671,8 +688,7 @@ const ZonaPractica = {
         this._addLog(`Deck: ${dk.name||'(sin nombre)'} — Main:${main.length} Extra:${extra.length} Side→Other:${side.length}`);
         document.getElementById('pz-deck-overlay')?.remove();
         this._renderAllZones();
-        // Auto-mostrar widget de estado al cargar deck
-        if (!this.statusWidgetVisible) this.toggleStatusWidget();
+       
     },
 
     clearBoard: function () {
@@ -714,36 +730,40 @@ const ZonaPractica = {
     },
 
     _showZoneMenu: function (zone, slotIndex, zoneType) {
+    // Si hay un menú activo en esta misma zona, solo cerrarlo
+    const existing = document.getElementById('pz-zone-menu-active');
+    if (existing) {
         this._closeZoneMenus();
-        const elId = `pz-zone-${zone}`;
-        const containerEl = document.getElementById(elId);
-        if (!containerEl) return;
+        return;
+    }
+    const elId = `pz-zone-${zone}`;
+    const containerEl = document.getElementById(elId);
+    if (!containerEl) return;
 
-        // Para multi-zona, anclar al slot clicado si existe
-        let anchor = containerEl;
-        if (zoneType === 'multi' && slotIndex !== null) {
-            const slots = containerEl.querySelectorAll('.pz-card-slot');
-            if (slots[slotIndex]) anchor = slots[slotIndex];
+    let anchor = containerEl;
+    if (zoneType === 'multi' && slotIndex !== null) {
+        const slots = containerEl.querySelectorAll('.pz-card-slot');
+        if (slots[slotIndex]) anchor = slots[slotIndex];
+    }
+
+    const menu = document.createElement('div');
+    menu.className = 'pz-zone-menu';
+    menu.id = 'pz-zone-menu-active';
+    menu.innerHTML = `
+        <button class="pz-zmenu-btn pz-zmenu-ver"
+                onclick="ZonaPractica._zmView('${zone}',${slotIndex},event)">Ver</button>
+        <button class="pz-zmenu-btn pz-zmenu-accion"
+                onclick="ZonaPractica._zmShowAction('${zone}',${slotIndex},'${zoneType}',event)">Acción</button>`;
+    anchor.appendChild(menu);
+
+    const close = (e) => {
+        if (!menu.contains(e.target)) {
+            this._closeZoneMenus();
+            document.removeEventListener('click', close, true);
         }
-
-        const menu = document.createElement('div');
-        menu.className = 'pz-zone-menu';
-        menu.id = 'pz-zone-menu-active';
-        menu.innerHTML = `
-            <button class="pz-zmenu-btn pz-zmenu-ver"
-                    onclick="ZonaPractica._zmView('${zone}',${slotIndex},event)">Ver</button>
-            <button class="pz-zmenu-btn pz-zmenu-accion"
-                    onclick="ZonaPractica._zmShowAction('${zone}',${slotIndex},'${zoneType}',event)">Acción</button>`;
-        anchor.appendChild(menu);
-
-        const close = (e) => {
-            if (!menu.contains(e.target)) {
-                this._closeZoneMenus();
-                document.removeEventListener('click', close);
-            }
-        };
-        setTimeout(() => document.addEventListener('click', close), 0);
-    },
+    };
+    setTimeout(() => document.addEventListener('click', close, true), 50);
+},
 
     _closeZoneMenus: function () {
         document.querySelectorAll('.pz-zone-menu, .pz-action-submenu').forEach(m => m.remove());
@@ -787,13 +807,15 @@ const ZonaPractica = {
     _zmActivate: function (zone, slotIndex, zoneType, e) {
         e?.stopPropagation();
         this._closeZoneMenus();
-        let card = null;
+        let entry = null;
         if (zoneType === 'field') {
-            card = this.field[zone]?.card;
+            entry = this.field[zone];
         } else {
-            card = this._getMultiArray(zone)[parseInt(slotIndex)]?.card;
+            entry = this._getMultiArray(zone)[parseInt(slotIndex)];
         }
+        const card = entry?.card;
         if (!card) return;
+
         // Flash de 900ms
         const elId = `pz-zone-${zone}`;
         const el = document.getElementById(elId);
@@ -801,9 +823,102 @@ const ZonaPractica = {
             el.classList.add('pz-activate-flash');
             setTimeout(() => el.classList.remove('pz-activate-flash'), 900);
         }
-        this._addLog(`${card.name} activa efecto.`, card);
+
+        // ── Cartas Encadenadas ──────────────────────────────
+        this._chainCounter++;
+        const chainNum = this._chainCounter;
+        this._chainedCards.push({ zone, slotIndex, zoneType, chainNum, cardName: card.name });
+
+        // Guardar chainNum EN el entry para que persista tras renders/moves
+        if (entry) entry._chainNum = chainNum;
+
+        this._renderAllZones(); // re-renders badges
+        this._showChainResolveBtn();
+        this._addLog(`${card.name} activa efecto [en la zona: ${zone}].`, card);
+    },
+// ═══════════════════════════════════════════════════════
+    // CARTAS ENCADENADAS — botón flotante + resolución
+    // ═══════════════════════════════════════════════════════
+    _showChainResolveBtn: function () {
+        if (document.getElementById('pz-chain-resolve-btn')) return;
+        const btn = document.createElement('button');
+        btn.id        = 'pz-chain-resolve-btn';
+        btn.className = 'pz-chain-resolve-btn';
+        btn.innerHTML = '⛓ Resolver';
+        btn.title     = 'Resolver Cadena';
+        btn.onclick   = () => ZonaPractica.resolveChain();
+        document.body.appendChild(btn);
     },
 
+    resolveChain: function () {
+        const count = this._chainCounter;
+        if (count === 0) {
+            this._showToast('Sin cadena activa.', 1500);
+            return;
+        }
+        // Lista SEGOC (LIFO: último efecto al primero)
+        const segocLines = [...this._chainedCards]
+            .reverse()
+            .map(c => `&nbsp;&nbsp;${c.chainNum}. ${c.cardName}`)
+            .join('<br>');
+
+        // Limpiar _chainNum de todos los entries
+        Object.values(this.field).forEach(e => { if (e) delete e._chainNum; });
+        ['hand','main','extra','gy','banish','other'].forEach(z => {
+            this._getMultiArray(z).forEach(e => { if (e) delete e._chainNum; });
+        });
+
+        const msg = `⛓ Cadena resuelta — ${count} efecto${count !== 1 ? 's' : ''}. SEGOC:<br>${segocLines}`;
+        this._addLog(msg);
+        console.info(`[PZ] Cadena resuelta: ${count} efectos SEGOC: ${[...this._chainedCards].reverse().map(c=>c.cardName).join(' → ')}`);
+        this._chainCounter = 0;
+        this._chainedCards = [];
+        document.getElementById('pz-chain-resolve-btn')?.remove();
+        this._renderAllZones();
+        this._showToast(`⛓ Cadena resuelta (${count} efectos)`, 2000);
+    },
+
+    // ═══════════════════════════════════════════════════════
+    // DESCARGAR LOG
+    // ═══════════════════════════════════════════════════════
+    downloadLog: function () {
+        if (!this.logEntries.length) { this._showToast('El log está vacío.', 1500); return; }
+        const lines = this.logEntries.map(e => `[T${e.turn} ${e.time}] ${e.msg}`);
+        const blob  = new Blob([lines.join('\n')], { type: 'text/plain' });
+        const a     = document.createElement('a');
+        a.href      = URL.createObjectURL(blob);
+        a.download  = `pz-log-T${this.turnNumber}.txt`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    },
+
+    // ═══════════════════════════════════════════════════════
+    // DESCARGAR ESTADO COMO PNG
+    // ═══════════════════════════════════════════════════════
+    _downloadStatePng: function (id) {
+        const cardEl = document.getElementById(`pz-nav-card-${id}`);
+        if (!cardEl) { this._showToast('Abre el detalle del estado primero.', 1800); return; }
+        // Asegurar que el detalle esté expandido
+        const detail = document.getElementById(`pz-nav-detail-${id}`);
+        const wasHidden = detail && detail.style.display === 'none';
+        if (wasHidden) { detail.style.display = ''; }
+
+        if (typeof html2canvas === 'undefined') {
+            this._showToast('html2canvas no disponible.', 2000); return;
+        }
+        html2canvas(cardEl, {
+            backgroundColor: '#001a33',
+            scale: 2,
+            useCORS: true,
+            logging: false
+        }).then(canvas => {
+            const a      = document.createElement('a');
+            a.href       = canvas.toDataURL('image/png');
+            a.download   = `estado-${id}.png`;
+            a.click();
+            if (wasHidden && detail) detail.style.display = 'none';
+        }).catch(() => this._showToast('Error al generar imagen.', 2000));
+    },
     // ═══════════════════════════════════════════════════════
     // MODO MOVER
     // ═══════════════════════════════════════════════════════
@@ -1172,6 +1287,7 @@ const ZonaPractica = {
         } else {
             document.getElementById('pz-toast')?.remove();
         }
+        this._updateFloatingBtns();
     },
 
     // Cicla la posición de una entry: ATK → DEF → Boca abajo → ATK
@@ -1216,6 +1332,10 @@ const ZonaPractica = {
             other:     JSON.parse(JSON.stringify(this.other)),
         };
         this.gameStates.push(snap);
+        // Mostrar botón Estado la primera vez que se guarda un estado
+        const swBtn = document.getElementById('pz-sw-toggle-btn');
+        if (swBtn) swBtn.style.display = '';
+
         this._addLog(`📌 Estado #${snap.id} guardado — T${snap.turn} · ${snap.phase} · Mano:${snap.hand.length} · GY:${snap.gy.length}`);
         this._showToast(`📌 Estado #${snap.id} guardado`);
         // Actualizar panel de log si está abierto
@@ -1226,6 +1346,7 @@ const ZonaPractica = {
         if (navList) navList.innerHTML = this._renderNavList();
         // Actualizar widget
         this._updateStatusWidget();
+        this._updateFloatingBtns();
     },
 
     // ═══════════════════════════════════════════════════════
@@ -1265,7 +1386,15 @@ const ZonaPractica = {
         this._renderZone(zone);
         this._addLog(`${zone}: ${this[flag] ? 'oculta' : 'visible'}.`);
     },
-
+// Voltear todas las cartas de una zona (equivale a flip individual en masa)
+    _flipAllInZone: function (zone) {
+        const arr = this._getMultiArray(zone);
+        if (!arr.length) { this._showToast(`${zone} está vacío.`, 1400); return; }
+        const allFaceUp = arr.every(e => e.faceUp);
+        arr.forEach(e => { e.faceUp = !allFaceUp; });
+        this._renderZone(zone);
+        this._addLog(`${zone}: ${allFaceUp ? 'todas boca abajo' : 'todas boca arriba'}.`);
+    },
     // Sincroniza el ícono de los botones de ojo por zona
     _syncZoneHideBtns: function () {
         const map = { hand:'hiddenHand', main:'hiddenMain', extra:'hiddenExtra' };
@@ -1319,9 +1448,27 @@ const ZonaPractica = {
             { icon:'↩️', label:'Devolver',        msg:'Carta devuelta al deck.' },
             { icon:'👀', label:'Revelar Carta',   msg:'Carta revelada.'     },
             { icon:'🔍', label:'Mirar Carta',     msg:'Carta mirada.'       },
-            { icon:'⛓️', label:'Resolucion de Cadena', msg:'Cadena resuelta.'    },
+            { icon:'⛓️', label:'Resolver Cadena', msg:'__RESOLVE_CHAIN__' },
         ];
-
+// Pre-calcular chips de estados con onclick de scroll
+        const statesBarHtml = this.gameStates.length ? (() => {
+            const chips = this.gameStates.map(s => {
+                const targetIdx = this.logEntries.findIndex(e =>
+                    e.msg.includes(`Estado #${s.id} guardado`));
+                const scrollCall = targetIdx >= 0
+                    ? `var c=document.getElementById('pz-log-entries');var t=document.getElementById('pz-log-entry-${targetIdx}');if(c&&t){c.scrollTo({top:t.offsetTop-8,behavior:'smooth'});}`
+                    : '';
+                return `<div class="pz-log-state-chip pz-log-state-chip-link"
+                             title="T${s.turn} · ${s.phase} · ${s.timestamp} — Ir al registro"
+                             onclick="${scrollCall}">
+                    #${s.id} <span>T${s.turn}·${s.timestamp}</span>
+                </div>`;
+            }).join('');
+            return `<div class="pz-log-states-bar">
+                <span class="pz-log-states-title">📌 Estados guardados (${this.gameStates.length})</span>
+                <div class="pz-log-states-list" id="pz-log-states-list">${chips}</div>
+            </div>`;
+        })() : '';
         panel.innerHTML = `
             <div class="pz-log-header">
                 <div class="pz-log-title">
@@ -1330,6 +1477,7 @@ const ZonaPractica = {
                     <span class="pz-log-phase-badge pz-log-phase-${this.phase}">${this._phaseLabel(this.phase)}</span>
                 </div>
                 <div class="pz-log-header-btns">
+                    <button class="pz-log-dl-btn" onclick="ZonaPractica.downloadLog()" title="Descargar log">⬇ Log</button>
                     <button class="pz-log-clear-btn" onclick="ZonaPractica._clearLog()" title="Limpiar log">🗑</button>
                     <button class="pz-modal-close" onclick="ZonaPractica.openLog()">✕</button>
                 </div>
@@ -1337,7 +1485,9 @@ const ZonaPractica = {
 
             <div class="pz-log-shortcuts">
                 ${shortcuts.map(s =>
-                    `<button class="pz-log-sc-btn" onclick="ZonaPractica._logShortcut('${s.msg}')" title="${s.msg}">
+                    `<button class="pz-log-sc-btn"
+                        onclick="${s.msg === '__RESOLVE_CHAIN__' ? 'ZonaPractica.resolveChain()' : `ZonaPractica._logShortcut('${s.msg}')`}"
+                        title="${s.label}">
                         <span class="pz-log-sc-icon">${s.icon}</span>
                         <span class="pz-log-sc-label">${s.label}</span>
                     </button>`).join('')}
@@ -1349,16 +1499,7 @@ const ZonaPractica = {
                 <button class="pz-log-add-btn" onclick="ZonaPractica._addCustomLog()">+</button>
             </div>
 
-            ${this.gameStates.length ? `
-            <div class="pz-log-states-bar">
-                <span class="pz-log-states-title">📌 Estados guardados (${this.gameStates.length})</span>
-                <div class="pz-log-states-list" id="pz-log-states-list">
-                    ${this.gameStates.map(s => `
-                        <div class="pz-log-state-chip" title="T${s.turn} · ${s.phase} · ${s.timestamp}">
-                            #${s.id} <span>T${s.turn}·${s.timestamp}</span>
-                        </div>`).join('')}
-                </div>
-            </div>` : ''}
+            ${statesBarHtml}
 
             <div class="pz-log-entries" id="pz-log-entries">
                 ${this._renderLogEntries()}
@@ -1384,36 +1525,16 @@ const ZonaPractica = {
         return { draw:'Draw', standby:'Standby', main1:'Main 1', battle:'Battle', main2:'Main 2', end:'End' }[p] || p;
     },
 
-    _renderLogEntries: function () {
-        if (!this.logEntries.length) {
-            return '<p class="pz-log-empty">Sin entradas aún.</p>';
-        }
-        return this.logEntries.map((e, i) => `
-            <div class="pz-log-entry ${e.msg.startsWith('---') ? 'pz-log-turn-sep' : ''}">
-                <span class="pz-log-entry-idx">${i + 1}</span>
-                <span class="pz-log-entry-meta">T${e.turn}&nbsp;${e.time}</span>
-                <span class="pz-log-entry-msg">${e.msg}</span>
-            </div>`).join('');
-    },
-
     _logShortcut: function (msg) {
         this._addLog(msg);
-        // Refresh entries list if open
-        const el = document.getElementById('pz-log-entries');
-        if (el) {
-            el.innerHTML = this._renderLogEntries();
-            el.scrollTop = el.scrollHeight;
-        }
     },
 
     _addCustomLog: function () {
         const inp = document.getElementById('pz-log-custom-input');
         const msg = inp?.value?.trim();
         if (!msg) return;
-        this._addLog(msg);
+        this._addLog(msg, null, true);
         inp.value = '';
-        const el = document.getElementById('pz-log-entries');
-        if (el) { el.innerHTML = this._renderLogEntries(); el.scrollTop = el.scrollHeight; }
     },
 
     _clearLog: function () {
@@ -1495,6 +1616,10 @@ const ZonaPractica = {
                 <div class="pz-nav-detail" id="pz-nav-detail-${s.id}" style="display:none">
                     ${this._renderNavFieldPreview(s)}
                     <div class="pz-nav-actions">
+                        <button class="pz-nav-download-btn"
+                                onclick="ZonaPractica._downloadStatePng(${s.id})">
+                            📥 PNG
+                        </button>
                         <button class="pz-nav-restore-btn"
                                 onclick="ZonaPractica._restoreState(${s.id})">
                             ↩ Restaurar este estado
@@ -1528,31 +1653,50 @@ const ZonaPractica = {
     },
 
     _renderNavFieldPreview: function (s) {
-        // Mini representación textual del campo
-        const monsterZones = ['1','2','3','4','5','A','B'];
-        const stZones      = ['C','6','7','8','9','10'];
+    // Estructura igual al campo real: EMZ (A,B), Monstruos (C,1-5), S/T (6-10)
+    const emzZones      = ['A','B'];
+    const monsterZones  = ['C','1','2','3','4','5'];
+    const stZones       = ['6','7','8','9','10'];
+    const stOnlyZones   = ['6','7','8','9','10'];
 
-        const buildRow = (zones) => zones.map(z => {
-            const entry = s.field[z];
-            if (!entry?.card) return `<div class="pz-nav-fz pz-nav-fz-empty">${z}</div>`;
-            const name    = entry.card.name || '?';
-            const shortName = name.length > 10 ? name.slice(0, 10) + '…' : name;
-            const pos     = entry.faceUp ? (entry.rotation ? 'DEF' : 'ATK') : 'SET';
-            const posClass = entry.faceUp ? (entry.rotation ? 'pz-nav-fz-def' : 'pz-nav-fz-atk') : 'pz-nav-fz-set';
-            return `<div class="pz-nav-fz ${posClass}" title="${name} · ${pos}">
-                <span class="pz-nav-fz-lbl">${z}</span>
-                <span class="pz-nav-fz-name">${shortName}</span>
-                <span class="pz-nav-fz-pos">${pos}</span>
-            </div>`;
-        }).join('');
+    const buildZone = (z) => {
+        const entry = s.field[z];
+        if (!entry?.card) return `<div class="pz-nav-fz pz-nav-fz-empty" title="${z}">${z}</div>`;
+        const img  = entry.card.card_images?.[0]?.image_url_small || this.CARD_BACK;
+        const isMonster = ['1','2','3','4','5','A','B'].includes(String(z));
+        let pos, posClass;
+        if (isMonster) {
+            if (entry.faceUp && !entry.rotation)       { pos = 'ATK'; posClass = 'pz-nav-fz-atk'; }
+            else if (entry.faceUp && entry.rotation)   { pos = 'DEF'; posClass = 'pz-nav-fz-def'; }
+            else                                        { pos = 'SET'; posClass = 'pz-nav-fz-set'; }
+        } else {
+            pos      = entry.faceUp ? 'Face-up' : 'Set';
+            posClass = entry.faceUp ? 'pz-nav-fz-atk' : 'pz-nav-fz-set';
+        }
+        const rotation = entry.rotation ? `rotate(${entry.rotation}deg)` : '';
+        return `<div class="pz-nav-fz ${posClass}" title="${entry.card.name} · ${pos}">
+            <span class="pz-nav-fz-lbl">${z}</span>
+            <img src="${entry.faceUp ? img : this.CARD_BACK}"
+                 class="pz-nav-fz-img"
+                 style="${rotation ? `transform:${rotation}` : ''}"
+                 onerror="this.src='${this.CARD_BACK}'">
+            <span class="pz-nav-fz-pos">${pos}</span>
+        </div>`;
+    };
 
-        return `
-            <div class="pz-nav-field-preview">
-                <div class="pz-nav-field-row">${buildRow(monsterZones)}</div>
-                <div class="pz-nav-field-row">${buildRow(stZones)}</div>
-            </div>
-            <div class="pz-nav-hand-preview">
-                <span class="pz-nav-zone-title">Mano (${s.hand.length})</span>
+    const emzRow      = emzZones.map(buildZone).join('');
+    const monsterRow  = monsterZones.map(buildZone).join('');
+    const stRow       = stOnlyZones.map(buildZone).join('');
+
+    return `
+        <div class="pz-nav-field-preview">
+            <div class="pz-nav-field-row pz-nav-field-emz">${emzRow}</div>
+            <div class="pz-nav-field-row">${monsterRow}</div>
+            <div class="pz-nav-field-row">${stRow}</div>
+        </div>
+        <div class="pz-nav-extra-zones">
+            <div class="pz-nav-zone-block">
+                <span class="pz-nav-zone-title">✋ Mano (${s.hand.length})</span>
                 <div class="pz-nav-hand-imgs">
                     ${s.hand.slice(0, 8).map(e => {
                         const img = e.card?.card_images?.[0]?.image_url_small || this.CARD_BACK;
@@ -1562,8 +1706,33 @@ const ZonaPractica = {
                     }).join('')}
                     ${s.hand.length > 8 ? `<span class="pz-nav-hand-more">+${s.hand.length - 8}</span>` : ''}
                 </div>
-            </div>`;
-    },
+            </div>
+            <div class="pz-nav-zone-block">
+                <span class="pz-nav-zone-title">🪦 GY (${s.gy.length})</span>
+                <div class="pz-nav-hand-imgs">
+                    ${s.gy.slice(0, 6).map(e => {
+                        const img = e.card?.card_images?.[0]?.image_url_small || this.CARD_BACK;
+                        return `<img src="${img}" class="pz-nav-hand-img"
+                                    onerror="this.src='${this.CARD_BACK}'"
+                                    title="${e.card?.name||'?'}">`;
+                    }).join('')}
+                    ${s.gy.length > 6 ? `<span class="pz-nav-hand-more">+${s.gy.length - 6}</span>` : ''}
+                </div>
+            </div>
+            <div class="pz-nav-zone-block">
+                <span class="pz-nav-zone-title">🚀 Banish (${s.banish.length})</span>
+                <div class="pz-nav-hand-imgs">
+                    ${s.banish.slice(0, 6).map(e => {
+                        const img = e.card?.card_images?.[0]?.image_url_small || this.CARD_BACK;
+                        return `<img src="${img}" class="pz-nav-hand-img"
+                                    onerror="this.src='${this.CARD_BACK}'"
+                                    title="${e.card?.name||'?'}">`;
+                    }).join('')}
+                    ${s.banish.length > 6 ? `<span class="pz-nav-hand-more">+${s.banish.length - 6}</span>` : ''}
+                </div>
+            </div>
+        </div>`;
+},
 
     _toggleNavCard: function (id) {
         const detail = document.getElementById(`pz-nav-detail-${id}`);
@@ -1732,7 +1901,70 @@ const ZonaPractica = {
             const mu = () => { dragging2 = false; document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); };
         }
     },
+// ═══════════════════════════════════════════════════════
+    // BOTONES FLOTANTES CONTEXTUALES
+    // ═══════════════════════════════════════════════════════
+    _updateFloatingBtns: function () {
+        const inSim = window.Navigation?.currentTab === 'simuladores';
 
+        // Ajustar posición del shortcuts-float-btn para hacer hueco
+        const scBtn = document.getElementById('shortcuts-float-btn');
+        if (scBtn) scBtn.style.bottom = inSim ? '260px' : '';
+
+        if (!inSim) { this._cleanupFloatBtns(); return; }
+
+        // ── Log flotante (solo si hay entradas) ─────────────
+        let logBtn = document.getElementById('pz-float-log-btn');
+        if (this.logEntries.length > 0) {
+            if (!logBtn) {
+                logBtn = document.createElement('button');
+                logBtn.id        = 'pz-float-log-btn';
+                logBtn.className = 'pz-float-btn';
+                logBtn.innerHTML = '📋';
+                logBtn.title     = 'Log';
+                logBtn.onclick   = () => ZonaPractica.openLog();
+                document.body.appendChild(logBtn);
+            }
+        } else {
+            logBtn?.remove();
+        }
+
+        // ── Cambiar Pos flotante (solo si hay cartas en campo) ──
+        const fieldHasCards = Object.values(this.field).some(Boolean);
+        let cpBtn = document.getElementById('pz-float-chgpos-btn');
+        if (fieldHasCards) {
+            if (!cpBtn) {
+                cpBtn = document.createElement('button');
+                cpBtn.id        = 'pz-float-chgpos-btn';
+                cpBtn.className = 'pz-float-btn';
+                cpBtn.innerHTML = '↕';
+                cpBtn.title     = 'Cambiar Posición';
+                cpBtn.onclick   = () => ZonaPractica.toggleChangePosition();
+                document.body.appendChild(cpBtn);
+            }
+            cpBtn.classList.toggle('pz-float-btn-active', this.changePositionMode);
+        } else {
+            cpBtn?.remove();
+        }
+
+        // ── Marcar Estado flotante (siempre en simuladores) ──
+        if (!document.getElementById('pz-float-markstate-btn')) {
+            const btn = document.createElement('button');
+            btn.id        = 'pz-float-markstate-btn';
+            btn.className = 'pz-float-btn pz-float-btn-state';
+            btn.innerHTML = '📌';
+            btn.title     = 'Marcar Estado';
+            btn.onclick   = () => ZonaPractica.saveGameState();
+            document.body.appendChild(btn);
+        }
+    },
+
+    _cleanupFloatBtns: function () {
+        ['pz-float-log-btn', 'pz-float-markstate-btn','pz-float-chgpos-btn',
+         'pz-chain-resolve-btn'].forEach(id => document.getElementById(id)?.remove());
+        const scBtn = document.getElementById('shortcuts-float-btn');
+        if (scBtn) scBtn.style.bottom = '';
+    },
     // ═══════════════════════════════════════════════════════
     // TOAST NOTIFICATION
     // ═══════════════════════════════════════════════════════
@@ -1757,13 +1989,15 @@ const ZonaPractica = {
         ['A','B','C','1','2','3','4','5','6','7','8','9','10'].forEach(z => this._renderFieldZone(z));
         ['hand','main','extra','gy','banish','other'].forEach(z => this._renderZone(z));
         this._updateStatusWidget();
+        this._updateFloatingBtns();
     },
 
     _renderFieldZone: function (zone) {
-        const el = document.getElementById(`pz-zone-${zone}`);
-        if (!el) return;
-        el.querySelector('.pz-card-img')?.remove();
-        el.querySelector('.pz-pos-badge')?.remove();
+    const el = document.getElementById(`pz-zone-${zone}`);
+    if (!el) return;
+    el.querySelector('.pz-card-img')?.remove();
+    el.querySelector('.pz-pos-badge')?.remove();
+    el.querySelector('.pz-chain-badge')?.remove();
         const entry = this.field[zone];
         if (!entry?.card) return;
 
@@ -1790,6 +2024,16 @@ const ZonaPractica = {
                 badge.classList.add(entry.faceUp ? 'pz-pos-atk' : 'pz-pos-set');
             }
             el.appendChild(badge);
+        }
+        // Re-añadir badge de cadena si corresponde
+        if (entry._chainNum) {
+            const existing = el.querySelector('.pz-chain-badge');
+            if (!existing) {
+                const badge = document.createElement('span');
+                badge.className = 'pz-chain-badge';
+                badge.textContent = entry._chainNum;
+                el.appendChild(badge);
+            }
         }
     },
 
@@ -1835,16 +2079,27 @@ const ZonaPractica = {
             else if (entry.rotation) img.style.transform = `rotate(${entry.rotation}deg)`;
 
             slot.appendChild(img);
+            // Re-añadir badge de cadena si corresponde
+            if (entry._chainNum) {
+                const badge = document.createElement('span');
+                badge.className = 'pz-chain-badge';
+                badge.textContent = entry._chainNum;
+                slot.appendChild(badge);
+            }
             el.appendChild(slot);
         });
     },
 
-    _addLog: function (msg, card) {
+    _addLog: function (msg, card, isManual) {
         const now  = new Date();
         const time = now.toLocaleTimeString('es-ES', { hour12:false });
         const imgUrl = card?.card_images?.[0]?.image_url_small || null;
-        this.logEntries.push({ msg, time, turn: this.turnNumber, imgUrl });
-        console.info(`[PZ] T${this.turnNumber} ${time} — ${msg}`);
+        this.logEntries.push({ msg, time, turn: this.turnNumber, imgUrl, isManual: !!isManual });
+        console.info(`[PZ] T${this.turnNumber} ${time} — ${isManual ? '[Jugador A] ' : ''}${msg}`);
+        // Actualizar Log en tiempo real si está abierto
+        const el = document.getElementById('pz-log-entries');
+        if (el) { el.innerHTML = this._renderLogEntries(); el.scrollTop = el.scrollHeight; }
+        this._updateFloatingBtns();
     },
 
     _renderLogEntries: function () {
@@ -1852,9 +2107,11 @@ const ZonaPractica = {
             return '<p class="pz-log-empty">Sin entradas aún.</p>';
         }
         return this.logEntries.map((e, i) => `
-            <div class="pz-log-entry ${e.msg.startsWith('---') ? 'pz-log-turn-sep' : ''}">
+            <div class="pz-log-entry ${e.msg.startsWith('---') ? 'pz-log-turn-sep' : ''}"
+                 id="pz-log-entry-${i}">
                 <span class="pz-log-entry-idx">${i + 1}</span>
                 <span class="pz-log-entry-meta">T${e.turn}&nbsp;${e.time}</span>
+                ${e.isManual ? '<span class="pz-log-player-tag">Jugador A:</span>' : ''}
                 ${e.imgUrl ? `<img src="${e.imgUrl}" class="pz-log-card-thumb"
                     onerror="this.style.display='none'" title="${e.msg}">` : ''}
                 <span class="pz-log-entry-msg">${e.msg}</span>

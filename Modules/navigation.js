@@ -127,6 +127,11 @@ const Navigation = {
             if (tabName === 'mideck' && window.Engines) {
                 Engines.init();
             }
+        // Limpiar botones flotantes de ZonaPractica al salir de simuladores
+        if (previousTab === 'simuladores' && tabName !== 'simuladores' && window.ZonaPractica) {
+            ZonaPractica._cleanupFloatBtns?.();
+        }
+
         SafeLogger.functionEnd('Navigation', 'showTab', { success: true, currentTab: tabName });
 
         // PASO 6: Hacer scroll al inicio del contenido (smooth)
@@ -134,8 +139,13 @@ const Navigation = {
             top: 0, 
             behavior: 'smooth' 
         });
-
+        // Después de: this._updateStatusWidget o justo antes del return true
+        if (typeof updateButtons === 'function') updateButtons();
+        
+        // Forzar actualización de scroll-buttons al cambiar pestaña
+        document.dispatchEvent(new Event('scroll'));
         return true;
+        
     },
 
     /**
