@@ -9,7 +9,7 @@ const Torneo = {
     data:        null,
     viewRound:   1,
     _pendingYDK: null,   // datos de .ydk esperando ser asignados a un participante
-    simTab: 'torneo',
+    simTab: 'mulligan', // tab activo en la sección de Simuladores
 
     // ─────────────────────────────────────────────
     // ESTRUCTURA VACÍA
@@ -74,10 +74,10 @@ const Torneo = {
         this.container.innerHTML = `
         <h2>Simuladores</h2>
         <div class="sim-main-tabs">
-            <button class="sim-tab-btn" data-simtab="mulligan"
-                    onclick="Torneo.showSimTab('mulligan')">🎲 Mulligan</button>
-            <button class="sim-tab-btn active" data-simtab="torneo"
-                    onclick="Torneo.showSimTab('torneo')">🏆 Torneo</button>
+            <button class="sim-tab-btn active" data-simtab="mulligan"
+        onclick="Torneo.showSimTab('mulligan')">🎲 Mulligan</button>
+        <button class="sim-tab-btn" data-simtab="torneo"
+                onclick="Torneo.showSimTab('torneo')">🏆 Torneo</button>
             <button class="sim-tab-btn" data-simtab="duelo"
                     onclick="Torneo.showSimTab('duelo')">⚔️ Duelo en Vivo</button>
             <button class="sim-tab-btn" data-simtab="practica"
@@ -132,6 +132,10 @@ const Torneo = {
                 <div id="torneo-tab-puntos"        class="torneo-tab-content" style="display:none;">${this.renderPuntos()}</div>
 
             </div>`;
+            // Asegurar que se muestra la sub-pestaña activa al inicializar
+        if (this.simTab !== 'torneo') {
+            this.showSimTab(this.simTab);
+        }
     },
 
     showMainTab: function (tab) {

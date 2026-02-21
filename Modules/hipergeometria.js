@@ -78,10 +78,10 @@ renderInto: function (container) {
     _buildHTML: function () {
         const back = this.CARD_BACK;
         return `
-<div class="hiper-header" onclick="Hipergeometria.toggleSection()">
+<div class="hiper-header">
     🎲 Probabilidad de Robo — Calculadora de Hipergeometria <span id="hiper-arrow">▼</span>
 </div>
-<div id="hiper-sec" style="display:none">
+<div id="hiper-sec">
 
     <p class="hiper-intro">
         Basado en la <strong>distribución hipergeométrica</strong>, este calculador determina la probabilidad
