@@ -29,6 +29,9 @@ const ZonaPractica = {
     gameStates:          [],
     _chainCounter: 0,
     _chainedCards: [],   // [{zone, slotIndex, zoneType}]
+    // Junto a: _chainCounter: 0,
+    _tokenCounter: 0,
+    
 
     field: {
         'A':null,'B':null,'C':null,
@@ -240,8 +243,13 @@ const ZonaPractica = {
                 <button class="pz-action-btn" id="pz-btn-hide"
                         onclick="ZonaPractica.toggleHideCards()">🙈 Ocultar Cartas</button>
                 <button class="pz-action-btn" onclick="ZonaPractica.openLog()">📋 Log</button>
+                <button class="pz-action-btn" onclick="ZonaPractica.flipCoin()">🪙 Moneda</button>
+                <button class="pz-action-btn" onclick="ZonaPractica.rollDice()">🎲 Dados</button>
+                <button class="pz-action-btn" onclick="ZonaPractica.createToken()">🔘 Token</button>
             </div>
-        </div>`;
+            <button class="pz-enfrentar-btn" onclick="/* TODO: Funcionalidad futura — agregar un segundo deck en un panel paralelo al actual para simular un duelo completo cara a cara */">
+                ⚔️ Enfrentar Decks
+            </button>`;
     },
 
     // ═══════════════════════════════════════════════════════
@@ -707,6 +715,7 @@ const ZonaPractica = {
     this.gameStates    = [];
     this._chainCounter = 0;
     this._chainedCards = [];
+    this._tokenCounter = 0;
     // Cerrar paneles abiertos
     document.getElementById('pz-log-panel')?.remove();
     document.getElementById('pz-nav-panel')?.remove();
@@ -895,6 +904,83 @@ const ZonaPractica = {
         this._renderAllZones();
         this._showToast(`⛓ Cadena resuelta (${count} efectos)`, 2000);
     },
+
+        // ═══════════════════════════════════════════════════════
+        // MONEDA
+        // ═══════════════════════════════════════════════════════
+        flipCoin: function () {
+            const result = Math.random() < 0.5 ? 'Cara' : 'Cruz';
+            this._addLog(`🪙 Lanza moneda: ${result}`);
+            this._showToast(`🪙 ${result}`, 1800);
+        },
+
+        // ═══════════════════════════════════════════════════════
+        // DADOS
+        // ═══════════════════════════════════════════════════════
+        rollDice: function () {
+            document.getElementById('pz-dice-overlay')?.remove();
+            const overlay = document.createElement('div');
+            overlay.id = 'pz-dice-overlay';
+            overlay.className = 'pz-modal-overlay';
+            overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+            const faces = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+            let rolling = true;
+            let intervalId = null;
+
+            overlay.innerHTML = `
+                <div class="pz-modal-box pz-dice-box">
+                    <button class="pz-modal-close" onclick="document.getElementById('pz-dice-overlay').remove()">✕</button>
+                    <div class="pz-modal-title">🎲 Tiro de Dado</div>
+                    <div id="pz-dice-face" class="pz-dice-face">⚀</div>
+                    <div id="pz-dice-result" class="pz-dice-result"></div>
+                    <button class="pz-dice-roll-btn" id="pz-dice-roll-btn"
+                            onclick="ZonaPractica._diceRoll()">Lanzar</button>
+                </div>`;
+            document.body.appendChild(overlay);
+        },
+
+        _diceRoll: function () {
+            const faces = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+            const faceEl   = document.getElementById('pz-dice-face');
+            const resultEl = document.getElementById('pz-dice-result');
+            const btn      = document.getElementById('pz-dice-roll-btn');
+            if (!faceEl) return;
+            btn.disabled = true;
+            let count = 0;
+            const total = 14 + Math.floor(Math.random() * 8);
+            const iv = setInterval(() => {
+                faceEl.textContent = faces[Math.floor(Math.random() * 6)];
+                count++;
+                if (count >= total) {
+                    clearInterval(iv);
+                    const val = Math.floor(Math.random() * 6) + 1;
+                    faceEl.textContent = faces[val - 1];
+                    if (resultEl) resultEl.textContent = `Resultado: ${val}`;
+                    btn.disabled = false;
+                    this._addLog(`🎲 Tiro de dado: ${val}`);
+                }
+            }, 80);
+        },
+
+        // ═══════════════════════════════════════════════════════
+        // TOKEN
+        // ═══════════════════════════════════════════════════════
+        createToken: function () {
+            this._tokenCounter++;
+            const tokenCard = {
+                id:   `token_${this._tokenCounter}`,
+                name: `Token ${this._tokenCounter}`,
+                type: 'Token',
+                desc: 'Token',
+                card_images: [{ image_url_small: this.CARD_BACK, image_url: this.CARD_BACK }],
+                _isToken: true
+            };
+            this.other.push({ card: tokenCard, faceUp: true, rotation: 0, _isToken: true });
+            this._renderZone('other');
+            // No se registra en Log por diseño
+            this._showToast(`🔘 Token ${this._tokenCounter} creado`, 1200);
+        },
 
     // ═══════════════════════════════════════════════════════
     // DESCARGAR LOG
@@ -2081,6 +2167,8 @@ dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
             else if (entry.rotation) img.style.transform = `rotate(${entry.rotation}deg)`;
 
             slot.appendChild(img);
+            if (entry._isToken) img.style.filter = 'saturate(0) opacity(0.7)';
+
             // Re-añadir badge de cadena si corresponde
             if (entry._chainNum) {
                 const badge = document.createElement('span');

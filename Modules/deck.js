@@ -447,7 +447,23 @@ const Deck = {
         this.cards = {};
         this.render();
     },
-
+tryDeck: function () {
+    if (!window.Navigation || !window.Torneo || !window.ZonaPractica) return;
+    // Navegar a Simuladores
+    Navigation.showTab('simuladores');
+    // Esperar a que el DOM de Simuladores esté listo, luego ir a Zona de Práctica
+    setTimeout(() => {
+        Torneo.showSimTab('practica');
+        // Cargar este deck en ZonaPractica
+        setTimeout(() => {
+            const dk = { name: this.name, cards: this.cards };
+            ZonaPractica._loadDeck('_direct', 0);
+            // _loadDeck espera un cache; lo inyectamos directamente
+            ZonaPractica._dsCache._direct = [dk];
+            ZonaPractica._loadDeck('_direct', 0);
+        }, 80);
+    }, 60);
+},
     exportYDK: function () {
         let main = '', extra = '', side = '';
 
@@ -1295,10 +1311,11 @@ onDeckLoaded: function () {
     </h2>
 
     <div class="deck-zone-counts">
-        <span class="dzc-chip dzc-main">🃏 Main <strong>${mainC}</strong></span>
-        <span class="dzc-chip dzc-extra">✨ Extra <strong>${extraC}</strong></span>
-        <span class="dzc-chip dzc-side">🔄 Side <strong>${sideC}</strong></span>
-    </div>
+    <span class="dzc-chip dzc-main">🃏 Main <strong>${mainC}</strong></span>
+    <span class="dzc-chip dzc-extra">✨ Extra <strong>${extraC}</strong></span>
+    <span class="dzc-chip dzc-side">🔄 Side <strong>${sideC}</strong></span>
+    <button class="dzc-probar-btn" onclick="Deck.tryDeck()">⚔️ Probar Deck</button>
+</div>
 
     ${this.renderDeckStatsBlock()}
 

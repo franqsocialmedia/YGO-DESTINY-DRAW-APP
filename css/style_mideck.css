@@ -2037,6 +2037,21 @@
 }
 .dv-group-label:first-child { margin-top: 0; }
 
+.dzc-probar-btn {
+    padding: 5px 14px;
+    background: rgba(180, 30, 30, .2);
+    border: 1px solid rgba(214, 48, 49, .5);
+    color: #ff8080;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: .78rem;
+    font-weight: 700;
+    transition: background .14s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.dzc-probar-btn:hover { background: rgba(214, 48, 49, .38); }
+
 /* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 700px) {
     .engines-sidebar { flex: none; width: 100%; max-width: none; position: static; }
