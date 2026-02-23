@@ -16,6 +16,7 @@ const Experimentacion = {
     _instances:    [],   // [{ iid, card, x, y }]
     _dragging:     null, // { iid, ox, oy }
     _dsCache:      { saved: [], engines: [], meta: [] },
+    _listGroups: [],
 
     // ── Punto de entrada ────────────────────────────────────────
     renderInto: function (container) {
@@ -189,20 +190,15 @@ const Experimentacion = {
         if (window.ZonaPractica) ZonaPractica._openMiniCV(inst.card);
     },
 
-    _viewCardFromList: function (cardId) {
-        const inst = this._instances.find(i => i.card.id === cardId);
-        if (!inst) return;
-        if (window.ZonaPractica) ZonaPractica._openMiniCV(inst.card);
-    },
+    _viewCardFromList: function () { /* obsoleto — mantenido por compatibilidad */ },
 
     // ── Lista lateral ────────────────────────────────────────────
     _refreshList: function () {
         const el = document.getElementById('exp-card-list');
         if (!el) return;
-        // Agrupar instancias por card.id
         const groups = {};
         this._instances.forEach(inst => {
-            const key = inst.card.id || inst.card.name;
+            const key = String(inst.card.id || inst.card.name);
             if (!groups[key]) groups[key] = { card: inst.card, count: 0 };
             groups[key].count++;
         });
@@ -211,22 +207,49 @@ const Experimentacion = {
             el.innerHTML = '<div class="exp-list-empty">Sin cartas añadidas.</div>';
             return;
         }
-        el.innerHTML = entries.map(g => {
+        // Limpiar y reconstruir con event listeners directos (sin inline onclick)
+        el.innerHTML = '';
+        entries.forEach(g => {
             const img  = g.card.card_images?.[0]?.image_url_small || this.CARD_BACK;
-            const cid  = g.card.id || g.card.name;
-            return `
-<div class="exp-list-item">
-  <img src="${img}" class="exp-list-thumb"
-       onerror="this.src='${this.CARD_BACK}'"
-       onclick="Experimentacion._viewCardFromList('${cid}')"
-       title="${g.card.name}">
-  <span class="exp-list-name"
-        onclick="Experimentacion._viewCardFromList('${cid}')">${g.card.name}</span>
-  <span class="exp-list-count">${g.count}</span>
-  <button class="exp-list-add" title="Añadir copia"
-          onclick="Experimentacion._addCopyFromList('${cid}')">＋</button>
-</div>`;
-        }).join('');
+            const row  = document.createElement('div');
+            row.className = 'exp-list-item';
+
+            const thumb = document.createElement('img');
+            thumb.className = 'exp-list-thumb';
+            thumb.src   = img;
+            thumb.title = g.card.name;
+            thumb.onerror = () => { thumb.src = this.CARD_BACK; };
+            thumb.addEventListener('click', () => { if (window.ZonaPractica) ZonaPractica._openMiniCV(g.card); });
+
+            const name = document.createElement('span');
+            name.className   = 'exp-list-name';
+            name.textContent = g.card.name;
+            name.addEventListener('click', () => { if (window.ZonaPractica) ZonaPractica._openMiniCV(g.card); });
+
+            const count = document.createElement('span');
+            count.className   = 'exp-list-count';
+            count.textContent = g.count;
+
+            const addBtn = document.createElement('button');
+            addBtn.className   = 'exp-list-add';
+            addBtn.title       = 'Añadir copia';
+            addBtn.textContent = '＋';
+            addBtn.addEventListener('click', () => { this._addCard(g.card); });
+
+            row.appendChild(thumb);
+            row.appendChild(name);
+            row.appendChild(count);
+            row.appendChild(addBtn);
+            el.appendChild(row);
+        });
+    },
+
+    _addCopyFromList: function () { /* obsoleto — mantenido por compatibilidad */ },
+
+    _addCopyFromList: function (idx) {
+        const g = this._listGroups?.[idx];
+        if (!g) return;
+        this._addCard(g.card);
     },
 
     _addCopyFromList: function (cardId) {
