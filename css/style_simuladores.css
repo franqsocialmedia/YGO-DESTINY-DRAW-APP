@@ -2449,6 +2449,13 @@
 }
 .pz-modal-close:hover { background:#d63031; }
 
+/* X dentro del header del Log — en flujo flex, no absoluto */
+.pz-log-header-btns .pz-modal-close {
+    position: relative;
+    top: auto; right: auto;
+    width: 26px; height: 26px;
+    flex-shrink: 0;
+}
 /* ════════════════════════════════════════════════════
    BUSCAR CARTA
    ════════════════════════════════════════════════════ */
@@ -2608,6 +2615,10 @@
 .pz-dvc-actions     { display:flex; gap:3px; flex-wrap:wrap; }
 .pz-dvc-act         { padding:3px 7px; border-radius:5px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.05); cursor:pointer; font-size:.68rem; font-weight:700; transition:all .11s; white-space:nowrap; line-height:1.2; }
 .pz-dvc-act:hover   { filter:brightness(1.35); }
+.pz-dvc-put  { background: rgba(0, 184, 148, .25); border-color: rgba(0,184,148,.5); color: #00b894; }
+.pz-dvc-set  { background: rgba(108, 92, 231, .25); border-color: rgba(108,92,231,.5);  color: #a29bfe; }
+.pz-dvc-put:hover { background: rgba(0,184,148,.45); }
+.pz-dvc-set:hover { background: rgba(108,92,231,.45); }
 .pz-dvc-ver  { border-color:rgba(0,120,200,.4);  color:#80c8ff; }
 .pz-dvc-hand { border-color:rgba(26,122,46,.4);  color:#80e898; }
 .pz-dvc-gy   { border-color:rgba(120,100,10,.4); color:#e8d080; }
@@ -2708,6 +2719,24 @@
 .pz-log-card-thumb { width:22px; height:32px; object-fit:cover; border-radius:2px; border:1px solid rgba(255,255,255,.12); flex-shrink:0; }
 .pz-log-entry-msg  { font-size:.78rem; color:rgba(241,241,241,.8); flex:1; min-width:0; word-break:break-word; line-height:1.4; }
 .pz-log-turn-sep .pz-log-entry-msg { color:rgba(255,215,0,.8); font-weight:700; font-size:.72rem; }
+
+.pz-log-cardname { color: #ffffff; font-weight: 600; }
+.pz-log-action   { color: #ffd700; }
+
+.pz-log-header-btns .pz-modal-close {
+    position: relative;
+    top: auto; right: auto;
+    width: 26px; height: 26px;
+    flex-shrink: 0;
+}
+.pz-log-cardname-link { cursor: pointer; text-decoration: underline dotted rgba(255,255,255,.4); }
+.pz-log-cardname-link:hover { text-decoration: underline; }
+.pz-nav-header-btns .pz-modal-close {
+    position: relative;
+    top: auto; right: auto;
+    width: 26px; height: 26px;
+    flex-shrink: 0;
+}
 
 /* ════════════════════════════════════════════════════
    FASE 5 — HISTORIAL DE ESTADOS · WIDGET
@@ -3267,6 +3296,130 @@
 .pz-log-chain-resolve .pz-log-entry-msg { color: #87CEEB; font-weight: 700; }
 .pz-log-activate      .pz-log-entry-msg { color: #80e898; }
 
+/* ═══════════════════════════════════════════
+   XYZ OVERLAY — MATERIALES ACOPLADOS
+   ═══════════════════════════════════════════ */
+.pz-zone .pz-xyz-stack {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    pointer-events: none;
+}
+.pz-xyz-mat-img {
+    width: 86%;
+    border-radius: 3px;
+    border: 1px solid rgba(255,215,0,.25);
+    margin-top: -68%;
+    display: block;
+    pointer-events: none;
+}
+.pz-xyz-mat-img:first-child { margin-top: 0; }
+.pz-xyz-count-badge {
+    position: absolute;
+    bottom: 2px;
+    right: 3px;
+    background: rgba(0,0,0,.75);
+    color: #ffd700;
+    font-size: .62rem;
+    font-weight: 700;
+    border-radius: 3px;
+    padding: 1px 4px;
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* Panel de materiales en mini-CV */
+.pz-xyz-materials-panel {
+    margin-top: 10px;
+    border-top: 1px solid rgba(255,215,0,.15);
+    padding-top: 8px;
+}
+.pz-xyz-materials-title {
+    font-size: .75rem;
+    font-weight: 700;
+    color: rgba(255,215,0,.8);
+    margin-bottom: 6px;
+}
+.pz-xyz-mat-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
+}
+.pz-xyz-mat-thumb {
+    width: 34px;
+    height: 49px;
+    object-fit: cover;
+    border-radius: 3px;
+    border: 1px solid rgba(255,255,255,.15);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.pz-xyz-mat-thumb:hover { border-color: #ffd700; }
+.pz-xyz-mat-name {
+    flex: 1;
+    font-size: .73rem;
+    color: rgba(241,241,241,.85);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.pz-xyz-detach-btn {
+    font-size: .68rem;
+    padding: 2px 7px;
+    background: rgba(214,48,49,.2);
+    border: 1px solid rgba(214,48,49,.4);
+    color: #ff8080;
+    border-radius: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.pz-xyz-detach-btn:hover { background: rgba(214,48,49,.4); }
+
+/* Mini-lista de selección para desacoplar desde Acción */
+.pz-detach-submenu {
+    position: absolute;
+    z-index: 120;
+    background: #001f3f;
+    border: 1px solid rgba(255,215,0,.3);
+    border-radius: 7px;
+    padding: 6px;
+    min-width: 160px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.6);
+}
+.pz-detach-submenu-title {
+    font-size: .68rem;
+    color: rgba(255,215,0,.6);
+    margin-bottom: 5px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.pz-detach-submenu-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 4px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.pz-detach-submenu-item:hover { background: rgba(255,255,255,.08); }
+.pz-detach-sub-thumb {
+    width: 24px;
+    height: 34px;
+    object-fit: cover;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.pz-detach-sub-name {
+    font-size: .71rem;
+    color: rgba(241,241,241,.85);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
 /* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 500px) {

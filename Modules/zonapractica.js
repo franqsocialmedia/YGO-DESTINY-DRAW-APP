@@ -32,6 +32,8 @@ const ZonaPractica = {
     // Junto a: _chainCounter: 0,
     _tokenCounter: 0,
     lp: 8000,
+    _activeDeckName: null,  // deck guardado activo (null = ninguno / independiente)
+    _activePlacement: null, // { sourceZone, idx, faceUp }
     
 
     field: {
@@ -71,7 +73,8 @@ const ZonaPractica = {
         'Flip':'Flip Effect Monster','Gemini':'Gemini Monster',
         'Union':'Union Effect Monster','Spirit':'Spirit Monster'
     },
-
+// Zonas donde se permite el acoplamiento XYZ
+OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
     // ═══════════════════════════════════════════════════════
     // ENTRY POINT
     // ═══════════════════════════════════════════════════════
@@ -184,19 +187,19 @@ const ZonaPractica = {
                     <!-- Panel lateral: GY + Banish -->
                     <div class="pz-field-side">
                         <div class="pz-field-side-zone">
-                            <div class="pz-multi-zone pz-gy-zone pz-side-zone" id="pz-zone-gy"
-                                 onclick="ZonaPractica._onMultiZoneClick(event,'gy')"></div>
-                            <div class="pz-field-side-btns">
-                                <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('gy')">👁</button>
-                                <span class="pz-row-label">GY</span>
-                            </div>
-                        </div>
-                        <div class="pz-field-side-zone">
                             <div class="pz-multi-zone pz-banish-zone pz-side-zone" id="pz-zone-banish"
                                  onclick="ZonaPractica._onMultiZoneClick(event,'banish')"></div>
                             <div class="pz-field-side-btns">
                                 <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('banish')">👁</button>
                                 <span class="pz-row-label">Banish</span>
+                            </div>
+                        </div>
+                        <div class="pz-field-side-zone">
+                            <div class="pz-multi-zone pz-gy-zone pz-side-zone" id="pz-zone-gy"
+                                 onclick="ZonaPractica._onMultiZoneClick(event,'gy')"></div>
+                            <div class="pz-field-side-btns">
+                                <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('gy')">👁</button>
+                                <span class="pz-row-label">GY</span>
                             </div>
                         </div>
                     </div>
@@ -266,10 +269,14 @@ const ZonaPractica = {
     // ═══════════════════════════════════════════════════════
     // FASES
     // ═══════════════════════════════════════════════════════
-    setPhase: function (p) {
+   setPhase: function (p) {
         if (this.phase === 'end' && p === 'draw') {
             this.turnNumber++;
             this._addLog(`--- Turno: ${this.turnNumber} ---`);
+        } else {
+            const prev = this._phaseLabel(this.phase);
+            const next = this._phaseLabel(p);
+            this._addLog(`${prev} → <span style="color:#e17055;font-weight:700">${next}</span>`);
         }
         this.phase = p;
         document.querySelectorAll('.pz-phase-btn').forEach(btn => {
@@ -668,29 +675,53 @@ const ZonaPractica = {
         };
 
         const overlay = document.createElement('div');
-        overlay.id = 'pz-deck-overlay';
-        overlay.className = 'pz-modal-overlay';
-        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
-        overlay.innerHTML = `
-            <div class="pz-modal-box pz-ds-box">
-                <div class="pz-modal-title">🃏 Seleccionar Deck</div>
-                <button class="pz-modal-close"
-                        onclick="document.getElementById('pz-deck-overlay').remove()">✕</button>
-                <div class="pz-ds-body">
-                    ${saved.length||engines.length||meta.length
-                        ? buildSec('📁 Decks Guardados',saved,'saved') + buildSec('⚙️ Engines',engines,'engines') + buildSec('🌐 Meta',meta,'meta')
-                        : '<p class="pz-search-hint">No hay decks disponibles.</p>'}
-                </div>
-            </div>`;
+overlay.id = 'pz-deck-overlay';
+overlay.className = 'pz-modal-overlay';
+overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+overlay.innerHTML = `
+    <div class="pz-modal-box pz-ds-box">
+        <div class="pz-modal-title">🃏 Seleccionar Deck</div>
+        <button class="pz-modal-close"
+                onclick="document.getElementById('pz-deck-overlay').remove()">✕</button>
+        <div class="pz-ds-body">
+            <div class="pz-ds-section">
+                <button class="pz-ctrl-btn pz-ctrl-deck" style="width:100%;margin-bottom:4px"
+                        onclick="ZonaPractica._importYDK()">📥 Importar deck (.ydk)</button>
+            </div>
+            ${saved.length||engines.length||meta.length
+                ? buildSec('📁 Decks Guardados',saved,'saved') +
+                  buildSec('⚙️ Engines',engines,'engines') +
+                  buildSec('🌐 Meta Decks',meta,'meta')
+                : '<p class="pz-search-hint">No hay decks disponibles.</p>'}
+        </div>
+    </div>`;
         document.body.appendChild(overlay);
     },
 
     _loadDeck: function (type, indexStr) {
-        const src = this._dsCache[type];
-        const dk  = src?.[parseInt(indexStr)];
-        if (!dk) return;
-        const cards = dk.cards || {};
-        this._resetState();
+    const src = this._dsCache[type];
+    const dk  = src?.[parseInt(indexStr)];
+    if (!dk) return;
+    const cards = dk.cards || {};
+    // Limpiar sesión anterior
+    this._resetState();
+    this.logEntries    = [];
+    this.gameStates    = [];
+    this._chainCounter = 0;
+    this._chainedCards = [];
+    this._tokenCounter = 0;
+    this.lp = 8000;
+    const lpEl = document.getElementById('pz-lp-val');
+    if (lpEl) lpEl.textContent = '8,000';
+    document.getElementById('pz-chain-resolve-btn')?.remove();
+    document.getElementById('pz-log-panel')?.remove();
+    document.getElementById('pz-nav-panel')?.remove();
+    const swBtn = document.getElementById('pz-sw-toggle-btn');
+    if (swBtn) swBtn.style.display = 'none';
+    if (this.statusWidgetVisible) {
+        this.statusWidgetVisible = false;
+        document.getElementById('pz-status-widget')?.remove();
+    }
         const main=[], extra=[], side=[];
         Object.values(cards).forEach(item => {
             for (let i=0; i<(item.qty||1); i++) {
@@ -707,6 +738,19 @@ const ZonaPractica = {
         }
         this.main=main; this.extra=extra; this.other=side;
         this._addLog(`Deck: ${dk.name||'(sin nombre)'} — Main:${main.length} Extra:${extra.length} Side→Other:${side.length}`);
+        // Rastrear deck guardado activo y cargar sus estados previos
+        if (type === 'saved' && dk.name) {
+            this._activeDeckName = dk.name;
+            const saved = this._loadStatesFromDeck(dk.name);
+            if (saved && saved.length) {
+                this.gameStates = saved;
+                const swBtn = document.getElementById('pz-sw-toggle-btn');
+                if (swBtn) swBtn.style.display = '';
+                this._addLog(`📌 ${saved.length} estado(s) restaurado(s) del deck "${dk.name}".`);
+            }
+        } else {
+            this._activeDeckName = null;
+        }
         document.getElementById('pz-deck-overlay')?.remove();
         this._renderAllZones();
        
@@ -744,18 +788,20 @@ const ZonaPractica = {
     document.querySelectorAll('.pz-phase-btn').forEach(b => b.classList.toggle('pz-phase-active', b.dataset.phase==='draw'));
     this._renderAllZones();
     this._addLog('Tablero limpiado.');
-},
-
-    _resetState: function () {
-        Object.keys(this.field).forEach(k => this.field[k]=null);
-        this.hand=[]; this.main=[]; this.extra=[]; this.gy=[]; this.banish=[]; this.other=[];
+    this._saveStatesToDeck(); // guarda historial vacío en el deck (si venía de uno guardado)
     },
+
+   _resetState: function () {
+    Object.keys(this.field).forEach(k => this.field[k]=null);
+    this.hand=[]; this.main=[]; this.extra=[]; this.gy=[]; this.banish=[]; this.other=[];
+},
 
     // ═══════════════════════════════════════════════════════
     // INTERACCIÓN — ZONAS MONO (CAMPO PÚBLICO)
     // ═══════════════════════════════════════════════════════
     onZoneClick: function (zone) {
-        if (this._activeMove) { this._completeMoveToField(zone); return; }
+    if (this._activePlacement) { this._completePlacement(zone); return; }
+    if (this._activeMove) { this._completeMoveToField(zone); return; }
         // Modo cambiar posición
         if (this.changePositionMode) {
             const entry = this.field[zone];
@@ -819,7 +865,38 @@ const ZonaPractica = {
         } else {
             card = this._getMultiArray(zone)[parseInt(slotIndex)]?.card;
         }
-        if (card) this._openMiniCV(card);
+        if (!card) return;
+        this._openMiniCV(card);
+        // Panel de materiales XYZ (solo zonas de campo con materiales)
+        if ((slotIndex === null || slotIndex === 'null' || slotIndex === undefined) && this.OVERLAY_ZONES.includes(String(zone))) {
+            const mats = this.field[zone]?._materials;
+            if (mats?.length) {
+                setTimeout(() => this._appendMaterialsPanel(zone, mats), 60);
+            }
+        }
+    },
+
+    _appendMaterialsPanel: function (zone, mats) {
+        const box = document.querySelector('#pz-minicv-overlay .pz-mcv-box');
+        if (!box || document.getElementById('pz-xyz-mats-panel')) return;
+        const panel = document.createElement('div');
+        panel.id        = 'pz-xyz-mats-panel';
+        panel.className = 'pz-xyz-materials-panel';
+        panel.innerHTML = `<div class="pz-xyz-materials-title">⛓ Materiales Acoplados (${mats.length}):</div>` +
+            mats.map((m, i) => {
+                const img  = m.card?.card_images?.[0]?.image_url_small || this.CARD_BACK;
+                const name = m.card?.name || '?';
+                return `<div class="pz-xyz-mat-row">
+                    <img src="${img}" class="pz-xyz-mat-thumb"
+                         onerror="this.src='${this.CARD_BACK}'"
+                         onclick="ZonaPractica._openMiniCV(ZonaPractica.field['${zone}']._materials[${i}]?.card)"
+                         title="${name}">
+                    <span class="pz-xyz-mat-name">${name}</span>
+                    <button class="pz-xyz-detach-btn"
+                            onclick="ZonaPractica._detachMaterial('${zone}',${i})">Desacoplar</button>
+                </div>`;
+            }).join('');
+        box.appendChild(panel);
     },
 
     _zmShowAction: function (zone, slotIndex, zoneType, e) {
@@ -833,11 +910,14 @@ const ZonaPractica = {
             const slots = containerEl.querySelectorAll('.pz-card-slot');
             if (slots[slotIndex]) anchor = slots[slotIndex];
         }
+        const hasMats = zoneType === 'field' && this.OVERLAY_ZONES.includes(String(zone)) && (this.field[zone]?._materials?.length > 0);
         const sub = document.createElement('div');
         sub.className = 'pz-action-submenu';
         sub.innerHTML = `
             <button class="pz-zmenu-btn pz-zmenu-activate"
                     onclick="ZonaPractica._zmActivate('${zone}',${slotIndex},'${zoneType}',event)">Activar</button>
+            ${hasMats ? `<button class="pz-zmenu-btn"
+                    onclick="ZonaPractica._showDetachMenu('${zone}',event)">⛓ Desacoplar</button>` : ''}
             <button class="pz-zmenu-btn pz-zmenu-move"
                     onclick="ZonaPractica._zmStartMove('${zone}',${slotIndex},'${zoneType}',event)">Mover</button>`;
         anchor.appendChild(sub);
@@ -993,6 +1073,7 @@ const ZonaPractica = {
             this.other.push({ card: tokenCard, faceUp: true, rotation: 0, _isToken: true });
             this._renderZone('other');
             // No se registra en Log por diseño
+            this._addLog(`Invocación de Token — Token ${this._tokenCounter}`);
             this._showToast(`🔘 Token ${this._tokenCounter} creado`, 1200);
         },
 
@@ -1075,7 +1156,121 @@ const ZonaPractica = {
         document.getElementById('pz-board-outer')?.classList.remove('pz-move-mode');
         document.getElementById('pz-move-hint')?.remove();
     },
+// ─── MODO PUT/SET ─────────────────────────────────────────────────────────────
+_startPlacement: function (sourceZone, idx, faceUp) {
+    this._activePlacement = { sourceZone, idx, faceUp };
+    document.getElementById('pz-dv-overlay')?.remove();
+    document.getElementById('pz-board-outer')?.classList.add('pz-move-mode');
+    const card   = this._getMultiArray(sourceZone)[idx]?.card;
+    const action = faceUp ? 'boca arriba (Put)' : 'boca abajo (Set)';
+    const hint   = document.getElementById('pz-move-hint') || document.createElement('div');
+    hint.id        = 'pz-move-hint';
+    hint.className = 'pz-move-hint';
+    hint.innerHTML = `Colocando: <strong>${card?.name || 'carta'}</strong> — ${action} — Elige zona del campo &nbsp;
+        <button onclick="ZonaPractica._cancelPlacement()">✕ Cancelar</button>`;
+    const wrap = this._container?.querySelector('.pz-wrap');
+    if (!document.getElementById('pz-move-hint')) {
+        if (wrap) wrap.insertBefore(hint, wrap.querySelector('.pz-board-outer'));
+        else document.body.appendChild(hint);
+    }
+},
 
+_completePlacement: function (targetZone) {
+    const pl = this._activePlacement;
+    if (!pl) return;
+    const arr   = this._getMultiArray(pl.sourceZone);
+        const entry = arr[pl.idx];
+        if (!entry) { this._cancelPlacement(); return; }
+        if (this.field[targetZone]) {
+            if (this.OVERLAY_ZONES.includes(String(targetZone))) {
+                arr.splice(pl.idx, 1);
+                this._attachMaterial(targetZone, entry, pl.sourceZone);
+                this._cancelPlacement();
+                this._renderAllZones();
+            } else {
+                this._showToast('⚠️ Zona ocupada.', 1400);
+                this._cancelPlacement();
+            }
+            return;
+        }
+        arr.splice(pl.idx, 1);
+        const isSTZone = ['6','7','8','9','10','C'].includes(String(targetZone));
+        const setRotation = pl.faceUp ? 0 : (isSTZone ? 0 : 90);
+        this.field[targetZone] = { ...entry, faceUp: pl.faceUp, rotation: setRotation, _materials: entry._materials || [] };
+    if (pl.sourceZone !== 'other') {
+        const action = pl.faceUp ? 'Put' : 'Set';
+        this._addLog(`${entry.card?.name || '?'} [${this._zoneName(pl.sourceZone)} → Zona ${targetZone}] — ${action}`, entry.card);
+    }
+    this._cancelPlacement();
+    this._renderAllZones();
+},
+
+_cancelPlacement: function () {
+    this._activePlacement = null;
+    document.getElementById('pz-board-outer')?.classList.remove('pz-move-mode');
+    document.getElementById('pz-move-hint')?.remove();
+},
+
+// ─── XYZ OVERLAY ─────────────────────────────────────────────────────────────
+_attachMaterial: function (zone, entry, sourceZone) {
+    const host = this.field[zone];
+    if (!host) return;
+    if (!host._materials) host._materials = [];
+    const matEntry = { ...entry, faceUp: true, rotation: 0 };
+    host._materials.push(matEntry);
+    const hostName = host.card?.name  || '?';
+    const matName  = entry.card?.name || '?';
+    if (sourceZone !== 'other') {
+        this._addLog(`${matName} se acopla a ${hostName}`, entry.card);
+    }
+},
+_detachMaterial: function (zone, matIdx) {
+    const host = this.field[zone];
+    if (!host?._materials?.length) return;
+    const [mat] = host._materials.splice(matIdx, 1);
+    if (!mat) return;
+    this.gy.push({ ...mat, faceUp: true, rotation: 0 });
+    this._addLog(`${mat.card?.name || '?'} desacoplada y enviada al GY`, mat.card);
+    // Si ya no quedan materiales, limpiar el array explícitamente
+    if (!host._materials.length) host._materials = [];
+    this._renderAllZones();
+    document.getElementById('pz-minicv-overlay')?.remove();
+},
+// Desacopla todos los materiales de una zona y los manda al GY
+_detachAllMaterials: function (zone, entryOverride) {
+    const entry = entryOverride || this.field[zone];
+    if (!entry?._materials?.length) return;
+    [...entry._materials].forEach(m => {
+        this.gy.push({ ...m, faceUp: true, rotation: 0 });
+        this._addLog(`${m.card?.name || '?'} desacoplada y enviada al GY`, m.card);
+    });
+    entry._materials = [];
+},
+_showDetachMenu: function (zone, e) {
+    e?.stopPropagation();
+    this._closeZoneMenus();
+    const mats = this.field[zone]?._materials;
+    if (!mats?.length) return;
+    const el  = document.getElementById(`pz-zone-${zone}`);
+    if (!el) return;
+    const menu = document.createElement('div');
+    menu.className = 'pz-detach-submenu';
+    menu.innerHTML = `<div class="pz-detach-submenu-title">Selecciona material:</div>` +
+        mats.map((m, i) => {
+            const img  = m.card?.card_images?.[0]?.image_url_small || this.CARD_BACK;
+            const name = m.card?.name || '?';
+            return `<div class="pz-detach-submenu-item"
+                         onclick="ZonaPractica._detachMaterial('${zone}',${i})">
+                <img src="${img}" class="pz-detach-sub-thumb" onerror="this.src='${this.CARD_BACK}'">
+                <span class="pz-detach-sub-name">${name}</span>
+            </div>`;
+        }).join('');
+    el.appendChild(menu);
+    const close = (ev) => {
+        if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('click', close, true); }
+    };
+    setTimeout(() => document.addEventListener('click', close, true), 50);
+},
     _completeMoveToField: function (targetZone) {
         const mv = this._activeMove;
         if (!mv) return;
@@ -1083,17 +1278,40 @@ const ZonaPractica = {
             ? this.field[mv.sourceZone]
             : this._getMultiArray(mv.sourceZone)[mv.sourceSlot];
         if (!entry) { this._cancelMoveMode(); return; }
-        if (this.field[targetZone]) { this._cancelMoveMode(); return; } // ocupada
+        // Zona ocupada: si es zona overlay y tiene carta → acoplar como material XYZ
+        if (this.field[targetZone]) {
+            if (this.OVERLAY_ZONES.includes(String(targetZone))) {
+                this._removeFromSource(mv);
+                this._attachMaterial(targetZone, entry, mv.sourceZone);
+                this._cancelMoveMode();
+                this._renderAllZones();
+            } else {
+                this._cancelMoveMode();
+            }
+            return;
+        }
         this._removeFromSource(mv);
-        this.field[targetZone] = { ...entry, faceUp: true };
-        this._addLog(`${entry.card.name} → Zona ${targetZone}`, entry.card);
+        const isTargetOverlay = this.OVERLAY_ZONES.includes(String(targetZone));
+        // Si la carta fuente tenía materiales y va a zona NO acoplable → desacoplar al GY
+        if (entry._materials?.length && !isTargetOverlay) {
+            this._detachAllMaterials(null, entry);
+        }
+        // Llevar los materiales restantes (si la zona destino es overlay)
+        this.field[targetZone] = { ...entry, faceUp: true, _materials: entry._materials || [] };
+        if (!entry._isToken && mv.sourceZone !== 'other') {
+            this._addLog(`${entry.card.name} [${this._zoneName(mv.sourceZone)} → Zona ${targetZone}]`, entry.card);
+        } else if (entry._isToken) {
+            const tNum = entry.card?.name?.replace('Token ','') || '';
+            this._addLog(`Token ${tNum} [Other → Zona ${targetZone}]`);
+        }
         this._cancelMoveMode();
         this._renderAllZones();
     },
 
     _onMultiZoneClick: function (e, zone) {
-        const slot = e.target.closest('.pz-card-slot');
-        if (this._activeMove) {
+    const slot = e.target.closest('.pz-card-slot');
+    if (this._activePlacement) { this._cancelPlacement(); return; }
+    if (this._activeMove) {
             const idx = slot ? Array.from(slot.parentElement.children).indexOf(slot) : undefined;
             this._completeMoveToMulti(zone, idx);
             return;
@@ -1123,12 +1341,29 @@ const ZonaPractica = {
             ? this.field[mv.sourceZone]
             : this._getMultiArray(mv.sourceZone)[mv.sourceSlot];
         if (!entry) { this._cancelMoveMode(); return; }
+        // Token que va a Hand/GY/Banish → se destruye
+        if (entry._isToken && ['hand','gy','banish'].includes(targetZone)) {
+            this._removeFromSource(mv);
+            const tNum = entry.card?.name?.replace('Token ','') || '';
+            this._addLog(`Token ${tNum} desaparece`);
+            this._cancelMoveMode();
+            this._renderAllZones();
+            return;
+        }
+
+        // Desacoplar materiales antes de mover a zona multi (no acoplable)
+        if (entry._materials?.length) {
+            this._detachAllMaterials(null, entry);
+        }
         this._removeFromSource(mv);
+        const entryClean = { ...entry, _materials: [] };
         const arr = this._getMultiArray(targetZone);
         (targetSlot !== undefined && targetSlot < arr.length)
-            ? arr.splice(targetSlot, 0, {...entry})
-            : arr.push({...entry});
-        this._addLog(`${entry.card.name} → ${targetZone}`, entry.card);
+            ? arr.splice(targetSlot, 0, entryClean)
+            : arr.push(entryClean);
+        if (mv.sourceZone !== 'other') {
+            this._addLog(`${entry.card.name} [${this._zoneName(mv.sourceZone)} → ${this._zoneName(targetZone)}]`, entry.card);
+        }
         this._cancelMoveMode();
         this._renderAllZones();
     },
@@ -1257,8 +1492,14 @@ const ZonaPractica = {
                 <button class="pz-dvc-act pz-dvc-other"
                         onclick="ZonaPractica._dvSendCard('${zoneName}',${idx},'other')">📌</button>
                 ${flipBtn}
-                ${mainBtns}
-                <button class="pz-dvc-act pz-dvc-del"
+            ${mainBtns}
+            <button class=\"pz-dvc-act pz-dvc-put\"
+                    onclick=\"ZonaPractica._startPlacement('${zoneName}',${idx},true)\"
+                    title=\"Poner boca arriba en el campo\">Put</button>
+            <button class=\"pz-dvc-act pz-dvc-set\"
+                    onclick=\"ZonaPractica._startPlacement('${zoneName}',${idx},false)\"
+                    title=\"Setear boca abajo en el campo\">Set</button>
+            <button class=\"pz-dvc-act pz-dvc-del\"
                         onclick="ZonaPractica._dvRemoveCard('${zoneName}',${idx})">✕</button>`;
         };
 
@@ -1294,13 +1535,27 @@ const ZonaPractica = {
         const entry = arr[idx];
         if (!entry) return;
 
+        // Token que va a Hand/GY/Banish → se destruye
+        if (entry._isToken && ['hand','gy','banish'].includes(target)) {
+            arr.splice(idx, 1);
+            const tNum = entry.card?.name?.replace('Token ','') || '';
+            this._addLog(`Token ${tNum} desaparece`);
+            this._renderZone(zone);
+            this._updateStatusWidget();
+            this._refreshDV(zone);
+            return;
+        }
+
         arr.splice(idx, 1);
 
         const dest = this._getMultiArray(target);
         const forceFaceUp = target === 'hand' || target === 'other';
-dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
+        dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
 
-        this._addLog(`${entry.card?.name||'?'}: ${zone} → ${target}`, entry.card);
+      if (zone !== 'other') {
+            this._addLog(`${entry.card?.name||'?'} [${this._zoneName(zone)} → ${this._zoneName(target)}]`, entry.card);
+        }
+
         this._renderZone(zone);
         this._renderZone(target);
         this._updateStatusWidget();
@@ -1333,7 +1588,9 @@ dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
         }
         this._renderZone(zone);
         this._refreshDV(zone);
-        this._addLog(`${entry.card?.name||'?'}: movida al ${direction === 'top' ? 'tope' : 'fondo'} del deck.`, entry.card);
+        if (zone !== 'other') {
+    this._addLog(`${entry.card?.name||'?'} [${this._zoneName(zone)}] → ${direction === 'top' ? 'tope' : 'fondo'} del deck.`, entry.card);
+}
     },
 
     _dvRemoveCard: function (zone, idx) {
@@ -1341,7 +1598,9 @@ dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
         const entry = arr[idx];
         if (!entry) return;
         arr.splice(idx, 1);
-        this._addLog(`${entry.card?.name||'?'} eliminada de ${zone}.`, entry.card);
+        if (zone !== 'other') {
+    this._addLog(`${entry.card?.name||'?'} [${this._zoneName(zone)} → eliminada]`, entry.card);
+}
         this._renderZone(zone);
         this._updateStatusWidget();
         this._refreshDV(zone);
@@ -1457,6 +1716,7 @@ dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
 
         this._addLog(`📌 Estado #${snap.id} guardado — T${snap.turn} · ${snap.phase} · Mano:${snap.hand.length} · GY:${snap.gy.length}`);
         this._showToast(`📌 Estado #${snap.id} guardado`);
+        this._saveStatesToDeck();
         // Actualizar panel de log si está abierto
         const logEntries = document.getElementById('pz-log-entries');
         if (logEntries) logEntries.innerHTML = this._renderLogEntries();
@@ -1566,16 +1826,19 @@ dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
         panel.className = 'pz-log-panel';
 
         const shortcuts = [
-            { icon:'👆', label:'Normal',         msg:'Invocación normal.'   },
-            { icon:'✨', label:'Especial',        msg:'Invocación especial.' },
-            { icon:'⚔️', label:'Ataque',          msg:'Declara ataque.'     },
-            { icon:'🚫', label:'Negar',           msg:'Efecto negado.'      },
-            { icon:'💥', label:'Destruir',        msg:'Carta destruida.'    },
-            { icon:'↩️', label:'Devolver',        msg:'Carta devuelta al deck.' },
-            { icon:'👀', label:'Revelar Carta',   msg:'Carta revelada.'     },
-            { icon:'🔍', label:'Mirar Carta',     msg:'Carta mirada.'       },
-            { icon:'⛓️', label:'Resolver Cadena', msg:'__RESOLVE_CHAIN__' },
-        ];
+    { icon:'👆', label:'Normal',        msg:'Invocación normal.'        },
+    { icon:'🙏', label:'Tributar',       msg:'Carta tributada.'         },
+    { icon:'✨', label:'Especial',       msg:'Invocación especial.'      },
+    { icon:'🔮', label:'Péndulo S.',     msg:'Invocación por péndulo.'   },
+    { icon:'⚔️', label:'Ataque',         msg:'Declara ataque.'          },
+    { icon:'💥', label:'Destruir',       msg:'Carta destruida.'         },
+    { icon:'🚫', label:'Negar',          msg:'Efecto negado.'           },
+    { icon:'👀', label:'Revelar Carta',  msg:'Carta revelada.'          },
+    { icon:'🔍', label:'Mirar Carta',    msg:'Carta mirada.'            },
+    { icon:'⛏️', label:'Excavate',        msg:'Excavates.'             },
+    { icon:'⛓️', label:'Resolver Cadena', msg:'__RESOLVE_CHAIN__'      },
+    //{ icon:'👁',  label:'Look at',         msg:'Mira cartas del deck.'  },
+];
 // Pre-calcular chips de estados con onclick de scroll
         const statesBarHtml = this.gameStates.length ? (() => {
             const chips = this.gameStates.map(s => {
@@ -1605,13 +1868,13 @@ dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
                 <div class="pz-log-header-btns">
                     <button class="pz-log-dl-btn" onclick="ZonaPractica.downloadLog()" title="Descargar log">⬇ Log</button>
                     <button class="pz-log-clear-btn" onclick="ZonaPractica._clearLog()" title="Limpiar log">🗑</button>
-                    <button class="pz-modal-close" onclick="ZonaPractica.openLog()">✕</button>
+                    <button class="pz-modal-close" onclick="ZonaPractica._closeLog()">✕</button>
                 </div>
             </div>
 
             <div class="pz-log-shortcuts">
                 ${shortcuts.map(s =>
-                    `<button class="pz-log-sc-btn"
+                    `<button class="pz-log-sc-btn" ${s.msg === '__RESOLVE_CHAIN__' ? 'style="background:rgba(0,184,148,.25);"' : ''}"
                         onclick="${s.msg === '__RESOLVE_CHAIN__' ? 'ZonaPractica.resolveChain()' : `ZonaPractica._logShortcut('${s.msg}')`}"
                         title="${s.label}">
                         <span class="pz-log-sc-icon">${s.icon}</span>
@@ -1664,12 +1927,18 @@ dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
         inp.value = '';
     },
 
-    _clearLog: function () {
-        this.logEntries = [];
-        const el = document.getElementById('pz-log-entries');
-        if (el) el.innerHTML = this._renderLogEntries();
-    },
+    _closeLog: function () {
+    const panel = document.getElementById('pz-log-panel');
+    if (!panel) return;
+    panel.classList.remove('pz-log-panel-open');
+    setTimeout(() => panel.remove(), 300);
+},
 
+_clearLog: function () {
+    this.logEntries = [];
+    const el = document.getElementById('pz-log-entries');
+    if (el) el.innerHTML = this._renderLogEntries();
+},
     // ═══════════════════════════════════════════════════════
     // FASE 5 — ESTADO NAVIGATOR (drawer izquierdo)
     // ═══════════════════════════════════════════════════════
@@ -1876,19 +2145,21 @@ dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
     },
 
     _deleteState: function (id) {
-        this.gameStates = this.gameStates.filter(s => s.id !== id);
-        const navList = document.getElementById('pz-nav-list');
-        if (navList) navList.innerHTML = this._renderNavList();
-        this._addLog(`Estado #${id} eliminado.`);
-    },
+    this.gameStates = this.gameStates.filter(s => s.id !== id);
+    const navList = document.getElementById('pz-nav-list');
+    if (navList) navList.innerHTML = this._renderNavList();
+    this._addLog(`Estado #${id} eliminado.`);
+    this._saveStatesToDeck();
+},
 
     _clearAllStates: function () {
-        if (!this.gameStates.length) return;
-        if (!confirm('¿Eliminar todos los estados guardados?')) return;
-        this.gameStates = [];
-        const navList = document.getElementById('pz-nav-list');
-        if (navList) navList.innerHTML = this._renderNavList();
-    },
+    if (!this.gameStates.length) return;
+    if (!confirm('¿Eliminar todos los estados guardados?')) return;
+    this.gameStates = [];
+    const navList = document.getElementById('pz-nav-list');
+    if (navList) navList.innerHTML = this._renderNavList();
+    this._saveStatesToDeck();
+},
 
     // ═══════════════════════════════════════════════════════
     // FASE 5 — WIDGET FLOTANTE DE ESTADO
@@ -2102,6 +2373,8 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica');
     el.querySelector('.pz-card-img')?.remove();
     el.querySelector('.pz-pos-badge')?.remove();
     el.querySelector('.pz-chain-badge')?.remove();
+    el.querySelector('.pz-xyz-stack')?.remove();
+    el.querySelector('.pz-xyz-count-badge')?.remove();
         const entry = this.field[zone];
         if (!entry?.card) return;
 
@@ -2130,6 +2403,7 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica');
             el.appendChild(badge);
         }
         // Re-añadir badge de cadena si corresponde
+        // Re-añadir badge de cadena si corresponde
         if (entry._chainNum) {
             const existing = el.querySelector('.pz-chain-badge');
             if (!existing) {
@@ -2138,6 +2412,23 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica');
                 badge.textContent = entry._chainNum;
                 el.appendChild(badge);
             }
+        }
+        // Materiales XYZ — solo muestra la última carta acoplada visualmente
+        const mats = entry._materials;
+        if (mats?.length) {
+            const lastMat = mats[mats.length - 1];
+            const stack = document.createElement('div');
+            stack.className = 'pz-xyz-stack';
+            const mi = document.createElement('img');
+            mi.className = 'pz-xyz-mat-img';
+            mi.src = lastMat.card?.card_images?.[0]?.image_url_small || this.CARD_BACK;
+            mi.onerror = () => { mi.src = this.CARD_BACK; };
+            stack.appendChild(mi);
+            el.appendChild(stack);
+            const badge = document.createElement('span');
+            badge.className = 'pz-xyz-count-badge';
+            badge.textContent = `×${mats.length}`;
+            el.appendChild(badge);
         }
     },
 
@@ -2156,8 +2447,8 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica');
                           (zoneName === 'main'  && (this.cardsHidden || this.hiddenMain))  ||
                           (zoneName === 'extra' && (this.cardsHidden || this.hiddenExtra));
 
-        const maxGap = isHand ? 8 : 4;
-        const minGap = isHand ? -52 : -36;
+        const maxGap = isHand ? 8 : 6;
+const minGap = isHand ? -52 : -18;
         const gap = cards.length <= 7
             ? maxGap
             : Math.max(minGap, maxGap - (cards.length - 7) * (isHand ? 9 : 6));
@@ -2200,14 +2491,38 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica');
     const now  = new Date();
     const time = now.toLocaleTimeString('es-ES', { hour12:false });
     const imgUrl = card?.card_images?.[0]?.image_url_small || null;
-    this.logEntries.push({ msg, time, turn: this.turnNumber, imgUrl, isManual: !!isManual, isLike: !!isLike });
+    const cardSlim = card ? { id: card.id, name: card.name, type: card.type, desc: card.desc,
+    atk: card.atk, def: card.def, race: card.race, attribute: card.attribute,
+    level: card.level, rank: card.rank, linkval: card.linkval,
+    banlist_info: card.banlist_info,
+    card_images: card.card_images || [] } : null;
+    this.logEntries.push({ msg, time, turn: this.turnNumber, imgUrl, isManual: !!isManual, isLike: !!isLike, cardName: card?.name || null, card: cardSlim });
         console.info(`[PZ] T${this.turnNumber} ${time} — ${isManual ? '[Jugador A] ' : ''}${msg}`);
         // Actualizar Log en tiempo real si está abierto
         const el = document.getElementById('pz-log-entries');
         if (el) { el.innerHTML = this._renderLogEntries(); el.scrollTop = el.scrollHeight; }
         this._updateFloatingBtns();
     },
-
+_fmtLogMsg: function (msg, cardName, entryIdx, isSpecial) {
+    // Entradas especiales (like, cadena, activar): sin recolor, solo hacer nombre clickable
+    if (!cardName) return isSpecial ? msg : `<span class="pz-log-action">${msg}</span>`;
+    const idx = msg.indexOf(cardName);
+    if (idx === -1) return isSpecial ? msg : `<span class="pz-log-action">${msg}</span>`;
+    const before = msg.slice(0, idx);
+    const after  = msg.slice(idx + cardName.length);
+    const nameSpan = entryIdx !== null
+        ? `<span class="pz-log-cardname pz-log-cardname-link" onclick="ZonaPractica._openLogCard(${entryIdx})">${cardName}</span>`
+        : `<span class="pz-log-cardname">${cardName}</span>`;
+    if (isSpecial) return `${before}${nameSpan}${after}`;
+    return `${before ? `<span class="pz-log-action">${before}</span>` : ''}${nameSpan}${after ? `<span class="pz-log-action">${after}</span>` : ''}`;
+},
+_openLogCard: function (idx) {
+    const entry = this.logEntries[idx];
+    if (!entry?.card) return;
+    this._closeLog();
+    // Pequeño delay para que el panel cierre antes de abrir el viewer
+    setTimeout(() => this._openMiniCV(entry.card), 320);
+},
     _renderLogEntries: function () {
         if (!this.logEntries.length) {
             return '<p class="pz-log-empty">Sin entradas aún.</p>';
@@ -2227,7 +2542,7 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica');
                 ${e.isManual ? '<span class="pz-log-player-tag">Jugador A:</span>' : ''}
                 ${e.imgUrl ? `<img src="${e.imgUrl}" class="pz-log-card-thumb"
                     onerror="this.style.display='none'" title="${e.msg}">` : ''}
-                <span class="pz-log-entry-msg">${e.msg}</span>
+                <span class=\"pz-log-entry-msg\">${ZonaPractica._fmtLogMsg(e.msg, e.cardName, i, !!(e.isLike || isChainRes || isActivate))}</span>
             </div>`}).join('');
 
             
@@ -2277,11 +2592,123 @@ _calcPzLP: function (type) {
     this._addLog(`❤️ LP ${type === 'gain' ? '+' : '-'}${val} → ${this.lp.toLocaleString()}`);
     document.getElementById('pz-lp-panel')?.remove();
 },
+_importYDK: function () {
+    document.getElementById('pz-deck-overlay')?.remove();
+    const input = document.createElement('input');
+    input.type   = 'file';
+    input.accept = '.ydk';
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const text = await file.text();
+        const lines = text.split(/\r?\n/).map(l => l.trim());
+        let section = 'main';
+        const ids   = { main: [], extra: [], side: [] };
+        lines.forEach(l => {
+            if (l === '#main')    { section = 'main';  return; }
+            if (l === '#extra')   { section = 'extra'; return; }
+            if (l === '!side')    { section = 'side';  return; }
+            if (/^\d+$/.test(l)) ids[section].push(l);
+        });
+        const allIds = [...new Set([...ids.main, ...ids.extra, ...ids.side])];
+        if (!allIds.length) { this._showToast('YDK vacío o inválido.', 2000); return; }
+        this._showToast('⏳ Cargando cartas...', 2500);
+        try {
+            const res   = await fetch(`${this.API_URL}?id=${allIds.join('%7C')}`);
+            const data  = await res.json();
+            const byId  = {};
+            (data.data || []).forEach(c => { byId[String(c.id)] = c; });
+            const makeEntries = (section) =>
+                ids[section].map(id => ({ card: byId[id] || { id, name:`#${id}`, type:'', desc:'', card_images:[{image_url_small:this.CARD_BACK,image_url:this.CARD_BACK}] }, faceUp: false, rotation: 0 }));
+            this._resetState();
+            const main  = makeEntries('main');
+            const extra = makeEntries('extra');
+            const side  = makeEntries('side').map(e => ({...e, faceUp:true}));
+            for (let i = main.length-1; i > 0; i--) {
+                const j = Math.floor(Math.random()*(i+1));
+                [main[i],main[j]] = [main[j],main[i]];
+            }
+            this.main  = main;
+            this.extra = extra;
+            this.other = side;
+            this._activeDeckName = null; // YDK import = independiente
+            this._addLog(`Importado YDK: ${file.name} — Main:${main.length} Extra:${extra.length} Side→Other:${side.length}`);
+            this._renderAllZones();
+            this._showToast(`✅ Deck importado (${main.length} main / ${extra.length} extra)`);
+        } catch (err) {
+            this._showToast('❌ Error al importar YDK.', 2500);
+            console.error('[PZ] YDK import error:', err);
+        }
+    };
+    input.click();
+},
+_zoneName: function (zone) {
+    const map = { hand:'Hand', main:'Main', extra:'Extra', gy:'GY', banish:'Banish', other:'Other' };
+    return map[zone] || `Zona ${zone}`;
+},
 
 _resetPzLP: function () {
     this.lp = 8000;
     const el = document.getElementById('pz-lp-val');
     if (el) el.textContent = '8,000';
+},
+
+// ─── Persistencia de Estados en Deck ─────────────────────────────────────────
+// Solo guarda si hay un deck guardado activo (_activeDeckName !== null).
+// Guarda versión "slim" (sin card_images ni desc) para no saturar localStorage.
+_saveStatesToDeck: function () {
+    if (!this._activeDeckName) return;
+    const slim = this.gameStates.map(s => ({
+        id:        s.id,
+        turn:      s.turn,
+        phase:     s.phase,
+        timestamp: s.timestamp,
+        field:     this._slimField(s.field),
+        hand:      s.hand.map(e => this._slimEntry(e)),
+        main:      s.main.map(e => this._slimEntry(e)),
+        extra:     s.extra.map(e => this._slimEntry(e)),
+        gy:        s.gy.map(e => this._slimEntry(e)),
+        banish:    s.banish.map(e => this._slimEntry(e)),
+        other:     s.other.map(e => this._slimEntry(e)),
+    }));
+    try {
+        localStorage.setItem(`pz_states_${this._activeDeckName}`, JSON.stringify(slim));
+    } catch (e) {
+        console.warn('[PZ] No se pudieron guardar estados (localStorage lleno):', e);
+    }
+},
+
+_loadStatesFromDeck: function (deckName) {
+    try {
+        const raw = localStorage.getItem(`pz_states_${deckName}`);
+        return raw ? JSON.parse(raw) : null;
+    } catch (_) { return null; }
+},
+
+// Versión slim de un entry: conserva posición y datos identificativos, descarta imágenes
+_slimEntry: function (e) {
+    if (!e?.card) return e;
+    const { id, name, type, atk, def, race, attribute, level, rank, linkval, _isToken } = e.card;
+    const imgSmall = e.card.card_images?.[0]?.image_url_small || '';
+    return {
+        faceUp:    e.faceUp,
+        rotation:  e.rotation,
+        _isToken:  e._isToken,
+        card: { id, name, type, atk, def, race, attribute, level, rank, linkval,
+                _isToken,
+                card_images: imgSmall ? [{ image_url_small: imgSmall }] : [] }
+    };
+},
+
+_slimField: function (field) {
+    const slim = {};
+    Object.entries(field).forEach(([k, v]) => {
+        if (!v) { slim[k] = null; return; }
+        const s = this._slimEntry(v);
+        s._materials = (v._materials || []).map(m => this._slimEntry(m));
+        slim[k] = s;
+    });
+    return slim;
 },
 
 };
