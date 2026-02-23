@@ -574,7 +574,15 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
         this.other.push({ card, faceUp: true, rotation: 0 });
         this._renderZone('other');
         this._addLog(`Añadida a Other: ${card.name}`, card);
-        this._closeSearch();
+        // Feedback visual en el botón sin cerrar el buscador
+        const btns = document.querySelectorAll('#pz-search-results .pz-search-add-btn');
+        const btn  = btns[index];
+        if (btn) {
+            const orig = btn.textContent;
+            btn.textContent = '✓';
+            btn.disabled = true;
+            setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 900);
+        }
     },
 
     // ═══════════════════════════════════════════════════════

@@ -3421,6 +3421,235 @@
     white-space: nowrap;
 }
 
+
+/* ═══════════════════════════════════════════
+   EXPERIMENTACIÓN MODULE
+   ═══════════════════════════════════════════ */
+.exp-wrap {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 160px);
+    min-height: 500px;
+    gap: 0;
+    overflow: hidden;
+}
+
+/* Toolbar */
+.exp-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(0,10,25,.55);
+    border-bottom: 1px solid rgba(255,215,0,.1);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.exp-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,.15);
+    background: rgba(255,255,255,.05);
+    color: rgba(241,241,241,.8);
+    font-size: .78rem;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+}
+.exp-btn:hover { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,215,0,.4); }
+.exp-btn-clear  { border-color: rgba(214,48,49,.3); color: #ff8080; }
+.exp-btn-clear:hover { background: rgba(214,48,49,.2); }
+.exp-zoom-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+.exp-zoom-lbl { font-size: .8rem; opacity: .5; }
+.exp-zoom-slider {
+    width: 110px;
+    accent-color: #ffd700;
+    cursor: pointer;
+}
+.exp-zoom-val {
+    font-size: .75rem;
+    color: rgba(255,215,0,.7);
+    min-width: 38px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Body */
+.exp-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Sidebar lista */
+.exp-sidebar {
+    width: 200px;
+    min-width: 160px;
+    flex-shrink: 0;
+    background: rgba(0,15,35,.6);
+    border-right: 1px solid rgba(255,255,255,.07);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.exp-sidebar-title {
+    font-size: .8rem;
+    font-weight: 700;
+    color: rgba(255,215,0,.7);
+    padding: 8px 10px 6px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    flex-shrink: 0;
+}
+.exp-card-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,215,0,.2) transparent;
+}
+.exp-card-list::-webkit-scrollbar { width: 4px; }
+.exp-card-list::-webkit-scrollbar-thumb { background: rgba(255,215,0,.15); border-radius: 2px; }
+.exp-list-empty {
+    font-size: .75rem;
+    color: rgba(255,255,255,.25);
+    text-align: center;
+    padding: 16px 0;
+    font-style: italic;
+}
+.exp-list-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 4px;
+    border-radius: 5px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.05);
+    transition: background .12s;
+}
+.exp-list-item:hover { background: rgba(255,255,255,.07); }
+.exp-list-thumb {
+    width: 28px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,.1);
+}
+.exp-list-thumb:hover { border-color: #ffd700; }
+.exp-list-name {
+    flex: 1;
+    font-size: .67rem;
+    color: rgba(241,241,241,.75);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    line-height: 1.3;
+}
+.exp-list-name:hover { color: #fff; }
+.exp-list-count {
+    font-size: .68rem;
+    color: rgba(255,215,0,.6);
+    font-weight: 700;
+    min-width: 14px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.exp-list-add {
+    font-size: .85rem;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,184,148,.4);
+    background: rgba(0,184,148,.12);
+    color: #00b894;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 0;
+    line-height: 1;
+}
+.exp-list-add:hover { background: rgba(0,184,148,.28); }
+
+/* Canvas area */
+.exp-canvas-wrap {
+    flex: 1;
+    overflow: auto;
+    background: rgba(30,40,55,.7);
+    position: relative;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,215,0,.15) transparent;
+}
+.exp-canvas-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+.exp-canvas-wrap::-webkit-scrollbar-thumb { background: rgba(255,215,0,.15); border-radius: 3px; }
+.exp-canvas {
+    position: relative;
+    width: 1200px;
+    height: 800px;
+    transform-origin: top left;
+    transition: transform .1s;
+}
+/* Carta en canvas */
+.exp-card {
+    position: absolute;
+    width: 86px;
+    cursor: grab;
+    user-select: none;
+    transition: box-shadow .12s, transform .08s;
+    z-index: 1;
+    border-radius: 4px;
+}
+.exp-card:hover { box-shadow: 0 0 0 2px rgba(255,215,0,.5); z-index: 10; }
+.exp-card.exp-card-dragging {
+    cursor: grabbing;
+    box-shadow: 0 8px 24px rgba(0,0,0,.55), 0 0 0 2px #ffd700;
+    transform: scale(1.04);
+}
+.exp-card img {
+    width: 100%;
+    border-radius: 4px;
+    display: block;
+    pointer-events: none;
+    border: 1px solid rgba(255,255,255,.1);
+}
+
+/* Deck picker */
+.exp-dp-section { margin-bottom: 10px; }
+.exp-dp-sec-title { font-size: .75rem; color: rgba(255,215,0,.6); margin-bottom: 6px; font-weight: 700; }
+.exp-dp-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background .13s;
+    margin-bottom: 4px;
+}
+.exp-dp-item:hover { background: rgba(255,255,255,.07); border-color: rgba(255,215,0,.2); }
+.exp-dp-thumb {
+    width: 34px;
+    height: 49px;
+    object-fit: cover;
+    border-radius: 3px;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,.1);
+}
+.exp-dp-info { display: flex; flex-direction: column; gap: 2px; }
+.exp-dp-name  { font-size: .78rem; color: rgba(241,241,241,.85); font-weight: 600; }
+.exp-dp-counts { font-size: .7rem; color: rgba(255,255,255,.4); }
+
 /* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 500px) {
     .herr-two-col { flex-direction: column; }

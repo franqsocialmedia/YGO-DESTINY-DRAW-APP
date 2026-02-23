@@ -80,13 +80,16 @@ const Torneo = {
                 onclick="Torneo.showSimTab('torneo')">🏆 Torneo</button>
             <button class="sim-tab-btn" data-simtab="duelo"
                     onclick="Torneo.showSimTab('duelo')">⚔️ Duelo en Vivo</button>
+            <button class="sim-tab-btn" data-simtab="experimentacion"
+                    onclick="Torneo.showSimTab('experimentacion')">🧪 Experimentación</button>
             <button class="sim-tab-btn" data-simtab="practica"
                     onclick="Torneo.showSimTab('practica')">🎴 Zona de Práctica</button>
         </div>
-        <div id="sim-mulligan-content" style="display:none;"></div>
+        <div id="sim-mulligan-content"       style="display:none;"></div>
         <div id="sim-torneo-content"></div>
-        <div id="sim-duelo-content" style="display:none;"></div>
-        <div id="sim-practica-content" style="display:none;"></div>`;
+        <div id="sim-duelo-content"          style="display:none;"></div>
+        <div id="sim-experimentacion-content" style="display:none;"></div>
+        <div id="sim-practica-content"       style="display:none;"></div>`;
     }
     document.querySelectorAll('.sim-tab-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.simtab === this.simTab);
@@ -166,6 +169,11 @@ const Torneo = {
     if (dueloEl) {
         dueloEl.style.display = tab === 'duelo' ? '' : 'none';
         if (tab === 'duelo' && window.DueloEnVivo) DueloEnVivo.renderInto(dueloEl);
+    }
+    const expEl = document.getElementById('sim-experimentacion-content');
+    if (expEl) {
+        expEl.style.display = tab === 'experimentacion' ? '' : 'none';
+        if (tab === 'experimentacion' && window.Experimentacion) Experimentacion.renderInto(expEl);
     }
     if (practicaEl) {
         practicaEl.style.display = tab === 'practica' ? '' : 'none';
