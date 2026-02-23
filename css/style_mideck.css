@@ -2052,6 +2052,62 @@
 }
 .dzc-probar-btn:hover { background: rgba(214, 48, 49, .38); }
 
+/* ── Saved Decks panel compacto arriba de Engines ─────────── */
+#deck-list-container {
+    margin-bottom: 0;
+}
+
+.deck-list-title {
+    cursor: pointer;
+    -webkit-user-select: none;
+}
+
+/* Scrollable cuando la lista es larga */
+#saved-decks-sec {
+    max-height: 420px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,215,0,.25) transparent;
+}
+#saved-decks-sec::-webkit-scrollbar { width: 5px; }
+#saved-decks-sec::-webkit-scrollbar-thumb {
+    background: rgba(255,215,0,.2);
+    border-radius: 3px;
+}
+
+/* ── Sub-pestañas del sidebar ─────────────────────────────── */
+.eng-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    padding-bottom: 8px;
+    margin-bottom: 2px;
+}
+.eng-tab-btn {
+    flex: 1;
+    padding: 5px 4px;
+    font-size: .75rem;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.04);
+    color: rgba(241,241,241,.5);
+    cursor: pointer;
+    transition: all .15s;
+    text-align: center;
+}
+.eng-tab-btn.eng-tab-active {
+    background: rgba(255,215,0,.12);
+    border-color: rgba(255,215,0,.4);
+    color: #ffd700;
+}
+.eng-tab-btn:hover:not(.eng-tab-active) {
+    background: rgba(255,255,255,.08);
+    color: rgba(241,241,241,.8);
+}
+
 /* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 700px) {
     .engines-sidebar { flex: none; width: 100%; max-width: none; position: static; }

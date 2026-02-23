@@ -8,6 +8,7 @@ const Engines = {
 
     STORAGE_KEY: 'yugioh_engines',
     CARD_BACK:   'https://images.ygoprodeck.com/images/cards/back.jpg',
+    _activeTab: 'saved', // 'engines' | 'saved'
 
     // Estado del panel de creación
     _creating: {
@@ -69,21 +70,88 @@ const Engines = {
     _renderSidebar: function () {
         const sidebar = document.getElementById('engines-sidebar');
         if (!sidebar) return;
-
-        const engines = this.getAll();
+        const engines  = this.getAll();
+        const isEng    = this._activeTab === 'engines';
 
         sidebar.innerHTML = `
-<div class="eng-sidebar-title">⚙️ Engines</div>
-<div class="eng-sidebar-actions">
-    <button class="eng-action-btn eng-btn-primary"
-            onclick="Engines.openCreatePanel()">＋ Añadir Engine</button>
-    <button class="eng-action-btn eng-btn-secondary"
-            onclick="Engines.importYDK()">📥 Importar .ydk</button>
+<div class="eng-tabs">
+    <button class="eng-tab-btn ${isEng ? 'eng-tab-active' : ''}"
+            onclick="Engines._switchTab('engines')">⚙️ Engines</button>
+    <button class="eng-tab-btn ${!isEng ? 'eng-tab-active' : ''}"
+            onclick="Engines._switchTab('saved')">📁 Decks</button>
 </div>
-<div class="eng-list" id="eng-list">
-    ${engines.length ? engines.map((e, i) => this._renderEngineItem(e, i)).join('') :
-      '<div class="eng-empty">Sin engines guardados</div>'}
+
+<div id="eng-panel-engines" style="display:${isEng ? 'flex' : 'none'};flex-direction:column;gap:8px;">
+    <div class="eng-sidebar-actions">
+        <button class="eng-action-btn eng-btn-primary"
+                onclick="Engines.openCreatePanel()">＋ Añadir Engine</button>
+        <button class="eng-action-btn eng-btn-secondary"
+                onclick="Engines.importYDK()">📥 Importar .ydk</button>
+    </div>
+    <div class="eng-list" id="eng-list">
+        ${engines.length ? engines.map((e, i) => this._renderEngineItem(e, i)).join('') :
+          '<div class="eng-empty">Sin engines guardados</div>'}
+    </div>
+</div>
+
+<div id="eng-panel-saved" style="display:${!isEng ? 'flex' : 'none'};flex-direction:column;gap:8px;">
+    <div class="eng-list" id="eng-saved-list">
+        ${this._renderSavedDeckItems()}
+    </div>
 </div>`;
+    },
+
+    _switchTab: function (tab) {
+        this._activeTab = tab;
+        this._renderSidebar();
+    },
+
+_renderSavedDeckItems: function () {
+        if (!window.Deck) return '<div class="eng-empty">Módulo de decks no disponible.</div>';
+        const saved = Deck.getSavedDecks();
+        if (!saved.length) return '<div class="eng-empty">Sin decks guardados.</div>';
+
+        return saved.map(deck => {
+            const cartaAs = Object.values(deck.cards).find(c => c.roles?.includes('Carta As'));
+            const cover   = cartaAs || (window.Deck ? Deck.getMostRepeatedCard(deck.cards) : null);
+            const img     = cover
+                ? (cover.data?.card_images?.[0]?.image_url_small || cover.card_images?.[0]?.image_url_small || this.CARD_BACK)
+                : this.CARD_BACK;
+
+            const mainCount = Object.values(deck.cards)
+                .filter(c => c.location === 'main').reduce((s, c) => s + c.qty, 0);
+            const extraCount = Object.values(deck.cards)
+                .filter(c => c.location === 'extra').reduce((s, c) => s + c.qty, 0);
+
+            // Winrate si está disponible
+            let wrHtml = '';
+            if (window.Winrate) {
+                const wr    = Winrate.getRecord(deck.name);
+                const total = wr.wins1st + wr.wins2nd + wr.losses1st + wr.losses2nd;
+                if (total > 0) {
+                    const pct = Winrate.calcWinrate(wr.wins1st + wr.wins2nd, wr.losses1st + wr.losses2nd);
+                    const col = pct >= 60 ? '#00b894' : pct >= 45 ? '#fdcb6e' : '#d63031';
+                    wrHtml = `<div class="eng-item-stats" style="color:${col}">WR ${pct}% (${total})</div>`;
+                }
+            }
+
+            return `
+<div class="eng-item">
+    <img src="${img}" class="eng-item-img" onerror="this.src='${this.CARD_BACK}'"
+         onclick="Deck.openLoadDeckPanel('${deck.name}')">
+    <div class="eng-item-info">
+        <div class="eng-item-name">${deck.name}</div>
+        <div class="eng-item-counts">M:${mainCount} · E:${extraCount}</div>
+        ${wrHtml}
+    </div>
+    <div class="eng-item-btns">
+        <button class="eng-item-edit" title="Ver / Cargar"
+                onclick="Deck.openLoadDeckPanel('${deck.name}')">📂</button>
+        <button class="eng-item-delete" title="Eliminar"
+                onclick="Deck.openDeleteDeckPanel('${deck.name}');Engines._renderSidebar()">✖</button>
+    </div>
+</div>`;
+        }).join('');
     },
 
     _renderEngineItem: function (engine, idx) {

@@ -335,6 +335,7 @@ const Deck = {
         localStorage.setItem(`deck_${this.name}`, JSON.stringify(deckData));
         alert('Deck guardado');
         this.render();
+        if (window.Engines) Engines._renderSidebar();
         // Notificar a Estadísticas para actualizar el selector de decks
         if (window.Estadisticas) {
             const panel = document.getElementById('deck-selector-panel');
@@ -440,6 +441,7 @@ const Deck = {
     confirmDeleteDeck: function (deckName) {
         localStorage.removeItem(`deck_${deckName}`);
         this.closeModal();
+        if (window.Engines) Engines._renderSidebar();
         this.render();
     },
 
@@ -1291,19 +1293,10 @@ onDeckLoaded: function () {
         const totalCards = Object.keys(this.cards).length;
         const isEmpty = totalCards === 0;
 
-        let html = `
-            <div id="deck-list-container">
-                <h2 class="deck-list-title" onclick="Deck.toggleSection('saved-decks-sec')">
-                    Decks Guardados
-                </h2>
-                <div id="saved-decks-sec"style="display:none;">
-                    ${this.renderDeckList()}
-                </div>
-            </div>
-        `;
+        let html = ``;
 
         if (isEmpty) {
-            html += `<p>Abra la seccion de Decks Guardados y elija uno o agregue cartas desde la pestaña Buscador.</p>`;
+            html += `<p style="margin-top:10px;font-size:.85rem;opacity:.6">Elige un deck desde el panel lateral o agrega cartas desde el Buscador.</p>`;
         } else {
     html += `
     <h2 onclick="Deck.openRenamePanel()" class="deck-title">
