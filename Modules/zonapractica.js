@@ -883,7 +883,8 @@ overlay.innerHTML = `
     // INTERACCIÓN — ZONAS MONO (CAMPO PÚBLICO)
     // ═══════════════════════════════════════════════════════
     onZoneClick: function (zone) {
-        if (this._activeMove) { this._completeMoveToField(zone); return; }
+    if (this._activePlacement) { this._completePlacement(zone); return; }
+    if (this._activeMove) { this._completeMoveToField(zone); return; }
         if (this.changePositionMode) {
             const entry = this.field[zone];
             if (entry?.card) {
@@ -1557,7 +1558,7 @@ _showDetachMenu: function (zone, e) {
                            ${isFaceUp?'▽':'▲'}</button>`;
             return `
                 <button class="pz-dvc-act pz-dvc-ver"
-                        onclick="ZonaPractica._openMiniCV(ZonaPractica._getMultiArray('${zoneName}')[${i}]?.card)">👁</button>
+                        onclick="ZonaPractica._openMiniCV(ZonaPractica._getMultiArray('${zoneName}')[${idx}]?.card)">👁</button>
                 <button class="pz-dvc-act pz-dvc-hand"
                         onclick="ZonaPractica._dvSendCard('${zoneName}',${idx},'hand')">✋</button>
                 <button class="pz-dvc-act pz-dvc-gy"
