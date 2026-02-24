@@ -744,6 +744,42 @@
     outline: none;
 }
 .adv-input:focus { border-color: #5aa0ff; }
+
+
+
+/* ── Selector de Arquetipos ──────────────────────────────── */
+.adv-filters-toggle-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.buscador-archetype-sel {
+    background: var(--bg-input, rgba(0,15,40,.85));
+    border: 1px solid rgba(255,215,0,.25);
+    color: rgba(241,241,241,.8);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: .75rem;
+    cursor: pointer;
+    width: 180px;
+    flex-shrink: 0;
+    transition: border-color .15s;
+    order: 10;   /* siempre al final de la fila flex */
+}
+.buscador-archetype-sel:focus {
+    outline: none;
+    border-color: rgba(255,215,0,.55);
+}
+
+.results-cap-notice {
+    text-align: center;
+    font-size: .78rem;
+    color: rgba(255,215,0,.55);
+    padding: 10px 0 4px;
+    margin: 0;
+    border-top: 1px solid rgba(255,255,255,.06);
+}
 /* ====================================
    RESPONSIVE - TABLET
    ==================================== */

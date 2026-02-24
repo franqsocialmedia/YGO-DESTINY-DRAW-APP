@@ -33,48 +33,125 @@ const Duelista = {
     },
 
     // Agrega todos los records de todos los decks guardados
-    getGlobalStats: function () {
-        if (!window.Winrate) return null;
-        const all    = Winrate.getAllRecords();
-        let w1 = 0, l1 = 0, w2 = 0, l2 = 0;
+    _calcWR: function (w, l) {
+        const t = w + l;
+        return t === 0 ? null : Math.round((w / t) * 100);
+    },
 
-        Object.values(all).forEach(r => {
-            w1 += r.wins1st   || 0;
-            l1 += r.losses1st || 0;
-            w2 += r.wins2nd   || 0;
-            l2 += r.losses2nd || 0;
+    _getAllMatchupRecords: function () {
+        // Agrega todos los matchups de todos los decks guardados
+        if (!window.Deck) return [];
+        const decks = Deck.getSavedDecks();
+        const all   = [];
+        decks.forEach(deck => {
+            try {
+                const raw = localStorage.getItem(`matchup_${deck.name}`);
+                const records = JSON.parse(raw) || [];
+                records.forEach(m => {
+                    // Migración inline igual que en Matchups.getAll
+                    if (m.wins1st !== undefined) { all.push({ ...m, _deckName: deck.name }); }
+                    else all.push({ ...m, wins1st: m.wins||0, losses1st: m.losses||0, wins2nd: 0, losses2nd: 0, _deckName: deck.name });
+                });
+            } catch (_) {}
         });
+        return all;
+    },
 
+    _calcWR: function (w, l) {
+        const t = w + l;
+        return t === 0 ? null : Math.round((w / t) * 100);
+    },
+
+    _getAllMatchupRecords: function () {
+        // Agrega todos los matchups de todos los decks guardados
+        if (!window.Deck) return [];
+        const decks = Deck.getSavedDecks();
+        const all   = [];
+        decks.forEach(deck => {
+            try {
+                const raw = localStorage.getItem(`matchup_${deck.name}`);
+                const records = JSON.parse(raw) || [];
+                records.forEach(m => {
+                    // Migración inline igual que en Matchups.getAll
+                    if (m.wins1st !== undefined) { all.push({ ...m, _deckName: deck.name }); }
+                    else all.push({ ...m, wins1st: m.wins||0, losses1st: m.losses||0, wins2nd: 0, losses2nd: 0, _deckName: deck.name });
+                });
+            } catch (_) {}
+        });
+        return all;
+    },
+
+    _calcWR: function (w, l) {
+        const t = w + l;
+        return t === 0 ? null : Math.round((w / t) * 100);
+    },
+
+    _getAllMatchupRecords: function () {
+        // Agrega todos los matchups de todos los decks guardados
+        if (!window.Deck) return [];
+        const decks = Deck.getSavedDecks();
+        const all   = [];
+        decks.forEach(deck => {
+            try {
+                const raw = localStorage.getItem(`matchup_${deck.name}`);
+                const records = JSON.parse(raw) || [];
+                records.forEach(m => {
+                    // Migración inline igual que en Matchups.getAll
+                    if (m.wins1st !== undefined) { all.push({ ...m, _deckName: deck.name }); }
+                    else all.push({ ...m, wins1st: m.wins||0, losses1st: m.losses||0, wins2nd: 0, losses2nd: 0, _deckName: deck.name });
+                });
+            } catch (_) {}
+        });
+        return all;
+    },
+
+    getGlobalStats: function () {
+        if (!window.Deck) return null;
+        const all = this._getAllMatchupRecords();
+        let w1 = 0, l1 = 0, w2 = 0, l2 = 0;
+        all.forEach(m => {
+            w1 += m.wins1st   || 0;
+            l1 += m.losses1st || 0;
+            w2 += m.wins2nd   || 0;
+            l2 += m.losses2nd || 0;
+        });
         return {
-            wins1st:   w1, losses1st: l1,
-            wins2nd:   w2, losses2nd: l2,
+            wins1st: w1, losses1st: l1,
+            wins2nd: w2, losses2nd: l2,
             totalWins:   w1 + w2,
             totalLosses: l1 + l2,
             totalDuels:  w1 + l1 + w2 + l2,
-            wr1st:  Winrate.calcWinrate(w1, l1),
-            wr2nd:  Winrate.calcWinrate(w2, l2),
-            wrAll:  Winrate.calcWinrate(w1 + w2, l1 + l2)
+            wr1st: this._calcWR(w1, l1),
+            wr2nd: this._calcWR(w2, l2),
+            wrAll: this._calcWR(w1 + w2, l1 + l2)
         };
     },
-
     getBestDecks: function () {
-        if (!window.Winrate || !window.Deck) return null;
-        const all    = Winrate.getAllRecords();
-        const result = { general: null, going1st: null, going2nd: null };
-
+        if (!window.Deck) return null;
+        const allRecords = this._getAllMatchupRecords();
+        const result     = { general: null, going1st: null, going2nd: null };
         let bestAll = -1, best1st = -1, best2nd = -1;
 
-        Object.entries(all).forEach(([name, r]) => {
-            const total = r.wins1st + r.losses1st + r.wins2nd + r.losses2nd;
-            if (total < 5) return; // mínimo de duelos para ser significativo
+        // Agrupar por deck del jugador
+        const byDeck = {};
+        allRecords.forEach(m => {
+            const dk = m._deckName;
+            if (!byDeck[dk]) byDeck[dk] = { w1:0, l1:0, w2:0, l2:0 };
+            byDeck[dk].w1 += m.wins1st   || 0;
+            byDeck[dk].l1 += m.losses1st || 0;
+            byDeck[dk].w2 += m.wins2nd   || 0;
+            byDeck[dk].l2 += m.losses2nd || 0;
+        });
 
-            const all  = Winrate.calcWinrate(r.wins1st + r.wins2nd, r.losses1st + r.losses2nd);
-            const go1  = Winrate.calcWinrate(r.wins1st, r.losses1st);
-            const go2  = Winrate.calcWinrate(r.wins2nd, r.losses2nd);
-
-            if (all !== null && all > bestAll) { bestAll = all; result.general  = { name, pct: all,  duels: total }; }
-            if (go1 !== null && go1 > best1st) { best1st = go1; result.going1st = { name, pct: go1, duels: r.wins1st + r.losses1st }; }
-            if (go2 !== null && go2 > best2nd) { best2nd = go2; result.going2nd = { name, pct: go2, duels: r.wins2nd + r.losses2nd }; }
+        Object.entries(byDeck).forEach(([name, r]) => {
+            const total = r.w1 + r.l1 + r.w2 + r.l2;
+            if (total < 5) return;
+            const pAll = this._calcWR(r.w1+r.w2, r.l1+r.l2);
+            const p1st = this._calcWR(r.w1, r.l1);
+            const p2nd = this._calcWR(r.w2, r.l2);
+            if (pAll !== null && pAll > bestAll) { bestAll = pAll; result.general  = { name, pct: pAll, duels: total }; }
+            if (p1st !== null && p1st > best1st) { best1st = p1st; result.going1st = { name, pct: p1st, duels: r.w1+r.l1 }; }
+            if (p2nd !== null && p2nd > best2nd) { best2nd = p2nd; result.going2nd = { name, pct: p2nd, duels: r.w2+r.l2 }; }
         });
 
         return result;
@@ -91,7 +168,7 @@ const Duelista = {
                 <div class="duelista-empty">
                     <div class="duelista-empty-icon">🥚</div>
                     <p>Aún no tienes duelos registrados.</p>
-                    <small>Ve a <strong>Estadísticas → Winrate del Deck</strong> y empieza a registrar tus partidas.</small>
+                    <small>Ve a <strong>Mi Deck → Historial de Enfrentamientos</strong> y registra tus partidas.</small>
                 </div>`;
         }
 

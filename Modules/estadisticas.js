@@ -2221,13 +2221,7 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
             <div id="deck-stats-sec" class="stats-section" style="display:none;">
                 ${this.renderDeckStats()}
             </div>`;
-        // ── 2.2 WINRATE DEL DECK (si hay datos) ─────────────────────
-      html += `<h3 class="stats-section-title" onclick="Estadisticas.toggleSection('winrate-sec'); if(window.Winrate) Winrate.refreshSection();">
-                🏆 Winrate del Deck
-            </h3>
-            <div id="winrate-sec" class="stats-section" style="display:none;">
-                <p class="stats-empty">Abre esta sección para ver el winrate.</p>
-            </div>`
+        // Winrate movido a Simuladores → pestaña Winrate
 // ── 2.5 TOP TIER ──────────────────────────────────────────────
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('top-tier-sec'); Estadisticas._refreshTopTier()">

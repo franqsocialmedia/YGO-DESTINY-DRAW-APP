@@ -29,7 +29,9 @@ const Buscador = {
     scale:          '',  // escala péndulo
     atk:            '',
     def:            '',
+    archetype:      '',
 },
+    _archetypeList: [],
 
 
 FILTER_DATA: {
@@ -217,12 +219,12 @@ await new Promise(resolve => setTimeout(resolve, 0));
     search: async function () {
 
         const mainTerm = this.searchInput.value.trim();
-
+/* NO INTERESA SI NO HAY NOMBRE, SI HAY FILTROS O CHIPS
         // Permitir buscar solo con filtros (sin nombre)
         if (!mainTerm && this.filterWords.length === 0) {
             this.showMessage('⚠️ Escribe un nombre de carta o agrega palabras clave');
             return;
-        }
+        }*/
 
         this.showLoading();
 
@@ -290,24 +292,26 @@ await new Promise(resolve => setTimeout(resolve, 0));
     },
 
     displayResults: function (cards) {
+        this.currentCards = cards;
+        const MAX = 100;
+        const shown  = cards.slice(0, MAX);
+        const excess = cards.length - shown.length;
 
         let html = '<div class="results-grid">';
-        this.currentCards = cards;
-
-           cards.forEach((card, index) => {
-    const img = card.card_images?.[0]?.image_url_small || '';
-
-    html += `
-        <div class="card-item" onclick="Buscador.showCardActions(${index}, this)">
-            <img src="${img}" class="card-image">
-            <div class="card-name">${card.name}</div>
-            <div class="card-type">${card.type}</div>
-        </div>
-    `;
-});
-
-
+        shown.forEach((card, index) => {
+            const img = card.card_images?.[0]?.image_url_small || '';
+            html += `
+                <div class="card-item" onclick="Buscador.showCardActions(${index}, this)">
+                    <img src="${img}" class="card-image">
+                    <div class="card-name">${card.name}</div>
+                    <div class="card-type">${card.type}</div>
+                </div>`;
+        });
         html += '</div>';
+
+        if (excess > 0) {
+            html += `<p class="results-cap-notice">Mostrando 100 de ${cards.length} resultados. Refina tu búsqueda para ver más.</p>`;
+        }
         this.resultsContainer.innerHTML = html;
     },
 
@@ -516,6 +520,7 @@ _updateFilterSummary: function() {
     if (f.scale)          parts.push(`Esc.${f.scale}`);
     if (f.atk)            parts.push(`ATK ${f.atk}`);
     if (f.def)            parts.push(`DEF ${f.def}`);
+    if (f.archetype)      parts.push(`⚔ ${f.archetype}`);
     const summary  = document.getElementById('adv-filters-summary');
     const resetBtn = document.getElementById('adv-reset-btn');
     if (summary)  summary.textContent = parts.length ? parts.join(' · ') : '';
@@ -526,7 +531,7 @@ hasAdvancedFilters: function() {
     const f = this.advancedFilters;
     return !!(f.cardCategory || f.attribute || f.monsterType || f.monsterSubtype ||
               f.spellSubtype || f.trapSubtype || f.level || f.linkval || f.scale ||
-              f.atk || f.def);
+              f.atk || f.def || f.archetype);
 },
 
 buildApiUrl: function(mainTerm) {
@@ -557,7 +562,7 @@ buildApiUrl: function(mainTerm) {
         params.set('type', 'Trap Card');
         if (f.trapSubtype) params.set('race', f.trapSubtype);
     }
-
+if (f.archetype) params.set('archetype', f.archetype);
     const qs = params.toString();
     return qs ? `${this.apiUrl}?${qs}` : this.apiUrl;
 },
@@ -637,12 +642,36 @@ applyAdvancedLocalFilter: function(cards) {
         return true;
     });
 },
+_loadArchetypes: async function () {
+    if (this._archetypeList.length) return; // ya cacheado
+    try {
+        const res  = await fetch('https://db.ygoprodeck.com/api/v7/archetypes.php');
+        const data = await res.json();
+        this._archetypeList = (data || []).map(a => a.archetype_name).sort();
+        const sel = document.getElementById('buscador-archetype-sel');
+        if (sel) this._populateArchetypeSel(sel);
+    } catch (_) {}
+},
 
+_populateArchetypeSel: function (sel) {
+    // Limpiar opciones existentes excepto la primera (— cualquier carta —)
+    while (sel.options.length > 1) sel.remove(1);
+    this._archetypeList.forEach(name => {
+        const opt     = document.createElement('option');
+        opt.value     = name;
+        opt.textContent = name;
+        if (name === this.advancedFilters.archetype) opt.selected = true;
+        sel.appendChild(opt);
+    });
+},
 resetAdvancedFilters: function() {
     Object.assign(this.advancedFilters, {
         cardCategory:'', attribute:'', monsterType:'', monsterSubtype:'',
-        spellSubtype:'', trapSubtype:'', level:'', linkval:'', scale:'', atk:'', def:''
+        spellSubtype:'', trapSubtype:'', level:'', linkval:'', scale:'', atk:'', def:'',
+        archetype: ''
     });
+    const arcSel = document.getElementById('buscador-archetype-sel');
+    if (arcSel) arcSel.value = '';
     this._updateFilterSummary();
     if (this.filterPanelOpen) this.renderFilterPanel();
     this.autoSearch();

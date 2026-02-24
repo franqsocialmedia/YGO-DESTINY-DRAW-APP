@@ -3604,7 +3604,7 @@
     position: absolute;
     width: 86px;
     cursor: grab;
-    user-select: none;
+    -webkit-user-select: none;
     transition: box-shadow .12s, transform .08s;
     z-index: 1;
     border-radius: 4px;
@@ -3649,6 +3649,44 @@
 .exp-dp-info { display: flex; flex-direction: column; gap: 2px; }
 .exp-dp-name  { font-size: .78rem; color: rgba(241,241,241,.85); font-weight: 600; }
 .exp-dp-counts { font-size: .7rem; color: rgba(255,255,255,.4); }
+
+.pz-archetype-sel {
+    margin-left: auto;
+    background: rgba(0,15,40,.85);
+    border: 1px solid rgba(255,215,0,.25);
+    color: rgba(241,241,241,.8);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: .72rem;
+    cursor: pointer;
+    max-width: 160px;
+}
+.pz-archetype-sel:focus { outline: none; border-color: rgba(255,215,0,.5); }
+
+/* ── Tab Winrate en Simuladores ───────────────────── */
+.sim-wr-wrap {
+    display: flex;
+    gap: 20px;
+    padding: 16px 0;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+.sim-wr-col {
+    flex: 1;
+    min-width: 280px;
+    background: rgba(0,15,40,.45);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 10px;
+    padding: 14px;
+}
+.sim-wr-col-title {
+    font-size: .88rem;
+    font-weight: 700;
+    color: rgba(255,215,0,.8);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+}
 
 /* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 500px) {

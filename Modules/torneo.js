@@ -84,12 +84,15 @@ const Torneo = {
                     onclick="Torneo.showSimTab('experimentacion')">🧪 Experimentación</button>
             <button class="sim-tab-btn" data-simtab="practica"
                     onclick="Torneo.showSimTab('practica')">🎴 Zona de Práctica</button>
+            <button class="sim-tab-btn" data-simtab="winrate"
+                    onclick="Torneo.showSimTab('winrate')">📊 Winrate</button>
         </div>
-        <div id="sim-mulligan-content"       style="display:none;"></div>
+        <div id="sim-mulligan-content"        style="display:none;"></div>
         <div id="sim-torneo-content"></div>
-        <div id="sim-duelo-content"          style="display:none;"></div>
+        <div id="sim-duelo-content"           style="display:none;"></div>
         <div id="sim-experimentacion-content" style="display:none;"></div>
-        <div id="sim-practica-content"       style="display:none;"></div>`;
+        <div id="sim-practica-content"        style="display:none;"></div>
+        <div id="sim-winrate-content"         style="display:none;"></div>`;
     }
     document.querySelectorAll('.sim-tab-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.simtab === this.simTab);
@@ -151,7 +154,65 @@ const Torneo = {
         const roundTabsEl = document.getElementById('torneo-round-tabs');
         if (roundTabsEl) roundTabsEl.style.display = (tab === 'matches' || tab === 'brackets') ? 'flex' : 'none';
     },
-
+    _renderSimMatchups: function () {
+        const el = document.getElementById('sim-matchups-sec');
+        if (!el) return;
+        if (!window.Matchups || !window.Deck?.name) {
+            el.innerHTML = '<p class="stats-empty" style="padding:16px">Carga un deck para ver su historial.</p>';
+            return;
+        }
+        // Reutiliza el HTML de Matchups pero sin el wrapper de deck.js
+        const list  = Matchups.getAll();
+        if (!list.length) {
+            el.innerHTML = `
+                <div class="matchup-toolbar">
+                    <button class="matchup-btn matchup-btn-add" onclick="Matchups.openAddPanel();setTimeout(()=>Torneo._renderSimMatchups(),400)">＋ Agregar enfrentamiento</button>
+                </div>
+                <p class="matchup-empty" style="padding:16px">Sin enfrentamientos registrados.</p>`;
+            return;
+        }
+        let rows = '';
+        list.forEach((m, i) => {
+            const { w, l, total } = Matchups._totals(m);
+            const pct   = total > 0 ? Math.round((w / total) * 100) : null;
+            const col   = pct === null ? 'rgba(255,255,255,0.3)' : pct >= 60 ? '#00b894' : pct >= 45 ? '#fdcb6e' : '#d63031';
+            const wr1pct = (m.wins1st||0)+(m.losses1st||0) > 0
+                ? Math.round(((m.wins1st||0)/((m.wins1st||0)+(m.losses1st||0)))*100) : null;
+            const wr2pct = (m.wins2nd||0)+(m.losses2nd||0) > 0
+                ? Math.round(((m.wins2nd||0)/((m.wins2nd||0)+(m.losses2nd||0)))*100) : null;
+            const hasDeck = m.cardData && Object.keys(m.cardData).length > 0;
+            rows += `
+            <div class="matchup-row">
+                <div class="matchup-row-main">
+                    <div class="matchup-opponent-name">${m.opponentName || '—'}</div>
+                    <div class="matchup-stats">
+                        <span class="matchup-wr" style="color:${col}">${w}W – ${l}L${pct!==null?` · ${pct}%`:''}</span>
+                        <span class="matchup-wr-detail">
+                            1ro: ${m.wins1st||0}W/${m.losses1st||0}L${wr1pct!==null?` (${wr1pct}%)`:''}
+                            &nbsp;·&nbsp;
+                            2do: ${m.wins2nd||0}W/${m.losses2nd||0}L${wr2pct!==null?` (${wr2pct}%)`:''}
+                        </span>
+                    </div>
+                    <div class="matchup-row-btns">
+                        ${hasDeck ? `<button class="matchup-btn matchup-btn-deck" onclick="Matchups.openDeckPanel(${i})">🃏 Ver Deck</button>` : ''}
+                        <button class="matchup-btn matchup-btn-edit"
+                                onclick="Matchups.openEditPanel(${i});setTimeout(()=>Torneo._renderSimMatchups(),400)">✏️</button>
+                        <button class="matchup-btn matchup-btn-del"
+                                onclick="Matchups.deleteRecord(${i});Torneo._renderSimMatchups()">✕</button>
+                    </div>
+                </div>
+                ${m.notes ? `<div class="matchup-notes-preview">${m.notes}</div>` : ''}
+            </div>`;
+        });
+        el.innerHTML = `
+            <div class="matchup-toolbar">
+                <button class="matchup-btn matchup-btn-add"
+                        onclick="Matchups.openAddPanel();setTimeout(()=>Torneo._renderSimMatchups(),400)">＋ Agregar</button>
+                <button class="matchup-btn matchup-btn-clear"
+                        onclick="Matchups.clearAll();Torneo._renderSimMatchups()">🗑 Borrar todo</button>
+            </div>
+            <div class="matchup-list">${rows}</div>`;
+    },
     showSimTab: function (tab) {
     this.simTab = tab;
     document.querySelectorAll('.sim-tab-btn').forEach(b => {
@@ -175,6 +236,18 @@ const Torneo = {
         expEl.style.display = tab === 'experimentacion' ? '' : 'none';
         if (tab === 'experimentacion' && window.Experimentacion) Experimentacion.renderInto(expEl);
     }
+    const wrEl = document.getElementById('sim-winrate-content');
+    if (wrEl) {
+        wrEl.style.display = tab === 'winrate' ? '' : 'none';
+        if (tab === 'winrate') {
+            wrEl.innerHTML = `
+                <div style="padding:16px 0;max-width:520px">
+                    <div class="sim-wr-col-title" style="margin-bottom:12px">📊 Winrate del Deck</div>
+                    <div id="winrate-sec"></div>
+                </div>`;
+            if (window.Winrate) Winrate.refreshSection();
+        }
+    }
     if (practicaEl) {
         practicaEl.style.display = tab === 'practica' ? '' : 'none';
         if (tab === 'practica' && window.ZonaPractica) ZonaPractica.renderInto(practicaEl);
@@ -186,6 +259,8 @@ const Torneo = {
             : ZonaPractica._cleanupFloatBtns();
     }
 },
+
+
     setViewRound: function (num) {
         this.viewRound = num;
         const matchEl  = document.getElementById('torneo-tab-matches');

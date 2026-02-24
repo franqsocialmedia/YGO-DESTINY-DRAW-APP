@@ -14,8 +14,20 @@ const Matchups = {
     },
 
     getAll: function () {
-        try { return JSON.parse(localStorage.getItem(this._key())) || []; }
-        catch (_) { return []; }
+        try {
+            const list = JSON.parse(localStorage.getItem(this._key())) || [];
+            // Migrar registros viejos que solo tenían wins/losses planos
+            return list.map(m => {
+                if (m.wins1st !== undefined) return m; // ya migrado
+                return {
+                    ...m,
+                    wins1st:   m.wins   || 0,
+                    losses1st: m.losses || 0,
+                    wins2nd:   0,
+                    losses2nd: 0,
+                };
+            });
+        } catch (_) { return []; }
     },
 
     save: function (list) {
@@ -26,7 +38,11 @@ const Matchups = {
     _uid: function () {
         return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     },
-
+_totals: function (m) {
+        const w = (m.wins1st||0) + (m.wins2nd||0);
+        const l = (m.losses1st||0) + (m.losses2nd||0);
+        return { w, l, total: w + l };
+    },
     // ─── RENDER DE SECCIÓN (llamado desde deck.js render) ────
     renderSection: function () {
         if (!window.Deck?.name) return '';
@@ -39,10 +55,14 @@ const Matchups = {
             rows = `<p class="matchup-empty">Sin enfrentamientos registrados aún.</p>`;
         } else {
             list.forEach((m, i) => {
-                const total = (m.wins || 0) + (m.losses || 0);
-                const pct   = total > 0 ? Math.round((m.wins / total) * 100) : null;
+                const { w, l, total } = this._totals(m);
+                const pct   = total > 0 ? Math.round((w / total) * 100) : null;
                 const col   = pct === null ? 'rgba(255,255,255,0.3)' : pct >= 60 ? '#00b894' : pct >= 45 ? '#fdcb6e' : '#d63031';
                 const hasDeck = m.cardData && Object.keys(m.cardData).length > 0;
+                const wr1pct = (m.wins1st||0)+(m.losses1st||0) > 0
+                    ? Math.round(((m.wins1st||0) / ((m.wins1st||0)+(m.losses1st||0))) * 100) : null;
+                const wr2pct = (m.wins2nd||0)+(m.losses2nd||0) > 0
+                    ? Math.round(((m.wins2nd||0) / ((m.wins2nd||0)+(m.losses2nd||0))) * 100) : null;
 
                 rows += `
                 <div class="matchup-row" id="matchup-row-${i}">
@@ -50,7 +70,12 @@ const Matchups = {
                         <div class="matchup-opponent-name">${m.opponentName || '—'}</div>
                         <div class="matchup-stats">
                             <span class="matchup-wr" style="color:${col}">
-                                ${m.wins}W – ${m.losses}L${pct !== null ? ` · ${pct}%` : ''}
+                                ${w}W – ${l}L${pct !== null ? ` · ${pct}%` : ''}
+                            </span>
+                            <span class="matchup-wr-detail">
+                                1ro: ${m.wins1st||0}W/${m.losses1st||0}L${wr1pct!==null?` (${wr1pct}%)`:''}
+                                &nbsp;·&nbsp;
+                                2do: ${m.wins2nd||0}W/${m.losses2nd||0}L${wr2pct!==null?` (${wr2pct}%)`:''}
                             </span>
                         </div>
                         <div class="matchup-row-btns">
@@ -102,10 +127,14 @@ const Matchups = {
 
         let rows = '';
         list.forEach((m, i) => {
-            const total = (m.wins || 0) + (m.losses || 0);
-            const pct   = total > 0 ? Math.round((m.wins / total) * 100) : null;
+            const { w, l, total } = this._totals(m);
+            const pct   = total > 0 ? Math.round((w / total) * 100) : null;
             const col   = pct === null ? 'rgba(255,255,255,0.3)' : pct >= 60 ? '#00b894' : pct >= 45 ? '#fdcb6e' : '#d63031';
             const hasDeck = m.cardData && Object.keys(m.cardData).length > 0;
+            const wr1pct = (m.wins1st||0)+(m.losses1st||0) > 0
+                ? Math.round(((m.wins1st||0)/((m.wins1st||0)+(m.losses1st||0)))*100) : null;
+            const wr2pct = (m.wins2nd||0)+(m.losses2nd||0) > 0
+                ? Math.round(((m.wins2nd||0)/((m.wins2nd||0)+(m.losses2nd||0)))*100) : null;
 
             rows += `
             <div class="matchup-row" id="matchup-row-${i}">
@@ -113,7 +142,12 @@ const Matchups = {
                     <div class="matchup-opponent-name">${m.opponentName || '—'}</div>
                     <div class="matchup-stats">
                         <span class="matchup-wr" style="color:${col}">
-                            ${m.wins}W – ${m.losses}L${pct !== null ? ` · ${pct}%` : ''}
+                            ${w}W – ${l}L${pct !== null ? ` · ${pct}%` : ''}
+                        </span>
+                        <span class="matchup-wr-detail">
+                            1ro: ${m.wins1st||0}W/${m.losses1st||0}L${wr1pct!==null?` (${wr1pct}%)`:''}
+                            &nbsp;·&nbsp;
+                            2do: ${m.wins2nd||0}W/${m.losses2nd||0}L${wr2pct!==null?` (${wr2pct}%)`:''}
                         </span>
                     </div>
                     <div class="matchup-row-btns">
@@ -159,18 +193,30 @@ const Matchups = {
                 <input type="text" id="mu-name" class="matchup-input"
                        placeholder="Ej: Dragon Link, Snake-Eye Fire King...">
 
-                <!-- Winrate -->
+                <!-- Resultado yendo primero -->
+                <label class="matchup-label">Yendo 1ro</label>
                 <div class="matchup-wr-row">
                     <div class="matchup-wr-field">
-                        <label class="matchup-label">Victorias</label>
-                        <input type="number" id="mu-wins" class="matchup-input matchup-input-sm"
-                               value="0" min="0">
+                        <label class="matchup-label matchup-label-sm">Victorias</label>
+                        <input type="number" id="mu-w1" class="matchup-input matchup-input-sm" value="0" min="0">
                     </div>
                     <div class="matchup-wr-field">
-                        <label class="matchup-label">Derrotas</label>
-                        <input type="number" id="mu-losses" class="matchup-input matchup-input-sm"
-                               value="0" min="0">
+                        <label class="matchup-label matchup-label-sm">Derrotas</label>
+                        <input type="number" id="mu-l1" class="matchup-input matchup-input-sm" value="0" min="0">
                     </div>
+                </div>
+                <!-- Resultado yendo segundo -->
+                <label class="matchup-label">Yendo 2do</label>
+                <div class="matchup-wr-row">
+                    <div class="matchup-wr-field">
+                        <label class="matchup-label matchup-label-sm">Victorias</label>
+                        <input type="number" id="mu-w2" class="matchup-input matchup-input-sm" value="0" min="0">
+                    </div>
+                    <div class="matchup-wr-field">
+                        <label class="matchup-label matchup-label-sm">Derrotas</label>
+                        <input type="number" id="mu-l2" class="matchup-input matchup-input-sm" value="0" min="0">
+                    </div>
+                </div>
                 </div>
 
                 <!-- Deck del oponente (opcional) -->
@@ -331,8 +377,10 @@ const Matchups = {
         const record = {
             id:           this._uid(),
             opponentName: name,
-            wins:         Math.max(0, parseInt(winsEl?.value) || 0),
-            losses:       Math.max(0, parseInt(lossesEl?.value) || 0),
+            wins1st:      Math.max(0, parseInt(document.getElementById('mu-w1')?.value) || 0),
+            losses1st:    Math.max(0, parseInt(document.getElementById('mu-l1')?.value) || 0),
+            wins2nd:      Math.max(0, parseInt(document.getElementById('mu-w2')?.value) || 0),
+            losses2nd:    Math.max(0, parseInt(document.getElementById('mu-l2')?.value) || 0),
             notes:        notesEl?.value.trim() || '',
             cardData:     this._pendingCardData || null,
             createdAt:    Date.now()
@@ -369,18 +417,32 @@ const Matchups = {
                 <input type="text" id="mu-edit-name" class="matchup-input"
                        value="${m.opponentName || ''}">
 
-                <div class="matchup-wr-row">
-                    <div class="matchup-wr-field">
-                        <label class="matchup-label">Victorias</label>
-                        <input type="number" id="mu-edit-wins" class="matchup-input matchup-input-sm"
-                               value="${m.wins || 0}" min="0">
+                <label class="matchup-label">Yendo 1ro</label>
+                    <div class="matchup-wr-row">
+                        <div class="matchup-wr-field">
+                            <label class="matchup-label matchup-label-sm">Victorias</label>
+                            <input type="number" id="mu-w1" class="matchup-input matchup-input-sm"
+                                   value="${m.wins1st || 0}" min="0">
+                        </div>
+                        <div class="matchup-wr-field">
+                            <label class="matchup-label matchup-label-sm">Derrotas</label>
+                            <input type="number" id="mu-l1" class="matchup-input matchup-input-sm"
+                                   value="${m.losses1st || 0}" min="0">
+                        </div>
                     </div>
-                    <div class="matchup-wr-field">
-                        <label class="matchup-label">Derrotas</label>
-                        <input type="number" id="mu-edit-losses" class="matchup-input matchup-input-sm"
-                               value="${m.losses || 0}" min="0">
+                    <label class="matchup-label">Yendo 2do</label>
+                    <div class="matchup-wr-row">
+                        <div class="matchup-wr-field">
+                            <label class="matchup-label matchup-label-sm">Victorias</label>
+                            <input type="number" id="mu-w2" class="matchup-input matchup-input-sm"
+                                   value="${m.wins2nd || 0}" min="0">
+                        </div>
+                        <div class="matchup-wr-field">
+                            <label class="matchup-label matchup-label-sm">Derrotas</label>
+                            <input type="number" id="mu-l2" class="matchup-input matchup-input-sm"
+                                   value="${m.losses2nd || 0}" min="0">
+                        </div>
                     </div>
-                </div>
                 ${pct !== null ? `<div class="matchup-wr-preview">Winrate actual: ${m.wins}W – ${m.losses}L · ${pct}%</div>` : ''}
 
                 <label class="matchup-label">Notas</label>

@@ -47,9 +47,11 @@ const ZonaPractica = {
     pzFilterWords:    [],
     pzFilterPanelOpen: false,
     pzFilters: {
-        cardCategory:'', attribute:'', monsterType:'', monsterSubtype:'',
-        spellSubtype:'', trapSubtype:'', level:'', linkval:'', scale:'', atk:'', def:''
-    },
+            cardCategory:'', attribute:'', monsterType:'', monsterSubtype:'',
+            spellSubtype:'', trapSubtype:'', level:'', linkval:'', scale:'', atk:'', def:'',
+            archetype: ''
+        },
+        _archetypeList: [],   // cache de arquetipos
     FILTER_DATA: {
         attributes:      ['DARK','LIGHT','EARTH','WATER','FIRE','WIND','DIVINE'],
         monsterTypes:    ['Dragon','Warrior','Spellcaster','Zombie','Fiend','Machine','Fairy',
@@ -314,6 +316,10 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                     <span id="pz-adv-summary" class="pz-adv-summary"></span>
                     <button id="pz-adv-reset-btn" class="pz-adv-reset-btn"
                             onclick="ZonaPractica._resetAdvFilters()" style="display:none">✕ Limpiar</button>
+                    <select id="pz-archetype-sel" class="pz-archetype-sel"
+                            onchange="ZonaPractica._setPzFilter('archetype',this.value)">
+                        <option value="">— cualquier carta —</option>
+                    </select>
                 </div>
                 <div id="pz-adv-panel" class="adv-filter-panel-inner" style="display:none"></div>
                 <div id="pz-search-results" class="pz-search-results">
@@ -321,6 +327,37 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                 </div>
             </div>`;
         document.body.appendChild(overlay);
+// Cargar lista de arquetipos si no está en caché
+        if (!this._archetypeList.length) {
+            fetch('https://db.ygoprodeck.com/api/v7/archetypes.php')
+                .then(r => r.json())
+                .then(data => {
+                    this._archetypeList = (data || []).map(a => a.archetype_name).sort();
+                    const sel = document.getElementById('pz-archetype-sel');
+                    if (sel) {
+                        this._archetypeList.forEach(name => {
+                            const opt = document.createElement('option');
+                            opt.value       = name;
+                            opt.textContent = name;
+                            if (name === this.pzFilters.archetype) opt.selected = true;
+                            sel.appendChild(opt);
+                        });
+                    }
+                }).catch(() => {});
+        } else {
+            // Ya están en caché, poblar el select
+            setTimeout(() => {
+                const sel = document.getElementById('pz-archetype-sel');
+                if (!sel || sel.options.length > 1) return;
+                this._archetypeList.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value       = name;
+                    opt.textContent = name;
+                    if (name === this.pzFilters.archetype) opt.selected = true;
+                    sel.appendChild(opt);
+                });
+            }, 0);
+        }
 
         const inp = document.getElementById('pz-search-input');
         inp?.focus();
@@ -425,8 +462,11 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
     _resetAdvFilters: function () {
         Object.assign(this.pzFilters, {
             cardCategory:'', attribute:'', monsterType:'', monsterSubtype:'',
-            spellSubtype:'', trapSubtype:'', level:'', linkval:'', scale:'', atk:'', def:''
+            spellSubtype:'', trapSubtype:'', level:'', linkval:'', scale:'', atk:'', def:'',
+            archetype: ''
         });
+        const sel = document.getElementById('pz-archetype-sel');
+        if (sel) sel.value = '';
         this._updateAdvSummary();
         if (this.pzFilterPanelOpen) this._renderAdvPanel();
     },
@@ -453,7 +493,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
     _hasPzAdvFilters: function () {
         const f = this.pzFilters;
         return !!(f.cardCategory||f.attribute||f.monsterType||f.monsterSubtype||
-                  f.spellSubtype||f.trapSubtype||f.level||f.linkval||f.scale||f.atk||f.def);
+                  f.spellSubtype||f.trapSubtype||f.level||f.linkval||f.scale||f.atk||f.def||f.archetype);
     },
 
     _buildApiUrl: function (term) {
@@ -476,6 +516,8 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
             params.set('type', 'Trap Card');
             if (f.trapSubtype) params.set('race', f.trapSubtype);
         }
+
+        if (this.pzFilters.archetype) params.set('archetype', this.pzFilters.archetype);
         const qs = params.toString();
         return qs ? `${this.API_URL}?${qs}` : this.API_URL;
     },

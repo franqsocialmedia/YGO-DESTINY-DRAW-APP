@@ -155,6 +155,11 @@
                 <span id="adv-filters-summary" class="adv-filters-summary"></span>
                 <button id="adv-reset-btn" class="adv-reset-btn"
                         onclick="Buscador.resetAdvancedFilters()" style="display:none">✕ Limpiar</button>
+                <select id="buscador-archetype-sel" class="buscador-archetype-sel"
+                        onchange="Buscador.advancedFilters.archetype=this.value; Buscador._updateFilterSummary(); Buscador.autoSearch();"
+                        onfocus="Buscador._loadArchetypes()">
+                    <option value="">— cualquier carta —</option>
+                </select>
             </div>
             <div id="advanced-filters-panel" class="advanced-filters-panel" style="display:none"></div>
         </div>

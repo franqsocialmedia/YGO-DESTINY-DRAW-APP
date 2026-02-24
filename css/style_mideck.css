@@ -2107,7 +2107,12 @@
     background: rgba(255,255,255,.08);
     color: rgba(241,241,241,.8);
 }
-
+.matchup-wr-detail {
+    display: block;
+    font-size: .7rem;
+    color: rgba(255,255,255,.4);
+    margin-top: 2px;
+}
 /* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 700px) {
     .engines-sidebar { flex: none; width: 100%; max-width: none; position: static; }
