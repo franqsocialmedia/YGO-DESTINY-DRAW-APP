@@ -44,22 +44,7 @@ const ZonaPractica = {
     },
     hand:[], main:[], extra:[], gy:[], banish:[], other:[],
 
-    // ── Player B ──────────────────────────────────────────────────
-    _b: {
-        field: {
-            'E':null,'F':null,'D':null,
-            '11':null,'12':null,'13':null,'14':null,'15':null,
-            '16':null,'17':null,'18':null,'19':null,'20':null
-        },
-        hand:[], main:[], extra:[], gy:[], banish:[], other:[],
-        lp: 8000,
-        _tokenCounter: 0,
-        _activeDeckName: null,
-    },
-    _duelMode: false,          // true = modo 2 jugadores activo
-    _activePlayer: 'A',        // 'A' | 'B' (qué campo está en pantalla)
-    _turnPlayer: 'A',          // quién tiene el turno
-    _waitingInteraction: false, // flag "Algo ahí?" activo
+
 
     // ─── Filtros mini-buscador (independientes de Buscador) ───────
     pzFilterWords:    [],
@@ -125,13 +110,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                     <button class="pz-ctrl-btn pz-ctrl-clear"
                             onclick="ZonaPractica.clearBoard()">🗑 Limpiar</button>
                 </div>
-                <div class="pz-player-bar">
-                                    <button class="pz-player-switch" id="pz-player-switch"
-                                            onclick="ZonaPractica._toggleDuelMode()">
-                                        <span class="pz-switch-dot"></span>
-                                        <span class="pz-switch-label" id="pz-switch-label">Jugador B</span>
-                                    </button>
-                                </div>
+
                 <div class="pz-lp-bar">
                     <span class="pz-lp-label">❤️ LP</span>
                     <span class="pz-lp-val" id="pz-lp-val">8,000</span>
@@ -246,8 +225,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                             onclick="ZonaPractica.shuffleHand()">🔀</button>
                     <button class="pz-mini-btn" title="Robar carta"
                             onclick="ZonaPractica.drawCard()">⬆</button>
-                    <button class="pz-interact-btn" id="pz-interact-btn-A"
-                            title="Interacción" onclick="ZonaPractica._onInteractBtn('A')">⚡</button>
+
                 </div>
 
                 <!-- Main Deck -->
@@ -289,124 +267,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                 <button class="pz-action-btn" onclick="ZonaPractica.rollDice()">🎲 Dados</button>
                 <button class="pz-action-btn" onclick="ZonaPractica.createToken()">🔘 Token</button>
             </div>
-            <!-- Campo del Jugador B (oculto por defecto) -->
-            <div id="pz-board-b" style="display:none">
-
-                <div class="pz-lp-bar pz-lp-bar-b">
-                    <span class="pz-lp-label">❤️ LP-B</span>
-                    <span class="pz-lp-val" id="pz-lp-val-b">8,000</span>
-                    <div class="pz-lp-ops">
-                        <button class="pz-lp-btn pz-lp-gain"  onclick="ZonaPractica._openPzLP('gain','B')">＋ Gain</button>
-                        <button class="pz-lp-btn pz-lp-dmg"   onclick="ZonaPractica._openPzLP('damage','B')">－ Damage</button>
-                        <button class="pz-lp-btn pz-lp-reset" onclick="ZonaPractica._resetPzLP('B')">↺ 8000</button>
-                    </div>
-                </div>
-
-                <div class="pz-controls-bar pz-controls-bar-b">
-                    <button class="pz-ctrl-btn pz-ctrl-search"
-                            onclick="ZonaPractica.openCardSearch('B')">🔍 Buscar Carta</button>
-                    <button class="pz-ctrl-btn pz-ctrl-deck"
-                            onclick="ZonaPractica.openDeckSelector('B')">🃏 Usar Deck</button>
-                    <button class="pz-ctrl-btn"
-                            onclick="ZonaPractica._loadRandomDeck()">🎲 Deck Aleatorio</button>
-                    <button class="pz-ctrl-btn pz-ctrl-clear"
-                            onclick="ZonaPractica.clearBoard('B')">🗑 Limpiar</button>
-                </div>
-
-                <div class="pz-board-outer pz-board-b" id="pz-board-outer-b">
-
-                    <div class="pz-field-area-wrap">
-                        <div class="pz-field-other-side">
-                            <div class="pz-multi-zone pz-other-zone pz-side-zone" id="pz-zone-other-b"
-                                onclick="ZonaPractica._onMultiZoneClick(event,'other','B')"></div>
-                            <div class="pz-field-side-btns">
-                                <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('other','B')">👁</button>
-                                <span class="pz-row-label">Other</span>
-                            </div>
-                        </div>
-                        <div class="pz-field-grid-wrap">
-                            <div class="pz-field-grid">
-                                <div class="pz-zone pz-zone-emz pz-fg-emz-a" id="pz-zone-E" data-zone="E"
-                                     onclick="ZonaPractica.onZoneClick('E','B')"><span class="pz-zone-lbl">E</span></div>
-                                <div class="pz-logo-cell pz-fg-logo">
-                                    <div class="pz-logo-fallback">⚔️</div>
-                                </div>
-                                <div class="pz-zone pz-zone-emz pz-fg-emz-b" id="pz-zone-F" data-zone="F"
-                                     onclick="ZonaPractica.onZoneClick('F','B')"><span class="pz-zone-lbl">F</span></div>
-
-                                <div class="pz-zone pz-zone-field pz-fg-c" id="pz-zone-D" data-zone="D"
-                                     onclick="ZonaPractica.onZoneClick('D','B')"><span class="pz-zone-lbl">D</span></div>
-                                ${[11,12,13,14,15].map(n=>`
-                                <div class="pz-zone pz-zone-monster" id="pz-zone-${n}" data-zone="${n}"
-                                     onclick="ZonaPractica.onZoneClick('${n}','B')"><span class="pz-zone-lbl">${n}</span></div>`).join('')}
-
-                                <div class="pz-fg-st-spacer"></div>
-                                <div class="pz-zone pz-zone-pendulum" id="pz-zone-16" data-zone="16"
-                                     onclick="ZonaPractica.onZoneClick('16','B')"><span class="pz-zone-lbl">16</span></div>
-                                ${[17,18,19].map(n=>`
-                                <div class="pz-zone pz-zone-st" id="pz-zone-${n}" data-zone="${n}"
-                                     onclick="ZonaPractica.onZoneClick('${n}','B')"><span class="pz-zone-lbl">${n}</span></div>`).join('')}
-                                <div class="pz-zone pz-zone-pendulum" id="pz-zone-20" data-zone="20"
-                                     onclick="ZonaPractica.onZoneClick('20','B')"><span class="pz-zone-lbl">20</span></div>
-                            </div>
-                        </div>
-                        <div class="pz-field-side">
-                            <div class="pz-field-side-zone">
-                                <div class="pz-multi-zone pz-banish-zone pz-side-zone" id="pz-zone-banish-b"
-                                     onclick="ZonaPractica._onMultiZoneClick(event,'banish','B')"></div>
-                                <div class="pz-field-side-btns">
-                                    <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('banish','B')">👁</button>
-                                    <span class="pz-row-label">Banish</span>
-                                </div>
-                            </div>
-                            <div class="pz-field-side-zone">
-                                <div class="pz-multi-zone pz-gy-zone pz-side-zone" id="pz-zone-gy-b"
-                                     onclick="ZonaPractica._onMultiZoneClick(event,'gy','B')"></div>
-                                <div class="pz-field-side-btns">
-                                    <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('gy','B')">👁</button>
-                                    <span class="pz-row-label">GY</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="pz-zone-row pz-hand-row">
-                        <span class="pz-row-label">Hand</span>
-                        <div class="pz-multi-zone pz-hand-zone" id="pz-zone-hand-b"
-                             onclick="ZonaPractica._onMultiZoneClick(event,'hand','B')"></div>
-                        <button class="pz-mini-btn" onclick="ZonaPractica.toggleHideZone('hand','B')">🙈</button>
-                        <button class="pz-mini-btn" onclick="ZonaPractica.shuffleHand('B')">🔀</button>
-                        <button class="pz-mini-btn" onclick="ZonaPractica.drawCard('B')">⬆</button>
-                        <button class="pz-interact-btn" id="pz-interact-btn-B"
-                                title="Interacción" onclick="ZonaPractica._onInteractBtn('B')">⚡</button>
-                    </div>
-
-                    <div class="pz-zone-row pz-deck-row">
-                        <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('main','B')">👁</button>
-                        <button class="pz-mini-btn" onclick="ZonaPractica._flipAllInZone('main','B')">🔄</button>
-                        <span class="pz-row-label">Main</span>
-                        <div class="pz-multi-zone pz-main-zone" id="pz-zone-main-b"
-                             onclick="ZonaPractica._onMultiZoneClick(event,'main','B')"></div>
-                    </div>
-                    <div class="pz-zone-row pz-deck-row">
-                        <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('extra','B')">👁</button>
-                        <button class="pz-mini-btn" onclick="ZonaPractica._flipAllInZone('extra','B')">🔄</button>
-                        <span class="pz-row-label">Extra</span>
-                        <div class="pz-multi-zone pz-extra-zone" id="pz-zone-extra-b"
-                             onclick="ZonaPractica._onMultiZoneClick(event,'extra','B')"></div>
-                    </div>
-                </div>
-
-                <div class="pz-action-bar pz-action-bar-b">
-                    <button class="pz-action-btn" onclick="ZonaPractica.shuffleDeck('B')">🔀 Barajar Deck</button>
-                    <button class="pz-action-btn" onclick="ZonaPractica.drawCard('B')">⬆ Robar</button>
-                    <button class="pz-action-btn" onclick="ZonaPractica.toggleChangePosition()">↕ Cambiar Pos.</button>
-                    <button class="pz-action-btn" onclick="ZonaPractica.saveGameState()">📌 Marcar Estado</button>
-                    <button class="pz-action-btn" onclick="ZonaPractica.toggleHideCards('B')">🙈 Ocultar Cartas</button>
-                    <button class="pz-action-btn" onclick="ZonaPractica.openLog()">📋 Log</button>
-                    <button class="pz-action-btn" onclick="ZonaPractica.createToken('B')">🔘 Token</button>
-                </div>
-            </div>`;
+`;
     },
 
     // ═══════════════════════════════════════════════════════
@@ -415,11 +276,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
    setPhase: function (p) {
         if (this.phase === 'end' && p === 'draw') {
             this.turnNumber++;
-            if (this._duelMode) {
-                this._advanceTurn();
-            } else {
-                this._addLog(`--- Turno: ${this.turnNumber} ---`);
-            }
+            this._addLog(`--- Turno: ${this.turnNumber} ---`);
         } else {
             const prev = this._phaseLabel(this.phase);
             const next = this._phaseLabel(p);
@@ -430,178 +287,9 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
             btn.classList.toggle('pz-phase-active', btn.dataset.phase === p);
         });
     },
-// ═══════════════════════════════════════════════════════
-    // MODO DUELO — JUGADOR B
-    // ═══════════════════════════════════════════════════════
-    _toggleDuelMode: function () {
-        const boardB  = document.getElementById('pz-board-b');
-        const label   = document.getElementById('pz-switch-label');
-        const btn     = document.getElementById('pz-player-switch');
 
-        if (!this._duelMode) {
-            // Primera activación: mostrar campo B, jugador B activo
-            // Convertir logo cell en botón de interacción
-            const logoCell = document.querySelector('.pz-logo-cell.pz-fg-logo');
-            if (logoCell) {
-                logoCell.innerHTML = '';
-                logoCell.className = 'pz-logo-cell pz-fg-logo pz-logo-interact';
-                logoCell.setAttribute('onclick', "ZonaPractica._onInteractBtn('A')");
-                logoCell.innerHTML = `<span id="pz-logo-interact-label" class="pz-logo-interact-label">¿Alguna<br>Interacción?</span>`;
-            }
-            // Ocultar botón original de interacción de la zona hand (si existe)
-            const origBtn = document.getElementById('pz-interact-btn-A');
-            if (origBtn) origBtn.style.display = 'none';
-            this._duelMode    = true;
-            this._activePlayer = 'B';
-            btn?.classList.add('pz-switch-on');
-            if (label)  label.textContent = 'Jugador A';
-            if (boardB) boardB.style.display = '';
-            this._renderAllZonesB();
-        } else {
-            // Ya activo: el switch alterna el jugador activo para el Log
-            this._activePlayer = this._activePlayer === 'B' ? 'A' : 'B';
-            if (label) label.textContent = this._activePlayer === 'B' ? 'Jugador A' : 'Jugador B';
-        }
-        this._updateActivePlayerUI();
-    },
-    _updateActivePlayerUI: function () {
-        const isB = this._duelMode;
-        // Bordes de campo activo
-        const boardA = document.getElementById('pz-board-outer');
-        const boardB = document.getElementById('pz-board-outer-b');
-        
-        if (boardA) boardA.classList.toggle('pz-board-active-turn', this._turnPlayer === 'A');
-        if (boardB) boardB.classList.toggle('pz-board-active-turn', this._turnPlayer === 'B');
-        // Botón de interacción — activo solo si es el turno del jugador correspondiente
-        // Botón interacción A (ahora puede ser la logo cell)
-        const btnA = document.getElementById('pz-interact-btn-A') ||
-                     document.querySelector('.pz-logo-interact');
-        if (btnA) {
-            btnA.classList.toggle('pz-interact-active', this._turnPlayer === 'A');
-            btnA.classList.toggle('pz-interact-waiting', this._waitingInteraction && this._turnPlayer !== 'A');
-        }
-        const btnB = document.getElementById('pz-interact-btn-B');
-        if (btnA) {
-            btnA.classList.toggle('pz-interact-active', this._turnPlayer === 'A');
-            btnA.classList.toggle('pz-interact-waiting', this._waitingInteraction && this._turnPlayer !== 'A');
-        }
-        if (btnB && isB) {
-            btnB.classList.toggle('pz-interact-active', this._turnPlayer === 'B');
-            btnB.classList.toggle('pz-interact-waiting', this._waitingInteraction && this._turnPlayer !== 'B');
-        }
-    },
 
-    _onInteractBtn: function (player) {
-        if (!this._duelMode) return;
-        const isTurnPlayer = this._turnPlayer === player;
-
-        if (isTurnPlayer) {
-            // El jugador en turno pregunta "¿Algo ahí?"
-            this._waitingInteraction = true;
-            this._addLog(`<span style="color:#e17055;font-weight:700">¿Algo ahí?</span>`);
-            this._updateActivePlayerUI();
-        } else {
-            // El jugador que no es del turno responde
-            if (this._chainCounter > 0) {
-                // Hay cadena activa → "¿Algo ahí?" del lado contrario
-                this._addLog(`<span style="color:#e17055;font-weight:700">¿Algo ahí?</span>`);
-            } else {
-                // Sin cadena → Prosigue!
-                this._waitingInteraction = false;
-                this._addLog(`<span class="pz-log-prosigue">✊ ¡Prosigue!</span>`);
-                this._updateActivePlayerUI();
-            }
-        }
-    },
-
-    // Cambio de turno manual ahora considera el modo duelo
-    _advanceTurn: function () {
-        if (this._duelMode) {
-            this._turnPlayer = this._turnPlayer === 'A' ? 'B' : 'A';
-            this._waitingInteraction = false;
-            // Ocultar cartas del jugador que pasa a turno
-            if (this._turnPlayer === 'A') {
-                this.cardsHidden = true;
-                const btn = document.getElementById('pz-btn-hide');
-                if (btn) btn.classList.add('pz-hide-active');
-            } else {
-                this._bHideCards = true;
-            }
-            this._addLog(`--- Turno: ${this.turnNumber} (Jugador ${this._turnPlayer}) ---`);
-            this._renderAllZones();
-            this._renderAllZonesB();
-            this._updateActivePlayerUI();
-        }
-    },
-
-    // ─── Deck Aleatorio para Jugador B ───────────────────────────
-    _loadRandomDeck: function () {
-        const saved = window.Deck ? Deck.getSavedDecks() : [];
-        let meta = [];
-        try {
-            const raw = localStorage.getItem('yugioh_meta_decks');
-            if (raw) Object.values(JSON.parse(raw)).forEach(f => (f.decks||[]).forEach(d => meta.push(d)));
-        } catch (_) {}
-        const pool = [...saved, ...meta];
-        if (!pool.length) { this._showToast('No hay decks disponibles.', 2000); return; }
-        const dk = pool[Math.floor(Math.random() * pool.length)];
-        this._loadDeckIntoB(dk);
-    },
-
-    _loadDeckIntoB: function (dk) {
-        if (!dk) return;
-        const cards = dk.cards || {};
-        const b = this._b;
-        b.hand=[]; b.gy=[]; b.banish=[]; b.other=[];
-        Object.keys(b.field).forEach(k => b.field[k] = null);
-        const main=[], extra=[];
-        Object.values(cards).forEach(item => {
-            const qty  = item.qty || 1;
-            const card = item.data || item;
-            for (let i=0; i<qty; i++) {
-                const entry = { card, faceUp: false, rotation: 0, _materials: [] };
-                (item.location === 'extra' ? extra : main).push(entry);
-            }
-        });
-        for (let i=main.length-1;i>0;i--) {
-            const j=Math.floor(Math.random()*(i+1));
-            [main[i],main[j]]=[main[j],main[i]];
-        }
-        b.main=main; b.extra=extra;
-        b._activeDeckName = dk.name || null;
-        this._addLog(`Jugador B: Deck cargado — ${dk.name || 'aleatorio'}`);
-        this._renderAllZonesB();
-        this._showToast(`✅ Deck de B: ${dk.name || 'aleatorio'}`, 1800);
-        if (player === 'B') {
-            this._loadDeckIntoB({ name: dk.name, cards: dk.cards || {} });
-            return;
-        }
-    },
-
-    // ─── Render de zonas del Jugador B ───────────────────────────
-    _getZoneIdB: function (zone) {
-        const sideSuffix = { hand:'hand-b', main:'main-b', extra:'extra-b', gy:'gy-b', banish:'banish-b', other:'other-b' };
-        return sideSuffix[zone] ? `pz-zone-${sideSuffix[zone]}` : `pz-zone-${zone}`;
-    },
-
-    _renderAllZonesB: function () {
-        const b = this._b;
-        // Zonas multi
-        ['hand','main','extra','gy','banish','other'].forEach(z => {
-            const el = document.getElementById(this._getZoneIdB(z));
-            if (!el) return;
-            this._renderZoneInEl(el, b[z], z, 'B');
-        });
-        // Zonas de campo
-        ['E','F','D','11','12','13','14','15','16','17','18','19','20'].forEach(z => {
-            this._renderFieldZoneB(z);
-        });
-    },
-
-    _renderZoneInEl: function (el, cards, zoneName, player) {
-        // Reutiliza exactamente la misma lógica que _renderZone
-        // Temporalmente asigna la zona al estado B para usar _renderZone
-        const isB    = player === 'B';
+    _renderZoneInEl: function (el, cards, zoneName) {
         const isHand = zoneName === 'hand';
         const isBanish = zoneName === 'banish';
         el.innerHTML = '';
@@ -613,9 +301,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
         const avail  = (el.getBoundingClientRect().width || el.offsetWidth || 280) - CARD_W;
         const gap    = Math.max(minGap, Math.min(maxGap, n > 1 ? avail / (n - 1) : maxGap));
         const BACK   = this.CARD_BACK;
-        const hideCards = isB ? (this._bHideCards || false) : this.cardsHidden;
-        const hideHand  = isB ? false : (this.hiddenHand && isHand);
-        const hiddenZone = hideCards || (isHand && hideHand);
+        const hiddenZone = this.cardsHidden || (isHand && this.hiddenHand);
 
         cards.forEach((entry, i) => {
             const slot = document.createElement('div');
@@ -633,36 +319,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
         });
     },
 
-    _renderFieldZoneB: function (zone) {
-        const el = document.getElementById(`pz-zone-${zone}`);
-        if (!el) return;
-        el.querySelector('.pz-card-img')?.remove();
-        el.querySelector('.pz-chain-badge')?.remove();
-        el.querySelector('.pz-xyz-stack')?.remove();
-        el.querySelector('.pz-xyz-count-badge')?.remove();
-        const entry = this._b.field[zone];
-        if (!entry?.card) return;
-        const img = document.createElement('img');
-        img.className = 'pz-card-img';
-        img.src = entry.faceUp ? (entry.card?.card_images?.[0]?.image_url_small || this.CARD_BACK) : this.CARD_BACK;
-        img.onerror = () => { img.src = this.CARD_BACK; };
-        if (entry.rotation) img.style.transform = `rotate(${entry.rotation}deg)`;
-        el.insertBefore(img, el.querySelector('.pz-zone-lbl'));
-    },
-
-    // ─── Helpers para despachar al jugador correcto ───────────────
-    _bState: function (player) {
-        return (player === 'B') ? this._b : null;
-    },
-
-    _getMultiArrayFor: function (zone, player) {
-        const st = player === 'B' ? this._b : this;
-        return st[zone] || [];
-    },
-
-    _logPrefix: function () {
-        return (this._duelMode && this._activePlayer === 'B') ? 'Jugador B: ' : '';
-    },
+    // ─── Helpers ──────────────────────────────────────────────────
     // ═══════════════════════════════════════════════════════
     // BUSCAR CARTA — con filtros avanzados + límite 100
     // ═══════════════════════════════════════════════════════
@@ -1071,8 +728,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
     // ═══════════════════════════════════════════════════════
     // USAR DECK
     // ═══════════════════════════════════════════════════════
-    openDeckSelector: function (player) {
-        const target = player || 'A';
+    openDeckSelector: function () {
         document.getElementById('pz-deck-overlay')?.remove();
         const saved   = window.Deck    ? Deck.getSavedDecks() : [];
         const engines = window.Engines ? Engines.getAll()     : [];
@@ -1093,7 +749,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                     const cover = as ? (as.data?.card_images?.[0]?.image_url_small || this.CARD_BACK) : this.CARD_BACK;
                     const mN    = Object.values(cards).filter(c=>c.location==='main').reduce((s,c)=>s+c.qty,0);
                     const eN    = Object.values(cards).filter(c=>c.location==='extra').reduce((s,c)=>s+c.qty,0);
-                    return `<div class="pz-ds-item" onclick="ZonaPractica._loadDeck('${type}',${i},'${target}')">
+                    return `<div class="pz-ds-item" onclick="ZonaPractica._loadDeck('${type}',${i})">
                         <img src="${cover}" class="pz-ds-thumb" onerror="this.src='${this.CARD_BACK}'">
                         <div class="pz-ds-info">
                             <div class="pz-ds-name">${name}</div>
@@ -1126,32 +782,13 @@ overlay.innerHTML = `
         document.body.appendChild(overlay);
     },
 
-    _loadDeck: function (type, indexStr, player) {
+    _loadDeck: function (type, indexStr) {
     const src = this._dsCache[type];
     const dk  = src?.[parseInt(indexStr)];
     if (!dk) return;
     const cards = dk.cards || {};
-    // Solo limpiar estado de A si no es carga para B
-    if (player !== 'B') {
     this._resetState();
     this.logEntries    = [];
-    this.gameStates    = [];
-    this._chainCounter = 0;
-    this._chainedCards = [];
-    this._tokenCounter = 0;
-    this.lp = 8000;
-    const lpEl = document.getElementById('pz-lp-val');
-    if (lpEl) lpEl.textContent = '8,000';
-    document.getElementById('pz-chain-resolve-btn')?.remove();
-    document.getElementById('pz-log-panel')?.remove();
-    document.getElementById('pz-nav-panel')?.remove();
-    const swBtn = document.getElementById('pz-sw-toggle-btn');
-    if (swBtn) swBtn.style.display = 'none';
-    if (this.statusWidgetVisible) {
-        this.statusWidgetVisible = false;
-        document.getElementById('pz-status-widget')?.remove();
-    }
-    } // fin if player !== 'B'
     this.gameStates    = [];
     this._chainCounter = 0;
     this._chainedCards = [];
@@ -1181,16 +818,6 @@ overlay.innerHTML = `
         for (let i=main.length-1; i>0; i--) {
             const j = Math.floor(Math.random()*(i+1));
             [main[i],main[j]] = [main[j],main[i]];
-        }
-        if (player === 'B') {
-            this._b.main=main; this._b.extra=extra; this._b.other=side;
-            this._b.lp = 8000;
-            const lpElB = document.getElementById('pz-lp-val-b');
-            if (lpElB) lpElB.textContent = '8,000';
-            this._addLog(`Jugador B: Deck — ${dk.name||'(sin nombre)'} — Main:${main.length} Extra:${extra.length}`);
-            document.getElementById('pz-deck-overlay')?.remove();
-            this._renderAllZonesB();
-            return;
         }
         this.main=main; this.extra=extra; this.other=side;
         this._addLog(`Deck: ${dk.name||'(sin nombre)'} — Main:${main.length} Extra:${extra.length} Side→Other:${side.length}`);
@@ -1255,30 +882,22 @@ overlay.innerHTML = `
     // ═══════════════════════════════════════════════════════
     // INTERACCIÓN — ZONAS MONO (CAMPO PÚBLICO)
     // ═══════════════════════════════════════════════════════
-    onZoneClick: function (zone, player) {
-        const pl  = player || 'A';
-        const isB = pl === 'B';
-        const fieldSrc = isB ? this._b.field : this.field;
-
-        if (this._activeMove) { this._completeMoveToField(zone, pl); return; }
-
+    onZoneClick: function (zone) {
+        if (this._activeMove) { this._completeMoveToField(zone); return; }
         if (this.changePositionMode) {
-            const entry = fieldSrc[zone];
+            const entry = this.field[zone];
             if (entry?.card) {
                 const pos = this._cyclePosition(entry, zone);
-                const prefix = isB ? 'Jugador B: ' : 'Jugador A: ';
-                this._addLog(`${prefix}${entry.card.name}: ${pos}`, entry.card);
-                if (isB) this._renderFieldZoneB(zone);
-                else     this._renderFieldZone(zone);
+                this._addLog(`${entry.card.name}: ${pos}`, entry.card);
+                this._renderFieldZone(zone);
             }
             return;
         }
-        if (!fieldSrc[zone]) return;
-        this._showZoneMenu(zone, null, 'field', pl);
+        if (!this.field[zone]) return;
+        this._showZoneMenu(zone, null, 'field');
     },
 
-    _showZoneMenu: function (zone, slotIndex, zoneType, player) {
-        const pl = player || 'A';
+    _showZoneMenu: function (zone, slotIndex, zoneType) {
     // Si hay un menú activo en esta misma zona, solo cerrarlo
     const existing = document.getElementById('pz-zone-menu-active');
     if (existing) {
@@ -1300,9 +919,9 @@ overlay.innerHTML = `
     menu.id = 'pz-zone-menu-active';
     menu.innerHTML = `
         <button class="pz-zmenu-btn pz-zmenu-ver"
-                onclick="ZonaPractica._zmView('${zone}',${slotIndex},event,'${pl}')">Ver</button>
+                onclick="ZonaPractica._zmView('${zone}',${slotIndex},event)">Ver</button>
         <button class="pz-zmenu-btn pz-zmenu-accion"
-                onclick="ZonaPractica._zmShowAction('${zone}',${slotIndex},'${zoneType}',event,'${pl}')">Acción</button>`;
+                onclick="ZonaPractica._zmShowAction('${zone}',${slotIndex},'${zoneType}',event)">Acción</button>`;
     anchor.appendChild(menu);
 
     const close = (e) => {
@@ -1318,15 +937,14 @@ overlay.innerHTML = `
         document.querySelectorAll('.pz-zone-menu, .pz-action-submenu').forEach(m => m.remove());
     },
 
-    _zmView: function (zone, slotIndex, e, player) {
+    _zmView: function (zone, slotIndex, e) {
         e?.stopPropagation();
         this._closeZoneMenus();
-        const isB = player === 'B';
         let entry = null;
         if (slotIndex === null || slotIndex === 'null' || slotIndex === undefined) {
-            entry = (isB ? this._b.field : this.field)[zone];
+            entry = this.field[zone];
         } else {
-            entry = (isB ? this._getMultiArrayB(zone) : this._getMultiArray(zone))[parseInt(slotIndex)];
+            entry = this._getMultiArray(zone)[parseInt(slotIndex)];
         }
         const card = entry?.card;
         if (!card) return;
@@ -1363,8 +981,7 @@ overlay.innerHTML = `
         box.appendChild(panel);
     },
 
-    _zmShowAction: function (zone, slotIndex, zoneType, e, player) {
-        const pl = player || 'A';
+    _zmShowAction: function (zone, slotIndex, zoneType, e) {
         e?.stopPropagation();
         this._closeZoneMenus();
         const elId = `pz-zone-${zone}`;
@@ -1525,24 +1142,21 @@ overlay.innerHTML = `
         // ═══════════════════════════════════════════════════════
         // TOKEN
         // ═══════════════════════════════════════════════════════
-      createToken: function (player) {
-        const b = player === 'B' ? this._b : null;
-        const counter = b ? ++b._tokenCounter : ++this._tokenCounter;
-            const tokenCard = {
-                id:   `token_${counter}`,
-                name: `Token ${counter}`,
-                type: 'Token',
-                desc: 'Token',
-                card_images: [{ image_url_small: 'https://images.ygoprodeck.com/images/cards_small/60764582.jpg', image_url: 'https://images.ygoprodeck.com/images/cards/60764582.jpg' }],
-                _isToken: true
-            };
-            (b ? b.other : this.other).push({ card: tokenCard, faceUp: true, rotation: 0, _isToken: true });
-            if (b) this._renderAllZonesB(); else this._renderZone('other');
-            // No se registra en Log por diseño
-            const prefix = b ? 'Jugador B: ' : '';
-            this._addLog(`${prefix}Invocación de Token — Token ${counter}`);
-            this._showToast(`🔘 Token ${counter} creado`, 1200);
-        },
+      createToken: function () {
+        const counter = ++this._tokenCounter;
+        const tokenCard = {
+            id:   `token_${counter}`,
+            name: `Token ${counter}`,
+            type: 'Token',
+            desc: 'Token',
+            card_images: [{ image_url_small: 'https://images.ygoprodeck.com/images/cards_small/60764582.jpg', image_url: 'https://images.ygoprodeck.com/images/cards/60764582.jpg' }],
+            _isToken: true
+        };
+        this.other.push({ card: tokenCard, faceUp: true, rotation: 0, _isToken: true });
+        this._renderZone('other');
+        this._addLog(`Invocación de Token — Token ${counter}`);
+        this._showToast(`🔘 Token ${counter} creado`, 1200);
+    },
 
     // ═══════════════════════════════════════════════════════
     // DESCARGAR LOG
@@ -1588,8 +1202,7 @@ overlay.innerHTML = `
     // ═══════════════════════════════════════════════════════
     // MODO MOVER
     // ═══════════════════════════════════════════════════════
-   _zmStartMove: function (zone, slotIndex, zoneType, e, player) {
-        const pl = player || 'A';
+   _zmStartMove: function (zone, slotIndex, zoneType, e) {
         e?.stopPropagation();
         this._closeZoneMenus();
         this._activeMove = {
@@ -1743,20 +1356,15 @@ _showDetachMenu: function (zone, e) {
     };
     setTimeout(() => document.addEventListener('click', close, true), 50);
 },
-    _completeMoveToField: function (targetZone, player) {
-        const mv  = this._activeMove;
+    _completeMoveToField: function (targetZone) {
+        const mv = this._activeMove;
         if (!mv) return;
-        const isB = player === 'B';
-        const fieldSrc = isB ? this._b.field : this.field;
-
         let entry = mv.sourceType === 'field'
-            ? fieldSrc[mv.sourceZone]
-            : (isB ? this._getMultiArrayB(mv.sourceZone) : this._getMultiArray(mv.sourceZone))[mv.sourceSlot];
+            ? this.field[mv.sourceZone]
+            : this._getMultiArray(mv.sourceZone)[mv.sourceSlot];
         if (!entry) { this._cancelMoveMode(); return; }
-
-        // Si zona destino ocupada: acoplar si es overlay zone (solo Player A por ahora)
-        if (fieldSrc[targetZone]) {
-            if (!isB && this.OVERLAY_ZONES.includes(String(targetZone))) {
+        if (this.field[targetZone]) {
+            if (this.OVERLAY_ZONES.includes(String(targetZone))) {
                 if (mv.sourceType === 'field') this.field[mv.sourceZone] = null;
                 else this._getMultiArray(mv.sourceZone).splice(mv.sourceSlot, 1);
                 this._attachMaterial(targetZone, entry, mv.sourceZone);
@@ -1767,23 +1375,20 @@ _showDetachMenu: function (zone, e) {
             }
             return;
         }
-
-        if (mv.sourceType === 'field') fieldSrc[mv.sourceZone] = null;
-        else (isB ? this._getMultiArrayB(mv.sourceZone) : this._getMultiArray(mv.sourceZone)).splice(mv.sourceSlot, 1);
-
-        fieldSrc[targetZone] = { ...entry, _materials: entry._materials || [], faceUp: true };
-        const prefix = isB ? 'Jugador B: ' : 'Jugador A: ';
-        this._addLog(`${prefix}${entry.card.name} → Zona ${targetZone}`, entry.card);
+        if (mv.sourceType === 'field') this.field[mv.sourceZone] = null;
+        else this._getMultiArray(mv.sourceZone).splice(mv.sourceSlot, 1);
+        this.field[targetZone] = { ...entry, _materials: entry._materials || [], faceUp: true };
+        this._addLog(`${entry.card.name} → Zona ${targetZone}`, entry.card);
         this._cancelMoveMode();
-        if (isB) this._renderAllZonesB(); else this._renderAllZones();
+        this._renderAllZones();
     },
 
-    _onMultiZoneClick: function (e, zone, player) {
+    _onMultiZoneClick: function (e, zone) {
         const slot = e.target.closest('.pz-card-slot');
         if (this._activePlacement) { this._cancelPlacement(); return; }
         if (this._activeMove) {
             const idx = slot ? Array.from(slot.parentElement.children).indexOf(slot) : undefined;
-            this._completeMoveToMulti(zone, idx, player);
+            this._completeMoveToMulti(zone, idx);
             return;
         }
         // Modo cambiar posición en multi-zona
@@ -1801,47 +1406,40 @@ _showDetachMenu: function (zone, e) {
         if (!slot) return;
         e.stopPropagation();
         const idx = Array.from(slot.parentElement.children).indexOf(slot);
-        this._showZoneMenu(zone, idx, 'multi', player);
+        this._showZoneMenu(zone, idx, 'multi');
     },
 
-    _completeMoveToMulti: function (targetZone, targetSlot, player) {
-        const mv  = this._activeMove;
+    _completeMoveToMulti: function (targetZone, targetSlot) {
+        const mv = this._activeMove;
         if (!mv) return;
-        const isB = player === 'B';
-        const fieldSrc = isB ? this._b.field : this.field;
         let entry = mv.sourceType === 'field'
-            ? fieldSrc[mv.sourceZone]
-            : (isB ? this._getMultiArrayB(mv.sourceZone) : this._getMultiArray(mv.sourceZone))[mv.sourceSlot];
+            ? this.field[mv.sourceZone]
+            : this._getMultiArray(mv.sourceZone)[mv.sourceSlot];
         if (!entry) { this._cancelMoveMode(); return; }
-        // Token que va a Hand/GY/Banish → se destruye
         if (entry._isToken && ['hand','gy','banish'].includes(targetZone)) {
-            if (mv.sourceType === 'field') fieldSrc[mv.sourceZone] = null;
-            else (isB ? this._getMultiArrayB(mv.sourceZone) : this._getMultiArray(mv.sourceZone)).splice(mv.sourceSlot, 1);
+            if (mv.sourceType === 'field') this.field[mv.sourceZone] = null;
+            else this._getMultiArray(mv.sourceZone).splice(mv.sourceSlot, 1);
             const tNum = entry.card?.name?.replace('Token ','') || '';
             this._addLog(`Token ${tNum} desaparece`);
             this._cancelMoveMode();
             this._renderAllZones();
             return;
         }
-
-        // Desacoplar materiales antes de mover a zona multi (no acoplable)
         if (entry._materials?.length) {
             this._detachAllMaterials(null, entry);
         }
-        if (mv.sourceType === 'field') fieldSrc[mv.sourceZone] = null;
-        else (isB ? this._getMultiArrayB(mv.sourceZone) : this._getMultiArray(mv.sourceZone)).splice(mv.sourceSlot, 1);
+        if (mv.sourceType === 'field') this.field[mv.sourceZone] = null;
+        else this._getMultiArray(mv.sourceZone).splice(mv.sourceSlot, 1);
         const entryClean = { ...entry, _materials: [] };
-        const arr = isB ? this._getMultiArrayB(targetZone) : this._getMultiArray(targetZone);
+        const arr = this._getMultiArray(targetZone);
         (targetSlot !== undefined && targetSlot < arr.length)
             ? arr.splice(targetSlot, 0, entryClean)
             : arr.push(entryClean);
         if (mv.sourceZone !== 'other') {
-            const mvPrefix = isB ? 'Jugador B: ' : '';
-        this._addLog(`${mvPrefix}${entry.card.name} → ${targetZone}`, entry.card);
-        
+            this._addLog(`${entry.card.name} → ${targetZone}`, entry.card);
         }
         this._cancelMoveMode();
-        if (isB) this._renderAllZonesB(); else this._renderAllZones();
+        this._renderAllZones();
     },
 
     _removeFromSource: function (mv) {
@@ -1856,17 +1454,11 @@ _showDetachMenu: function (zone, e) {
     _getMultiArray: function (zone) {
         return this[{ hand:'hand',main:'main',extra:'extra',gy:'gy',banish:'banish',other:'other' }[zone]] || [];
     },
-_getMultiArrayB: function (zone) {
-        const b = this._b;
-        const map = { hand:b.hand, main:b.main, extra:b.extra,
-                      gy:b.gy, banish:b.banish, other:b.other };
-        return map[zone] || [];
-    },
+
     // ═══════════════════════════════════════════════════════
     // DECK VIEWER MEJORADO (Fase 5)
     // ═══════════════════════════════════════════════════════
-    openDeckViewer: function (zoneName, player) {
-        const pl = player || 'A';
+    openDeckViewer: function (zoneName) {
         document.getElementById('pz-dv-overlay')?.remove();
         const labels = { main:'Main Deck', extra:'Extra Deck', hand:'Mano',
                          gy:'Cementerio', banish:'Destierro', other:'Other Options' };
@@ -1876,7 +1468,7 @@ _getMultiArrayB: function (zone) {
         overlay.id = 'pz-dv-overlay';
         overlay.className = 'pz-modal-overlay';
         overlay.setAttribute('data-zone', zoneName);
-        overlay.setAttribute('data-player', pl);
+        overlay.setAttribute('data-player', 'A');
         overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
 
         overlay.innerHTML = `
@@ -1929,12 +1521,9 @@ _getMultiArrayB: function (zone) {
         const countEl = document.getElementById('pz-dv-count');
         if (!grid) return;
 
-        const ov       = document.getElementById('pz-dv-overlay');
-        const pl       = ov?.getAttribute('data-player') || 'A';
-        const isB      = pl === 'B';
         const searchQ  = (document.getElementById('pz-dv-search')?.value || '').toLowerCase().trim();
         const filter   = this._dvCurrentFilter || 'all';
-        const allCards = isB ? this._getMultiArrayB(zoneName) : this._getMultiArray(zoneName);
+        const allCards = this._getMultiArray(zoneName);
         const isMain   = zoneName === 'main';
 
         const filtered = allCards.map((e, i) => ({ e, i })).filter(({ e }) => {
@@ -1958,35 +1547,35 @@ _getMultiArrayB: function (zone) {
             const isFaceUp = e.faceUp;
             const mainBtns = isMain
                 ? `<button class="pz-dvc-act pz-dvc-top"
-                           onclick="ZonaPractica._dvMoveInZone('${zoneName}',${idx},'top',${pl})">🔝</button>
+                           onclick="ZonaPractica._dvMoveInZone('${zoneName}',${idx},'top')">🔝</button>
                    <button class="pz-dvc-act pz-dvc-bot"
-                           onclick="ZonaPractica._dvMoveInZone('${zoneName}',${idx},'bot',${pl})">🔚</button>`
+                           onclick="ZonaPractica._dvMoveInZone('${zoneName}',${idx},'bot')">🔚</button>`
                 : '';
             const flipBtn = `<button class="pz-dvc-act pz-dvc-flip"
-                           onclick="ZonaPractica._dvFlip('${zoneName}',${idx},${pl})"
+                           onclick="ZonaPractica._dvFlip('${zoneName}',${idx})"
                            title="${isFaceUp?'Voltear boca abajo':'Voltear boca arriba'}">
                            ${isFaceUp?'▽':'▲'}</button>`;
             return `
                 <button class="pz-dvc-act pz-dvc-ver"
-                        onclick="ZonaPractica._openMiniCV((${isB}?ZonaPractica._getMultiArrayB('${zoneName}'):ZonaPractica._getMultiArray('${zoneName}'))[${i}]?.card)">👁</button>
+                        onclick="ZonaPractica._openMiniCV(ZonaPractica._getMultiArray('${zoneName}')[${i}]?.card)">👁</button>
                 <button class="pz-dvc-act pz-dvc-hand"
-                        onclick="ZonaPractica._dvSendCard('${zoneName}',${idx},'hand','${pl}')">✋</button>
+                        onclick="ZonaPractica._dvSendCard('${zoneName}',${idx},'hand')">✋</button>
                 <button class="pz-dvc-act pz-dvc-gy"
-                        onclick="ZonaPractica._dvSendCard('${zoneName}',${idx},'gy','${pl}')">🪦</button>
+                        onclick="ZonaPractica._dvSendCard('${zoneName}',${idx},'gy')">🪦</button>
                 <button class="pz-dvc-act pz-dvc-ban"
-                        onclick="ZonaPractica._dvSendCard('${zoneName}',${idx},'banish','${pl}')">🚀</button>
+                        onclick="ZonaPractica._dvSendCard('${zoneName}',${idx},'banish')">🚀</button>
                 <button class="pz-dvc-act pz-dvc-other"
-                        onclick="ZonaPractica._dvSendCard('${zoneName}',${idx},'other',${pl})">📌</button>
+                        onclick="ZonaPractica._dvSendCard('${zoneName}',${idx},'other')">📌</button>
                 ${flipBtn}
             ${mainBtns}
             <button class="pz-dvc-act pz-dvc-put"
-                    onclick="ZonaPractica._startPlacement('${zoneName}',${idx},true,${pl})"
+                    onclick="ZonaPractica._startPlacement('${zoneName}',${idx},true)"
                     title="Poner boca arriba en el campo">Put</button>
             <button class="pz-dvc-act pz-dvc-set"
-                    onclick="ZonaPractica._startPlacement('${zoneName}',${idx},false,${pl})"
+                    onclick="ZonaPractica._startPlacement('${zoneName}',${idx},false)"
                     title="Setear boca abajo en el campo">Set</button>
             <button class="pz-dvc-act pz-dvc-del"
-                        onclick="ZonaPractica._dvRemoveCard('${zoneName}',${idx},${pl})">✕</button>`;
+                        onclick="ZonaPractica._dvRemoveCard('${zoneName}',${idx})">✕</button>`;
         };
 
         grid.innerHTML = filtered.map(({ e, i }) => {
@@ -2002,7 +1591,7 @@ _getMultiArrayB: function (zone) {
             return `<div class="pz-dv-card-row ${typeClass}" data-idx="${i}">
                 <img src="${face}" class="pz-dv-card-img"
                      onerror="this.src='${this.CARD_BACK}'"
-                     onclick="ZonaPractica._openMiniCV((${isB}?ZonaPractica._getMultiArrayB('${zoneName}'):ZonaPractica._getMultiArray('${zoneName}'))[${i}]?.card)">
+                     onclick="ZonaPractica._openMiniCV(ZonaPractica._getMultiArray('${zoneName}')[${i}]?.card)">
                 <div class="pz-dv-card-info">
                     <div class="pz-dv-card-name">${e.card.name || '?'}</div>
                     <div class="pz-dv-card-meta">
@@ -2016,9 +1605,8 @@ _getMultiArrayB: function (zone) {
     },
 
     // Acciones del DV
-    _dvSendCard: function (zone, idx, target, player) {
-        const isB   = player === 'B';
-        const arr   = isB ? this._getMultiArrayB(zone) : this._getMultiArray(zone);
+    _dvSendCard: function (zone, idx, target) {
+        const arr   = this._getMultiArray(zone);
         const entry = arr[idx];
         if (!entry) return;
 
@@ -2035,7 +1623,7 @@ _getMultiArrayB: function (zone) {
 
         arr.splice(idx, 1);
 
-        const dest = isB ? this._getMultiArrayB(target) : this._getMultiArray(target);
+        const dest = this._getMultiArray(target);
         const forceFaceUp = target === 'hand' || target === 'other';
         dest.push({ ...entry, faceUp: forceFaceUp ? true : entry.faceUp, rotation: 0 });
 
@@ -2043,8 +1631,8 @@ _getMultiArrayB: function (zone) {
             this._addLog(`${entry.card?.name||'?'} [${this._zoneName(zone)} → ${this._zoneName(target)}]`, entry.card);
         }
 
-        if (isB) { this._renderAllZonesB(); this._refreshDV(zone, 'B'); }
-        else     { this._renderAllZones();  this._refreshDV(zone); }
+        this._renderAllZones();
+        this._refreshDV(zone);
         this._renderZone(target);
         this._updateStatusWidget();
 
@@ -2110,26 +1698,23 @@ _getMultiArrayB: function (zone) {
     // FASE 4 — BARAJAR DECK
     // ═══════════════════════════════════════════════════════
     
-    shuffleDeck: function (player) {
-        const src = player === 'B' ? this._b : this;
-        for (let i=src.main.length-1;i>0;i--) {
+    shuffleDeck: function () {
+        for (let i=this.main.length-1;i>0;i--) {
             const j=Math.floor(Math.random()*(i+1));
-            [src.main[i],src.main[j]]=[src.main[j],src.main[i]];
+            [this.main[i],this.main[j]]=[this.main[j],this.main[i]];
         }
-        if (player === 'B') this._renderAllZonesB(); else this._renderAllZones();
+        this._renderAllZones();
     },
 
     // ═══════════════════════════════════════════════════════
     // FASE 4 — ROBAR CARTA
     // ═══════════════════════════════════════════════════════
-    drawCard: function (player) {
-        const src  = player === 'B' ? this._b : this;
-        const from = src.main, to = src.hand;
-        if (!from.length) { this._showToast('No hay cartas en el deck.', 1400); return; }
-        const card = from.pop();
-        to.push({ ...card, faceUp: true });
-        if (player === 'B') this._renderAllZonesB(); else this._renderAllZones();
-        this._addLog(`${src === this ? '' : 'Jugador B: '}Carta robada.`);
+    drawCard: function () {
+        if (!this.main.length) { this._showToast('No hay cartas en el deck.', 1400); return; }
+        const card = this.main.pop();
+        this.hand.push({ ...card, faceUp: true });
+        this._renderAllZones();
+        this._addLog('Carta robada.');
     },
 
 
@@ -2247,9 +1832,8 @@ _getMultiArrayB: function (zone) {
         this._addLog(`${zone}: ${this[flag] ? 'oculta' : 'visible'}.`);
     },
 // Voltear todas las cartas de una zona (equivale a flip individual en masa)
-    _flipAllInZone: function (zone, player) {
-        const isB = player === 'B';
-        const arr = isB ? this._getMultiArrayB(zone) : this._getMultiArray(zone);
+    _flipAllInZone: function (zone) {
+        const arr = this._getMultiArray(zone);
         if (!arr.length) { this._showToast(`${zone} está vacío.`, 1400); return; }
         const allFaceUp = arr.every(e => e.faceUp);
         if (zone === 'main' && allFaceUp) {
@@ -2259,10 +1843,8 @@ _getMultiArrayB: function (zone) {
             }
         }
         arr.forEach(e => { e.faceUp = !allFaceUp; });
-        if (isB) this._renderAllZonesB();
-        else     this._renderZone(zone);
-        const prefix = isB ? 'Jugador B: ' : 'Jugador A: ';
-        this._addLog(`${prefix}${zone}: ${allFaceUp ? 'todas boca abajo (barajado)' : 'todas boca arriba'}.`);
+        this._renderZone(zone);
+        this._addLog(`${zone}: ${allFaceUp ? 'todas boca abajo (barajado)' : 'todas boca arriba'}.`);
     },
     // Sincroniza el ícono de los botones de ojo por zona
     _syncZoneHideBtns: function () {
@@ -2366,7 +1948,7 @@ _getMultiArrayB: function (zone) {
             </div>
 
             <div class="pz-log-input-row">
-                <button class="pz-log-like-btn" onclick="ZonaPractica._logLike()" title="Jugador A: Prosigue!">👍</button>
+                <button class="pz-log-like-btn" onclick="ZonaPractica._logLike()" title="¡Prosigue!">👍</button>
                 <input type="text" id="pz-log-custom-input" class="pz-log-custom-input"
                     placeholder="Entrada manual..." autocomplete="off">
                 <button class="pz-log-add-btn" onclick="ZonaPractica._addCustomLog()">+</button>
@@ -2406,8 +1988,7 @@ _getMultiArrayB: function (zone) {
         const inp = document.getElementById('pz-log-custom-input');
         const msg = inp?.value?.trim();
         if (!msg) return;
-        const prefix = (this._duelMode && this._activePlayer === 'B') ? 'Jugador B: ' : '';
-        this._addLog(prefix + msg, null, true);
+        this._addLog(msg, null, true);
         inp.value = '';
     },
 
@@ -2981,14 +2562,7 @@ const minGap = isHand ? -52 : -18;
     banlist_info: card.banlist_info,
     card_images: card.card_images || [] } : null;
     this.logEntries.push({ msg, time, turn: this.turnNumber, imgUrl, isManual: !!isManual, isLike: !!isLike, cardName: card?.name || null });
-        console.info(`[PZ] T${this.turnNumber} ${time} — ${isManual ? '[Jugador A] ' : ''}${msg}`);
-        // Prefijo de jugador en modo duelo
-        if (this._duelMode && this._activePlayer === 'B' && !isLike) {
-            const prefix = 'Jugador B: ';
-            if (!msg.startsWith(prefix) && !msg.startsWith('<')) {
-                msg = prefix + msg;
-            }
-        }
+        console.info(`[PZ] T${this.turnNumber} ${time} — ${isManual ? '[Manual] ' : ''}${msg}`);
         // Actualizar Log en tiempo real si está abierto
         const el = document.getElementById('pz-log-entries');
         if (el) { el.innerHTML = this._renderLogEntries(); el.scrollTop = el.scrollHeight; }
@@ -3030,7 +2604,7 @@ _openLogCard: function (idx) {
             <div class="pz-log-entry ${extraClass}" id="pz-log-entry-${i}">
                 <span class="pz-log-entry-idx">${i + 1}</span>
                 <span class="pz-log-entry-meta">T${e.turn}&nbsp;${e.time}</span>
-                ${e.isManual ? `<span class="pz-log-player-tag">${e.msg.startsWith('Jugador B:') ? 'Jugador B:' : 'Jugador A:'}</span>` : ''}
+                ${e.isManual ? `<span class="pz-log-player-tag">Manual:</span>` : ''}
                 ${e.imgUrl ? `<img src="${e.imgUrl}" class="pz-log-card-thumb"
                     onerror="this.style.display='none'" title="${e.msg}">` : ''}
                 <span class=\"pz-log-entry-msg\">${ZonaPractica._fmtLogMsg(e.msg, e.cardName, i, !!(e.isLike || isChainRes || isActivate))}</span>
@@ -3040,12 +2614,11 @@ _openLogCard: function (idx) {
     },
     // ── Like / Prosigue ──────────────────────────────────────
 _logLike: function () {
-    const player = (this._duelMode && this._activePlayer === 'B') ? 'B' : 'A';
-    this._addLog(`✅ Jugador ${player}: Prosigue!`, null, false, true);
+    this._addLog('✅ ¡Prosigue!', null, false, true);
 },
 
 // ── LP de Zona de Práctica ───────────────────────────────
-_openPzLP: function (type, player) {
+_openPzLP: function (type) {
     document.getElementById('pz-lp-panel')?.remove();
     const presets = [100, 300, 500, 1000, 1500, 2000, 4000, 8000];
     const label   = type === 'gain' ? 'Gain ＋' : 'Damage －';
@@ -3068,24 +2641,20 @@ _openPzLP: function (type, player) {
                         onclick="document.getElementById('pz-lp-input').value=''">✕</button>
             </div>
             <button class="pz-ctrl-btn pz-ctrl-deck" style="width:100%;margin-top:10px"
-                    onclick="ZonaPractica._calcPzLP('${type}','${player||'A'}')">✓ Aplicar</button>
+                    onclick="ZonaPractica._calcPzLP('${type}')">✓ Aplicar</button>
         </div>`;
     document.body.appendChild(panel);
     setTimeout(() => document.getElementById('pz-lp-input')?.focus(), 50);
 },
 
-_calcPzLP: function (type, player) {
+_calcPzLP: function (type) {
     const val = parseInt(document.getElementById('pz-lp-input')?.value);
     if (isNaN(val) || val < 0) return;
-    const isB  = player === 'B';
-    const src  = isB ? this._b : this;
-    const elId = isB ? 'pz-lp-val-b' : 'pz-lp-val';
-    if (type === 'gain')   src.lp = (src.lp || 8000) + val;
-    if (type === 'damage') src.lp = Math.max(0, (src.lp || 8000) - val);
-    const el = document.getElementById(elId);
-    if (el) el.textContent = src.lp.toLocaleString();
-    const prefix = isB ? 'Jugador B: ' : 'Jugador A: ';
-    this._addLog(`${prefix}❤️ LP ${type === 'gain' ? '+' : '-'}${val} → ${src.lp.toLocaleString()}`);
+    if (type === 'gain')   this.lp = (this.lp || 8000) + val;
+    if (type === 'damage') this.lp = Math.max(0, (this.lp || 8000) - val);
+    const el = document.getElementById('pz-lp-val');
+    if (el) el.textContent = this.lp.toLocaleString();
+    this._addLog(`❤️ LP ${type === 'gain' ? '+' : '-'}${val} → ${this.lp.toLocaleString()}`);
     document.getElementById('pz-lp-panel')?.remove();
 },
 _importYDK: function () {
@@ -3143,12 +2712,9 @@ _zoneName: function (zone) {
     return map[zone] || `Zona ${zone}`;
 },
 
-_resetPzLP: function (player) {
-    const isB  = player === 'B';
-    const src  = isB ? this._b : this;
-    const elId = isB ? 'pz-lp-val-b' : 'pz-lp-val';
-    src.lp = 8000;
-    const el = document.getElementById(elId);
+_resetPzLP: function () {
+    this.lp = 8000;
+    const el = document.getElementById('pz-lp-val');
     if (el) el.textContent = '8,000';
 },
 
