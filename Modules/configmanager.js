@@ -1020,6 +1020,15 @@ addStapleToDeck: function (index) {
 // MÚSICA CONFIG
 // ===============================
 MUSIC_KEY: 'yugioh_music_config',
+PLAYER_LEVEL_KEY: 'yugioh_player_level',
+
+getPlayerLevel: function () {
+    return localStorage.getItem(this.PLAYER_LEVEL_KEY) || 'default';
+},
+
+savePlayerLevel: function (level) {
+    localStorage.setItem(this.PLAYER_LEVEL_KEY, level);
+},
 
 defaultMusicConfig: {
     enabled: true,

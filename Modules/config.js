@@ -102,6 +102,16 @@ const Config = {
                 </div>
             </div>
 
+            <!-- Sección: Perfil del Jugador -->
+            <div class="config-section">
+                <h3 class="config-section-title" onclick="Config.toggleSection('player-level-section')">
+                    ▶ Perfil del Jugador
+                </h3>
+                <div id="player-level-section" class="config-section-content" style="display:none;">
+                    ${this.renderPlayerLevelSection()}
+                </div>
+            </div>
+
             <!-- Sección: Ajustes de Música -->
             <div class="config-section">
                 <h3 class="config-section-title" onclick="Config.toggleSection('music-section')">
@@ -1289,6 +1299,54 @@ onVolumeChange: function (val) {
     if (disp) disp.textContent = Math.round(parseFloat(val) * 100) + '%';
     if (window.MusicPlayer) MusicPlayer.setVolume(parseFloat(val));
 },
+renderPlayerLevelSection: function () {
+    const current = window.ConfigManager ? ConfigManager.getPlayerLevel() : 'default';
+    const levels = [
+        { key: 'novato',      icon: '🌱', label: 'Novato',      desc: 'Aprende las bases del juego y la app',           color: '#00b894' },
+        { key: 'casual',      icon: '🃏', label: 'Casual',      desc: 'Construye decks y juega por diversión',           color: '#fdcb6e' },
+        { key: 'competitivo', icon: '⚔️', label: 'Competitivo', desc: 'Analiza el meta y optimiza tu estrategia',        color: '#d63031' },
+    ];
+
+    const buttons = levels.map(l => {
+        const isActive = current === l.key;
+        const border   = isActive ? `2px solid ${l.color}` : '1px solid rgba(255,255,255,0.1)';
+        const bg       = isActive ? `${l.color}18` : 'transparent';
+        return `
+            <button class="welcome-btn"
+                    style="border:${border};background:${bg};cursor:pointer;"
+                    onclick="Config.selectPlayerLevel('${l.key}')">
+                <span class="wb-icon">${l.icon}</span>
+                <span>
+                    <span class="wb-label" style="color:${l.color}">${l.label}${isActive ? ' ✓' : ''}</span>
+                    <span class="wb-desc">${l.desc}</span>
+                </span>
+            </button>`;
+    }).join('');
+
+    return `
+        <div class="config-help-text">
+            <p>Cambia tu perfil en cualquier momento. Activa automáticamente la pista musical asociada.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;max-width:480px;">
+            ${buttons}
+        </div>`;
+},
+
+selectPlayerLevel: function (levelKey) {
+    if (window.ConfigManager) ConfigManager.savePlayerLevel(levelKey);
+    if (window.MusicPlayer) {
+        const cfg  = window.ConfigManager ? ConfigManager.getMusicConfig() : {};
+        const path = cfg.tracks?.[levelKey] || 'ots/Climax Theme 2.mp3';
+        MusicPlayer.setTrack(path);
+    }
+    this.render();
+    this._restoreAndScroll('player-level-section', null);
+    requestAnimationFrame(() => {
+        const sec = document.getElementById('player-level-section');
+        if (sec) sec.style.display = 'block';
+    });
+},
+
 };
 
 window.Config = Config;
