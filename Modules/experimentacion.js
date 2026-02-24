@@ -90,7 +90,19 @@ const Experimentacion = {
         this._renderCard(this._instances[this._instances.length - 1]);
         this._refreshList();
     },
-
+_removeCard: function (card) {
+        const key = String(card.id || card.name);
+        // Buscar la última instancia de esta carta en el array
+        let lastIdx = -1;
+        this._instances.forEach((inst, i) => {
+            if (String(inst.card.id || inst.card.name) === key) lastIdx = i;
+        });
+        if (lastIdx === -1) return;
+        const iid = this._instances[lastIdx].iid;
+        this._instances.splice(lastIdx, 1);
+        document.getElementById(`exp-card-${iid}`)?.remove();
+        this._refreshList();
+    },
     _renderCard: function (inst) {
         const canvas = document.getElementById('exp-canvas');
         if (!canvas) return;
@@ -236,10 +248,17 @@ const Experimentacion = {
             addBtn.textContent = '＋';
             addBtn.addEventListener('click', () => { this._addCard(g.card); });
 
+            const removeBtn = document.createElement('button');
+            removeBtn.className   = 'exp-list-remove';
+            removeBtn.title       = 'Quitar copia';
+            removeBtn.textContent = '—';
+            removeBtn.addEventListener('click', () => { this._removeCard(g.card); });
+
             row.appendChild(thumb);
             row.appendChild(name);
             row.appendChild(count);
             row.appendChild(addBtn);
+            row.appendChild(removeBtn);
             el.appendChild(row);
         });
     },
@@ -294,34 +313,55 @@ const Experimentacion = {
 
     // ── Importar YDK ────────────────────────────────────────────
     importYDK: function () {
-        const input = document.createElement('input');
-        input.type   = 'file';
-        input.accept = '.ydk';
-        input.onchange = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const text  = await file.text();
-            const lines = text.split(/\r?\n/).map(l => l.trim());
-            const ids   = [];
-            let section = 'main';
-            lines.forEach(l => {
-                if (l === '#main' || l === '#extra' || l === '!side') { section = l; return; }
-                if (/^\d+$/.test(l)) ids.push(l);
-            });
-            if (!ids.length) { alert('YDK vacío o inválido.'); return; }
+    const input = document.createElement('input');
+    input.type   = 'file';
+    input.accept = '.ydk';
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const text  = await file.text();
+        const lines = text.split(/\r?\n/).map(l => l.trim());
+        const ids   = [];
+        lines.forEach(l => {
+            if (l === '#main' || l === '#extra' || l === '!side') return;
+            if (/^\d+$/.test(l)) ids.push(l);
+        });
+        if (!ids.length) { alert('YDK vacío o inválido.'); return; }
+
+        // Resolver IDs únicos en lotes de 8 con tolerancia a fallos por lote
+        const uniqueIds = [...new Set(ids)];
+        const BATCH = 8;
+        const byId  = {};
+        for (let i = 0; i < uniqueIds.length; i += BATCH) {
+            const batch = uniqueIds.slice(i, i + BATCH);
             try {
-                const res  = await fetch(`${this.API_URL}?id=${[...new Set(ids)].join('%7C')}`);
+                const res  = await fetch(`${this.API_URL}?id=${batch.join('|')}&num=100`);
                 const data = await res.json();
-                const byId = {};
                 (data.data || []).forEach(c => { byId[String(c.id)] = c; });
-                ids.forEach(id => {
-                    const card = byId[id];
-                    if (card) this._addCard(card);
-                });
-            } catch (_) { alert('Error al importar YDK.'); }
-        };
-        input.click();
-    },
+            } catch (_) { /* lote fallido: continuar con el siguiente */ }
+        }
+
+        // Añadir todas las copias (respetando duplicados del YDK) en una sola pasada
+        const CARD_W = 86, CARD_H = 124, GAP = 10, COLS = 8;
+        ids.forEach(id => {
+            const card = byId[id];
+            if (!card) return;
+            const col = this._instances.length % COLS;
+            const row = Math.floor(this._instances.length / COLS);
+            this._instanceId++;
+            const inst = {
+                iid:  this._instanceId,
+                card,
+                x: col * (CARD_W + GAP) + 10,
+                y: row * (CARD_H + GAP) + 10
+            };
+            this._instances.push(inst);
+            this._renderCard(inst);
+        });
+        this._refreshList();
+    };
+    input.click();
+},
 
     // ── Elegir Deck ─────────────────────────────────────────────
     openDeckPicker: function () {
