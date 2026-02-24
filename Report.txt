@@ -1,5 +1,5 @@
 # 🗂️ Destiny Draw – Reporte Completo del Proyecto
-**Versión:** Febrero 2026  
+**Versión:** Febrero 2026 (Actualización)
 **Base:** Análisis sobre código fuente real (todos los módulos)
 
 ===============================================================================
@@ -8,44 +8,152 @@
 
 Destiny Draw es una SPA (Single Page Application) sin servidor para jugadores de Yu-Gi-Oh!. Funciona 100% desde el navegador. Usa localStorage para toda la persistencia y se conecta a la API pública de YGOProDeck para datos de cartas. La arquitectura es modular: cada módulo es un objeto JavaScript global independiente.
 
+La app está organizada en dos áreas principales:
+- **Pestañas de contenido principal** (`index.html`): Buscador, Mi Deck, Estadísticas, Simuladores, Meta, Formación, Configuración.
+- **Sub-pestañas de Simuladores** (gestionadas por `torneo.js`): Mulligan (Hipergeometría), Torneo, Duelo en Vivo, Experimentación, Zona de Práctica, Winrate.
+
+**Estructura de carpetas relevante:**
+- `Modules/` — todos los archivos JavaScript (.js)
+- `css/` — todos los archivos de estilos (.css)
+- `img/` — imágenes estáticas (logo, etc.)
+- `ots/` — archivos de música de fondo (.mp3)
+- `index.html` — punto de entrada único
+
+**Orden de carga de scripts** (el orden importa por dependencias):
+```
+logger.js → navigation.js → parallax.js → utils.js → cardviewer.js → buscador.js →
+configmanager.js → specialty-analyzer.js → nomenclature-analyzer.js → stats.js →
+deck.js → estadisticas.js → config.js → help.js → winrate.js → duelista.js →
+favoritas.js → banlist.js → torneo.js → duelo.js → matchups.js → hipergeometria.js →
+engines.js → experimentacion.js → zonapractica.js → welcome.js
+```
+
 ---
 
 ## 2. Inventario de Módulos
 
 ---
 
+### `logger.js`
+Sistema centralizado de logging para desarrollo. Debe cargarse primero antes que cualquier otro módulo. Expone el objeto global `Logger` con niveles de log: `functionStart`, `functionEnd`, `info`, `success`, `error`, `warning`, `debug`, `event`, `buttonClick`. Todos los demás módulos usan `SafeLogger` (alias seguro que no rompe si Logger no existe).
+
+---
+
 ### `navigation.js`
-Controla el sistema de pestañas. Muestra/oculta las secciones `<section id="X-content">` y activa/desactiva los botones del nav. Al cambiar de pestaña notifica a Estadísticas para mostrar/ocultar el widget flotante.
+Controla el sistema de pestañas principales. Muestra/oculta las secciones `<section id="X-content">` y activa/desactiva los botones del nav.
 
 | Función | Descripción |
 |---|---|
-| `init()` | Registra listeners en todos `.nav-button` y carga pestaña inicial (`buscador`) |
-| `showTab(tabName)` | Oculta todo, muestra la sección indicada, activa botón, llama a `Estadisticas.updateFloatingWidgetVisibility()` |
+| `init()` | Registra listeners en todos `.nav-button` y carga pestaña inicial (`buscador`). Usa `requestAnimationFrame` para esperar el DOM |
+| `showTab(tabName)` | Oculta todo, muestra la sección indicada, activa botón, notifica a módulos dependientes |
 | `previousTab()` / `nextTab()` | Navegación circular entre pestañas |
 | `getCurrentTab()` | Devuelve la pestaña activa actual |
 
 **Pestañas disponibles:** `buscador`, `mideck`, `estadisticas`, `simuladores`, `meta`, `formacion`, `config`
 
-**Objeto Shortcuts** (incluido en el mismo archivo):  
-Botón flotante ⚡ que abre un menú de accesos rápidos configurables. Lee los shortcuts desde `ConfigManager.getShortcuts()`. Cada shortcut tiene: tab destino, ID de sección a la que hacer scroll, y módulo a refrescar (Winrate, Duelista, Estadísticas). El catálogo completo cubre: Buscador, Decks Guardados, Mi Deck Notas, Análisis vs Meta, Internal Score, Winrate, Top Tier, Decks del Meta, Poder de Cartas, Counter-Cards, Exportar Datos, Nivel Duelista, Roles, Mecánicas y Counters, Staples, Nomenclatura, Pilares.
+**Efectos secundarios de `showTab`:**
+- Llama a `Estadisticas.updateFloatingWidgetVisibility(tabName)` para mostrar/ocultar el widget flotante de scores
+- Al entrar a `simuladores`: llama a `Torneo.init()`
+- Al entrar a `mideck`: llama a `Engines.init()`
+- Al salir de `simuladores`: llama a `ZonaPractica._cleanupFloatBtns()`
+- Despacha un evento `scroll` para actualizar los botones flotantes de desplazamiento
+
+**⚠️ NOTA IMPORTANTE:** Los botones del nav en `index.html` tienen `onclick="switchTab('...')"` Y también reciben un `addEventListener` desde `navigation.js`. Esto provoca doble disparo de `showTab` en cada clic. El fix correcto es eliminar los `onclick` del HTML y dejar solo los listeners del módulo. El botón Config ya es el modelo correcto (sin `onclick` en el HTML).
+
+**Objeto `Shortcuts`** (incluido en el mismo archivo):
+Botón flotante `⚡` que abre un menú de accesos rápidos configurables.
+
+| Función | Descripción |
+|---|---|
+| `init()` | Crea el botón flotante `#shortcuts-float-btn` |
+| `openMenu()` | Lee shortcuts desde `ConfigManager.getShortcuts()` y renderiza el panel modal |
+| `closeMenu()` | Elimina el overlay |
+| `go(index)` | Navega a la pestaña y sección indicadas, refresca el módulo si corresponde |
+
+**Catálogo completo de shortcuts disponibles:** Buscador, Decks Guardados, Mi Deck – Notas, Análisis vs Meta, Internal Score, Winrate, Top Tier, Decks del Meta, Poder de Cartas, Counter-Cards, Exportar Datos, Nivel Duelista, Roles, Mecánicas y Counters, Staples, Nomenclatura, Pilares.
+
+---
+
+### `parallax.js`
+Efecto de parallax en el header. No tiene lógica de negocio. Se inicializa automáticamente y escucha el evento `scroll` para desplazar `.parallax-bg` a una fracción de `window.scrollY`.
+
+---
+
+### `utils.js`
+Botones flotantes de scroll (▲ arriba / ▼ abajo).
+
+- ▲ visible si `scrollY > 300px`
+- ▼ visible si no se está al fondo (margen 50px)
+- Ambos ocultos automáticamente cuando la pestaña activa es `simuladores`
+- Expone `updateButtons()` globalmente para ser llamado desde `navigation.js` al cambiar pestaña
+
+---
+
+### `cardviewer.js`
+Modal flotante de detalle de carta. Expone el objeto global `CardViewer`.
+
+| Función | Descripción |
+|---|---|
+| `open(card)` | Abre el modal completo inyectándolo en el DOM |
+| `openFromDeck(id)` | Abre desde Mi Deck por ID de carta en `Deck.cards` |
+| `openFromIndex(index)` | Abre desde array de resultados del Buscador |
+| `highlightNomenclature(desc)` | Colorea el efecto según categorías de Nomenclatura configuradas |
+| `splitIntoParagraphs(text)` | Divide el efecto en segmentos para análisis |
+| `highlightParagraphNew(paragraph, categories)` | Sistema nuevo de resaltado por categoría con condiciones |
+| `highlightParagraphOld(paragraph, nomenclature, colors)` | Sistema legacy de resaltado (fallback) |
+| `detectPossibleRoles(card)` | Detecta roles del Config que coinciden con el texto del efecto. Si el rol tiene `scope` de nomenclatura, solo busca dentro de los segmentos de esa categoría |
+| `calculateCardContribution(card, detectedRoles)` | Simula agregar la carta y calcula delta en los 3 pilares del Internal Score |
+| `renderCardContribution(card)` | Renderiza bloque de roles + barras de aporte con colores verde/rojo |
+| `generateCardDecklistFallback(card)` | Descarga imagen PNG de la carta |
+| `openCardSearch(formatName, prefillName, mode)` | Abre un buscador modal especializado para añadir cartas a Banlist o Staples desde CardViewer |
+| `openPointsEditor(formatName, cardId, cardName, currentPoints)` | Abre editor de puntos de ban para una carta en un formato específico |
+
+**Contenido del modal cuando hay deck activo:**
+- Imagen HD con thumbnails alternativas (si hay varias artes)
+- Stats de carta (ATK/DEF, Nivel/Rango/Link, Atributo, Tipo, Raza)
+- Descripción/efecto coloreado por Nomenclatura
+- Cantidad actual en deck con controles +/−
+- "Posibles Roles" detectados automáticamente
+- "Aporte al Deck Activo" (delta de Consistencia, Potencia, Resiliencia)
+- Botón "Ver HD" (abre imagen en nueva pestaña)
+- Botón "📌 Staple" (toggle: marca/desmarca como staple del formato vía ConfigManager)
+- Botón "☆ Favorita" (toggle: agrega/quita de Favoritas)
+- Botones de localización: Añadir al Main / Extra / Side Deck
 
 ---
 
 ### `buscador.js`
-Busca cartas contra la API de YGOProDeck por nombre y/o palabras clave. Muestra resultados en grilla con opciones "Ver" y "Añadir".
+Busca cartas contra la API de YGOProDeck por nombre y/o palabras clave. Muestra resultados en grilla. Expone el objeto global `Buscador`.
 
 | Función | Descripción |
 |---|---|
 | `init()` | Vincula inputs y botones del DOM |
+| `setupEvents()` | Registra todos los event listeners (Enter en input, click en botones) |
 | `search()` | Busca por nombre + aplica filtros de chips activos |
-| `autoSearch()` | Se dispara automáticamente al agregar/quitar chips. Si no hay nombre, muestra mensaje "Buscando en la base de datos…" antes de llamar a la API completa |
+| `autoSearch()` | Búsqueda automática al agregar/quitar chips |
 | `applyWordFilters(cards)` | Filtra el array por todos los chips (lógica AND sobre nombre, tipo, desc, raza, atributo) |
-| `displayResults(cards)` | Renderiza grilla de resultados |
+| `displayResults(cards)` | Renderiza grilla de resultados con overlay de acción al tocar |
 | `addChipFromInput()` | Convierte texto del campo filtro en chip visual al presionar `,` o Enter |
+| `renderChips()` | Redibuja los chips de filtro activos |
 | `removeChip(index)` | Elimina chip y relanza búsqueda |
-| `showCardActions(index, el)` | Overlay con botones Ver/Añadir sobre la carta tocada |
-| `viewCard(index)` / `addCard(index)` | Abre CardViewer o añade la carta al deck activo |
+| `showCardActions(index, element)` | Overlay con botones Ver/Añadir sobre la carta tocada |
+| `removeCardActions()` | Elimina overlay de acciones |
+| `viewCard(index)` | Abre CardViewer para la carta en posición `index` del array de resultados |
+| `addCard(index)` | Añade la carta al deck activo vía `Deck.syncFromViewer` |
 | `clear()` | Limpia búsqueda, filtros y chips |
+| `showLoading()` | Muestra placeholder de carga |
+| `showMessage(msg)` | Muestra mensaje informativo en el área de resultados |
+| `toggleFilterPanel()` | Muestra/oculta el panel de filtros avanzados |
+| `renderFilterPanel()` | Construye el HTML del panel de filtros avanzados |
+| `setFilter(key, value)` | Activa o desactiva un filtro avanzado y relanza búsqueda |
+| `_updateFilterSummary()` | Actualiza el texto resumen de filtros activos |
+| `hasAdvancedFilters()` | Devuelve `true` si hay algún filtro avanzado activo |
+| `buildApiUrl(mainTerm)` | Construye la URL de la API con todos los parámetros activos |
+| `applyAdvancedLocalFilter(cards)` | Aplica filtros que no soporta la API directamente (ATK, DEF exactos) |
+| `_populateArchetypeSel(sel)` | Carga la lista de arquetipos desde la API en el select |
+| `resetAdvancedFilters()` | Limpia todos los filtros avanzados |
+
+**Filtros avanzados disponibles:** Tipo (Monstruo/Mágica/Trampa), Atributo, Subtipo de monstruo, Tipo de criatura, Subtipo de mágica/trampa, Nivel/Rango, Link, Escala, ATK exacto, DEF exacto, Arquetipo.
 
 **Layout de pestaña Buscador:** 3 columnas:
 - Izquierda: panel "📌 Staples" (`#staples-panel`) — oculto si vacío
@@ -54,62 +162,138 @@ Busca cartas contra la API de YGOProDeck por nombre y/o palabras clave. Muestra 
 
 ---
 
-### `cardviewer.js`
-Modal flotante de detalle de carta. Se abre desde Buscador, Favoritas o Mi Deck.
+### `configmanager.js`
+Capa de acceso y persistencia de la configuración global. No tiene UI propia. Toda la configuración vive en `localStorage` bajo la clave `yugioh_config`. Expone el objeto global `ConfigManager`.
+
+**Gestión de Roles:**
 
 | Función | Descripción |
 |---|---|
-| `open(card)` | Crea e inyecta el modal completo en el DOM |
-| `openFromDeck(id)` | Abre desde Mi Deck por ID de carta |
-| `openFromIndex(index)` | Abre desde array de resultados del Buscador |
-| `highlightNomenclature(desc)` | Colorea el efecto según categorías de Nomenclatura configuradas |
-| `splitIntoParagraphs(text)` | Divide el efecto en segmentos |
-| `detectPossibleRoles(card)` | Detecta qué roles del Config coinciden con el texto. Si el rol tiene `scope` de nomenclatura, solo busca dentro de los segmentos de esa categoría |
-| `calculateCardContribution(card, roles)` | Simula agregar la carta y calcula delta en los 3 pilares del Internal Score |
-| `renderCardContribution(card)` | Renderiza bloque de roles + barras de aporte con colores verde/rojo |
-| `generateCardDecklistHTML2Canvas()` | Descarga imagen PNG de la carta |
+| `getConfig()` | Devuelve la configuración completa (con defaults si no existe) |
+| `saveConfig(config)` | Persiste la configuración completa |
+| `resetToDefault()` | Restaura la configuración de fábrica |
+| `getRoles()` | Devuelve el objeto completo de roles |
+| `getRoleNames()` | Array de nombres de roles activos |
+| `getRoleKeywords(roleName)` | Keywords de detección de un rol |
+| `getRoleWeight(roleName)` | Peso de valor del rol (0.1–1.0) |
+| `setRoleWeight(roleName, weight)` | Guarda el peso de un rol |
+| `createRole(roleName)` | Crea un rol nuevo con defaults |
+| `duplicateRole(roleName)` | Duplica un rol existente con sufijo `_copia` |
+| `renameRole(oldName, newName)` | Renombra rol migrando todas sus referencias |
+| `deleteRole(roleName)` | Elimina rol y todas sus referencias |
+| `addKeywordToRole(roleName, keyword)` | Añade keyword de detección |
+| `removeKeywordFromRole(roleName, keyword)` | Elimina keyword de detección |
+| `getRoleConditions()` | Devuelve condiciones de detección condicional |
+| `setRoleCondition(roleName, conditionals, keywords)` | Define condición: keywords que deben estar en el texto + keywords que activan el rol |
+| `removeRoleCondition(roleName)` | Elimina condición de un rol |
+| `addConditionalToRole(roleName, conditional)` | Añade string condicional a un rol |
+| `removeConditionalFromRole(roleName, conditional)` | Elimina string condicional |
+| `setRoleNomenclatureCategory(roleName, categoryId)` | Asocia un rol a una categoría de nomenclatura (scope) |
+| `getRoleNomenclatureCategories(roleName)` | Array de IDs de categorías asociadas al rol |
+| `addRoleNomenclatureCategory(roleName, catId)` | Añade una categoría al scope del rol |
+| `removeRoleNomenclatureCategory(roleName, catId)` | Quita una categoría del scope del rol |
 
-**Contenido del modal cuando hay deck activo:**
-- Imagen HD, stats, descripción coloreada por Nomenclatura
-- Cantidad actual en deck con controles +/-
-- "Posibles Roles" detectados automáticamente
-- "Aporte al Deck Activo" (delta de Consistencia, Potencia, Resiliencia)
-- Botón "Ver HD" (abre imagen en nueva pestaña)
-- Botón "📌 Staple" (toggle: marca/desmarca como staple del formato via ConfigManager)
-- Botón "☆ Favorita" (toggle: agrega/quita de Favoritas)
-- Botones de localización: Añadir al Main / Extra / Side Deck
+**Gestión de Especialidades (Mecánicas/Counters):**
+
+| Función | Descripción |
+|---|---|
+| `getSpecialties()` | Array de pares `{ id, mechanicRole, counterRole }` |
+| `getSpecialtyPairById(id)` | Par específico por ID |
+| `createSpecialtyPair(mechanicRole, counterRole)` | Crea nuevo par |
+| `updateSpecialtyPair(id, mechanicRole, counterRole)` | Actualiza los roles de un par |
+| `deleteSpecialtyPair(id)` | Elimina un par |
+| `updateSpecialtyPairField(id, side, field, value)` | Actualiza un campo específico de un lado del par |
+| `addKeywordToSpecialtyPair(id, side, keyword)` | Añade keyword a un lado del par (`mechanic` o `counter`) |
+| `removeKeywordFromSpecialtyPair(id, side, keyword)` | Elimina keyword de un lado del par |
+
+**Gestión de Staples:**
+
+| Función | Descripción |
+|---|---|
+| `getStaples()` | Objeto con todos los staples |
+| `getStapleIds()` | Array de IDs de staples |
+| `isStaple(cardId)` | Boolean de si una carta es staple |
+| `createStaple(cardId, data)` | Añade una carta como staple |
+| `deleteStaple(cardId)` | Elimina un staple |
+| `renderStaplesPanel()` | Renderiza el panel de staples en el Buscador |
+| `showStapleActions(index, el)` | Overlay Ver/Añadir sobre un staple |
+| `openStapleCard(index)` | Abre CardViewer para un staple |
+| `addStapleToDeck(index)` | Añade un staple al deck activo |
+
+**Gestión de Nomenclatura:**
+
+| Función | Descripción |
+|---|---|
+| `getNomenclature()` | Array de categorías de nomenclatura |
+| `getNomenclatureColors()` | Objeto `{ categoryId: color }` |
+| `updateNomenclatureColor(categoryId, color)` | Guarda color de una categoría |
+| `updateNomenclatureCategory(categoryId, updates)` | Actualiza campos de una categoría |
+| `addNomenclatureCategory()` | Crea nueva categoría |
+| `deleteNomenclatureCategory(categoryId)` | Elimina categoría |
+| `updateNomenclatureCategoryCondition(categoryId, conditionField, value)` | Actualiza la condición de una categoría |
+| `addNomCondKw(categoryId, field, keyword)` | Añade keyword condicional a una categoría |
+| `removeNomCondKw(categoryId, field, keyword)` | Elimina keyword condicional |
+
+**Gestión de Rendimientos Decrecientes:**
+
+| Función | Descripción |
+|---|---|
+| `getDiminishingReturns()` | Objeto de umbrales por rol: `{ optimal, max, penalty }` |
+| `getDefaultDiminishingReturns()` | Valores por defecto |
+| `saveDiminishingReturns(diminishing)` | Persiste umbrales |
+| `updateRoleThreshold(roleName, threshold)` | Actualiza umbrales de un rol específico |
+
+**Gestión de Pilares y RPS:**
+
+| Función | Descripción |
+|---|---|
+| `getPillars()` | Objeto `{ consistency, power, resilience }` con arrays de roles |
+| `addRoleToPillar(pillar, role)` | Añade un rol a un pilar |
+| `removeRoleFromPillar(pillar, role)` | Quita un rol de un pilar |
+| `getPillarRPS()` | Objeto de ventajas RPS entre pilares (Rock-Paper-Scissors) |
+| `savePillarRPS(rps)` | Persiste la tabla RPS |
+
+**Gestión de Shortcuts, Música y Nivel:**
+
+| Función | Descripción |
+|---|---|
+| `getShortcuts()` | Array de shortcuts configurados |
+| `saveShortcuts(shortcuts)` | Persiste shortcuts |
+| `getPlayerLevel()` | Devuelve el nivel del jugador guardado (`'default'` si no hay) |
+| `savePlayerLevel(level)` | Persiste el nivel del jugador |
+| `getMusicConfig()` | Objeto `{ enabled, volume, tracks }` |
+| `saveMusicConfig(cfg)` | Persiste configuración de música |
+
+**Funciones de exportación/importación:**
+
+| Función | Descripción |
+|---|---|
+| `exportConfig()` | Descarga la configuración completa como archivo JSON |
+| `importConfig(file)` | Importa configuración desde archivo JSON |
 
 ---
 
-### `deck.js`
-Módulo central de construcción del deck activo. Gestiona cartas en memoria y en localStorage.
+### `specialty-analyzer.js`
+Sistema de análisis de mecánicas de juego basado en roles. No tiene UI propia. Expone el objeto global `SpecialtyAnalyzer`.
 
 | Función | Descripción |
 |---|---|
-| `syncFromViewer(id, card, qty)` | Agrega/actualiza/elimina carta recibida del CardViewer o Buscador |
-| `changeQty(id, delta)` | Sube o baja la cantidad de una carta |
-| `toggleLocation(id)` | Alterna carta entre Main Deck y Side Deck |
-| `autoAssignRoles(card)` | Detecta y asigna roles automáticamente al agregar una carta (excluye monstruos normales) |
-| `openRolePanel(id)` | Abre modal de checkboxes para asignación manual de roles y Carta As |
-| `assignRoles(id)` / `removeRoles(id)` | Guarda o borra roles de una carta |
-| `setCartaAs(id)` / `getCartaAs()` | Marca/desmarca carta insignia del deck |
-| `saveDeck()` | Guarda deck activo en localStorage como `deck_{nombre}` |
-| `confirmLoadDeck(name)` | Carga un deck guardado y notifica a otros módulos |
-| `exportYDK()` | Genera y descarga archivo `.ydk` compatible |
-| `importYDK()` | Importa `.ydk` desde disco llamando a la API para resolver IDs |
-| `exportTXT()` | Exporta lista de cartas en texto plano |
-| `downloadDecklist()` | Genera imagen PNG del decklist con html2canvas |
-| `renderDeckStatsBlock()` | Composición del deck: tipos, atributos (con color por elemento), niveles/rangos/Link rating, subtipos de hechizos/trampas |
-| `renderRows(location)` | Renderiza filas de cartas de una sección. Los badges de rol muestran borde **naranja** si copias del rol > umbral `optimal`, borde **rojo** si > `max` |
-| `renderDeckList()` | Lista de decks guardados con thumbnail (Carta As), conteos y scores |
+| `_detectRoles(card)` | Detecta roles de una carta desde su descripción sin depender de `Deck` |
+| `analyzeCard(card)` | Analiza una carta: usa roles pre-asignados o los auto-detecta. Devuelve `{ specializations, counters }` |
+| `analyzeDeck(cards)` | Analiza el deck completo y agrega especialidades/counters con conteo de copias |
+| `getPrimarySpecialization(deckAnalysis)` | Devuelve la especialización dominante del deck |
+| `cardCountersCard()` | ⚠️ Función declarada pero sin implementar — siempre devuelve `0` |
+| `renderDeckSpecializations(deckAnalysis)` | Genera HTML con la lista de especializaciones del deck |
 
-**Orden de cartas en Main Deck:** Ritual → Normal → Efecto → Péndulo → Hechizo → Trampa (y luego alfabético dentro de cada tipo).
-**Extra Deck:** se clasifica automáticamente por tipo (Fusión, Sincronía, XYZ, Link).
+---
+
+### `nomenclature-analyzer.js`
+Módulo de análisis de nomenclatura de cartas. Trabaja junto a `configmanager.js` para identificar y categorizar secciones del texto de las cartas según patrones configurados. Sin UI propia.
 
 ---
 
 ### `stats.js`
-Motor de cálculo de puntuaciones. No tiene UI propia — provee los números a Estadísticas y Deck.
+Motor de cálculo de puntuaciones. No tiene UI propia — provee los números a `estadisticas.js` y `deck.js`. Expone el objeto global `Stats`.
 
 | Función | Descripción |
 |---|---|
@@ -117,19 +301,89 @@ Motor de cálculo de puntuaciones. No tiene UI propia — provee los números a 
 | `calculateExternalScore(cards, powerCache)` | Vulnerabilidad del deck vs cartas del meta que counteren sus mecánicas |
 | `calculateCounterDeckScore(cards)` | Capacidad de interrupción del deck al meta, con penalización por bricks |
 | `calculateDiminishingReturns(roleName, count)` | Penaliza sobrecargar un rol según umbrales del Config |
+| `calculateRPSModifier(pillarA, pillarB)` | Devuelve el modificador RPS entre dos pilares dominantes |
 
 **Detalles de `calculateInternalScore`:**
-- Normaliza variantes de nombre de rol a forma canónica (ej. "Boss", "carta jefe", "ace monster" → mismo rol)
+- Normaliza variantes de nombre de rol a forma canónica
 - Pilares: Consistencia (searcher, starter), Potencia (boss monster, boardbreaker, booster, removal, disruption), Resiliencia (negator, extender, recycle, undestroyable, untargetable, unaffectable)
 - Cartas con restricción "once per turn" o "per duel": copias adicionales cuentan al 50%
 - Penalización por deck > 43 cartas: -0.5 por cada carta extra
 - Cada pilar se escala (×15 consistencia, ×20 potencia, ×18 resiliencia) y se limita a 10
 - Ponderación final: 33% cada pilar
+- Los pesos de cada rol (0.1–1.0 definidos en ConfigManager) multiplican el aporte al pilar
+
+---
+
+### `deck.js`
+Módulo central de construcción del deck activo. Gestiona cartas en memoria y en localStorage. Expone el objeto global `Deck`.
+
+**Estado interno:**
+- `Deck.cards` — objeto `{ [id]: { data, qty, location, roles } }`
+- `Deck.name` — nombre del deck activo
+
+| Función | Descripción |
+|---|---|
+| `init()` | Inicializa el módulo y renderiza |
+| `isExtraDeckCard(card)` | `true` si la carta pertenece al Extra Deck |
+| `getMainDeckCardType(card)` | Devuelve el tipo principal (Ritual/Normal/Efecto/Péndulo/Mágica/Trampa) |
+| `getExtraDeckCardType(card)` | Devuelve subtipo de Extra Deck (Fusión/Sincronía/XYZ/Link) |
+| `compareCards(a, b, location)` | Función de orden para renderizado: por tipo y luego alfabético |
+| `detectSubtypes(card)` | Detecta subtipos de hechizos y trampas desde el `type` string |
+| `autoAssignRoles(card)` | Detecta y asigna roles automáticamente al agregar una carta. Excluye monstruos normales |
+| `syncFromViewer(id, card, qty)` | Agrega/actualiza/elimina carta recibida del CardViewer o Buscador |
+| `changeQty(id, delta)` | Sube o baja la cantidad de una carta |
+| `toggleLocation(id)` | Alterna carta entre Main Deck y Side Deck |
+| `count(loc)` | Cuenta cartas en una ubicación específica (`main`, `extra`, `side`) |
+| `openRenamePanel()` | Abre modal para renombrar el deck |
+| `confirmRename()` | Aplica el nuevo nombre |
+| `closeModal()` | Cierra cualquier modal activo |
+| `openRolePanel(id)` | Abre modal de checkboxes para asignación manual de roles y Carta As |
+| `assignRoles(id)` | Guarda roles seleccionados para una carta |
+| `removeRoles(id)` | Borra roles de una carta |
+| `saveDeck()` | Guarda deck activo en localStorage como `deck_{nombre}` |
+| `getSavedDecks()` | Devuelve array de todos los decks guardados |
+| `getMostRepeatedCard(cards)` | Carta con más copias en el deck (para thumbnail por defecto) |
+| `openLoadDeckPanel(deckName)` | Abre modal de confirmación para cargar un deck guardado |
+| `confirmLoadDeck(name)` | Carga un deck guardado y notifica a `Estadisticas` y `CardViewer` |
+| `openDeleteDeckPanel(deckName)` | Abre modal de confirmación para borrar un deck guardado |
+| `confirmDeleteDeck(deckName)` | Elimina deck del localStorage |
+| `clearDeck()` | Vacía el deck activo |
+| `tryDeck()` | Navega a Simuladores > Zona de Práctica y carga el deck activo en ZonaPractica |
+| `exportYDK()` | Genera y descarga archivo `.ydk` compatible |
+| `exportTXT()` | Exporta lista de cartas en texto plano |
+| `importYDK()` | Importa `.ydk` desde disco llamando a la API para resolver IDs |
+| `parseYDK(content, filename)` | Parsea el contenido de un `.ydk` y construye el deck vía API |
+| `toggleSection(id)` | Colapsa/expande una sección del panel Mi Deck |
+| `renderDeckList()` | Lista de decks guardados con thumbnail (Carta As), conteos y scores |
+| `renderRows(location)` | Renderiza filas de cartas de una sección. Badges de rol con borde naranja (> `optimal`) o rojo (> `max`) |
+| `renderDeckStatsBlock()` | Composición del deck: tipos, atributos (con color por elemento), niveles/rangos/Link, subtipos de hechizos/trampas |
+| `switchDeckStatsTab(tab)` | Alterna la sub-pestaña del bloque de stats del deck |
+| `setCartaAs(cardId)` | Marca/desmarca carta insignia del deck |
+| `getCartaAs()` | Devuelve ID de la carta insignia actual |
+| `onDeckLoaded()` | Callback ejecutado después de cargar un deck. Notifica a Estadísticas, recalcula scores, actualiza widget flotante |
+| `render()` | Renderiza toda la sección Mi Deck en el DOM |
+| `generateDecklistHTML()` | Genera HTML completo del decklist para exportar como imagen PNG |
+| `generateCardHTML(item)` | Genera HTML de una carta individual para el export de imagen |
+| `_buildDeckViewPane(location)` | Construye el panel de vista de una sección del deck (Main/Extra/Side) |
+
+**Orden de cartas en Main Deck:** Ritual → Normal → Efecto → Péndulo → Mágica → Trampa (y luego alfabético dentro de cada tipo).
+**Extra Deck:** clasificado automáticamente por tipo (Fusión, Sincronía, XYZ, Link).
 
 ---
 
 ### `estadisticas.js`
-Módulo de visualización del análisis completo. Es el módulo más extenso de la app.
+Módulo de visualización del análisis completo. Es el módulo más extenso de la app. Expone el objeto global `Estadisticas`.
+
+**Estado interno:**
+- `metaDecks` — decks del meta cargados desde localStorage
+- `metaFolders` — lista de carpetas de meta ordenadas cronológicamente
+- `selectedFolders` — filtro multi-carpeta activo (`[]` = Todo el Meta)
+- `powerScoreCache` — cache del Power Score calculado
+- `metaCardLibrary` — biblioteca de cartas del meta: `{ cardId → { id, name, type, roles } }`
+- `metaDeckScores` — scores pre-calculados por deck: `"folder|||deckname" → { internalScore, externalScore, pillars, calculatedAt }`
+- `crossScores` — scores cruzados N×N entre decks del meta
+- `topTierFilter` — filtro activo del Top Tier (`'powercreep'` | `'consistency'` | `'power'` | `'resilience'`)
+- `topTierPCMode` — modo del Power Creep (`'internal'` | `'external'`)
 
 **Secciones que renderiza:**
 
@@ -137,181 +391,671 @@ Módulo de visualización del análisis completo. Es el módulo más extenso de 
 |---|---|
 | `deck-analysis-sec` | Análisis vs Meta: Internal/External/Counter-Deck Score, mecánicas detectadas, cartas amenaza, decks amenazantes, staples faltantes |
 | `deck-stats-sec` | Internal Score con barras por pilar |
-| `top-tier-sec` | Decks del meta ordenados por presencia de cartas clave |
-| `meta-decks-sec` | Lista de decks del meta importados con filtro por carpeta (multi-selección) |
+| `top-tier-sec` | Top Tier con filtros por pilar y modo Power Creep |
+| `meta-decks-sec` | Lista de decks del meta con filtro multi-carpeta |
 | `power-scores-sec` | Power Score de cada carta del meta |
 | `counter-cards-sec` | Cartas del meta con función de interrupción activa |
 | `winrate-sec` | Widget de Winrate (renderizado por `Winrate.renderSection()`) |
-| `duelista-sec` | Perfil del Duelista (renderizado por `Duelista.renderSection()`) |
-| `export-sec` | Descarga reportes .txt y .csv |
 
-**Funciones clave:**
+**Funciones principales:**
 
 | Función | Descripción |
 |---|---|
-| `createFolder()` / `deleteFolder()` | Gestión de carpetas de meta por fecha de formato |
-| `importYDK()` / `processYDKFile()` / `parseYDK()` | Importa archivos .ydk al meta, resuelve IDs via API |
-| `updateDeckStats()` | Recalcula todos los scores y actualiza la UI |
-| `renderDeckAnalysis()` | Renderiza la sección de análisis vs meta |
-| `calculatePowerScore()` | Para cada carta del meta: presencia + specBonus + counterBonus |
-| `renderPowerScore()` / `renderCardRecurrence()` / `renderCounterCards()` | Renderizado de tablas del meta |
-| `createDeckFloatingWidget()` / `updateFloatingWidget()` | Widget flotante con scores en tiempo real, visible en otras pestañas |
-| `updateFloatingWidgetVisibility(tabName)` | Muestra/oculta el widget según la pestaña activa |
-| `toggleFolderFilter(folderName)` | Activa/desactiva filtro de carpeta (multi-selección) en la lista de meta |
+| `init()` | Carga datos de localStorage y llama a `render()` y `createDeckFloatingWidget()` |
+| `loadMetaData()` | Carga meta decks, power cache, meta card library, deck scores y cross scores desde localStorage |
+| `saveMetaData()` | Persiste `metaDecks` en localStorage |
+| `_saveMetaCardLibrary()` | Persiste la biblioteca de cartas del meta |
+| `_saveMetaDeckScores()` | Persiste los scores pre-calculados de los decks del meta |
+| `calculateCrossExternalScores()` | Calcula la matriz N×N de amenazas entre decks del meta. Usa mecánicas, counters, internal score relativo y modificador RPS |
+| `getMetaDominantPillar()` | Suma los pilares de todos los decks del meta y devuelve el dominante global |
+| `enrichAndScoreMetaDeck(folderName, deckFilename)` | Carga un deck del meta, llama a la API para obtener datos de cartas, calcula Internal Score y guarda en `metaDeckScores` |
+| `_computeAndSaveMetaDeckScore(folderName, deckFilename)` | Calcula y persiste el score de un deck del meta desde `metaCardLibrary` |
+| `recalculateAllMetaDeckScores()` | Recalcula los scores de todos los decks del meta en cola asíncrona |
+| `createFolder(name)` | Crea nueva carpeta de formato en el meta |
+| `deleteFolder(folderName)` | Elimina carpeta y todos sus decks |
+| `importYDK(folderName)` | Importa un `.ydk` como deck del meta en una carpeta. Muestra loading overlay durante la carga |
+| `processYDKFile(file, folderName)` | Procesa el archivo `.ydk` y llama a la API para enriquecer los datos |
+| `parseYDK(content)` | Parsea texto YDK y devuelve `{ main, extra, side }` con IDs |
+| `getMostFrequentCardId(cards)` | ID de la carta más repetida en el deck (para thumbnail) |
+| `deleteDeck(folderName, deckFilename)` | Elimina un deck del meta |
+| `setFolderFilter(folder)` | Activa/desactiva una carpeta en el filtro multi-selección |
+| `getFilteredDecks()` | Devuelve los decks filtrados según `selectedFolders` |
+| `loadMetaDeckToMiDeck(folderName, deckFilename)` | Carga un deck del meta como deck activo en Mi Deck. Llama a la API para resolver datos completos. Muestra loading overlay |
+| `viewMetaDeck(folderName, deckFilename)` | Abre modal de vista previa del deck del meta |
+| `selectAndLoadDeck(deckKey)` | Selecciona un deck del meta para análisis |
+| `closeModal()` | Cierra modal de vista previa |
+| `_renderMetaDeckScoreHTML(cached, key)` | Genera HTML de los scores pre-calculados de un deck del meta |
+| `renderDeckStats()` | Renderiza la sección de Internal Score con barras de pilares |
+| `createDeckFloatingWidget()` | Crea el widget flotante de scores (visible fuera de la pestaña Estadísticas) |
+| `updateFloatingWidget()` | Actualiza los valores del widget flotante con los scores actuales |
+| `updateFloatingWidgetVisibility(tabName)` | Muestra/oculta el widget flotante según la pestaña activa |
+| `toggleDeckList()` | Expande/colapsa la lista de decks en el widget flotante |
+| `expandDeckList()` | Expande la lista de decks guardados en el widget |
+| `collapseDeckList()` | Colapsa la lista de decks en el widget |
+| `selectDeckFromWidget(deckName)` | Carga un deck guardado desde el widget flotante |
+| `calculateMetaCardStats()` | Calcula estadísticas de recurrencia de cartas en el meta |
+| `renderMetaCardStats()` | Renderiza la tabla de recurrencia de cartas |
+| `loadCardNames(cardIds)` | Consulta la API para obtener nombres de cartas por ID |
+| `loadPowerScores()` | Carga los power scores desde cache o recalcula |
+| `refreshDependentSections()` | Refresca secciones que dependen del deck activo (Internal Score, Análisis vs Meta) |
+| `calculatePowerScores()` | Calcula el Power Score de todas las cartas del meta. Muestra spinner de carga |
+| `renderPowerScores({ cards, maxPower, decksWithData })` | Renderiza la tabla de Power Scores con colores |
+| `renderCounterCardStats()` | Renderiza la lista de Counter-Cards del meta |
+| `_getTopTierScore(scoreData)` | Devuelve el score relevante según el filtro Top Tier activo |
+| `setTopTierFilter(filter)` | Cambia el filtro del Top Tier y refresca |
+| `setTopTierPCMode(mode)` | Cambia el modo Power Creep y refresca |
+| `_refreshTopTier()` | Refresca la sección Top Tier |
+| `renderTopTier()` | Renderiza la clasificación Top Tier con filtros por pilar |
+| `renderDeckSelectorPanel()` | Renderiza el panel de selección de deck para análisis (propios + meta) |
+| `loadSavedDeckForAnalysis(deckName)` | Carga un deck guardado para analizarlo vs el meta |
+| `loadMetaDeckForAnalysis(folderName, deckFilename)` | Carga un deck del meta para analizarlo. Muestra loading overlay |
+| `renderDeckAnalysis()` | Renderiza el análisis completo del deck activo vs el meta |
+| `openCachedCard(cardId)` | Abre CardViewer para una carta del meta desde la biblioteca local |
+| `openCardById(cardId)` | Abre CardViewer consultando la API si no está en la biblioteca |
+| `exportDeckReport()` | Exporta reporte del deck activo como `.txt` |
+| `exportMetaPowerRanking()` | Exporta el ranking de Power Score del meta como `.csv` |
+| `exportMetaFrequency()` | Exporta la frecuencia de cartas del meta como `.csv` |
+| `_downloadTxt(content, filename)` | Helper para descarga de archivo de texto |
+| `render()` | Renderiza toda la pestaña Estadísticas con todas sus secciones |
+| `_getSavedDecksForTopTier()` | Devuelve decks guardados con scores calculados para el Top Tier |
+| `toggleSection(id)` | Colapsa/expande una sección de Estadísticas |
 
-**Lógica de External Score:**
-El denominador es la suma de todos los counterBonus del meta activo (escala relativa al formato). El score es inversamente proporcional a la amenaza total: `(1 - amenaza/baseline) × 10`.
-
-**Lógica de Counter-Deck Score:**
-Suma counterBonus × copias de cartas counter del deck. Las cartas "Brick" no suman sino que se acumulan para aplicar una penalización proporcional: `penalización = rawCounter × (bricks/total) × 0.6`.
-
-**Lógica de Power Score del meta:**
-Presencia (% de decks que la incluyen) + specBonus (mecánicas detectadas × presencia) + counterBonus (counters detectados × presencia). Las cartas con counterBonus > 0 se marcan como `isCounter: true` y alimentan el External Score.
-
-**Probabilidad de Encuentro:** usa distribución hipergeométrica para calcular P(ver al menos 1 copia en mano inicial del oponente), ajustada por presencia del deck en el meta.
-
----
-
-### `configmanager.js`
-Capa de acceso y persistencia de toda la configuración. Objeto invisible — no tiene UI propia.
-
-| Función | Descripción |
-|---|---|
-| `getConfig()` | Config completa (localStorage o defaultConfig) |
-| `saveConfig(config)` | Persiste en localStorage bajo `yugioh_config` |
-| `getRoles()` / `getRoleNames()` | Roles y sus keywords de detección |
-| `getRoleWeight(name)` | Peso del rol (0.1–2.0) para el score |
-| `getRoleCondition(name)` | Keywords + conditionals del rol |
-| `getSpecialties()` | Pares Especialidad ↔ Counter |
-| `getStaples()` / `isStaple(id)` / `createStaple()` / `deleteStaple()` | Gestión de staples del formato |
-| `getNomenclature()` | Categorías de color para efectos de cartas |
-| `getDiminishingReturns()` | Umbrales de saturación por rol (optimal, max, curve) |
-| `getShortcuts()` | Accesos rápidos seleccionados del catálogo de Shortcuts |
-| `resetToDefault()` | Restaura configuración por defecto |
-
-Incluye migración automática de formatos legacy para retrocompatibilidad.
+**Loading overlay** (`#meta-deck-loading`): Aparece durante importación y carga de decks del meta. Usa el spinner CSS `.power-loading-spinner` definido en `style_estadisticas.css`.
 
 ---
 
 ### `config.js`
-Interfaz visual de configuración. Todo guarda vía ConfigManager.
-
-**Secciones:**
-- **Roles** (`#roles-section`): crear/editar/eliminar roles. Cada rol tiene: nombre, keywords de detección, conditionals, scope de nomenclatura, peso (0.1–2.0)
-- **Especialidades y Counters** (`#specialties-section`): pares mecanicRole ↔ counterRole, cada uno con lista de keywords
-- **Staples** (`#staples-section`): cartas consideradas esenciales en el formato actual. Se pueden marcar/desmarcar también desde el CardViewer
-- **Nomenclatura** (`#nomenclature-section`): categorías con nombre, color, y condiciones de matching (startsWith, contains, notContains, endsWith — todos como arrays, lógica OR dentro de cada campo)
-- **Rendimientos Decrecientes** (`#pillars-section`): umbrales por rol que afectan el Internal Score
-
----
-
-### `nomenclature-analyzer.js`
-Analiza el texto del efecto de una carta contra las categorías configuradas.
+UI de configuración. Renderiza el panel completo de la pestaña Config. Expone el objeto global `Config`.
 
 | Función | Descripción |
 |---|---|
-| `analyzeCard(card)` | Itera categorías, divide el efecto con el delimiter de cada una, detecta categoría por segmento |
-| `detectCategory(paragraph, categories)` | Evalúa condiciones startsWith/contains/notContains/endsWith |
-| `matchesConditions(paragraph, conditions)` | Lógica de matching: OR dentro de cada campo, AND entre campos |
-| `splitIntoParagraphs(text, delimiter)` | Divide texto con el delimiter provisto. Si no hay delimiter, devuelve el texto como bloque único |
-| `_getCategoryDelimiter(cat)` | Infiere el delimiter de la categoría desde su `endsWith`. Devuelve regex que divide conservando el delimitador al final del segmento |
-| `getSummary(analysis)` | Resumen de categorías presentes en el análisis |
-
-**Comportamiento actual del splitting:** cada categoría define su propio delimiter basado en su campo `endsWith`. Si una categoría no tiene `endsWith`, el efecto se evalúa como bloque completo. Las cartas se analizan categoría por categoría y un segmento no se reclasifica una vez asignado.
-
----
-
-### `specialty-analyzer.js`
-Detecta mecánicas (especializaciones) y counters de cartas/decks, basado en roles — no en keywords propias.
-
-| Función | Descripción |
-|---|---|
-| `_detectRoles(card)` | Detección interna de roles desde descripción (excluye monstruos normales). Replica la lógica de `deck.autoAssignRoles` sin depender del módulo Deck |
-| `analyzeCard(card)` | Usa roles pre-asignados de la carta o los detecta internamente. Cruza contra pares de Especialidades/Counters del Config |
-| `analyzeDeck(cards)` | Acumula especializaciones y counters de todo el deck (solo main + extra) |
-| `getPrimarySpecialization(deckAnalysis)` | La mecánica con mayor cantidad de cartas en el deck |
-| `renderDeckSpecializations(deckAnalysis)` | HTML con lista de especializaciones ordenadas por frecuencia |
-
-**Cómo funciona la detección:** compara los roles de la carta (en minúsculas) contra `pair.mechanicRole` y `pair.counterRole` de cada par configurado. Si coincide con `mechanicRole` → es una especialización; si coincide con `counterRole` → es un counter.
-
----
-
-### `winrate.js`
-Registro de victorias/derrotas del deck activo, separadas por Going 1st y Going 2nd.
-
-| Función | Descripción |
-|---|---|
-| `getAllRecords()` | Todos los registros de todos los decks desde localStorage |
-| `getRecord(deckName)` | Record del deck indicado (o vacío si no existe) |
-| `saveRecord(deckName, data)` | Persiste el record actualizado |
-| `change(going, type, delta)` | Incrementa o decrementa un contador (+1/-1). Llama a `refreshSection()` |
-| `calcWinrate(wins, losses)` | Calcula porcentaje (null si no hay datos) |
-| `renderSection()` | HTML completo con contadores ＋/－ por modalidad y winrate general |
-| `refreshSection()` | Re-renderiza `#winrate-sec` |
-
-**Colores:** ≥60% verde (#00b894), ≥45% amarillo (#fdcb6e), <45% rojo (#d63031).
-
----
-
-### `duelista.js`
-Perfil del jugador. Agrega todos los registros de Winrate para stats globales.
-
-| Función | Descripción |
-|---|---|
-| `getLevel(totalDuels)` | Nivel según escala de 9 rangos (Novato → Legendario) con umbral y próximo nivel |
-| `getGlobalStats()` | Suma wins/losses de todos los decks de Winrate |
-| `getBestDecks()` | Top decks por winrate general, Going 1st y Going 2nd (mínimo 5 duelos para contar) |
-| `renderSection()` | HTML con nivel + barra de progreso + winrate global + ranking de mejores decks |
-| `refreshSection()` | Re-renderiza `#duelista-content` |
-
-**Escala de niveles:** Novato (0), Aprendiz (10), Duelista (25), Rival (50), Competidor (100), Semi-Pro (200), Pro (400), Élite (800), Legendario (1500).
-
----
-
-### `favoritas.js`
-Lista persistente de cartas favoritas del jugador.
-
-| Función | Descripción |
-|---|---|
-| `getAll()` | Todas las favoritas desde localStorage (`yugioh_favoritas`) |
-| `has(cardId)` | Boolean si una carta está en favoritas |
-| `toggle(card)` | Agrega o quita una carta de favoritas y re-renderiza |
-| `render()` | Renderiza el panel `#favoritas-panel`. Si está vacío, oculta el panel |
-| `showActions(index, el)` | Overlay con botones Ver / Añadir sobre la carta |
-| `viewCard(index)` / `addCard(index)` | Abre CardViewer o añade al deck activo |
-| `remove(cardId)` | Elimina una favorita específica |
-
-Cada favorita guarda: id, name, type, img (thumbnail), y la carta completa (`data`) para poder Ver/Añadir sin consultar la API.
+| `init()` | Inicializa y renderiza |
+| `render()` | Renderiza toda la pestaña Config con todas las secciones |
+| `renderRolesSection()` | Sección de gestión de roles |
+| `renderRoleCard(roleName)` | Tarjeta individual de un rol con sus keywords, peso y opciones |
+| `removeCondKeywordByIndex(roleName, index)` | Elimina keyword condicional por índice |
+| `removeConditionalByIndex(roleName, index)` | Elimina string condicional por índice |
+| `renderSpecialtiesSection()` | Sección de pares Mecánica/Counter |
+| `renderStaplesSection()` | Sección de staples del formato |
+| `renderNomenclatureSection()` | Sección de categorías de nomenclatura |
+| `renderDiminishingSection()` | Sección de configuración de rendimientos decrecientes por rol |
+| `toggleDiminishing()` | Expande/colapsa el panel de rendimientos decrecientes |
+| `saveDiminishingRole(role)` | Guarda los umbrales de rendimiento decreciente de un rol |
+| `renderNomenclatureCategory(cat)` | Renderiza tarjeta de una categoría de nomenclatura |
+| `renderNomCategoryOptions(selectedId)` | Genera opciones de `<select>` de categorías de nomenclatura |
+| `createNewRole()` | Crea un rol nuevo y refresca |
+| `renameRole(el)` | Renombra un rol desde el input inline |
+| `deleteRole(roleName)` | Elimina un rol con confirmación |
+| `addCondKeywordFromInput(el)` | Añade keyword condicional desde input |
+| `removeCondKeyword(roleName, keyword)` | Elimina keyword condicional |
+| `addConditionalFromInput(el)` | Añade string condicional desde input |
+| `removeConditional(roleName, conditional)` | Elimina string condicional |
+| `createSpecialtyPair()` | Crea par Mecánica/Counter nuevo |
+| `deleteSpecialtyPair(id)` | Elimina par con confirmación |
+| `addSpecKw(id, side, el)` | Añade keyword a un lado del par |
+| `removeSpecKw(id, side, keyword)` | Elimina keyword de un lado del par |
+| `deleteStaple(cardId)` | Elimina un staple |
+| `addNomenclatureCategory()` | Añade categoría de nomenclatura |
+| `deleteNomCategory(categoryId)` | Elimina categoría de nomenclatura |
+| `resetToDefault()` | Restaura toda la configuración a valores de fábrica (con confirmación) |
+| `exportConfig()` | Exporta configuración como JSON |
+| `importConfig()` | Importa configuración desde JSON |
+| `addNomCondKw(catId, field, el)` | Añade keyword condicional a categoría de nomenclatura |
+| `removeNomCondKw(catId, field, kw)` | Elimina keyword condicional de categoría |
+| `removeNomCondKwByIndex(catId, field, index)` | Elimina keyword condicional por índice |
+| `renderNomCategoryOptionsAdd(roleName)` | Genera opciones de categoría para añadir a un rol |
+| `addRoleNomCat(roleName)` | Asocia categoría de nomenclatura a un rol |
+| `removeRoleNomCat(roleName, catId)` | Desasocia categoría de nomenclatura de un rol |
+| `_restoreAndScroll(sectionId, anchorId)` | Refresca la sección y hace scroll al anchor indicado |
+| `toggleSection(sectionId)` | Colapsa/expande una sección de Config |
+| `borrarDeck()` | Vacía el deck activo desde el panel Config |
 
 ---
 
 ### `help.js`
-Panel flotante de ayuda contextual + FAQ.
+Panel flotante de ayuda contextual + FAQ. Expone el objeto global `HelpPanel`.
 
 | Función | Descripción |
 |---|---|
-| `init()` | Crea el botón "?" flotante y el overlay del panel |
+| `init()` | Crea el botón `?` flotante y el overlay del panel |
+| `createButton()` | Crea el botón flotante `#help-float-btn` |
+| `createPanel()` | Inyecta el overlay `#help-panel-overlay` |
 | `open()` / `close()` / `toggle()` | Control de visibilidad |
 | `showTab(tab)` | Muestra contenido de la pestaña "Ayuda" o "FAQ" |
-| `getActiveTab()` | Lee `Navigation.currentTab` para mostrar ayuda contextual de la sección actual |
-| `renderFAQ()` | Lista de preguntas con acordeón (toggle por ítem) |
+| `getActiveTab()` | Lee `Navigation.currentTab` para mostrar ayuda contextual |
+| `renderFAQ()` | Lista de preguntas con acordeón |
 | `toggleFAQ(i)` | Expande/colapsa respuesta de FAQ |
 
 **Ayuda contextual disponible para:** `buscador`, `mideck`, `estadisticas`, `config`. El resto muestra contenido genérico.
 
 ---
 
-### `welcome.js`
-Pantalla de bienvenida con selección de perfil de jugador.
+### `winrate.js`
+Registro de victorias/derrotas. Expone el objeto global `Winrate`.
 
 | Función | Descripción |
 |---|---|
-| `init()` | Crea el panel overlay. Solo se ejecuta si `Welcome.dismissed === false` |
-| `createPanel()` | Inyecta el overlay con botones de perfil y controles de música |
-| `enter(tabName, musicPath)` | Inicia música, descarta el overlay y navega a la pestaña indicada |
-| `startMusic(path)` / `stopMusic()` | Controla el audio de fondo (loop, volumen 0.40) |
-| `toggleMusic()` | Pausa/reanuda la música desde el botón del panel |
-| `dismiss()` | Cierra el overlay con animación. **La música continúa sonando** después de cerrarse |
+| `getAllRecords()` | Devuelve todos los records de winrate de todos los decks |
+| `getRecord(deckName)` | Record de un deck específico |
+| `saveRecord(deckName, data)` | Persiste el record de un deck |
+| `change(going, type, delta)` | Modifica contador vinculado al deck activo |
+| `calcWinrate(wins, losses)` | Calcula porcentaje de winrate (null si sin datos) |
+| `renderSection()` | Genera HTML completo del widget de winrate |
+| `refreshSection()` | Re-renderiza el widget en `#winrate-sec` |
+| `_getStandaloneRecord()` | Record standalone (independiente de deck, para Simuladores) |
+| `_saveStandaloneRecord(r)` | Persiste el record standalone |
+| `changeStandalone(going, type, delta)` | Modifica contador standalone |
+| `resetStandalone()` | Reinicia todos los contadores standalone |
+
+**Tipos de going:** `'1st'` (primero) / `'2nd'` (segundo)
+**Tipos de resultado:** `'wins'` / `'losses'`
+
+---
+
+### `duelista.js`
+Perfil del jugador con niveles progresivos basados en duelos totales registrados en Matchups. Expone el objeto global `Duelista`.
+
+| Función | Descripción |
+|---|---|
+| `getLevel(totalDuels)` | Devuelve nivel actual `{ label, icon, next, totalDuels }` basado en duelos totales |
+| `getGlobalStats()` | Agrega todos los matchups de todos los decks y calcula WR global |
+| `getBestDecks()` | Decks con mayor WR general, Going 1st y Going 2nd (mínimo 5 duelos) |
+| `renderSection()` | Genera HTML completo del perfil del duelista |
+| `refreshSection()` | Re-renderiza en `#duelista-content` |
+
+**Niveles disponibles (por duelos totales):** Novato (0) → Aprendiz (10) → Duelista (25) → Rival (50) → Competidor (100) → Semi-Pro (200) → Pro (400) → Élite (800) → Legendario (1500).
+
+---
+
+### `favoritas.js`
+Lista de cartas favoritas del jugador. Expone el objeto global `Favoritas`.
+
+| Función | Descripción |
+|---|---|
+| `getAll()` | Devuelve todas las favoritas desde localStorage |
+| `has(cardId)` | Boolean de si una carta está marcada |
+| `toggle(card)` | Agrega o quita una carta de favoritas |
+| `render()` | Renderiza el panel `#favoritas-panel` en el Buscador |
+| `showActions(index, el)` | Overlay Ver/Añadir sobre una favorita |
+| `viewCard(index)` | Abre CardViewer para una favorita |
+| `addCard(index)` | Añade una favorita al deck activo |
+| `remove(cardId)` | Quita una carta de favoritas |
+| `init()` | Inicializa y renderiza al cargar la página |
+
+Cada favorita guarda: `id`, `name`, `type`, `img` (thumbnail URL), `data` (objeto carta completo para operar sin API).
+
+---
+
+### `banlist.js`
+Sistema de gestión de listas de bans por formato. Expone el objeto global `Banlist`.
+
+| Función | Descripción |
+|---|---|
+| `getData()` | Devuelve datos completos del banlist desde localStorage |
+| `saveData(data)` | Persiste datos del banlist |
+| `getActiveFormats()` | Array de nombres de formatos activos |
+| `toggleActiveFormat(formatName)` | Activa/desactiva un formato. Genesys excluye todos los demás cuando se activa |
+| `getEffectiveBanStatus(cardId)` | Estado efectivo de ban de una carta en los formatos activos: devuelve el estado más restrictivo |
+| `getBadgeHTML(cardId)` | HTML del badge de ban para mostrar en CardViewer |
+| `setCardStatus(formatName, cardId, cardMeta, status)` | Define el estado de ban de una carta en un formato |
+| `removeCardFromFormat(formatName, cardId)` | Elimina carta de un formato |
+| `createCustomFormat()` | Crea nuevo formato personalizado |
+| `deleteCustomFormat(formatName)` | Elimina formato personalizado |
+| `toggleInverted(formatName)` | Invierte la lógica del formato (Genesys mode: lo baneado está permitido) |
+| `renderSection()` | Renderiza toda la sección de Banlist en la UI |
+| `_buildSectionHTML()` | Genera el HTML base de la sección |
+| `_buildTabContent(formatName, data)` | Genera HTML de la lista de cartas de un formato |
+| `renderFormatList(formatName)` | Refresca la lista de cartas de un formato |
+| `openChangeBan(formatName, cardId, cardName)` | Abre modal para cambiar el estado de ban de una carta |
+| `viewCard(cardId)` | Abre CardViewer para una carta del banlist |
+| `switchTab(name)` | Cambia la pestaña activa del banlist |
+| `refreshFormatChips()` | Actualiza los chips de formatos activos en la UI |
+| `isGenesysActive()` | `true` si el formato Genesys está activo |
+
+**Formatos pre-cargados:** TCG, OCG, Genesys (modo invertido especial). Se pueden crear formatos personalizados adicionales.
+
+---
+
+### `matchups.js`
+Historial de enfrentamientos por deck. Registra victorias/derrotas Going 1st y Going 2nd contra decks rivales específicos. Expone el objeto global `Matchups`.
+
+| Función | Descripción |
+|---|---|
+| `_key()` | Devuelve la clave de localStorage para el deck activo (`matchup_{deckName}`) |
+| `getAll()` | Array de todos los matchups del deck activo |
+| `save(list)` | Persiste la lista de matchups del deck activo |
+| `_uid()` | Genera UID único para cada matchup |
+| `_totals(m)` | Calcula totales de un matchup `{ wins, losses, total, wr }` |
+| `renderSection()` | Renderiza la sección completa de matchups |
+| `_refreshList()` | Refresca la lista de matchups en la UI |
+| `openAddPanel()` | Abre panel para registrar nuevo matchup |
+| `_onDeckSelectChange()` | Maneja cambio de selección de deck en el panel de matchup |
+| `_importYDK()` | Importa un YDK para definir el deck del rival en un matchup pendiente |
+| `_setPendingStatus(msg)` | Actualiza el mensaje de estado del deck pendiente |
+| `_clearPendingDeck()` | Limpia el deck pendiente |
+| `_saveNew()` | Guarda nuevo matchup |
+| `openEditPanel(index)` | Abre panel de edición de matchup existente |
+| `_saveEdit(index)` | Guarda cambios de un matchup |
+| `openDeckPanel(index)` | Abre panel para gestionar el deck de un rival en el historial |
+| `deleteRecord(index)` | Elimina un matchup con confirmación |
+| `clearAll()` | Elimina todos los matchups del deck activo |
+| `_closeOverlay()` | Cierra el overlay activo |
+| `_getSavedDeckNames()` | Devuelve nombres de decks guardados para el selector |
+
+---
+
+### `hipergeometria.js`
+Calculadora de probabilidades hipergeométricas. Sub-pestaña "Mulligan" dentro de Simuladores. Expone el objeto global `Hipergeometria`.
+
+| Función | Descripción |
+|---|---|
+| `combination(n, k)` | Cálculo combinatorio C(n,k) |
+| `hyperExact(N, n, M, k)` | Probabilidad exacta de obtener exactamente k copias |
+| `hyperAtLeast(N, n, M, x)` | Probabilidad de obtener al menos x copias |
+| `init()` | Inicialización del módulo |
+| `renderInto(container)` | Construye la UI en el contenedor dado |
+| `_buildHTML()` | Genera el HTML completo del módulo |
+| `toggleSection()` | Colapsa/expande la sección de calculadora |
+| `switchTab(tab)` | Alterna entre modos `'quick'` (cálculo rápido) y `'deck'` (análisis del deck actual) |
+| `_calcQuick()` | Calcula probabilidad con los parámetros manuales |
+| `_renderResults(resId, chartId, N, n, M, x)` | Muestra los resultados calculados |
+| `_renderTurnChart(container, N, n, M, x)` | Renderiza el gráfico de probabilidad por turno |
+| `openSearch()` | Abre el buscador de cartas para seleccionar carta objetivo |
+| `closeSearch()` | Cierra el buscador |
+| `_modalBgClose(e)` | Cierra el modal al hacer clic fuera |
+| `_onSearchInput()` | Busca cartas en la API según el input |
+| `_selectCard(idx)` | Selecciona una carta como objetivo |
+| `_loadDeckList()` | Carga la lista de decks para el modo deck |
+| `_getMetaDeckList()` | Obtiene lista de decks del meta |
+| `_renderMiniDecklist()` | Muestra el decklist del deck seleccionado |
+| `_tapTargetCard(id)` | Selecciona carta del deck como objetivo del cálculo |
+
+---
+
+### `engines.js`
+Módulo de Engines (sub-mazos reutilizables). Panel lateral visible en la pestaña Mi Deck. Expone el objeto global `Engines`.
+
+| Función | Descripción |
+|---|---|
+| `getAll()` | Array de todos los engines guardados |
+| `saveAll(engines)` | Persiste todos los engines |
+| `init()` | Inicializa el panel lateral si no existe |
+| `_renderSidebar()` | Renderiza el panel lateral completo |
+| `_switchTab(tab)` | Alterna entre pestañas `'engines'` y `'saved'` |
+| `_renderSavedDeckItems()` | Lista de decks guardados en la pestaña Saved |
+| `_renderEngineItem(engine, idx)` | Tarjeta de un engine individual |
+| `clickEngine(idx)` | Añade todas las cartas del engine al deck activo |
+| `deleteEngine(idx)` | Elimina un engine con confirmación |
+| `openCreatePanel()` | Abre el panel de creación de nuevo engine |
+| `_showCreateModal()` | Construye y muestra el modal de creación |
+| `closeCreatePanel()` | Cierra el modal de creación |
+| `_onSearchInput()` | Busca cartas en la API para añadir al engine |
+| `addCard(searchIdx, qty)` | Añade carta al engine en creación |
+| `removeCard(cardId)` | Quita carta del engine en creación |
+| `_isExtraCard(card)` | Determina si una carta va al Extra Deck |
+| `_refreshCardsGrid()` | Actualiza la grilla de cartas del engine en creación |
+| `openCoverPicker()` | Abre selector de carta cover para el engine |
+| `setCover(cardId, imgUrl)` | Define la carta cover del engine |
+| `toggleRolesDropdown()` | Muestra/oculta el desplegable de roles del engine |
+
+Un Engine contiene: `name`, `description`, `coverCardId`, `coverImg`, `roles[]`, `cards: { [id]: { data, qty, location } }`.
+
+---
+
+### `experimentacion.js`
+Lienzo libre de drag & drop para posicionar cartas visualmente. Sub-pestaña "Experimentación" dentro de Simuladores. Expone el objeto global `Experimentacion`.
+
+| Función | Descripción |
+|---|---|
+| `renderInto(container)` | Construye el shell una sola vez (flag `_rendered`) |
+| `_buildShell()` | Genera el HTML del módulo |
+| `_setZoom(val)` | Aplica zoom al canvas |
+| `_addCard(card)` | Añade una instancia de carta al canvas con posición auto-calculada en grilla de 8 columnas |
+| `_removeCard(card)` | Quita la última instancia de una carta del canvas. Si era la única, desaparece de la lista |
+| `_renderCard(inst)` | Renderiza el elemento DOM de una instancia |
+| `_expandCanvas(minW, minH)` | Expande el canvas si la carta añadida sale de los límites actuales |
+| `_bindEvents()` | Registra mousemove, mouseup, touchmove, touchend para drag & drop |
+| `_startDrag(e, iid)` | Inicia arrastre de una instancia |
+| `_startDragTouch(e, iid)` | Inicia arrastre táctil |
+| `_onDragMove(e)` | Actualiza posición durante arrastre |
+| `_onDragMoveTouch(e)` | Versión táctil de `_onDragMove` |
+| `_stopDrag()` | Finaliza arrastre |
+| `_viewCard(iid)` | Abre `_openMiniCV` de ZonaPractica para ver la carta (doble clic) |
+| `_refreshList()` | Reconstruye la lista lateral agrupando instancias por carta con conteo |
+| `openSearch()` | Reutiliza el panel de búsqueda de ZonaPractica, parcheando `_addSearchCard` temporalmente para añadir cartas al canvas en lugar de a Other |
+| `importYDK()` | Importa un `.ydk` al canvas. IDs separados por coma a la API, loading overlay durante la carga (`#exp-import-loading` con `.power-loading-spinner`) |
+| `openDeckPicker()` | Abre modal para seleccionar deck guardado, engine o meta |
+| `_loadDeck(type, idx)` | Carga todas las cartas del deck seleccionado al canvas |
+| `clearCanvas()` | Limpia todas las instancias del canvas y reinicia el estado |
+
+**Lista lateral:** Cada entrada muestra thumbnail, nombre, conteo de copias, botón `＋` (añadir copia) y botón `—` (quitar copia). El doble clic sobre una carta del canvas abre el mini CardViewer de ZonaPractica.
+
+---
+
+### `zonapractica.js`
+Simulador de campo de Yu-Gi-Oh! completo. Sub-pestaña "Zona de Práctica" dentro de Simuladores. Expone el objeto global `ZonaPractica`.
+
+**Estado del campo:**
+- `field` — objeto `{ A, B, C, 1-10 }` para zonas del campo. A/B = EMZ, C = Field Zone, 1-5 = Monster Zones, 6/10 = Pendulum Zones, 7-9 = S/T Zones
+- `hand`, `main`, `extra`, `gy`, `banish`, `other` — arrays de entradas de cartas
+- `lp` — Life Points actuales (default 8000)
+- `phase` — fase actual del turno
+- `turnNumber` — número de turno
+- `_activeDeckName` — deck guardado activo (null = independiente o importado por YDK)
+- `_activePlacement` — `{ sourceZone, idx, faceUp }` para el modo Put/Set
+- `_activeMove` — datos del movimiento activo entre zonas
+- `_chainCounter` / `_chainedCards` — gestión de cadenas
+- `_tokenCounter` — contador de tokens creados
+- `gameStates` — array de estados guardados manualmente
+- `logEntries` — historial de acciones
+
+**Entry Point:**
+
+| Función | Descripción |
+|---|---|
+| `renderInto(container)` | Construye el shell del campo en el contenedor dado |
+| `_buildShell()` | Genera el HTML completo del campo |
+
+**Fases:**
+
+| Función | Descripción |
+|---|---|
+| `setPhase(p)` | Cambia la fase activa y registra en log. Al pasar de End a Draw incrementa el turno |
+
+**Búsqueda de cartas (mini-buscador independiente):**
+
+| Función | Descripción |
+|---|---|
+| `openCardSearch()` | Abre el panel de búsqueda propio de ZonaPractica con filtros avanzados |
+| `_closeSearch()` | Cierra panel y resetea filtros |
+| `_addChip(word)` / `_removeChip(i)` / `_renderChips()` | Gestión de chips de palabras clave |
+| `_toggleAdvPanel()` | Muestra/oculta el panel de filtros avanzados |
+| `_renderAdvPanel()` | Construye los filtros avanzados (tipo, atributo, subtipo, nivel, ATK, DEF, etc.) |
+| `_setPzFilter(key, value)` | Activa/desactiva un filtro avanzado |
+| `_resetAdvFilters()` | Limpia todos los filtros avanzados |
+| `_updateAdvSummary()` | Actualiza el resumen de filtros activos |
+| `_hasPzAdvFilters()` | Boolean de si hay filtros avanzados activos |
+| `_buildApiUrl(term)` | Construye URL de búsqueda con todos los parámetros |
+| `_applyLocalFilters(cards)` | Aplica filtros locales (ATK/DEF exactos, arquetipo) post-API |
+| `_addSearchCard(index)` | Añade carta de los resultados a la zona Other |
+
+**Mini CardViewer:**
+
+| Función | Descripción |
+|---|---|
+| `_openMiniCV(indexOrCard)` | Abre el mini visor de carta (puede recibir índice del array de resultados o objeto carta directamente) |
+| `_appendMaterialsPanel(zone, mats)` | Añade panel de materiales XYZ al mini CV |
+
+**Carga de decks:**
+
+| Función | Descripción |
+|---|---|
+| `openDeckSelector()` | Abre el selector de deck (Guardados / Engines / Meta) |
+| `_loadDeck(type, indexStr)` | Carga el deck seleccionado. Baraja el Main con Fisher-Yates. El Side va a Other con faceUp. Restaura estados guardados si había sesión anterior con ese deck |
+
+**Interacción con zonas del campo:**
+
+| Función | Descripción |
+|---|---|
+| `onZoneClick(zone)` | Click en zona de campo. Si hay placement activo → completar. Si hay move activo → completar. Si está en modo cambiar posición → ciclar posición. Si no → mostrar menú |
+| `_showZoneMenu(zone, slotIndex, zoneType)` | Muestra menú contextual con opciones Ver y Acción sobre la zona o carta |
+| `_closeZoneMenus()` | Elimina todos los menús activos |
+| `_zmView(zone, slotIndex, e)` | Abre el mini CV para la carta de la zona. Añade panel de materiales XYZ si aplica |
+| `_appendMaterialsPanel(zone, mats)` | Panel de materiales XYZ en el mini CV |
+| `_zmShowAction(zone, slotIndex, zoneType, e)` | Muestra sub-menú de acciones (Activar, GY, Banish, Hand, Move, Desacoplar materiales) |
+| `_zmActivate(zone, slotIndex, zoneType, e)` | Activa la carta en cadena |
+| `_showChainResolveBtn()` | Muestra el botón flotante de resolución de cadena |
+| `resolveChain()` | Resuelve la cadena registrando el orden y limpiando badges |
+
+**Herramientas:**
+
+| Función | Descripción |
+|---|---|
+| `flipCoin()` | Lanza moneda con animación |
+| `rollDice()` | Abre panel de dados configurables |
+| `_diceRoll()` | Ejecuta el lanzamiento de dados |
+| `createToken()` | Crea un token y lo añade a Other Options |
+| `downloadLog()` | Descarga el log de acciones como archivo .txt |
+| `_downloadStatePng(id)` | Descarga el snapshot de un estado como imagen PNG |
+
+**Movimiento de cartas:**
+
+| Función | Descripción |
+|---|---|
+| `_zmStartMove(zone, slotIndex, zoneType, e)` | Inicia modo de movimiento de una carta entre zonas |
+| `_showMoveHint(name)` | Muestra hint flotante del movimiento activo |
+| `_cancelMoveMode()` | Cancela el movimiento activo |
+| `_startPlacement(sourceZone, idx, faceUp)` | Inicia modo Put/Set para colocar carta del DV en el campo |
+| `_completePlacement(targetZone)` | Completa el Put/Set en la zona destino |
+| `_cancelPlacement()` | Cancela el Put/Set |
+| `_completeMoveToField(targetZone)` | Completa movimiento hacia zona de campo |
+| `_onMultiZoneClick(e, zone)` | Click en zona multi-carta (hand/main/extra/gy/banish/other) |
+| `_completeMoveToMulti(targetZone, targetSlot)` | Completa movimiento hacia zona multi-carta |
+| `_removeFromSource(mv)` | Elimina carta de su origen tras el movimiento |
+
+**Materiales XYZ:**
+
+| Función | Descripción |
+|---|---|
+| `_attachMaterial(zone, entry, sourceZone)` | Acopla una carta como material XYZ bajo la carta del campo |
+| `_detachMaterial(zone, matIdx)` | Desacopla un material específico al GY |
+| `_detachAllMaterials(zone, entryOverride)` | Desacopla todos los materiales al GY |
+| `_showDetachMenu(zone, e)` | Menú para seleccionar qué material desacoplar |
+
+**Deck Viewer (modal de visualización de zona):**
+
+| Función | Descripción |
+|---|---|
+| `openDeckViewer(zoneName)` | Abre el modal visor de una zona (Main, Extra, Hand, GY, Banish, Other) con búsqueda y filtros |
+| `_setDvFilter(btn, zoneName)` | Activa filtro por tipo en el DV |
+| `_refreshDV(zoneName)` | Refresca el contenido del DV con filtros activos |
+| `_dvSendCard(zone, idx, target)` | Mueve carta del DV a otra zona. Los tokens que van a Hand/GY/Banish se destruyen |
+| `_dvFlip(zone, idx)` | Voltea la orientación de una carta en el DV |
+| `_dvMoveInZone(zone, idx, direction)` | Mueve carta al inicio o final del array (solo Main Deck) |
+| `_dvRemoveCard(zone, idx)` | Elimina carta del DV y de la zona |
+
+**Acciones generales:**
+
+| Función | Descripción |
+|---|---|
+| `shuffleHand()` | Baraja la mano |
+| `shuffleDeck()` | Baraja el Main Deck |
+| `drawCard()` | Roba la primera carta del Main Deck a la mano |
+| `toggleChangePosition()` | Activa/desactiva modo cambiar posición |
+| `_cyclePosition(entry, zone)` | Cicla posición: ATK → DEF → SET → ATK |
+| `saveGameState()` | Guarda un snapshot del estado actual (campo + mano + mazos) |
+| `toggleHideCards()` | Oculta/muestra todas las cartas (hand + main + extra) |
+| `toggleHideZone(zone)` | Oculta/muestra una zona específica |
+| `_flipAllInZone(zone)` | Voltea todas las cartas de una zona |
+| `_syncZoneHideBtns()` | Sincroniza el estado visual de los botones de ocultar |
+| `_showHideWidget()` | Muestra el widget de control de visibilidad |
+| `_updateHideWidget()` | Actualiza el estado del widget de visibilidad |
+
+**Log y Historial:**
+
+| Función | Descripción |
+|---|---|
+| `openLog()` | Abre el panel de log de acciones |
+| `_phaseLabel(p)` | Devuelve label legible de una fase |
+| `_logShortcut(msg)` | Añade entrada al log desde shortcut |
+| `_addCustomLog()` | Añade entrada manual al log |
+| `_closeLog()` | Cierra el panel de log |
+| `_clearLog()` | Limpia el historial de log |
+| `_addLog(msg, card, isManual, isLike)` | Añade entrada al log con timestamp, imagen opcional y tipo |
+| `_fmtLogMsg(msg, cardName, entryIdx, isSpecial)` | Formatea un mensaje del log |
+| `_openLogCard(idx)` | Abre la carta referenciada en una entrada del log |
+| `_renderLogEntries()` | Refresca la vista del log |
+| `_logLike()` | Marca la última entrada del log con ❤️ |
+
+**Navegador de Estados:**
+
+| Función | Descripción |
+|---|---|
+| `openStateNavigator()` | Abre el panel del historial de estados guardados |
+| `_renderNavList()` | Lista todos los estados con previews |
+| `_renderNavCounts(s)` | Conteos de cartas de un estado |
+| `_renderNavFieldPreview(s)` | Preview visual del campo en un estado |
+| `_toggleNavCard(id)` | Expande/colapsa el detalle de un estado |
+| `_restoreState(id)` | Restaura un estado guardado al campo actual |
+| `_deleteState(id)` | Elimina un estado del historial |
+| `_clearAllStates()` | Elimina todos los estados |
+
+**Widget de Estado y Botones Flotantes:**
+
+| Función | Descripción |
+|---|---|
+| `toggleStatusWidget()` | Muestra/oculta el widget de estado del campo |
+| `_createStatusWidget()` | Crea el widget DOM del estado |
+| `_updateStatusWidget()` | Actualiza los contadores del widget |
+| `_updateFloatingBtns()` | Crea/actualiza botones flotantes "Robar", "Marcar Estado", "Log" solo en Zona de Práctica |
+| `_cleanupFloatBtns()` | Elimina los botones flotantes al salir de Zona de Práctica |
+| `_showToast(msg, duration)` | Muestra notificación temporal en pantalla |
+
+**Life Points:**
+
+| Función | Descripción |
+|---|---|
+| `_openPzLP(type)` | Abre panel de gain/damage de LP con presets |
+| `_calcPzLP(type)` | Aplica el cambio de LP |
+| `_resetPzLP()` | Restaura LP a 8000 |
+
+**Importación YDK:**
+
+| Función | Descripción |
+|---|---|
+| `_importYDK()` | Importa un `.ydk` externo directamente al campo. IDs separados por `%7C` a la API |
+
+**Persistencia de estados:**
+
+| Función | Descripción |
+|---|---|
+| `_saveStatesToDeck()` | Guarda estados del historial en localStorage bajo `pz_states_{deckName}`. Solo si hay deck guardado activo. Usa versión slim (sin imágenes ni desc) |
+| `_loadStatesFromDeck(deckName)` | Recupera estados guardados de un deck |
+| `_slimEntry(e)` | Versión reducida de una entrada de carta |
+| `_slimField(field)` | Versión reducida del campo completo |
+
+**Render:**
+
+| Función | Descripción |
+|---|---|
+| `clearBoard()` | Limpia todo el campo |
+| `_resetState()` | Vacía todos los arrays y el campo |
+| `_renderAllZones()` | Renderiza todas las zonas (campo + multi) y actualiza widgets |
+| `_renderFieldZone(zone)` | Renderiza una zona mono del campo |
+| `_renderZone(zoneName)` | Renderiza una zona multi-carta (hand/main/extra/gy/banish/other) |
+| `_renderZoneInEl(el, cards, zoneName)` | Renderiza cartas en un elemento DOM dado |
+| `_getMultiArray(zone)` | Devuelve el array de la zona indicada |
+| `_zoneName(zone)` | Nombre legible de una zona |
+
+**Zonas overlay XYZ:** A, B, 1, 2, 3, 4, 5 (aceptan acoplamiento de materiales).
+**Posiciones posibles:** ATK (faceUp, rotation=0), DEF (faceUp, rotation≠0), SET (faceUp=false).
+
+---
+
+### `torneo.js`
+Gestiona las sub-pestañas de Simuladores y el sistema de torneos Swiss. Expone el objeto global `Torneo`.
+
+**Estado:**
+- `data` — datos del torneo activo: nombre, participantes, rondas, historial, puntos
+- `viewRound` — ronda actualmente visualizada
+- `simTab` — sub-pestaña activa de Simuladores
+
+| Función | Descripción |
+|---|---|
+| `_empty(name)` | Estructura vacía de un torneo nuevo |
+| `load()` | Carga torneo desde localStorage con migración de estructura mínima |
+| `save()` | Persiste el torneo activo |
+| `init()` | Inicializa: obtiene el contenedor de Simuladores, carga datos, renderiza |
+| `render()` | Construye el shell de Simuladores (una sola vez) y renderiza el contenido del torneo |
+| `showMainTab(tab)` | Alterna entre sub-pestañas del torneo (Participantes/Matches/Brackets/Historial/Puntos) |
+| `_renderSimMatchups()` | Renderiza el sub-panel de matchups del torneo activo |
+| `showSimTab(tab)` | **Función clave**: alterna entre sub-pestañas de Simuladores. Inicializa el módulo correspondiente con `renderInto()` si aún no está creado: Mulligan (Hipergeometria), Duelo (DueloEnVivo), Experimentación (Experimentacion), Práctica (ZonaPractica). Winrate se renderiza inline. Gestiona botones flotantes de ZonaPractica |
+| `setViewRound(num)` | Cambia la ronda visualizada |
+| `renderParticipantes()` | Sección de participantes con opciones de deck |
+| `_renderThumb(p, clickable)` | Thumbnail del deck de un participante |
+| `onDeckSelectChange()` | Maneja cambio de deck en el selector de participante |
+| `triggerYDK()` | Inicia selección de archivo YDK para un participante |
+| `handleYDKUpload(input)` | Procesa el YDK subido y lo asocia al participante pendiente |
+| `_parseYDK(text)` | Parsea texto YDK para torneos |
+| `addParticipant()` | Añade participante con nombre y deck |
+| `_applyDeckFromSaved(p, deckName)` | Asocia deck guardado a un participante |
+| `_applyDeckFromMeta(p, folder, deckName)` | Asocia deck del meta a un participante |
+| `_applyDeckFromYDK(p, ydk)` | Asocia deck YDK importado a un participante |
+| `removeParticipant(id)` | Elimina participante |
+| `renderMatches()` | Sección de enfrentamientos de la ronda actual |
+| `_renderMatchItem(m, idx, locked, round)` | Item de un match individual |
+| `_buildDeckOptions(currentDeck)` | Opciones de deck para selector en match |
+| `addMatch()` | Añade match a la ronda actual |
+| `removeMatch(matchId)` | Elimina match |
+| `changeWins(matchId, side, delta)` | Modifica victorias de un lado |
+| `changeMatchDeck(matchId, side, val)` | Cambia el deck de un lado del match |
+| `runSwiss()` | Genera matches automáticos con sistema Swiss (empareja por puntos) |
+| `renderBrackets()` | Sección de brackets visuales |
+| `finalizeRound()` | Finaliza la ronda actual y crea la siguiente |
+| `_updatePoints(round)` | Actualiza puntos de todos los participantes (2 pts victoria, 1 empate, 0 derrota) |
+| `_addToHistorial(round)` | Añade ronda finalizada al historial |
+| `renderHistorial()` | Sección de historial de rondas |
+| `renderPuntos()` | Clasificación general con puntos |
+| `openDeckPanel(playerId)` | Panel de gestión del deck de un participante |
+| `newTorneo()` | Crea torneo nuevo (requiere confirmación, borra todo) |
+| `renameTorneo()` | Renombra el torneo activo |
+| `exportTxt()` | Exporta el torneo como archivo `.txt` |
+| `_currentRound()` | Devuelve la ronda actual (última del array) |
+| `_getSavedDeckNames()` | Lista nombres de decks guardados para selectores |
+
+---
+
+### `duelo.js`
+Cronómetros y gestión de Life Points para duelos presenciales. Sub-pestaña "Duelo en Vivo" dentro de Simuladores. Sin persistencia en localStorage. Expone el objeto global `DueloEnVivo`.
+
+**Sub-pestañas:** Cronómetro Estándar, Cronómetro Master Duel, Herramientas.
+
+| Función | Descripción |
+|---|---|
+| `renderInto(container)` | Construye el shell en el contenedor dado |
+| `_buildShell()` | HTML completo con las 3 sub-pestañas |
+| `showSubTab(tab)` | Alterna entre `estandar`, `masterduel`, `herramientas` |
+| `_fmt(secs)` | Formatea segundos a `HH:MM:SS` |
+| `_setDisplay(id, secs)` | Actualiza display de tiempo |
+| `_flashAlert(msg, duration)` | Muestra alerta de tiempo con flash visual |
+| `_buildStdPane()` | HTML del cronómetro estándar |
+| `stdStart(scope)` | Inicia cronómetro estándar o de Master Duel |
+| `stdStop(scope)` | Pausa cronómetro |
+| `stdReset(scope)` | Reinicia cronómetro al tiempo por defecto |
+| `_buildMDPane()` | HTML completo del modo Master Duel (cronómetro de partida + cronómetros de jugador A y B + LP + Wins) |
+| `_startPlayerTimer(p)` | Inicia el cronómetro de turno del jugador A o B |
+| `_stopPlayerTimer(p)` | Pausa cronómetro del jugador |
+| `resetPlayerTimers()` | Reinicia ambos cronómetros de jugadores |
+| `setInteraction(p)` | Indica que el jugador `p` está respondiendo (pausa su cronómetro, activa el del rival) |
+| `_updateInteractButtons()` | Actualiza el estado visual de los botones de interacción |
+| `nextTurn()` | Avanza el turno e inicia cronómetro del jugador activo |
+| `surrender(loser)` | Declara rendición del jugador `loser` |
+| `_declareWinner(winner, reason)` | Registra la victoria, actualiza el marcador de wins |
+| `openLP(player, type)` | Abre panel de ganancia/daño de LP para modo Master Duel |
+| `calcLP(player, type)` | Aplica el cambio de LP del modo Master Duel |
+| `resetLP()` | Reinicia LP de ambos jugadores a 8000 |
+| `openLPStd(player, type)` / `calcLPStd` / `resetLPStd` | Versiones para el módulo estándar de LP |
+| `_buildHerrPane()` | HTML del panel de herramientas (moneda + dados) |
+| `chooseSide(side)` | Selecciona cara de la moneda |
+| `flipCoin()` | Lanza la moneda con animación |
+| `changeDice(delta)` | Cambia el número de dados |
+| `rollDice()` | Lanza los dados con animación |
+
+---
+
+### `welcome.js`
+Pantalla de bienvenida con selección de perfil y sistema de música de fondo. Expone los objetos globales `Welcome` y `MusicPlayer`.
+
+**`Welcome`:**
+
+| Función | Descripción |
+|---|---|
+| `init()` | Crea el panel overlay. No ejecuta si `dismissed === true` |
+| `createPanel()` | Inyecta el overlay con botones de perfil y control de música |
+| `toggleMusic()` | Pausa/reanuda la música desde el panel |
+| `enter(tabName, levelKey)` | Delega la música a `MusicPlayer.setTrack()`, cierra el overlay y navega a la pestaña |
+| `startMusic(path)` / `stopMusic()` | Control básico de audio |
+| `dismiss()` | Cierra el overlay con animación. La música continúa sonando |
 
 **Perfiles disponibles:**
 - Novato → navega a `formacion`
@@ -319,25 +1063,46 @@ Pantalla de bienvenida con selección de perfil de jugador.
 - Competitivo → navega a `buscador`
 - "Entrar sin seleccionar" → navega a `buscador`
 
-**Nota:** La línea `document.addEventListener('DOMContentLoaded', () => Welcome.init())` está comentada en el código — el módulo existe pero la pantalla de bienvenida no se activa automáticamente en la build actual.
+**⚠️ NOTA:** La línea `document.addEventListener('DOMContentLoaded', () => Welcome.init())` está comentada — la pantalla de bienvenida no se activa automáticamente en la build actual.
 
----
+**`MusicPlayer`:**
 
-### `utils.js`
-Botones flotantes de scroll (▲ arriba / ▼ abajo). Aparecen/desaparecen según posición: ▲ visible si scroll > 300px, ▼ visible si no se está al fondo (margen 50px).
+| Función | Descripción |
+|---|---|
+| `init()` | Lee config, crea el audio y el botón flotante si está habilitado |
+| `setTrack(path)` | Cambia la pista activa sin interrumpir si ya estaba sonando |
+| `_buildAudio(path, volume)` | Crea el objeto Audio |
+| `toggle()` | Pausa/reanuda la música desde el botón flotante |
+| `setVolume(vol)` | Cambia el volumen |
+| `setEnabled(enabled)` | Habilita/deshabilita la música y el botón flotante |
+| `_createButton()` | Crea el botón flotante `#music-float-btn` |
+| `_updateButton()` | Actualiza el ícono del botón según estado de reproducción |
+
+La configuración de música se lee desde `ConfigManager.getMusicConfig()` que devuelve `{ enabled, volume, tracks }`. Las pistas se organizan por nivel de jugador (`novato`, `casual`, `competitivo`, `default`).
 
 ---
 
 ## 3. Persistencia de Datos (localStorage)
 
-| Clave | Contenido |
-|---|---|
-| `yugioh_config` | Configuración completa: roles, especialidades, staples, nomenclatura, rendimientos decrecientes |
-| `deck_{nombre}` | Cada deck guardado individualmente |
-| `yugioh_meta_decks` | Todos los decks del meta organizados por carpeta/fecha |
-| `yugioh_power_cache` | Cache del Power Score calculado del meta |
-| `yugioh_winrates` | Registros de winrate por nombre de deck |
-| `yugioh_favoritas` | Cartas marcadas como favoritas |
+| Clave | Módulo | Contenido |
+|---|---|---|
+| `yugioh_config` | ConfigManager | Configuración completa: roles, keywords, pesos, especialidades, staples, nomenclatura, rendimientos decrecientes, pilares, RPS, shortcuts |
+| `deck_{nombre}` | Deck | Cada deck guardado individualmente: `{ name, cards, notes }` |
+| `yugioh_meta_decks` | Estadisticas | Todos los decks del meta organizados por carpeta/fecha |
+| `yugioh_meta_card_library` | Estadisticas | Biblioteca de cartas del meta: `{ cardId → { id, name, type, roles } }` |
+| `yugioh_meta_deck_scores` | Estadisticas | Scores pre-calculados por deck: `"folder|||deckname" → { internalScore, externalScore, pillars, calculatedAt }` |
+| `yugioh_cross_scores` | Estadisticas | Scores cruzados N×N entre decks del meta |
+| `yugioh_power_cache` | Estadisticas | Cache del Power Score calculado del meta |
+| `yugioh_winrates` | Winrate | Records de winrate por nombre de deck |
+| `pz_winrate_standalone` | Winrate | Record standalone para Simuladores (independiente de deck) |
+| `yugioh_favoritas` | Favoritas | Cartas marcadas como favoritas: `{ cardId → { id, name, type, img, data } }` |
+| `yugioh_banlist_data` | Banlist | Datos de ban lists: formatos TCG, OCG, Genesys y personalizados |
+| `yugioh_engines` | Engines | Array de engines guardados |
+| `yugioh_torneo_actual` | Torneo | Torneo activo con participantes, rondas, historial y puntos |
+| `matchup_{deckName}` | Matchups | Historial de enfrentamientos por deck activo |
+| `pz_states_{deckName}` | ZonaPractica | Historial de estados guardados de la Zona de Práctica por deck |
+| `yugioh_player_level` | ConfigManager | Nivel del jugador seleccionado (`'default'` o nombre de perfil) |
+| `yugioh_music_config` | ConfigManager / MusicPlayer | Configuración de música: `{ enabled, volume, tracks }` |
 
 Sin servidor, cuenta de usuario, ni sincronización entre dispositivos.
 
@@ -345,83 +1110,45 @@ Sin servidor, cuenta de usuario, ni sincronización entre dispositivos.
 
 ## 4. Dependencias Externas
 
-- **API YGOProDeck** (`db.ygoprodeck.com/api/v7/cardinfo.php`) — fuente de todos los datos de cartas. Sin internet, la app no puede buscar ni importar.
+- **API YGOProDeck** (`db.ygoprodeck.com/api/v7/cardinfo.php`) — fuente de todos los datos de cartas. Parámetros usados: `?id=` (IDs separados por coma para consultas múltiples), `?fname=` (búsqueda por nombre parcial), más parámetros avanzados de tipo, atributo, raza, nivel, etc. Sin internet, la app no puede buscar ni importar.
 - **html2canvas** (CDN, v1.4.1) — generación de imágenes PNG del decklist y de cartas individuales.
 
 ---
 
-## 5. Bugs Conocidos Activos
+## 5. Estructura de Archivos CSS
+
+| Archivo | Módulo / Uso |
+|---|---|
+| `css/style_global.css` | Variables CSS globales, layout base, header parallax, nav de pestañas, footer, tema oscuro |
+| `css/style_buscador.css` | Panel del Buscador: search bar, chips de filtro, grilla de resultados, panels de Staples y Favoritas |
+| `css/style_mideck.css` | Panel Mi Deck: layout, filas de cartas, badges de rol, composición del deck, panel de decks guardados, Engines sidebar |
+| `css/style_estadisticas.css` | Panel Estadísticas: secciones colapsables, barras de pilar, tablas de scores, widget flotante, spinner de carga (`.power-loading-spinner`) |
+| `css/style_simuladores.css` | Toda la UI de Simuladores: campo de ZonaPractica, modales PZ (`.pz-modal-overlay`, `.pz-modal-box`), Deck Viewer, mini CardViewer, log, historial de estados, Torneo, DueloEnVivo, Experimentación |
+| `css/style_meta.css` | Pestaña Meta (placeholder, pendiente de implementación) |
+| `css/style_formacion.css` | Pestaña Formación (placeholder, pendiente de implementación) |
+| `css/style_config.css` | Panel Config: tarjetas de rol, pares de especialidades, sección de nomenclatura, rendimientos decrecientes |
+| `css/style_welcome.css` | Pantalla de bienvenida: overlay, panel, botones de perfil, logo |
+| `css/style_cardviewer.css` | Modal CardViewer: imagen, stats, descripción, controles de cantidad, barras de aporte, badges de saturación de roles |
+
+**⚠️ NOTA:** `style_simuladores.css` está listada dos veces en `index.html` (líneas 18 y 23). Es redundante pero inofensivo.
 
 ---
 
-### 🔴 Bug 1 — `navigation.js` + `index.html` — doble disparo de `showTab`
+## 6. Módulos JS sin archivo propio (placeholders en index.html)
 
-**Problema:** Los botones del nav (Buscador, Mi Deck, Estadísticas, Simuladores, Meta, Formación) tienen `onclick="switchTab('...')"` en el HTML y además `navigation.js` les agrega un `addEventListener('click', ...)` en `init()`. Cada clic ejecuta `showTab` dos veces.
-
-**Fix:** Eliminar los atributos `onclick="switchTab('...')"` de todos los `<button class="nav-button">` en `index.html`. Dejar solo los listeners del módulo. El botón Config no tiene `onclick` y ya funciona bien — es el modelo correcto.
-
----
-
-### 🔴 Bug 2 — `stats.js` — typo `undestroyeble` en pilares de Resiliencia
-
-**Problema:** En la lista de roles que aportan a Resiliencia, el sistema usa `'undestroyeble'` (con e) en lugar de `'undestroyable'`. El rol real en el sistema se llama `undestroyable`. Resultado: cartas marcadas con ese rol no suman nada al pilar de Resiliencia del Internal Score.
-
-**Fix:** Corregir el typo en la constante/array de roles de Resiliencia dentro de `stats.js`. Buscar `undestroyeble` y reemplazar por `undestroyable`.
+| Módulo | Archivo | Estado |
+|---|---|---|
+| `logger.js` | `Modules/logger.js` | Funcional. No revisado en detalle en este reporte. Expone `window.Logger` |
+| `parallax.js` | `Modules/parallax.js` | Funcional. Efecto visual del header |
+| `nomenclature-analyzer.js` | `Modules/nomenclature-analyzer.js` | Funcional. Trabaja junto a ConfigManager para análisis de texto de cartas |
 
 ---
 
-### 🟡 Bug 3 — `specialty-analyzer.js` — `cardCountersCard` retorna siempre 0
+## 7. Pestañas Pendientes de Implementación
 
-**Problema:** La función `cardCountersCard()` existe en el módulo pero su implementación es `return 0` — está vacía. Cualquier lógica que llame a esta función para saber si una carta countera a otra siempre obtendrá 0.
-
-**Estado:** Impacto bajo si el flujo principal no la usa directamente, pero es una función declarada y sin implementar.
-
----
-
-## 6. Features Implementados Confirmados
-
-- ✅ Búsqueda de cartas por nombre y filtros combinados (chips)
-- ✅ Mensaje de espera al buscar solo por palabras clave (toda la DB)
-- ✅ CardViewer con Nomenclatura coloreada, aporte al deck, posibles roles, toggle Favorita y toggle Staple
-- ✅ Construcción de deck (Main/Extra/Side) con orden automático por tipo
-- ✅ Bloque de composición del deck (tipos, atributos con color, niveles, subtipos)
-- ✅ Roles manuales y detección automática al agregar cartas
-- ✅ Saturación de roles: borde naranja (> optimal) y rojo (> max) en badges del deck
-- ✅ Carta As como imagen representativa del deck guardado
-- ✅ Notas del deck persistentes
-- ✅ Importación/Exportación .ydk, exportación .txt, descarga imagen PNG
-- ✅ Internal Score con 3 pilares, rendimientos decrecientes y penalización por deck > 43
-- ✅ External Score relativo al meta cargado
-- ✅ Counter-Deck Score (Nivel Anti-META) con penalización por bricks
-- ✅ Power Score de cartas del meta con presencia, specBonus y counterBonus
-- ✅ Probabilidad de encuentro hipergeométrica
-- ✅ Análisis de mecánicas del deck vs cartas amenaza del meta
-- ✅ Identificación de decks del meta que más contrarrestan al deck activo
-- ✅ Gestión de carpetas de meta por fecha de formato
-- ✅ Filtro multi-carpeta en lista de decks del meta
-- ✅ Recurrencia de cartas en el meta
-- ✅ Counter-Cards del meta
-- ✅ Widget flotante de scores en tiempo real (visible en pestañas distintas a Estadísticas)
-- ✅ Winrate por deck (Going 1st / Going 2nd / General)
-- ✅ Perfil del Duelista con 9 niveles y barra de progreso
-- ✅ Favoritas con acceso rápido desde el Buscador
-- ✅ Staples del formato con panel en el Buscador y gestión desde CardViewer
-- ✅ Nomenclatura configurable con delimiter por categoría (basado en `endsWith`)
-- ✅ SpecialtyAnalyzer basado en roles (no keywords propias)
-- ✅ Accesos rápidos (⚡ Shortcuts) con menú flotante configurable
-- ✅ Panel de ayuda contextual + FAQ
-- ✅ Scroll buttons flotantes (▲/▼)
-- ✅ Pantalla de bienvenida con perfiles (código presente, init desactivado)
-- ✅ Exportación de reportes (.txt / .csv) desde Estadísticas
-
----
-
-## 7. Pendiente de Implementación
-
-Pestañas con placeholder en `index.html` sin contenido real:
-- **Simuladores** — sin contenido funcional
-- **Meta** (pestaña propia) — sin contenido. Diferente al análisis de meta dentro de Estadísticas, que sí funciona
-- **Formación** — sin contenido funcional
-- **Welcome Screen** — código completo pero `init()` comentado; no se activa en la build actual
+Estas pestañas tienen HTML placeholder en `index.html` pero sin contenido funcional real:
+- **Meta** (`#meta-content`) — texto placeholder
+- **Formación** (`#formacion-content`) — texto placeholder
+- **Welcome Screen** — código completo en `welcome.js` pero `init()` comentado, no se activa en la build actual
 
 ===============================================================================
