@@ -63,18 +63,12 @@ const Winrate = {
     // ── Render ────────────────────────────────────────────────────
 
     renderSection: function () {
-        const deckName = window.Deck?.name;
-
-        if (!deckName || Object.keys(window.Deck?.cards || {}).length === 0) {
-            return `<p class="stats-empty">Carga un deck para registrar su winrate.</p>`;
-        }
-
-        const r = this.getRecord(deckName);
+        // ── Leer desde storage independiente (no ligado a deck) ──
+        const r = this._getStandaloneRecord();
 
         const wr1   = this.calcWinrate(r.wins1st,   r.losses1st);
         const wr2   = this.calcWinrate(r.wins2nd,   r.losses2nd);
         const wrAll = this.calcWinrate(r.wins1st + r.wins2nd, r.losses1st + r.losses2nd);
-
         const totalDuels = r.wins1st + r.losses1st + r.wins2nd + r.losses2nd;
 
         const wrColor = (pct) => {
@@ -96,23 +90,21 @@ const Winrate = {
                         <div class="wr-counter-block">
                             <div class="wr-counter-btns">
                                 <button class="wr-btn wr-btn-up"
-                                    onclick="Winrate.change('${going}', 'wins', 1)">＋</button>
+                                    onclick="Winrate.changeStandalone('${going}','wins',1)">＋</button>
                                 <div class="wr-number" style="color:#00b894">${wins}</div>
                                 <button class="wr-btn wr-btn-down"
-                                    onclick="Winrate.change('${going}', 'wins', -1)">－</button>
+                                    onclick="Winrate.changeStandalone('${going}','wins',-1)">－</button>
                             </div>
                             <div class="wr-counter-label">Victorias</div>
                         </div>
-
                         <div class="wr-separator">—</div>
-
                         <div class="wr-counter-block">
                             <div class="wr-counter-btns">
                                 <button class="wr-btn wr-btn-up"
-                                    onclick="Winrate.change('${going}', 'losses', 1)">＋</button>
+                                    onclick="Winrate.changeStandalone('${going}','losses',1)">＋</button>
                                 <div class="wr-number" style="color:#d63031">${losses}</div>
                                 <button class="wr-btn wr-btn-down"
-                                    onclick="Winrate.change('${going}', 'losses', -1)">－</button>
+                                    onclick="Winrate.changeStandalone('${going}','losses',-1)">－</button>
                             </div>
                             <div class="wr-counter-label">Derrotas</div>
                         </div>
@@ -125,13 +117,10 @@ const Winrate = {
         };
 
         return `
-            <div class="wr-deck-label">🃏 ${deckName}</div>
-
             <div class="wr-halves">
                 ${counterHTML('1st', 'Going 1st')}
                 ${counterHTML('2nd', 'Going 2nd')}
             </div>
-
             <div class="wr-general">
                 <div class="wr-general-label">Winrate General</div>
                 <div class="wr-general-pct" style="color:${wrColor(wrAll)}">
@@ -140,15 +129,45 @@ const Winrate = {
                 <div class="wr-general-duels">
                     ${totalDuels > 0
                         ? `${r.wins1st + r.wins2nd}V · ${r.losses1st + r.losses2nd}D · ${totalDuels} duelos totales`
-                        : 'Sin duelos registrados'}
+                        : 'Sin duelos registrados aún.'}
                 </div>
-            </div>`;
+            </div>
+            <button class="wr-reset-btn" onclick="Winrate.resetStandalone()">↺ Reiniciar contadores</button>`;
     },
 
     refreshSection: function () {
         const el = document.getElementById('winrate-sec');
         if (el) el.innerHTML = this.renderSection();
-    }
+    },
+    // ── Winrate standalone (Simuladores — independiente de deck) ─
+    STANDALONE_KEY: 'pz_winrate_standalone',
+
+    _getStandaloneRecord: function () {
+        try {
+            return JSON.parse(localStorage.getItem(this.STANDALONE_KEY)) || {
+                wins1st: 0, losses1st: 0, wins2nd: 0, losses2nd: 0
+            };
+        } catch (_) {
+            return { wins1st: 0, losses1st: 0, wins2nd: 0, losses2nd: 0 };
+        }
+    },
+
+    _saveStandaloneRecord: function (r) {
+        localStorage.setItem(this.STANDALONE_KEY, JSON.stringify(r));
+    },
+
+    changeStandalone: function (going, type, delta) {
+        const r   = this._getStandaloneRecord();
+        const key = type + going;
+        r[key] = Math.max(0, (r[key] || 0) + delta);
+        this._saveStandaloneRecord(r);
+        this.refreshSection();
+    },
+
+    resetStandalone: function () {
+        this._saveStandaloneRecord({ wins1st: 0, losses1st: 0, wins2nd: 0, losses2nd: 0 });
+        this.refreshSection();
+    },
 };
 
 window.Winrate = Winrate;
