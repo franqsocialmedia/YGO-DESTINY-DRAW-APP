@@ -434,35 +434,52 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
     // MODO DUELO — JUGADOR B
     // ═══════════════════════════════════════════════════════
     _toggleDuelMode: function () {
-        this._duelMode = !this._duelMode;
-        const btn   = document.getElementById('pz-player-switch');
-        const label = document.getElementById('pz-switch-label');
-        const boardB = document.getElementById('pz-board-b');
-        if (this._duelMode) {
-            btn?.classList.add('pz-switch-on');
-            if (label) label.textContent = 'Jugador A';
-            if (boardB) boardB.style.display = '';
+        const boardB  = document.getElementById('pz-board-b');
+        const label   = document.getElementById('pz-switch-label');
+        const btn     = document.getElementById('pz-player-switch');
+
+        if (!this._duelMode) {
+            // Primera activación: mostrar campo B, jugador B activo
+            // Convertir logo cell en botón de interacción
+            const logoCell = document.querySelector('.pz-logo-cell.pz-fg-logo');
+            if (logoCell) {
+                logoCell.innerHTML = '';
+                logoCell.className = 'pz-logo-cell pz-fg-logo pz-logo-interact';
+                logoCell.setAttribute('onclick', "ZonaPractica._onInteractBtn('A')");
+                logoCell.innerHTML = `<span id="pz-logo-interact-label" class="pz-logo-interact-label">¿Alguna<br>Interacción?</span>`;
+            }
+            // Ocultar botón original de interacción de la zona hand (si existe)
+            const origBtn = document.getElementById('pz-interact-btn-A');
+            if (origBtn) origBtn.style.display = 'none';
+            this._duelMode    = true;
             this._activePlayer = 'B';
-            this._updateActivePlayerUI();
+            btn?.classList.add('pz-switch-on');
+            if (label)  label.textContent = 'Jugador A';
+            if (boardB) boardB.style.display = '';
             this._renderAllZonesB();
         } else {
-            btn?.classList.remove('pz-switch-on');
-            if (label) label.textContent = 'Jugador B';
-            if (boardB) boardB.style.display = 'none';
-            this._activePlayer = 'A';
-            this._updateActivePlayerUI();
+            // Ya activo: el switch alterna el jugador activo para el Log
+            this._activePlayer = this._activePlayer === 'B' ? 'A' : 'B';
+            if (label) label.textContent = this._activePlayer === 'B' ? 'Jugador A' : 'Jugador B';
         }
+        this._updateActivePlayerUI();
     },
-
     _updateActivePlayerUI: function () {
         const isB = this._duelMode;
         // Bordes de campo activo
         const boardA = document.getElementById('pz-board-outer');
         const boardB = document.getElementById('pz-board-outer-b');
+        
         if (boardA) boardA.classList.toggle('pz-board-active-turn', this._turnPlayer === 'A');
         if (boardB) boardB.classList.toggle('pz-board-active-turn', this._turnPlayer === 'B');
         // Botón de interacción — activo solo si es el turno del jugador correspondiente
-        const btnA = document.getElementById('pz-interact-btn-A');
+        // Botón interacción A (ahora puede ser la logo cell)
+        const btnA = document.getElementById('pz-interact-btn-A') ||
+                     document.querySelector('.pz-logo-interact');
+        if (btnA) {
+            btnA.classList.toggle('pz-interact-active', this._turnPlayer === 'A');
+            btnA.classList.toggle('pz-interact-waiting', this._waitingInteraction && this._turnPlayer !== 'A');
+        }
         const btnB = document.getElementById('pz-interact-btn-B');
         if (btnA) {
             btnA.classList.toggle('pz-interact-active', this._turnPlayer === 'A');
@@ -593,7 +610,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
         const n      = cards.length;
         const maxGap = isHand ? 8 : 6;
         const minGap = isHand ? -52 : -18;
-        const avail  = (el.offsetWidth || 200) - CARD_W;
+        const avail  = (el.getBoundingClientRect().width || el.offsetWidth || 280) - CARD_W;
         const gap    = Math.max(minGap, Math.min(maxGap, n > 1 ? avail / (n - 1) : maxGap));
         const BACK   = this.CARD_BACK;
         const hideCards = isB ? (this._bHideCards || false) : this.cardsHidden;
@@ -1114,9 +1131,27 @@ overlay.innerHTML = `
     const dk  = src?.[parseInt(indexStr)];
     if (!dk) return;
     const cards = dk.cards || {};
-    // Limpiar sesión anterior
+    // Solo limpiar estado de A si no es carga para B
+    if (player !== 'B') {
     this._resetState();
     this.logEntries    = [];
+    this.gameStates    = [];
+    this._chainCounter = 0;
+    this._chainedCards = [];
+    this._tokenCounter = 0;
+    this.lp = 8000;
+    const lpEl = document.getElementById('pz-lp-val');
+    if (lpEl) lpEl.textContent = '8,000';
+    document.getElementById('pz-chain-resolve-btn')?.remove();
+    document.getElementById('pz-log-panel')?.remove();
+    document.getElementById('pz-nav-panel')?.remove();
+    const swBtn = document.getElementById('pz-sw-toggle-btn');
+    if (swBtn) swBtn.style.display = 'none';
+    if (this.statusWidgetVisible) {
+        this.statusWidgetVisible = false;
+        document.getElementById('pz-status-widget')?.remove();
+    }
+    } // fin if player !== 'B'
     this.gameStates    = [];
     this._chainCounter = 0;
     this._chainedCards = [];
@@ -1146,6 +1181,16 @@ overlay.innerHTML = `
         for (let i=main.length-1; i>0; i--) {
             const j = Math.floor(Math.random()*(i+1));
             [main[i],main[j]] = [main[j],main[i]];
+        }
+        if (player === 'B') {
+            this._b.main=main; this._b.extra=extra; this._b.other=side;
+            this._b.lp = 8000;
+            const lpElB = document.getElementById('pz-lp-val-b');
+            if (lpElB) lpElB.textContent = '8,000';
+            this._addLog(`Jugador B: Deck — ${dk.name||'(sin nombre)'} — Main:${main.length} Extra:${extra.length}`);
+            document.getElementById('pz-deck-overlay')?.remove();
+            this._renderAllZonesB();
+            return;
         }
         this.main=main; this.extra=extra; this.other=side;
         this._addLog(`Deck: ${dk.name||'(sin nombre)'} — Main:${main.length} Extra:${extra.length} Side→Other:${side.length}`);
@@ -1210,21 +1255,26 @@ overlay.innerHTML = `
     // ═══════════════════════════════════════════════════════
     // INTERACCIÓN — ZONAS MONO (CAMPO PÚBLICO)
     // ═══════════════════════════════════════════════════════
-    onZoneClick: function (zone) {
-    if (this._activePlacement) { this._completePlacement(zone); return; }
-    if (this._activeMove) { this._completeMoveToField(zone); return; }
-        // Modo cambiar posición
+    onZoneClick: function (zone, player) {
+        const pl  = player || 'A';
+        const isB = pl === 'B';
+        const fieldSrc = isB ? this._b.field : this.field;
+
+        if (this._activeMove) { this._completeMoveToField(zone, pl); return; }
+
         if (this.changePositionMode) {
-            const entry = this.field[zone];
+            const entry = fieldSrc[zone];
             if (entry?.card) {
                 const pos = this._cyclePosition(entry, zone);
-                this._addLog(`${entry.card.name}: ${pos}`, entry.card);
-                this._renderFieldZone(zone);
+                const prefix = isB ? 'Jugador B: ' : 'Jugador A: ';
+                this._addLog(`${prefix}${entry.card.name}: ${pos}`, entry.card);
+                if (isB) this._renderFieldZoneB(zone);
+                else     this._renderFieldZone(zone);
             }
             return;
         }
-        if (!this.field[zone]) return;
-        this._showZoneMenu(zone, null, 'field');
+        if (!fieldSrc[zone]) return;
+        this._showZoneMenu(zone, null, 'field', pl);
     },
 
     _showZoneMenu: function (zone, slotIndex, zoneType, player) {
@@ -1478,10 +1528,9 @@ overlay.innerHTML = `
       createToken: function (player) {
         const b = player === 'B' ? this._b : null;
         const counter = b ? ++b._tokenCounter : ++this._tokenCounter;
-            this._tokenCounter++;
             const tokenCard = {
-                id:   `token_${this._tokenCounter}`,
-                name: `Token ${this._tokenCounter}`,
+                id:   `token_${counter}`,
+                name: `Token ${counter}`,
                 type: 'Token',
                 desc: 'Token',
                 card_images: [{ image_url_small: 'https://images.ygoprodeck.com/images/cards_small/60764582.jpg', image_url: 'https://images.ygoprodeck.com/images/cards/60764582.jpg' }],
@@ -1490,8 +1539,9 @@ overlay.innerHTML = `
             (b ? b.other : this.other).push({ card: tokenCard, faceUp: true, rotation: 0, _isToken: true });
             if (b) this._renderAllZonesB(); else this._renderZone('other');
             // No se registra en Log por diseño
-            this._addLog(`Invocación de Token — Token ${this._tokenCounter}`);
-            this._showToast(`🔘 Token ${this._tokenCounter} creado`, 1200);
+            const prefix = b ? 'Jugador B: ' : '';
+            this._addLog(`${prefix}Invocación de Token — Token ${counter}`);
+            this._showToast(`🔘 Token ${counter} creado`, 1200);
         },
 
     // ═══════════════════════════════════════════════════════
@@ -1538,7 +1588,8 @@ overlay.innerHTML = `
     // ═══════════════════════════════════════════════════════
     // MODO MOVER
     // ═══════════════════════════════════════════════════════
-    _zmStartMove: function (zone, slotIndex, zoneType, e) {
+   _zmStartMove: function (zone, slotIndex, zoneType, e, player) {
+        const pl = player || 'A';
         e?.stopPropagation();
         this._closeZoneMenus();
         this._activeMove = {
@@ -1634,6 +1685,10 @@ _attachMaterial: function (zone, entry, sourceZone) {
     if (!host) return;
     if (!host._materials) host._materials = [];
     const matEntry = { ...entry, faceUp: true, rotation: 0 };
+    // Si la carta que se acopla tenía sus propios materiales, transferirlos primero
+        if (entry._materials && entry._materials.length) {
+            entry._materials.forEach(mat => host._materials.push({ ...mat }));
+        }
     host._materials.push(matEntry);
     const hostName = host.card?.name  || '?';
     const matName  = entry.card?.name || '?';
@@ -1688,17 +1743,22 @@ _showDetachMenu: function (zone, e) {
     };
     setTimeout(() => document.addEventListener('click', close, true), 50);
 },
-    _completeMoveToField: function (targetZone) {
-        const mv = this._activeMove;
+    _completeMoveToField: function (targetZone, player) {
+        const mv  = this._activeMove;
         if (!mv) return;
+        const isB = player === 'B';
+        const fieldSrc = isB ? this._b.field : this.field;
+
         let entry = mv.sourceType === 'field'
-            ? this.field[mv.sourceZone]
-            : this._getMultiArray(mv.sourceZone)[mv.sourceSlot];
+            ? fieldSrc[mv.sourceZone]
+            : (isB ? this._getMultiArrayB(mv.sourceZone) : this._getMultiArray(mv.sourceZone))[mv.sourceSlot];
         if (!entry) { this._cancelMoveMode(); return; }
-        // Zona ocupada: si es zona overlay y tiene carta → acoplar como material XYZ
-        if (this.field[targetZone]) {
-            if (this.OVERLAY_ZONES.includes(String(targetZone))) {
-                this._removeFromSource(mv);
+
+        // Si zona destino ocupada: acoplar si es overlay zone (solo Player A por ahora)
+        if (fieldSrc[targetZone]) {
+            if (!isB && this.OVERLAY_ZONES.includes(String(targetZone))) {
+                if (mv.sourceType === 'field') this.field[mv.sourceZone] = null;
+                else this._getMultiArray(mv.sourceZone).splice(mv.sourceSlot, 1);
                 this._attachMaterial(targetZone, entry, mv.sourceZone);
                 this._cancelMoveMode();
                 this._renderAllZones();
@@ -1707,22 +1767,15 @@ _showDetachMenu: function (zone, e) {
             }
             return;
         }
-        this._removeFromSource(mv);
-        const isTargetOverlay = this.OVERLAY_ZONES.includes(String(targetZone));
-        // Si la carta fuente tenía materiales y va a zona NO acoplable → desacoplar al GY
-        if (entry._materials?.length && !isTargetOverlay) {
-            this._detachAllMaterials(null, entry);
-        }
-        // Llevar los materiales restantes (si la zona destino es overlay)
-        this.field[targetZone] = { ...entry, faceUp: true, _materials: entry._materials || [] };
-        if (!entry._isToken && mv.sourceZone !== 'other') {
-            this._addLog(`${entry.card.name} [${this._zoneName(mv.sourceZone)} → Zona ${targetZone}]`, entry.card);
-        } else if (entry._isToken) {
-            const tNum = entry.card?.name?.replace('Token ','') || '';
-            this._addLog(`Token ${tNum} [Other → Zona ${targetZone}]`);
-        }
+
+        if (mv.sourceType === 'field') fieldSrc[mv.sourceZone] = null;
+        else (isB ? this._getMultiArrayB(mv.sourceZone) : this._getMultiArray(mv.sourceZone)).splice(mv.sourceSlot, 1);
+
+        fieldSrc[targetZone] = { ...entry, _materials: entry._materials || [], faceUp: true };
+        const prefix = isB ? 'Jugador B: ' : 'Jugador A: ';
+        this._addLog(`${prefix}${entry.card.name} → Zona ${targetZone}`, entry.card);
         this._cancelMoveMode();
-        this._renderAllZones();
+        if (isB) this._renderAllZonesB(); else this._renderAllZones();
     },
 
     _onMultiZoneClick: function (e, zone, player) {
@@ -1751,16 +1804,19 @@ _showDetachMenu: function (zone, e) {
         this._showZoneMenu(zone, idx, 'multi', player);
     },
 
-    _completeMoveToMulti: function (targetZone, targetSlot) {
-        const mv = this._activeMove;
+    _completeMoveToMulti: function (targetZone, targetSlot, player) {
+        const mv  = this._activeMove;
         if (!mv) return;
+        const isB = player === 'B';
+        const fieldSrc = isB ? this._b.field : this.field;
         let entry = mv.sourceType === 'field'
-            ? this.field[mv.sourceZone]
-            : this._getMultiArray(mv.sourceZone)[mv.sourceSlot];
+            ? fieldSrc[mv.sourceZone]
+            : (isB ? this._getMultiArrayB(mv.sourceZone) : this._getMultiArray(mv.sourceZone))[mv.sourceSlot];
         if (!entry) { this._cancelMoveMode(); return; }
         // Token que va a Hand/GY/Banish → se destruye
         if (entry._isToken && ['hand','gy','banish'].includes(targetZone)) {
-            this._removeFromSource(mv);
+            if (mv.sourceType === 'field') fieldSrc[mv.sourceZone] = null;
+            else (isB ? this._getMultiArrayB(mv.sourceZone) : this._getMultiArray(mv.sourceZone)).splice(mv.sourceSlot, 1);
             const tNum = entry.card?.name?.replace('Token ','') || '';
             this._addLog(`Token ${tNum} desaparece`);
             this._cancelMoveMode();
@@ -1772,17 +1828,20 @@ _showDetachMenu: function (zone, e) {
         if (entry._materials?.length) {
             this._detachAllMaterials(null, entry);
         }
-        this._removeFromSource(mv);
+        if (mv.sourceType === 'field') fieldSrc[mv.sourceZone] = null;
+        else (isB ? this._getMultiArrayB(mv.sourceZone) : this._getMultiArray(mv.sourceZone)).splice(mv.sourceSlot, 1);
         const entryClean = { ...entry, _materials: [] };
-        const arr = this._getMultiArray(targetZone);
+        const arr = isB ? this._getMultiArrayB(targetZone) : this._getMultiArray(targetZone);
         (targetSlot !== undefined && targetSlot < arr.length)
             ? arr.splice(targetSlot, 0, entryClean)
             : arr.push(entryClean);
         if (mv.sourceZone !== 'other') {
-            this._addLog(`${entry.card.name} [${this._zoneName(mv.sourceZone)} → ${this._zoneName(targetZone)}]`, entry.card);
+            const mvPrefix = isB ? 'Jugador B: ' : '';
+        this._addLog(`${mvPrefix}${entry.card.name} → ${targetZone}`, entry.card);
+        
         }
         this._cancelMoveMode();
-        this._renderAllZones();
+        if (isB) this._renderAllZonesB(); else this._renderAllZones();
     },
 
     _removeFromSource: function (mv) {
@@ -1817,6 +1876,7 @@ _getMultiArrayB: function (zone) {
         overlay.id = 'pz-dv-overlay';
         overlay.className = 'pz-modal-overlay';
         overlay.setAttribute('data-zone', zoneName);
+        overlay.setAttribute('data-player', pl);
         overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
 
         overlay.innerHTML = `
@@ -1869,9 +1929,12 @@ _getMultiArrayB: function (zone) {
         const countEl = document.getElementById('pz-dv-count');
         if (!grid) return;
 
+        const ov       = document.getElementById('pz-dv-overlay');
+        const pl       = ov?.getAttribute('data-player') || 'A';
+        const isB      = pl === 'B';
         const searchQ  = (document.getElementById('pz-dv-search')?.value || '').toLowerCase().trim();
         const filter   = this._dvCurrentFilter || 'all';
-        const allCards = this._getMultiArray(zoneName);
+        const allCards = isB ? this._getMultiArrayB(zoneName) : this._getMultiArray(zoneName);
         const isMain   = zoneName === 'main';
 
         const filtered = allCards.map((e, i) => ({ e, i })).filter(({ e }) => {
@@ -1905,7 +1968,7 @@ _getMultiArrayB: function (zone) {
                            ${isFaceUp?'▽':'▲'}</button>`;
             return `
                 <button class="pz-dvc-act pz-dvc-ver"
-                        onclick="ZonaPractica._openMiniCV(ZonaPractica._getMultiArray('${zoneName}')[${idx}]?.card)">👁</button>
+                        onclick="ZonaPractica._openMiniCV((${isB}?ZonaPractica._getMultiArrayB('${zoneName}'):ZonaPractica._getMultiArray('${zoneName}'))[${i}]?.card)">👁</button>
                 <button class="pz-dvc-act pz-dvc-hand"
                         onclick="ZonaPractica._dvSendCard('${zoneName}',${idx},'hand','${pl}')">✋</button>
                 <button class="pz-dvc-act pz-dvc-gy"
@@ -1939,7 +2002,7 @@ _getMultiArrayB: function (zone) {
             return `<div class="pz-dv-card-row ${typeClass}" data-idx="${i}">
                 <img src="${face}" class="pz-dv-card-img"
                      onerror="this.src='${this.CARD_BACK}'"
-                     onclick="ZonaPractica._openMiniCV(ZonaPractica._getMultiArray('${zoneName}')[${i}]?.card)">
+                     onclick="ZonaPractica._openMiniCV((${isB}?ZonaPractica._getMultiArrayB('${zoneName}'):ZonaPractica._getMultiArray('${zoneName}'))[${i}]?.card)">
                 <div class="pz-dv-card-info">
                     <div class="pz-dv-card-name">${e.card.name || '?'}</div>
                     <div class="pz-dv-card-meta">
@@ -2198,7 +2261,7 @@ _getMultiArrayB: function (zone) {
         arr.forEach(e => { e.faceUp = !allFaceUp; });
         if (isB) this._renderAllZonesB();
         else     this._renderZone(zone);
-        const prefix = isB ? 'Jugador B: ' : '';
+        const prefix = isB ? 'Jugador B: ' : 'Jugador A: ';
         this._addLog(`${prefix}${zone}: ${allFaceUp ? 'todas boca abajo (barajado)' : 'todas boca arriba'}.`);
     },
     // Sincroniza el ícono de los botones de ojo por zona
@@ -3021,7 +3084,7 @@ _calcPzLP: function (type, player) {
     if (type === 'damage') src.lp = Math.max(0, (src.lp || 8000) - val);
     const el = document.getElementById(elId);
     if (el) el.textContent = src.lp.toLocaleString();
-    const prefix = isB ? 'Jugador B: ' : '';
+    const prefix = isB ? 'Jugador B: ' : 'Jugador A: ';
     this._addLog(`${prefix}❤️ LP ${type === 'gain' ? '+' : '-'}${val} → ${src.lp.toLocaleString()}`);
     document.getElementById('pz-lp-panel')?.remove();
 },
