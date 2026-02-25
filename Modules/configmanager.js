@@ -67,7 +67,9 @@ const ConfigManager = {
             'Starter': {
                 conditionals: [],
                 keywords: ['summoned']
-            }
+            },
+            // ⭐ FORMACION GAMES
+            formacionGames: [],
         },
 
         // Specialties: array de pares
@@ -1138,6 +1140,34 @@ saveMetaLinks: function (links) {
     const config = this.getConfig();
     config.metaLinks = links;
     this.saveConfig(config);
+},
+FORMACION_FALLBACKS_KEY: 'yugioh_formacion_fallbacks',
+
+getFormacionGames: function () {
+    const config = this.getConfig();
+    return config.formacionGames || [];
+},
+saveFormacionGames: function (games) {
+    const config = this.getConfig();
+    config.formacionGames = games;
+    this.saveConfig(config);
+},
+getFormacionFallbacks: function () {
+    try {
+        return JSON.parse(localStorage.getItem(this.FORMACION_FALLBACKS_KEY)) || {};
+    } catch (_) { return {}; }
+},
+saveFormacionFallback: function (gameId, dataUrl) {
+    try {
+        const all = this.getFormacionFallbacks();
+        if (dataUrl) all[gameId] = dataUrl;
+        else delete all[gameId];
+        localStorage.setItem(this.FORMACION_FALLBACKS_KEY, JSON.stringify(all));
+        return true;
+    } catch (e) {
+        console.error('Error guardando fallback:', e);
+        return false;
+    }
 },
 };
 

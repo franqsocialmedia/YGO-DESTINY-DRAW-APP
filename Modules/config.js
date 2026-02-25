@@ -142,6 +142,18 @@ const Config = {
                 </div>
             </div>
 
+
+            <!-- Sección: Juegos Alternativos -->
+            <div class="config-section">
+                <h3 class="config-section-title" onclick="Config.toggleSection('formacion-games-config-section')">
+                    ▶ Juegos Alternativos de Yu-Gi-Oh!
+                </h3>
+                <div id="formacion-games-config-section" class="config-section-content" style="display:none;">
+                    ${this.renderFormacionGamesSection()}
+                </div>
+            </div>
+
+
             <!-- Botones de acción -->
             <div class="config-actions">
                 <button class="btn btn-primary" onclick="Config.exportConfig()">📥 Exportar Data</button>
@@ -1672,6 +1684,134 @@ _reRenderMetaLinks: function (links) {
     const list = document.getElementById('config-meta-links-list');
     if (!list) return;
     list.innerHTML = links.map((lk, i) => this._renderMetaLinkItem(lk, i)).join('');
+},
+// ===============================
+// JUEGOS ALTERNATIVOS - CONFIG
+// ===============================
+_FORM_PLATFORMS: ['PC', 'GBC', 'GBA', 'PS1', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'Físico'],
+
+renderFormacionGamesSection: function () {
+    const games = window.ConfigManager?.getFormacionGames?.() ?? [];
+    return `
+        <p style="font-size:0.82rem;color:rgba(255,255,255,0.5);margin:0 0 12px 0;">
+            Configura los juegos alternativos de Yu-Gi-Oh! que aparecen en la pestaña Formación.
+        </p>
+        <div class="form-games-list" id="config-form-games-list">
+            ${games.map((g, i) => this._renderFormGameItem(g, i)).join('')}
+        </div>
+        <button class="form-games-add-btn" onclick="Config.addFormGame()">+ Agregar juego</button>
+        <br>
+        <button class="form-games-save-btn" onclick="Config.saveFormGames()">💾 Guardar juegos</button>
+    `;
+},
+
+_renderFormGameItem: function (g, i) {
+    const platforms  = Array.isArray(g.platforms) ? g.platforms : [];
+    const checkboxes = this._FORM_PLATFORMS.map(p => {
+        const checked = platforms.includes(p) ? 'checked' : '';
+        return `<label class="form-platform-check-label">
+            <input type="checkbox" value="${p}" ${checked} class="fg-plt-${i}"> ${p}
+        </label>`;
+    }).join('');
+
+    return `
+        <div class="form-game-item" id="form-game-item-${i}">
+            <div class="form-game-item-header">
+                <span class="form-game-index">#${i + 1}</span>
+                <button class="form-game-del-btn" onclick="Config.removeFormGame(${i})">✕ Eliminar</button>
+            </div>
+            <div class="form-game-field">
+                <label>Nombre del juego</label>
+                <input type="text" id="fg-name-${i}" value="${this._escVal(g.name)}" placeholder="Ej: Yu-Gi-Oh! Forbidden Memories">
+            </div>
+            <div class="form-game-field">
+                <label>Descripción corta</label>
+                <input type="text" id="fg-title-${i}" value="${this._escVal(g.title)}" placeholder="Ej: Clásico de PS1">
+            </div>
+            <div class="form-game-field">
+                <label>Link (al hacer click en la tarjeta)</label>
+                <input type="url" id="fg-link-${i}" value="${this._escVal(g.link)}" placeholder="https://...">
+            </div>
+            <div class="form-game-field">
+                <label>Imagen de portada (URL o archivo local)</label>
+                <input type="url" id="fg-fallback-${i}" value="${this._escVal(g.fallbackUrl)}" placeholder="https://... o usa el botón">
+                <div style="display:flex;align-items:center;gap:8px;margin-top:5px;">
+                    <button class="form-game-file-btn" onclick="Config._pickFormGameFile(${i})">📁 Elegir archivo local</button>
+                    ${g.fallbackUrl?.startsWith('local:') ? `<span style="font-size:0.72rem;color:rgba(255,215,0,0.6);">✔ Archivo local cargado</span>` : ''}
+                </div>
+                <input type="file" id="fg-fallback-file-${i}" accept="image/*"
+                       style="display:none;" onchange="Config._onFormGameFileChange(${i}, this)">
+            </div>
+            <div class="form-game-field">
+                <label>Plataforma</label>
+                <div class="form-platforms-check-grid">${checkboxes}</div>
+            </div>
+        </div>
+    `;
+},
+
+addFormGame: function () {
+    const list = document.getElementById('config-form-games-list');
+    if (!list) return;
+    const i     = list.querySelectorAll('.form-game-item').length;
+    const empty = { id: 'fg_' + Date.now(), name: '', title: '', link: '', fallbackUrl: '', platforms: [] };
+    list.insertAdjacentHTML('beforeend', this._renderFormGameItem(empty, i));
+},
+
+removeFormGame: function (index) {
+    const item = document.getElementById(`form-game-item-${index}`);
+    if (!item) return;
+    item.remove();
+    const list  = document.getElementById('config-form-games-list');
+    if (!list) return;
+    list.querySelectorAll('.form-game-item').forEach((el, i) => {
+        el.id = `form-game-item-${i}`;
+        const idx = el.querySelector('.form-game-index');
+        if (idx) idx.textContent = `#${i + 1}`;
+    });
+},
+
+saveFormGames: function () {
+    const list = document.getElementById('config-form-games-list');
+    if (!list || !window.ConfigManager) return;
+    const games = [];
+    list.querySelectorAll('.form-game-item').forEach((item, i) => {
+        const fmtChecks = item.querySelectorAll(`.fg-plt-${i}:checked`);
+        games.push({
+            id:          'fg_' + i,
+            name:        (document.getElementById(`fg-name-${i}`)?.value     || '').trim(),
+            title:       (document.getElementById(`fg-title-${i}`)?.value    || '').trim(),
+            link:        (document.getElementById(`fg-link-${i}`)?.value     || '').trim(),
+            fallbackUrl: (document.getElementById(`fg-fallback-${i}`)?.value || '').trim(),
+            platforms:   Array.from(fmtChecks).map(cb => cb.value)
+        });
+    });
+    ConfigManager.saveFormacionGames(games);
+    alert('Juegos guardados. Los cambios se verán la próxima vez que abras la pestaña Formación.');
+},
+
+_pickFormGameFile: function (i) {
+    document.getElementById(`fg-fallback-file-${i}`)?.click();
+},
+
+_onFormGameFileChange: function (i, input) {
+    const file = input.files?.[0];
+    if (!file) return;
+    if (file.size > 1.5 * 1024 * 1024) {
+        alert('Máx. 1.5 MB. Usa una URL externa para archivos más pesados.');
+        return;
+    }
+    const reader  = new FileReader();
+    reader.onload = (e) => {
+        const gameId = `fg_${i}`;
+        const ok     = ConfigManager.saveFormacionFallback(gameId, e.target.result);
+        if (!ok) { alert('Almacenamiento lleno. Usa una URL externa.'); return; }
+        const urlInput = document.getElementById(`fg-fallback-${i}`);
+        if (urlInput) urlInput.value = `local:${gameId}`;
+        const btn = document.querySelector(`#form-game-item-${i} .form-game-file-btn`);
+        if (btn) btn.textContent = `✔ ${file.name}`;
+    };
+    reader.readAsDataURL(file);
 },
 };
 

@@ -137,6 +137,9 @@ const Navigation = {
             top: 0, 
             behavior: 'smooth' 
         });
+        
+        if (tabName === 'formacion' && window.Formacion) Formacion.init();
+
         // Después de: this._updateStatusWidget o justo antes del return true
         if (typeof updateButtons === 'function') updateButtons();
         

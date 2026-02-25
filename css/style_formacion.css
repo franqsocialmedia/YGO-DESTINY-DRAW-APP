@@ -1,0 +1,319 @@
+/* ====================================
+   FORMACION MODULE - Destiny Draw
+   ==================================== */
+
+/* ── Secciones colapsables ─────────────────────────────────────── */
+.form-section {
+    background: var(--bg-card, #002b4d);
+    border: 1px solid rgba(255, 215, 0, 0.12);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.form-section-title {
+    margin: 0;
+    padding: 14px 18px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gold-color, #FFD700);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.form-section-title:hover {
+    background: rgba(255, 215, 0, 0.06);
+}
+
+.form-section-content {
+    padding: 14px 16px 18px;
+    border-top: 1px solid rgba(255, 215, 0, 0.08);
+}
+
+.form-empty {
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 20px 0;
+}
+
+/* ── Grid de juegos ────────────────────────────────────────────── */
+.form-juegos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 14px;
+}
+
+/* ── Tarjeta de juego ───────────────────────────────────────────── */
+.form-game-card {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 215, 0, 0.14);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.form-game-card:hover {
+    border-color: rgba(255, 215, 0, 0.4);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+    transform: translateY(-2px);
+}
+.form-game-card--nolink {
+    cursor: default;
+}
+.form-game-card--nolink:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* ── Imagen del juego ───────────────────────────────────────────── */
+.form-game-img-wrap {
+    position: relative;
+    width: 100%;
+    padding-top: 140%;  /* proporción vertical tipo portada */
+    background: #000;
+    overflow: hidden;
+}
+
+.form-game-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+.form-game-img--empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 0.72rem;
+    font-style: italic;
+}
+
+/* ── Info ───────────────────────────────────────────────────────── */
+.form-game-info {
+    padding: 8px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+}
+
+.form-game-name {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--gold-color, #FFD700);
+    line-height: 1.3;
+}
+
+.form-game-title {
+    font-size: 0.68rem;
+    color: rgba(160, 196, 216, 0.85);
+    line-height: 1.3;
+}
+
+/* ── Plataformas ────────────────────────────────────────────────── */
+.form-game-platforms {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.form-platforms-label {
+    font-size: 0.62rem;
+    color: rgba(255, 255, 255, 0.35);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-platforms-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+
+.form-platform-badge {
+    background: rgba(0, 51, 102, 0.55);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 20px;
+    padding: 1px 7px;
+    font-size: 0.6rem;
+    color: rgba(241, 241, 241, 0.8);
+    white-space: nowrap;
+}
+.form-platform-none {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.22);
+    font-style: italic;
+}
+
+/* ================================================================
+   CONFIG: Juegos Alternativos
+   ================================================================ */
+
+.form-games-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.form-game-item {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 215, 0, 0.12);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.form-game-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.form-game-index {
+    font-size: 0.72rem;
+    color: rgba(255, 215, 0, 0.45);
+    font-weight: 600;
+    min-width: 22px;
+}
+
+.form-game-del-btn {
+    background: rgba(214, 48, 49, 0.15);
+    border: 1px solid rgba(214, 48, 49, 0.3);
+    color: #ff7675;
+    border-radius: 5px;
+    padding: 3px 9px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+.form-game-del-btn:hover { background: rgba(214, 48, 49, 0.35); }
+
+.form-game-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.form-game-field label {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.form-game-field input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    color: var(--text-light, #f1f1f1);
+    font-size: 0.82rem;
+    padding: 6px 9px;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+.form-game-field input:focus {
+    outline: none;
+    border-color: rgba(255, 215, 0, 0.4);
+}
+
+.form-platforms-check-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.form-platform-check-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(0, 51, 102, 0.4);
+    border: 1px solid rgba(255, 215, 0, 0.18);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    color: rgba(241, 241, 241, 0.75);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    user-select: none;
+}
+.form-platform-check-label input[type="checkbox"] {
+    width: auto;
+    accent-color: var(--gold-color, #FFD700);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.form-platform-check-label:hover {
+    background: rgba(0, 51, 102, 0.7);
+    border-color: rgba(255, 215, 0, 0.4);
+}
+
+.form-game-file-btn {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    color: rgba(255, 215, 0, 0.8);
+    border-radius: 5px;
+    padding: 4px 11px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+.form-game-file-btn:hover { background: rgba(255, 215, 0, 0.22); }
+
+.form-games-add-btn {
+    background: rgba(0, 102, 204, 0.2);
+    border: 1px solid rgba(0, 102, 204, 0.4);
+    color: #7ec8ff;
+    border-radius: 7px;
+    padding: 8px 16px;
+    font-size: 0.83rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
+}
+.form-games-add-btn:hover { background: rgba(0, 102, 204, 0.38); }
+
+.form-games-save-btn {
+    background: linear-gradient(135deg, var(--accent-color, #0066cc), var(--secondary-color, #004080));
+    border: none;
+    color: #fff;
+    border-radius: 7px;
+    padding: 9px 22px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.2s;
+}
+.form-games-save-btn:hover { opacity: 0.88; }
+
+/* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .form-juegos-grid {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    }
+}
