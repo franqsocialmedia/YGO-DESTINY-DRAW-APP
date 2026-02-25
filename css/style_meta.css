@@ -1,0 +1,357 @@
+/* ====================================
+   META MODULE - Destiny Draw
+   Estilos de la pestaña Meta
+   ==================================== */
+
+/* ── Secciones colapsables (mismo patrón que Estadísticas) ─────── */
+.meta-section {
+    background: var(--bg-card, #002b4d);
+    border: 1px solid rgba(255, 215, 0, 0.12);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.meta-section-title {
+    margin: 0;
+    padding: 14px 18px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gold-color, #FFD700);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.meta-section-title:hover {
+    background: rgba(255, 215, 0, 0.06);
+}
+
+.meta-section-content {
+    padding: 14px 16px 18px;
+    border-top: 1px solid rgba(255, 215, 0, 0.08);
+}
+
+.meta-empty {
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 20px 0;
+}
+
+/* ── Tabs de navegación ────────────────────────────────────────── */
+.meta-fuentes-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.meta-tabs-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.meta-tab-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    color: rgba(241, 241, 241, 0.7);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+.meta-tab-btn:hover {
+    background: rgba(255, 215, 0, 0.08);
+    border-color: rgba(255, 215, 0, 0.4);
+    color: #f1f1f1;
+}
+.meta-tab-btn.active {
+    background: rgba(255, 215, 0, 0.14);
+    border-color: var(--gold-color, #FFD700);
+    color: var(--gold-color, #FFD700);
+    font-weight: 600;
+}
+
+/* ── Frame panes ───────────────────────────────────────────────── */
+.meta-frame-pane {
+    display: none;
+}
+.meta-frame-pane.active {
+    display: block;
+}
+
+.meta-frame-desc {
+    font-size: 0.82rem;
+    color: rgba(160, 196, 216, 0.9);
+    margin: 0 0 10px 0;
+    line-height: 1.5;
+}
+
+.meta-frame-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.meta-frame-url {
+    font-size: 0.74rem;
+    color: rgba(255, 255, 255, 0.3);
+    word-break: break-all;
+    flex: 1;
+}
+
+.meta-frame-open-btn {
+    background: rgba(0, 102, 204, 0.35);
+    border: 1px solid rgba(0, 102, 204, 0.5);
+    color: #7ec8ff;
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+}
+.meta-frame-open-btn:hover {
+    background: rgba(0, 102, 204, 0.55);
+    border-color: #0066cc;
+    color: #fff;
+}
+
+/* ── Iframe wrapper ────────────────────────────────────────────── */
+.meta-iframe-wrapper {
+    position: relative;
+    width: 100%;
+    height: 70vh;
+    min-height: 420px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: #f9f9f9;
+}
+
+.meta-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+
+/* ── Overlay de bloqueo ────────────────────────────────────────── */
+.meta-iframe-blocked {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 10, 26, 0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.meta-blocked-content {
+    text-align: center;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.meta-blocked-icon {
+    font-size: 2.5rem;
+}
+
+.meta-blocked-content p {
+    color: rgba(241, 241, 241, 0.65);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.meta-blocked-link {
+    text-decoration: none;
+    display: inline-block;
+    padding: 9px 20px;
+    font-size: 0.88rem;
+}
+
+/* ── Hint de carga ─────────────────────────────────────────────── */
+.meta-iframe-hint {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.78);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    border-radius: 8px;
+    padding: 7px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: rgba(241, 241, 241, 0.75);
+    z-index: 3;
+    white-space: nowrap;
+}
+
+.meta-iframe-hint button {
+    background: rgba(255, 215, 0, 0.15);
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    color: var(--gold-color, #FFD700);
+    border-radius: 5px;
+    padding: 3px 10px;
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+.meta-iframe-hint button:hover {
+    background: rgba(255, 215, 0, 0.28);
+}
+.meta-hint-close {
+    background: transparent !important;
+    border: none !important;
+    color: rgba(255, 255, 255, 0.35) !important;
+    font-size: 0.85rem !important;
+    padding: 2px 5px !important;
+}
+
+/* ── CONFIG: Sección Fuentes Externas del Meta ─────────────────── */
+.meta-links-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.meta-link-item {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 215, 0, 0.12);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.meta-link-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.meta-link-index {
+    font-size: 0.72rem;
+    color: rgba(255, 215, 0, 0.45);
+    font-weight: 600;
+    min-width: 22px;
+}
+
+.meta-link-del-btn {
+    background: rgba(214, 48, 49, 0.15);
+    border: 1px solid rgba(214, 48, 49, 0.3);
+    color: #ff7675;
+    border-radius: 5px;
+    padding: 3px 9px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+.meta-link-del-btn:hover {
+    background: rgba(214, 48, 49, 0.35);
+}
+
+.meta-link-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.meta-link-field label {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.meta-link-field input,
+.meta-link-field textarea {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    color: var(--text-light, #f1f1f1);
+    font-size: 0.82rem;
+    padding: 6px 9px;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+.meta-link-field input:focus,
+.meta-link-field textarea:focus {
+    outline: none;
+    border-color: rgba(255, 215, 0, 0.4);
+}
+.meta-link-field textarea {
+    resize: vertical;
+    min-height: 52px;
+}
+
+.meta-links-add-btn {
+    background: rgba(0, 102, 204, 0.2);
+    border: 1px solid rgba(0, 102, 204, 0.4);
+    color: #7ec8ff;
+    border-radius: 7px;
+    padding: 8px 16px;
+    font-size: 0.83rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
+}
+.meta-links-add-btn:hover {
+    background: rgba(0, 102, 204, 0.38);
+}
+
+.meta-links-save-btn {
+    background: linear-gradient(135deg, var(--accent-color, #0066cc), var(--secondary-color, #004080));
+    border: none;
+    color: #fff;
+    border-radius: 7px;
+    padding: 9px 22px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.2s;
+}
+.meta-links-save-btn:hover {
+    opacity: 0.88;
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .meta-iframe-wrapper {
+        height: 55vh;
+        min-height: 300px;
+    }
+    .meta-tab-btn {
+        font-size: 0.75rem;
+        padding: 5px 10px;
+    }
+    .meta-frame-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

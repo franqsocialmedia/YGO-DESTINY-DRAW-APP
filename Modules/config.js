@@ -100,8 +100,17 @@ const Config = {
                 <div id="banlist-section" class="config-section-content" style="display:none;">
                     <p class="stats-empty">Abre la sección para ver la banlist.</p>
                 </div>
+                
             </div>
-
+<!-- Sección: Fuentes Externas del Meta -->
+            <div class="config-section">
+                <h3 class="config-section-title" onclick="Config.toggleSection('meta-links-config-section')">
+                    ▶ Fuentes Externas del Meta
+                </h3>
+                <div id="meta-links-config-section" class="config-section-content" style="display:none;">
+                    ${this.renderMetaLinksSection()}
+                </div>
+            </div>
             <!-- Sección: Perfil del Jugador -->
             <div class="config-section">
                 <h3 class="config-section-title" onclick="Config.toggleSection('player-level-section')">
@@ -1346,7 +1355,87 @@ selectPlayerLevel: function (levelKey) {
         if (sec) sec.style.display = 'block';
     });
 },
+// ===============================
+// FUENTES EXTERNAS DEL META
+// ===============================
+renderMetaLinksSection: function () {
+    const links = window.ConfigManager ? ConfigManager.getMetaLinks() : [];
+    return `
+        <p style="font-size:0.82rem;color:rgba(255,255,255,0.5);margin:0 0 12px 0;">
+            Define los enlaces que se mostrarán en la pestaña Meta. Cada fuente tiene título, URL y descripción opcional.
+        </p>
+        <div class="meta-links-list" id="config-meta-links-list">
+            ${links.map((lk, i) => this._renderMetaLinkItem(lk, i)).join('')}
+        </div>
+        <button class="meta-links-add-btn" onclick="Config.addMetaLink()">+ Agregar fuente</button>
+        <br>
+        <button class="meta-links-save-btn" onclick="Config.saveMetaLinks()">💾 Guardar fuentes</button>
+    `;
+},
 
+_renderMetaLinkItem: function (lk, i) {
+    return `
+        <div class="meta-link-item" id="meta-link-item-${i}">
+            <div class="meta-link-item-header">
+                <span class="meta-link-index">#${i + 1}</span>
+                <button class="meta-link-del-btn" onclick="Config.removeMetaLink(${i})">✕ Eliminar</button>
+            </div>
+            <div class="meta-link-field">
+                <label>Título</label>
+                <input type="text" id="ml-title-${i}" value="${this._escVal(lk.title)}" placeholder="Ej: Master Duel Meta – Tier List">
+            </div>
+            <div class="meta-link-field">
+                <label>URL</label>
+                <input type="url" id="ml-url-${i}" value="${this._escVal(lk.url)}" placeholder="https://...">
+            </div>
+            <div class="meta-link-field">
+                <label>Descripción</label>
+                <textarea id="ml-desc-${i}" placeholder="Descripción breve de la fuente...">${this._escVal(lk.desc)}</textarea>
+            </div>
+        </div>
+    `;
+},
+
+_escVal: function (str) {
+    return String(str || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+},
+
+addMetaLink: function () {
+    const links = window.ConfigManager ? ConfigManager.getMetaLinks() : [];
+    links.push({ id: 'ml_' + Date.now(), title: '', url: '', desc: '' });
+    ConfigManager.saveMetaLinks(links);
+    this._reRenderMetaLinks(links);
+},
+
+removeMetaLink: function (index) {
+    const links = window.ConfigManager ? ConfigManager.getMetaLinks() : [];
+    links.splice(index, 1);
+    ConfigManager.saveMetaLinks(links);
+    this._reRenderMetaLinks(links);
+},
+
+saveMetaLinks: function () {
+    const list = document.getElementById('config-meta-links-list');
+    if (!list || !window.ConfigManager) return;
+    const items = list.querySelectorAll('.meta-link-item');
+    const links = [];
+    items.forEach((item, i) => {
+        links.push({
+            id:    document.getElementById(`ml-title-${i}`) ? ('ml_' + i) : ('ml_' + Date.now() + i),
+            title: (document.getElementById(`ml-title-${i}`)?.value || '').trim(),
+            url:   (document.getElementById(`ml-url-${i}`)?.value   || '').trim(),
+            desc:  (document.getElementById(`ml-desc-${i}`)?.value  || '').trim()
+        });
+    });
+    ConfigManager.saveMetaLinks(links);
+    alert('Fuentes guardadas. Los cambios se verán la próxima vez que abras la pestaña Meta.');
+},
+
+_reRenderMetaLinks: function (links) {
+    const list = document.getElementById('config-meta-links-list');
+    if (!list) return;
+    list.innerHTML = links.map((lk, i) => this._renderMetaLinkItem(lk, i)).join('');
+},
 };
 
 window.Config = Config;

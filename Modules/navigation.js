@@ -129,7 +129,7 @@ const Navigation = {
         if (previousTab === 'simuladores' && tabName !== 'simuladores' && window.ZonaPractica) {
             ZonaPractica._cleanupFloatBtns?.();
         }
-
+        if (tabName === 'meta' && window.Meta) Meta.init();
         SafeLogger.functionEnd('Navigation', 'showTab', { success: true, currentTab: tabName });
 
         // PASO 6: Hacer scroll al inicio del contenido (smooth)

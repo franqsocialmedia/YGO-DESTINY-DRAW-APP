@@ -210,6 +210,15 @@ const ConfigManager = {
             ['power',       'consistency'],
             ['consistency', 'resilience']
         ],
+        // ⭐ META LINKS - Fuentes externas de la pestaña Meta
+        metaLinks: [
+            { id: 'ml_1', title: 'Master Duel Meta – Tier List',      url: 'https://www.masterduelmeta.com/tier-list#power-rankings', desc: 'Tier list y power rankings de Master Duel' },
+            { id: 'ml_2', title: 'YugiohMeta – Tier List',            url: 'https://www.yugiohmeta.com/tier-list',                  desc: 'Tier list TCG competitivo actualizada' },
+            { id: 'ml_3', title: 'YGOProDeck',                        url: 'https://ygoprodeck.com/',                               desc: 'Base de datos y decklists de la comunidad' },
+            { id: 'ml_4', title: 'Wiki Yu-Gi-Oh! (ES)',               url: 'https://yugioh.fandom.com/es/wiki/Mago_Oscuro',         desc: 'Wiki en español de Yu-Gi-Oh!' },
+            { id: 'ml_5', title: 'Road of the King – Master Duel',    url: 'https://roadoftheking.com/tag/master-duel/',             desc: 'Análisis y reportes del meta de Master Duel' },
+            { id: 'ml_6', title: 'Road of the King – OCG Weekly',     url: 'https://roadoftheking.com/tag/ocg-metagame-weekly/',     desc: 'Reportes semanales del meta OCG' },
+        ],
         shortcuts: [
             { label: 'Decks Guardados', tab: 'mideck',       sectionId: 'saved-decks-sec',  module: 'Deck' },
             { label: 'Winrate',          tab: 'estadisticas', sectionId: 'winrate-sec',       module: 'Estadisticas' },
@@ -1052,6 +1061,19 @@ getMusicConfig: function () {
 
 saveMusicConfig: function (cfg) {
     localStorage.setItem(this.MUSIC_KEY, JSON.stringify(cfg));
+},
+// ===============================
+// META LINKS
+// ===============================
+getMetaLinks: function () {
+    const config = this.getConfig();
+    return config.metaLinks || JSON.parse(JSON.stringify(this.defaultConfig.metaLinks));
+},
+
+saveMetaLinks: function (links) {
+    const config = this.getConfig();
+    config.metaLinks = links;
+    this.saveConfig(config);
 },
 };
 window.ConfigManager = ConfigManager;
