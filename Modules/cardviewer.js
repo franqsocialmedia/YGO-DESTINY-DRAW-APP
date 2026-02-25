@@ -77,9 +77,8 @@ const CardViewer = {
                     <hr>
 
                     <div>
-                        <b>Limitaciones:</b><br>
-                        TCG: ${ban.ban_tcg || 'Free'}<br>
-                        OCG: ${ban.ban_ocg || 'Free'}<br>
+                        <b>Pack/Set proveniente:</b><br>
+                        <span id="cv-sets-list" style="font-size:0.82rem;color:rgba(241,241,241,0.75);">Cargando...</span><br>
                         <b>ID:</b> ${card.id}
                     </div>
 
@@ -95,6 +94,25 @@ const CardViewer = {
         `;
 
         document.body.insertAdjacentHTML('beforeend', html);
+
+        // Cargar sets de aparición
+        fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${card.id}&misc=yes`)
+            .then(r => r.json())
+            .then(data => {
+                const sets = data?.data?.[0]?.card_sets;
+                const el   = document.getElementById('cv-sets-list');
+                if (!el) return;
+                if (!sets?.length) { el.textContent = 'No disponible'; return; }
+                const unique = [...new Map(sets.map(s => [s.set_name, s])).values()];
+                el.innerHTML = unique.map(s => {
+                    const year = s.set_release_date ? s.set_release_date.substring(0,4) : '';
+                    return `<span onclick="CardViewer.openSetInBuscador('${s.set_name.replace(/'/g,"\\'")}'); return false;" style="display:inline-block;background:rgba(0,51,102,0.5);border:1px solid rgba(255,215,0,0.2);border-radius:4px;padding:2px 7px;margin:2px 3px 2px 0;font-size:0.75rem;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='rgba(255,215,0,0.6)'" onmouseout="this.style.borderColor='rgba(255,215,0,0.2)'">${s.set_name}${year ? ` (${year})` : ''}</span>`;
+                }).join('');
+            })
+            .catch(() => {
+                const el = document.getElementById('cv-sets-list');
+                if (el) el.textContent = 'No disponible';
+            });
 
         const overlay = document.getElementById('cv-overlay');
         const close = document.getElementById('cv-close');
@@ -1101,7 +1119,26 @@ openPointsEditor: function (formatName, cardId, cardName, currentPoints) {
         setTimeout(() => overlay.remove(), 900);
     });
 },
-    
+    openSetInBuscador: function (setName) {
+        // Cerrar el cardviewer
+        document.getElementById('cv-overlay')?.remove();
+        // Navegar al buscador
+        if (window.Navigation) Navigation.showTab('buscador');
+        // Aplicar el filtro de set y buscar
+        setTimeout(() => {
+            if (!window.Buscador) return;
+            // Limpiar búsqueda previa
+            Buscador.clear();
+            // Asegurarse de que el set esté cargado en la lista
+            Buscador._loadCardsets().then(() => {
+                Buscador.advancedFilters.cardset = setName;
+                const sel = document.getElementById('buscador-set-sel');
+                if (sel) sel.value = setName;
+                Buscador._updateFilterSummary();
+                Buscador.autoSearch();
+            });
+        }, 80);
+    },
 };
 
 window.CardViewer = CardViewer;
