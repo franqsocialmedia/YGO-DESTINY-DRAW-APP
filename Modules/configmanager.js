@@ -219,6 +219,18 @@ const ConfigManager = {
             { id: 'ml_5', title: 'Road of the King – Master Duel',    url: 'https://roadoftheking.com/tag/master-duel/',             desc: 'Análisis y reportes del meta de Master Duel' },
             { id: 'ml_6', title: 'Road of the King – OCG Weekly',     url: 'https://roadoftheking.com/tag/ocg-metagame-weekly/',     desc: 'Reportes semanales del meta OCG' },
         ],
+        // ⭐ META MASTERS - Maestros del Juego
+        metaMasters: [],
+
+        // ⭐ META LINKS - Fuentes externas de la pestaña Meta
+        metaLinks: [
+            { id: 'ml_1', title: 'Road of the King – Master Duel',      url: 'https://roadoftheking.com/tag/master-duel/',              desc: 'Análisis y reportes del meta de Master Duel' },
+            { id: 'ml_2', title: 'Road of the King – OCG Weekly',       url: 'https://roadoftheking.com/tag/ocg-metagame-weekly/',      desc: 'Reportes semanales del meta OCG' },
+            { id: 'ml_3', title: 'YGOProDeck',                          url: 'https://ygoprodeck.com/',                                desc: 'Base de datos y decklists de la comunidad' },
+            { id: 'ml_4', title: 'Wiki Yu-Gi-Oh! (ES)',                 url: 'https://yugioh.fandom.com/es/wiki/Mago_Oscuro',          desc: 'Wiki en español de Yu-Gi-Oh!' },
+            { id: 'ml_5', title: 'Master Duel Meta – Tier List',        url: 'https://www.masterduelmeta.com/tier-list#power-rankings', desc: 'Tier list y power rankings de Master Duel' },
+            { id: 'ml_6', title: 'YugiohMeta – Tier List',             url: 'https://www.yugiohmeta.com/tier-list',                   desc: 'Tier list TCG competitivo actualizada' }
+        ],
         shortcuts: [
             { label: 'Decks Guardados', tab: 'mideck',       sectionId: 'saved-decks-sec',  module: 'Deck' },
             { label: 'Winrate',          tab: 'estadisticas', sectionId: 'winrate-sec',       module: 'Estadisticas' },
@@ -337,19 +349,22 @@ const ConfigManager = {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => {
-                try {
-                    const config = JSON.parse(e.target.result);
-                    if (!config.roles || typeof config.roles !== 'object') {
-                        reject('Archivo de configuración inválido');
-                        return;
-                    }
-                    this.saveConfig(config);
-                    resolve(true);
-                } catch (err) {
-                    console.error('Error parseando configuración:', err);
-                    reject('Error al leer el archivo de configuración');
-                }
-            };
+            const dataUrl   = e.target.result;
+            const masterId  = `mm_${i}`;
+            const urlInput  = document.getElementById(`mm-fallback-${i}`);
+            // Guardar en clave separada
+            const ok = ConfigManager.saveMetaFallback(masterId, dataUrl);
+            if (!ok) {
+                alert('No se pudo guardar la imagen (almacenamiento lleno). Usa una URL externa.');
+                return;
+            }
+            // En el input guardar solo una referencia, no el base64
+            if (urlInput) urlInput.value = `local:${masterId}`;
+            const btn = document.getElementById(`mm-fallback-file-${i}`)
+                ?.previousElementSibling?.querySelector?.('.meta-master-file-btn')
+                || document.querySelector(`#meta-master-item-${i} .meta-master-file-btn`);
+            if (btn) btn.textContent = `✔ ${file.name}`;
+        };
             reader.onerror = () => reject('Error al leer el archivo');
             reader.readAsText(file);
         });
@@ -958,7 +973,7 @@ renderStaplesPanel: function () {
 
     list.innerHTML = cards.map((c, i) => `
         <div class="fav-item" onclick="ConfigManager.showStapleActions(${i}, this)">
-            <img src="${c.imageUrl || ''}" class="fav-img" alt="${c.name}"
+            <img src="${c.imageUrl || ''}" class="fav-img" loading="lazy" alt="${c.name}"
                  onerror="this.style.background='#002b4d';this.src='';">
             <div class="fav-info">
                 <div class="fav-name">${c.name}</div>
@@ -1075,5 +1090,55 @@ saveMetaLinks: function (links) {
     config.metaLinks = links;
     this.saveConfig(config);
 },
+// ===============================
+// META MASTERS
+// ===============================
+getMetaMasters: function () {
+    const config = this.getConfig();
+    return config.metaMasters || JSON.parse(JSON.stringify(this.defaultConfig.metaMasters));
+},
+saveMetaMasters: function (masters) {
+    const config = this.getConfig();
+    config.metaMasters = masters;
+    this.saveConfig(config);
+},
+// Fallbacks se guardan aparte para no saturar yugioh_config
+META_FALLBACKS_KEY: 'yugioh_meta_fallbacks',
+
+getMetaFallbacks: function () {
+    try {
+        return JSON.parse(localStorage.getItem(this.META_FALLBACKS_KEY)) || {};
+    } catch (_) { return {}; }
+},
+
+saveMetaFallback: function (masterId, dataUrl) {
+    try {
+        const all = this.getMetaFallbacks();
+        if (dataUrl) all[masterId] = dataUrl;
+        else delete all[masterId];
+        localStorage.setItem(this.META_FALLBACKS_KEY, JSON.stringify(all));
+        return true;
+    } catch (e) {
+        console.error('Error guardando fallback:', e);
+        return false;
+    }
+},
+
+removeMetaFallback: function (masterId) {
+    this.saveMetaFallback(masterId, null);
+},
+// ===============================
+// META LINKS
+// ===============================
+getMetaLinks: function () {
+    const config = this.getConfig();
+    return config.metaLinks || JSON.parse(JSON.stringify(this.defaultConfig.metaLinks));
+},
+saveMetaLinks: function (links) {
+    const config = this.getConfig();
+    config.metaLinks = links;
+    this.saveConfig(config);
+},
 };
+
 window.ConfigManager = ConfigManager;

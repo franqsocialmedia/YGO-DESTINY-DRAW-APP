@@ -19,7 +19,7 @@
     font-weight: 600;
     color: var(--gold-color, #FFD700);
     cursor: pointer;
-    user-select: none;
+    -webkit-user-select: none;
     transition: background 0.2s;
     display: flex;
     align-items: center;
@@ -42,7 +42,149 @@
     padding: 20px 0;
 }
 
-/* ── Tabs de navegación ────────────────────────────────────────── */
+/* ================================================================
+   MAESTROS DEL JUEGO
+   ================================================================ */
+
+.meta-maestros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 18px;
+}
+.meta-maestros-grid .meta-master-name  { font-size: 0.78rem; }
+.meta-maestros-grid .meta-master-title { font-size: 0.68rem; }
+.meta-maestros-grid .meta-format-badge { font-size: 0.6rem; padding: 1px 6px; }
+.meta-maestros-grid .meta-master-channel-btn { font-size: 0.68rem; padding: 4px 8px; }
+.meta-maestros-grid .meta-master-yt-fallback  { font-size: 0.62rem; }
+/* ── Tarjeta de maestro ─────────────────────────────────────────── */
+.meta-master-card {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 215, 0, 0.14);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.meta-master-card:hover {
+    border-color: rgba(255, 215, 0, 0.35);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Bloque de video ────────────────────────────────────────────── */
+.meta-master-video {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 */
+    background: #000;
+}
+.meta-master-video iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+.meta-master-video--empty {
+    display: flex;
+    padding-top: 0;
+    height: 100px;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 0.8rem;
+    font-style: italic;
+}
+
+/* ── Info de la tarjeta ─────────────────────────────────────────── */
+.meta-master-info {
+    padding: 12px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    flex: 1;
+}
+
+.meta-master-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--gold-color, #FFD700);
+    line-height: 1.3;
+}
+
+.meta-master-title {
+    font-size: 0.78rem;
+    color: rgba(160, 196, 216, 0.9);
+    line-height: 1.4;
+}
+
+/* ── Formatos ───────────────────────────────────────────────────── */
+.meta-master-formats {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 2px;
+}
+
+.meta-formats-label {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.38);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.meta-formats-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.meta-format-badge {
+    background: rgba(0, 51, 102, 0.55);
+    border: 1px solid rgba(255, 215, 0, 0.22);
+    border-radius: 20px;
+    padding: 2px 9px;
+    font-size: 0.68rem;
+    color: rgba(241, 241, 241, 0.8);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+.meta-format-none {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.25);
+    font-style: italic;
+}
+
+/* ── Botón canal ────────────────────────────────────────────────── */
+.meta-master-channel-btn {
+    display: inline-block;
+    margin-top: 4px;
+    background: rgba(255, 0, 0, 0.12);
+    border: 1px solid rgba(255, 60, 60, 0.3);
+    color: #ff9a9a;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: background 0.2s, border-color 0.2s;
+    align-self: flex-start;
+}
+.meta-master-channel-btn:hover {
+    background: rgba(255, 0, 0, 0.28);
+    border-color: rgba(255, 60, 60, 0.6);
+    color: #fff;
+}
+
+/* ================================================================
+   FUENTES EXTERNAS
+   ================================================================ */
+
 .meta-fuentes-tabs {
     display: flex;
     flex-direction: column;
@@ -79,13 +221,8 @@
     font-weight: 600;
 }
 
-/* ── Frame panes ───────────────────────────────────────────────── */
-.meta-frame-pane {
-    display: none;
-}
-.meta-frame-pane.active {
-    display: block;
-}
+.meta-frame-pane        { display: none; }
+.meta-frame-pane.active { display: block; }
 
 .meta-frame-desc {
     font-size: 0.82rem;
@@ -133,7 +270,6 @@
     color: #fff;
 }
 
-/* ── Iframe wrapper ────────────────────────────────────────────── */
 .meta-iframe-wrapper {
     position: relative;
     width: 100%;
@@ -152,7 +288,6 @@
     display: block;
 }
 
-/* ── Overlay de bloqueo ────────────────────────────────────────── */
 .meta-iframe-blocked {
     position: absolute;
     inset: 0;
@@ -172,9 +307,7 @@
     gap: 12px;
 }
 
-.meta-blocked-icon {
-    font-size: 2.5rem;
-}
+.meta-blocked-icon { font-size: 2.5rem; }
 
 .meta-blocked-content p {
     color: rgba(241, 241, 241, 0.65);
@@ -189,7 +322,6 @@
     font-size: 0.88rem;
 }
 
-/* ── Hint de carga ─────────────────────────────────────────────── */
 .meta-iframe-hint {
     position: absolute;
     bottom: 10px;
@@ -217,9 +349,8 @@
     font-size: 0.78rem;
     cursor: pointer;
 }
-.meta-iframe-hint button:hover {
-    background: rgba(255, 215, 0, 0.28);
-}
+.meta-iframe-hint button:hover { background: rgba(255, 215, 0, 0.28); }
+
 .meta-hint-close {
     background: transparent !important;
     border: none !important;
@@ -228,7 +359,151 @@
     padding: 2px 5px !important;
 }
 
-/* ── CONFIG: Sección Fuentes Externas del Meta ─────────────────── */
+/* ================================================================
+   CONFIG: Maestros del Juego
+   ================================================================ */
+
+.meta-masters-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.meta-master-item {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 215, 0, 0.12);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.meta-master-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.meta-master-index {
+    font-size: 0.72rem;
+    color: rgba(255, 215, 0, 0.45);
+    font-weight: 600;
+    min-width: 22px;
+}
+
+.meta-master-del-btn {
+    background: rgba(214, 48, 49, 0.15);
+    border: 1px solid rgba(214, 48, 49, 0.3);
+    color: #ff7675;
+    border-radius: 5px;
+    padding: 3px 9px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+.meta-master-del-btn:hover { background: rgba(214, 48, 49, 0.35); }
+
+.meta-master-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.meta-master-field label {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.meta-master-field input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    color: var(--text-light, #f1f1f1);
+    font-size: 0.82rem;
+    padding: 6px 9px;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+.meta-master-field input:focus {
+    outline: none;
+    border-color: rgba(255, 215, 0, 0.4);
+}
+
+/* Checkboxes de formato */
+.meta-formats-check-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.meta-format-check-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(0, 51, 102, 0.4);
+    border: 1px solid rgba(255, 215, 0, 0.18);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    color: rgba(241, 241, 241, 0.75);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    -webkit-user-select: none;
+}
+.meta-format-check-label input[type="checkbox"] {
+    width: auto;
+    accent-color: var(--gold-color, #FFD700);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.meta-format-check-label:hover {
+    background: rgba(0, 51, 102, 0.7);
+    border-color: rgba(255, 215, 0, 0.4);
+}
+
+/* Botones add/save compartidos con meta-links */
+.meta-links-list,
+.meta-masters-list { }
+
+.meta-links-add-btn,
+.meta-masters-add-btn {
+    background: rgba(0, 102, 204, 0.2);
+    border: 1px solid rgba(0, 102, 204, 0.4);
+    color: #7ec8ff;
+    border-radius: 7px;
+    padding: 8px 16px;
+    font-size: 0.83rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
+}
+.meta-links-add-btn:hover,
+.meta-masters-add-btn:hover { background: rgba(0, 102, 204, 0.38); }
+
+.meta-links-save-btn,
+.meta-masters-save-btn {
+    background: linear-gradient(135deg, var(--accent-color, #0066cc), var(--secondary-color, #004080));
+    border: none;
+    color: #fff;
+    border-radius: 7px;
+    padding: 9px 22px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.2s;
+}
+.meta-links-save-btn:hover,
+.meta-masters-save-btn:hover { opacity: 0.88; }
+
+/* CONFIG: Fuentes Externas (links) */
 .meta-links-list {
     display: flex;
     flex-direction: column;
@@ -271,9 +546,7 @@
     flex-shrink: 0;
     transition: background 0.2s;
 }
-.meta-link-del-btn:hover {
-    background: rgba(214, 48, 49, 0.35);
-}
+.meta-link-del-btn:hover { background: rgba(214, 48, 49, 0.35); }
 
 .meta-link-field {
     display: flex;
@@ -309,38 +582,63 @@
     min-height: 52px;
 }
 
-.meta-links-add-btn {
-    background: rgba(0, 102, 204, 0.2);
-    border: 1px solid rgba(0, 102, 204, 0.4);
-    color: #7ec8ff;
-    border-radius: 7px;
-    padding: 8px 16px;
-    font-size: 0.83rem;
+.meta-master-yt-fallback {
+    display: inline-block;
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.3);
+    text-decoration: none;
+    padding: 3px 0;
+    transition: color 0.2s;
+}
+.meta-master-yt-fallback:hover {
+    color: rgba(255, 80, 80, 0.8);
+}
+.meta-master-fallback {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    display: flex;
+    object-fit: cover;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.meta-master-fallback-media {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+.meta-master-file-btn {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    color: rgba(255, 215, 0, 0.8);
+    border-radius: 5px;
+    padding: 4px 11px;
+    font-size: 0.75rem;
     cursor: pointer;
     transition: background 0.2s;
-    width: 100%;
+    white-space: nowrap;
 }
-.meta-links-add-btn:hover {
-    background: rgba(0, 102, 204, 0.38);
-}
-
-.meta-links-save-btn {
-    background: linear-gradient(135deg, var(--accent-color, #0066cc), var(--secondary-color, #004080));
-    border: none;
-    color: #fff;
-    border-radius: 7px;
-    padding: 9px 22px;
-    font-size: 0.88rem;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 8px;
-    transition: opacity 0.2s;
-}
-.meta-links-save-btn:hover {
-    opacity: 0.88;
+.meta-master-file-btn:hover {
+    background: rgba(255, 215, 0, 0.22);
 }
 
+.meta-masters-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
 /* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 700px) {
+    .meta-maestros-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 600px) {
     .meta-iframe-wrapper {
         height: 55vh;

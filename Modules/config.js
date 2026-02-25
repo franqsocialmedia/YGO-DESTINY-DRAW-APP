@@ -102,15 +102,6 @@ const Config = {
                 </div>
                 
             </div>
-<!-- Sección: Fuentes Externas del Meta -->
-            <div class="config-section">
-                <h3 class="config-section-title" onclick="Config.toggleSection('meta-links-config-section')">
-                    ▶ Fuentes Externas del Meta
-                </h3>
-                <div id="meta-links-config-section" class="config-section-content" style="display:none;">
-                    ${this.renderMetaLinksSection()}
-                </div>
-            </div>
             <!-- Sección: Perfil del Jugador -->
             <div class="config-section">
                 <h3 class="config-section-title" onclick="Config.toggleSection('player-level-section')">
@@ -128,6 +119,26 @@ const Config = {
                 </h3>
                 <div id="music-section" class="config-section-content" style="display:none;">
                     ${this.renderMusicSection()}
+                </div>
+            </div>
+
+            <!-- Sección: Maestros del Duelo -->
+            <div class="config-section">
+                <h3 class="config-section-title" onclick="Config.toggleSection('meta-masters-config-section')">
+                    ▶ Maestros del Duelo
+                </h3>
+                <div id="meta-masters-config-section" class="config-section-content" style="display:none;">
+                    ${this.renderMetaMastersSection()}
+                </div>
+            </div>
+
+            <!-- Sección: Fuentes Externas del Meta -->
+            <div class="config-section">
+                <h3 class="config-section-title" onclick="Config.toggleSection('meta-links-config-section')">
+                    ▶ Fuentes Externas del Meta
+                </h3>
+                <div id="meta-links-config-section" class="config-section-content" style="display:none;">
+                    ${this.renderMetaLinksSection()}
                 </div>
             </div>
 
@@ -1422,6 +1433,232 @@ saveMetaLinks: function () {
     items.forEach((item, i) => {
         links.push({
             id:    document.getElementById(`ml-title-${i}`) ? ('ml_' + i) : ('ml_' + Date.now() + i),
+            title: (document.getElementById(`ml-title-${i}`)?.value || '').trim(),
+            url:   (document.getElementById(`ml-url-${i}`)?.value   || '').trim(),
+            desc:  (document.getElementById(`ml-desc-${i}`)?.value  || '').trim()
+        });
+    });
+    ConfigManager.saveMetaLinks(links);
+    alert('Fuentes guardadas. Los cambios se verán la próxima vez que abras la pestaña Meta.');
+},
+
+_reRenderMetaLinks: function (links) {
+    const list = document.getElementById('config-meta-links-list');
+    if (!list) return;
+    list.innerHTML = links.map((lk, i) => this._renderMetaLinkItem(lk, i)).join('');
+},
+// ===============================
+// MAESTROS DEL JUEGO - CONFIG
+// ===============================
+_META_FORMATS: ['TCG', 'OCG', 'Genesys', 'Master Duel', 'Duel Links', 'Time Wizard', 'Todos'],
+
+renderMetaMastersSection: function () {
+    const masters = window.ConfigManager ? ConfigManager.getMetaMasters() : [];
+    return `
+        <p style="font-size:0.82rem;color:rgba(255,255,255,0.5);margin:0 0 12px 0;">
+            Configura los creadores de contenido que aparecen en la pestaña Meta. Pega la URL del video de YouTube que quieras mostrar.
+        </p>
+        <div class="meta-masters-list" id="config-meta-masters-list">
+            ${masters.map((m, i) => this._renderMetaMasterItem(m, i)).join('')}
+        </div>
+        <div class="meta-masters-btns">
+            <button class="meta-masters-add-btn" onclick="Config.addMetaMaster()">+ Agregar maestro</button>
+            <button class="meta-masters-save-btn" onclick="Config.saveMetaMasters()">💾 Guardar maestros</button>
+        </div>
+    `;
+},
+
+_renderMetaMasterItem: function (m, i) {
+    const formats   = Array.isArray(m.formats) ? m.formats : [];
+    const allFmts   = this._META_FORMATS;
+    const checkboxes = allFmts.map(f => {
+        const checked = formats.includes(f) ? 'checked' : '';
+        return `<label class="meta-format-check-label">
+            <input type="checkbox" value="${f}" ${checked} class="mm-fmt-${i}"> ${f}
+        </label>`;
+    }).join('');
+
+    return `
+        <div class="meta-master-item" id="meta-master-item-${i}">
+            <div class="meta-master-item-header">
+                <span class="meta-master-index">#${i + 1}</span>
+                <button class="meta-master-del-btn" onclick="Config.removeMetaMaster(${i})">✕ Eliminar</button>
+            </div>
+            <div class="meta-master-field">
+                <label>Nombre del Canal / Creador</label>
+                <input type="text" id="mm-name-${i}" value="${this._escVal(m.name)}" placeholder="Ej: Team APS">
+            </div>
+            <div class="meta-master-field">
+                <label>Título / Descripción corta</label>
+                <input type="text" id="mm-title-${i}" value="${this._escVal(m.title)}" placeholder="Ej: El mejor canal de meta TCG">
+            </div>
+            <div class="meta-master-field">
+                <label>URL del Video (YouTube)</label>
+                <input type="url" id="mm-video-${i}" value="${this._escVal(m.videoUrl)}" placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+            <div class="meta-master-field">
+                <label>URL del Canal</label>
+                <input type="url" id="mm-channel-${i}" value="${this._escVal(m.channelUrl)}" placeholder="https://www.youtube.com/@...">
+            </div>
+            <div class="meta-master-field">
+                <label>Imagen/Video alternativo si el video no carga</label>
+                <input type="url" id="mm-fallback-${i}" value="${this._escVal(m.fallbackUrl)}" placeholder="https://... o usa el botón para elegir archivo">
+                <div style="display:flex;align-items:center;gap:8px;margin-top:5px;">
+                    <button class="meta-master-file-btn" onclick="Config._pickFallbackFile(${i})">📁 Elegir archivo local</button>
+                    ${m.fallbackUrl && m.fallbackUrl.startsWith('data:')
+                        ? `<span style="font-size:0.72rem;color:rgba(255,215,0,0.6);">✔ Archivo local cargado</span>`
+                        : ''}
+                </div>
+                <input type="file" id="mm-fallback-file-${i}" accept="image/*,video/mp4"
+                    style="display:none;" onchange="Config._onFallbackFileChange(${i}, this)">
+            </div>     
+            <div class="meta-master-field">
+                <label>Formato Especializado</label>
+                <div class="meta-formats-check-grid">${checkboxes}</div>
+            </div>
+        </div>
+    `;
+},
+_pickFallbackFile: function (i) {
+    document.getElementById(`mm-fallback-file-${i}`)?.click();
+},
+
+_onFallbackFileChange: function (i, input) {
+    const file = input.files?.[0];
+    if (!file) return;
+    if (file.size > 1.5 * 1024 * 1024) {
+        alert('El archivo es demasiado grande (máx. 1.5 MB). Usa una URL externa para archivos más pesados.');
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const urlInput = document.getElementById(`mm-fallback-${i}`);
+        if (urlInput) {
+            urlInput.value = e.target.result;
+            urlInput.dispatchEvent(new Event('input'));
+        }
+        // Feedback visual
+        const btn = input.previousElementSibling?.querySelector('.meta-master-file-btn');
+        if (btn) btn.textContent = `✔ ${file.name}`;
+    };
+    reader.readAsDataURL(file);
+},
+addMetaMaster: function () {
+    const list = document.getElementById('config-meta-masters-list');
+    if (!list) return;
+    const currentCount = list.querySelectorAll('.meta-master-item').length;
+    const emptyMaster  = { id: 'mm_' + Date.now(), name: '', title: '', videoUrl: '', channelUrl: '', formats: [], fallbackUrl: '' };
+    list.insertAdjacentHTML('beforeend', this._renderMetaMasterItem(emptyMaster, currentCount));
+},
+
+removeMetaMaster: function (index) {
+    const item = document.getElementById(`meta-master-item-${index}`);
+    if (!item) return;
+    item.remove();
+    // Re-indexar los items restantes en el DOM
+    const list  = document.getElementById('config-meta-masters-list');
+    if (!list) return;
+    const items = list.querySelectorAll('.meta-master-item');
+    items.forEach((el, i) => {
+        el.id = `meta-master-item-${i}`;
+        const idx = el.querySelector('.meta-master-index');
+        if (idx) idx.textContent = `#${i + 1}`;
+    });
+},
+saveMetaMasters: function () {
+    const list = document.getElementById('config-meta-masters-list');
+    if (!list || !window.ConfigManager) return;
+    const items   = list.querySelectorAll('.meta-master-item');
+    const masters = [];
+    items.forEach((item, i) => {
+        const fmtChecks = item.querySelectorAll(`.mm-fmt-${i}:checked`);
+        const formats   = Array.from(fmtChecks).map(cb => cb.value);
+        masters.push({
+            id:         'mm_' + i,
+            name:       (document.getElementById(`mm-name-${i}`)?.value    || '').trim(),
+            title:      (document.getElementById(`mm-title-${i}`)?.value   || '').trim(),
+            videoUrl:   (document.getElementById(`mm-video-${i}`)?.value   || '').trim(),
+            channelUrl: (document.getElementById(`mm-channel-${i}`)?.value || '').trim(),
+            fallbackUrl: (document.getElementById(`mm-fallback-${i}`)?.value || '').trim(),
+            formats
+        });
+    });
+    ConfigManager.saveMetaMasters(masters);
+    alert('Maestros guardados. Los cambios se verán la próxima vez que abras la pestaña Meta.');
+},
+
+_reRenderMetaMasters: function (masters) {
+    const list = document.getElementById('config-meta-masters-list');
+    if (!list) return;
+    list.innerHTML = masters.map((m, i) => this._renderMetaMasterItem(m, i)).join('');
+},
+
+// ===============================
+// FUENTES EXTERNAS - CONFIG
+// ===============================
+renderMetaLinksSection: function () {
+    const links = window.ConfigManager ? ConfigManager.getMetaLinks() : [];
+    return `
+        <p style="font-size:0.82rem;color:rgba(255,255,255,0.5);margin:0 0 12px 0;">
+            Define los enlaces que se mostrarán en la pestaña Meta como frames de navegación.
+        </p>
+        <div class="meta-links-list" id="config-meta-links-list">
+            ${links.map((lk, i) => this._renderMetaLinkItem(lk, i)).join('')}
+        </div>
+        <button class="meta-links-add-btn" onclick="Config.addMetaLink()">+ Agregar fuente</button>
+        <br>
+        <button class="meta-links-save-btn" onclick="Config.saveMetaLinks()">💾 Guardar fuentes</button>
+    `;
+},
+
+_renderMetaLinkItem: function (lk, i) {
+    return `
+        <div class="meta-link-item" id="meta-link-item-${i}">
+            <div class="meta-link-item-header">
+                <span class="meta-link-index">#${i + 1}</span>
+                <button class="meta-link-del-btn" onclick="Config.removeMetaLink(${i})">✕ Eliminar</button>
+            </div>
+            <div class="meta-link-field">
+                <label>Título</label>
+                <input type="text" id="ml-title-${i}" value="${this._escVal(lk.title)}" placeholder="Ej: Master Duel Meta – Tier List">
+            </div>
+            <div class="meta-link-field">
+                <label>URL</label>
+                <input type="url" id="ml-url-${i}" value="${this._escVal(lk.url)}" placeholder="https://...">
+            </div>
+            <div class="meta-link-field">
+                <label>Descripción</label>
+                <textarea id="ml-desc-${i}" placeholder="Descripción breve...">${this._escVal(lk.desc)}</textarea>
+            </div>
+        </div>
+    `;
+},
+
+_escVal: function (str) {
+    return String(str || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+},
+
+addMetaLink: function () {
+    const links = window.ConfigManager ? ConfigManager.getMetaLinks() : [];
+    links.push({ id: 'ml_' + Date.now(), title: '', url: '', desc: '' });
+    ConfigManager.saveMetaLinks(links);
+    this._reRenderMetaLinks(links);
+},
+
+removeMetaLink: function (index) {
+    const links = window.ConfigManager ? ConfigManager.getMetaLinks() : [];
+    links.splice(index, 1);
+    ConfigManager.saveMetaLinks(links);
+    this._reRenderMetaLinks(links);
+},
+
+saveMetaLinks: function () {
+    const list = document.getElementById('config-meta-links-list');
+    if (!list || !window.ConfigManager) return;
+    const links = [];
+    list.querySelectorAll('.meta-link-item').forEach((item, i) => {
+        links.push({
+            id:    'ml_' + i,
             title: (document.getElementById(`ml-title-${i}`)?.value || '').trim(),
             url:   (document.getElementById(`ml-url-${i}`)?.value   || '').trim(),
             desc:  (document.getElementById(`ml-desc-${i}`)?.value  || '').trim()

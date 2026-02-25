@@ -1,11 +1,13 @@
 /* ====================================
    META MODULE - Destiny Draw
-   Pestaña Meta: Fuentes Externas
+   Pestaña Meta: Maestros del Juego + Fuentes Externas
    ==================================== */
 
 const Meta = {
 
     container: null,
+
+    FORMATS: ['TCG', 'OCG', 'Genesys', 'Master Duel', 'Duel Links', 'Time Wizard', 'Todos'],
 
     init: function () {
         this.container = document.getElementById('meta-content');
@@ -17,6 +19,16 @@ const Meta = {
         if (!this.container) return;
         this.container.innerHTML = `
             <h2>Meta</h2>
+
+            <!-- Sección: Maestros del Juego (desplegada por defecto) -->
+            <div class="meta-section">
+                <h3 class="meta-section-title" onclick="Meta.toggleSection('meta-maestros-section')">
+                    ▼ Maestros del Juego
+                </h3>
+                <div id="meta-maestros-section" class="meta-section-content">
+                    ${this._renderMaestrosSection()}
+                </div>
+            </div>
 
             <!-- Sección: Fuentes Externas -->
             <div class="meta-section">
@@ -44,11 +56,114 @@ const Meta = {
     },
 
     // ===============================
+    // MAESTROS DEL JUEGO
+    // ===============================
+
+    _renderMaestrosSection: function () {
+        const masters = window.ConfigManager?.getMetaMasters?.() ?? [];
+        if (!masters.length) {
+            return '<p class="meta-empty">No hay maestros configurados. Ve a Configuración → Maestros del Juego.</p>';
+        }
+        return `
+            <div class="meta-maestros-grid">
+                ${masters.map(m => this._renderMasterCard(m)).join('')}
+            </div>
+        `;
+    },
+
+    _renderMasterCard: function (m) {
+        const videoId  = this._extractYoutubeId(m.videoUrl || '');
+        const embedUrl = videoId
+            ? `https://www.youtube-nocookie.com/embed/${videoId}`
+            : null;
+        const formats  = Array.isArray(m.formats) ? m.formats : [];
+
+        const formatBadges = formats.length
+            ? formats.map(f => `<span class="meta-format-badge">${this._escHtml(f)}</span>`).join('')
+            : '<span class="meta-format-badge meta-format-none">Sin formato</span>';
+
+        const fallback = m.fallbackUrl ? m.fallbackUrl.trim() : '';
+        const resolvedFallback = fallback.startsWith('local:')
+    ? (ConfigManager.getMetaFallbacks()[fallback.replace('local:', '')] || '')
+    : fallback;
+        const isMp4 = resolvedFallback.toLowerCase().endsWith('.mp4');
+
+        const fallbackContent = fallback
+            ? (isMp4
+                ? `<video class="meta-master-fallback-media" autoplay muted loop playsinline>
+                    <source src="${this._escAttr(fallback)}" type="video/mp4">
+                </video>`
+                : `<img class="meta-master-fallback-media" src="${this._escAttr(fallback)}" alt="${this._escAttr(m.name || '')}">`)
+            : `<div class="meta-master-video--empty"><span>Sin video configurado</span></div>`;
+
+        const videoBlock = embedUrl
+            ? `<div class="meta-master-video">
+                <iframe
+                    src="${embedUrl}"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen loading="lazy"
+                    title="${this._escAttr(m.name || 'Video')}"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                </iframe>
+                <div class="meta-master-fallback" style="display:none;">${fallbackContent}</div>
+            </div>`
+            : `<div class="meta-master-video">${fallbackContent}</div>`;
+
+                const channelBtn = m.channelUrl
+            ? `<a class="meta-master-channel-btn"
+                href="${this._escAttr(m.channelUrl)}"
+                target="_blank" rel="noopener noreferrer">
+                📺 Ir al canal
+            </a>`
+            : '';
+
+const videoFallbackBtn = videoId
+    ? `<a class="meta-master-yt-fallback"
+          href="https://www.youtube.com/watch?v=${videoId}"
+          target="_blank" rel="noopener noreferrer">
+           ▶ Ver en YouTube si no carga
+       </a>`
+    : '';
+
+        return `
+            <div class="meta-master-card">
+                ${videoBlock}
+                <div class="meta-master-info">
+                    <div class="meta-master-name">${this._escHtml(m.name || 'Sin nombre')}</div>
+                    ${m.title ? `<div class="meta-master-title">${this._escHtml(m.title)}</div>` : ''}
+                    <div class="meta-master-formats">
+                        <span class="meta-formats-label">Formato Especializado:</span>
+                        <div class="meta-formats-row">${formatBadges}</div>
+                    </div>
+                    ${channelBtn}
+                    ${videoFallbackBtn}
+                </div>
+            </div>
+        `;
+    },
+
+    // Extrae el ID de YouTube desde múltiples formatos de URL
+    _extractYoutubeId: function (url) {
+        if (!url) return null;
+        const patterns = [
+            /[?&]v=([^&#]+)/,
+            /youtu\.be\/([^?&#]+)/,
+            /youtube\.com\/embed\/([^?&#]+)/,
+            /youtube\.com\/shorts\/([^?&#]+)/
+        ];
+        for (const p of patterns) {
+            const m = url.match(p);
+            if (m) return m[1];
+        }
+        return null;
+    },
+
+    // ===============================
     // FUENTES EXTERNAS
     // ===============================
 
     _renderFuentesSection: function () {
-        const links = window.ConfigManager ? ConfigManager.getMetaLinks() : [];
+        const links = window.ConfigManager?.getMetaLinks?.() ?? [];
         if (!links.length) {
             return '<p class="meta-empty">No hay fuentes configuradas. Ve a Configuración → Fuentes Externas del Meta.</p>';
         }
@@ -64,7 +179,6 @@ const Meta = {
                         </button>
                     `).join('')}
                 </div>
-
                 <div class="meta-frames-container" id="meta-frames-container">
                     ${links.map((lk, i) => `
                         <div class="meta-frame-pane${i === 0 ? ' active' : ''}" id="meta-frame-pane-${i}">
@@ -106,30 +220,20 @@ const Meta = {
     },
 
     showFrame: function (index) {
-        const panes = document.querySelectorAll('.meta-frame-pane');
-        const btns  = document.querySelectorAll('.meta-tab-btn');
-        panes.forEach((p, i) => p.classList.toggle('active', i === index));
-        btns.forEach((b, i)  => b.classList.toggle('active',  i === index));
+        document.querySelectorAll('.meta-frame-pane').forEach((p, i) => p.classList.toggle('active', i === index));
+        document.querySelectorAll('.meta-tab-btn').forEach((b, i)  => b.classList.toggle('active',  i === index));
     },
 
-    // Detección de bloqueo por iframe: si el frame carga pero está vacío (frame-busting),
-    // no podemos saberlo desde el padre cross-origin. Lo mejor es mostrar un overlay
-    // que el usuario puede cerrar si SÍ cargó. Se muestra 3s después del onload.
     _onFrameLoad: function (index, iframe) {
-        // Intentar detectar bloqueo: si contentDocument es nulo → bloqueado
         try {
             const doc = iframe.contentDocument || iframe.contentWindow?.document;
-            // Si accede sin error → mismo origen, cargó bien
             if (doc && doc.body) return;
-        } catch (_) {
-            // Cross-origin: no podemos acceder. Mostramos aviso no-intrusivo.
-        }
-        // Mostrar overlay "puede que esté bloqueado" con botón para cerrarlo
+        } catch (_) {}
         const wrapper  = document.getElementById(`meta-iframe-wrapper-${index}`);
         const existing = document.getElementById(`meta-iframe-hint-${index}`);
         if (!wrapper || existing) return;
         const hint = document.createElement('div');
-        hint.id = `meta-iframe-hint-${index}`;
+        hint.id        = `meta-iframe-hint-${index}`;
         hint.className = 'meta-iframe-hint';
         hint.innerHTML = `
             <span>¿No ves el contenido?</span>
@@ -139,9 +243,7 @@ const Meta = {
         wrapper.appendChild(hint);
     },
 
-    _onFrameError: function (index) {
-        this._showBlocked(index);
-    },
+    _onFrameError: function (index) { this._showBlocked(index); },
 
     _showBlocked: function (index) {
         const blocked = document.getElementById(`meta-iframe-blocked-${index}`);

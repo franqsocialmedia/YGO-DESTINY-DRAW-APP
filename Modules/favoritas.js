@@ -57,7 +57,7 @@ const Favoritas = {
 
         list.innerHTML = cards.map((c, i) => `
             <div class="fav-item" onclick="Favoritas.showActions(${i}, this)">
-                <img src="${c.img}" class="fav-img" alt="${c.name}">
+                <img src="${c.img}" class="fav-img" loading="lazy"alt="${c.name}">
                 <div class="fav-info">
                     <div class="fav-name">${c.name}</div>
                     <div class="fav-type">${c.type}</div>
