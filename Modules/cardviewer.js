@@ -15,11 +15,9 @@ const CardViewer = {
         const images = card.card_images || [];
         const mainImg = images[0]?.image_url || '';
 
-        const thumbsHtml = images.map(img => `
-            <img src="${img.image_url_small}"
-                 class="cv-thumb"
-                 style="width:50px; cursor:pointer; margin:3px;">
-        `).join('');
+        const thumbsHtml = images.map(img =>
+            `<img src="${img.image_url_small}" class="cv-thumb">`
+        ).join('');
 
         const statsHtml = card.atk !== undefined ? `
             <p><b>Atributo:</b> ${card.attribute || '-'}</p>
@@ -32,66 +30,59 @@ const CardViewer = {
 
         const highlightedDesc = this.highlightNomenclature(card.desc);
 
-        const html = `
-            <div id="cv-overlay"
-                 style="position:fixed;top:0;left:0;width:100%;height:100%;
-                        background:rgba(0,0,0,0.75);z-index:99998;">
+const html = `
+    <div id="cv-overlay" class="cv-overlay">
+        <div id="cv-modal" class="cv-modal">
 
-                <div id="cv-modal"
-                     style="position:absolute;top:50%;left:50%;
-                            transform:translate(-50%,-50%);
-                            background:#111;color:white;
-                            padding:20px;border:2px solid yellow;
-                            width:350px;max-height:90%;overflow:auto;">
+            <button id="cv-close" class="cv-close-btn">✕</button>
 
-                    <button id="cv-close"
-                            style="float:right;background:red;color:white;border:none;cursor:pointer;">X</button>
+            <div class="cv-name">${card.name}</div>
 
-                    <h2>${card.name}</h2>
+            <img id="cv-main-img" src="${mainImg}" class="cv-main-img">
+            <div id="cv-thumbs" class="cv-thumbs">${thumbsHtml}</div>
+            <div id="cv-ban-btns" class="cv-ban-area"></div>
 
-                    <img id="cv-main-img"
-                         src="${mainImg}"
-                         style="width:100%;margin-bottom:10px;">
+            <hr class="cv-hr">
 
-                    <div id="cv-thumbs">${thumbsHtml}</div>
-                    <div id="cv-ban-btns" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;"></div>
+            <div class="cv-stats-block">
+                <p><b>Tipo:</b> ${card.type}</p>
+                ${statsHtml}
+            </div>
 
-                    <hr>
+            <div class="cv-desc-block">${highlightedDesc}</div>
 
-                    <p><b>Tipo:</b> ${card.type}</p>
-                    ${statsHtml}
+            <hr class="cv-hr">
 
-                    <div style="white-space:pre-wrap; line-height: 1.8;">${highlightedDesc}</div>
-
-                    <hr>
-
-                    <div>
-                        <b>Cantidad en Deck:</b><br>
-                        <button id="cv-minus">◀</button>
-                        <span id="cv-count">${quantity}</span>
-                        <button id="cv-plus">▶</button>
-                    </div>
-
-                   ${this.renderCardContribution(card)}
-
-                    <hr>
-
-                    <div>
-                        <b>Pack/Set proveniente:</b><br>
-                        <span id="cv-sets-list" style="font-size:0.82rem;color:rgba(241,241,241,0.75);">Cargando...</span><br>
-                        <b>ID:</b> ${card.id}
-                    </div>
-
-                    <hr>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button id="cv-open-image" style="flex: 1; min-width: 120px;">Ver Imagen HD</button>
-                        <button id="cv-staple-btn" style="flex: 1; min-width: 120px;"></button>
-                        <button id="cv-fav-btn" style="flex: 1; min-width: 120px;"></button>
-                    </div>
-
+            <div class="cv-qty-block">
+                <span class="cv-qty-label">Cantidad en Deck:</span>
+                <div class="cv-qty-controls">
+                    <button id="cv-minus" class="cv-qty-btn">◀</button>
+                    <span id="cv-count" class="cv-qty-count">${quantity}</span>
+                    <button id="cv-plus" class="cv-qty-btn">▶</button>
                 </div>
             </div>
-        `;
+
+            ${this.renderCardContribution(card)}
+
+            <hr class="cv-hr">
+
+            <div class="cv-sets-block">
+                <span class="cv-sets-label">📦 Pack / Set</span>
+                <div id="cv-sets-list" class="cv-sets-list">Cargando...</div>
+                <span class="cv-card-id">ID: ${card.id}</span>
+            </div>
+
+            <hr class="cv-hr">
+
+            <div class="cv-action-row">
+                <button id="cv-open-image" class="cv-action-btn">🖼 Ver HD</button>
+                <button id="cv-staple-btn" class="cv-action-btn"></button>
+                <button id="cv-fav-btn" class="cv-action-btn"></button>
+            </div>
+
+        </div>
+    </div>
+`;
 
         document.body.insertAdjacentHTML('beforeend', html);
 
