@@ -30,8 +30,11 @@ const Buscador = {
     atk:            '',
     def:            '',
     archetype:      '',
+    cardset:        '',
+
 },
     _archetypeList: [],
+    _cardsetList:   [],
 
 
 FILTER_DATA: {
@@ -185,9 +188,8 @@ SUBTYPE_API_MAP: {
             } else {
                 this.showMessage('🔍 Buscando en la base de datos. Puede tardar unos segundos...');
 await new Promise(resolve => setTimeout(resolve, 0));
-                // Búsqueda solo por filtros (obtener todas las cartas y filtrar)
-                // Usamos un nombre genérico para obtener un conjunto amplio
-                const url = `${this.apiUrl}`;
+                // Búsqueda solo por filtros
+                const url = this.buildApiUrl('');
                 const response = await fetch(url);
 
                 if (!response.ok) throw new Error('Error HTTP');
@@ -293,7 +295,7 @@ await new Promise(resolve => setTimeout(resolve, 0));
 
     displayResults: function (cards) {
         this.currentCards = cards;
-        const MAX = 100;
+        const MAX = 200;
         const shown  = cards.slice(0, MAX);
         const excess = cards.length - shown.length;
 
@@ -521,6 +523,7 @@ _updateFilterSummary: function() {
     if (f.atk)            parts.push(`ATK ${f.atk}`);
     if (f.def)            parts.push(`DEF ${f.def}`);
     if (f.archetype)      parts.push(`⚔ ${f.archetype}`);
+    if (f.cardset)        parts.push(`📦 ${f.cardset}`);
     const summary  = document.getElementById('adv-filters-summary');
     const resetBtn = document.getElementById('adv-reset-btn');
     if (summary)  summary.textContent = parts.length ? parts.join(' · ') : '';
@@ -531,7 +534,7 @@ hasAdvancedFilters: function() {
     const f = this.advancedFilters;
     return !!(f.cardCategory || f.attribute || f.monsterType || f.monsterSubtype ||
               f.spellSubtype || f.trapSubtype || f.level || f.linkval || f.scale ||
-              f.atk || f.def || f.archetype);
+              f.atk || f.def || f.archetype || f.cardset);
 },
 
 buildApiUrl: function(mainTerm) {
@@ -563,6 +566,7 @@ buildApiUrl: function(mainTerm) {
         if (f.trapSubtype) params.set('race', f.trapSubtype);
     }
 if (f.archetype) params.set('archetype', f.archetype);
+if (f.cardset)   params.set('cardset',   f.cardset);
     const qs = params.toString();
     return qs ? `${this.apiUrl}?${qs}` : this.apiUrl;
 },
@@ -664,14 +668,43 @@ _populateArchetypeSel: function (sel) {
         sel.appendChild(opt);
     });
 },
+_loadCardsets: async function () {
+    if (this._cardsetList.length) return;
+    try {
+        const res  = await fetch('https://db.ygoprodeck.com/api/v7/cardsets.php');
+        const data = await res.json();
+        // Ordenar por fecha descendente (más recientes primero), luego por nombre
+        this._cardsetList = (data || [])
+            .filter(s => s.tcg_date)
+            .sort((a, b) => b.tcg_date.localeCompare(a.tcg_date));
+        const sel = document.getElementById('buscador-set-sel');
+        if (sel) this._populateCardsetSel(sel);
+    } catch (_) {}
+},
+
+_populateCardsetSel: function (sel) {
+    while (sel.options.length > 1) sel.remove(1);
+    this._cardsetList.forEach(s => {
+        const year = s.tcg_date ? s.tcg_date.substring(0, 4) : '';
+        const opt  = document.createElement('option');
+        opt.value  = s.set_name;
+        opt.textContent = year ? `${s.set_name} (${year})` : s.set_name;
+        if (s.set_name === this.advancedFilters.cardset) opt.selected = true;
+        sel.appendChild(opt);
+    });
+},
+
 resetAdvancedFilters: function() {
     Object.assign(this.advancedFilters, {
         cardCategory:'', attribute:'', monsterType:'', monsterSubtype:'',
         spellSubtype:'', trapSubtype:'', level:'', linkval:'', scale:'', atk:'', def:'',
-        archetype: ''
+        archetype: '',
+        cardset:   ''
     });
     const arcSel = document.getElementById('buscador-archetype-sel');
     if (arcSel) arcSel.value = '';
+    const setSel = document.getElementById('buscador-set-sel');
+    if (setSel) setSel.value = '';
     this._updateFilterSummary();
     if (this.filterPanelOpen) this.renderFilterPanel();
     this.autoSearch();

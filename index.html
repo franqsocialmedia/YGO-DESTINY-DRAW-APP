@@ -105,13 +105,19 @@
 
             <div class="buscador-layout">
 
-    <!-- Columna izquierda: Staples -->
-    <div id="staples-panel" class="favoritas-panel staples-panel" style="display:none;">
-        <div class="favoritas-header">📌 Staples</div>
-        <div id="staples-list" class="favoritas-list"></div>
+    <!-- Columna izquierda: Staples + Favoritas -->
+    <div class="buscador-sidebar">
+        <div id="staples-panel" class="favoritas-panel staples-panel" style="display:none;">
+            <div class="favoritas-header">📌 Staples</div>
+            <div id="staples-list" class="favoritas-list"></div>
+        </div>
+        <div id="favoritas-panel" class="favoritas-panel" style="display:none;">
+            <div class="favoritas-header">⭐ Favoritas</div>
+            <div id="favoritas-list" class="favoritas-list"></div>
+        </div>
     </div>
 
-    <!-- Columna central: búsqueda + resultados -->
+    <!-- Columna principal: búsqueda + resultados -->
     <div class="buscador-main">
         <div class="search-container">
             <div class="search-bar">
@@ -161,18 +167,20 @@
                     <option value="">— cualquier carta —</option>
                 </select>
             </div>
+            <div class="buscador-sets-row">
+                <span class="buscador-sets-label">📦 Packs y Sets:</span>
+                <select id="buscador-set-sel" class="buscador-set-sel"
+                        onchange="Buscador.advancedFilters.cardset=this.value; Buscador._updateFilterSummary(); Buscador.autoSearch();"
+                        onfocus="Buscador._loadCardsets()">
+                    <option value="">— todos los sets —</option>
+                </select>
+            </div>
             <div id="advanced-filters-panel" class="advanced-filters-panel" style="display:none"></div>
         </div>
 
         <div id="search-results" class="results-container">
             <p class="results-placeholder">Utiliza el buscador para encontrar cartas de Yu-Gi-Oh!</p>
         </div>
-    </div>
-
-    <!-- Columna derecha: Favoritas -->
-    <div id="favoritas-panel" class="favoritas-panel" style="display:none;">
-        <div class="favoritas-header">⭐ Favoritas</div>
-        <div id="favoritas-list" class="favoritas-list"></div>
     </div>
 
 </div>

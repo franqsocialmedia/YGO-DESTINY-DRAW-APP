@@ -780,6 +780,54 @@
     margin: 0;
     border-top: 1px solid rgba(255,255,255,.06);
 }
+
+/* ── Fila Packs y Sets ──────────────────────────────────────── */
+.buscador-sets-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+.buscador-sets-label {
+    font-size: 0.78rem;
+    color: rgba(241, 241, 241, 0.6);
+    white-space: nowrap;
+}
+.buscador-set-sel {
+    background: var(--bg-input, rgba(0, 15, 40, 0.85));
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    color: rgba(241, 241, 241, 0.8);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+    transition: border-color 0.15s;
+}
+.buscador-set-sel:focus {
+    outline: none;
+    border-color: rgba(255, 215, 0, 0.55);
+}
+/* ── Sidebar izquierdo: Staples + Favoritas apilados ── */
+.buscador-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 200px;
+    min-width: 180px;
+    flex-shrink: 0;
+}
+.buscador-sidebar .favoritas-panel {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    max-height: calc(50vh - 80px);
+}
+
+
 /* ====================================
    RESPONSIVE - TABLET
    ==================================== */
