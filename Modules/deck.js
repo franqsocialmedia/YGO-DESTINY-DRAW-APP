@@ -466,6 +466,20 @@ tryDeck: function () {
         }, 80);
     }, 60);
 },
+tryDeckExperimentacion: function (deckName) {
+    if (!window.Navigation || !window.Torneo || !window.Experimentacion) return;
+    const saved = Deck.getSavedDecks();
+    const dk = saved.find(d => d.name === deckName);
+    if (!dk) return;
+    Navigation.showTab('simuladores');
+    setTimeout(() => {
+        Torneo.showSimTab('experimentacion');
+        setTimeout(() => {
+            Experimentacion._dsCache._direct = [dk];
+            Experimentacion._loadDeck('_direct', 0);
+        }, 80);
+    }, 60);
+},
     exportYDK: function () {
         let main = '', extra = '', side = '';
 
@@ -1307,6 +1321,7 @@ onDeckLoaded: function () {
     <span class="dzc-chip dzc-main">🃏 Main <strong>${mainC}</strong></span>
     <span class="dzc-chip dzc-extra">✨ Extra <strong>${extraC}</strong></span>
     <span class="dzc-chip dzc-side">🔄 Side <strong>${sideC}</strong></span>
+    <button class="dzc-exp-btn" onclick="Deck.tryDeckExperimentacion(Deck.name)" title="Abrir en Experimentación">🧪 Exp.</button>
     <button class="dzc-probar-btn" onclick="Deck.tryDeck()">⚔️ Probar Deck</button>
 </div>
 

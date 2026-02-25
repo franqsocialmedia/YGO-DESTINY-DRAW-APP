@@ -116,7 +116,8 @@ _removeCard: function (card) {
         el.innerHTML     = `<img src="${img}" onerror="this.src='${this.CARD_BACK}'" draggable="false">`;
         el.addEventListener('mousedown',  (e) => this._startDrag(e, inst.iid));
         el.addEventListener('touchstart', (e) => this._startDragTouch(e, inst.iid), { passive: false });
-        el.addEventListener('dblclick',   () => this._viewCard(inst.iid));
+        el.addEventListener('dblclick',     () => this._viewCard(inst.iid));
+        el.addEventListener('contextmenu',  (e) => { e.preventDefault(); this._removeCard(inst.card); });
         canvas.appendChild(el);
         // Expandir canvas si es necesario
         this._expandCanvas(inst.x + 96, inst.y + 134);

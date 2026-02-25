@@ -2834,6 +2834,39 @@
 .pz-log-chain-resolve .pz-log-entry-msg { color: #87CEEB; font-weight: 700; }
 .pz-log-activate      .pz-log-entry-msg { color: #80e898; }
 
+.deck-exp-btn {
+    background: #1a5c2e;
+    border: 1px solid #2d8f47;
+    color: #a8f0bc;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    width: 100%;
+    margin-bottom: 4px;
+}
+.deck-exp-btn:hover {
+    background: #22753a;
+    border-color: #3dba5f;
+    color: #c8ffd8;
+}
+.dzc-exp-btn {
+    background: #1a5c2e;
+    border: 1px solid #2d8f47;
+    color: #a8f0bc;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    white-space: nowrap;
+}
+.dzc-exp-btn:hover {
+    background: #22753a;
+    border-color: #3dba5f;
+    color: #c8ffd8;
+}
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width:600px) {
     .pz-field-grid { gap:2px; }
