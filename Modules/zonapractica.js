@@ -1132,6 +1132,12 @@ _startLongPressMulti: function (zone, idx, e) {
         btn.title     = 'Resolver Cadena';
         btn.onclick   = () => ZonaPractica.resolveChain();
         document.body.appendChild(btn);
+        // Activar zona logo
+        const logoCell = document.querySelector('.pz-logo-cell');
+        if (logoCell) {
+            logoCell.classList.add('pz-logo-chain-active');
+            logoCell.onclick = () => ZonaPractica.resolveChain();
+        }
     },
 
     resolveChain: function () {
@@ -1158,6 +1164,11 @@ _startLongPressMulti: function (zone, idx, e) {
         this._chainCounter = 0;
         this._chainedCards = [];
         document.getElementById('pz-chain-resolve-btn')?.remove();
+        const logoCell = document.querySelector('.pz-logo-cell');
+        if (logoCell) {
+            logoCell.classList.remove('pz-logo-chain-active');
+            logoCell.onclick = null;
+        }
         this._renderAllZones();
         this._showToast(`⛓ Cadena resuelta (${count} efectos)`, 2000);
     },
@@ -2517,7 +2528,7 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica');
     _renderFieldZone: function (zone) {
     const el = document.getElementById(`pz-zone-${zone}`);
     if (!el) return;
-    el.querySelector('.pz-card-img')?.remove();
+    el.querySelectorAll('.pz-card-img, .pz-card-ghost').forEach(e => e.remove());
     el.querySelector('.pz-pos-badge')?.remove();
     el.querySelector('.pz-chain-badge')?.remove();
     el.querySelector('.pz-xyz-stack')?.remove();
@@ -2533,6 +2544,18 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica');
         img.onerror = () => { img.src = this.CARD_BACK; };
         if (entry.rotation) img.style.transform = `rotate(${entry.rotation}deg)`;
         el.insertBefore(img, el.querySelector('.pz-zone-lbl'));
+
+        // Imagen fantasma para cartas en Set (boca abajo)
+        if (!entry.faceUp && entry.card.card_images?.[0]?.image_url_small) {
+            const ghost = document.createElement('img');
+            ghost.className = 'pz-card-ghost';
+            ghost.src = entry.card.card_images[0].image_url_small;
+            ghost.onerror = () => { ghost.remove(); };
+            ghost.style.cssText = 'position:absolute;inset:0; top:11px; left:12px; width:80%;height:auto; max-height:80%;opacity:0.45; z-index:2;pointer-events:none;object-fit:contain;';
+            el.style.position = 'relative';
+            if (entry.rotation) ghost.style.transform = `rotate(${entry.rotation}deg)`;
+            el.insertBefore(ghost, el.querySelector('.pz-zone-lbl'));
+        }
 
         // Badge de posición cuando está activo el modo cambiar posición
         if (this.changePositionMode) {
