@@ -153,6 +153,15 @@ const Config = {
                 </div>
             </div>
 
+            <!-- Sección: Temas de Formación -->
+            <div class="config-section">
+                <h3 class="config-section-title" onclick="Config.toggleSection('formacion-topics-section')">
+                    ▶ Temas de Formación
+                </h3>
+                <div id="formacion-topics-section" class="config-section-content" style="display:none;">
+                    ${this.renderFormacionTopicsSection()}
+                </div>
+            </div>
 
             <!-- Botones de acción -->
             <div class="config-actions">
@@ -1812,6 +1821,75 @@ _onFormGameFileChange: function (i, input) {
         if (btn) btn.textContent = `✔ ${file.name}`;
     };
     reader.readAsDataURL(file);
+},
+renderFormacionTopicsSection: function () {
+    const allTopics = window.Formacion?.TOPICS ?? [{ id: 'que-es-yugioh', label: '¿Qué es Yu-Gi-Oh!?' }];
+    const cfg       = window.ConfigManager?.getFormacionTopicsConfig?.() ?? {};
+    const mastered  = JSON.parse(localStorage.getItem('yugioh_formacion_mastered') || '[]');
+
+    const rows = allTopics.map(t => {
+        const topicCfg     = cfg[t.id] || {};
+        const isActive     = topicCfg.active !== false;
+        const hideOnMaster = topicCfg.hideOnMaster !== false;
+        const isMastered   = mastered.includes(t.id);
+        return `
+            <div style="display:flex;align-items:center;justify-content:space-between;
+                        padding:10px 12px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,215,0,0.1);
+                        border-radius:8px;gap:12px;flex-wrap:wrap;">
+                <div>
+                    <span style="font-size:0.88rem;color:#f1f1f1;font-weight:600;">${t.label}</span>
+                    ${isMastered ? '<span style="font-size:0.72rem;color:#2ecc71;margin-left:8px;">✅ Dominado</span>' : ''}
+                </div>
+                <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+                    <label style="font-size:0.78rem;color:rgba(255,255,255,0.55);display:flex;align-items:center;gap:6px;cursor:pointer;">
+                        <input type="checkbox" ${isActive ? 'checked' : ''}
+                               onchange="Config._saveTopicCfg('${t.id}','active',this.checked)"
+                               style="accent-color:#FFD700;">
+                        Activo (visible)
+                    </label>
+                    <label style="font-size:0.78rem;color:rgba(255,255,255,0.55);display:flex;align-items:center;gap:6px;cursor:pointer;">
+                        <input type="checkbox" ${hideOnMaster ? 'checked' : ''}
+                               onchange="Config._saveTopicCfg('${t.id}','hideOnMaster',this.checked)"
+                               style="accent-color:#FFD700;">
+                        Ocultar al dominar
+                    </label>
+                    ${isMastered ? `
+                        <button onclick="Config._resetTopicMastered('${t.id}')"
+                                style="background:rgba(214,48,49,0.15);border:1px solid rgba(214,48,49,0.3);
+                                       color:#ff7675;border-radius:5px;padding:3px 9px;font-size:0.72rem;cursor:pointer;">
+                            Restablecer
+                        </button>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <p style="font-size:0.82rem;color:rgba(255,255,255,0.5);margin:0 0 12px 0;">
+            Activa/desactiva temas y controla si se ocultan al ser dominados.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:8px;">${rows}</div>
+    `;
+},
+
+_saveTopicCfg: function (topicId, key, value) {
+    if (!window.ConfigManager) return;
+    const cfg         = ConfigManager.getFormacionTopicsConfig();
+    if (!cfg[topicId]) cfg[topicId] = {};
+    cfg[topicId][key] = value;
+    ConfigManager.saveFormacionTopicsConfig(cfg);
+},
+
+_resetTopicMastered: function (topicId) {
+    const mastered = JSON.parse(localStorage.getItem('yugioh_formacion_mastered') || '[]')
+        .filter(id => id !== topicId);
+    localStorage.setItem('yugioh_formacion_mastered', JSON.stringify(mastered));
+    this.render();
+    this._restoreAndScroll('formacion-topics-section', null);
+    requestAnimationFrame(() => {
+        const sec = document.getElementById('formacion-topics-section');
+        if (sec) sec.style.display = 'block';
+    });
 },
 };
 

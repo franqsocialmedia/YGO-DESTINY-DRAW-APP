@@ -1169,6 +1169,18 @@ saveFormacionFallback: function (gameId, dataUrl) {
         return false;
     }
 },
+// ===============================
+// FORMACION TOPICS CONFIG
+// ===============================
+getFormacionTopicsConfig: function () {
+    const config = this.getConfig();
+    return config.formacionTopicsConfig || {};
+},
+saveFormacionTopicsConfig: function (cfg) {
+    const config = this.getConfig();
+    config.formacionTopicsConfig = cfg;
+    this.saveConfig(config);
+},
 };
 
 window.ConfigManager = ConfigManager;
