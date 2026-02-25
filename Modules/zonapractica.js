@@ -34,6 +34,8 @@ const ZonaPractica = {
     lp: 8000,
     _activeDeckName: null,  // deck guardado activo (null = ninguno / independiente)
     _activePlacement: null, // { sourceZone, idx, faceUp }
+    _longPressTimer: null,
+    _longPressPreventClick: false,
     
 
     // ── Player A ──────────────────────────────────────────────────
@@ -140,6 +142,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
 
                 <!-- ── CAMPO + LATERAL (GY / BANISH) ── -->
                 <div class="pz-field-area-wrap">
+
                 <!-- ── COLUMNA OTHER (izquierda) ── -->
                 <div class="pz-field-other-side">
                     <div class="pz-multi-zone pz-other-zone pz-side-zone" id="pz-zone-other"
@@ -156,35 +159,27 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                             <!-- Fila EMZ -->
                             
                             <div class="pz-zone pz-zone-emz pz-fg-emz-a" id="pz-zone-A" data-zone="A"
-                                 onclick="ZonaPractica.onZoneClick('A')"><span class="pz-zone-lbl">A</span></div>
+                                 onclick="ZonaPractica.onZoneClick('A')" onpointerdown="ZonaPractica._startLongPress('A', event)" onpointerup="ZonaPractica._cancelLongPress()" onpointerleave="ZonaPractica._cancelLongPress()" onpointercancel="ZonaPractica._cancelLongPress()" oncontextmenu="return false;"ondragstart="return false;"><span class="pz-zone-lbl">A</span></div>
                             <div class="pz-logo-cell pz-fg-logo">
                                 <img src="img/LOGO - Destiny Draw Yugioh APP.png" class="pz-logo-img"
                                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                                 <div class="pz-logo-fallback" style="display:none">🃏</div>
                             </div>
                             <div class="pz-zone pz-zone-emz pz-fg-emz-b" id="pz-zone-B" data-zone="B"
-                                 onclick="ZonaPractica.onZoneClick('B')"><span class="pz-zone-lbl">B</span></div>
+                                 onclick="ZonaPractica.onZoneClick('B')" onpointerdown="ZonaPractica._startLongPress('B', event)" onpointerup="ZonaPractica._cancelLongPress()" onpointerleave="ZonaPractica._cancelLongPress()" onpointercancel="ZonaPractica._cancelLongPress()" oncontextmenu="return false;"ondragstart="return false;"><span class="pz-zone-lbl">B</span></div>
                             
-
-                            <!-- Fila Monstruos + Zona C (izquierda) -->
                             <div class="pz-zone pz-zone-field pz-fg-c" id="pz-zone-C" data-zone="C"
-                                 onclick="ZonaPractica.onZoneClick('C')"><span class="pz-zone-lbl">C</span></div>
+                                 onclick="ZonaPractica.onZoneClick('C')" onpointerdown="ZonaPractica._startLongPress('C', event)" onpointerup="ZonaPractica._cancelLongPress()" onpointerleave="ZonaPractica._cancelLongPress()" onpointercancel="ZonaPractica._cancelLongPress()" oncontextmenu="return false;"ondragstart="return false;"><span class="pz-zone-lbl">C</span></div>
                             ${[1,2,3,4,5].map(n=>`
                             <div class="pz-zone pz-zone-monster" id="pz-zone-${n}" data-zone="${n}"
-                                 onclick="ZonaPractica.onZoneClick('${n}')"><span class="pz-zone-lbl">${n}</span></div>`).join('')}
+                                 onclick="ZonaPractica.onZoneClick('${n}')" onpointerdown="ZonaPractica._startLongPress('${n}', event)" onpointerup="ZonaPractica._cancelLongPress()" onpointerleave="ZonaPractica._cancelLongPress()" onpointercancel="ZonaPractica._cancelLongPress()" oncontextmenu="return false;"ondragstart="return false;"><span class="pz-zone-lbl">${n}</span></div>`).join('')}
 
                             <!-- Fila S/T -->
                             <div class="pz-fg-st-spacer"></div>
-                            <div class="pz-zone pz-zone-pendulum" id="pz-zone-6" data-zone="6"
-                                 onclick="ZonaPractica.onZoneClick('6')"><span class="pz-zone-lbl">6</span></div>
-                            <div class="pz-zone pz-zone-st" id="pz-zone-7" data-zone="7"
-                                 onclick="ZonaPractica.onZoneClick('7')"><span class="pz-zone-lbl">7</span></div>
-                            <div class="pz-zone pz-zone-st" id="pz-zone-8" data-zone="8"
-                                 onclick="ZonaPractica.onZoneClick('8')"><span class="pz-zone-lbl">8</span></div>
-                            <div class="pz-zone pz-zone-st" id="pz-zone-9" data-zone="9"
-                                 onclick="ZonaPractica.onZoneClick('9')"><span class="pz-zone-lbl">9</span></div>
-                            <div class="pz-zone pz-zone-pendulum" id="pz-zone-10" data-zone="10"
-                                 onclick="ZonaPractica.onZoneClick('10')"><span class="pz-zone-lbl">10</span></div>
+                            ${[6,7,8,9,10].map(n=>`
+                            <div class="pz-zone ${n==6||n==10?'pz-zone-pendulum':'pz-zone-st'}" id="pz-zone-${n}" data-zone="${n}"
+                                 onclick="ZonaPractica.onZoneClick('${n}')" onpointerdown="ZonaPractica._startLongPress('${n}', event)" onpointerup="ZonaPractica._cancelLongPress()" onpointerleave="ZonaPractica._cancelLongPress()" onpointercancel="ZonaPractica._cancelLongPress()" oncontextmenu="return false;"ondragstart="return false;"><span class="pz-zone-lbl">${n}</span></div>`).join('')}
+                            <!-- ARREGLAR AQUI-->
 
                         </div>
                     </div>
@@ -214,7 +209,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                 <!-- ── ZONAS INFERIORES ── -->
 
                 <!-- Mano -->
-                <div class="pz-zone-row pz-hand-row">
+                <div class="pz-zone-row pz-hand-row" >
                     <span class="pz-row-label">Hand</span>
                     <div class="pz-multi-zone pz-hand-zone" id="pz-zone-hand"
                          onclick="ZonaPractica._onMultiZoneClick(event,'hand')"></div>
@@ -315,6 +310,14 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
             if (entry.rotation) img.style.transform = `rotate(${entry.rotation}deg)`;
             if (isBanish && entry.faceUp === false) img.style.opacity = '0.55';
             slot.appendChild(img);
+            if (isHand) {
+                const iIdx = i;
+                slot.addEventListener('pointerdown',  (ev) => { if (ev.button !== 0 && ev.type !== 'pointerdown') return; if (!this.hand[iIdx]?.card) return; this._cancelLongPress(); this._longPressTimer = setTimeout(() => { this._longPressPreventClick = true; if (navigator.vibrate) navigator.vibrate(50); this._showHandQuickMenu(iIdx); }, 250); });
+                slot.addEventListener('pointerup',     () => this._cancelLongPress());
+                slot.addEventListener('pointerleave',  () => this._cancelLongPress());
+                slot.addEventListener('pointercancel', () => this._cancelLongPress());
+                slot.addEventListener('contextmenu',   (ev) => ev.preventDefault());
+            }
             el.appendChild(slot);
         });
     },
@@ -883,6 +886,7 @@ overlay.innerHTML = `
     // INTERACCIÓN — ZONAS MONO (CAMPO PÚBLICO)
     // ═══════════════════════════════════════════════════════
     onZoneClick: function (zone) {
+    if (this._longPressPreventClick) { this._longPressPreventClick = false; return; }
     if (this._activePlacement) { this._completePlacement(zone); return; }
     if (this._activeMove) { this._completeMoveToField(zone); return; }
         if (this.changePositionMode) {
@@ -918,11 +922,19 @@ overlay.innerHTML = `
     const menu = document.createElement('div');
     menu.className = 'pz-zone-menu';
     menu.id = 'pz-zone-menu-active';
-    menu.innerHTML = `
-        <button class="pz-zmenu-btn pz-zmenu-ver"
-                onclick="ZonaPractica._zmView('${zone}',${slotIndex},event)">Ver</button>
-        <button class="pz-zmenu-btn pz-zmenu-accion"
-                onclick="ZonaPractica._zmShowAction('${zone}',${slotIndex},'${zoneType}',event)">Acción</button>`;
+    if (zone === 'hand') {
+        menu.innerHTML = `
+            <button class="pz-zmenu-btn pz-zmenu-activate"
+                    onclick="ZonaPractica._zmActivate('hand',${slotIndex},'multi',event)" onmouseup="ZonaPractica._zmActivate('hand',${slotIndex},'multi',event)">Activar</button>
+            <button class="pz-zmenu-btn pz-zmenu-move"
+                    onclick="ZonaPractica._zmStartMove('hand',${slotIndex},'multi',event)" onmouseup="ZonaPractica._zmStartMove('hand',${slotIndex},'multi',event)">Mover</button>`;
+    } else {
+        menu.innerHTML = `
+            <button class="pz-zmenu-btn pz-zmenu-ver"
+                    onclick="ZonaPractica._zmView('${zone}',${slotIndex},event)">Ver</button>
+            <button class="pz-zmenu-btn pz-zmenu-accion"
+                    onclick="ZonaPractica._zmShowAction('${zone}',${slotIndex},'${zoneType}',event)">Acción</button>`;
+    }
     anchor.appendChild(menu);
 
     const close = (e) => {
@@ -933,7 +945,75 @@ overlay.innerHTML = `
     };
     setTimeout(() => document.addEventListener('click', close, true), 50);
 },
+_startLongPress: function (zone, e) {
+        if (e.button !== 0 && e.type !== 'pointerdown') return;
+        if (!this.field[zone] || !this.field[zone].card) return;
+        this._cancelLongPress();
+        this._longPressTimer = setTimeout(() => {
+            this._longPressPreventClick = true;
+            this._showQuickActionMenu(zone, e);
+        }, 250);
+    },
 
+    _cancelLongPress: function () {
+        if (this._longPressTimer) {
+            clearTimeout(this._longPressTimer);
+            this._longPressTimer = null;
+        }
+    },
+
+    _showHandQuickMenu: function (idx) {
+        this._closeZoneMenus();
+        const containerEl = document.getElementById('pz-zone-hand');
+        if (!containerEl) return;
+        const slots = containerEl.querySelectorAll('.pz-card-slot');
+        const anchor = slots[idx] || containerEl;
+        const sub = document.createElement('div');
+        sub.className = 'pz-action-submenu pz-quick-action';
+        sub.innerHTML = `
+            <button class="pz-zmenu-btn pz-zmenu-activate"
+                    onclick="ZonaPractica._zmActivate('hand',${idx},'multi',event)" onmouseup="ZonaPractica._zmActivate('hand',${idx},'multi',event)">Activar</button>
+            <button class="pz-zmenu-btn pz-zmenu-move"
+                    onclick="ZonaPractica._zmStartMove('hand',${idx},'multi',event)" onmouseup="ZonaPractica._zmStartMove('hand',${idx},'multi',event)">Mover</button>`;
+        anchor.appendChild(sub);
+        const close = (e2) => { if (!sub.contains(e2.target)) { sub.remove(); document.removeEventListener('click', close, true); } };
+        setTimeout(() => document.addEventListener('click', close, true), 50);
+    },
+_startLongPressMulti: function (zone, idx, e) {
+        if (e.button !== 0 && e.type !== 'pointerdown') return;
+        const arr = this._getMultiArray(zone);
+        if (!arr[idx]?.card) return;
+        this._cancelLongPress();
+        this._longPressTimer = setTimeout(() => {
+            this._longPressPreventClick = true;
+            this._zmShowAction(zone, idx, 'multi', e);
+        }, 250);
+    },
+    _showQuickActionMenu: function (zone, e) {
+        this._closeZoneMenus();
+        const elId = `pz-zone-${zone}`;
+        const containerEl = document.getElementById(elId);
+        if (!containerEl) return;
+
+        if (navigator.vibrate) navigator.vibrate(20); // Feedback táctil
+
+        const hasMats = this.OVERLAY_ZONES.includes(String(zone)) && (this.field[zone]?._materials?.length > 0);
+        
+        const sub = document.createElement('div');
+        sub.className = 'pz-action-submenu pz-quick-action';
+        sub.innerHTML = `
+            <button class="pz-zmenu-btn pz-zmenu-activate"
+                    onclick="ZonaPractica._zmActivate('${zone}',null,'field',event)" onmouseup="ZonaPractica._zmActivate('${zone}',null,'field',event)">Activar</button>
+            ${hasMats ? `<button class="pz-zmenu-btn"
+                    onclick="ZonaPractica._showDetachMenu('${zone}',event)" onmouseup="ZonaPractica._showDetachMenu('${zone}',event)">⛓ Desacoplar</button>` : ''}
+            <button class="pz-zmenu-btn pz-zmenu-move"
+                    onclick="ZonaPractica._zmStartMove('${zone}',null,'field',event)" onmouseup="ZonaPractica._zmStartMove('${zone}',null,'field',event)">Mover</button>`;
+        
+        containerEl.appendChild(sub);
+
+        const close = (e2) => { if (!sub.contains(e2.target)) { sub.remove(); document.removeEventListener('click', close, true); } };
+        setTimeout(() => document.addEventListener('click', close, true), 10);
+    },
     _closeZoneMenus: function () {
         document.querySelectorAll('.pz-zone-menu, .pz-action-submenu').forEach(m => m.remove());
     },
@@ -1385,6 +1465,7 @@ _showDetachMenu: function (zone, e) {
     },
 
     _onMultiZoneClick: function (e, zone) {
+        if (this._longPressPreventClick) { this._longPressPreventClick = false; return; }
         const slot = e.target.closest('.pz-card-slot');
         if (this._activePlacement) { this._cancelPlacement(); return; }
         if (this._activeMove) {
@@ -2605,7 +2686,7 @@ _openLogCard: function (idx) {
             <div class="pz-log-entry ${extraClass}" id="pz-log-entry-${i}">
                 <span class="pz-log-entry-idx">${i + 1}</span>
                 <span class="pz-log-entry-meta">T${e.turn}&nbsp;${e.time}</span>
-                ${e.isManual ? `<span class="pz-log-player-tag">Manual:</span>` : ''}
+                ${e.isManual ? `<span class="pz-log-player-tag">Jugador:</span>` : ''}
                 ${e.imgUrl ? `<img src="${e.imgUrl}" class="pz-log-card-thumb"
                     onerror="this.style.display='none'" title="${e.msg}">` : ''}
                 <span class=\"pz-log-entry-msg\">${ZonaPractica._fmtLogMsg(e.msg, e.cardName, i, !!(e.isLike || isChainRes || isActivate))}</span>
