@@ -102,8 +102,11 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                             onclick="ZonaPractica.openCardSearch()">🔍 Buscar Carta</button>
                     <button class="pz-ctrl-btn pz-ctrl-deck"
                             onclick="ZonaPractica.openDeckSelector()">🃏 Usar Deck</button>
-                    <button class="pz-ctrl-btn pz-ctrl-historia"
-                            onclick="ZonaPractica.openStateNavigator()">📜 Historial</button>
+                    
+                    ${!window.ContentManager || ContentManager.isVisible('sim-practica-history')
+                        ? `<button class="pz-ctrl-btn pz-ctrl-historia"
+                                onclick="ZonaPractica.openStateNavigator()">📜 Historial</button>`
+                        : ''}
                     <button class="pz-ctrl-btn pz-ctrl-widget"
                             id="pz-sw-toggle-btn"
                             onclick="ZonaPractica.toggleStatusWidget()"
@@ -254,7 +257,10 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                 <button class="pz-action-btn" onclick="ZonaPractica.drawCard()">⬆ Robar</button>
                 <button class="pz-action-btn" id="pz-btn-chgpos"
                         onclick="ZonaPractica.toggleChangePosition()">↕ Cambiar Pos.</button>
-                <button class="pz-action-btn" onclick="ZonaPractica.saveGameState()">📌 Marcar Estado</button>
+                
+                ${!window.ContentManager || ContentManager.isVisible('sim-practica-history')
+                    ? `<button class="pz-action-btn" onclick="ZonaPractica.saveGameState()">📌 Marcar Estado</button>`
+                    : ''}
                 <button class="pz-action-btn" id="pz-btn-hide"
                         onclick="ZonaPractica.toggleHideCards()">🙈 Ocultar Cartas</button>
                 <button class="pz-action-btn" onclick="ZonaPractica.openLog()">📋 Log</button>

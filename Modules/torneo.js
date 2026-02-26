@@ -74,13 +74,13 @@ const Torneo = {
         this.container.innerHTML = `
         <h2>Simuladores</h2>
         <div class="sim-main-tabs">
-            <button class="sim-tab-btn active" data-simtab="mulligan"
-        onclick="Torneo.showSimTab('mulligan')">🎲 Mulligan</button>
-        <button class="sim-tab-btn" data-simtab="torneo"
-                onclick="Torneo.showSimTab('torneo')">🏆 Torneo</button>
+            <button class="sim-tab-btn active" data-simtab="mulligan" data-section-id="sim-mulligan"
+                    onclick="Torneo.showSimTab('mulligan')">🎲 Mulligan</button>
+            <button class="sim-tab-btn" data-simtab="torneo" data-section-id="sim-torneo"
+                    onclick="Torneo.showSimTab('torneo')">🏆 Torneo</button>
             <button class="sim-tab-btn" data-simtab="duelo"
                     onclick="Torneo.showSimTab('duelo')">⚔️ Duelo en Vivo</button>
-            <button class="sim-tab-btn" data-simtab="experimentacion"
+            <button class="sim-tab-btn" data-simtab="experimentacion" data-section-id="sim-experimentacion"
                     onclick="Torneo.showSimTab('experimentacion')">🧪 Experimentación</button>
             <button class="sim-tab-btn" data-simtab="practica"
                     onclick="Torneo.showSimTab('practica')">🎴 Zona de Práctica</button>
@@ -214,6 +214,11 @@ const Torneo = {
             <div class="matchup-list">${rows}</div>`;
     },
     showSimTab: function (tab) {
+    // No navegar a un sub-tab oculto
+    if (window.ContentManager) {
+        const secMap = { mulligan:'sim-mulligan', torneo:'sim-torneo', experimentacion:'sim-experimentacion' };
+        if (secMap[tab] && !ContentManager.isVisible(secMap[tab])) return;
+    }
     this.simTab = tab;
     document.querySelectorAll('.sim-tab-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.simtab === tab);

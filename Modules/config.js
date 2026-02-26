@@ -12,6 +12,8 @@ const Config = {
             console.error('Config: contenedor no encontrado'); 
             return; 
         }
+        // Inyectar panel de Content Manager al principio del contenido de Config
+        
         this.render();
         if (window.ConfigManager) ConfigManager.renderStaplesPanel();
     },
@@ -21,9 +23,9 @@ const Config = {
         
         this.container.innerHTML = `
             <h2>Configuración</h2>
-
+            ${window.ContentManager ? ContentManager.renderConfigSection() : ''}
             <!-- Sección: Roles y Palabras Asociadas -->
-            <div class="config-section">
+            <div class="config-section" data-section-id="config-roles" id="roles-section-wrap">
                 <h3 class="config-section-title" onclick="Config.toggleSection('roles-section')">
                     ▶ Roles y Palabras Asociadas
                 </h3>
@@ -33,7 +35,7 @@ const Config = {
             </div>
 
             <!-- Sección: Mecánicas y Counters -->
-            <div class="config-section">
+            <div class="config-section" data-section-id="config-specialties">
                 <h3 class="config-section-title" onclick="Config.toggleSection('specialties-section')">
                     ▶ Mecánicas y Counters
                 </h3>
@@ -43,7 +45,7 @@ const Config = {
             </div>
 
             <!-- Sección: Lista de Staples -->
-            <div class="config-section">
+            <div class="config-section" data-section-id="config-staples">
                 <h3 class="config-section-title" onclick="Config.toggleSection('staples-section')">
                     ▶ Lista de Staples
                 </h3>
@@ -53,7 +55,7 @@ const Config = {
             </div>
 
             <!-- Sección: Nomenclatura de Efectos -->
-            <div class="config-section">
+            <div class="config-section" data-section-id="config-nomenclature">
                 <h3 class="config-section-title" onclick="Config.toggleSection('nomenclature-section')">
                     ▶ Nomenclatura de Efectos
                 </h3>
@@ -63,7 +65,7 @@ const Config = {
             </div>
 
             <!-- Sección: Pilares del Internal Score -->
-            <div class="config-section">
+            <div class="config-section" data-section-id="config-pillars">
                 <h3 class="config-section-title" onclick="Config.toggleSection('pillars-section')">
                     ▶ Pilares del Internal Score
                 </h3>
@@ -73,7 +75,7 @@ const Config = {
             </div>
 
             <!-- Sección: Rendimientos Decrecientes -->
-            <div class="config-section">
+            <div class="config-section" data-section-id="config-diminishing">
                 <h3 class="config-section-title" onclick="Config.toggleSection('diminishing-section')">
                     ▶ Rendimientos Decrecientes
                 </h3>
@@ -175,13 +177,13 @@ const Config = {
             <div class="config-danger-zone">
                 <div class="config-danger-title">⚠️ Zona de borrado</div>
                 <div class="config-danger-buttons">
-                    <button class="btn btn-danger" onclick="Config.borrarDeck()">
+                    <button class="btn btn-danger" data-section-id="config-danger-delete" onclick="Config.borrarDeck()">
                         🗑️ Borrar Deck
                         <small style="display:block;font-weight:normal;font-size:0.7rem;opacity:0.75;">
                             Decks guardados, winrates, notas, cache de scores
                         </small>
                     </button>
-                    <button class="btn btn-danger" onclick="Config.borrarMeta()">
+                    <button class="btn btn-danger" data-section-id="config-danger-meta" onclick="Config.borrarMeta()">
                         🗑️ Borrar META
                         <small style="display:block;font-weight:normal;font-size:0.7rem;opacity:0.75;">
                             Carpetas, decks importados, poder de cartas calculado

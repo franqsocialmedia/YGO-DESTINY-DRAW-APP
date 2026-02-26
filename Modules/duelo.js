@@ -230,16 +230,10 @@ herr: {
             <!-- Fila superior: Cronómetro Estándar + Marcador -->
             <div class="duelo-md-std-row">
                 <div class="duelo-md-std-main">
-                    <div class="duelo-md-clock-score-row">
-                        <div class="duelo-std-display duelo-std-display-md" id="std-md-display">${this._fmt(md.std.remaining)}</div>
-                        <div class="duelo-md-scoreboard">
-                            <span class="md-score-label">B</span>
-                            <span class="md-score-val" id="md-score-b">${md.winsB}</span>
-                            <span class="md-score-dash">–</span>
-                            <span class="md-score-val" id="md-score-a">${md.winsA}</span>
-                            <span class="md-score-label">A</span>
-                        </div>
-                    </div>
+
+                ${!window.ContentManager || ContentManager.isVisible('sim-timer')
+                    ? `<div class="duelo-md-clock-score-row">...timer content...</div>`
+                    : ''}
                     <!-- Controles del cronómetro estándar MD -->
                     <div class="duelo-std-config-row duelo-std-config-row-sm">
                         <label class="duelo-label">Mins:</label>

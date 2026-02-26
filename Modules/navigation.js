@@ -145,6 +145,9 @@ const Navigation = {
         
         // Forzar actualización de scroll-buttons al cambiar pestaña
         document.dispatchEvent(new Event('scroll'));
+        // Aplicar visibilidad de secciones al nuevo contenido del DOM
+        if (window.ContentManager) ContentManager.applyAll();
+
         return true;
         
     },

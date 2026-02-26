@@ -110,7 +110,7 @@
 
     <!-- Columna izquierda: Staples + Favoritas -->
     <div class="buscador-sidebar">
-        <div id="staples-panel" class="favoritas-panel staples-panel" style="display:none;">
+        <div id="staples-panel" class="favoritas-panel staples-panel" data-section-id="buscador-staples-panel" style="display:none;">
             <div class="favoritas-header">📌 Staples</div>
             <div id="staples-list" class="favoritas-list"></div>
         </div>
@@ -140,7 +140,7 @@
                     <span class="btn-text">Limpiar</span>
                 </button>
             </div>
-            <div class="filters-container">
+            <div class="filters-container" data-section-id="buscador-keywords">
                 <label for="additional-filters" class="filter-label">
                     Filtrar por palabras clave (separadas por coma):
                 </label>
@@ -164,13 +164,13 @@
                 <span id="adv-filters-summary" class="adv-filters-summary"></span>
                 <button id="adv-reset-btn" class="adv-reset-btn"
                         onclick="Buscador.resetAdvancedFilters()" style="display:none">✕ Limpiar</button>
-                <select id="buscador-archetype-sel" class="buscador-archetype-sel"
+                <select id="buscador-archetype-sel" class="buscador-archetype-sel" data-section-id="buscador-archetypes"
                         onchange="Buscador.advancedFilters.archetype=this.value; Buscador._updateFilterSummary(); Buscador.autoSearch();"
                         onfocus="Buscador._loadArchetypes()">
                     <option value="">— cualquier carta —</option>
                 </select>
             </div>
-            <div class="buscador-sets-row">
+            <div class="buscador-sets-row" data-section-id="buscador-sets">
                 <span class="buscador-sets-label">📦 Packs y Sets:</span>
                 <select id="buscador-set-sel" class="buscador-set-sel"
                         onchange="Buscador.advancedFilters.cardset=this.value; Buscador._updateFilterSummary(); Buscador.autoSearch();"
@@ -286,6 +286,7 @@
     <script src="Modules/zonapractica.js"></script>
     <script src="Modules/meta.js"></script>
     <script src="Modules/formacion.js"></script>
+    <script src="Modules/contentmanager.js"></script>
     <script src="Modules/welcome.js"></script>
 
     

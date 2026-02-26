@@ -28,7 +28,10 @@ const CardViewer = {
 
         const ban = card.banlist_info || {};
 
-        const highlightedDesc = this.highlightNomenclature(card.desc);
+        const showNomenclature = !window.ContentManager || ContentManager.isVisible('cv-nomenclature');
+        const highlightedDesc  = showNomenclature
+            ? this.highlightNomenclature(card.desc)
+            : (card.desc || '');
 
 const html = `
     <div id="cv-overlay" class="cv-overlay">
@@ -62,7 +65,8 @@ const html = `
                 </div>
             </div>
 
-            ${this.renderCardContribution(card)}
+            ${!window.ContentManager || ContentManager.isVisible('cv-contribution')
+                ? this.renderCardContribution(card) : ''}
 
             <hr class="cv-hr">
 
@@ -214,6 +218,9 @@ const html = `
 
         // Botón: Volver Staple
         const stapleBtn = document.getElementById('cv-staple-btn');
+        if (window.ContentManager && !ContentManager.isVisible('cv-staple-btn')) {
+    stapleBtn.style.display = 'none';
+}
         const isStaple  = () => window.ConfigManager?.isStaple?.(card.id);
         const updateStapleBtn = () => {
             stapleBtn.textContent      = isStaple() ? '⭐ Es Staple' : '☆ Volver Staple';

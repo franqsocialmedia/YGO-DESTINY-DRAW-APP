@@ -646,6 +646,7 @@ tryDeckExperimentacion: function (deckName) {
     // RENDERIZAR LISTA DE DECKS
     // ===============================
     renderDeckList: function () {
+        if (window.ContentManager && !ContentManager.isVisible('deck-floating-widget')) return '';
         const savedDecks = this.getSavedDecks();
         
         if (savedDecks.length === 0) {
@@ -844,9 +845,10 @@ tryDeckExperimentacion: function (deckName) {
 
            // Generar badges de ROLES
             let rolesBadges = '';
+            const showRoles = !window.ContentManager || ContentManager.isVisible('deck-roles-badges');
             const dimConfig = window.ConfigManager?.getDiminishingReturns?.();
 
-            if (item.roles && item.roles.length > 0) {
+            if (showRoles && item.roles && item.roles.length > 0) {
                 item.roles.forEach(role => {
                     if (role === 'Carta As') {
                         rolesBadges += `<span class="role-badge badge-carta-as">⭐ Carta As</span>`;
@@ -1321,11 +1323,11 @@ onDeckLoaded: function () {
     <span class="dzc-chip dzc-main">🃏 Main <strong>${mainC}</strong></span>
     <span class="dzc-chip dzc-extra">✨ Extra <strong>${extraC}</strong></span>
     <span class="dzc-chip dzc-side">🔄 Side <strong>${sideC}</strong></span>
-    <button class="dzc-exp-btn" onclick="Deck.tryDeckExperimentacion(Deck.name)" title="Abrir en Experimentación">🧪 Exp.</button>
+    ${(!window.ContentManager || ContentManager.isVisible('deck-experimentacion')) ? `<button class="dzc-exp-btn" onclick="Deck.tryDeckExperimentacion(Deck.name)" title="Abrir en Experimentación">🧪 Exp.</button>` : ''}
     <button class="dzc-probar-btn" onclick="Deck.tryDeck()">⚔️ Probar Deck</button>
 </div>
 
-    ${this.renderDeckStatsBlock()}
+    ${(!window.ContentManager || ContentManager.isVisible('deck-chart')) ? this.renderDeckStatsBlock() : ''}
 
         ${window.Banlist?.isGenesysActive?.() ? Banlist.renderDeckPointsIndicator(this.cards) : ''}
         <h3 onclick="Deck.toggleSection('main-sec')">
@@ -1363,7 +1365,7 @@ onDeckLoaded: function () {
             `;
         }
 // SECCIÓN DE HISTORIAL DE ENFRENTAMIENTOS
-        if (!isEmpty && window.Matchups) {
+        if (!isEmpty && window.Matchups && (!window.ContentManager || ContentManager.isVisible('deck-matchups'))) {
             html += Matchups.renderSection();
         }
         // SECCIÓN DE ACCIONES - SIEMPRE VISIBLE
@@ -1609,6 +1611,5 @@ _buildDeckViewPane: function (location) {
     return html;
 },
 };
-
 window.Deck = Deck;
 document.addEventListener('DOMContentLoaded', () => Deck.init());

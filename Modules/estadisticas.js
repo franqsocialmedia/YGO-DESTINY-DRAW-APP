@@ -950,6 +950,7 @@ _renderMetaDeckScoreHTML: function (cached, key) {
     // WIDGET FLOTANTE DE DECK
     // ===============================
     createDeckFloatingWidget: function () {
+        if (window.ContentManager && !ContentManager.isVisible('deck-floating-widget')) return;
         if (document.getElementById('deck-floating-widget')) return;
         const widget = document.createElement('div');
         widget.id = 'deck-floating-widget';

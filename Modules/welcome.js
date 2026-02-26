@@ -105,8 +105,10 @@ enter: function (tabName, levelKey) {
         MusicPlayer.setTrack(path);
     }
     this.dismiss();
+    if (window.ContentManager) ContentManager.applyProfile(levelKey);
     if (window.Navigation) Navigation.showTab(tabName);
 },
+
 
 startMusic: function (path) {
     // Si ya hay música sonando del mismo path, no reiniciar
@@ -223,4 +225,4 @@ window.MusicPlayer = MusicPlayer;
 document.addEventListener('DOMContentLoaded', () => MusicPlayer.init());
 
 window.Welcome = Welcome;
-//document.addEventListener('DOMContentLoaded', () => Welcome.init());
+document.addEventListener('DOMContentLoaded', () => Welcome.init());
