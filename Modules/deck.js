@@ -903,7 +903,7 @@ html += `
                             </button>
                         ` : ''}
                         
-                        <button class="deck-role-btn" onclick="Deck.openRolePanel(${id})">
+                        <button class="deck-role-btn" data-section-id="deck-role-btn" onclick="Deck.openRolePanel(${id})">
                             Rol
                         </button>
                     </div>
@@ -1323,11 +1323,11 @@ onDeckLoaded: function () {
     <span class="dzc-chip dzc-main">🃏 Main <strong>${mainC}</strong></span>
     <span class="dzc-chip dzc-extra">✨ Extra <strong>${extraC}</strong></span>
     <span class="dzc-chip dzc-side">🔄 Side <strong>${sideC}</strong></span>
-    ${(!window.ContentManager || ContentManager.isVisible('deck-experimentacion')) ? `<button class="dzc-exp-btn" onclick="Deck.tryDeckExperimentacion(Deck.name)" title="Abrir en Experimentación">🧪 Exp.</button>` : ''}
+    <button class="dzc-exp-btn" data-section-id="deck-experimentacion" onclick="Deck.tryDeckExperimentacion(Deck.name)" title="Abrir en Experimentación">🧪 Exp.</button>
     <button class="dzc-probar-btn" onclick="Deck.tryDeck()">⚔️ Probar Deck</button>
 </div>
 
-    ${(!window.ContentManager || ContentManager.isVisible('deck-chart')) ? this.renderDeckStatsBlock() : ''}
+    <div data-section-id="deck-chart">${this.renderDeckStatsBlock()}</div>
 
         ${window.Banlist?.isGenesysActive?.() ? Banlist.renderDeckPointsIndicator(this.cards) : ''}
         <h3 onclick="Deck.toggleSection('main-sec')">
@@ -1365,8 +1365,8 @@ onDeckLoaded: function () {
             `;
         }
 // SECCIÓN DE HISTORIAL DE ENFRENTAMIENTOS
-        if (!isEmpty && window.Matchups && (!window.ContentManager || ContentManager.isVisible('deck-matchups'))) {
-            html += Matchups.renderSection();
+        if (!isEmpty && window.Matchups) {
+            html += `<div data-section-id="deck-matchups">${Matchups.renderSection()}</div>`;
         }
         // SECCIÓN DE ACCIONES - SIEMPRE VISIBLE
         html += `
@@ -1611,5 +1611,6 @@ _buildDeckViewPane: function (location) {
     return html;
 },
 };
+
 window.Deck = Deck;
 document.addEventListener('DOMContentLoaded', () => Deck.init());

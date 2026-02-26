@@ -103,10 +103,8 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                     <button class="pz-ctrl-btn pz-ctrl-deck"
                             onclick="ZonaPractica.openDeckSelector()">🃏 Usar Deck</button>
                     
-                    ${!window.ContentManager || ContentManager.isVisible('sim-practica-history')
-                        ? `<button class="pz-ctrl-btn pz-ctrl-historia"
-                                onclick="ZonaPractica.openStateNavigator()">📜 Historial</button>`
-                        : ''}
+                    <button class="pz-ctrl-btn pz-ctrl-historia" data-section-id="sim-practica-history"
+                            onclick="ZonaPractica.openStateNavigator()">📜 Historial</button>
                     <button class="pz-ctrl-btn pz-ctrl-widget"
                             id="pz-sw-toggle-btn"
                             onclick="ZonaPractica.toggleStatusWidget()"
@@ -258,9 +256,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                 <button class="pz-action-btn" id="pz-btn-chgpos"
                         onclick="ZonaPractica.toggleChangePosition()">↕ Cambiar Pos.</button>
                 
-                ${!window.ContentManager || ContentManager.isVisible('sim-practica-history')
-                    ? `<button class="pz-action-btn" onclick="ZonaPractica.saveGameState()">📌 Marcar Estado</button>`
-                    : ''}
+                <button class="pz-action-btn" data-section-id="sim-practica-history" onclick="ZonaPractica.saveGameState()">📌 Marcar Estado</button>
                 <button class="pz-action-btn" id="pz-btn-hide"
                         onclick="ZonaPractica.toggleHideCards()">🙈 Ocultar Cartas</button>
                 <button class="pz-action-btn" onclick="ZonaPractica.openLog()">📋 Log</button>
@@ -2493,6 +2489,7 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica');
             btn.className = 'pz-float-btn pz-float-btn-state';
             btn.innerHTML = '📌';
             btn.title     = 'Marcar Estado';
+            btn.dataset.sectionId = 'pz-markstate-btn';
             btn.onclick   = () => ZonaPractica.saveGameState();
             document.body.appendChild(btn);
         }

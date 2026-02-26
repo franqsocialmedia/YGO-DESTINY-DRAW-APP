@@ -31,7 +31,7 @@ const Meta = {
             </div>
 
             <!-- Sección: Fuentes Externas -->
-            <div class="meta-section">
+            <div class="meta-section" data-section-id="meta-fuentes">
                 <h3 class="meta-section-title" onclick="Meta.toggleSection('meta-fuentes-section')">
                     ▶ Fuentes Externas
                 </h3>

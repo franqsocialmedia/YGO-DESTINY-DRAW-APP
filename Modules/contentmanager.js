@@ -37,8 +37,9 @@ const ContentManager = {
         { id: 'deck-chart',           group: 'Mi Deck', label: 'Gráfica y Composición',           novato: false, casual: true, competitivo: true },
         { id: 'deck-roles-badges',    group: 'Mi Deck', label: 'Roles de cartas (badges)',        novato: false, casual: true, competitivo: true },
         { id: 'deck-engines',         group: 'Mi Deck', label: 'Engines',                         novato: false, casual: true, competitivo: true },
-        { id: 'deck-experimentacion', group: 'Mi Deck', label: 'Botón Experimentación',           novato: false, casual: true, competitivo: true },
-        { id: 'deck-matchups',        group: 'Mi Deck', label: 'Historial de Enfrentamientos',    novato: false, casual: true, competitivo: true },
+        { id: 'deck-role-btn',        group: 'Mi Deck', label: 'Botón Rol (por carta)',             novato: false, casual: true, competitivo: true },
+        { id: 'deck-experimentacion', group: 'Mi Deck', label: 'Botón Experimentación',             novato: false, casual: true, competitivo: true },
+        { id: 'deck-matchups',        group: 'Mi Deck', label: 'Historial de Enfrentamientos',      novato: false, casual: true, competitivo: true },
 
         // ── SIMULADORES ───────────────────────────────────────────
         { id: 'sim-mulligan',         group: 'Simuladores', label: 'Mulligan',                       novato: false, casual: false, competitivo: true },
@@ -46,16 +47,28 @@ const ContentManager = {
         { id: 'sim-timer',            group: 'Simuladores', label: 'Cronómetro Master Duel',         novato: false, casual: false, competitivo: true },
         { id: 'sim-experimentacion',  group: 'Simuladores', label: 'Experimentación',                novato: false, casual: true,  competitivo: true },
         { id: 'sim-practica-history', group: 'Simuladores', label: 'Historial y Guardado de Estados',novato: false, casual: false, competitivo: true },
+        { id: 'pz-markstate-btn',     group: 'Simuladores', label: 'Marcar Estado (flotante)',       novato: false, casual: false, competitivo: true },
+
+        // ── META ──────────────────────────────────────────────────
+        { id: 'meta-fuentes',         group: 'Meta', label: 'Fuentes Externas',                     novato: false, casual: true,  competitivo: true },
 
         // ── CONFIGURACIÓN ─────────────────────────────────────────
-        { id: 'config-roles',         group: 'Configuración', label: 'Roles y Palabras Asociadas',  novato: false, casual: true,  competitivo: true },
-        { id: 'config-specialties',   group: 'Configuración', label: 'Mecánicas y Counters',        novato: false, casual: false, competitivo: true },
-        { id: 'config-staples',       group: 'Configuración', label: 'Lista de Staples',            novato: false, casual: true,  competitivo: true },
-        { id: 'config-nomenclature',  group: 'Configuración', label: 'Nomenclatura de Efectos',     novato: false, casual: true,  competitivo: true },
-        { id: 'config-pillars',       group: 'Configuración', label: 'Pilares del Internal Score',  novato: false, casual: true,  competitivo: true },
-        { id: 'config-diminishing',   group: 'Configuración', label: 'Rendimientos Decrecientes',   novato: false, casual: false, competitivo: true },
-        { id: 'config-danger-delete', group: 'Configuración', label: 'Borrar Data',                 novato: false, casual: true,  competitivo: true },
-        { id: 'config-danger-meta',   group: 'Configuración', label: 'Borrar META',                 novato: false, casual: false, competitivo: true },
+        { id: 'config-roles',              group: 'Configuración', label: 'Roles y Palabras Asociadas',  novato: false, casual: true,  competitivo: true },
+        { id: 'config-specialties',        group: 'Configuración', label: 'Mecánicas y Counters',        novato: false, casual: false, competitivo: true },
+        { id: 'config-staples',            group: 'Configuración', label: 'Lista de Staples',            novato: false, casual: true,  competitivo: true },
+        { id: 'config-nomenclature',       group: 'Configuración', label: 'Nomenclatura de Efectos',     novato: false, casual: true,  competitivo: true },
+        { id: 'config-pillars',            group: 'Configuración', label: 'Pilares del Internal Score',  novato: false, casual: true,  competitivo: true },
+        { id: 'config-diminishing',        group: 'Configuración', label: 'Rendimientos Decrecientes',   novato: false, casual: false, competitivo: true },
+        { id: 'config-shortcuts',          group: 'Configuración', label: 'Atajos Rápidos',              novato: true,  casual: true,  competitivo: true },
+        { id: 'config-banlist',            group: 'Configuración', label: 'Banlist del Formato',         novato: true,  casual: true,  competitivo: true },
+        { id: 'config-music',              group: 'Configuración', label: 'Ajustes de Música',           novato: true,  casual: true,  competitivo: true },
+        { id: 'config-meta-masters',       group: 'Configuración', label: 'Maestros del Duelo',          novato: true,  casual: true,  competitivo: true },
+        { id: 'config-meta-links',         group: 'Configuración', label: 'Fuentes Externas del Meta',   novato: false, casual: true,  competitivo: true },
+        { id: 'config-formacion-games',    group: 'Configuración', label: 'Juegos Alternativos',         novato: true,  casual: true,  competitivo: true },
+        { id: 'config-formacion-topics',   group: 'Configuración', label: 'Temas de Formación',          novato: true,  casual: true,  competitivo: true },
+        { id: 'config-danger-zone',        group: 'Configuración', label: 'Zona de Borrado',             novato: false, casual: true,  competitivo: true },
+        { id: 'config-danger-delete',      group: 'Configuración', label: '↳ Botón Borrar Deck',         novato: false, casual: true,  competitivo: true },
+        { id: 'config-danger-meta',        group: 'Configuración', label: '↳ Botón Borrar META',         novato: false, casual: false, competitivo: true },
     ],
 
     // ── Storage ───────────────────────────────────────────────────
@@ -225,9 +238,10 @@ const ContentManager = {
     _toggle: function (id, visible) {
         this.setVisible(id, visible);
         this.applyAll();
-        // Si el módulo afectado está activo, forzar re-render
+        // Forzar re-render en módulos con elementos JS-guardados
         if (id.startsWith('deck-') && window.Deck?.render) Deck.render();
         if (id.startsWith('config-') && window.Config?.render) Config.render();
+        if (id.startsWith('meta-') && window.Meta?.render) Meta.render();
     },
 
     _applyProfileUI: function (level) {

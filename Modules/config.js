@@ -12,8 +12,6 @@ const Config = {
             console.error('Config: contenedor no encontrado'); 
             return; 
         }
-        // Inyectar panel de Content Manager al principio del contenido de Config
-        
         this.render();
         if (window.ConfigManager) ConfigManager.renderStaplesPanel();
     },
@@ -23,7 +21,9 @@ const Config = {
         
         this.container.innerHTML = `
             <h2>Configuración</h2>
+
             ${window.ContentManager ? ContentManager.renderConfigSection() : ''}
+
             <!-- Sección: Roles y Palabras Asociadas -->
             <div class="config-section" data-section-id="config-roles" id="roles-section-wrap">
                 <h3 class="config-section-title" onclick="Config.toggleSection('roles-section')">
@@ -85,7 +85,7 @@ const Config = {
             </div>
 
             <!-- Sección: Atajos Rápidos -->
-            <div class="config-section">
+            <div class="config-section" data-section-id="config-shortcuts">
                 <h3 class="config-section-title" onclick="Config.toggleSection('shortcuts-section')">
                     ▶ Atajos Rápidos
                 </h3>
@@ -95,7 +95,7 @@ const Config = {
             </div>
 
             <!-- Sección: Banlist del Formato -->
-            <div class="config-section">
+            <div class="config-section" data-section-id="config-banlist">
                 <h3 class="config-section-title" onclick="Config.toggleSection('banlist-section'); if(window.Banlist) Banlist.renderSection();">
                     ▶ Banlist del Formato
                 </h3>
@@ -104,18 +104,8 @@ const Config = {
                 </div>
                 
             </div>
-            <!-- Sección: Perfil del Jugador -->
-            <div class="config-section">
-                <h3 class="config-section-title" onclick="Config.toggleSection('player-level-section')">
-                    ▶ Perfil del Jugador
-                </h3>
-                <div id="player-level-section" class="config-section-content" style="display:none;">
-                    ${this.renderPlayerLevelSection()}
-                </div>
-            </div>
-
             <!-- Sección: Ajustes de Música -->
-            <div class="config-section">
+            <div class="config-section" data-section-id="config-music">
                 <h3 class="config-section-title" onclick="Config.toggleSection('music-section')">
                     ▶ Ajustes de Música
                 </h3>
@@ -125,7 +115,7 @@ const Config = {
             </div>
 
             <!-- Sección: Maestros del Duelo -->
-            <div class="config-section">
+            <div class="config-section" data-section-id="config-meta-masters">
                 <h3 class="config-section-title" onclick="Config.toggleSection('meta-masters-config-section')">
                     ▶ Maestros del Duelo
                 </h3>
@@ -135,7 +125,7 @@ const Config = {
             </div>
 
             <!-- Sección: Fuentes Externas del Meta -->
-            <div class="config-section">
+            <div class="config-section" data-section-id="config-meta-links">
                 <h3 class="config-section-title" onclick="Config.toggleSection('meta-links-config-section')">
                     ▶ Fuentes Externas del Meta
                 </h3>
@@ -146,7 +136,7 @@ const Config = {
 
 
             <!-- Sección: Juegos Alternativos -->
-            <div class="config-section">
+            <div class="config-section" data-section-id="config-formacion-games">
                 <h3 class="config-section-title" onclick="Config.toggleSection('formacion-games-config-section')">
                     ▶ Juegos Alternativos de Yu-Gi-Oh!
                 </h3>
@@ -156,7 +146,7 @@ const Config = {
             </div>
 
             <!-- Sección: Temas de Formación -->
-            <div class="config-section">
+            <div class="config-section" data-section-id="config-formacion-topics">
                 <h3 class="config-section-title" onclick="Config.toggleSection('formacion-topics-section')">
                     ▶ Temas de Formación
                 </h3>
@@ -169,14 +159,19 @@ const Config = {
             <div class="config-actions">
                 <button class="btn btn-primary" onclick="Config.exportConfig()">📥 Exportar Data</button>
                 <button class="btn btn-primary" onclick="Config.importConfig()">📤 Importar Data</button>
-                <button class="btn btn-danger" onclick="Config.borrarTodo()" style="background:#c0392b;">🗑️ Borrar Data</button>
                 <button class="btn btn-success" onclick="Config.resetToDefault()" style="background:#27ae60;border-color:#27ae60;">🔄 Restaurar Configuración</button>
             </div>
 
             <!-- Zona de borrado -->
-            <div class="config-danger-zone">
+            <div class="config-danger-zone" data-section-id="config-danger-zone">
                 <div class="config-danger-title">⚠️ Zona de borrado</div>
                 <div class="config-danger-buttons">
+                    <button class="btn btn-danger" onclick="Config.borrarTodo()" style="background:#c0392b;">
+                        🗑️ Borrar Data
+                        <small style="display:block;font-weight:normal;font-size:0.7rem;opacity:0.75;">
+                            Toda la configuración de la app
+                        </small>
+                    </button>
                     <button class="btn btn-danger" data-section-id="config-danger-delete" onclick="Config.borrarDeck()">
                         🗑️ Borrar Deck
                         <small style="display:block;font-weight:normal;font-size:0.7rem;opacity:0.75;">

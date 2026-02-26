@@ -58,6 +58,7 @@ herr: {
                 <button class="duelo-sub-tab ${this.subTab === 'estandar'   ? 'active' : ''}"
                         onclick="DueloEnVivo.showSubTab('estandar')">⏱ Cronómetro Estándar</button>
                 <button class="duelo-sub-tab ${this.subTab === 'masterduel' ? 'active' : ''}"
+                        data-section-id="sim-timer"
                         onclick="DueloEnVivo.showSubTab('masterduel')">👑 Cronómetro Master Duel</button>
                 <button class="duelo-sub-tab ${this.subTab === 'herramientas' ? 'active' : ''}"
         onclick="DueloEnVivo.showSubTab('herramientas')">🎲 Herramientas</button>
