@@ -1264,6 +1264,26 @@ switchDeckStatsTab: function (tab) {
         if (btn)  btn.classList.toggle('active', p === tab);
     });
 },
+switchMiDeckTab: function (tab) {
+    const panes = ['mideck-decklist-pane', 'mideck-construccion-pane'];
+    panes.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    const target = document.getElementById('mideck-' + tab + '-pane');
+    if (target) target.style.display = 'block';
+
+    document.querySelectorAll('.mideck-subtab-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.querySelector('.mideck-subtab-btn[data-tab="' + tab + '"]');
+    if (btn) btn.classList.add('active');
+
+    if (tab === 'construccion' && window.Estadisticas) {
+        const cStats = document.getElementById('construccion-deck-stats-sec');
+        if (cStats) cStats.innerHTML = Estadisticas.renderDeckStats();
+        const cAnalysis = document.getElementById('construccion-deck-analysis-sec');
+        if (cAnalysis) cAnalysis.innerHTML = Estadisticas.renderDeckAnalysis();
+    }
+},
 // CARTA AS
 // ===============================
 setCartaAs: function (cardId) {
@@ -1311,77 +1331,91 @@ onDeckLoaded: function () {
 
         let html = ``;
 
-        if (isEmpty) {
-            html += `<p style="margin-top:10px;font-size:.85rem;opacity:.6">Elige un deck desde el panel lateral o agrega cartas desde el Buscador.</p>`;
-        } else {
+// Sub-tab nav
+html += `
+<div class="mideck-subtabs-nav">
+    <button class="mideck-subtab-btn active sim-tab-btn" data-tab="decklist" onclick="Deck.switchMiDeckTab('decklist')">📋 Decklist</button>
+    <button class="mideck-subtab-btn sim-tab-btn" data-tab="construccion" onclick="Deck.switchMiDeckTab('construccion')">🔨 Construcción</button>
+</div>`;
+
+// ── PANE: DECKLIST ────────────────────────────────────────────
+html += `<div id="mideck-decklist-pane">`;
+
+if (isEmpty) {
+    html += `<p style="margin-top:10px;font-size:.85rem;opacity:.6">Elige un deck desde el panel lateral o agrega cartas desde el Buscador.</p>`;
+} else {
     html += `
-    <h2 onclick="Deck.openRenamePanel()" class="deck-title">
-        ${this.name}
-    </h2>
-
+    <h2 onclick="Deck.openRenamePanel()" class="deck-title">${this.name}</h2>
     <div class="deck-zone-counts">
-    <span class="dzc-chip dzc-main">🃏 Main <strong>${mainC}</strong></span>
-    <span class="dzc-chip dzc-extra">✨ Extra <strong>${extraC}</strong></span>
-    <span class="dzc-chip dzc-side">🔄 Side <strong>${sideC}</strong></span>
-    <button class="dzc-exp-btn" data-section-id="deck-experimentacion" onclick="Deck.tryDeckExperimentacion(Deck.name)" title="Abrir en Experimentación">🧪 Exp.</button>
-    <button class="dzc-probar-btn" onclick="Deck.tryDeck()">⚔️ Probar Deck</button>
-</div>
-
-    <div data-section-id="deck-chart">${this.renderDeckStatsBlock()}</div>
-
-        ${window.Banlist?.isGenesysActive?.() ? Banlist.renderDeckPointsIndicator(this.cards) : ''}
-        <h3 onclick="Deck.toggleSection('main-sec')">
-            🃏 Main Deck (${mainC})
-        </h3>
-        <div id="main-sec">${this.renderRows('main')}</div>
-
-        <h3 onclick="Deck.toggleSection('extra-sec')">
-            🃏 Extra Deck (${extraC})
-        </h3>
-        <div id="extra-sec">${this.renderRows('extra')}</div>
-
-        <h3 onclick="Deck.toggleSection('side-sec')">
-            🃏 Side Deck (${sideC})
-        </h3>
-        <div id="side-sec">${this.renderRows('side')}</div>
-    `;
+        <span class="dzc-chip dzc-main">🃏 Main <strong>${mainC}</strong></span>
+        <span class="dzc-chip dzc-extra">✨ Extra <strong>${extraC}</strong></span>
+        <span class="dzc-chip dzc-side">🔄 Side <strong>${sideC}</strong></span>
+        <button class="dzc-exp-btn" data-section-id="deck-experimentacion" onclick="Deck.tryDeckExperimentacion(Deck.name)" title="Abrir en Experimentación">🧪 Exp.</button>
+        <button class="dzc-probar-btn" onclick="Deck.tryDeck()">⚔️ Probar Deck</button>
+    </div>
+    ${window.Banlist?.isGenesysActive?.() ? Banlist.renderDeckPointsIndicator(this.cards) : ''}
+    <h3 onclick="Deck.toggleSection('main-sec')">🃏 Main Deck (${mainC})</h3>
+    <div id="main-sec">${this.renderRows('main')}</div>
+    <h3 onclick="Deck.toggleSection('extra-sec')">🃏 Extra Deck (${extraC})</h3>
+    <div id="extra-sec">${this.renderRows('extra')}</div>
+    <h3 onclick="Deck.toggleSection('side-sec')">🃏 Side Deck (${sideC})</h3>
+    <div id="side-sec">${this.renderRows('side')}</div>`;
 }
-// SECCIÓN DE NOTAS - solo visible con cartas cargadas
-        if (!isEmpty) {
-            html += `
-                <h3 class="deck-section-title" onclick="Deck.toggleSection('notes-sec')">
-                    📝 Notas del Deck
-                </h3>
-                <div id="notes-sec" class="deck-section-content" style="display:none;">
-                    <textarea
-                        class="deck-notes-textarea"
-                        placeholder="Anota estrategias, combos clave, mulligan ideal, matchups difíciles..."
-                        oninput="Deck.notes = this.value"
-                    >${this.notes || ''}</textarea>
-                    <div class="deck-notes-hint">
-                        Las notas se guardan al presionar "Guardar Deck".
-                    </div>
-                </div>
-            `;
-        }
-// SECCIÓN DE HISTORIAL DE ENFRENTAMIENTOS
-        if (!isEmpty && window.Matchups) {
-            html += `<div data-section-id="deck-matchups">${Matchups.renderSection()}</div>`;
-        }
-        // SECCIÓN DE ACCIONES - SIEMPRE VISIBLE
-        html += `
-            <h3 onclick="Deck.toggleSection('actions-sec')"></h3>
-            <div id="actions-sec" class="deck-actions">
-                <button class="deck-move" onclick="Deck.saveDeck()" ${isEmpty ? 'disabled' : ''}>Guardar Deck</button>
-                <button class="deck-move" onclick="Deck.clearDeck()" ${isEmpty ? 'disabled' : ''}>Limpiar Deck</button>
-                <button class="deck-move" onclick="Deck.exportYDK()" ${isEmpty ? 'disabled' : ''}>Exportar Deck (.ydk)</button>
-                <button class="deck-move" onclick="Deck.importYDK()">Importar Deck (.ydk)</button>
-                <button class="deck-move" onclick="Deck.exportTXT()" ${isEmpty ? 'disabled' : ''}>Descargar Lista (.txt)</button>
-                <button class="deck-move" onclick="Deck.downloadDecklist()" ${isEmpty ? 'disabled' : ''}>📸 Descargar Decklist</button>
-            </div>
-        `;
 
-        this.container.innerHTML = html;
+html += `
+    <h3 onclick="Deck.toggleSection('actions-sec')"></h3>
+    <div id="actions-sec" class="deck-actions">
+        <button class="deck-move" onclick="Deck.saveDeck()" ${isEmpty ? 'disabled' : ''}>Guardar Deck</button>
+        <button class="deck-move" onclick="Deck.clearDeck()" ${isEmpty ? 'disabled' : ''}>Limpiar Deck</button>
+        <button class="deck-move" onclick="Deck.exportYDK()" ${isEmpty ? 'disabled' : ''}>Exportar Deck (.ydk)</button>
+        <button class="deck-move" onclick="Deck.importYDK()">Importar Deck (.ydk)</button>
+        <button class="deck-move" onclick="Deck.exportTXT()" ${isEmpty ? 'disabled' : ''}>Descargar Lista (.txt)</button>
+        <button class="deck-move" onclick="Deck.downloadDecklist()" ${isEmpty ? 'disabled' : ''}>📸 Descargar Decklist</button>
+    </div>`;
+
+html += `</div>`; // fin mideck-decklist-pane
+
+// ── PANE: CONSTRUCCIÓN ────────────────────────────────────────
+html += `<div id="mideck-construccion-pane" style="display:none;">`;
+
+if (!isEmpty) {
+    html += `<div data-section-id="deck-chart">${this.renderDeckStatsBlock()}</div>`;
+
+    html += `
+        <h3 class="deck-section-title" onclick="Deck.toggleSection('notes-sec')">📝 Notas del Deck</h3>
+        <div id="notes-sec" class="deck-section-content" style="display:none;">
+            <textarea class="deck-notes-textarea"
+                placeholder="Anota estrategias, combos clave, mulligan ideal, matchups difíciles..."
+                oninput="Deck.notes = this.value"
+            >${this.notes || ''}</textarea>
+            <div class="deck-notes-hint">Las notas se guardan al presionar "Guardar Deck".</div>
+        </div>`;
+
+    if (window.Matchups) {
+        html += `<div data-section-id="deck-matchups">${Matchups.renderSection()}</div>`;
+    }
+
+    html += `
+        <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('construccion-deck-stats-sec')">
+            📈 Deck Activo - Internal Score
+        </h3>
+        <div id="construccion-deck-stats-sec" class="stats-section" style="display:none;">
+            ${window.Estadisticas ? Estadisticas.renderDeckStats() : ''}
+        </div>
+
+        <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('construccion-deck-analysis-sec')">
+            📊 Análisis del Deck vs Meta
+        </h3>
+        <div id="construccion-deck-analysis-sec" class="stats-section">
+            ${window.Estadisticas ? Estadisticas.renderDeckAnalysis() : ''}
+        </div>`;
+} else {
+    html += `<p style="opacity:.6;margin-top:10px;">Carga un deck para ver la sección de Construcción.</p>`;
+}
+
+html += `</div>`; // fin mideck-construccion-pane
+
+this.container.innerHTML = html;
     },
 
     // ===============================

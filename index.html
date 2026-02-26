@@ -73,7 +73,7 @@
                 </button>
             </li>
             <!-- Pestaña: Meta Actual -->
-            <li class="nav-item">
+            <li class="nav-item" style="display:none">
                 <button class="nav-button" data-tab="meta" onclick="switchTab('meta')">
                     Meta
                 </button>
@@ -108,16 +108,14 @@
 
             <div class="buscador-layout">
 
-    <!-- Columna izquierda: Staples + Favoritas -->
-    <div class="buscador-sidebar">
-        <div id="staples-panel" class="favoritas-panel staples-panel" data-section-id="buscador-staples-panel" style="display:none;">
-            <div class="favoritas-header">📌 Staples</div>
-            <div id="staples-list" class="favoritas-list"></div>
-        </div>
-        <div id="favoritas-panel" class="favoritas-panel" style="display:none;">
-            <div class="favoritas-header">⭐ Favoritas</div>
-            <div id="favoritas-list" class="favoritas-list"></div>
-        </div>
+    <!-- Columna izquierda: Cover Art -->
+    <div class="buscador-cover-sidebar">
+        <img 
+            src="https://static.wikia.nocookie.net/yugiohenespanol/images/0/0e/Protagonistas_Yu-Gi-Oh%21_V-Jump.png/revision/latest/scale-to-width-down/1000?cb=20150521161844&path-prefix=es"
+            class="buscador-cover-img"
+            alt="Yu-Gi-Oh! Protagonistas"
+            loading="lazy"
+        >
     </div>
 
     <!-- Columna principal: búsqueda + resultados -->
@@ -194,6 +192,8 @@
              Gestión de mazos personales
              ==================================== -->
         <section id="mideck-content" class="tab-content">
+            <!-- Staples y Favoritas: se inyectan en engines-sidebar via navigation.js -->
+            
             <div id="deck-container"></div>
         </section>
 

@@ -27,7 +27,7 @@ const Navigation = {
     currentTab: 'buscador',
     
     // Lista de todas las pestañas disponibles
-    tabs: ['buscador', 'mideck', 'estadisticas', 'simuladores', 'meta', 'formacion', 'config'],
+    tabs: ['buscador', 'mideck', 'estadisticas', 'simuladores', 'formacion', 'config'],
     
     /**
      * Inicializar módulo de navegación
@@ -124,6 +124,7 @@ const Navigation = {
             
             if (tabName === 'mideck' && window.Engines) {
                 Engines.init();
+                
             }
         // Limpiar botones flotantes de ZonaPractica al salir de simuladores
         if (previousTab === 'simuladores' && tabName !== 'simuladores' && window.ZonaPractica) {
@@ -209,6 +210,8 @@ if (document.readyState === 'loading') {
 } else {
     Navigation.init();
 }
+
+
 
 // ====================================
 // EXPORTAR AL SCOPE GLOBAL

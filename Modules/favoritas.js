@@ -41,34 +41,34 @@ const Favoritas = {
     // ── Render ────────────────────────────────────────────────────
 
     render: function () {
-        const panel = document.getElementById('favoritas-panel');
-        const list  = document.getElementById('favoritas-list');
-        if (!panel || !list) return;
-
-        const all   = this.getAll();
-        const cards = Object.values(all).sort((a, b) => a.name.localeCompare(b.name));
-
-        if (cards.length === 0) {
-            panel.style.display = 'none';
-            return;
+    // Si el sidebar de Engines existe y está en tab favoritas, refrescarlo
+    if (window.Engines) {
+        if (Engines._activeTab === 'favoritas') {
+            Engines._renderSidebar();
         }
+        return;
+    }
 
-        panel.style.display = '';
-
-        list.innerHTML = cards.map((c, i) => `
-            <div class="fav-item" onclick="Favoritas.showActions(${i}, this)">
-                <img src="${c.img}" class="fav-img" loading="lazy"alt="${c.name}">
-                <div class="fav-info">
-                    <div class="fav-name">${c.name}</div>
-                    <div class="fav-type">${c.type}</div>
-                </div>
-                <button class="fav-remove" onclick="event.stopPropagation(); Favoritas.remove('${c.id}')" title="Quitar">✕</button>
+    // Fallback legacy (si no hay sidebar)
+    const panel = document.getElementById('favoritas-panel');
+    const list  = document.getElementById('favoritas-list');
+    if (!panel || !list) return;
+    const all   = this.getAll();
+    const cards = Object.values(all).sort((a, b) => a.name.localeCompare(b.name));
+    if (cards.length === 0) { panel.style.display = 'none'; return; }
+    panel.style.display = '';
+    list.innerHTML = cards.map((c, i) => `
+        <div class="fav-item" onclick="Favoritas.showActions(${i}, this)">
+            <img src="${c.img}" class="fav-img" loading="lazy" alt="${c.name}">
+            <div class="fav-info">
+                <div class="fav-name">${c.name}</div>
+                <div class="fav-type">${c.type}</div>
             </div>
-        `).join('');
-
-        // Guardar el array indexado para showActions
-        this._cards = cards;
-    },
+            <button class="fav-remove" onclick="event.stopPropagation(); Favoritas.remove('${c.id}')" title="Quitar">✕</button>
+        </div>
+    `).join('');
+    this._cards = cards;
+},
 
     showActions: function (index, el) {
         // Quitar overlay previo

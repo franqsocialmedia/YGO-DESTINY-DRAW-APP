@@ -943,6 +943,12 @@ _renderMetaDeckScoreHTML: function (cached, key) {
             const statsSec = document.getElementById('deck-stats-sec');
             if (statsSec) statsSec.innerHTML = this.renderDeckStats();
 
+            // También actualizar secciones en pestaña Construcción (Mi Deck)
+            const cAnalysisSec = document.getElementById('construccion-deck-analysis-sec');
+            if (cAnalysisSec) cAnalysisSec.innerHTML = this.renderDeckAnalysis();
+            const cStatsSec = document.getElementById('construccion-deck-stats-sec');
+            if (cStatsSec) cStatsSec.innerHTML = this.renderDeckStats();
+
             this.updateFloatingWidget();
         },
 
@@ -1180,6 +1186,12 @@ _renderMetaDeckScoreHTML: function (cached, key) {
 
         const deckStatsSec = document.getElementById('deck-stats-sec');
         if (deckStatsSec) deckStatsSec.innerHTML = this.renderDeckStats();
+        
+        // También actualizar secciones en pestaña Construcción (Mi Deck)
+        const cAnalysisSec = document.getElementById('construccion-deck-analysis-sec');
+        if (cAnalysisSec) cAnalysisSec.innerHTML = this.renderDeckAnalysis();
+        const cStatsSec = document.getElementById('construccion-deck-stats-sec');
+        if (cStatsSec) cStatsSec.innerHTML = this.renderDeckStats();
     },
 
     calculatePowerScores: async function () {
@@ -2205,23 +2217,7 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
 
         let html = `<h2>Estadísticas</h2>`;
 
-        // ── 1. ANÁLISIS DEL DECK VS META (primero que todo) ──────
-        html += `
-            <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('deck-analysis-sec')">
-                📊 Análisis del Deck vs Meta
-            </h3>
-            <div id="deck-analysis-sec" class="stats-section">
-                ${this.renderDeckAnalysis()}
-            </div>`;
-
-        // ── 2. INTERNAL SCORE ─────────────────────────────────────
-        html += `
-            <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('deck-stats-sec')">
-                Deck Activo - Internal Score
-            </h3>
-            <div id="deck-stats-sec" class="stats-section" style="display:none;">
-                ${this.renderDeckStats()}
-            </div>`;
+        
         // Winrate movido a Simuladores → pestaña Winrate
 // ── 2.5 TOP TIER ──────────────────────────────────────────────
         html += `

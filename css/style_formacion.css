@@ -566,7 +566,7 @@
     color: rgba(241,241,241,0.75);
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s;
-    user-select: none;
+    -webkit-user-select: none;
 }
 .form-platform-check-label input[type="checkbox"] {
     width: auto;

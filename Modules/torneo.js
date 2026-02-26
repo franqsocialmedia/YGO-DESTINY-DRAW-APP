@@ -76,6 +76,8 @@ const Torneo = {
         <div class="sim-main-tabs">
             <button class="sim-tab-btn active" data-simtab="mulligan" data-section-id="sim-mulligan"
                     onclick="Torneo.showSimTab('mulligan')">🎲 Mulligan</button>
+            <button class="sim-tab-btn" data-simtab="winrate"
+                    onclick="Torneo.showSimTab('winrate')">📊 Winrate</button>
             <button class="sim-tab-btn" data-simtab="torneo" data-section-id="sim-torneo"
                     onclick="Torneo.showSimTab('torneo')">🏆 Torneo</button>
             <button class="sim-tab-btn" data-simtab="duelo"
@@ -84,8 +86,6 @@ const Torneo = {
                     onclick="Torneo.showSimTab('experimentacion')">🧪 Experimentación</button>
             <button class="sim-tab-btn" data-simtab="practica"
                     onclick="Torneo.showSimTab('practica')">🎴 Zona de Práctica</button>
-            <button class="sim-tab-btn" data-simtab="winrate"
-                    onclick="Torneo.showSimTab('winrate')">📊 Winrate</button>
         </div>
         <div id="sim-mulligan-content"        style="display:none;"></div>
         <div id="sim-torneo-content"></div>

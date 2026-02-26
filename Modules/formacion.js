@@ -44,6 +44,10 @@ const Formacion = {
                 `).join('')}
                 <button class="form-subnav-btn${this.activeTab === 'juegos' ? ' active' : ''}"
                         onclick="Formacion.switchTab('juegos')">🎮 Juegos</button>
+                <button class="form-subnav-btn${this.activeTab === 'fuentes' ? ' active' : ''}"
+                        onclick="Formacion.switchTab('fuentes')">🔗 Fuentes</button>
+                <button class="form-subnav-btn${this.activeTab === 'maestros' ? ' active' : ''}"
+                        onclick="Formacion.switchTab('maestros')">🎓 Maestros</button>
             </div>
 
             <!-- Contenido de sub-pestañas -->
@@ -54,25 +58,29 @@ const Formacion = {
     },
 
     switchTab: function (tabId) {
-        this.activeTab = tabId;
-        const content = document.getElementById('form-tab-content');
-        if (!content) return;
-        content.innerHTML = this._renderCurrentTab();
-        // Actualizar botones activos
-        document.querySelectorAll('.form-subnav-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.textContent.includes(
-                tabId === 'apuntes' ? 'Apuntes' :
-                tabId === 'juegos'  ? 'Juegos'  :
-                (this.TOPICS.find(t => t.id === tabId)?.label || '')
-            ));
-        });
-    },
+    this.activeTab = tabId;
+    const content = document.getElementById('form-tab-content');
+    if (!content) return;
+    content.innerHTML = this._renderCurrentTab();
+    document.querySelectorAll('.form-subnav-btn').forEach(btn => {
+        const map = {
+            apuntes:  'Apuntes',
+            juegos:   'Juegos',
+            fuentes:  'Fuentes',
+            maestros: 'Maestros'
+        };
+        const label = map[tabId] || (this.TOPICS.find(t => t.id === tabId)?.label || '');
+        btn.classList.toggle('active', label && btn.textContent.trim().includes(label));
+    });
+},
 
     _renderCurrentTab: function () {
         if (this.activeTab === 'apuntes') return this._renderApuntesTab();
         if (this.activeTab === 'juegos')  return this._renderJuegosTab();
         const topic = this.TOPICS.find(t => t.id === this.activeTab);
         if (topic) return this._renderTopicTab(topic);
+        if (this.activeTab === 'fuentes')  return this._renderFuentesTab();
+        if (this.activeTab === 'maestros') return this._renderMaestrosTab();
         return '';
     },
 
@@ -440,7 +448,16 @@ const Formacion = {
     },
     _escAttr: function (str) {
         return String(str).replace(/"/g, '&quot;');
-    }
+    },
+    _renderFuentesTab: function () {
+    if (window.Meta) return Meta._renderFuentesSection();
+    return '<p class="form-empty">Módulo Meta no disponible.</p>';
+},
+
+_renderMaestrosTab: function () {
+    if (window.Meta) return Meta._renderMaestrosSection();
+    return '<p class="form-empty">Módulo Meta no disponible.</p>';
+},
 };
 
 window.Formacion = Formacion;

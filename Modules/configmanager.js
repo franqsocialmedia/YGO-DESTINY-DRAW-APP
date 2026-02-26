@@ -955,6 +955,10 @@ saveShortcuts: function (shortcuts) {
     this.saveConfig(config);
 },
 renderStaplesPanel: function () {
+    if (window.Engines && Engines._activeTab === 'staples') {
+        Engines._renderSidebar();
+        return;
+    }
     const panel = document.getElementById('staples-panel');
     const list  = document.getElementById('staples-list');
     if (!panel || !list) return;

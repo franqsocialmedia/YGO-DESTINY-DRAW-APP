@@ -9,11 +9,10 @@ const Welcome = {
     audio: null,
     shown: false,
     dismissed: false,
-
 init: function () {
-    if (Welcome.dismissed) return;
+    if (localStorage.getItem('dd_welcome_dismissed') === 'true') return; // ← AÑADIR
+    if (this.dismissed) return;
     this.createPanel();
-    
 },
     createPanel: function () {
         const overlay = document.createElement('div');
@@ -98,6 +97,8 @@ init: function () {
         }
     },
 enter: function (tabName, levelKey) {
+    if (window.ContentManager && levelKey) ContentManager.applyProfile(levelKey); // ← AÑADIR
+    if (window.ConfigManager  && levelKey) ConfigManager.savePlayerLevel(levelKey);
     // levelKey: 'novato' | 'casual' | 'competitivo' | 'default'
     if (window.MusicPlayer) {
         const cfg   = window.ConfigManager ? ConfigManager.getMusicConfig() : {};
@@ -136,6 +137,7 @@ stopMusic: function () {
 },
 
 dismiss: function () {
+    localStorage.setItem('dd_welcome_dismissed', 'true');
     Welcome.dismissed = true;
     // NO se llama stopMusic — la música sigue sonando
 

@@ -1037,6 +1037,7 @@ _restoreAndScroll: function(sectionId, anchorId) {
     }
     allKeys.forEach(k => localStorage.removeItem(k));
     if (window.Welcome) Welcome.dismissed = false;
+localStorage.removeItem('dd_welcome_dismissed'); 
 
     // Guardar config vacía explícitamente
     const emptyConfig = {
@@ -1372,6 +1373,7 @@ renderPlayerLevelSection: function () {
 
 selectPlayerLevel: function (levelKey) {
     if (window.ConfigManager) ConfigManager.savePlayerLevel(levelKey);
+    if (window.ContentManager) ContentManager.applyProfile(levelKey); // ← AÑADIR
     if (window.MusicPlayer) {
         const cfg  = window.ConfigManager ? ConfigManager.getMusicConfig() : {};
         const path = cfg.tracks?.[levelKey] || 'ots/Climax Theme 2.mp3';

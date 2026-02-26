@@ -9,6 +9,7 @@ const Engines = {
     STORAGE_KEY: 'yugioh_engines',
     CARD_BACK:   'https://images.ygoprodeck.com/images/cards/back.jpg',
     _activeTab: 'saved', // 'engines' | 'saved'
+    _activeTabBefore: null,
 
     // Estado del panel de creación
     _creating: {
@@ -68,38 +69,64 @@ const Engines = {
     // ═══════════════════════════════════════════════════
 
     _renderSidebar: function () {
-        const sidebar = document.getElementById('engines-sidebar');
-        if (!sidebar) return;
-        const engines  = this.getAll();
-        const isEng    = this._activeTab === 'engines';
+    const sidebar = document.getElementById('engines-sidebar');
+    if (!sidebar) return;
 
-        sidebar.innerHTML = `
-<div class="eng-tabs">
-    <button class="eng-tab-btn ${isEng ? 'eng-tab-active' : ''}"
-            onclick="Engines._switchTab('engines')">⚙️ Engines</button>
-    <button class="eng-tab-btn ${!isEng ? 'eng-tab-active' : ''}"
-            onclick="Engines._switchTab('saved')">📁 Decks</button>
-</div>
+    const tab      = this._activeTab;
+    const engines  = this.getAll();
+    const tabs = [
+        { id: 'engines',   label: '⚙️ Engines' },
+        { id: 'saved',     label: '📁 Decks'   },
+        { id: 'staples',   label: '📌 Staples' },
+        { id: 'favoritas', label: '⭐ Favoritas'}
+    ];
 
-<div id="eng-panel-engines" style="display:${isEng ? 'flex' : 'none'};flex-direction:column;gap:8px;">
-    <div class="eng-sidebar-actions">
-        <button class="eng-action-btn eng-btn-primary"
-                onclick="Engines.openCreatePanel()">＋ Añadir Engine</button>
-        <button class="eng-action-btn eng-btn-secondary"
-                onclick="Engines.importYDK()">📥 Importar .ydk</button>
-    </div>
-    <div class="eng-list" id="eng-list">
-        ${engines.length ? engines.map((e, i) => this._renderEngineItem(e, i)).join('') :
-          '<div class="eng-empty">Sin engines guardados</div>'}
-    </div>
-</div>
+    // Contenido de cada panel
+    const enginesHTML = `
+        <div class="eng-sidebar-actions">
+            <button class="eng-action-btn eng-btn-primary"
+                    onclick="Engines.openCreatePanel()">＋ Añadir Engine</button>
+            <button class="eng-action-btn eng-btn-secondary"
+                    onclick="Engines.importYDK()">📥 Importar .ydk</button>
+        </div>
+        <div class="eng-list" id="eng-list">
+            ${engines.length
+                ? engines.map((e, i) => this._renderEngineItem(e, i)).join('')
+                : '<div class="eng-empty">Sin engines guardados</div>'}
+        </div>`;
 
-<div id="eng-panel-saved" style="display:${!isEng ? 'flex' : 'none'};flex-direction:column;gap:8px;">
-    <div class="eng-list" id="eng-saved-list">
-        ${this._renderSavedDeckItems()}
-    </div>
-</div>`;
-    },
+    const savedHTML = `
+        <div class="eng-list" id="eng-saved-list">
+            ${this._renderSavedDeckItems()}
+        </div>`;
+
+    const staplesHTML = `
+        <div class="eng-list" id="eng-staples-list">
+            ${window.ConfigManager ? this._renderStaplesItems() : '<div class="eng-empty">Módulo no disponible.</div>'}
+        </div>`;
+
+    const favoritasHTML = `
+        <div class="eng-list" id="eng-favoritas-list">
+            ${window.Favoritas ? this._renderFavoritasItems() : '<div class="eng-empty">Módulo no disponible.</div>'}
+        </div>`;
+
+    const contentMap = {
+        engines:   enginesHTML,
+        saved:     savedHTML,
+        staples:   staplesHTML,
+        favoritas: favoritasHTML
+    };
+
+    sidebar.innerHTML = `
+        <div class="eng-tabs eng-tabs-4">
+            ${tabs.map(t => `
+            <button class="eng-tab-btn ${tab === t.id ? 'eng-tab-active' : ''}"
+                    onclick="Engines._switchTab('${t.id}')">${t.label}</button>`).join('')}
+        </div>
+        <div class="eng-panel-content">
+            ${contentMap[tab] || ''}
+        </div>`;
+},
 
     _switchTab: function (tab) {
         this._activeTab = tab;
@@ -766,6 +793,61 @@ saveEditEngine: function () {
     this.saveAll(engines);
     this.closeCreatePanel();
     this._renderSidebar();
+},
+_renderStaplesItems: function () {
+    const staples = ConfigManager.getStaples();
+    const ids     = ConfigManager.getStapleIds();
+    if (!ids.length) return '<div class="eng-empty">Sin staples en este formato.</div>';
+
+    // Sincronizar _staplePanelCards para que openStapleCard/addStapleToDeck funcionen
+    ConfigManager._staplePanelCards = ids.map(id => staples[id]);
+
+    const BACK = this.CARD_BACK;
+    return ids.map((id, idx) => {
+        const s   = staples[id] || {};
+        const img = s.imageUrl || `https://images.ygoprodeck.com/images/cards_small/${id}.jpg`;
+        const name = s.name || id;
+        return `
+<div class="eng-item">
+    <img src="${img}" class="eng-item-img" onerror="this.src='${BACK}'"
+         onclick="ConfigManager.openStapleCard(${idx})">
+    <div class="eng-item-info">
+        <div class="eng-item-name">${name}</div>
+        <div class="eng-item-counts">${s.type || ''}</div>
+    </div>
+    <div class="eng-item-btns">
+        <button class="eng-item-edit" title="Añadir al deck"
+                onclick="ConfigManager.addStapleToDeck(${idx})">＋</button>
+        <button class="eng-item-delete" title="Quitar staple"
+                onclick="ConfigManager.deleteStaple('${id}');Engines._renderSidebar()">✕</button>
+    </div>
+</div>`;
+    }).join('');
+},
+
+_renderFavoritasItems: function () {
+    const all = Favoritas.getAll();
+    const ids = Object.keys(all);
+    if (!ids.length) return '<div class="eng-empty">Sin favoritas guardadas.</div>';
+    const BACK = this.CARD_BACK;
+    return ids.map((id, idx) => {
+        const f   = all[id];
+        const img = f.img || f.data?.card_images?.[0]?.image_url_small || BACK;
+        return `
+<div class="eng-item">
+    <img src="${img}" class="eng-item-img" onerror="this.src='${BACK}'"
+         onclick="Favoritas.viewCard(${idx})">
+    <div class="eng-item-info">
+        <div class="eng-item-name">${f.name || id}</div>
+    </div>
+    <div class="eng-item-btns">
+        <button class="eng-item-edit" title="Añadir al deck"
+                onclick="Favoritas.addCard(${idx})">＋</button>
+        <button class="eng-item-delete" title="Quitar favorita"
+                onclick="Favoritas.remove('${id}');Engines._renderSidebar()">✕</button>
+    </div>
+</div>`;
+    }).join('');
 },
 };
 

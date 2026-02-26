@@ -2133,11 +2133,98 @@
     .matchup-panel { padding: 20px 14px 16px; }
 }
 /* ====================================
-   RESPONSIVE
+   BUSCADOR COVER SIDEBAR
+   Imagen lateral que crece con el contenido
    ==================================== */
 
-@media (max-width: 768px) {
-    .deck-row {
+.buscador-cover-sidebar {
+    flex: 0 0 160px;
+    min-width: 120px;
+    max-width: 190px;
+    align-self: stretch;
+    position: sticky;
+    top: 10px;
+    overflow: hidden;
+    border-radius: 10px;
+    border: 1px solid rgba(255,215,0,0.12);
+    background: rgba(0,26,51,0.4);
+}
+
+.buscador-cover-img {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+    border-radius: 10px;
+    opacity: 0.85;
+    transition: opacity 0.2s;
+}
+
+.buscador-cover-img:hover {
+    opacity: 1;
+}
+
+@media (max-width: 700px) {
+    .buscador-cover-sidebar { display: none; }
+}
+
+/* ====================================
+   ENGINES SIDEBAR — EXT TABS (Staples/Favoritas)
+   ==================================== */
+
+/* Los panels ext están ocultos por defecto */
+.eng-ext-panel {
+    display: none;
+}
+
+/* Cuando un ext-tab está activo: ocultar contenido nativo del sidebar */
+.engines-sidebar[data-ext-tab] > *:not(.eng-tabs):not(.eng-ext-panel) {
+    display: none !important;
+}
+
+/* Mostrar el panel correcto según tab activo */
+.engines-sidebar[data-ext-tab="staples"]   #staples-panel   { display: block !important; }
+.engines-sidebar[data-ext-tab="favoritas"] #favoritas-panel { display: block !important; }
+
+/* Estilos de los paneles cuando están dentro del sidebar */
+.engines-sidebar .favoritas-panel {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.engines-sidebar .favoritas-header {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--gold-color, #FFD700);
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 8px;
+}
+
+.engines-sidebar .favoritas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 65vh;
+    overflow-y: auto;
+}
+
+/* Estado vacío de panels ext */
+.engines-sidebar[data-ext-tab="favoritas"] #favoritas-panel:empty::after,
+.engines-sidebar[data-ext-tab="staples"] #staples-list:empty::after {
+    content: 'Sin cartas guardadas';
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.35);
+    display: block;
+    padding: 12px 0;
+    text-align: center;
+}
+
+
         grid-template-columns: 60px 1fr;
         grid-template-areas:
             "img name"
@@ -2210,4 +2297,70 @@
         width: 95%;
         padding: var(--spacing-md);
     }
+}
+
+/* ── Sub-pestañas Mi Deck ── */
+.mideck-subtabs-nav {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+    padding-bottom: 6px;
+}
+.mideck-subtab-btn {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.7);
+    border-radius: 6px 6px 0 0;
+    padding: 6px 16px;
+    cursor: pointer;
+    font-size: .88rem;
+    transition: background .2s, color .2s;
+}
+.mideck-subtab-btn.active,
+.mideck-subtab-btn:hover {
+    background: rgba(255,215,0,0.15);
+    color: #ffd700;
+    border-color: #ffd700;
+}
+
+/* ── 4 tabs en sidebar ── */
+.eng-tabs-4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+}
+.eng-tabs-4 .eng-tab-btn {
+    font-size: .78rem;
+    padding: 5px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.eng-panel-content {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+}
+/* ── Acciones del deck: grid compacto ── */
+.deck-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 10px;
+    padding: 8px 0;
+}
+.deck-actions .deck-move {
+    padding: 6px 4px;
+    font-size: .75rem;
+    border-radius: 6px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
 }
