@@ -2224,7 +2224,9 @@
     text-align: center;
 }
 
-
+@media (max-width: 600px) {
+    .deck-row {
+        display: grid;
         grid-template-columns: 60px 1fr;
         grid-template-areas:
             "img name"
@@ -2232,45 +2234,6 @@
             "qty buttons";
     }
 
-    .deck-img {
-        grid-area: img;
-    }
-
-    .deck-name {
-        grid-area: name;
-    }
-
-    .deck-roles {
-        grid-area: roles;
-        margin: 4px 0;
-    }
-
-    .deck-qty {
-        grid-area: qty;
-    }
-
-    .deck-buttons {
-        grid-area: buttons;
-        flex-direction: row;
-        justify-self: end;
-    }
-
-    .deck-actions {
-        flex-direction: column;
-    }
-
-    .deck-actions button {
-        width: 100%;
-        min-width: auto;
-    }
-
-    .deck-list-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .role-checkboxes {
-        grid-template-columns: 1fr;
-    }
 }
 
 @media (max-width: 480px) {
