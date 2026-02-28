@@ -869,6 +869,7 @@ const Config = {
 
             <!-- Botones de acción -->
             <div class="config-actions">
+                <button class="btn btn-secondary" onclick="Config.generarReporte()" style="background:#4a0015;border-color:#9b1030;" title="Exporta un .txt con el log de ejecución de esta sesión">📋 Generar Reporte</button>
                 <button class="btn btn-primary" onclick="Config.exportConfig()">📥 Exportar Data</button>
                 <button class="btn btn-primary" onclick="Config.importConfig()">📤 Importar Data</button>
                 <button class="btn btn-success" onclick="Config.resetToDefault()" style="background:#27ae60;border-color:#27ae60;">🔄 Restaurar Configuración</button>
@@ -1566,6 +1567,17 @@ renderNomCategoryOptions: function (selectedId) {
         } else {
             alert('❌ No se pudo exportar el backup.');
         }
+    },
+
+    generarReporte: function () {
+        if (typeof window.DDLogger === 'undefined') {
+            alert('❌ Logger no disponible en esta sesión.');
+            return;
+        }
+        const total  = window.DDLogger.getLogs().length;
+        const errors = window.DDLogger.getLogs().filter(e => !e.ok).length;
+        if (!confirm(`📋 Generar reporte de log?\n\nEntradas: ${total}\nErrores: ${errors}\n\nSe descargará un archivo .txt.`)) return;
+        window.DDLogger.exportReport();
     },
 
     importConfig: function () {

@@ -15,15 +15,15 @@ index.html  — Shell única. Secciones vacías, JS llena el DOM en runtime.
 
 **Orden de carga en index.html (crítico):**
 ```
-logger.js → parallax.js → core.js → data.js → buscador.js →
+core.js → data.js → buscador.js →
 mideck.js → historial.js → estadisticas.js →
-simuladores.js → simuladores-campo.js → formacion.js
+simuladores.js → simuladores-campo.js → formacion.js →
+logger.js  (SIEMPRE AL FINAL — se carga post-módulos)
 ```
 
 | Archivo | Objetos globales | Líneas | Absorbe |
 |---------|-----------------|--------|---------|
-| `logger.js` | `Logger`, `SafeLogger` | ~80 | — (no subido, se mantiene) |
-| `parallax.js` | — | ~30 | — (no subido, se mantiene) |
+| `logger.js` | `DDLogger` | ~250 | Logger no-invasivo. Se carga al final, envuelve todos los objetos globales post-`window.load`. **No modifica ningún módulo fuente.** API: `DDLogger.exportReport()`, `DDLogger.getLogs()`, `DDLogger.getStats()`, `DDLogger.enable/disable/clear()` |
 | `core.js` | `Navigation`, `Shortcuts`, `ContentManager`, `switchTab` | 412 | navigation + utils + contentmanager |
 | `data.js` | `ConfigManager`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 1433 | configmanager + specialty-analyzer + nomenclature-analyzer |
 | `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 1915 | buscador + cardviewer + favoritas |
@@ -202,7 +202,7 @@ Secciones (IDs para Shortcuts y ContentManager):
 
 ## 7. BUGS RESUELTOS EN ESTA SESIÓN
 
-| # | Bug | Archivo | Solución |
+| 4 | `logger.js` y `parallax.js` referenciados pero inexistentes | `index.html` | Eliminados del orden de carga; nuevo `logger.js` creado (DDLogger) |
 |---|-----|---------|----------|
 | 1 | `_calcWR` y `_getAllMatchupRecords` duplicados 3 veces | `duelista.js` → `historial.js` | Eliminadas las 2 copias extra |
 | 2 | `yugioh_player_level` y `dd_player_profile` desincronizados | `welcome.js` + `config.js` | `enter()` ahora escribe ambas claves |
@@ -249,8 +249,7 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 
 **Archivos que NO necesitas subir salvo cambios:**
 - `html2canvas_min.js` — librería externa
-- `logger.js` / `parallax.js` — estables, no cambian
-- `responsive_style.css` — solo para ajustes de breakpoints
+- `logger.js` — solo si cambia la lista `TARGETS` o el formato del reporte
 
 **Variables CSS globales** (definidas en `style_core.css`):
 `--gold-color` · `--accent-color` · `--bg-card` · `--text-light` · `--danger-color` · `--spacing-sm/md/lg`
