@@ -877,25 +877,34 @@ const Config = {
 
             <!-- Zona de borrado -->
             <div class="config-danger-zone" data-section-id="config-danger-zone">
-                <div class="config-danger-title">⚠️ Zona de borrado</div>
-                <div class="config-danger-buttons">
-                    <button class="btn btn-danger" onclick="Config.borrarTodo()" style="background:#c0392b;">
-                        🗑️ Borrar Data
-                        <small style="display:block;font-weight:normal;font-size:0.7rem;opacity:0.75;">
-                            Toda la configuración de la app
-                        </small>
-                    </button>
-                    <button class="btn btn-danger" data-section-id="config-danger-delete" onclick="Config.borrarDeck()">
-                        🗑️ Borrar Decks & Juego
-                        <small style="display:block;font-weight:normal;font-size:0.7rem;opacity:0.75;">
-                            Decks guardados, winrates, notas, cache de scores
-                        </small>
-                    </button>
+    <div class="config-danger-title">⚠️ Zona de borrado</div>
+    <div class="borrar-opciones-grid">
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="decks"> <span>Decks guardados</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="engines"> <span>Engines</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="matchups"> <span>Matchups e Historial</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="winrates"> <span>Winrates</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="favoritas"> <span>Favoritas</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="torneo"> <span>Torneo activo</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="practica"> <span>Estados de práctica</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="cache"> <span>Cache de Estadísticas</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="formacion"> <span>Notas y temas de Formación</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="meta_folders"> <span>Carpetas del Meta</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="config"> <span>Configuración (roles, staples, mecánicas…)</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="perfil"> <span>Perfil y bienvenida</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="fallbacks"> <span>Imágenes y Fallbacks</span></label>
+    </div>
+    <div class="borrar-footer-row">
+        <label class="borrar-select-all-label">
+            <input type="checkbox" id="borrar-select-all" onchange="Config._borrarToggleAll(this.checked)">
+            <span>Seleccionar todo</span>
+        </label>
+        <button class="btn btn-danger" onclick="Config.borrarSeleccion()" style="background:#c0392b;">
+            🗑️ Ejecutar Borrado
+        </button>
+    </div>
+</div>
 
-                </div>
-            </div>
-            
-            <input type="file" id="config-import-file" accept=".txt" style="display:none;" onchange="Config.handleFileImport(this)">
+<input type="file" id="config-import-file" accept=".txt" style="display:none;" onchange="Config.handleFileImport(this)">
         `;
     },
 
@@ -1663,74 +1672,95 @@ _restoreAndScroll: function(sectionId, anchorId) {
         
     },
     
-    borrarDeck: function () {
-        if (!confirm(
-            '¿Borrar TODOS los decks, engines, matchups, winrates, favoritas y estados de práctica?\n' +
-            'La configuración (roles, staples, etc.) no se tocará.\n' +
-            'Esta acción no se puede deshacer.'
-        )) return;
+    _borrarToggleAll: function (checked) {
+    document.querySelectorAll('.borrar-opcion-cb').forEach(cb => { cb.checked = checked; });
+},
 
-        const keysToRemove = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const k = localStorage.key(i);
-            if (!k) continue;
-            if (k.startsWith('deck_') || k.startsWith('matchup_') || k.startsWith('pz_states_'))
-                keysToRemove.push(k);
-        }
-        keysToRemove.forEach(k => localStorage.removeItem(k));
-        localStorage.removeItem('yugioh_engines');
-        localStorage.removeItem('yugioh_winrates');
-        localStorage.removeItem('pz_winrate_standalone');
-        localStorage.removeItem('yugioh_favoritas');
-        localStorage.removeItem('yugioh_torneo_actual');
-        localStorage.removeItem('yugioh_power_cache');
-        localStorage.removeItem('yugioh_cross_scores');
+borrarSeleccion: function () {
+    const selected = [...document.querySelectorAll('.borrar-opcion-cb:checked')].map(cb => cb.dataset.key);
+    if (!selected.length) { alert('Selecciona al menos una opción para borrar.'); return; }
 
-        if (window.Deck) { Deck.cards = {}; Deck.name = 'Mi Deck'; Deck.notes = ''; Deck.render(); }
+    const etiquetas = {
+        decks: 'Decks guardados', engines: 'Engines', matchups: 'Matchups e Historial',
+        winrates: 'Winrates', favoritas: 'Favoritas', torneo: 'Torneo activo',
+        practica: 'Estados de práctica', cache: 'Cache de Estadísticas',
+        formacion: 'Notas y temas de Formación', meta_folders: 'Carpetas del Meta',
+        config: 'Configuración (roles, staples, mecánicas…)',
+        perfil: 'Perfil y bienvenida', fallbacks: 'Imágenes y Fallbacks',
+    };
+    const lista = selected.map(k => `• ${etiquetas[k]}`).join('\n');
+    if (!confirm(`⚠️ ¿Borrar lo siguiente?\n\n${lista}\n\nEsta acción NO se puede deshacer.`)) return;
+
+    const rm  = (k)      => localStorage.removeItem(k);
+    const rmP = (prefix) => {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k?.startsWith(prefix)) keys.push(k); }
+        keys.forEach(rm);
+    };
+
+    if (selected.includes('decks')) {
+        rm('yugioh_decks'); rmP('deck_');
+        if (window.Deck) { Deck.cards = {}; Deck.name = 'Mi Deck'; Deck.notes = ''; if (document.getElementById('deck-content')) Deck.render(); }
+    }
+    if (selected.includes('engines')) {
+        rm('yugioh_engines');
         if (window.Engines && document.getElementById('mideck-content')) Engines._renderSidebar();
+    }
+    if (selected.includes('matchups')) {
+        rmP('matchup_');
+        if (window.Matchups) Matchups.refreshSection?.();
+        if (window.Duelista) { const el = document.getElementById('duelista-content'); if (el) Duelista.refreshSection(); }
+    }
+    if (selected.includes('winrates')) {
+        rm('yugioh_winrates'); rm('pz_winrate_standalone');
+        if (window.Winrate) Winrate.refreshSection();
+    }
+    if (selected.includes('favoritas')) {
+        rm('yugioh_favoritas');
         if (window.Favoritas) Favoritas.render?.();
-        if (window.Winrate)   Winrate.refreshSection();
-        if (window.Duelista)  Duelista.refreshSection();
-        if (window.Torneo)    Torneo._initialized = false;
+    }
+    if (selected.includes('torneo')) {
+        rm('yugioh_torneo_actual');
+        if (window.Torneo) Torneo._initialized = false;
+    }
+    if (selected.includes('practica')) {
+        rmP('pz_states_');
+    }
+    if (selected.includes('cache')) {
+        rm('yugioh_power_cache'); rm('yugioh_cross_scores'); rm('dd_power_scores_cache');
         if (window.Estadisticas) {
-            Estadisticas.powerScoreCache = null;
+            Estadisticas.powerScoreCache = null; Estadisticas.crossScores = {};
             if (typeof Estadisticas.updateFloatingWidget === 'function') Estadisticas.updateFloatingWidget();
         }
-
-        alert(`✅ ${keysToRemove.length} deck(s) y toda la data de juego eliminados.`);
-    },
-
-    // borrarMeta eliminado — pestaña Meta ya no existe
-    borrarTodo: function () {
-        if (!confirm(
-            '⚠️ BORRAR TODO ⚠️\n\n' +
-            'Esto eliminará ABSOLUTAMENTE TODA la data:\n' +
-            '• Decks guardados y estados de práctica\n' +
-            '• Engines y Staples\n' +
-            '• Matchups, winrates e historial\n' +
-            '• Favoritas y banlist personalizada\n' +
-            '• Notas y temas de Formación\n' +
-            '• Torneo activo\n' +
-            '• Cache de Estadísticas y Meta\n' +
-            '• Toda la Configuración (roles, mecánicas, nomenclatura, pilares)\n\n' +
-            'La app quedará completamente vacía.\n' +
-            'Esta acción NO se puede deshacer.'
-        )) return;
-
-        // Borrar absolutamente todo el localStorage
-        const allKeys = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const k = localStorage.key(i);
-            if (k) allKeys.push(k);
+    }
+    if (selected.includes('formacion')) {
+        rm('yugioh_formacion_notes'); rm('yugioh_formacion_mastered');
+    }
+    if (selected.includes('meta_folders')) {
+        rm('yugioh_meta_folders');
+        if (window.Estadisticas) {
+            Estadisticas.metaDecks = {}; Estadisticas.metaFolders = [];
+            Estadisticas.metaCardLibrary = {}; Estadisticas.metaDeckScores = {};
+            if (document.getElementById('estadisticas-content')) Estadisticas.render();
         }
-        allKeys.forEach(k => localStorage.removeItem(k));
+    }
+    if (selected.includes('config')) {
+        rm('yugioh_config');
+        if (window.ConfigManager && typeof ConfigManager._ensureDefaults === 'function') ConfigManager._ensureDefaults();
+    }
+    if (selected.includes('perfil')) {
+        rm('yugioh_player_level'); rm('dd_player_profile');
+        rm('dd_content_visibility'); rm('dd_welcome_dismissed');
+        if (window.Welcome) { Welcome.dismissed = false; Welcome.init(); }
+        if (window.ContentManager) ContentManager.applyAll();
+    }
+    if (selected.includes('fallbacks')) {
+        rm('yugioh_meta_fallbacks'); rm('yugioh_formacion_fallbacks');
+    }
 
-        // Resetear módulos en memoria
-        this._resetModulesInMemory();
-        this.render();
-        if (window.Welcome) Welcome.init();
-        alert('✅ Todo borrado. La app está completamente vacía.');
-    },
+    this.render();
+    alert(`✅ ${selected.length} categoría(s) borrada(s) correctamente.`);
+},
 
     // Resetea todos los módulos en memoria tras un clear total
     _resetModulesInMemory: function () {
@@ -2829,56 +2859,90 @@ const HelpPanel = {
 
     // Contenido de ayuda por pestaña activa
     tabContent: {
-        buscador: `
-            <h4>🔍 Buscador de Cartas</h4>
-            <p>Aquí puedes buscar cualquier carta de Yu-Gi-Oh! por nombre. Al encontrarla, puedes ver su efecto completo, sus estadísticas y agregarla directamente a tu deck activo.</p>
-            <ul>
-                <li>Escribe el nombre (o parte de él) y presiona Enter o el botón Buscar.</li>
-                <li>Toca la imagen de la carta para abrir su vista detallada.</li>
-                <li>Desde la vista detallada puedes agregarla al Main Deck, Extra Deck o Side Deck.</li>
-                <li>El sistema resalta automáticamente las palabras clave según la nomenclatura que configures.</li>
-            </ul>`,
+    buscador: `
+        <h4>🔍 Buscador de Cartas</h4>
+        <p>Busca cualquier carta de Yu-Gi-Oh! por nombre, arquetipo, set o palabras clave en su efecto.</p>
+        <ul>
+            <li>Escribe el nombre (o parte) y presiona Enter o el botón Buscar.</li>
+            <li>Usa <strong>Filtros avanzados</strong> para filtrar por tipo, atributo, nivel, etc.</li>
+            <li>El selector de Arquetipo y el de Packs/Sets permiten búsquedas muy específicas.</li>
+            <li>Toca la imagen de la carta para abrir su <strong>Vista de Carta</strong> detallada.</li>
+            <li>Desde la Vista puedes agregarla al Main, Extra o Side Deck, marcarla como Staple o Favorita, y ver sus roles detectados y estado de banlist.</li>
+            <li>El sistema resalta palabras clave en el efecto según la Nomenclatura configurada.</li>
+        </ul>`,
 
-        mideck: `
-            <h4>🃏 Mi Deck</h4>
-            <p>Este es tu espacio de construcción. Aquí ves todas las cartas de tu deck activo organizadas por sección.</p>
-            <ul>
-                <li><strong>Composición:</strong> el bloque superior muestra un resumen de tipos, atributos, niveles y más de tu deck actual.</li>
-                <li><strong>Roles:</strong> asigna roles a cada carta (Starter, Negadora, Boss, etc.) para que el Internal Score los tome en cuenta.</li>
-                <li><strong>Carta As:</strong> puedes marcar una carta como insignia de tu deck — será la imagen que representa al deck guardado.</li>
-                <li><strong>Acciones:</strong> guarda, limpia, exporta o importa tu deck en formato .ydk compatible con otras plataformas.</li>
-            </ul>`,
+    mideck: `
+        <h4>🃏 Mi Deck</h4>
+        <p>Tu espacio de construcción y gestión de mazos.</p>
+        <ul>
+            <li><strong>Decklist / Construcción:</strong> sub-tabs para ver tus cartas o armar el deck desde el sidebar.</li>
+            <li><strong>Sidebar:</strong> accede a Engines (combos guardados), Decks guardados, Staples del formato y tus Favoritas.</li>
+            <li><strong>Composición:</strong> el bloque superior muestra tipos, atributos, niveles, y balance de tu deck en tiempo real.</li>
+            <li><strong>Roles:</strong> asigna roles a cada carta para que los tres scores (Internal, External, Counter) los tomen en cuenta.</li>
+            <li><strong>Carta As:</strong> marca una carta como ícono del deck — será su imagen en la lista de decks guardados.</li>
+            <li><strong>Acciones:</strong> guarda, limpia, exporta o importa tu deck en formato .ydk (compatible con YGOPro, EDOPro, etc.).</li>
+            <li><strong>Matchups:</strong> registra resultados contra decks rivales para alimentar el Nivel Duelista.</li>
+        </ul>`,
 
-        estadisticas: `
-            <h4>📊 Estadísticas</h4>
-            <p>El centro de análisis de la app. Cada sección te da una perspectiva distinta sobre tu deck y el meta:</p>
-            <ul>
-                <li><strong>Análisis del Deck vs Meta:</strong> comparativa entre el poder teórico de tu deck y qué tan bien sobrevive frente al meta seleccionado. Incluye las mecánicas detectadas, cartas amenaza y decks que más te contrarrestan.</li>
-                <li><strong>Internal Score:</strong> mide la calidad técnica de tu deck en tres pilares — Consistencia, Potencia y Resiliencia — basado en los roles asignados.</li>
-                <li><strong>Counter-Deck Score:</strong> indica qué tan capaz es tu deck de interrumpir las estrategias del meta. A mayor puntaje, más disruptivo es tu deck contra el formato.</li>
-                <li><strong>Gestión de Carpetas:</strong> aquí importas los decks del meta en formato .ydk, organizados por fecha de formato.</li>
-                <li><strong>Decks del Meta:</strong> visualiza todos los decks importados. Usa los chips de carpeta para filtrar por uno o varios formatos a la vez.</li>
-                <li><strong>Recurrencia de Cartas:</strong> muestra qué cartas aparecen más veces en el meta y con qué frecuencia promedio por deck.</li>
-                <li><strong>Poder de Cartas del Meta:</strong> calcula un puntaje de poder para cada carta del meta basado en su presencia, mecánicas y capacidad de counter.</li>
-                <li><strong>Counter-Cards del Meta:</strong> lista las cartas del meta que tienen función de interrupción activa contra mecánicas específicas.</li>
-                <li><strong>Exportar:</strong> descarga reportes de tu deck o rankings del meta en .txt y .csv.</li>
-            </ul>`,
+    estadisticas: `
+        <h4>📊 Estadísticas</h4>
+        <p>El centro de análisis. Usa los scores para tomar decisiones de construcción basadas en datos.</p>
+        <ul>
+            <li><strong>Internal Score:</strong> mide la calidad técnica de tu deck en tres pilares — Consistencia, Potencia y Resiliencia — según los roles asignados.</li>
+            <li><strong>Análisis del Deck vs Meta:</strong> cruza las mecánicas de tu deck contra el meta activo. Muestra tu External Score, decks que te amenazan y cartas que te contrarrestan.</li>
+            <li><strong>Winrate:</strong> historial de resultados de tu deck activo contra los rivales que registraste.</li>
+            <li><strong>Top Tier:</strong> ranking de los decks del meta cargado por presencia y poder combinado.</li>
+            <li><strong>Decks del Meta:</strong> visualiza todos los decks importados. Filtra por carpeta/formato.</li>
+            <li><strong>Poder de Cartas:</strong> Power Score de cada carta del meta basado en presencia, mecánicas y capacidad de counter.</li>
+            <li><strong>Counter-Cards:</strong> lista de cartas del meta con función de interrupción activa y su Score de counter.</li>
+            <li><strong>Exportar:</strong> descarga reportes de tu deck o del meta en .txt y .csv.</li>
+            <li><strong>Nivel Duelista:</strong> estadísticas personales de rendimiento basadas en tus matchups registrados.</li>
+        </ul>`,
 
-        config: `
-            <h4>⚙️ Configuración</h4>
-            <p>Aquí personalizas cómo la app analiza las cartas y los decks. Lo que configures aquí afecta directamente a los scores y al resaltado del Buscador.</p>
-            <ul>
-                <li><strong>Roles:</strong> define los roles que puedes asignar a las cartas (Starter, Boss, etc.), sus keywords de detección, y el peso de valor (1.0 = rol genérico de máximo aporte · 0.1 = rol arquetípico de menor aporte general).</li>
-                <li><strong>Especialidades y Counters:</strong> configura pares de mecánicas de juego y sus contrapartes. Esto activa el sistema de Power Score y External Score.</li>
-                <li><strong>Staples del Formato:</strong> agrega cartas que consideras esenciales en el formato actual. El sistema las sugerirá si no las tienes en tu deck.</li>
-                <li><strong>Nomenclatura:</strong> define categorías de texto para que el Buscador resalte partes del efecto de las cartas por color.</li>
-            </ul>`,
+    simuladores: `
+        <h4>🎮 Simuladores</h4>
+        <p>Herramientas para practicar y medir tu rendimiento sin necesidad de un oponente.</p>
+        <ul>
+            <li><strong>Mulligan / Hipergeometría:</strong> simula manos iniciales y calcula probabilidades de abrir con piezas clave.</li>
+            <li><strong>Winrate:</strong> registro rápido de partidas por deck y oponente.</li>
+            <li><strong>Torneo (Swiss):</strong> gestiona un torneo local con sistema de rondas suizas, standings y puntos.</li>
+            <li><strong>Duelo en Vivo:</strong> cronómetro maestro con control de LP, turnos y temporizador por jugador.</li>
+            <li><strong>Experimentación:</strong> herramientas analíticas avanzadas para explorar métricas del deck.</li>
+            <li><strong>Campo de Práctica:</strong> campo de duelo visual donde puedes mover cartas, marcar estados y guardar posiciones.</li>
+        </ul>`,
 
-        default: `
-            <h4>❓ Ayuda</h4>
-            <p>Esta pestaña es para ayudarte a ser mejor jugador de Yu-Gi-Oh!.</p>
-            <p>Navega entre las pestañas de la app y vuelve a abrir este panel para ver la ayuda específica de cada sección.</p>`
-    },
+    formacion: `
+        <h4>📚 Formación</h4>
+        <p>Tu cuaderno de estudio y biblioteca de recursos para mejorar como jugador.</p>
+        <ul>
+            <li><strong>Apuntes:</strong> crea y organiza notas con título, cuerpo y fecha. Ideal para anotar rulings, combos o estrategias.</li>
+            <li><strong>Temas:</strong> lista de conceptos del juego (Rulings, Fases, Mecánicas, etc.) que puedes marcar como dominados.</li>
+            <li><strong>Juegos Alternativos:</strong> acceso rápido a juegos/plataformas de Yu-Gi-Oh! configuradas en Config.</li>
+            <li><strong>Fuentes:</strong> links a sitios externos del meta (Limitless, YGOPro, etc.) configurados en Config.</li>
+            <li><strong>Maestros:</strong> galería de streamers y jugadores de referencia que configuras en Config.</li>
+        </ul>`,
+
+    config: `
+        <h4>⚙️ Configuración</h4>
+        <p>Personaliza cómo la app analiza cartas y decks. Todo lo que configures aquí afecta directamente los scores y el resaltado.</p>
+        <ul>
+            <li><strong>Contenido de la App:</strong> controla qué secciones son visibles según tu perfil (Novato / Casual / Competitivo). Puedes ajustar cada item individualmente.</li>
+            <li><strong>Roles:</strong> define roles para asignar a cartas (Starter, Boss, etc.), sus keywords de detección y su peso en el Internal Score.</li>
+            <li><strong>Mecánicas y Counters:</strong> configura pares mecánica/counter que activan el Power Score y el External Score.</li>
+            <li><strong>Staples:</strong> cartas esenciales del formato. El sistema las sugiere si no las tienes en el deck.</li>
+            <li><strong>Nomenclatura:</strong> categorías de texto para resaltar partes del efecto de cartas por color en el Buscador.</li>
+            <li><strong>Pilares:</strong> asigna qué roles pesan en Consistencia, Potencia y Resiliencia del Internal Score.</li>
+            <li><strong>Banlist:</strong> gestiona la lista de cartas prohibidas/limitadas por formato personalizado.</li>
+            <li><strong>Atajos Rápidos:</strong> configura hasta 6 accesos directos al botón ⚡ flotante.</li>
+            <li><strong>Música:</strong> asigna pistas por perfil y controla el volumen del botón ▶ flotante.</li>
+            <li><strong>Zona de Borrado:</strong> elimina selectivamente cada tipo de data guardada en la app.</li>
+        </ul>`,
+
+    default: `
+        <h4>❓ Ayuda</h4>
+        <p>Navega entre las pestañas de la app y vuelve a abrir este panel para ver la ayuda específica de cada sección.</p>
+        <p>Usa el botón <strong>FAQ</strong> para respuestas a preguntas frecuentes sobre los scores y el funcionamiento interno.</p>`
+},
 
     faqContent: [
         {

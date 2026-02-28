@@ -2161,3 +2161,42 @@
     gap: 8px;
     margin-top: 4px;
 }
+/* ── Zona de borrado multi-select ── */
+.borrar-opciones-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 16px;
+    margin: 12px 0 10px;
+}
+.borrar-opcion-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+.borrar-opcion-row:hover { background: rgba(255,255,255,0.06); }
+.borrar-opcion-row input[type="checkbox"] { accent-color: #d63031; width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+.borrar-footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.borrar-select-all-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: rgba(255,255,255,0.7);
+}
+.borrar-select-all-label input[type="checkbox"] { accent-color: #d63031; width: 15px; height: 15px; cursor: pointer; }
