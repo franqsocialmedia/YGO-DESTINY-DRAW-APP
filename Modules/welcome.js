@@ -228,3 +228,4 @@ document.addEventListener('DOMContentLoaded', () => MusicPlayer.init());
 
 window.Welcome = Welcome;
 document.addEventListener('DOMContentLoaded', () => Welcome.init());
+

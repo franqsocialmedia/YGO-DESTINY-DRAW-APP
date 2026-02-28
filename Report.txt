@@ -1,357 +1,256 @@
-# DESTINY DRAW — REPORTE TÉCNICO COMPLETO
-**Versión:** Post-refactor Sesión 5 | **Fecha:** Feb 2026  
+# DESTINY DRAW — REPORTE TÉCNICO
+**Versión:** Post-consolidación | **Fecha:** Feb 2026
 **Stack:** Vanilla JS (ES6 objects) · CSS modular · HTML5 SPA · YGOProDeck API · localStorage
 
 ---
 
-## 1. ESTRUCTURA DE ARCHIVOS
+## 1. ESTRUCTURA DE ARCHIVOS ACTUAL
 
 ### 1.1 HTML
 ```
-index.html          — Shell única. Secciones vacías, JS llena el DOM en runtime.
+index.html  — Shell única. Secciones vacías, JS llena el DOM en runtime.
 ```
-**Secciones del DOM:**
-| ID | Pestaña | Llenado por |
-|----|---------|-------------|
-| `buscador-content` | Buscador | HTML estático + Buscador.js |
-| `mideck-content` | Mi Deck | Deck.render() |
-| `estadisticas-content` | Estadísticas | Estadisticas.render() |
-| `simuladores-content` | Simuladores | Torneo.init() |
-| `meta-content` | Meta | Meta.init() — **oculto en nav** |
-| `formacion-content` | Formación | Formacion.init() |
-| `config-content` | Config | Config.render() |
 
-**Nota:** Meta tab tiene `style="display:none"` en `<li>`. Su contenido lo consume Formación.
+### 1.2 JavaScript — 11 módulos (consolidados de 27)
+
+**Orden de carga en index.html (crítico):**
+```
+logger.js → parallax.js → core.js → data.js → buscador.js →
+mideck.js → historial.js → estadisticas.js →
+simuladores.js → simuladores-campo.js → formacion.js
+```
+
+| Archivo | Objetos globales | Líneas | Absorbe |
+|---------|-----------------|--------|---------|
+| `logger.js` | `Logger`, `SafeLogger` | ~80 | — (no subido, se mantiene) |
+| `parallax.js` | — | ~30 | — (no subido, se mantiene) |
+| `core.js` | `Navigation`, `Shortcuts`, `ContentManager`, `switchTab` | 412 | navigation + utils + contentmanager |
+| `data.js` | `ConfigManager`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 1433 | configmanager + specialty-analyzer + nomenclature-analyzer |
+| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 1915 | buscador + cardviewer + favoritas |
+| `mideck.js` | `Deck`, `Banlist`, `Engines` | 2971 | deck + banlist + engines |
+| `historial.js` | `Matchups`, `Duelista` | 783 | matchups + duelista (duplicados eliminados) |
+| `estadisticas.js` | `Estadisticas` | 2350 | — (solo, era demasiado grande) |
+| `simuladores.js` | `Torneo`, `Duelo`, `Hipergeometria` | 2649 | torneo + duelo + hipergeometria |
+| `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3228 | zonapractica + experimentacion |
+| `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | 3000 | formacion + meta + config + welcome + help |
+
+**Nota:** `stats.js` y `winrate.js` no existían como archivos independientes — sus funciones estaban integradas en `estadisticas.js` y `deck.js` respectivamente.
+
+### 1.3 CSS — 6 archivos (consolidados de 10)
+
+**Orden de carga en index.html:**
+```html
+style_core.css → style_buscador.css → style_mideck.css →
+style_simuladores.css → style_config.css → responsive_style.css
+```
+
+| Archivo | Líneas | Absorbe |
+|---------|--------|---------|
+| `style_core.css` | 1322 | style_global + style_welcome + style_cardviewer |
+| `style_buscador.css` | 1017 | — (sin cambio estructural) |
+| `style_mideck.css` | 2193 | — (sin cambio, límite de tamaño) |
+| `style_simuladores.css` | 5844 | style_simuladores + style_estadisticas |
+| `style_config.css` | 2164 | style_config + style_formacion + style_meta |
+| `responsive_style.css` | 558 | **NUEVO** — todos los @media del proyecto extraídos |
+
+**Todos los archivos CSS tienen sus `@media` eliminados** — viven exclusivamente en `responsive_style.css`.
 
 ---
 
-### 1.2 JavaScript — 27 módulos activos
+## 2. ESTRUCTURA DEL DOM
 
-**Orden de carga en index.html (crítico para dependencias):**
-```
-logger → navigation → parallax → utils → cardviewer → buscador →
-configmanager → specialty-analyzer → nomenclature-analyzer → stats →
-deck → estadisticas → config → help → winrate → duelista → favoritas →
-banlist → torneo → duelo → matchups → hipergeometria → engines →
-experimentacion → zonapractica → meta → formacion → contentmanager → welcome
-```
-
-#### MÓDULOS — REFERENCIA RÁPIDA
-
-| Archivo | Objeto global | Propósito | Líneas aprox |
-|---------|--------------|-----------|--------------|
-| `logger.js` | `Logger`, `SafeLogger` | Logging con niveles. SafeLogger es stub si Logger no existe | ~80 |
-| `navigation.js` | `Navigation`, `Shortcuts` | Cambio de pestañas, botones flotantes de acceso rápido | ~380 |
-| `parallax.js` | — | Efecto parallax en header | ~30 |
-| `utils.js` | — | Funciones utilitarias compartidas | ~100 |
-| `configmanager.js` | `ConfigManager` | **Capa de datos principal.** Roles, Staples, Meta, Formación, Música, PlayerLevel | ~1200 |
-| `contentmanager.js` | `ContentManager` | Visibilidad de secciones por perfil (novato/casual/competitivo) | ~260 |
-| `specialty-analyzer.js` | `SpecialtyAnalyzer` | Detecta mecánicas/counters en cartas vía texto | ~200 |
-| `nomenclature-analyzer.js` | `NomenclatureAnalyzer` | Divide efecto de carta en segmentos por categoría de nomenclatura | ~180 |
-| `stats.js` | `Stats` | Cálculos de Internal Score (Consistencia/Potencia/Resiliencia) | ~150 |
-| `buscador.js` | `Buscador` | Búsqueda en YGOProDeck API, filtros avanzados, arquetipos, sets | ~600 |
-| `cardviewer.js` | `CardViewer` | Panel flotante de detalle de carta. Nomenclatura, roles, aporte al deck | ~450 |
-| `favoritas.js` | `Favoritas` | Lista de cartas favoritas. render() delega a Engines si tab=favoritas | ~100 |
-| `banlist.js` | `Banlist` | Estado de banlist por formato. Decora filas del deck | ~200 |
-| `deck.js` | `Deck` | **Gestión del deck activo.** render() con sub-tabs Decklist/Construcción | ~1650 |
-| `engines.js` | `Engines` | Sidebar 4 tabs (Engines/Decks/Staples/Favoritas). Gestión de engines del deck | ~900 |
-| `matchups.js` | `Matchups` | Historial de enfrentamientos por deck (overlay panel) | ~500 |
-| `winrate.js` | `Winrate` | Registro W/L por deck. Going 1st/2nd | ~350 |
-| `duelista.js` | `Duelista` | Perfil del jugador: nivel, WR global, mejores decks. **Tiene métodos duplicados** | ~200 |
-| `estadisticas.js` | `Estadisticas` | **Análisis completo.** Internal Score, External Score, Meta Decks, Power Score, Counter-Cards, Export | ~2200 |
-| `torneo.js` | `Torneo` | Simulador Swiss/Mulligan/Cronómetro/Winrate/Práctica | ~800 |
-| `duelo.js` | `Duelo` | Simulador de duelo (turnos, LP) | ~400 |
-| `hipergeometria.js` | `Hipergeometria` | Calculadora de probabilidades (mulligan) | ~250 |
-| `experimentacion.js` | `Experimentacion` | Modo experimentación de deck | ~300 |
-| `zonapractica.js` | `ZonaPractica` | Campo visual interactivo para practicar jugadas | ~1800 |
-| `config.js` | `Config` | UI de configuración. Roles, Staples, Nomenclatura, Pilares, Maestros, Fuentes, PlayerLevel | ~1400 |
-| `meta.js` | `Meta` | Maestros del Juego + Fuentes Externas. Usado por Formacion como sub-tabs | ~300 |
-| `formacion.js` | `Formacion` | Sub-tabs: Apuntes, Temas, Juegos, Fuentes→Meta, Maestros→Meta | ~500 |
-| `welcome.js` | `Welcome` | Panel de bienvenida overlay. Selección de perfil inicial | ~150 |
-| `help.js` | `HelpPanel` | Botón flotante ? + panel FAQ contextual | ~200 |
-| `contentmanager.js` | `ContentManager` | Visibilidad por perfil. applyProfile() + applyAll() | ~260 |
+| ID sección | Pestaña | Llenado por |
+|-----------|---------|-------------|
+| `#buscador-content` | Buscador | HTML estático + `Buscador.init()` |
+| `#mideck-content` | Mi Deck | `Deck.render()` → `#deck-container` |
+| `#estadisticas-content` | Estadísticas | `Estadisticas.render()` |
+| `#simuladores-content` | Simuladores | `Torneo.init()` (lazy) |
+| `#meta-content` | Meta | `Meta.init()` — **oculto en nav** (`display:none`) |
+| `#formacion-content` | Formación | `Formacion.init()` |
+| `#config-content` | Config | `Config.render()` |
 
 ---
 
-### 1.3 CSS — 10 archivos
+## 3. LOCALSTORAGE — TODAS LAS CLAVES
 
-| Archivo | Contenido principal | Líneas aprox |
-|---------|--------------------|----|
-| `style_global.css` | Variables CSS, layout base, nav, header, footer, botones globales, animaciones | ~600 |
-| `style_buscador.css` | Buscador, filtros avanzados, resultados, chips, archetypes | ~500 |
-| `style_mideck.css` | Mi Deck completo: rows, acciones, modales, engines sidebar, matchups, stats, sub-tabs | ~2400 |
-| `style_estadisticas.css` | Estadísticas: cards de score, gráficas, meta decks, export | ~800 |
-| `style_simuladores.css` | Simuladores: torneo, duelo, zona practica | ~700 |
-| `style_config.css` | Config: roles, staples, nomenclatura, pilares, maestros | ~900 |
-| `style_formacion.css` | Formación: apuntes, temas, juegos, notebook styles | ~400 |
-| `style_meta.css` | Meta: master cards, fuentes, iframes, format badges | ~350 |
-| `style_cardviewer.css` | CardViewer overlay, contribution block, cv-* clases | ~300 |
-| `style_welcome.css` | Welcome overlay, perfil buttons, animaciones | ~200 |
-
----
-
-## 2. LOCALSTORAGE — TODAS LAS CLAVES
-
-| Clave | Módulo dueño | Tipo | Descripción |
-|-------|-------------|------|-------------|
-| `yugioh_config` | ConfigManager | Object | Config principal: roles, staples, specialties, nomenclature, pillars, metaMasters, metaLinks, formacionGames, formacionTopics, shortcuts, music |
-| `yugioh_player_level` | ConfigManager | String | `'novato'|'casual'|'competitivo'|'default'` — perfil del Welcome Panel y Config |
-| `dd_player_profile` | ContentManager | String | `'novato'|'casual'|'competitivo'` — controla visibilidad de secciones |
-| `dd_content_visibility` | ContentManager | Object | Override manual de visibilidad por sección ID |
-| `dd_welcome_dismissed` | Welcome | String `'true'` | **PENDIENTE implementar en welcome.js** |
-| `yugioh_favoritas` | Favoritas | Object | `{cardId: {id,name,type,img,data}}` |
-| `yugioh_engines` | Engines | Array | Lista de engines guardados `[{id,name,cards,roles,notes,cover}]` |
-| `yugioh_decks` | Deck | Object | Decks guardados `{nombre: {cards,notes,matchupHistory}}` |
-| `matchup_${deckName}` | Matchups | Array | Historial por deck `[{opponent,wins1st,losses1st,wins2nd,losses2nd,notes}]` |
-| `winrate_${deckName}` | Winrate | Object | W/L por deck |
-| `yugioh_music_config` | ConfigManager | Object | `{enabled, volume, tracks:{novato,casual,competitivo}}` |
-| `yugioh_meta_fallbacks` | ConfigManager | Object | Base64/URL de imágenes fallback para Maestros |
-| `yugioh_formacion_fallbacks` | ConfigManager | Object | Base64/URL de imágenes fallback para Juegos |
-| `yugioh_formacion_notes` | Formacion | Array | `[{title,content,date}]` |
-| `yugioh_formacion_mastered` | Formacion | Array | IDs de temas dominados |
-| `dd_power_scores_cache` | Estadisticas | Object | Cache de Power Scores calculados |
-| `yugioh_meta_folders` | Estadisticas | Array | Carpetas del meta con decks .ydk |
+| Clave | Módulo | Tipo | Descripción |
+|-------|--------|------|-------------|
+| `yugioh_config` | `ConfigManager` | Object | Config principal: roles, staples, specialties, nomenclature, pillars, metaMasters, metaLinks, formacionGames, formacionTopics, shortcuts, music |
+| `yugioh_player_level` | `ConfigManager` | String | `'novato'\|'casual'\|'competitivo'\|'default'` — perfil elegido en Welcome y Config |
+| `dd_player_profile` | `ContentManager` | String | `'novato'\|'casual'\|'competitivo'` — controla visibilidad de secciones |
+| `dd_content_visibility` | `ContentManager` | Object | Override manual de visibilidad por sección ID |
+| `dd_welcome_dismissed` | `Welcome` | String `'true'` | Panel solo reaparece al hacer Borrar Data |
+| `yugioh_favoritas` | `Favoritas` | Object | `{cardId: {id,name,type,img,data}}` |
+| `yugioh_engines` | `Engines` | Array | `[{id,name,cards,roles,notes,cover}]` |
+| `yugioh_decks` | `Deck` | Object | Decks guardados `{nombre: {cards,notes}}` |
+| `matchup_${deckName}` | `Matchups` | Array | `[{opponent,wins1st,losses1st,wins2nd,losses2nd,notes}]` |
+| `yugioh_music_config` | `ConfigManager` | Object | `{enabled, volume, tracks:{novato,casual,competitivo}}` |
+| `yugioh_meta_fallbacks` | `ConfigManager` | Object | Base64/URL imágenes fallback para Maestros |
+| `yugioh_formacion_fallbacks` | `ConfigManager` | Object | Base64/URL imágenes fallback para Juegos |
+| `yugioh_formacion_notes` | `Formacion` | Array | `[{title,content,date}]` |
+| `yugioh_formacion_mastered` | `Formacion` | Array | IDs de temas dominados |
+| `dd_power_scores_cache` | `Estadisticas` | Object | Cache de Power Scores calculados |
+| `yugioh_meta_folders` | `Estadisticas` | Array | Carpetas del meta con decks .ydk importados |
 
 ---
 
-## 3. DEPENDENCIAS ENTRE MÓDULOS
+## 4. DEPENDENCIAS ENTRE MÓDULOS
 
 ```
-ConfigManager  ←── cardviewer, buscador, deck, engines, estadisticas,
-                    config, formacion, meta, welcome, contentmanager
+data.js (ConfigManager)  ←── buscador, mideck, historial, estadisticas,
+                               simuladores, formacion, core (ContentManager)
 
-ContentManager ←── navigation (applyAll en cada tab change)
-                    config (applyProfile al cambiar perfil) [PENDIENTE SYNC]
+core.js (ContentManager) ←── formacion (applyProfile al cambiar perfil)
+                               navigation applyAll() en cada tab change
 
-Deck           ←── estadisticas (renderDeckStats, renderDeckAnalysis)
-                    engines (lee deck activo para sidebar)
-                    matchups, winrate (leen deck activo)
+mideck.js (Engines)      ←── Favoritas.render() delega si _activeTab='favoritas'
+                               Staples: usa campo imageUrl (NO img)
 
-Engines        ←── deck (render llama Engines._renderSidebar)
-                    favoritas (render delega a Engines si tab=favoritas)
-                    configmanager (getStaples para tab Staples)
+historial.js (Duelista)  ←── lee matchup_${deckName} de todos los decks
+                               requiere Deck.getSavedDecks()
 
-Meta           ←── formacion (_renderMaestrosSection, _renderFuentesSection)
-                    [Meta tab oculto, su contenido vive en Formacion]
+formacion.js (Meta)      ←── Sub-tabs Fuentes y Maestros de Formacion delegan a
+                               Meta._renderFuentesSection() / _renderMaestrosSection()
 
-Stats          ←── deck (calcula Internal Score del deck activo)
-                    estadisticas (muestra resultado)
-
-NomenclatureAnalyzer ←── cardviewer (highlight de efectos)
-SpecialtyAnalyzer    ←── deck, estadisticas (detección de mecánicas)
+formacion.js (Welcome)   ←── llama ConfigManager.savePlayerLevel() Y
+                               ContentManager.applyProfile() al hacer enter()
 ```
 
 ---
 
-## 4. FLUJOS CRÍTICOS
+## 5. FLUJOS CRÍTICOS
 
-### 4.1 Cambio de pestaña (navigation.showTab)
+### 5.1 Cambio de pestaña
 ```
-switchTab(name)
-  → oculta todos .tab-content
-  → activa #name-content
-  → activa botón nav
-  → si mideck: Engines.init()
-  → si simuladores: Torneo.init()
-  → si formacion: Formacion.init()
-  → si meta: Meta.init()
+switchTab(name) → Navigation.showTab(name)
+  → oculta todos .tab-content, activa #name-content
+  → si mideck:            Engines.init()
+  → si simuladores:       Torneo.init()
+  → si formacion:         Formacion.init()
+  → si meta:              Meta.init()
   → ContentManager.applyAll()
   → Estadisticas.updateFloatingWidgetVisibility()
 ```
 
-### 4.2 Render del sidebar de Mi Deck (Engines._renderSidebar)
+### 5.2 Selección de perfil (Welcome)
+```
+Welcome.enter(tabName, levelKey)
+  → ContentManager.applyProfile(levelKey)  → 'dd_player_profile'
+  → ConfigManager.savePlayerLevel(levelKey) → 'yugioh_player_level'
+  → MusicPlayer.setTrack(cfg.tracks[levelKey])
+  → Welcome.dismiss() → localStorage 'dd_welcome_dismissed' = 'true'
+  → Navigation.showTab(tabName)
+```
+
+### 5.3 Selección de perfil (Config)
+```
+Config.selectPlayerLevel(levelKey)
+  → ConfigManager.savePlayerLevel(levelKey)
+  → ContentManager.applyProfile(levelKey)
+  → MusicPlayer.setTrack(...)
+  → Config.render()
+```
+
+### 5.4 Borrar Todo
+```
+Config.borrarTodo()
+  → localStorage.clear() completo
+  → Welcome.dismissed = false
+  → localStorage.removeItem('dd_welcome_dismissed')
+  → reconstruye config vacía
+  → Deck.render(), Estadisticas.render(), Favoritas.render()
+  → Welcome.init() → muestra panel de nuevo
+```
+
+### 5.5 Render sidebar Mi Deck
 ```
 Engines._renderSidebar()
   → lee _activeTab (engines|decks|staples|favoritas)
-  → si engines: lista de engines guardados
-  → si decks: lista de decks guardados con botón cargar
-  → si staples: _renderStaplesItems() → ConfigManager.getStaples()
-  → si favoritas: _renderFavoritasItems() → Favoritas.getAll()
-  → IMG de staples usa campo: s.imageUrl (NO s.img)
-```
-
-### 4.3 Selección de perfil
-```
-Welcome Panel → Config.selectPlayerLevel(key)
-  → ConfigManager.savePlayerLevel(key)   → 'yugioh_player_level'
-  → ContentManager.applyProfile(key)     → 'dd_player_profile' [PENDIENTE en welcome.js]
-  → MusicPlayer.setTrack(...)
-  → Config.render()
-
-Config UI → Config._applyProfileUI(key) → ContentManager.applyProfile(key)
-  → [NO llama ConfigManager.savePlayerLevel] [PENDIENTE]
-```
-
-### 4.4 Borrar Todo (Config.borrarTodo)
-```
-→ localStorage.clear() completo
-→ Welcome.dismissed = false
-→ localStorage.removeItem('dd_welcome_dismissed') [PENDIENTE]
-→ reconstruye config vacía
-→ Deck.render(), Estadisticas.render(), Favoritas.render()
-→ Welcome.init() → muestra panel de nuevo
+  → staples: _renderStaplesItems() → imageUrl (NO img)
+  → favoritas: _renderFavoritasItems() → Favoritas.getAll()
 ```
 
 ---
 
-## 5. ESTRUCTURA DE PESTAÑAS Y SUB-TABS
+## 6. SUB-TABS POR PESTAÑA
 
-### Mi Deck (`deck.js` → `#deck-container`)
+### Mi Deck (`mideck.js`)
 ```
-Sub-tabs (mideck-subtabs-nav):
-├── Decklist    — filas Main/Extra/Side + botones de acción (grid 3×2)
-└── Construcción — deck-stats-block, notas, matchups, Internal Score, análisis
-Sidebar (.engines-sidebar) — 4 tabs en grid 2×2:
-├── Engines     — lista de engines creados
-├── Decks       — decks guardados
-├── Staples     — staples del formato (imageUrl field)
-└── Favoritas   — cartas favoritas (img field desde Favoritas.toggle)
+Sub-tabs:  Decklist | Construcción
+Sidebar (2×2 grid):  Engines | Decks | Staples | Favoritas
 ```
 
-### Formación (`formacion.js` → `#formacion-content`)
+### Formación (`formacion.js`)
 ```
-Sub-tabs (form-subnav):
-├── 📓 Apuntes    — editor + lista de notas
-├── 📖 [Temas]    — dinámico según ConfigManager.getFormacionTopicsConfig()
-├── 🎮 Juegos     — grid de juegos alt. desde ConfigManager.getFormacionGames()
-├── 🔗 Fuentes    — Meta._renderFuentesSection() [iframes de fuentes externas]
-└── 🎓 Maestros   — Meta._renderMaestrosSection() [tarjetas de youtubers/maestros]
+Sub-tabs:  📓 Apuntes | 📖 Temas | 🎮 Juegos | 🔗 Fuentes | 🎓 Maestros
+           (Fuentes y Maestros delegan a Meta._renderFuentesSection/MaestrosSection)
 ```
 
-### Estadísticas (`estadisticas.js` → `#estadisticas-content`)
+### Simuladores (`simuladores.js`)
 ```
-Secciones (con IDs para Shortcuts y ContentManager):
-deck-stats-sec      → Internal Score
-deck-analysis-sec   → Análisis vs Meta
-winrate-sec         → Winrate por deck
-top-tier-sec        → Top Tier del meta
-meta-decks-sec      → Decks del meta importados
-power-scores-sec    → Poder de cartas
-counter-cards-sec   → Counter-cards del meta
-export-sec          → Exportar datos
-duelista-sec        → Perfil del duelista
+Sub-tabs:  Mulligan | Winrate | Torneo | Duelo | Experimentación | Práctica
 ```
 
-### Simuladores (`torneo.js` → `#simuladores-content`)
+### Estadísticas (`estadisticas.js`)
 ```
-Sub-tabs:
-Mulligan → Winrate → Torneo → Duelo → Experimentación → Práctica
+Secciones (IDs para Shortcuts y ContentManager):
+  deck-stats-sec | deck-analysis-sec | winrate-sec | top-tier-sec |
+  meta-decks-sec | power-scores-sec | counter-cards-sec | export-sec | duelista-sec
 ```
 
 ---
 
-## 6. BUGS CONOCIDOS Y PENDIENTES
+## 7. BUGS RESUELTOS EN ESTA SESIÓN
 
-### 🔴 Bugs activos
-
-| # | Problema | Archivo | Fix |
-|---|---------|---------|-----|
-| 1 | `Duelista._calcWR` y `_getAllMatchupRecords` definidos 3 veces | `duelista.js` | Eliminar las 2 copias duplicadas (líneas ~45-65 y ~66-85) |
-| 2 | `yugioh_player_level` y `dd_player_profile` desincronizados | `config.js`, `welcome.js` | Ver §4.3 — aplicar doble escritura en ambas funciones |
-
-### 🟡 Pendientes implementar
-
-| # | Tarea | Archivo | Detalle |
-|---|-------|---------|---------|
-| 1 | Persistir Welcome dismissed | `welcome.js` | `init()` debe leer `dd_welcome_dismissed`, `dismiss()` debe escribirla |
-| 2 | Sync perfil Welcome→ContentManager | `welcome.js` | En `enter()` llamar `ContentManager.applyProfile(levelKey)` |
-| 3 | Sync perfil Config→ConfigManager | `config.js` `selectPlayerLevel()` | Ya llama ContentManager pero NO llama ConfigManager.savePlayerLevel |
-| 4 | Eliminar duplicados en duelista.js | `duelista.js` | 2 métodos duplicados |
-
-### 🟢 Cambios recientes completados
-
-- Sidebar Mi Deck: 4 tabs (Engines/Decks/Staples/Favoritas) en grid 2×2
-- Sub-tabs Mi Deck: Decklist / Construcción
-- Formación: añadidos tabs Fuentes y Maestros (delegando a Meta)
-- Meta tab: oculto en nav (`display:none`)
-- Duplicado Staples/Favoritas: eliminados paneles del index.html y `_injectMiDeckSidebarPanels` de navigation.js
-- CSS: corregidos bloques huérfanos en `style_mideck.css` (media queries sin selector)
-- Botones de acción del deck: grid compacto 3×2
-
----
-
-## 7. PLAN DE CONSOLIDACIÓN (PROPUESTO, NO EJECUTADO)
-
-### JS: 27 → 9 archivos
-| Archivo destino | Absorbe |
-|----------------|---------|
-| `core.js` | logger + navigation + parallax + utils + contentmanager + welcome + help |
-| `data.js` | configmanager + specialty-analyzer + nomenclature-analyzer + stats |
-| `buscador.js` | buscador + cardviewer + favoritas |
-| `mideck.js` | deck + engines + banlist |
-| `mideck-historial.js` | matchups + winrate + duelista |
-| `estadisticas.js` | (solo, ~2200 líneas) |
-| `simuladores.js` | torneo + hipergeometria + duelo |
-| `simuladores-campo.js` | zonapractica + experimentacion |
-| `formacion.js` | formacion + meta + config |
-
-### CSS: 10 → 5 archivos
-| Archivo destino | Absorbe |
-|----------------|---------|
-| `style_core.css` | style_global + style_welcome + style_cardviewer |
-| `style_buscador.css` | (sin cambio) |
-| `style_mideck.css` | (sin cambio, ~2400 líneas) |
-| `style_simuladores.css` | style_simuladores + style_estadisticas |
-| `style_config.css` | style_config + style_formacion + style_meta |
+| # | Bug | Archivo | Solución |
+|---|-----|---------|----------|
+| 1 | `_calcWR` y `_getAllMatchupRecords` duplicados 3 veces | `duelista.js` → `historial.js` | Eliminadas las 2 copias extra |
+| 2 | `yugioh_player_level` y `dd_player_profile` desincronizados | `welcome.js` + `config.js` | `enter()` ahora escribe ambas claves |
+| 3 | Welcome Panel reaparecía al recargar | `welcome.js` | `init()` lee `dd_welcome_dismissed`, `dismiss()` la escribe |
 
 ---
 
 ## 8. API EXTERNA
 
-**YGOProDeck API** (sin autenticación, CORS libre)
+**YGOProDeck** (sin auth, CORS libre)
 ```
 Base: https://db.ygoprodeck.com/api/v7/
-
-Endpoints usados:
-GET cardinfo.php?name=NOMBRE           → búsqueda por nombre
-GET cardinfo.php?id=ID                 → carta por ID
-GET cardinfo.php?fname=TEXTO           → búsqueda fuzzy
-GET archetypes.php                     → lista de arquetipos
-GET cardsets.php                       → lista de sets
+cardinfo.php?name=  cardinfo.php?id=  cardinfo.php?fname=
+archetypes.php      cardsets.php
 
 Imágenes:
-https://images.ygoprodeck.com/images/cards/{id}.jpg           → full
-https://images.ygoprodeck.com/images/cards_small/{id}.jpg     → small
-https://images.ygoprodeck.com/images/cards/back.jpg           → back (CARD_BACK)
+https://images.ygoprodeck.com/images/cards/{id}.jpg        → full
+https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 ```
 
 ---
 
-## 9. CLASES CSS CLAVE (REFERENCIA RÁPIDA)
+## 9. CLASES CSS CLAVE
 
-| Clase | Dónde se usa | Propósito |
-|-------|-------------|-----------|
-| `.tab-content` | index.html | Secciones de pestañas. `active` = visible |
-| `.engines-sidebar` | mideck | Sidebar con 4 tabs |
-| `.eng-tab-btn.eng-tab-active` | engines | Tab activo del sidebar |
-| `.eng-panel-content` | engines | Contenido del tab activo |
-| `.mideck-subtabs-nav` | deck | Nav Decklist/Construcción |
-| `.mideck-subtab-btn.active` | deck | Sub-tab activo de Mi Deck |
-| `.deck-actions` | deck | Grid 3×2 de botones de acción |
-| `.form-subnav-btn.active` | formacion | Tab activo de Formación |
-| `.cv-overlay` | cardviewer | Fondo oscuro del visor de carta |
-| `.card-viewer-overlay` | cardviewer | Panel del visor de carta |
-| `#welcome-overlay.welcome-visible` | welcome | Overlay de bienvenida visible |
-| `.cm-profile-btn.cm-profile-active` | contentmanager | Perfil activo en Config |
+| Clase | Archivo CSS | Propósito |
+|-------|------------|-----------|
+| `.tab-content` / `.active` | style_core | Secciones de pestañas |
+| `.engines-sidebar` | style_mideck | Sidebar 4 tabs Mi Deck |
+| `.eng-tab-btn.eng-tab-active` | style_mideck | Tab activo sidebar |
+| `.mideck-subtabs-nav` / `.mideck-subtab-btn.active` | style_mideck | Sub-tabs Decklist/Construcción |
+| `.deck-actions` (grid 3×2) | style_mideck | Botones de acción del deck |
+| `.form-subnav-btn.active` | style_config | Tab activo Formación |
+| `.cv-overlay` / `.card-viewer-overlay` | style_core | Visor de carta |
+| `#welcome-overlay.welcome-visible` | style_core | Panel bienvenida visible |
+| `.cm-profile-btn.cm-profile-active` | style_core | Perfil activo en Config |
 
 ---
 
 ## 10. NOTAS PARA TRABAJAR EFICIENTEMENTE
 
-**Para cambios en un módulo:**
-- Sube SOLO la función/método relevante, no el archivo completo
-- Indica el nombre del objeto y método: ej. `Engines._renderStaplesItems`
+**Para cambios puntuales:** sube solo la función afectada indicando objeto y método. Ej: `Engines._renderStaplesItems` en `mideck.js`.
 
-**Para bugs de sync entre módulos:**
-- Indica qué localStorage key espera cada lado
-- Las claves `yugioh_player_level` y `dd_player_profile` DEBEN escribirse siempre juntas
-
-**Para CSS:**
-- `style_mideck.css` es el más grande y frágil — cerrar todos los `@media` correctamente
-- Variables globales están en `style_global.css`: `--gold-color`, `--accent-color`, `--bg-card`, etc.
+**Para CSS:** todos los ajustes responsive van exclusivamente en `responsive_style.css`. Los 5 archivos principales no tienen `@media`.
 
 **Archivos que NO necesitas subir salvo cambios:**
-- `html2canvas_min.js` — librería externa, no modificar
-- `logger.js` — estable, no cambia
-- `parallax.js` — estable, no cambia
-- `utils.js` — estable, no cambia
+- `html2canvas_min.js` — librería externa
+- `logger.js` / `parallax.js` — estables, no cambian
+- `responsive_style.css` — solo para ajustes de breakpoints
+
+**Variables CSS globales** (definidas en `style_core.css`):
+`--gold-color` · `--accent-color` · `--bg-card` · `--text-light` · `--danger-color` · `--spacing-sm/md/lg`

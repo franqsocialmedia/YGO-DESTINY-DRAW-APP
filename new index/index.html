@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aplicación de Yu-Gi-Oh! para gestión de decks, búsqueda de cartas y análisis del meta">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%23001a33'/><text y='.9em' font-size='72' x='50%' text-anchor='middle' dominant-baseline='hanging'>🃏</text></svg>">
+    <title>Destiny Draw - Yu-Gi-Oh! App</title>
+    
+    <!-- ====================================
+         ARCHIVOS CSS
+         Estilos separados por módulo
+         ==================================== -->
+    <!-- CSS consolidado: 5 archivos temáticos + responsive separado -->
+    <link rel="stylesheet" href="css/style_core.css">
+    <link rel="stylesheet" href="css/style_buscador.css">
+    <link rel="stylesheet" href="css/style_mideck.css">
+    <link rel="stylesheet" href="css/style_simuladores.css">
+    <link rel="stylesheet" href="css/style_config.css">
+    <link rel="stylesheet" href="css/responsive_style.css">
+
+    <!-- CANVAS DESCARGADO -->
+    <script src="Modules/libs/html2canvas.min.js"></script>
+    <!--script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script--->
+</head>
+<body>
+    <!-- ====================================
+         HEADER CON PARALLAX
+         Contiene el logo y título de la app
+         ==================================== -->
+    <header id="header" class="parallax-header">
+        <div class="parallax-bg"></div>
+        <div class="logo-container">
+            <!-- Logo principal - Se oculta si no existe la imagen -->
+            <img src="img/LOGO - Destiny Draw Yugioh APP.png" alt="Destiny Draw Logo" class="main-logo" onerror="this.style.display='none'">
+            <!-- Título alternativo si no hay logo -->
+            <h1 class="logo-text"></h1>
+        </div>
+    </header>
+
+    <!-- ====================================
+         MENÚ DE NAVEGACIÓN
+         Sistema de pestañas para cambiar entre módulos
+         ==================================== -->
+    <nav id="main-nav" class="main-navigation">
+        <ul class="nav-tabs">
+            <!-- Pestaña: Buscador de Cartas -->
+            <li class="nav-item">
+                <button class="nav-button active" data-tab="buscador" onclick="switchTab('buscador')">
+                    Buscador
+                </button>
+            </li>
+            <!-- Pestaña: Mi Deck -->
+            <li class="nav-item">
+                <button class="nav-button" data-tab="mideck" onclick="switchTab('mideck')">
+                    Mi Deck
+                </button>
+            </li>
+            <!-- Pestaña: Estadísticas -->
+            <li class="nav-item">
+                <button class="nav-button" data-tab="estadisticas" onclick="switchTab('estadisticas')">
+                    Estadísticas
+                </button>
+            </li>
+            <!-- Pestaña: Simuladores -->
+            <li class="nav-item">
+                <button class="nav-button" data-tab="simuladores" onclick="switchTab('simuladores')">
+                    Simuladores
+                </button>
+            </li>
+            <!-- Pestaña: Meta Actual -->
+            <li class="nav-item" style="display:none">
+                <button class="nav-button" data-tab="meta" onclick="switchTab('meta')">
+                    Meta
+                </button>
+            </li>
+            <!-- Pestaña: Formación/Tutoriales -->
+            <li class="nav-item">
+                <button class="nav-button" data-tab="formacion" onclick="switchTab('formacion')">
+                    Formación
+                </button>
+            </li>
+            <!-- Pestaña: Configuración -->
+            <li class="nav-item">
+                <button class="nav-button" data-tab="config">
+                    Config
+                </button>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- ====================================
+         ÁREA DE CONTENIDO PRINCIPAL
+         Aquí se muestran los diferentes módulos
+         ==================================== -->
+    <main id="main-content" class="content-container">
+        
+        <!-- ====================================
+             MÓDULO: BUSCADOR DE CARTAS
+             Permite buscar cartas con filtros
+             ==================================== -->
+        <section id="buscador-content" class="tab-content active">
+            <h2>Buscador de Cartas</h2>
+
+            <div class="buscador-layout">
+
+    <!-- Columna izquierda: Cover Art -->
+    <div class="buscador-cover-sidebar">
+        <img 
+            src="https://static.wikia.nocookie.net/yugiohenespanol/images/0/0e/Protagonistas_Yu-Gi-Oh%21_V-Jump.png/revision/latest/scale-to-width-down/1000?cb=20150521161844&path-prefix=es"
+            class="buscador-cover-img"
+            alt="Yu-Gi-Oh! Protagonistas"
+            loading="lazy"
+        >
+    </div>
+
+    <!-- Columna principal: búsqueda + resultados -->
+    <div class="buscador-main">
+        <div class="search-container">
+            <div class="search-bar">
+                <input 
+                    type="text" 
+                    id="card-search-input" 
+                    class="search-input" 
+                    placeholder="Buscar carta por nombre..."
+                    autocomplete="off"
+                >
+                <button id="search-btn" class="btn btn-primary">
+                    <span class="btn-icon">🔍</span>
+                    <span class="btn-text">Buscar</span>
+                </button>
+                <button id="clear-btn" class="btn btn-secondary">
+                    <span class="btn-icon">✖</span>
+                    <span class="btn-text">Limpiar</span>
+                </button>
+            </div>
+            <div class="filters-container" data-section-id="buscador-keywords">
+                <label for="additional-filters" class="filter-label">
+                    Filtrar por palabras clave (separadas por coma):
+                </label>
+                <input 
+                    type="text" 
+                    id="additional-filters" 
+                    class="filter-input" 
+                    placeholder="Ejemplo: dragón, oscuro, efecto"
+                    autocomplete="off"
+                >
+                <small class="filter-help">
+                    Ingresa palabras clave separadas por comas para refinar la búsqueda
+                </small>
+                <div id="filter-chips-container" class="filter-chips"></div>
+            </div>
+            <!-- FILTROS AVANZADOS -->
+            <div class="adv-filters-toggle-row">
+                <button class="adv-filters-toggle-btn" onclick="Buscador.toggleFilterPanel()">
+                    ⚙ Filtros avanzados <span id="adv-filters-arrow">▼</span>
+                </button>
+                <span id="adv-filters-summary" class="adv-filters-summary"></span>
+                <button id="adv-reset-btn" class="adv-reset-btn"
+                        onclick="Buscador.resetAdvancedFilters()" style="display:none">✕ Limpiar</button>
+                <select id="buscador-archetype-sel" class="buscador-archetype-sel" data-section-id="buscador-archetypes"
+                        onchange="Buscador.advancedFilters.archetype=this.value; Buscador._updateFilterSummary(); Buscador.autoSearch();"
+                        onfocus="Buscador._loadArchetypes()">
+                    <option value="">— cualquier carta —</option>
+                </select>
+            </div>
+            <div class="buscador-sets-row" data-section-id="buscador-sets">
+                <span class="buscador-sets-label">📦 Packs y Sets:</span>
+                <select id="buscador-set-sel" class="buscador-set-sel"
+                        onchange="Buscador.advancedFilters.cardset=this.value; Buscador._updateFilterSummary(); Buscador.autoSearch();"
+                        onfocus="Buscador._loadCardsets()">
+                    <option value="">— todos los sets —</option>
+                </select>
+            </div>
+            <div id="advanced-filters-panel" class="advanced-filters-panel" style="display:none"></div>
+        </div>
+
+        <div id="search-results" class="results-container">
+            <p class="results-placeholder">Utiliza el buscador para encontrar cartas de Yu-Gi-Oh!</p>
+        </div>
+    </div>
+
+</div>
+        </section>
+
+        <!-- ====================================
+             MÓDULO: MI DECK
+             Gestión de mazos personales
+             ==================================== -->
+        <section id="mideck-content" class="tab-content">
+            <!-- Staples y Favoritas: se inyectan en engines-sidebar via navigation.js -->
+            
+            <div id="deck-container"></div>
+        </section>
+
+        <!-- ====================================
+             MÓDULO: ESTADÍSTICAS
+             Análisis de decks y estadísticas
+             ==================================== -->
+        <section id="estadisticas-content" class="tab-content">
+        </section>
+
+        <!-- ====================================
+             MÓDULO: SIMULADORES
+             Simuladores de juego
+             ==================================== -->
+        <section id="simuladores-content" class="tab-content"></section>
+
+        <!-- ====================================
+             MÓDULO: META
+             Información del meta actual
+             ==================================== -->
+        <section id="meta-content" class="tab-content"></section>
+
+        <!-- ====================================
+             MÓDULO: FORMACIÓN
+             Tutoriales y guías
+             ==================================== -->
+        
+        <section id="formacion-content" class="tab-content"></section>
+
+        <!-- ====================================
+             MÓDULO: CONFIGURACIÓN
+             Ajustes de la aplicación
+             ==================================== -->
+        <section id="config-content" class="tab-content">
+            <h2>Configuración</h2>
+            <p>Contenido de configuración (pendiente de implementación)</p>
+        </section>
+    </main>
+
+    <!-- ====================================
+         BOTÓN FLOTANTE - SCROLL TO TOP
+         Aparece después de hacer scroll (300px)
+         Lleva al usuario al inicio de la página
+         Color: Amarillo (#FFD700)
+         Opacity: 0.7 normal, 1.0 en hover
+         ==================================== -->
+
+    <!-- ====================================
+         FOOTER
+         Información de la aplicación
+         Siempre visible en la parte inferior
+         ==================================== -->
+    <footer class="main-footer">
+        <p>Herramienta de apoyo para el juego de Yugioh!. Destiny Draw! 2025. By El Panda.</p>
+    </footer>
+
+    <!-- ====================================
+         MÓDULOS JAVASCRIPT
+         Se cargan en orden de dependencias
+         IMPORTANTE: Logger debe cargarse primero
+         ConfigManager debe cargarse antes de deck.js
+         Stats debe cargarse antes de deck.js
+         SpecialtyAnalyzer debe cargarse después de ConfigManager
+         NomenclatureAnalyzer debe cargarse después de ConfigManager
+         ==================================== -->
+    <!-- JS consolidado: 9 módulos en orden de dependencias -->
+    <script src="Modules/logger.js"></script>
+    <script src="Modules/parallax.js"></script>
+    <script src="Modules/core.js"></script>
+    <script src="Modules/data.js"></script>
+    <script src="Modules/buscador.js"></script>
+    <script src="Modules/mideck.js"></script>
+    <script src="Modules/historial.js"></script>
+    <script src="Modules/estadisticas.js"></script>
+    <script src="Modules/simuladores.js"></script>
+    <script src="Modules/simuladores-campo.js"></script>
+    <script src="Modules/formacion.js"></script>
+
+    
+    <button id="scrollTopBtn">▲</button>
+    <button id="scrollBottomBtn">▼</button>
+
+</body>
+</html>
