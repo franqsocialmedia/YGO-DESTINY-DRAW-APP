@@ -739,7 +739,7 @@ const Config = {
             <!-- Sección: Roles y Palabras Asociadas -->
             <div class="config-section" data-section-id="config-roles" id="roles-section-wrap">
                 <h3 class="config-section-title" onclick="Config.toggleSection('roles-section')">
-                    ▶ Roles y Palabras Asociadas
+                    ▶ 🎭 Roles y Palabras Asociadas
                 </h3>
                 <div id="roles-section" class="config-section-content" style="display:none;">
                     ${this.renderRolesSection()}
@@ -749,7 +749,7 @@ const Config = {
             <!-- Sección: Mecánicas y Counters -->
             <div class="config-section" data-section-id="config-specialties">
                 <h3 class="config-section-title" onclick="Config.toggleSection('specialties-section')">
-                    ▶ Mecánicas y Counters
+                    ▶ ⚙️ Mecánicas y Counters
                 </h3>
                 <div id="specialties-section" class="config-section-content" style="display:none;">
                     ${this.renderSpecialtiesSection()}
@@ -759,7 +759,7 @@ const Config = {
             <!-- Sección: Lista de Staples -->
             <div class="config-section" data-section-id="config-staples">
                 <h3 class="config-section-title" onclick="Config.toggleSection('staples-section')">
-                    ▶ Lista de Staples
+                    ▶ 📌 Lista de Staples
                 </h3>
                 <div id="staples-section" class="config-section-content" style="display:none;">
                     ${this.renderStaplesSection()}
@@ -769,7 +769,7 @@ const Config = {
             <!-- Sección: Nomenclatura de Efectos -->
             <div class="config-section" data-section-id="config-nomenclature">
                 <h3 class="config-section-title" onclick="Config.toggleSection('nomenclature-section')">
-                    ▶ Nomenclatura de Efectos
+                    ▶ 🏷️ Nomenclatura de Efectos
                 </h3>
                 <div id="nomenclature-section" class="config-section-content" style="display:none;">
                     ${this.renderNomenclatureSection()}
@@ -779,7 +779,7 @@ const Config = {
             <!-- Sección: Pilares del Internal Score -->
             <div class="config-section" data-section-id="config-pillars">
                 <h3 class="config-section-title" onclick="Config.toggleSection('pillars-section')">
-                    ▶ Pilares del Internal Score
+                    ▶ 🧱 Pilares del Internal Score
                 </h3>
                 <div id="pillars-section" class="config-section-content" style="display:none;">
                     ${this.renderPillarsSection()}
@@ -789,7 +789,7 @@ const Config = {
             <!-- Sección: Rendimientos Decrecientes -->
             <div class="config-section" data-section-id="config-diminishing">
                 <h3 class="config-section-title" onclick="Config.toggleSection('diminishing-section')">
-                    ▶ Rendimientos Decrecientes
+                    ▶ 📉 Rendimientos Decrecientes
                 </h3>
                 <div id="diminishing-section" class="config-section-content" style="display:none;">
                     ${this.renderDiminishingSection()}
@@ -799,7 +799,7 @@ const Config = {
             <!-- Sección: Atajos Rápidos -->
             <div class="config-section" data-section-id="config-shortcuts">
                 <h3 class="config-section-title" onclick="Config.toggleSection('shortcuts-section')">
-                    ▶ Atajos Rápidos
+                    ▶ ⚡Atajos Rápidos
                 </h3>
                 <div id="shortcuts-section" class="config-section-content" style="display:none;">
                     ${this.renderShortcutsSection()}
@@ -809,7 +809,7 @@ const Config = {
             <!-- Sección: Banlist del Formato -->
             <div class="config-section" data-section-id="config-banlist">
                 <h3 class="config-section-title" onclick="Config.toggleSection('banlist-section'); if(window.Banlist) Banlist.renderSection();">
-                    ▶ Banlist del Formato
+                    ▶ 🚫 Banlist del Formato
                 </h3>
                 <div id="banlist-section" class="config-section-content" style="display:none;">
                     <p class="stats-empty">Abre la sección para ver la banlist.</p>
@@ -819,7 +819,7 @@ const Config = {
             <!-- Sección: Ajustes de Música -->
             <div class="config-section" data-section-id="config-music">
                 <h3 class="config-section-title" onclick="Config.toggleSection('music-section')">
-                    ▶ Ajustes de Música
+                    ▶ 🎵 Ajustes de Música
                 </h3>
                 <div id="music-section" class="config-section-content" style="display:none;">
                     ${this.renderMusicSection()}
@@ -829,7 +829,7 @@ const Config = {
             <!-- Sección: Maestros del Duelo -->
             <div class="config-section" data-section-id="config-meta-masters">
                 <h3 class="config-section-title" onclick="Config.toggleSection('meta-masters-config-section')">
-                    ▶ Maestros del Duelo
+                    ▶ 🎓 Maestros del Duelo
                 </h3>
                 <div id="meta-masters-config-section" class="config-section-content" style="display:none;">
                     ${this.renderMetaMastersSection()}
@@ -839,7 +839,7 @@ const Config = {
             <!-- Sección: Fuentes Externas del Meta -->
             <div class="config-section" data-section-id="config-meta-links">
                 <h3 class="config-section-title" onclick="Config.toggleSection('meta-links-config-section')">
-                    ▶ Fuentes Externas del Meta
+                    ▶ 📚 Fuentes Externas del Meta
                 </h3>
                 <div id="meta-links-config-section" class="config-section-content" style="display:none;">
                     ${this.renderMetaLinksSection()}
@@ -850,7 +850,7 @@ const Config = {
             <!-- Sección: Juegos Alternativos -->
             <div class="config-section" data-section-id="config-formacion-games">
                 <h3 class="config-section-title" onclick="Config.toggleSection('formacion-games-config-section')">
-                    ▶ Juegos Alternativos de Yu-Gi-Oh!
+                    ▶ 🎮 Juegos Alternativos de Yu-Gi-Oh!
                 </h3>
                 <div id="formacion-games-config-section" class="config-section-content" style="display:none;">
                     ${this.renderFormacionGamesSection()}
@@ -860,7 +860,7 @@ const Config = {
             <!-- Sección: Temas de Formación -->
             <div class="config-section" data-section-id="config-formacion-topics">
                 <h3 class="config-section-title" onclick="Config.toggleSection('formacion-topics-section')">
-                    ▶ Temas de Formación
+                    ▶ 📖 Temas de Formación
                 </h3>
                 <div id="formacion-topics-section" class="config-section-content" style="display:none;">
                     ${this.renderFormacionTopicsSection()}

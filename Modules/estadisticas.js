@@ -2133,7 +2133,7 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
 
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('meta-management-sec')">
-                Gestión de Carpetas del Meta
+               📁 Gestión de Carpetas del Meta
             </h3>
             <div id="meta-management-sec" class="stats-section" style="display:none;">
                 <button onclick="Estadisticas.createFolder()" class="btn btn-primary">Crear Carpeta</button>
@@ -2152,7 +2152,7 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
 
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('meta-decks-sec')">
-                Decks del Meta
+               🗂️ Decks del Meta
             </h3>
             <div id="meta-decks-sec" class="stats-section" style="display:none;">
                 <div class="meta-filter">
@@ -2195,7 +2195,7 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
 
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('meta-card-stats-sec')">
-                Recurrencia de Cartas en el Meta
+                🔁 Recurrencia de Cartas en el Meta
             </h3>
             <div id="meta-card-stats-sec" class="stats-section" style="display:none;">
                 ${this.renderMetaCardStats()}
