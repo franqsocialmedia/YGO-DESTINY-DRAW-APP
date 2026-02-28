@@ -333,13 +333,8 @@ const ContentManager = {
         // Sub-tabs de Simuladores
         this._applySimuladorSubTabs(vis);
 
-        // Re-render de módulos afectados (una sola vez por módulo)
-        const deckChanged   = this.CATALOG.some(c => c.id.startsWith('deck-'));
-        const configChanged = this.CATALOG.some(c => c.id.startsWith('config-'));
-        const metaChanged   = this.CATALOG.some(c => c.id.startsWith('meta-'));
-        if (deckChanged   && window.Deck?.render)   Deck.render();
-        if (configChanged && window.Config?.render) Config.render();
-        if (metaChanged   && window.Meta?.render)   Meta.render();
+        // Los módulos se re-renderizan sólo cuando se inicializan (al cambiar de pestaña)
+        // applyAll solo controla visibility del DOM
     },
 
     // Oculta/muestra sub-tab buttons de Simuladores según visibilidad
@@ -464,13 +459,15 @@ const ContentManager = {
 
     _applyProfileUI: function(level) {
         this.applyProfile(level);
-        // Re-renderizar la sección de ContentManager en Config para reflejar el perfil activo
-        if (window.Config?.render) {
-            Config.render();
-        } else {
-            const section = document.getElementById('cm-config-section');
-            if (section) section.outerHTML = this.renderConfigSection();
-        }
+        // Actualizar clases activas en todos los botones de perfil sin re-renderizar todo
+        document.querySelectorAll('.cm-profile-btn').forEach(btn => {
+            const btnLevel = btn.onclick?.toString().match(/['"]([^'"]+)['"]\s*\)/) ?
+                btn.onclick.toString().match(/_applyProfileUI\(['"]([^'"]+)['"]\)/)?.[1] : null;
+            if (btnLevel) btn.classList.toggle('cm-profile-active', btnLevel === level);
+        });
+        // Regenerar solo el bloque de ContentManager si existe en el DOM
+        const section = document.getElementById('cm-config-section');
+        if (section) section.outerHTML = this.renderConfigSection();
     },
 
     _toggleItem: function(id, visible) {

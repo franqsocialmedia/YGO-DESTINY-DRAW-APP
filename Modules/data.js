@@ -1,12 +1,13 @@
-/* data.js — Capa de datos: configuración persistente, análisis de especialidades y nomenclatura */
-/* Absorbe: configmanager.js, specialty-analyzer.js, nomenclature-analyzer.js */
+/* data.js — Capa de datos: config, scores, análisis de especialidades y nomenclatura */
+/* Absorbe: configmanager.js, stats.js, specialty-analyzer.js, nomenclature-analyzer.js */
 
 
-// ── ConfigManager — lectura/escritura de toda la config en localStorage (roles, staples, mecánicas, música, maestros, fuentes, formación) ──
+// ── ConfigManager — config persistente: roles, staples, mecánicas, música, maestros, fuentes, shortcuts ──
 
 const ConfigManager = {
 
     defaultConfig: {
+        // Roles: estructura compatible con OLD VERSION
         roles: {
             'Handtrap': ['from your hand'],
             'Boardbreaker': ['destroy all', 'destroy'],
@@ -26,6 +27,7 @@ const ConfigManager = {
             'Bridge': []
         },
         
+        // RoleConditions: keywords (actúan solos O con condicional)
         roleConditions: {
             'Handtrap': {
                 conditionals: [],
@@ -114,6 +116,7 @@ const ConfigManager = {
             }
         ],
 
+        // Staples: estructura simplificada
         staples: {
             "83764718": {
                 id: "83764718",
@@ -135,6 +138,7 @@ const ConfigManager = {
             }
         },
 
+        // Cada categoría tiene UNA configuración directa con 4 campos
         nomenclature: {
     categories: [
         {
@@ -181,6 +185,7 @@ const ConfigManager = {
         }
     ]
 },
+// ⭐ RENDIMIENTOS DECRECIENTES - parte de la config principal
         diminishingReturns: {
             enabled: true,
             crossPenalty: false,
@@ -1145,7 +1150,564 @@ window.ConfigManager = ConfigManager;
 
 
 
-// ── SpecialtyAnalyzer — detecta roles y mecánicas en cartas/decks para el External Score ──
+// ── Stats — motor de scores: Internal, External, CounterDeck, RPS, DiminishingReturns ──
+
+const Stats = {
+
+    // DESPUÉS:
+    calculateDiminishingReturns: function(roleName, count) {
+        const config = window.ConfigManager?.getDiminishingReturns?.();
+        if (!config || !config.enabled) {
+            return count;
+        }
+        
+        const threshold = config.roleThresholds?.[roleName];
+        if (!threshold) {
+            return Math.sqrt(count);
+        }
+        
+        if (count <= threshold.optimal) {
+            return count;
+        } else if (count <= threshold.max) {
+            // Rendimientos decrecientes entre optimal y max
+            const excess = count - threshold.optimal;
+            const range = threshold.max - threshold.optimal;
+            const factor = 1 - (excess / range) * (1 - threshold.curve);
+            return threshold.optimal + (excess * factor);
+        } else {
+            // Más allá del máximo: curva más agresiva
+            const baseValue = threshold.optimal + 
+                (threshold.max - threshold.optimal) * threshold.curve;
+            const excess = count - threshold.max;
+            return baseValue + (excess * threshold.curve * 0.5);
+        }
+    },
+
+        // ===============================
+        calculateInternalScore: function (cards) {
+    // Pilares desde Config (usuario configura qué roles aportan a cada uno)
+            const pillars = window.ConfigManager?.getPillars?.()
+                || { consistency: [], power: [], resilience: [] };
+
+            const consistencyRoles = pillars.consistency.map(r => r.toLowerCase());
+            const powerRoles       = pillars.power.map(r => r.toLowerCase());
+            const resilienceRoles  = pillars.resilience.map(r => r.toLowerCase());
+            const restrictionTerms = ['per turn', 'per duel', 'next turn', 'you can only', 'only once', 'cannot be used'];
+
+    const roleCounters = {};
+    const roleWeights  = {};
+    let mainCards = 0;
+    let totalCards = 0;
+
+    const getRoleWeight = (roleName) => window.ConfigManager?.getRoleWeight?.(roleName) ?? 1.0;
+
+    for (const [, item] of Object.entries(cards)) {
+        const loc   = item.location;
+        const qty   = item.qty || 1;
+        const roles = (item.roles || []).map(r => r.toLowerCase());
+        const desc  = (item.data?.desc || '').toLowerCase();
+
+       if (loc === 'main' || loc === 'extra') totalCards += qty;
+        if (loc !== 'main') continue;
+
+        mainCards += qty;
+
+        const isRestricted  = restrictionTerms.some(t => desc.includes(t));
+        const effectiveQty  = isRestricted ? 1 + (qty - 1) * 0.5 : qty;
+
+        roles.forEach(r => {
+            const weight = getRoleWeight(r);
+            if (!roleCounters[r]) { roleCounters[r] = 0; roleWeights[r] = weight; }
+            roleCounters[r] += effectiveQty;
+        });
+    }
+
+    // ── Sumar a pilares con rendimientos decrecientes ────────────
+    let consistencyScore = 0;
+    let powerScore       = 0;
+    let resilienceScore  = 0;
+
+    Object.entries(roleCounters).forEach(([role, count]) => {
+        const diminishedValue = this.calculateDiminishingReturns(role, count);
+        const weight          = roleWeights[role] ?? 1.0;
+        const contribution    = diminishedValue * weight;
+
+        if (consistencyRoles.includes(role)) consistencyScore += contribution;
+        if (powerRoles.includes(role))       powerScore       += contribution;
+        if (resilienceRoles.includes(role))  resilienceScore  += contribution;
+    });
+
+    // ── Penalización cruzada (opcional, por rol) ─────────────────
+    const dimCfg = window.ConfigManager?.getDiminishingReturns?.();
+    if (dimCfg && dimCfg.enabled) {
+        Object.entries(roleCounters).forEach(([role, count]) => {
+            const threshold = dimCfg.roleThresholds?.[role];
+            if (!threshold || !threshold.crossPenalty) return;
+            const excess = count - threshold.max;
+            if (excess <= 0) return;
+            const penalty = excess * threshold.curve * 0.3;
+            if (consistencyRoles.includes(role)) { powerScore      -= penalty; resilienceScore -= penalty; }
+            if (powerRoles.includes(role))       { consistencyScore -= penalty; resilienceScore -= penalty; }
+            if (resilienceRoles.includes(role))  { consistencyScore -= penalty; powerScore      -= penalty; }
+        });
+    }
+
+    if (mainCards === 0) mainCards = 1;
+
+    // ── Scores absolutos (sin normalización ni ponderación) ──────
+    const consistency = Math.max(0, consistencyScore);
+    const power       = Math.max(0, powerScore);
+    const resilience  = Math.max(0, resilienceScore);
+
+    let penalty = 0;
+    if (mainCards > 43) penalty = (mainCards - 43) * 0.5;
+
+    const internalScore = Math.max(0, consistency + power + resilience - penalty);
+
+    return {
+        internalScore: parseFloat(internalScore.toFixed(2)),
+        consistency:   parseFloat(consistency.toFixed(2)),
+        power:         parseFloat(power.toFixed(2)),
+        resilience:    parseFloat(resilience.toFixed(2)),
+        totalCards,
+        mainCards,
+        penalty:       parseFloat(penalty.toFixed(2))
+    };
+},// ===============================
+    // ===============================
+    getDominantPillar: function (internalResult) {
+        const c = parseFloat(internalResult.consistency) || 0;
+        const p = parseFloat(internalResult.power)       || 0;
+        const r = parseFloat(internalResult.resilience)  || 0;
+        if (c === 0 && p === 0 && r === 0) return null;
+        if (c >= p && c >= r) return 'consistency';
+        if (p >= c && p >= r) return 'power';
+        return 'resilience';
+    },
+
+    // ===============================
+    calculateRPSModifier: function (deckPillar, metaPillar) {
+        if (!deckPillar || !metaPillar || deckPillar === metaPillar) {
+            return { modifier: 1.0, relation: 'neutral' };
+        }
+        // Leer ciclo desde Config — permite al usuario reordenarlo
+        const rpsRules = window.ConfigManager?.getPillarRPS?.()
+            || [['resilience','power'],['power','consistency'],['consistency','resilience']];
+        const BEATS = {};
+        rpsRules.forEach(([winner, loser]) => { BEATS[winner] = loser; });
+
+        if (BEATS[deckPillar] === metaPillar) return { modifier: 1.25, relation: 'advantage' };
+        if (BEATS[metaPillar] === deckPillar) return { modifier: 0.75, relation: 'disadvantage' };
+        return { modifier: 1.0, relation: 'neutral' };
+    },
+        // ===============================
+        calculateComponent: function (count, threshold) {
+            if (count >= threshold) {
+                return 10;
+            }
+            return (count / threshold) * 10;
+        },
+
+        // ===============================
+        renderStatsCard: function (stats) {
+            // Determinar color del score (verde > 7, amarillo 5-7, rojo < 5)
+            let scoreColor = '#00b894';
+            if (stats.internalScore < 5) {
+                scoreColor = '#d63031';
+            } else if (stats.internalScore < 7) {
+                scoreColor = '#fdcb6e';
+            }
+
+            return `
+                <div class="stats-card">
+                    <div class="stats-header">
+                        <h3>Internal Score</h3>
+                        <div class="stats-score" style="color: ${scoreColor}">
+                            ${stats.internalScore} / 10
+                        </div>
+                    </div>
+                    
+                    <div class="stats-breakdown">
+                        <div class="stat-row">
+                            <span class="stat-label">Consistencia (50%):</span>
+                            <span class="stat-value">${stats.consistency} / 10</span>
+                            <span class="stat-count">(${stats.consistencyCount} cartas)</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Potencia (30%):</span>
+                            <span class="stat-value">${stats.power} / 10</span>
+                            <span class="stat-count">(${stats.powerCount} cartas)</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Resiliencia (20%):</span>
+                            <span class="stat-value">${stats.resilience} / 10</span>
+                            <span class="stat-count">(${stats.resilienceCount} cartas)</span>
+                        </div>
+                    </div>
+
+                    <div class="stats-footer">
+                        <div class="stat-info">
+                            <span>Total de cartas: ${stats.totalCards}</span>
+                        </div>
+                        ${stats.penalty > 0 ? `
+                            <div class="stat-penalty">
+                                ⚠️ Penalización por exceso: -${stats.penalty}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        },
+
+        // ===============================
+        getDeckStats: function (deckCards) {
+            if (!deckCards || Object.keys(deckCards).length === 0) {
+                return null;
+            }
+
+            return this.calculateInternalScore(deckCards);
+        },
+    // ===============================
+    calculateCounterDeckScore: function (cards, powerData) {
+        // powerData = powerScoreCache de Estadisticas (puede ser null)
+        const powerMap = {};
+        if (powerData && powerData.cards) {
+            powerData.cards.forEach(pc => { powerMap[String(pc.cardId)] = pc; });
+        }
+        const hasPowerData = Object.keys(powerMap).length > 0;
+
+        let rawCounter    = 0;
+        let brickCount    = 0;
+        let totalCards    = 0;
+        let counterCards  = 0;
+        const breakdown   = [];
+
+        for (const [id, item] of Object.entries(cards)) {
+            if (item.location !== 'main' && item.location !== 'extra') continue;
+            const qty   = item.qty || 1;
+            const roles = (item.roles || []).map(r => r.toLowerCase());
+            totalCards += qty;
+
+            if (roles.includes('brick')) {
+                brickCount += qty;
+                continue;
+            }
+
+            const cached = powerMap[String(id)];
+
+            if (cached && cached.isCounter && cached.counterBonus > 0) {
+                const contrib = cached.counterBonus * qty;
+                rawCounter   += contrib;
+                counterCards += qty;
+                breakdown.push({
+                    name:    cached.cardData?.name || id,
+                    bonus:   cached.counterBonus,
+                    qty,
+                    contrib
+                });
+            } else if (!cached && window.SpecialtyAnalyzer && item.data) {
+                // Fallback sin cache: detección binaria
+                const analysis = SpecialtyAnalyzer.analyzeCard(item.data);
+                if (analysis.counters && analysis.counters.length > 0) {
+                    const contrib = 5 * qty;
+                    rawCounter   += contrib;
+                    counterCards += qty;
+                    breakdown.push({
+                        name:    item.data.name || id,
+                        bonus:   5,
+                        qty,
+                        contrib,
+                        estimated: true
+                    });
+                }
+            }
+        }
+
+        // Penalización por Bricks: proporcional a su presencia en el deck
+        const brickRatio   = totalCards > 0 ? brickCount / totalCards : 0;
+        const brickPenalty = Math.round(rawCounter * brickRatio * 0.6);
+        const finalScore   = Math.max(0, rawCounter - brickPenalty);
+
+        // Nivel descriptivo
+        let level, levelColor;
+    if (finalScore === 0)       { level = 'Sin capacidad Anti-META';  levelColor = '#636e72'; }
+        else if (finalScore <= 30)  { level = 'Anti-META Bajo';           levelColor = '#fdcb6e'; }
+        else if (finalScore <= 70)  { level = 'Anti-META Medio';          levelColor = '#0066cc'; }
+        else if (finalScore <= 120) { level = 'Anti-META Alto';           levelColor = '#00b894'; }
+        else                        { level = '⚡ Anti-META Élite';        levelColor = '#ffd700'; }                    { level = 'Meta Counter';  levelColor = '#ffd700'; }
+
+        return {
+            finalScore,
+            rawCounter,
+            brickPenalty,
+            brickCount,
+            counterCards,
+            totalCards,
+            breakdown: breakdown.sort((a, b) => b.contrib - a.contrib),
+            level,
+            levelColor,
+            hasPowerData
+        };
+    },
+    // ===============================
+    calculateExternalScore: function (deckCards, powerScoreCache, metaDecks) {
+        const result = {
+            externalScore:    null,
+            deckSpecs:        [],
+            threatCards:      [],
+            counterDecks:     [],
+            missingStaples:   [],
+            hasPowerData:     false,
+            hasSpecData:      false,
+            baseline:         null,
+            totalThreat:      0,
+            threatPct:        0
+        };
+
+if (window.SpecialtyAnalyzer) {
+    const pairs     = ConfigManager.getSpecialties();
+    const specCount = {};
+
+    for (const [, item] of Object.entries(deckCards)) {
+        if (!item.data) continue;
+        const cardRoles = (item.roles || []).map(r => r.toLowerCase());
+
+        // Método 1: keywords (pares con estructura antigua — defaultConfig)
+        const analysis = SpecialtyAnalyzer.analyzeCard(item.data);
+        (analysis.specializations || []).forEach(s => {
+            specCount[s.name] = (specCount[s.name] || 0) + (item.qty || 1);
+        });
+
+        pairs.forEach(pair => {
+            if (!pair.mechanicRole) return;
+            const pairRoleLower = pair.mechanicRole.toLowerCase();
+            if (cardRoles.includes(pairRoleLower)) {
+                const label = pair.mechanicRole;
+                specCount[label] = (specCount[label] || 0) + (item.qty || 1);
+            }
+        });
+    }
+
+    result.deckSpecs = Object.entries(specCount)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, count]) => ({ name, count }));
+    result.hasSpecData = result.deckSpecs.length > 0;
+}
+
+if (powerScoreCache && powerScoreCache.cards) {
+    result.hasPowerData = true;
+    const deckSpecNames = new Set(result.deckSpecs.map(s => s.name));
+    const pairs         = ConfigManager.getSpecialties();
+
+    // Roles del deck activo (para cruzar con counterRole de pares nuevos)
+    const deckRoles = new Set();
+    for (const [, item] of Object.entries(deckCards)) {
+        (item.roles || []).forEach(r => deckRoles.add(r.toLowerCase()));
+    }
+
+    powerScoreCache.cards.forEach(card => {
+        const overlap = [];
+
+        if (card.isCounter && card.counterBonus > 0) {
+            const countersSpecs = (card.specAnalysis?.counters || [])
+                .map(c => c.countersSpec).filter(Boolean);
+            countersSpecs.filter(s => deckSpecNames.has(s))
+                .forEach(s => overlap.push(s));
+        }
+
+        // Método 2: roles — pares nuevos {mechanicRole, counterRole}
+        const cardRoles = (card.detectedRoles || []).map(r => r.toLowerCase());
+        pairs.forEach(pair => {
+            if (!pair.counterRole || !pair.mechanicRole) return;
+            const counterRoleLower  = pair.counterRole.toLowerCase();
+            const mechanicRoleLower = pair.mechanicRole.toLowerCase();
+            if (cardRoles.includes(counterRoleLower) && deckRoles.has(mechanicRoleLower)) {
+                const label = pair.mechanicRole;
+                if (!overlap.includes(label)) overlap.push(label);
+            }
+        });
+
+        if (overlap.length > 0) {
+            const counterBonus = card.counterBonus || 0;
+            result.threatCards.push({
+                cardId:       card.cardId,
+                name:         card.cardData?.name || String(card.cardId),
+                presencePct:  card.presencePct,
+                counterBonus,
+                countersSpecs: overlap,
+                specAnalysis:  card.specAnalysis,
+                threatLevel:   Math.round(counterBonus * (card.presencePct / 100))
+            });
+        }
+    });
+
+    result.threatCards.sort((a, b) => b.threatLevel - a.threatLevel);
+}
+
+        if (result.hasPowerData && result.hasSpecData) {
+            const maxTheoreticalThreat = (powerScoreCache.cards || [])
+                .filter(c => c.isCounter && c.counterBonus > 0)
+                .reduce((sum, c) => sum + c.counterBonus, 0);
+
+            if (maxTheoreticalThreat === 0) {
+                result.externalScore = null;
+            } else {
+                const totalThreat = result.threatCards.reduce((s, c) => s + c.threatLevel, 0);
+                result.externalScore = parseFloat(
+                    Math.max(0, (1 - Math.min(1, totalThreat / maxTheoreticalThreat)) * 10).toFixed(1)
+                );
+                result.baseline    = maxTheoreticalThreat;
+                result.totalThreat = totalThreat;
+                result.threatPct   = Math.round((totalThreat / maxTheoreticalThreat) * 100);
+            }
+
+        }else if (result.hasPowerData) {
+            result.externalScore = 0;
+        }
+
+        if (result.threatCards.length > 0 && metaDecks) {
+            const threatIds = new Set(result.threatCards.map(c => String(c.cardId)));
+            const allDecks  = [];
+
+            for (const [folder, decks] of Object.entries(metaDecks)) {
+                (decks || []).forEach(deck => {
+                    if (!deck.cardFrequency) return;
+                    let unique = 0, copies = 0;
+                    Object.entries(deck.cardFrequency).forEach(([id, qty]) => {
+                        if (threatIds.has(String(id))) { unique++; copies += qty; }
+                    });
+                    if (unique > 0) {
+                        allDecks.push({
+                            name: deck.filename, folder,
+                            unique, copies,
+                            score: unique * 3 + copies
+                        });
+                    }
+                });
+            }
+            allDecks.sort((a, b) => b.score - a.score);
+            result.counterDecks = allDecks.slice(0, 5);
+        }
+
+        if (window.ConfigManager) {
+            try {
+                const staples  = ConfigManager.getStaples() || {};
+                const deckIds  = new Set(Object.keys(deckCards).map(String));
+
+                // Specs de las cartas que ME amenazan (mecánicas del oponente)
+                const threatEnemySpecs = new Set();
+                result.threatCards.forEach(tc => {
+                    (tc.specAnalysis?.specializations || []).forEach(s => {
+                        threatEnemySpecs.add(s.name);
+                    });
+                });
+
+                Object.values(staples).forEach(staple => {
+                    if (!staple || !staple.id) return;
+                    if (deckIds.has(String(staple.id))) return;
+
+                    // ¿Esta staple hace counter a alguna mecánica de las cartas que me amenazan?
+                    let isCounterOfThreat = false;
+                    if (powerScoreCache) {
+                        const cached = powerScoreCache.cards?.find(
+                            c => String(c.cardId) === String(staple.id)
+                        );
+                        if (cached?.isCounter) {
+                            const countersSpecs = (cached.specAnalysis?.counters || [])
+                                .map(c => c.countersSpec);
+                            isCounterOfThreat = countersSpecs.some(s => threatEnemySpecs.has(s));
+                        }
+                    }
+
+                    result.missingStaples.push({
+                        cardId:           staple.id,
+                        name:             staple.name,
+                        type:             staple.type || '',
+                        isCounterOfThreat
+                    });
+                });
+
+                result.missingStaples.sort((a, b) =>
+                    (b.isCounterOfThreat ? 1 : 0) - (a.isCounterOfThreat ? 1 : 0)
+                );
+            } catch (e) {
+                console.warn('[ExternalScore] Staples error:', e);
+            }
+        }
+
+        return result;
+    },
+    // ===============================
+    calculateEncounterRate: function (cardId, powerScoreCache, metaDecks) {
+        // avgCopies del meta para esta carta
+        let totalCopies = 0;
+        let deckCount   = 0;
+        let totalMainSizes = 0;
+        let decksWith = 0;
+
+        for (const decks of Object.values(metaDecks || {})) {
+            for (const deck of decks) {
+                if (!deck.cardFrequency) continue;
+                const deckTotal = Object.values(deck.cardFrequency)
+                    .reduce((s, c) => s + c, 0);
+                totalMainSizes += deckTotal;
+                deckCount++;
+
+                const copies = deck.cardFrequency[String(cardId)] || 0;
+                if (copies > 0) {
+                    totalCopies += copies;
+                    decksWith++;
+                }
+            }
+        }
+
+        if (deckCount === 0 || decksWith === 0) return null;
+
+        const avgCopies   = totalCopies / decksWith;
+        const avgDeckSize = totalMainSizes / deckCount;
+        const presencePct = decksWith / deckCount;
+
+        // P = 1 - C(deckSize-copies, 5) / C(deckSize, 5)
+        const hypergeometric = (N, K, n) => {
+            // P(X=0) = C(N-K,n) / C(N,n)
+            const comb = (a, b) => {
+                if (b > a) return 0;
+                let r = 1;
+                for (let i = 0; i < b; i++) {
+                    r = r * (a - i) / (i + 1);
+                }
+                return r;
+            };
+            return comb(N - K, n) / comb(N, n);
+        };
+
+        const deckSize   = Math.round(avgDeckSize);
+        const copies     = Math.min(Math.round(avgCopies), deckSize);
+        const pZero      = hypergeometric(deckSize, copies, 5);
+        const pAtLeastOne = 1 - pZero;
+
+        // Probabilidad ajustada: solo si el oponente lleva ese deck
+        const pAdjusted = pAtLeastOne * presencePct;
+
+        // En 10 duelos esperados, cuántas veces verás esta carta en mano inicial del oponente
+        const encountersIn10 = parseFloat((pAdjusted * 10).toFixed(2));
+
+        return {
+            avgCopies:      parseFloat(avgCopies.toFixed(2)),
+            avgDeckSize:    Math.round(avgDeckSize),
+            presencePct:    Math.round(presencePct * 100),
+            pAtLeastOne:    Math.round(pAtLeastOne * 100),
+            pAdjusted:      Math.round(pAdjusted * 100),
+            encountersIn10
+        };
+    }
+    };
+
+    window.Stats = Stats;
+
+
+
+// ── SpecialtyAnalyzer — detección de mecánicas en cartas/decks para External Score ──
 
 const SpecialtyAnalyzer = {
 
@@ -1296,7 +1858,7 @@ window.SpecialtyAnalyzer = SpecialtyAnalyzer;
 
 
 
-// ── NomenclatureAnalyzer — segmenta el efecto de una carta por categorías de nomenclatura para el highlight del CardViewer ──
+// ── NomenclatureAnalyzer — segmentación del efecto por categorías para highlight en CardViewer ──
 
 const NomenclatureAnalyzer = {
 

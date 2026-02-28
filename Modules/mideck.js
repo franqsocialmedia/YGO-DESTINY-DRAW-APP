@@ -1,35 +1,7 @@
 /* mideck.js — Deck activo, banlist y sidebar de Mi Deck */
 /* Absorbe: deck.js, banlist.js, engines.js */
 
-// Stats — shim completo; delega a Estadisticas cuando está disponible
-const Stats = {
-    calculateInternalScore: function(cards) {
-        if (window.Estadisticas && typeof Estadisticas.calculateInternalScore === 'function')
-            return Estadisticas.calculateInternalScore(cards);
-        return { internalScore: 0, consistency: 0, power: 0, resilience: 0 };
-    },
-    calculateExternalScore: function(cards, powerCache, metaDecks) {
-        if (window.Estadisticas && typeof Estadisticas.calculateExternalScore === 'function')
-            return Estadisticas.calculateExternalScore(cards, powerCache, metaDecks);
-        return { externalScore: 0 };
-    },
-    calculateCounterDeckScore: function(cards, powerCache) {
-        if (window.Estadisticas && typeof Estadisticas.calculateCounterDeckScore === 'function')
-            return Estadisticas.calculateCounterDeckScore(cards, powerCache);
-        return { counterScore: 0 };
-    },
-    calculateDiminishingReturns: function(roleName, count) {
-        if (window.Estadisticas && typeof Estadisticas.calculateDiminishingReturns === 'function')
-            return Estadisticas.calculateDiminishingReturns(roleName, count);
-        return count;
-    },
-    calculateRPSModifier: function(pillarA, pillarB) {
-        if (window.Estadisticas && typeof Estadisticas.calculateRPSModifier === 'function')
-            return Estadisticas.calculateRPSModifier(pillarA, pillarB);
-        return 1;
-    }
-};
-window.Stats = Stats;
+// Stats vive en data.js — se carga antes que mideck.js
 
 
 // Winrate — shim si no existe como módulo independiente
@@ -589,7 +561,9 @@ tryDeckExperimentacion: function (deckName) {
             if (!response.ok) throw new Error('Error al buscar cartas');
             
             const result = await response.json();
-            const cardsData = result.data;
+            const cardsData = result.data || [];
+
+            if (!cardsData.length) throw new Error('La API no devolvió cartas');
 
             // Construir nuevo deck
             const newCards = {};
