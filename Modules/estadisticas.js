@@ -1,31 +1,20 @@
-/* ====================================
-   ESTADISTICAS MODULE
-   Destiny Draw - Yu-Gi-Oh! App
-   Visualizacion de estadisticas y comparacion con meta
-   ==================================== */
+/* estadisticas.js — Análisis completo: Internal Score, External Score, Meta Decks, Power Score, Counter-Cards, Export, Duelista */
 
-   
-// VISUAL: "Especialización" renombrado a "Mecánica" para el usuario final.
-// Internamente el código sigue usando specAnalysis, specializations, specBonus, etc.
-// No cambiar los nombres de variables ni claves de objeto — solo los strings visibles.
-
-// VISUAL: "Counter-Deck Score" renombrado a "Nivel de poder Anti-META".
-// Las clases CSS (counter-deck-card, counter-deck-header, etc.) y las
 // variables internas (finalScore, counter, breakdown) no cambian.
 const Estadisticas = {
     container: null,
     metaDecks: {},
     metaFolders: [],
     currentMetaDeck: null,
-    selectedFolders: [],   // [] = Todo el Meta (multi-selección)
+    selectedFolders: [],
     deckListExpanded: false,
     powerScoreCache: null,
     powerScoreLoading: false,
-    metaCardLibrary: {},   // cardId → { id, name, type, roles }
-    metaDeckScores:    {},   // "folder|||deckname" → { internalScore, externalScore, pillars, calculatedAt }
-    crossScores:       {},   // "folder|||deckname" → { crossExternalScore, matchups }
-    topTierFilter:     'powercreep',   // 'powercreep' | 'consistency' | 'power' | 'resilience'
-    topTierPCMode:     'internal',     // 'internal' | 'external'  (solo aplica a powercreep)
+    metaCardLibrary: {},
+    metaDeckScores:    {},
+    crossScores:       {},
+    topTierFilter:     'powercreep',
+    topTierPCMode:     'internal',
 
     init: function () {
         this.container = document.getElementById('estadisticas-content');
@@ -98,11 +87,6 @@ _saveMetaDeckScores: function () {
     } catch (_) {}
 },
 // ===============================
-// CROSS EXTERNAL SCORE (N×N)
-// Calcula cuánto amenaza el meta completo a cada deck del meta.
-// Usa metaCardLibrary (specializations + counters) y metaDeckScores (pillars).
-// Todo en memoria — sin API calls.
-// ===============================
 calculateCrossExternalScores: function () {
     // ── 1. Construir perfil de cada deck ──────────────────────────
     const profiles = [];
@@ -115,9 +99,9 @@ calculateCrossExternalScores: function () {
             if (allIds.length === 0) return;
 
             // Mecánicas que HACE este deck (acumuladas por copias)
-            const ownMechanics   = {};  // mechName → copias
+            const ownMechanics   = {};
             // Counters que TIENE este deck contra mecánicas ajenas
-            const ownCounters    = {};  // countersSpec → copias
+            const ownCounters    = {};
 
             allIds.forEach(id => {
                 const entry = this.metaCardLibrary[String(id)];
@@ -166,27 +150,24 @@ calculateCrossExternalScores: function () {
         profiles.forEach(deckB => {
             if (deckB.key === deckA.key) return;
 
-            // ¿Cuánto countera B a A?
             // → copias de counters de B que apuntan a mecánicas de A
             let threat = 0;
             Object.entries(deckB.ownCounters).forEach(([spec, copies]) => {
                 if (deckA.ownMechanics[spec]) {
-                    // Peso = copias del counter × relevancia de la mecánica en A
                     threat += copies * Math.sqrt(deckA.ownMechanics[spec]);
                 }
             });
 
             // Escalar por internal score de B (un deck más fuerte golpea más fuerte)
             const bStrength = deckB.internalScore / maxInternalScore;
-            threat *= (0.5 + bStrength * 0.5);   // rango 0.5–1.0
+            threat *= (0.5 + bStrength * 0.5);
 
             // Modificador RPS (pilares)
             let rpsModifier = 1.0;
             if (deckA.dominantPillar && deckB.dominantPillar && window.Stats?.calculateRPSModifier) {
-                // Desde perspectiva de B vs A: si B tiene ventaja pilar sobre A,
                 // el daño de B a A aumenta → rpsModifier > 1 significa más amenaza
                 const rps = Stats.calculateRPSModifier(deckB.dominantPillar, deckA.dominantPillar);
-                rpsModifier = rps.modifier;   // 1.25 si B vence a A, 0.75 si A vence a B
+                rpsModifier = rps.modifier;
             }
             threat *= rpsModifier;
 
@@ -217,7 +198,7 @@ calculateCrossExternalScores: function () {
             crossExternalScore,
             totalThreat:  parseFloat(totalThreat.toFixed(2)),
             baseline:     parseFloat(baseline.toFixed(2)),
-            matchups:     matchups.slice(0, 5),  // top 5 amenazas
+            matchups:     matchups.slice(0, 5),
             calculatedAt: Date.now()
         };
     });
@@ -239,8 +220,6 @@ calculateCrossExternalScores: function () {
         if (totP >= totC && totP >= totR) return 'power';
         return 'resilience';
     },
-// Fetcha las cartas faltantes de un deck del meta, analiza roles y guarda en biblioteca.
-// Luego calcula y persiste internal+external score para ese deck.
 enrichAndScoreMetaDeck: async function (folderName, deckFilename) {
     const deckData = (this.metaDecks[folderName] || []).find(d => d.filename === deckFilename);
     if (!deckData) return;
@@ -253,7 +232,6 @@ enrichAndScoreMetaDeck: async function (folderName, deckFilename) {
     const uniqueIds = [...new Set(allIds.map(e => e.id))];
     const missing   = uniqueIds.filter(id => !this.metaCardLibrary[id]);
 
-    // Fetch en lotes de 10 — solo las que no están en la biblioteca
     for (let i = 0; i < missing.length; i += 10) {
         const batch = missing.slice(i, i + 10);
         try {
@@ -306,7 +284,6 @@ _computeAndSaveMetaDeckScore: function (folderName, deckFilename) {
     });
     addSec(sections.main,  'main');
     addSec(sections.extra, 'extra');
-    // side: excluido del scoring (ya pedido)
 
     if (Object.keys(fakeCards).length === 0) return;
 
@@ -351,7 +328,6 @@ recalculateAllMetaDeckScores: function () {
         });
     }
 
-    // Cross External Score N×N — solo si hay al menos 2 decks con datos
     if (count >= 2) {
         this.crossScores = this.calculateCrossExternalScores();
         try {
@@ -367,8 +343,6 @@ recalculateAllMetaDeckScores: function () {
     
     return count;
 },
-    // ===============================
-    // GESTIÓN DE CARPETAS
     // ===============================
     createFolder: function () {
         const folderName = prompt('Ingresa el mes y año del meta\nEjemplo: Febrero 2026');
@@ -393,7 +367,6 @@ recalculateAllMetaDeckScores: function () {
         if (!confirm('¿Eliminar carpeta "' + folderName + '" y todos sus decks?')) return;
         delete this.metaDecks[folderName];
         this.metaFolders = this.metaFolders.filter(f => f !== folderName);
-        // Remover de selección si estaba
         this.selectedFolders = this.selectedFolders.filter(f => f !== folderName);
         this.saveMetaData();
         this.render();
@@ -437,13 +410,11 @@ recalculateAllMetaDeckScores: function () {
                     const file = files[i];
                     setProgress(
                         `Importando "${file.name.replace('.ydk', '')}" (${i + 1} / ${files.length})...`,
-                        Math.round(((i) / files.length) * 50)   // 0–50% = parse
+                        Math.round(((i) / files.length) * 50)
                     );
                     await this.processYDKFile(file, folderName);
                 }
 
-                // ── Análisis de mecánicas carta por carta ──────────────
-                // Tras parsear todos los YDK, fetch+analizar las cartas faltantes.
                 // Esto alimenta metaCardLibrary con specializations y counters.
                 const allIds = [];
                 files.forEach(file => {
@@ -489,7 +460,6 @@ recalculateAllMetaDeckScores: function () {
                 }
                 this._saveMetaCardLibrary();
 
-                // ── Calcular scores de todos los decks recién importados ─
                 setProgress('Calculando scores...', 96);
                 files.forEach(file => {
                     const deckName = file.name.replace('.ydk', '');
@@ -550,7 +520,7 @@ recalculateAllMetaDeckScores: function () {
 
     parseYDK: function (content) {
         const lines   = content.split('\n').map(l => l.trim()).filter(l => l);
-        const cards   = [];   // plano — para cardFrequency (retrocompatible)
+        const cards   = [];
         const main    = [];
         const extra   = [];
         const side    = [];
@@ -597,19 +567,14 @@ recalculateAllMetaDeckScores: function () {
     },
 
     // ===============================
-    // FILTRO MULTI-CARPETA
-    // ===============================
     setFolderFilter: function (folder) {
         if (folder === 'all') {
-            // "Todo el Meta" limpia la selección
             this.selectedFolders = [];
         } else {
             const idx = this.selectedFolders.indexOf(folder);
             if (idx > -1) {
-                // Deseleccionar si ya estaba activa
                 this.selectedFolders.splice(idx, 1);
             } else {
-                // Agregar a la selección
                 this.selectedFolders.push(folder);
             }
         }
@@ -630,18 +595,11 @@ recalculateAllMetaDeckScores: function () {
         });
         return filtered;
     },
-// ===============================
-    // CARGAR DECK DEL META EN MI DECK
-    // Carga el .ydk del meta directamente en la pestaña Mi Deck,
-    // consultando la API para obtener los datos de cada carta.
-    // No requiere que el deck esté guardado en localStorage.
-    // ===============================
     loadMetaDeckToMiDeck: async function (folderName, deckFilename) {
         const deckData = (this.metaDecks[folderName] || [])
             .find(d => d.filename === deckFilename);
         if (!deckData) return;
 
-        // Fallback para decks importados antes de que sections existiera:
         // si no tiene sections, trata todo como main
         const sections = deckData.sections || {
             main:  Object.keys(deckData.cardFrequency || {}),
@@ -675,7 +633,6 @@ recalculateAllMetaDeckScores: function () {
         try {
             const newCards = {};
 
-            // Fetch en lotes de 5 para no saturar la API
             for (let i = 0; i < allIds.length; i += 5) {
                 const batch = allIds.slice(i, i + 5);
                 await Promise.all(batch.map(async ({ id, loc }) => {
@@ -694,7 +651,7 @@ recalculateAllMetaDeckScores: function () {
                         } catch (_) {}
                     }
 
-                    if (!cardData) return; // carta no encontrada, la omite
+                    if (!cardData) return;
 
                     // Freq de este id en este deck
                     const qty = deckData.cardFrequency?.[String(id)] || 1;
@@ -715,9 +672,7 @@ recalculateAllMetaDeckScores: function () {
                 return;
             }
 
-            // Cargar en Deck y navegar a Mi Deck
             if (window.Deck) {
-                // Confirmar si hay deck activo con cartas
                 if (Object.keys(Deck.cards).length > 0) {
                     const ok = confirm(
                         `¿Reemplazar el deck activo "${Deck.name}" con "${deckFilename}"?\n` +
@@ -734,12 +689,10 @@ recalculateAllMetaDeckScores: function () {
             if (window.Navigation) Navigation.showTab('mideck');
 
 
-            // Enriquecer en segundo plano — no bloquea la carga del deck
             this.enrichAndScoreMetaDeck(folderName, deckFilename).then(() => {
                 // Actualizar scores en la sección si está abierta
                 const sec = document.getElementById('meta-decks-sec');
                 if (sec && sec.style.display !== 'none') {
-                    // Re-render solo los items de scores sin colapsar la sección
                     document.querySelectorAll('[data-meta-score-key]').forEach(el => {
                         const [f, n] = el.dataset.metaScoreKey.split('|||');
                         const cached = this.metaDeckScores[el.dataset.metaScoreKey];
@@ -754,8 +707,6 @@ recalculateAllMetaDeckScores: function () {
             if (el) el.remove();
         }
     },
-    // ===============================
-    // MODAL VER DECK DEL META
     // ===============================
     viewMetaDeck: function (folderName, deckFilename) {
         if (!Deck || !Deck.getSavedDecks) return;
@@ -827,8 +778,6 @@ _renderMetaDeckScoreHTML: function (cached, key) {
         ${threatNote}
     `;
 },
-    // ===============================
-    // INTERNAL SCORE Y Anti-META
     // ===============================
     renderDeckStats: function () {
         if (!Deck || !Deck.cards || Object.keys(Deck.cards).length === 0) {
@@ -953,8 +902,6 @@ _renderMetaDeckScoreHTML: function (cached, key) {
         },
 
     // ===============================
-    // WIDGET FLOTANTE DE DECK
-    // ===============================
     createDeckFloatingWidget: function () {
         if (window.ContentManager && !ContentManager.isVisible('deck-floating-widget')) return;
         if (document.getElementById('deck-floating-widget')) return;
@@ -1045,8 +992,6 @@ _renderMetaDeckScoreHTML: function (cached, key) {
         }, 100);
     },
 
-    // ===============================
-    // RECURRENCIA DE CARTAS DEL META
     // ===============================
     calculateMetaCardStats: function () {
         const filtered = this.getFilteredDecks();
@@ -1142,9 +1087,6 @@ _renderMetaDeckScoreHTML: function (cached, key) {
         }
     },
 
-    // ===============================
-    // SISTEMA DE PUNTOS DE PODER
-    // ===============================
     loadPowerScores: async function () {
         const container = document.getElementById('power-scores-content');
         if (!container || this.powerScoreLoading) return;
@@ -1160,7 +1102,6 @@ _renderMetaDeckScoreHTML: function (cached, key) {
             const result = await this.calculatePowerScores();
             this.powerScoreCache = result;
             this.powerScoreCache = result;
-            // Persistir para que Match-up funcione aunque se navegue a Mi Deck
             try {
                 localStorage.setItem('yugioh_power_cache', JSON.stringify(result));
             } catch (_) {}
@@ -1173,8 +1114,6 @@ _renderMetaDeckScoreHTML: function (cached, key) {
     },
 
     refreshDependentSections: function () {
-        // Si Mi Deck está visible, re-renderizar la lista de decks guardados
-        // para que Power Level y Match-up usen el cache recién calculado
         if (window.Deck && typeof Deck.render === 'function') {
             Deck.render();
         }
@@ -1212,7 +1151,6 @@ _renderMetaDeckScoreHTML: function (cached, key) {
             isCounter:    false
         }));
 
-        // PASO 2: fetch card data en lotes de 5
         for (let i = 0; i < cards.length; i += 5) {
             await Promise.all(cards.slice(i, i + 5).map(async item => {
                 try {
@@ -1223,8 +1161,6 @@ _renderMetaDeckScoreHTML: function (cached, key) {
                         item.specAnalysis = window.SpecialtyAnalyzer
                             ? SpecialtyAnalyzer.analyzeCard(item.cardData)
                             : { specializations: [], counters: [] };
-                        // Roles detectados con las keywords del Config del usuario
-                        // — misma vara de medir que los decks guardados
                         item.detectedRoles = window.Deck?.autoAssignRoles?.(item.cardData) ?? [];
                     }
                 } catch (_) {}
@@ -1239,7 +1175,6 @@ _renderMetaDeckScoreHTML: function (cached, key) {
             });
         });
 
-        // PASO 4: bonus de mecánica (primera pasada de scores)
         cards.forEach(card => {
             (card.specAnalysis?.specializations || []).forEach(spec => {
                 const w = specWeight[spec.name] || 0;
@@ -1248,9 +1183,6 @@ _renderMetaDeckScoreHTML: function (cached, key) {
             card.phase2Score = card.baseScore + card.specBonus;
         });
 
-        // PASO 5: counter bonus amplificado por frecuencia de la mecánica countered
-        // Si la mecánica X es muy usada en el meta (alto specWeight), la carta que
-        // la countera es más peligrosa → mayor counterBonus → mayor threatLevel en External Score.
         cards.forEach(card => {
             card.counterDetails = [];
             (card.specAnalysis?.counters || []).forEach(ctr => {
@@ -1273,7 +1205,6 @@ _renderMetaDeckScoreHTML: function (cached, key) {
             });
         });
 
-        // PASO 6: power final × multiplicador de copias
         cards.forEach(card => {
             const raw   = card.baseScore + card.specBonus + card.counterBonus;
             const multi = Math.min(1.0, Math.max(0.33, parseFloat(card.avgCopies) / 3));
@@ -1354,8 +1285,6 @@ _renderMetaDeckScoreHTML: function (cached, key) {
     },
 
     // ===============================
-    // COUNTER-CARDS DEL META
-    // ===============================
     renderCounterCardStats: function () {
         if (!this.powerScoreCache) {
             return `<p class="stats-empty">Requiere calcular ⚡ Poder de Cartas primero.</p>`;
@@ -1414,15 +1343,12 @@ _renderMetaDeckScoreHTML: function (cached, key) {
             <div class="counter-cards-list">${rows}</div>`;
     },
 // ===============================
-// TOP TIER
-// ===============================
 _getTopTierScore: function (scoreData) {
     const f = this.topTierFilter;
     const p = scoreData?.pillars;
     if (f === 'consistency') return p?.consistency ?? null;
     if (f === 'power')       return p?.power       ?? null;
     if (f === 'resilience')  return p?.resilience  ?? null;
-    // powercreep
     return this.topTierPCMode === 'external'
         ? (scoreData?.externalScore ?? null)
         : (scoreData?.internalScore ?? null);
@@ -1470,13 +1396,11 @@ for (const [folder, decks] of Object.entries(this.metaDecks)) {
     });
 }
 
-// Agregar decks guardados del usuario
 this._getSavedDecksForTopTier().forEach(mine => {
     const sd = { internalScore: mine.internalScore, externalScore: mine.externalScore,
                  pillars: { consistency: mine.consistency, power: mine.power, resilience: mine.resilience } };
     const score = this._getTopTierScore(sd);
     if (score === null) return;
-    // Si ya existe un deck del meta con el mismo nombre, no duplicar
     if (allDecks.some(d => d.name === mine.name && !d.isMine)) return;
     allDecks.push({ ...mine, score });
 });
@@ -1488,7 +1412,6 @@ this._getSavedDecksForTopTier().forEach(mine => {
         </p>`;
     }
 
-    // ── Ordenar descendente por score activo ─────────────────────
     allDecks.sort((a, b) => b.score - a.score);
     const N = allDecks.length;
 
@@ -1496,11 +1419,6 @@ this._getSavedDecksForTopTier().forEach(mine => {
     const totalPower   = allDecks.reduce((s, d) => s + d.score, 0);
     const avgPower     = totalPower / N;
 
-    // ── Asignar tier por promedio + distribución interna ─────────
-    // Decks por debajo del promedio → Fun
-    // Decks en el promedio o por encima → divididos en 3 bloques:
-    //   Tier 1 = top 20% de ese grupo
-    //   Tier 2 = siguiente 30%
     //   Tier 3 = último 50%
     const aboveAvg = allDecks.filter(d => d.score >= avgPower);
     const nAbove   = aboveAvg.length;
@@ -1508,12 +1426,11 @@ this._getSavedDecksForTopTier().forEach(mine => {
     // Construir un Set con las keys de los decks sobre el promedio
     const aboveKeys = new Set(aboveAvg.map(d => d.key));
 
-    // Para los decks sobre el promedio, ¿en qué posición relativa están?
     // allDecks ya está ordenado desc, así que los primeros nAbove son los above-avg
     const tierOf = (i) => {
-        if (!aboveKeys.has(allDecks[i].key)) return 4; // Fun
+        if (!aboveKeys.has(allDecks[i].key)) return 4;
         // Posición relativa dentro del grupo above-avg (0-based)
-        const relPos = i; // ya están primeros en el array ordenado desc
+        const relPos = i;
         const relPct = ((relPos + 1) / nAbove) * 100;
         if (relPct <= 20) return 1;
         if (relPct <= 50) return 2;
@@ -1673,8 +1590,6 @@ return `
 },
 
 // ===============================
-// SELECTOR DE DECK PARA ANÁLISIS
-// ===============================
 renderDeckSelectorPanel: function () {
     const activeName = window.Deck?.name || '';
     const hasCards   = window.Deck && Object.keys(Deck.cards || {}).length > 0;
@@ -1742,7 +1657,6 @@ loadSavedDeckForAnalysis: function (deckName) {
         if (!confirm(`¿Reemplazar "${Deck.name}" con "${deckName}"?\nGuarda tu deck si no quieres perderlo.`)) return;
     }
     Deck.confirmLoadDeck(deckName);
-    // updateDeckStats se dispara vía onDeckLoaded → re-render automático del panel
 },
 
 loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
@@ -1810,7 +1724,6 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
             if (Deck.render) Deck.render();
         }
         if (window.Deck) Deck.onDeckLoaded();
-        // Sin Navigation.showTab — permanece en Estadísticas
 
         this.enrichAndScoreMetaDeck(folderName, deckFilename).then(() => {
             const sec = document.getElementById('meta-decks-sec');
@@ -1826,8 +1739,6 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
         if (el) el.remove();
     }
 },
-    // ===============================
-    // ANÁLISIS COMPLETO DEL DECK
     // ===============================
     renderDeckAnalysis: function () {
     const selectorPanel = `
@@ -2055,8 +1966,6 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
 },
 
     // ===============================
-    // ABRIR CARTA DESDE ESTADÍSTICAS
-    // ===============================
     openCachedCard: function (cardId) {
         if (!window.CardViewer) return;
         const cached = this.powerScoreCache?.cards?.find(c => String(c.cardId) === String(cardId));
@@ -2078,8 +1987,6 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
         }
     },
 
-    // ===============================
-    // EXPORTACIONES
     // ===============================
     exportDeckReport: function () {
         if (!Deck || !Deck.cards || Object.keys(Deck.cards).length === 0) {
@@ -2180,8 +2087,6 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
     },
 
     // ===============================
-    // RENDER PRINCIPAL
-    // ===============================
     render: function () {
         if (!this.container) return;
 
@@ -2218,8 +2123,6 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
         let html = `<h2>Estadísticas</h2>`;
 
         
-        // Winrate movido a Simuladores → pestaña Winrate
-// ── 2.5 TOP TIER ──────────────────────────────────────────────
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('top-tier-sec'); Estadisticas._refreshTopTier()">
                 🏆 Top Tier
@@ -2228,7 +2131,6 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
                 ${this.renderTopTier()}
             </div>`;
 
-        // ── 3. GESTIÓN DE CARPETAS ────────────────────────────────
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('meta-management-sec')">
                 Gestión de Carpetas del Meta
@@ -2248,7 +2150,6 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
             </div>`;
 
 
-        // ── 4. DECKS DEL META (con multi-selección de carpetas) ───
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('meta-decks-sec')">
                 Decks del Meta
@@ -2292,7 +2193,6 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
                 </div>
             </div>`;
 
-        // ── 5. RECURRENCIA DE CARTAS ──────────────────────────────
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('meta-card-stats-sec')">
                 Recurrencia de Cartas en el Meta
@@ -2301,7 +2201,6 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
                 ${this.renderMetaCardStats()}
             </div>`;
 
-        // ── 6. PODER DE CARTAS ────────────────────────────────────
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('power-scores-sec')">
                 ⚡ Poder de Cartas del Meta
@@ -2322,7 +2221,6 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
                 </div>
             </div>`;
 
-        // ── 7. COUNTER-CARDS ──────────────────────────────────────
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('counter-cards-sec')">
                 🛡️ Counter-Cards del Meta
@@ -2331,7 +2229,6 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
                 ${this.renderCounterCardStats()}
             </div>`;
 
-        // ── 8. EXPORTAR DATOS ─────────────────────────────────────
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('export-sec')">
                 📤 Exportar Datos
@@ -2442,8 +2339,6 @@ _getSavedDecksForTopTier: function () {
     }
     return result;
 },
-    // ===============================
-    // UTILIDADES
     // ===============================
     toggleSection: function (id) {
         const el = document.getElementById(id);

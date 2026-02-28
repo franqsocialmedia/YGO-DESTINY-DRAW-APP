@@ -11,17 +11,13 @@
          ARCHIVOS CSS
          Estilos separados por módulo
          ==================================== -->
-    <link rel="stylesheet" href="css/style_global.css">
+    <!-- CSS consolidado: 5 archivos temáticos + responsive separado -->
+    <link rel="stylesheet" href="css/style_core.css">
     <link rel="stylesheet" href="css/style_buscador.css">
     <link rel="stylesheet" href="css/style_mideck.css">
-    <link rel="stylesheet" href="css/style_estadisticas.css">
     <link rel="stylesheet" href="css/style_simuladores.css">
-    <link rel="stylesheet" href="css/style_meta.css">
-    <link rel="stylesheet" href="css/style_formacion.css">
     <link rel="stylesheet" href="css/style_config.css">
-    <link rel="stylesheet" href="css/style_cardviewer.css">
-    <link rel="stylesheet" href="css/style_welcome.css">
-    <link rel="stylesheet" href="css/style_simuladores.css">
+    <link rel="stylesheet" href="css/responsive_style.css">
 
     <!-- CANVAS DESCARGADO -->
     <script src="Modules/libs/html2canvas.min.js"></script>
@@ -111,7 +107,7 @@
     <!-- Columna izquierda: Cover Art -->
     <div class="buscador-cover-sidebar">
         <img 
-            src="img/Protagonistas.webp"
+            src="https://static.wikia.nocookie.net/yugiohenespanol/images/0/0e/Protagonistas_Yu-Gi-Oh%21_V-Jump.png/revision/latest/scale-to-width-down/1000?cb=20150521161844&path-prefix=es"
             class="buscador-cover-img"
             alt="Yu-Gi-Oh! Protagonistas"
             loading="lazy"
@@ -259,35 +255,18 @@
          SpecialtyAnalyzer debe cargarse después de ConfigManager
          NomenclatureAnalyzer debe cargarse después de ConfigManager
          ==================================== -->
+    <!-- JS consolidado: 9 módulos en orden de dependencias -->
     <script src="Modules/logger.js"></script>
-    <script src="Modules/navigation.js"></script>
     <script src="Modules/parallax.js"></script>
-    <script src="Modules/utils.js"></script>
-    <script src="Modules/cardviewer.js"></script>
+    <script src="Modules/core.js"></script>
+    <script src="Modules/data.js"></script>
     <script src="Modules/buscador.js"></script>
-    <script src="Modules/configmanager.js"></script>
-    <script src="Modules/specialty-analyzer.js"></script>
-    <script src="Modules/nomenclature-analyzer.js"></script>
-    <script src="Modules/stats.js"></script>
-    <script src="Modules/deck.js"></script>
+    <script src="Modules/mideck.js"></script>
+    <script src="Modules/historial.js"></script>
     <script src="Modules/estadisticas.js"></script>
-    <script src="Modules/config.js"></script>
-    <script src="Modules/help.js"></script>
-    <script src="Modules/winrate.js"></script>
-    <script src="Modules/duelista.js"></script>
-    <script src="Modules/favoritas.js"></script>
-    <script src="Modules/banlist.js"></script>
-    <script src="Modules/torneo.js"></script>
-    <script src="Modules/duelo.js"></script>
-    <script src="Modules/matchups.js"></script>
-    <script src="Modules/hipergeometria.js"></script>
-    <script src="Modules/engines.js"></script>
-    <script src="Modules/experimentacion.js"></script>
-    <script src="Modules/zonapractica.js"></script>
-    <script src="Modules/meta.js"></script>
+    <script src="Modules/simuladores.js"></script>
+    <script src="Modules/simuladores-campo.js"></script>
     <script src="Modules/formacion.js"></script>
-    <script src="Modules/contentmanager.js"></script>
-    <script src="Modules/welcome.js"></script>
 
     
     <button id="scrollTopBtn">▲</button>

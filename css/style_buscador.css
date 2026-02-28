@@ -1,12 +1,5 @@
-/* ====================================
-   BUSCADOR STYLES
-   Destiny Draw - Yu-Gi-Oh! App
-   Estilos para el módulo de búsqueda de cartas
-   ==================================== */
+/* ── style_buscador.css ── */
 
-/* ====================================
-   CONTENEDOR PRINCIPAL
-   ==================================== */
 
 /* Contenedor del módulo buscador */
 #buscador-content {
@@ -23,9 +16,6 @@
     border: 1px solid var(--border-color);
 }
 
-/* ====================================
-   BARRA DE BÚSQUEDA PRINCIPAL
-   ==================================== */
 
 /* Contenedor de la barra de búsqueda */
 .search-bar {
@@ -61,9 +51,6 @@
     box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
 }
 
-/* ====================================
-   BOTONES
-   ==================================== */
 
 /* Botón base */
 .btn {
@@ -146,9 +133,6 @@
     transform: translateY(0);
 }
 
-/* ====================================
-   FILTROS ADICIONALES
-   ==================================== */
 
 /* Contenedor de filtros */
 .filters-container {
@@ -199,10 +183,6 @@
     font-style: italic;
 }
 
-/* ====================================
-   CHIPS DE PALABRAS CLAVE
-   Badges visuales de las palabras clave activas
-   ==================================== */
 
 /* Contenedor de chips */
 .filter-chips {
@@ -275,9 +255,6 @@
     transform: translateY(-2px);
 }
 
-/* ====================================
-   RESULTADOS
-   ==================================== */
 
 /* Contenedor de resultados */
 .results-grid {
@@ -320,9 +297,6 @@
     color: #f1f1f1;
 }
 
-/* ====================================
-   ESTADOS ESPECIALES
-   ==================================== */
 
 /* Estado de carga */
 .loading {
@@ -350,9 +324,6 @@
     font-size: 1.1rem;
 }
 
-/* ====================================
-   MODAL DE CARTA
-   ==================================== */
 
 /* Overlay del modal (fondo oscuro) */
 .card-modal-overlay {
@@ -470,9 +441,7 @@
     line-height: 1.8;
     color: rgba(241, 241, 241, 0.9);
 }
-/* ====================================
-   ACCIONES DE CARTA EN BUSCADOR
-   ==================================== */
+
 
 /* Item de carta con posición relativa para el overlay */
 .card-item {
@@ -746,7 +715,6 @@
 .adv-input:focus { border-color: #5aa0ff; }
 
 
-
 /* ── Selector de Arquetipos ──────────────────────────────── */
 .adv-filters-toggle-row {
     display: flex;
@@ -827,10 +795,6 @@
     max-height: calc(50vh - 80px);
 }
 
-/* ====================================
-   CARD VIEWER MODAL
-   Estilo inspirado en pestaña Config
-   ==================================== */
 
 .cv-overlay {
     position: fixed;
@@ -1052,81 +1016,3 @@
     color: #fff;
 }
 
-@media (max-width: 480px) {
-    .cv-modal { width: calc(100vw - 32px); }
-}
-/* ====================================
-   RESPONSIVE - TABLET
-   ==================================== */
-@media (max-width: 768px) {
-    /* Barra de búsqueda en columna */
-    .search-bar {
-        flex-direction: column;
-    }
-
-    .search-input {
-        min-width: 100%;
-    }
-
-    .btn {
-        width: 100%;
-        justify-content: center;
-    }
-
-    /* Grid de resultados más compacto */
-    .results-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: var(--spacing-sm);
-    }
-
-    /* Contenedor de búsqueda más compacto */
-    .search-container {
-        padding: var(--spacing-md);
-    }
-
-    /* Modal responsive */
-    .modal-content {
-        flex-direction: column;
-    }
-
-    .modal-image {
-        flex: none;
-        max-width: 300px;
-        margin: 0 auto;
-    }
-}
-
-/* ====================================
-   RESPONSIVE - MÓVIL
-   ==================================== */
-@media (max-width: 480px) {
-    /* Grid de una sola columna */
-    .results-grid {
-        grid-template-columns: 1fr;
-    }
-
-    /* Botones más compactos */
-    .btn {
-        padding: 10px 16px;
-        font-size: 0.95rem;
-    }
-
-    /* Inputs más compactos */
-    .search-input,
-    .filter-input {
-        font-size: 0.9rem;
-    }
-
-    /* Modal más compacto */
-    .card-modal {
-        width: 95%;
-    }
-
-    .modal-content {
-        padding: var(--spacing-md);
-    }
-
-    .modal-info h3 {
-        font-size: 1.2rem;
-    }
-}

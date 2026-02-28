@@ -1,20 +1,10 @@
-/* ====================================
-   MI DECK STYLES
-   Destiny Draw - Yu-Gi-Oh! App
-   Estilos para el módulo de gestión de deck
-   ==================================== */
+/* ── style_mideck.css ── */
 
-/* ====================================
-   CONTENEDOR PRINCIPAL
-   ==================================== */
 
 #mideck-content {
     animation: fadeIn 0.4s ease;
 }
 
-/* ====================================
-   ESTADO VACÍO
-   ==================================== */
 
 .deck-empty-state {
     text-align: center;
@@ -36,9 +26,6 @@
     color: rgba(241, 241, 241, 0.7) !important;
 }
 
-/* ====================================
-   TÍTULO DEL DECK
-   ==================================== */
 
 .deck-title {
     color: var(--gold-color);
@@ -57,9 +44,6 @@
     transform: translateX(5px);
 }
 
-/* ====================================
-   TÍTULOS DE SECCIÓN
-   ==================================== */
 
 .deck-section-title {
     color: var(--text-light);
@@ -77,9 +61,6 @@
     border-left-color: var(--gold-color);
 }
 
-/* ====================================
-   SECCIONES (Main, Extra, Side)
-   ==================================== */
 
 .deck-section {
     background: var(--bg-card);
@@ -96,9 +77,6 @@
     font-style: italic;
 }
 
-/* ====================================
-   FILAS DE CARTAS
-   ==================================== */
 
 .deck-row {
     display: flex;
@@ -265,9 +243,6 @@
     transform: translateY(-2px);
 }
 
-/* ====================================
-   ACCIONES
-   ==================================== */
 
 .deck-actions {
     display: flex;
@@ -284,9 +259,6 @@
     min-width: 150px;
 }
 
-/* ====================================
-   MODAL / OVERLAY
-   ==================================== */
 
 .deck-overlay {
     position: fixed;
@@ -422,9 +394,6 @@
     accent-color: var(--accent-color);
 }
 
-/* ====================================
-   LISTA DE DECKS GUARDADOS
-   ==================================== */
 
 #deck-list-container {
     margin-bottom: var(--spacing-xl);
@@ -584,9 +553,6 @@
     margin-top: auto;
 }
 
-/* ====================================
-   BOTONES GENERALES
-   ==================================== */
 
 .btn {
     padding: 10px 20px;
@@ -609,9 +575,6 @@
     box-shadow: 0 4px 8px rgba(0, 102, 204, 0.4);
 }
 
-/* ====================================
-   STATS CARD - INTERNAL SCORE
-   ==================================== */
 
 .stats-card {
     background: linear-gradient(135deg, rgba(0, 51, 102, 0.6), rgba(0, 43, 77, 0.8));
@@ -696,9 +659,6 @@
     font-size: 0.9rem;
 }
 
-/* ====================================
-   ANIMACIONES
-   ==================================== */
 
 @keyframes slideUp {
     from {
@@ -710,12 +670,7 @@
         transform: translateY(0);
     }
 }
-/* ====================================
-   ESTILOS PARA BADGES DE SUBTIPOS
-   Destiny Draw - Yu-Gi-Oh! App
-   
-   Agregar al final de style_deck.css
-   ==================================== */
+
 
 /* Badge de subtipo (amarillo con letras negras) */
 .subtype-badge {
@@ -762,12 +717,7 @@
     filter: saturate(30%);
     transition: filter 0.3s ease;
 }
-/* ====================================
-   ESTILOS PARA BADGES DE SUBTIPOS
-   Destiny Draw - Yu-Gi-Oh! App
-   
-   Agregar al final de style_deck.css
-   ==================================== */
+
 
 /* Badge de subtipo (amarillo con letras negras) */
 .subtype-badge {
@@ -797,12 +747,7 @@
     transform: scale(1.05);
     transition: all 0.2s ease;
 }
-/* ====================================
-   ESTILOS PARA WIDGET FLOTANTE CON THUMBNAILS
-   Destiny Draw - Yu-Gi-Oh! App
-   
-   Agregar al final de style.css o crear archivo separado
-   ==================================== */
+
 
 /* Modificar widget-deck-item para incluir imagen */
 .widget-deck-item {
@@ -891,9 +836,7 @@
 .widget-deck-list::-webkit-scrollbar-thumb:hover {
     background: #5dade2;
 }
-/* ====================================
-   BLOQUE DE ESTADÍSTICAS DEL DECK
-   ==================================== */
+
 
 .deck-stats-block {
     background: var(--bg-card);
@@ -950,10 +893,6 @@
     font-size: 0.85rem;
 }
 
-@media (max-width: 480px) {
-    .ds-row { flex-direction: column; gap: 8px; }
-    .ds-group { min-width: 0; }
-}
 .role-panel-header {
     display: flex;
     align-items: center;
@@ -1020,10 +959,6 @@
     box-shadow: 0 0 5px rgba(231, 76, 60, 0.55);
 }
 
-/* ============================================================
-   MATCHUPS — añadir al FINAL de css/style_mideck.css
-   (o al archivo CSS correspondiente al módulo Mi Deck)
-   ============================================================ */
 
 /* ─── BADGE DE CONTEO EN TÍTULO ─────────────────────────── */
 .matchup-count-badge {
@@ -1297,9 +1232,7 @@
     font-weight: 700 !important;
     margin-top: 4px;
 }
-/* ============================================================
-   DECK STATS GRÁFICA — añadir al FINAL de css/style_mideck.css
-   ============================================================ */
+
 
 /* ─── SUB-TABS (Composición / Gráfica) ───────────────────── */
 .dstab-tabs {
@@ -1443,11 +1376,7 @@
     border-radius: 9px;
 }
 .dsg-bar-val-lg { font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.75); width: 28px; }
-/* ====================================
-   ENGINES MODULE STYLES
-   Destiny Draw - Yu-Gi-Oh! App
-   Añadir al final de style_mideck.css
-   ==================================== */
+
 
 /* ── SIDEBAR ──────────────────────────────────────────────── */
 .engines-sidebar {
@@ -2114,28 +2043,9 @@
     margin-top: 2px;
 }
 /* ── RESPONSIVE ───────────────────────────────────────────── */
-@media (max-width: 700px) {
-    .engines-sidebar { flex: none; width: 100%; max-width: none; position: static; }
-    .eng-create-right { flex: none; width: 100%; }
-    .eng-modal-footer { flex-direction: column; }
-    .eng-modal-footer .eng-action-btn { width: 100%; }
-}
 /* ─── RESPONSIVE ─────────────────────────────────────────── */
-@media (max-width: 600px) {
-    .dsg-bar-label { width: 64px; font-size: 0.65rem; }
-    .dsg-bar-label-lg { width: 72px; font-size: 0.72rem; }
-    .dsg-group { min-width: 150px; padding: 10px; }
-}
 /* ─── RESPONSIVE ─────────────────────────────────────────── */
-@media (max-width: 600px) {
-    .matchup-row-main { gap: 6px; }
-    .matchup-opponent-name { font-size: 0.8rem; }
-    .matchup-panel { padding: 20px 14px 16px; }
-}
-/* ====================================
-   BUSCADOR COVER SIDEBAR
-   Imagen lateral que crece con el contenido
-   ==================================== */
+
 
 .buscador-cover-sidebar {
     flex: 0 0 160px;
@@ -2166,13 +2076,6 @@
     opacity: 1;
 }
 
-@media (max-width: 700px) {
-    .buscador-cover-sidebar { display: none; }
-}
-
-/* ====================================
-   ENGINES SIDEBAR — EXT TABS (Staples/Favoritas)
-   ==================================== */
 
 /* Los panels ext están ocultos por defecto */
 .eng-ext-panel {
@@ -2224,43 +2127,6 @@
     text-align: center;
 }
 
-@media (max-width: 600px) {
-    .deck-row {
-        display: grid;
-        grid-template-columns: 60px 1fr;
-        grid-template-areas:
-            "img name"
-            "roles roles"
-            "qty buttons";
-    }
-
-}
-
-@media (max-width: 480px) {
-    .deck-img {
-        width: 50px;
-    }
-
-    .deck-name {
-        font-size: 0.85rem;
-    }
-
-    .deck-qty button {
-        width: 25px;
-        height: 25px;
-        font-size: 0.9rem;
-    }
-
-    .deck-move {
-        font-size: 0.75rem;
-        padding: 4px 8px;
-    }
-
-    .deck-modal {
-        width: 95%;
-        padding: var(--spacing-md);
-    }
-}
 
 /* ── Sub-pestañas Mi Deck ── */
 .mideck-subtabs-nav {
