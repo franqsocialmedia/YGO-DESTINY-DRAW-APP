@@ -33,7 +33,7 @@
     font-size: 1rem;
     border: 2px solid var(--border-color);
     border-radius: 8px;
-    background: rgba(0, 26, 51, 0.6);
+    background: rgba(26, 0, 8, 0.6);
     color: var(--text-light);
     transition: all var(--transition-normal);
     outline: none;
@@ -47,7 +47,7 @@
 /* Estado focus del input */
 .search-input:focus {
     border-color: var(--gold-color);
-    background: rgba(0, 26, 51, 0.8);
+    background: rgba(26, 0, 8, 0.8);
     box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
 }
 
@@ -103,12 +103,12 @@
 .btn-primary {
     background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
     color: var(--text-light);
-    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.3);
+    box-shadow: 0 4px 8px rgba(155, 16, 48, 0.3);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #0080ff, var(--accent-color));
-    box-shadow: 0 6px 12px rgba(0, 102, 204, 0.5);
+    background: linear-gradient(135deg, #c0143c, var(--accent-color));
+    box-shadow: 0 6px 12px rgba(155, 16, 48, 0.5);
     transform: translateY(-2px);
 }
 
@@ -137,7 +137,7 @@
 /* Contenedor de filtros */
 .filters-container {
     padding-top: var(--spacing-md);
-    border-top: 1px solid rgba(0, 102, 204, 0.3);
+    border-top: 1px solid rgba(155, 16, 48, 0.3);
 }
 
 /* Label de filtros */
@@ -156,7 +156,7 @@
     font-size: 0.95rem;
     border: 2px solid var(--border-color);
     border-radius: 8px;
-    background: rgba(0, 26, 51, 0.6);
+    background: rgba(26, 0, 8, 0.6);
     color: var(--text-light);
     transition: all var(--transition-normal);
     outline: none;
@@ -171,7 +171,7 @@
 /* Estado focus del filtro */
 .filter-input:focus {
     border-color: var(--gold-color);
-    background: rgba(0, 26, 51, 0.8);
+    background: rgba(26, 0, 8, 0.8);
     box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
 }
 
@@ -204,7 +204,7 @@
     border-radius: 20px;
     font-size: 0.9rem;
     font-weight: 600;
-    box-shadow: 0 2px 6px rgba(0, 102, 204, 0.4);
+    box-shadow: 0 2px 6px rgba(155, 16, 48, 0.4);
     transition: all var(--transition-fast);
     animation: chipFadeIn 0.3s ease;
 }
@@ -251,7 +251,7 @@
 
 /* Hover sobre el chip completo */
 .filter-chip:hover {
-    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.6);
+    box-shadow: 0 4px 8px rgba(155, 16, 48, 0.6);
     transform: translateY(-2px);
 }
 
@@ -268,7 +268,7 @@
 /* Item de carta individual */
 
 .card-item {
-    background: #002b4d;
+    background: #2d0012;
     border-radius: 8px;
     padding: 6px;
     text-align: center;
@@ -485,13 +485,13 @@
 
 /* Botón Ver */
 .btn-view {
-    background: linear-gradient(135deg, #0066cc, #004080);
+    background: linear-gradient(135deg, #9b1030, #6b001f);
     color: white;
     transform: scale(0.85);
 }
 
 .btn-view:hover {
-    background: linear-gradient(135deg, #0080ff, #0066cc);
+    background: linear-gradient(135deg, #c0143c, #9b1030);
     transform: scale(1.05);
 }
 
@@ -523,7 +523,7 @@
     width: 200px;
     min-width: 180px;
     max-width: 200px;
-    background: rgba(0, 20, 40, 0.7);
+    background: rgba(20, 0, 8, 0.7);
     border: 1px solid rgba(255, 215, 0, 0.25);
     border-radius: 10px;
     overflow: hidden;
@@ -557,7 +557,7 @@
     display: flex;
     align-items: center;
     gap: 7px;
-    background: rgba(0, 26, 51, 0.6);
+    background: rgba(26, 0, 8, 0.6);
     border: 1px solid var(--border-color);
     border-radius: 7px;
     padding: 5px 6px;
@@ -697,8 +697,8 @@
 .adv-chip:hover { background: rgba(255,255,255,0.13); color: #fff; }
 .adv-chip-active {
     background: rgba(90,160,255,0.22);
-    border-color: #5aa0ff;
-    color: #7ab4ff;
+    border-color: #9b1030;
+    color: #c0445e;
     font-weight: 600;
 }
 .adv-input-group { display: flex; align-items: center; gap: 8px; }
@@ -712,7 +712,7 @@
     width: 90px;
     outline: none;
 }
-.adv-input:focus { border-color: #5aa0ff; }
+.adv-input:focus { border-color: #9b1030; }
 
 
 /* ── Selector de Arquetipos ──────────────────────────────── */
@@ -763,7 +763,7 @@
     white-space: nowrap;
 }
 .buscador-set-sel {
-    background: var(--bg-input, rgba(0, 15, 40, 0.85));
+    background: var(--bg-input, rgba(15, 0, 6, 0.85));
     border: 1px solid rgba(255, 215, 0, 0.25);
     color: rgba(241, 241, 241, 0.8);
     border-radius: 6px;
@@ -807,7 +807,7 @@
 }
 
 .cv-modal {
-    background: linear-gradient(135deg, rgba(0, 51, 102, 0.97), rgba(0, 26, 51, 0.99));
+    background: linear-gradient(135deg, rgba(74, 0, 21, 0.97), rgba(26, 0, 8, 0.99));
     border: 2px solid var(--border-color);
     border-radius: 12px;
     padding: var(--spacing-md);
@@ -902,7 +902,7 @@
 }
 
 .cv-stats-block {
-    background: rgba(0, 26, 51, 0.4);
+    background: rgba(26, 0, 8, 0.4);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 8px 12px;
@@ -916,17 +916,17 @@
     line-height: 1.75;
     font-size: 0.85rem;
     color: rgba(241, 241, 241, 0.9);
-    background: rgba(0, 26, 51, 0.3);
+    background: rgba(26, 0, 8, 0.3);
     border-radius: 8px;
     padding: 10px 12px;
-    border: 1px dashed rgba(0, 102, 204, 0.35);
+    border: 1px dashed rgba(155, 16, 48, 0.35);
 }
 
 .cv-qty-block {
     display: flex;
     align-items: center;
     gap: 12px;
-    background: rgba(0, 26, 51, 0.4);
+    background: rgba(26, 0, 8, 0.4);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 8px 12px;
@@ -972,7 +972,7 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    background: rgba(0, 26, 51, 0.3);
+    background: rgba(26, 0, 8, 0.3);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 8px 12px;
@@ -1000,7 +1000,7 @@
 .cv-action-btn {
     flex: 1;
     min-width: 110px;
-    background: rgba(0, 26, 51, 0.5);
+    background: rgba(26, 0, 8, 0.5);
     border: 1px solid var(--border-color);
     color: var(--text-light);
     border-radius: 8px;
@@ -1011,8 +1011,7 @@
     transition: background 0.2s, border-color 0.2s;
 }
 .cv-action-btn:hover {
-    background: rgba(0, 102, 204, 0.3);
+    background: rgba(155, 16, 48, 0.3);
     border-color: var(--gold-color);
     color: #fff;
-}
-
+}   

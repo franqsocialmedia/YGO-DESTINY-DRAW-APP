@@ -39,7 +39,7 @@
 }
 
 .deck-title:hover {
-    background: rgba(0, 102, 204, 0.2);
+    background: rgba(155, 16, 48, 0.2);
     border-color: var(--gold-color);
     transform: translateX(5px);
 }
@@ -297,7 +297,7 @@
     font-size: 1rem;
     border: 2px solid var(--border-color);
     border-radius: 8px;
-    background: rgba(0, 26, 51, 0.6);
+    background: rgba(26, 0, 8, 0.6);
     color: var(--text-light);
     margin-bottom: var(--spacing-md);
     outline: none;
@@ -368,7 +368,7 @@
     max-height: 300px;
     overflow-y: auto;
     padding: var(--spacing-sm);
-    background: rgba(0, 26, 51, 0.3);
+    background: rgba(26, 0, 8, 0.3);
     border-radius: 8px;
 }
 
@@ -384,7 +384,7 @@
 }
 
 .role-checkbox-label:hover {
-    background: rgba(0, 102, 204, 0.2);
+    background: rgba(155, 16, 48, 0.2);
 }
 
 .role-checkbox {
@@ -413,7 +413,7 @@
 }
 
 .deck-list-title:hover {
-    background: rgba(0, 102, 204, 0.2);
+    background: rgba(155, 16, 48, 0.2);
     border-color: var(--gold-color);
 }
 
@@ -438,7 +438,7 @@
 .deck-list-item:hover {
     border-color: var(--gold-color);
     transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 102, 204, 0.4);
+    box-shadow: 0 8px 16px rgba(155, 16, 48, 0.4);
 }
 
 /* Botón eliminar */
@@ -522,7 +522,7 @@
     gap: 3px;
     margin-top: 6px;
     padding-top: 6px;
-    border-top: 1px solid rgba(0, 102, 204, 0.3);
+    border-top: 1px solid rgba(155, 16, 48, 0.3);
 }
 
 .deck-score-row {
@@ -572,17 +572,17 @@
 .btn-primary:hover {
     background: var(--accent-hover);
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.4);
+    box-shadow: 0 4px 8px rgba(155, 16, 48, 0.4);
 }
 
 
 .stats-card {
-    background: linear-gradient(135deg, rgba(0, 51, 102, 0.6), rgba(0, 43, 77, 0.8));
+    background: linear-gradient(135deg, rgba(74, 0, 21, 0.6), rgba(45, 0, 18, 0.8));
     border: 2px solid var(--gold-color);
     border-radius: 12px;
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-lg);
-    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+    box-shadow: 0 4px 12px rgba(155, 16, 48, 0.3);
 }
 
 .stats-header {
@@ -618,7 +618,7 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-xs);
-    background: rgba(0, 26, 51, 0.4);
+    background: rgba(26, 0, 8, 0.4);
     border-radius: 6px;
 }
 
@@ -645,7 +645,7 @@
     flex-direction: column;
     gap: var(--spacing-xs);
     padding-top: var(--spacing-sm);
-    border-top: 1px solid rgba(0, 102, 204, 0.3);
+    border-top: 1px solid rgba(155, 16, 48, 0.3);
 }
 
 .stat-info {
@@ -882,7 +882,7 @@
     padding: 3px 8px;
     border-radius: 10px;
     border: 1px solid var(--border-color);
-    background: rgba(0, 51, 102, 0.4);
+    background: rgba(74, 0, 21, 0.4);
     font-size: 0.78rem;
     color: rgba(241, 241, 241, 0.8);
     white-space: nowrap;
@@ -928,7 +928,7 @@
 .deck-notes-textarea {
     width: 100%;
     min-height: 120px;
-    background: rgba(0, 26, 51, 0.5);
+    background: rgba(26, 0, 8, 0.5);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     color: var(--text-light);
@@ -1017,8 +1017,8 @@
     padding: 4px 9px;
 }
 .matchup-btn-deck {
-    background: rgba(0,102,204,0.15);
-    border-color: rgba(0,102,204,0.35);
+    background: rgba(155,16,48,0.15);
+    border-color: rgba(155,16,48,0.35);
     color: #74b9ff;
     font-size: 0.72rem;
     padding: 4px 9px;
@@ -1383,7 +1383,7 @@
     flex: 0 0 28%;
     min-width: 220px;
     max-width: 300px;
-    background: var(--bg-card, rgba(0,26,51,0.6));
+    background: var(--bg-card, rgba(26,0,8,0.6));
     border: 1px solid var(--border-color, rgba(255,255,255,0.1));
     border-radius: 10px;
     padding: 14px;
@@ -1421,12 +1421,12 @@
     text-align: center;
 }
 .eng-btn-primary {
-    background: linear-gradient(135deg, #003366, #004080);
+    background: linear-gradient(135deg, #4a0015, #6b001f);
     border-color: var(--gold-color, #FFD700);
     color: var(--gold-color, #FFD700);
 }
 .eng-btn-primary:hover {
-    background: linear-gradient(135deg, #004080, #0055a5);
+    background: linear-gradient(135deg, #6b001f, #7d0c26);
     box-shadow: 0 0 8px rgba(255,215,0,0.25);
 }
 .eng-btn-secondary {
@@ -1517,7 +1517,7 @@
 }
 
 .eng-role-chip {
-    background: rgba(0,51,102,0.6);
+    background: rgba(74,0,21,0.6);
     border: 1px solid rgba(255,215,0,0.25);
     color: rgba(255,215,0,0.8);
     font-size: 0.65rem;
@@ -1554,7 +1554,7 @@
 }
 
 .eng-modal-box {
-    background: var(--bg-dark, #001a33);
+    background: var(--bg-dark, #1a0008);
     border: 1px solid rgba(255,255,255,0.15);
     border-radius: 14px;
     padding: 22px;
@@ -1667,7 +1667,7 @@
 .eng-qty-btn {
     padding: 4px 8px;
     border-radius: 5px;
-    background: rgba(0,51,102,0.5);
+    background: rgba(74,0,21,0.5);
     border: 1px solid rgba(255,215,0,0.25);
     color: rgba(255,215,0,0.8);
     font-size: 0.75rem;
@@ -1787,7 +1787,7 @@
     padding: 20px;
 }
 .eng-cover-picker-box {
-    background: var(--bg-dark, #001a33);
+    background: var(--bg-dark, #1a0008);
     border: 1px solid rgba(255,255,255,0.15);
     border-radius: 12px;
     padding: 20px;
@@ -1845,7 +1845,7 @@
     top: 100%;
     left: 0;
     right: 0;
-    background: #001a33;
+    background: #1a0008;
     border: 1px solid rgba(255,255,255,0.15);
     border-radius: 7px;
     padding: 8px;
@@ -2057,7 +2057,7 @@
     overflow: hidden;
     border-radius: 10px;
     border: 1px solid rgba(255,215,0,0.12);
-    background: rgba(0,26,51,0.4);
+    background: rgba(26,0,8,0.4);
 }
 
 .buscador-cover-img {

@@ -3,16 +3,16 @@
 
 :root {
     /* Colores principales - Destiny Draw Theme */
-    --primary-color: #003366;        /* Azul marino oscuro - Color base */
-    --secondary-color: #004080;      /* Azul marino medio */
-    --accent-color: #0066cc;         /* Azul brillante */
-    --accent-hover: #0052a3;         /* Azul hover */
+    --primary-color: #4a0015;        /* Rojo vino oscuro - Color base */
+    --secondary-color: #6b001f;      /* Rojo vino medio */
+    --accent-color: #9b1030;         /* Rojo vino brillante */
+    --accent-hover: #7d0c26;         /* Rojo vino hover */
     --gold-color: #ffd700;           /* Dorado - Yu-Gi-Oh! */
     --text-light: #f1f1f1;           /* Texto claro */
-    --text-dark: #003366;            /* Texto oscuro */
-    --bg-dark: #001a33;              /* Fondo muy oscuro */
-    --bg-card: #002b4d;              /* Fondo de tarjetas */
-    --border-color: #0066cc;         /* Color de bordes */
+    --text-dark: #4a0015;            /* Texto oscuro */
+    --bg-dark: #1a0008;              /* Fondo muy oscuro */
+    --bg-card: #2d0012;              /* Fondo de tarjetas */
+    --border-color: #9b1030;         /* Color de bordes */
     --success-color: #00b894;        /* Verde - éxito */
     --warning-color: #fdcb6e;        /* Amarillo - advertencia */
     --danger-color: #d63031;         /* Rojo - peligro */
@@ -72,7 +72,7 @@ body {
     width: 100%;
     height: 100%;
     /* Gradiente sobre la imagen de fondo */
-    background: linear-gradient(rgba(1, 17, 33, 0.7), rgba(0, 26, 51, 0.9)),
+    background: linear-gradient(rgba(17, 0, 5, 0.7), rgba(26, 0, 8, 0.9)),
                 url('../img/header-bg.jpg') center center / cover;
     background-attachment: fixed;
     transform: translateZ(0);
@@ -121,7 +121,7 @@ body {
 .main-navigation {
     position: sticky;
     top: 0;
-    background: rgba(0, 51, 102, 0.95);
+    background: rgba(74, 0, 21, 0.95);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     z-index: 100;
     border-bottom: 2px solid var(--accent-color);
@@ -191,14 +191,14 @@ body {
 
 /* Estado hover del botón */
 .nav-button:hover {
-    background: rgba(0, 102, 204, 0.2);
+    background: rgba(155, 16, 48, 0.2);
     color: var(--gold-color);
 }
 
 /* Estado activo del botón - IMPORTANTE: color amarillo */
 .nav-button.active {
     border-bottom-color: var(--gold-color);
-    background: rgba(0, 102, 204, 0.3);
+    background: rgba(155, 16, 48, 0.3);
     color: var(--gold-color);
 }
 
@@ -248,7 +248,7 @@ body {
     bottom: 90px;
     right: 20px;
     background: #FFD700;
-    color: #003366;
+    color: #4a0015;
     border: none;
     border-radius: 50%;
     width: 40px;
@@ -269,7 +269,7 @@ body {
     bottom: 135px;
     right: 20px;
     background: #FFD700;
-    color: #003366;
+    color: #4a0015;
     border: none;
     border-radius: 50%;
     width: 40px;
@@ -294,7 +294,7 @@ body {
     width: 100%;
     
     /* Estilos visuales */
-    background: rgba(0, 26, 51, 0.95);
+    background: rgba(26, 0, 8, 0.95);
     border-top: 1px solid var(--border-color);
     padding: var(--spacing-sm) 0;
     
@@ -354,7 +354,7 @@ body {
 }
 
 .help-panel {
-    background: var(--bg-card, #001a33);
+    background: var(--bg-card, #1a0008);
     border: 1px solid var(--border-color, rgba(255,215,0,0.2));
     border-radius: 12px;
     width: min(420px, 95vw);
@@ -452,7 +452,7 @@ body {
     align-items: center;
     gap: 8px;
     padding: 10px 14px;
-    background: rgba(0,51,102,0.3);
+    background: rgba(74,0,21,0.3);
     border: none;
     color: var(--text-light, #f1f1f1);
     font-size: 0.85rem;
@@ -461,7 +461,7 @@ body {
     cursor: pointer;
     transition: background 0.15s;
 }
-.faq-question:hover { background: rgba(0,51,102,0.55); }
+.faq-question:hover { background: rgba(74,0,21,0.55); }
 .faq-arrow { font-size: 0.65rem; flex-shrink: 0; color: var(--gold-color, #FFD700); }
 
 .faq-answer {
@@ -686,7 +686,7 @@ body {
     gap: var(--spacing-md);
 }
 .cm-group {
-    background: rgba(0, 26, 51, 0.4);
+    background: rgba(26, 0, 8, 0.4);
     border: 1px solid var(--border-color);
     border-radius: 10px;
     padding: 12px 14px;
@@ -758,7 +758,7 @@ body {
     transition: transform 0.2s, background 0.2s;
 }
 .cm-switch input:checked + .cm-slider {
-    background: rgba(0, 102, 204, 0.7);
+    background: rgba(155, 16, 48, 0.7);
 }
 .cm-switch input:checked + .cm-slider::before {
     transform: translateX(16px);
@@ -793,7 +793,7 @@ body {
 }
 
 .welcome-panel {
-    background: linear-gradient(160deg, #001a33 0%, #002b4d 60%, #001a33 100%);
+    background: linear-gradient(160deg, #1a0008 0%, #2d0012 60%, #1a0008 100%);
     border: 1px solid rgba(255, 215, 0, 0.25);
     border-radius: 16px;
     padding: 40px 36px 32px;
@@ -983,7 +983,7 @@ body {
 
 /* ── Panel principal ─────────────────────────────────────────────── */
 .card-viewer-overlay {
-    background: var(--bg-card, #002b4d);
+    background: var(--bg-card, #2d0012);
     color: var(--text-light, #f1f1f1);
     width: 400px;
     max-height: 90vh;
@@ -1122,7 +1122,7 @@ body {
     margin: 4px 0;
 }
 .cv-qty-btn {
-    background: linear-gradient(135deg, var(--accent-color, #0066cc), var(--secondary-color, #004080));
+    background: linear-gradient(135deg, var(--accent-color, #9b1030), var(--secondary-color, #6b001f));
     border: none;
     cursor: pointer;
     color: var(--text-light, #f1f1f1);
@@ -1139,7 +1139,7 @@ body {
                 transform  var(--transition-fast, 0.2s ease);
 }
 .cv-qty-btn:hover {
-    background: linear-gradient(135deg, #0080ff, var(--accent-color, #0066cc));
+    background: linear-gradient(135deg, #c0143c, var(--accent-color, #9b1030));
     transform: scale(1.08);
 }
 .cv-qty-count {
@@ -1234,7 +1234,7 @@ body {
     margin-bottom: 10px;
 }
 .cv-role-chip {
-    background: rgba(0, 51, 102, 0.6);
+    background: rgba(74, 0, 21, 0.6);
     border: 1px solid rgba(255, 215, 0, 0.25);
     border-radius: 20px;
     padding: 3px 10px;

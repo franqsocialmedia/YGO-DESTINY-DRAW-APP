@@ -1270,7 +1270,12 @@ html += `
     <button class="mideck-subtab-btn sim-tab-btn" data-tab="construccion" onclick="Deck.switchMiDeckTab('construccion')">🔨 Construcción</button>
 </div>`;
 
-html += `<div id="mideck-decklist-pane">`;
+html += `
+<br>
+<br>
+<br>
+<br>
+<div id="mideck-decklist-pane">`;
 
 if (isEmpty) {
     html += `<p style="margin-top:10px;font-size:.85rem;opacity:.6">Elige un deck desde el panel lateral o agrega cartas desde el Buscador.</p>`;
