@@ -763,7 +763,7 @@ const html = `
                 </div>
             </div>
 
-            ${!window.ContentManager || ContentManager.isVisible('cv-contribution')
+            ${(!window.ContentManager || ContentManager.isVisible('cv-contribution') || ContentManager.isVisible('cv-roles'))
                 ? this.renderCardContribution(card) : ''}
 
             <hr class="cv-hr">
@@ -1506,17 +1506,26 @@ renderCardContribution: function (card) {
         contribHTML = `<p class="cv-contrib-empty">Agrega roles a las cartas del deck para ver el impacto.</p>`;
     }
 
-    return `
-        <hr>
-        <div class="cv-contribution-block">
-            <div class="cv-contrib-section-title">🎯 Posibles Roles</div>
-            <div class="cv-roles-row">${rolesHTML}</div>
+    const showRoles   = !window.ContentManager || ContentManager.isVisible('cv-roles');
+    const showContrib = !window.ContentManager || ContentManager.isVisible('cv-contribution');
+    if (!showRoles && !showContrib) return '';
 
+    const rolesSection = showRoles ? `
+            <div class="cv-contrib-section-title">🎯 Posibles Roles</div>
+            <div class="cv-roles-row">${rolesHTML}</div>` : '';
+
+    const contribSection = showContrib ? `
             <div class="cv-contrib-section-title" style="margin-top:10px;">
                 📊 Aporte al deck activo
                 <span class="cv-deck-name">${Deck.name}</span>
             </div>
-            ${contribHTML}
+            ${contribHTML}` : '';
+
+    return `
+        <hr>
+        <div class="cv-contribution-block">
+            ${rolesSection}
+            ${contribSection}
         </div>`;
 },
 

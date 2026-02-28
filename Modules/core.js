@@ -228,13 +228,11 @@ const ContentManager = {
     CATALOG: [
         { id: 'tab-estadisticas',  group: 'Pestañas', label: 'Estadísticas',  type: 'tab', novato: false, casual: false, competitivo: true },
         { id: 'tab-simuladores',   group: 'Pestañas', label: 'Simuladores',   type: 'tab', novato: true,  casual: true,  competitivo: true },
-        { id: 'tab-meta',          group: 'Pestañas', label: 'Meta',          type: 'tab', novato: false, casual: false, competitivo: false },
         { id: 'tab-formacion',     group: 'Pestañas', label: 'Formación',     type: 'tab', novato: true,  casual: true,  competitivo: true },
 
-        { id: 'buscador-staples-panel', group: 'Buscador', label: 'Panel de Staples',           novato: false, casual: true,  competitivo: true },
-        { id: 'buscador-archetypes',    group: 'Buscador', label: 'Filtro por Arquetipos',      novato: false, casual: true,  competitivo: true },
-        { id: 'buscador-keywords',      group: 'Buscador', label: 'Filtrar por palabras clave', novato: false, casual: true,  competitivo: true },
-        { id: 'buscador-sets',          group: 'Buscador', label: 'Packs y Sets',               novato: false, casual: true,  competitivo: true },
+        { id: 'buscador-archetypes', group: 'Buscador', label: 'Filtro por Arquetipos',      novato: false, casual: true,  competitivo: true },
+        { id: 'buscador-keywords',   group: 'Buscador', label: 'Filtrar por palabras clave', novato: false, casual: true,  competitivo: true },
+        { id: 'buscador-sets',       group: 'Buscador', label: 'Packs y Sets',               novato: false, casual: true,  competitivo: true },
 
         { id: 'cv-nomenclature', group: 'Vista de Carta', label: 'Nomenclatura de Efectos',  novato: false, casual: true,  competitivo: true },
         { id: 'cv-roles',        group: 'Vista de Carta', label: 'Posibles Roles',            novato: false, casual: true,  competitivo: true },
@@ -244,19 +242,19 @@ const ContentManager = {
         { id: 'deck-floating-widget', group: 'Mi Deck', label: 'Widget flotante de Decks',       novato: false, casual: true, competitivo: true },
         { id: 'deck-chart',           group: 'Mi Deck', label: 'Gráfica y Composición',          novato: false, casual: true, competitivo: true },
         { id: 'deck-roles-badges',    group: 'Mi Deck', label: 'Roles de cartas (badges)',       novato: false, casual: true, competitivo: true },
-        { id: 'deck-engines',         group: 'Mi Deck', label: 'Engines',                        novato: false, casual: true, competitivo: true },
+        { id: 'deck-engines',         group: 'Mi Deck', label: 'Sidebar de Engines',            novato: false, casual: true, competitivo: true },
         { id: 'deck-role-btn',        group: 'Mi Deck', label: 'Botón Rol (por carta)',          novato: false, casual: true, competitivo: true },
         { id: 'deck-experimentacion', group: 'Mi Deck', label: 'Botón Experimentación',          novato: false, casual: true, competitivo: true },
         { id: 'deck-matchups',        group: 'Mi Deck', label: 'Historial de Enfrentamientos',   novato: false, casual: true, competitivo: true },
 
-        { id: 'sim-mulligan',         group: 'Simuladores', label: 'Mulligan',                        novato: false, casual: false, competitivo: true },
-        { id: 'sim-torneo',           group: 'Simuladores', label: 'Torneo',                          novato: false, casual: true,  competitivo: true },
-        { id: 'sim-timer',            group: 'Simuladores', label: 'Cronómetro Master Duel',          novato: false, casual: false, competitivo: true },
-        { id: 'sim-experimentacion',  group: 'Simuladores', label: 'Experimentación',                 novato: false, casual: true,  competitivo: true },
-        { id: 'sim-practica-history', group: 'Simuladores', label: 'Historial y Guardado de Estados', novato: false, casual: false, competitivo: true },
-        { id: 'pz-markstate-btn',     group: 'Simuladores', label: 'Marcar Estado (flotante)',        novato: false, casual: false, competitivo: true },
+        { id: 'sim-mulligan',         group: 'Simuladores', label: 'Mulligan / Hipergeometría',          novato: false, casual: false, competitivo: true },
+        { id: 'sim-torneo',           group: 'Simuladores', label: 'Torneo (Swiss)',                      novato: false, casual: true,  competitivo: true },
+        { id: 'sim-timer',            group: 'Simuladores', label: 'Cronómetro Master Duel',              novato: false, casual: false, competitivo: true },
+        { id: 'sim-experimentacion',  group: 'Simuladores', label: 'Experimentación',                     novato: false, casual: true,  competitivo: true },
+        { id: 'sim-practica-history', group: 'Simuladores', label: 'Historial y Guardado de Estados',     novato: false, casual: false, competitivo: true },
+        { id: 'pz-markstate-btn',     group: 'Simuladores', label: 'Botón Marcar Estado (flotante)',      novato: false, casual: false, competitivo: true },
 
-        { id: 'meta-fuentes', group: 'Meta', label: 'Fuentes Externas', novato: false, casual: true, competitivo: true },
+        { id: 'meta-fuentes',         group: 'Formación',   label: 'Fuentes Externas del Meta',           novato: false, casual: true,  competitivo: true },
 
         { id: 'config-roles',              group: 'Configuración', label: 'Roles y Palabras Asociadas',  novato: false, casual: true,  competitivo: true },
         { id: 'config-specialties',        group: 'Configuración', label: 'Mecánicas y Counters',        novato: false, casual: false, competitivo: true },
@@ -271,9 +269,8 @@ const ContentManager = {
         { id: 'config-meta-links',         group: 'Configuración', label: 'Fuentes Externas del Meta',   novato: false, casual: true,  competitivo: true },
         { id: 'config-formacion-games',    group: 'Configuración', label: 'Juegos Alternativos',         novato: true,  casual: true,  competitivo: true },
         { id: 'config-formacion-topics',   group: 'Configuración', label: 'Temas de Formación',          novato: true,  casual: true,  competitivo: true },
-        { id: 'config-danger-zone',        group: 'Configuración', label: 'Zona de Borrado',             novato: false, casual: true,  competitivo: true },
-        { id: 'config-danger-delete',      group: 'Configuración', label: '↳ Botón Borrar Deck',        novato: false, casual: true,  competitivo: true },
-        { id: 'config-danger-meta',        group: 'Configuración', label: '↳ Botón Borrar META',        novato: false, casual: false, competitivo: true },
+        { id: 'config-danger-zone',     group: 'Configuración', label: 'Zona de Borrado',             novato: false, casual: true,  competitivo: true },
+        { id: 'config-danger-delete',   group: 'Configuración', label: '↳ Botón Borrar Decks',        novato: false, casual: true,  competitivo: true },
     ],
 
     _load: function() {
@@ -330,6 +327,14 @@ const ContentManager = {
             el.style.display = show ? '' : 'none';
         });
 
+        // Engines sidebar (usa id= no data-section-id)
+        const enginesSidebar = document.getElementById('engines-sidebar');
+        if (enginesSidebar) {
+            enginesSidebar.style.display = vis('deck-engines') ? '' : 'none';
+        } else if (vis('deck-engines') && window.Engines) {
+            Engines.init();
+        }
+
         // Sub-tabs de Simuladores
         this._applySimuladorSubTabs(vis);
 
@@ -339,20 +344,25 @@ const ContentManager = {
 
     // Oculta/muestra sub-tab buttons de Simuladores según visibilidad
     _applySimuladorSubTabs: function(vis) {
+        // Cada clave del CATALOG controla qué botones de pestaña de Simuladores son visibles
+        // El botón "Duelo en Vivo" tiene sub-secciones propias controladas por data-section-id
         const map = {
             'sim-mulligan':        ['mulligan', 'winrate'],
             'sim-torneo':          ['torneo'],
-            'sim-timer':           ['timer', 'duelo'],
             'sim-experimentacion': ['experimentacion'],
             'sim-practica-history':['practica']
         };
         Object.entries(map).forEach(([sectionId, btnIds]) => {
             const show = vis(sectionId);
             btnIds.forEach(id => {
-                const btn = document.querySelector(`.sim-tab-btn[data-sim="${id}"]`);
+                const btn = document.querySelector(`.sim-tab-btn[data-simtab="${id}"]`);
                 if (btn) btn.style.display = show ? '' : 'none';
             });
         });
+        // Duelo en vivo: siempre visible si alguna sub-sección suya lo es
+        // (sim-timer se controla via data-section-id dentro del panel de duelo)
+        const dueloBtn = document.querySelector('.sim-tab-btn[data-simtab="duelo"]');
+        if (dueloBtn) dueloBtn.style.display = '';
     },
 
     // Renderiza la UI de gestión de visibilidad para Config

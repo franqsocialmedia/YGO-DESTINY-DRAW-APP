@@ -2192,7 +2192,18 @@ const Engines = {
     // ═══════════════════════════════════════════════════
 
     init: function () {
-    if (document.getElementById('engines-sidebar')) return;
+    if (document.getElementById('engines-sidebar')) {
+        // Si ya existe, actualizar visibilidad según ContentManager
+        const sidebar = document.getElementById('engines-sidebar');
+        if (sidebar) {
+            const visible = !window.ContentManager || ContentManager.isVisible('deck-engines');
+            sidebar.style.display = visible ? '' : 'none';
+        }
+        return;
+    }
+
+    // Si ContentManager dice que no es visible, no crear el sidebar
+    if (window.ContentManager && !ContentManager.isVisible('deck-engines')) return;
 
     const deckContainer = document.getElementById('deck-container');
     if (!deckContainer) return;
