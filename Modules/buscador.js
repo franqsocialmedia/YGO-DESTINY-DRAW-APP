@@ -1912,4 +1912,3 @@ const Favoritas = {
 
 window.Favoritas = Favoritas;
 document.addEventListener('DOMContentLoaded', () => Favoritas.init());
-

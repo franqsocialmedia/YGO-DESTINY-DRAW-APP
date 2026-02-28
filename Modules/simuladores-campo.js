@@ -2,7 +2,7 @@
 /* Absorbe: zonapractica.js, experimentacion.js */
 
 
-// ── ZonaPractica — campo visual interactivo para practicar jugadas; gestiona estados guardados y botones flotantes ──
+// ── ZonaPractica — campo visual interactivo; estados guardados incluyen LP del momento ──
 
 const ZonaPractica = {
 
@@ -1800,6 +1800,7 @@ _showDetachMenu: function (zone, e) {
             id:        this.gameStates.length + 1,
             turn:      this.turnNumber,
             phase:     this.phase,
+            lp:        this.lp ?? 8000,
             timestamp: new Date().toLocaleTimeString('es-ES', { hour12: false }),
             field:     JSON.parse(JSON.stringify(this.field)),
             hand:      JSON.parse(JSON.stringify(this.hand)),
@@ -1939,9 +1940,9 @@ _showDetachMenu: function (zone, e) {
                     ? `var c=document.getElementById('pz-log-entries');var t=document.getElementById('pz-log-entry-${targetIdx}');if(c&&t){c.scrollTo({top:t.offsetTop-8,behavior:'smooth'});}`
                     : '';
                 return `<div class="pz-log-state-chip pz-log-state-chip-link"
-                             title="T${s.turn} · ${s.phase} · ${s.timestamp} — Ir al registro"
+                             title="T${s.turn} · ${s.phase} · LP:${(s.lp ?? 8000).toLocaleString()} · ${s.timestamp} — Ir al registro"
                              onclick="${scrollCall}">
-                    #${s.id} <span>T${s.turn}·${s.timestamp}</span>
+                    #${s.id} <span>T${s.turn}·${(s.lp ?? 8000).toLocaleString()}LP·${s.timestamp}</span>
                 </div>`;
             }).join('');
             return `<div class="pz-log-states-bar">
@@ -2737,6 +2738,7 @@ _saveStatesToDeck: function () {
         id:        s.id,
         turn:      s.turn,
         phase:     s.phase,
+        lp:        s.lp ?? 8000,
         timestamp: s.timestamp,
         field:     this._slimField(s.field),
         hand:      s.hand.map(e => this._slimEntry(e)),
@@ -3225,4 +3227,3 @@ _removeCard: function (card) {
 };
 
 window.Experimentacion = Experimentacion;
-

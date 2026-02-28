@@ -228,7 +228,7 @@ const ContentManager = {
     CATALOG: [
         { id: 'tab-estadisticas',  group: 'Pestañas', label: 'Estadísticas',  type: 'tab', novato: false, casual: false, competitivo: true },
         { id: 'tab-simuladores',   group: 'Pestañas', label: 'Simuladores',   type: 'tab', novato: true,  casual: true,  competitivo: true },
-        { id: 'tab-meta',          group: 'Pestañas', label: 'Meta',          type: 'tab', novato: true,  casual: true,  competitivo: true },
+        { id: 'tab-meta',          group: 'Pestañas', label: 'Meta',          type: 'tab', novato: false, casual: false, competitivo: false },
         { id: 'tab-formacion',     group: 'Pestañas', label: 'Formación',     type: 'tab', novato: true,  casual: true,  competitivo: true },
 
         { id: 'buscador-staples-panel', group: 'Buscador', label: 'Panel de Staples',           novato: false, casual: true,  competitivo: true },
@@ -333,13 +333,13 @@ const ContentManager = {
         // Sub-tabs de Simuladores
         this._applySimuladorSubTabs(vis);
 
-        // Re-render de módulos si aplica
-        this.CATALOG.forEach(c => {
-            if (!vis(c.id)) return;
-            if (c.id.startsWith('deck-') && window.Deck?.render) Deck.render();
-            if (c.id.startsWith('config-') && window.Config?.render) Config.render();
-            if (c.id.startsWith('meta-') && window.Meta?.render) Meta.render();
-        });
+        // Re-render de módulos afectados (una sola vez por módulo)
+        const deckChanged   = this.CATALOG.some(c => c.id.startsWith('deck-'));
+        const configChanged = this.CATALOG.some(c => c.id.startsWith('config-'));
+        const metaChanged   = this.CATALOG.some(c => c.id.startsWith('meta-'));
+        if (deckChanged   && window.Deck?.render)   Deck.render();
+        if (configChanged && window.Config?.render) Config.render();
+        if (metaChanged   && window.Meta?.render)   Meta.render();
     },
 
     // Oculta/muestra sub-tab buttons de Simuladores según visibilidad
@@ -396,11 +396,81 @@ const ContentManager = {
             <div class="cm-groups">${groupsHtml}</div>`;
     },
 
+    // Alias para compatibilidad con Config.render()
+    renderConfigSection: function() {
+        const groups  = {};
+        this.CATALOG.forEach(item => {
+            if (!groups[item.group]) groups[item.group] = [];
+            groups[item.group].push(item);
+        });
+        const stored  = this._load();
+        const profile = this.getProfile();
+        const vis     = (id) => (stored[id] !== undefined) ? !!stored[id] : true;
+        const pIcons  = { novato: '🌱', casual: '🃏', competitivo: '⚔️' };
+
+        return `
+            <div class="config-section" id="cm-config-section">
+                <h3 class="config-section-title" onclick="ContentManager._toggleExpand()">
+                    ▼ Contenido de la App
+                </h3>
+                <div id="cm-config-body" class="config-section-content">
+                    <div class="cm-profile-bar">
+                        <span class="cm-label">Perfil base:</span>
+                        ${['novato','casual','competitivo'].map(p => `
+                            <button class="cm-profile-btn ${profile === p ? 'cm-profile-active' : ''}"
+                                    onclick="ContentManager._applyProfileUI('${p}')">
+                                ${pIcons[p]} ${p.charAt(0).toUpperCase() + p.slice(1)}
+                            </button>`).join('')}
+                    </div>
+                    <p class="cm-hint">Cambiar el perfil restablece la visibilidad a sus valores por defecto. Luego puedes ajustar cada sección individualmente.</p>
+                    <div class="cm-groups">
+                        ${Object.entries(groups).map(([gName, items]) => `
+                            <div class="cm-group">
+                                <div class="cm-group-title">${gName}</div>
+                                <div class="cm-group-items">
+                                    ${items.map(item => `
+                                        <label class="cm-toggle-row">
+                                            <span class="cm-item-label">${item.label}</span>
+                                            <div class="cm-switch">
+                                                <input type="checkbox"
+                                                       ${vis(item.id) ? 'checked' : ''}
+                                                       onchange="ContentManager._toggle('${item.id}', this.checked)">
+                                                <span class="cm-slider"></span>
+                                            </div>
+                                        </label>`).join('')}
+                                </div>
+                            </div>`).join('')}
+                    </div>
+                </div>
+            </div>`;
+    },
+
+    _toggleExpand: function() {
+        const body  = document.getElementById('cm-config-body');
+        const title = body?.previousElementSibling;
+        if (!body) return;
+        const hide  = body.style.display !== 'none';
+        body.style.display = hide ? 'none' : '';
+        if (title) title.textContent = title.textContent.replace(hide ? '▼' : '▶', hide ? '▶' : '▼');
+    },
+
+    _toggle: function(id, visible) {
+        this.setVisible(id, visible);
+        this.applyAll();
+        if (id.startsWith('deck-')   && window.Deck?.render)   Deck.render();
+        if (id.startsWith('config-') && window.Config?.render) Config.render();
+        if (id.startsWith('meta-')   && window.Meta?.render)   Meta.render();
+    },
+
     _applyProfileUI: function(level) {
         this.applyProfile(level);
-        const container = document.querySelector('[data-cm-container]');
-        if (container) this.renderUI(container.id);
-        if (window.Config?.render) Config.render();
+        // Re-renderizar la sección de ContentManager en Config para reflejar el perfil activo
+        if (window.Config?.render) {
+            Config.render();
+        } else {
+            const section = document.getElementById('cm-config-section');
+            if (section) section.outerHTML = this.renderConfigSection();
+        }
     },
 
     _toggleItem: function(id, visible) {
