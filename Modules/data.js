@@ -222,16 +222,6 @@ const ConfigManager = {
         ],
         // ⭐ META MASTERS - Maestros del Juego
         metaMasters: [],
-
-        // ⭐ META LINKS - Fuentes externas de la pestaña Meta
-        metaLinks: [
-            { id: 'ml_1', title: 'Road of the King – Master Duel',      url: 'https://roadoftheking.com/tag/master-duel/',              desc: 'Análisis y reportes del meta de Master Duel' },
-            { id: 'ml_2', title: 'Road of the King – OCG Weekly',       url: 'https://roadoftheking.com/tag/ocg-metagame-weekly/',      desc: 'Reportes semanales del meta OCG' },
-            { id: 'ml_3', title: 'YGOProDeck',                          url: 'https://ygoprodeck.com/',                                desc: 'Base de datos y decklists de la comunidad' },
-            { id: 'ml_4', title: 'Wiki Yu-Gi-Oh! (ES)',                 url: 'https://yugioh.fandom.com/es/wiki/Mago_Oscuro',          desc: 'Wiki en español de Yu-Gi-Oh!' },
-            { id: 'ml_5', title: 'Master Duel Meta – Tier List',        url: 'https://www.masterduelmeta.com/tier-list#power-rankings', desc: 'Tier list y power rankings de Master Duel' },
-            { id: 'ml_6', title: 'YugiohMeta – Tier List',             url: 'https://www.yugiohmeta.com/tier-list',                   desc: 'Tier list TCG competitivo actualizada' }
-        ],
         shortcuts: [
             { label: 'Decks Guardados', tab: 'mideck',       sectionId: 'saved-decks-sec',  module: 'Deck' },
             { label: 'Winrate',          tab: 'estadisticas', sectionId: 'winrate-sec',       module: 'Estadisticas' },

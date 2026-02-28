@@ -869,7 +869,7 @@ const Config = {
 
             <!-- Botones de acción -->
             <div class="config-actions">
-                <button class="btn btn-secondary" onclick="Config.generarReporte()" style="background:#4a0015;border-color:#9b1030;" title="Exporta un .txt con el log de ejecución de esta sesión">📋 Generar Reporte</button>
+                <button class="btn btn-success" onclick="Config.generarReporte()" style="background:#4a0015;border-color:#9b1030;" title="Exporta un .txt con el log de ejecución de esta sesión">📋 Generar Reporte</button>
                 <button class="btn btn-primary" onclick="Config.exportConfig()">📥 Exportar Data</button>
                 <button class="btn btn-primary" onclick="Config.importConfig()">📤 Importar Data</button>
                 <button class="btn btn-success" onclick="Config.resetToDefault()" style="background:#27ae60;border-color:#27ae60;">🔄 Restaurar Configuración</button>
@@ -2731,7 +2731,8 @@ const MusicPlayer = {
 
     init: function () {
         const cfg = window.ConfigManager ? ConfigManager.getMusicConfig() : { enabled: true, volume: 0.40, tracks: {} };
-        this.currentPath = cfg.tracks?.default || 'ots/Climax Theme 2.mp3';
+        const level = window.ConfigManager ? ConfigManager.getPlayerLevel() : 'default';
+        this.currentPath = cfg.tracks?.[level] || cfg.tracks?.default || 'ots/Climax Theme 2.mp3';
         this._buildAudio(this.currentPath, cfg.volume ?? 0.40);
         if (cfg.enabled !== false) this._createButton();
     },
@@ -2757,11 +2758,27 @@ const MusicPlayer = {
 
     toggle: function () {
         const cfg = window.ConfigManager ? ConfigManager.getMusicConfig() : {};
-        if (cfg.enabled === false || !this.audio) return;
-        if (this.audio.paused) {
-            this.audio.play().catch(() => {});
-        } else {
+        if (cfg.enabled === false) return;
+
+        const level = window.ConfigManager ? ConfigManager.getPlayerLevel() : 'default';
+        const path  = cfg.tracks?.[level] || cfg.tracks?.default || 'ots/Climax Theme 2.mp3';
+
+        if (this.audio && !this.audio.paused) {
+            // STOP — detiene y resincroniza pista con el perfil activo
             this.audio.pause();
+            if (path !== this.currentPath) {
+                this.currentPath = path;
+                this._buildAudio(path, cfg.volume ?? 0.40); // queda pausado en 0
+            } else {
+                this.audio.currentTime = 0;
+            }
+        } else {
+            // PLAY — verifica que la pista sea la del perfil activo
+            if (!this.audio || path !== this.currentPath) {
+                this.currentPath = path;
+                this._buildAudio(path, cfg.volume ?? 0.40);
+            }
+            this.audio.play().catch(() => {});
         }
         this._updateButton();
     },
@@ -2791,8 +2808,8 @@ const MusicPlayer = {
         const btn = document.getElementById('music-float-btn');
         if (!btn) return;
         const playing   = this.audio && !this.audio.paused;
-        btn.textContent = playing ? '⏸' : '▶';
-        btn.title       = playing ? 'Pausar música' : 'Reproducir música';
+        btn.textContent = playing ? '⏹' : '▶';
+        btn.title       = playing ? 'Detener música' : 'Reproducir música';
     }
 };
 

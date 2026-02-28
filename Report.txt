@@ -1,5 +1,5 @@
 # DESTINY DRAW — REPORTE TÉCNICO
-**Versión:** Post-consolidación | **Fecha:** Feb 2026
+**Versión:** Post-consolidación v2 | **Fecha:** Feb 2026
 **Stack:** Vanilla JS (ES6 objects) · CSS modular · HTML5 SPA · YGOProDeck API · localStorage
 
 ---
@@ -162,7 +162,26 @@ Config.borrarTodo()
   → Welcome.init() → muestra panel de nuevo
 ```
 
-### 5.5 Render sidebar Mi Deck
+### 5.5 Botón flotante de música (MusicPlayer.toggle)
+```
+▶ (detenido) → MusicPlayer.toggle()
+  → lee ConfigManager.getPlayerLevel()  → resuelve cfg.tracks[level]
+  → si path ≠ currentPath: _buildAudio(path) + play
+  → si path == currentPath: play directo
+  → _updateButton() → '⏹'
+
+⏹ (reproduciendo) → MusicPlayer.toggle()
+  → lee ConfigManager.getPlayerLevel()  → resuelve cfg.tracks[level]
+  → pause()
+  → si path ≠ currentPath: _buildAudio(path)  ← pista actualizada, lista para próximo play
+  → si path == currentPath: audio.currentTime = 0
+  → _updateButton() → '▶'
+```
+**Nota:** cambiar Perfil Base en Config llama `MusicPlayer.setTrack(path)` que actualiza
+`currentPath` en caliente. El toggle siempre re-verifica el perfil activo, garantizando
+coherencia aunque el cambio ocurra mientras la música está detenida.
+
+### 5.6 Render sidebar Mi Deck
 ```
 Engines._renderSidebar()
   → lee _activeTab (engines|decks|staples|favoritas)
@@ -200,13 +219,16 @@ Secciones (IDs para Shortcuts y ContentManager):
 
 ---
 
-## 7. BUGS RESUELTOS EN ESTA SESIÓN
+## 7. BUGS RESUELTOS
 
-| 4 | `logger.js` y `parallax.js` referenciados pero inexistentes | `index.html` | Eliminados del orden de carga; nuevo `logger.js` creado (DDLogger) |
+| # | Bug | Archivo | Solución |
 |---|-----|---------|----------|
 | 1 | `_calcWR` y `_getAllMatchupRecords` duplicados 3 veces | `duelista.js` → `historial.js` | Eliminadas las 2 copias extra |
 | 2 | `yugioh_player_level` y `dd_player_profile` desincronizados | `welcome.js` + `config.js` | `enter()` ahora escribe ambas claves |
 | 3 | Welcome Panel reaparecía al recargar | `welcome.js` | `init()` lee `dd_welcome_dismissed`, `dismiss()` la escribe |
+| 4 | `logger.js` y `parallax.js` referenciados pero inexistentes | `index.html` | Eliminados del orden de carga; nuevo `logger.js` creado (DDLogger) |
+| 5 | `MusicPlayer.init()` cargaba siempre pista `default` ignorando perfil guardado | `formacion.js` → `MusicPlayer.init` | Lee `ConfigManager.getPlayerLevel()` al inicio; resuelve pista del perfil guardado |
+| 6 | Botón ▶/⏸ pausaba en lugar de detener; play no resincronizaba perfil | `formacion.js` → `MusicPlayer.toggle` | Stop real (pause + reset/rebuild); play relee perfil activo antes de reproducir |
 
 ---
 
