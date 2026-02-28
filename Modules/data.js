@@ -323,12 +323,34 @@ const ConfigManager = {
 
     exportConfig: function () {
         try {
-            const config = this.getConfig();
-            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
+            const snapshot = {};
+            // Claves estáticas conocidas
+            const staticKeys = [
+                'yugioh_config', 'yugioh_banlist_data', 'yugioh_engines',
+                'yugioh_winrates', 'pz_winrate_standalone', 'yugioh_power_cache',
+                'yugioh_cross_scores', 'yugioh_meta_decks', 'yugioh_meta_card_library',
+                'yugioh_meta_deck_scores', 'yugioh_favoritas', 'yugioh_formacion_notes',
+                'yugioh_formacion_mastered', 'yugioh_torneo_actual',
+                'dd_content_visibility', 'dd_player_profile'
+            ];
+            staticKeys.forEach(k => {
+                const v = localStorage.getItem(k);
+                if (v !== null) snapshot[k] = v;
+            });
+            // Claves dinámicas: deck_, matchup_, pz_states_
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (!k) continue;
+                if (k.startsWith('deck_') || k.startsWith('matchup_') || k.startsWith('pz_states_')) {
+                    snapshot[k] = localStorage.getItem(k);
+                }
+            }
+            const json = JSON.stringify(snapshot, null, 2);
+            const blob = new Blob([json], { type: 'text/plain' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
             a.href = url;
-            a.download = 'destiny_draw_config.txt';
+            a.download = `destiny_draw_backup_${new Date().toISOString().slice(0,10)}.txt`;
             a.click();
             URL.revokeObjectURL(url);
             return true;
@@ -342,21 +364,26 @@ const ConfigManager = {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => {
-            const dataUrl   = e.target.result;
-            const masterId  = `mm_${i}`;
-            const urlInput  = document.getElementById(`mm-fallback-${i}`);
-            // Guardar en clave separada
-            const ok = ConfigManager.saveMetaFallback(masterId, dataUrl);
-            if (!ok) {
-                alert('No se pudo guardar la imagen (almacenamiento lleno). Usa una URL externa.');
-                return;
-            }
-            if (urlInput) urlInput.value = `local:${masterId}`;
-            const btn = document.getElementById(`mm-fallback-file-${i}`)
-                ?.previousElementSibling?.querySelector?.('.meta-master-file-btn')
-                || document.querySelector(`#meta-master-item-${i} .meta-master-file-btn`);
-            if (btn) btn.textContent = `✔ ${file.name}`;
-        };
+                try {
+                    const snapshot = JSON.parse(e.target.result);
+                    if (typeof snapshot !== 'object' || Array.isArray(snapshot))
+                        throw new Error('Formato inválido');
+                    // Limpiar todo primero
+                    const allKeys = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const k = localStorage.key(i);
+                        if (k) allKeys.push(k);
+                    }
+                    allKeys.forEach(k => localStorage.removeItem(k));
+                    // Restaurar cada clave del backup
+                    Object.entries(snapshot).forEach(([k, v]) => {
+                        if (v !== null && v !== undefined) localStorage.setItem(k, v);
+                    });
+                    resolve(true);
+                } catch (err) {
+                    reject('Archivo inválido: ' + err.message);
+                }
+            };
             reader.onerror = () => reject('Error al leer el archivo');
             reader.readAsText(file);
         });
@@ -368,21 +395,16 @@ const ConfigManager = {
         return this.getConfig().roles || {};
     },
     setRoleWeight: function (roleName, weight) {
-    const config = this.getConfig();
-    if (!config.roleWeights) config.roleWeights = {};
-    config.roleWeights[roleName] = Math.max(0.1, Math.min(2.0, weight));
-    this.saveConfig(config);
-},
+        const config = this.getConfig();
+        if (!config.roleWeights) config.roleWeights = {};
+        config.roleWeights[roleName] = Math.max(0.1, Math.min(2.0, weight));
+        this.saveConfig(config);
+    },
 
-getRoleWeight: function (roleName) {
-    const w = this.getConfig().roleWeights?.[roleName];
-    return (w !== undefined && w > 0) ? w : 1.0;
-},
-
-getRoleWeight: function (roleName) {
-    const w = this.getConfig().roleWeights?.[roleName];
-    return (w !== undefined && w > 0) ? w : 1.0;
-},
+    getRoleWeight: function (roleName) {
+        const w = this.getConfig().roleWeights?.[roleName];
+        return (w !== undefined && w > 0) ? w : 1.0;
+    },
 
     getRoleNames: function () {
         return Object.keys(this.getRoles());

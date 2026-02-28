@@ -885,17 +885,12 @@ const Config = {
                         </small>
                     </button>
                     <button class="btn btn-danger" data-section-id="config-danger-delete" onclick="Config.borrarDeck()">
-                        🗑️ Borrar Deck
+                        🗑️ Borrar Decks & Juego
                         <small style="display:block;font-weight:normal;font-size:0.7rem;opacity:0.75;">
                             Decks guardados, winrates, notas, cache de scores
                         </small>
                     </button>
-                    <button class="btn btn-danger" data-section-id="config-danger-meta" onclick="Config.borrarMeta()">
-                        🗑️ Borrar META
-                        <small style="display:block;font-weight:normal;font-size:0.7rem;opacity:0.75;">
-                            Carpetas, decks importados, poder de cartas calculado
-                        </small>
-                    </button>
+
                 </div>
             </div>
             
@@ -1544,20 +1539,32 @@ renderNomCategoryOptions: function (selectedId) {
 
     // ===============================
     resetToDefault: function () {
-        if (!confirm('¿Restaurar toda la configuración a los valores por defecto? Esta acción no se puede deshacer.')) return;
-        if (ConfigManager.resetToDefault()) { 
-            this.render(); 
-            alert('✅ Configuración restaurada'); 
-        } else {
-            alert('❌ No se pudo restaurar la configuración');
+        if (!confirm(
+            '🔄 RESTAURAR DE FÁBRICA\n\n' +
+            'Esto borrará TODA la data actual (decks, engines, matchups, winrates, etc.)\n' +
+            'y restaurará la configuración al estado original de la app.\n\n' +
+            'Esta acción NO se puede deshacer.'
+        )) return;
+        // Limpiar todo el localStorage
+        const allKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k) allKeys.push(k);
         }
+        allKeys.forEach(k => localStorage.removeItem(k));
+        // Poner config de fábrica
+        if (window.ConfigManager) ConfigManager.resetToDefault();
+        // Resetear módulos en memoria
+        this._resetModulesInMemory();
+        this.render();
+        alert('✅ App restaurada a valores de fábrica.');
     },
 
     exportConfig: function () {
         if (ConfigManager.exportConfig()) {
-            alert('✅ Configuración exportada exitosamente');
+            alert('✅ Backup exportado (decks, engines, matchups, winrates, config y más).');
         } else {
-            alert('❌ No se pudo exportar');
+            alert('❌ No se pudo exportar el backup.');
         }
     },
 
@@ -1570,12 +1577,12 @@ renderNomCategoryOptions: function (selectedId) {
         if (!file) return;
         try {
             await ConfigManager.importConfig(file);
-            this.render();
-            alert('✅ Configuración importada exitosamente');
+            alert('✅ Backup importado correctamente. La app se recargará para aplicar los cambios.');
+            location.reload();
         } catch (err) {
             alert('❌ Error al importar: ' + err);
+            el.value = '';
         }
-        el.value = '';
     },
     
     addNomCondKw: function (catId, field, el) {
@@ -1646,127 +1653,112 @@ _restoreAndScroll: function(sectionId, anchorId) {
     
     borrarDeck: function () {
         if (!confirm(
-            '¿Borrar TODOS los decks guardados, winrates y cache de scores?\n' +
-            'El META y la configuración no se tocarán.\n' +
+            '¿Borrar TODOS los decks, engines, matchups, winrates, favoritas y estados de práctica?\n' +
+            'La configuración (roles, staples, etc.) no se tocará.\n' +
             'Esta acción no se puede deshacer.'
         )) return;
 
-        const deckKeys = [];
+        const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
             const k = localStorage.key(i);
-            if (k && k.startsWith('deck_')) deckKeys.push(k);
+            if (!k) continue;
+            if (k.startsWith('deck_') || k.startsWith('matchup_') || k.startsWith('pz_states_'))
+                keysToRemove.push(k);
         }
-        deckKeys.forEach(k => localStorage.removeItem(k));
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+        localStorage.removeItem('yugioh_engines');
         localStorage.removeItem('yugioh_winrates');
+        localStorage.removeItem('pz_winrate_standalone');
+        localStorage.removeItem('yugioh_favoritas');
+        localStorage.removeItem('yugioh_torneo_actual');
         localStorage.removeItem('yugioh_power_cache');
+        localStorage.removeItem('yugioh_cross_scores');
 
+        if (window.Deck) { Deck.cards = {}; Deck.name = 'Mi Deck'; Deck.notes = ''; Deck.render(); }
+        if (window.Engines && document.getElementById('mideck-content')) Engines._renderSidebar();
+        if (window.Favoritas) Favoritas.render?.();
+        if (window.Winrate)   Winrate.refreshSection();
+        if (window.Duelista)  Duelista.refreshSection();
+        if (window.Torneo)    Torneo._initialized = false;
+        if (window.Estadisticas) {
+            Estadisticas.powerScoreCache = null;
+            if (typeof Estadisticas.updateFloatingWidget === 'function') Estadisticas.updateFloatingWidget();
+        }
+
+        alert(`✅ ${keysToRemove.length} deck(s) y toda la data de juego eliminados.`);
+    },
+
+    // borrarMeta eliminado — pestaña Meta ya no existe
+    borrarTodo: function () {
+        if (!confirm(
+            '⚠️ BORRAR TODO ⚠️\n\n' +
+            'Esto eliminará ABSOLUTAMENTE TODA la data:\n' +
+            '• Decks guardados y estados de práctica\n' +
+            '• Engines y Staples\n' +
+            '• Matchups, winrates e historial\n' +
+            '• Favoritas y banlist personalizada\n' +
+            '• Notas y temas de Formación\n' +
+            '• Torneo activo\n' +
+            '• Cache de Estadísticas y Meta\n' +
+            '• Toda la Configuración (roles, mecánicas, nomenclatura, pilares)\n\n' +
+            'La app quedará completamente vacía.\n' +
+            'Esta acción NO se puede deshacer.'
+        )) return;
+
+        // Borrar absolutamente todo el localStorage
+        const allKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k) allKeys.push(k);
+        }
+        allKeys.forEach(k => localStorage.removeItem(k));
+
+        // Resetear módulos en memoria
+        this._resetModulesInMemory();
+        this.render();
+        if (window.Welcome) Welcome.init();
+        alert('✅ Todo borrado. La app está completamente vacía.');
+    },
+
+    // Resetea todos los módulos en memoria tras un clear total
+    _resetModulesInMemory: function () {
         if (window.Deck) {
             Deck.cards = {};
             Deck.name  = 'Mi Deck';
             Deck.notes = '';
-            Deck.render();
+            if (document.getElementById('deck-content')) Deck.render();
+        }
+        if (window.Engines) {
+            if (document.getElementById('mideck-content')) Engines._renderSidebar();
+        }
+        if (window.Matchups) {
+            if (document.getElementById('historial-content')) Matchups.refreshSection?.();
+        }
+        if (window.Duelista) {
+            const el = document.getElementById('duelista-content');
+            if (el) Duelista.refreshSection();
         }
         if (window.Estadisticas) {
-            Estadisticas.powerScoreCache = null;
-            Estadisticas.updateDeckStats();
+            Estadisticas.powerScoreCache  = null;
+            Estadisticas.metaDecks        = {};
+            Estadisticas.metaFolders      = [];
+            Estadisticas.metaCardLibrary  = {};
+            Estadisticas.metaDeckScores   = {};
+            Estadisticas.crossScores      = {};
+            if (document.getElementById('estadisticas-content')) Estadisticas.render();
             if (typeof Estadisticas.updateFloatingWidget === 'function')
                 Estadisticas.updateFloatingWidget();
         }
-        if (window.Winrate)  Winrate.refreshSection();
-        if (window.Duelista) Duelista.refreshSection();
-
-        alert(`✅ ${deckKeys.length} deck(s) y datos relacionados eliminados.`);
-    },
-
-    borrarMeta: function () {
-        if (!confirm(
-            '¿Borrar TODO el META (carpetas, decks importados, poder de cartas calculado)?\n' +
-            'Los decks guardados y winrates no se tocarán.\n' +
-            'Esta acción no se puede deshacer.'
-        )) return;
-
-        localStorage.removeItem('yugioh_meta_decks');
-        localStorage.removeItem('yugioh_power_cache');
-
-        if (window.Estadisticas) {
-            Estadisticas.powerScoreCache = null;
-            Estadisticas.metaDecks       = {};
-            Estadisticas.metaFolders     = [];
-            // Re-renderizar estadisticas en vivo
-            const statsEl = document.getElementById('estadisticas-content');
-            if (statsEl) Estadisticas.render();
-            if (typeof Estadisticas.updateFloatingWidget === 'function')
-                Estadisticas.updateFloatingWidget();
+        if (window.Favoritas) {
+            const el = document.getElementById('favoritas-panel');
+            if (el) Favoritas.render();
         }
-
-        alert('✅ META eliminado completamente.');
+        if (window.Winrate) Winrate.refreshSection();
+        if (window.Torneo) {
+            Torneo._initialized = false;
+        }
+        if (window.ContentManager) ContentManager.applyAll();
     },
-
-    borrarTodo: function () {
-    if (!confirm(
-        '⚠️ BORRAR TODO ⚠️\n\n' +
-        'Esto eliminará:\n' +
-        '• Todos los decks guardados\n' +
-        '• Meta completo (carpetas e importados)\n' +
-        '• Winrates e historial\n' +
-        '• Cartas favoritas\n' +
-        '• Cache de poder de cartas\n' +
-        '• Biblioteca de cartas del meta\n' +
-        '• Scores calculados de decks del meta\n' +
-        '• Roles, Mecánicas, Counters, Staples y Nomenclatura\n\n' +
-        'La app quedará completamente vacía.\n' +
-        'Esta acción NO se puede deshacer.'
-    )) return;
-
-    // Borrar absolutamente todo el localStorage
-    const allKeys = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k) allKeys.push(k);
-    }
-    allKeys.forEach(k => localStorage.removeItem(k));
-    if (window.Welcome) Welcome.dismissed = false;
-localStorage.removeItem('dd_welcome_dismissed'); 
-
-    // Guardar config vacía explícitamente
-    const emptyConfig = {
-        roles:          {},
-        roleConditions: {},
-        roleWeights:    {},
-        specialties:    [],
-        staples:        {},
-        nomenclature:   { categories: [] },
-        pillars:        { consistency: [], power: [], resilience: [] }
-    };
-    if (window.ConfigManager) ConfigManager.saveConfig(emptyConfig);
-
-    if (window.Deck) {
-        Deck.cards = {};
-        Deck.name  = 'Mi Deck';
-        Deck.notes = '';
-        Deck.render();
-    }
-    if (window.Estadisticas) {
-        Estadisticas.powerScoreCache  = null;
-        Estadisticas.metaDecks        = {};
-        Estadisticas.metaFolders      = [];
-        Estadisticas.metaCardLibrary  = {};
-       Estadisticas.metaDeckScores   = {};
-        Estadisticas.crossScores      = {};
-        const statsEl = document.getElementById('estadisticas-content');
-        if (statsEl) Estadisticas.render();
-        if (typeof Estadisticas.updateFloatingWidget === 'function')
-            Estadisticas.updateFloatingWidget();
-    }
-    if (window.Favoritas) Favoritas.render();
-    if (window.Winrate)   Winrate.refreshSection();
-    if (window.Duelista)  Duelista.refreshSection();
-    
-    this.render();
-
-if (window.Welcome) Welcome.init();
-    alert('✅ Todo borrado. La app está completamente vacía.');
-},
 renderPillarsSection: function() {
     const pillars   = ConfigManager.getPillars();
     const allRoles  = ConfigManager.getRoleNames();
@@ -2997,4 +2989,3 @@ const HelpPanel = {
 console.log('ESTADO: Actualizacion de lo que se esta haciendo')
 window.HelpPanel = HelpPanel;
 document.addEventListener('DOMContentLoaded', () => HelpPanel.init());
-
