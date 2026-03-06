@@ -2200,3 +2200,117 @@
     color: rgba(255,255,255,0.7);
 }
 .borrar-select-all-label input[type="checkbox"] { accent-color: #d63031; width: 15px; height: 15px; cursor: pointer; }
+
+/* ── Panel Reportar Error ── */
+.error-report-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.error-report-panel {
+    background: #1e0008;
+    border: 2px solid #2778d4;
+    border-radius: 14px;
+    padding: 24px 26px 20px;
+    width: 100%;
+    max-width: 520px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.error-report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-light);
+}
+.error-report-num {
+    color: #2778d4;
+    margin-left: 6px;
+}
+.error-report-close {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.5);
+    font-size: 1.4rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 4px;
+    transition: color 0.15s;
+}
+.error-report-close:hover { color: #fff; }
+.error-report-hint {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.45);
+    margin: 0;
+    line-height: 1.5;
+}
+.error-report-textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(39,120,212,0.4);
+    border-radius: 8px;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    padding: 10px 12px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.6;
+    transition: border-color 0.2s;
+}
+.error-report-textarea:focus {
+    outline: none;
+    border-color: #2778d4;
+}
+.error-report-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.error-report-date {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.35);
+}
+.error-report-send-btn {
+    background: #1a5fa8;
+    border-color: #2778d4;
+}
+.error-report-send-btn:hover { background: #2778d4; }
+
+
+/* ── CONFIG: Reportar Error (EmailJS) ── ```
+
+---
+
+## CAMBIO 5 — Setup EmailJS (una sola vez)
+
+1. Ve a **[emailjs.com](https://www.emailjs.com)** → crear cuenta gratuita
+2. **Email Services** → conecta tu Gmail `franq0524@gmail.com` → copia el **Service ID**
+3. **Email Templates** → crea una nueva plantilla con este contenido:
+```
+To: franq0524@gmail.com
+Subject: {{subject}}
+
+MENSAJE DEL USUARIO:
+{{user_message}}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+REPORTE #{{report_number}} — {{report_date}}
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- LOG DEL SISTEMA ---
+{{logger_report}}
+
+--- CONFIGURACIÓN ---
+{{config_data}}
+*/

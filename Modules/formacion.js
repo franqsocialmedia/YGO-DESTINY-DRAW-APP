@@ -869,6 +869,7 @@ const Config = {
 
             <!-- Botones de acción -->
             <div class="config-actions">
+                <button class="btn btn-primary" onclick="Config.abrirReportarError()" style="background:#1a5fa8;border-color:#2778d4;" title="Envía un reporte de error al desarrollador">📧 Reportar Error</button>
                 <button class="btn btn-success" onclick="Config.generarReporte()" style="background:#4a0015;border-color:#9b1030;" title="Exporta un .txt con el log de ejecución de esta sesión">📋 Generar Reporte</button>
                 <button class="btn btn-primary" onclick="Config.exportConfig()">📥 Exportar Data</button>
                 <button class="btn btn-primary" onclick="Config.importConfig()">📤 Importar Data</button>
@@ -1569,7 +1570,142 @@ renderNomCategoryOptions: function (selectedId) {
         this.render();
         alert('✅ App restaurada a valores de fábrica.');
     },
+// ── EmailJS credentials — reemplazar con los valores de tu cuenta emailjs.com ──
+_EMAILJS_PUBLIC_KEY:  'A53dOwIqPynXyCMjG',   // Account > API Keys
+_EMAILJS_SERVICE_ID:  'service_7dy6tci',   // Email Services > Service ID
+_EMAILJS_TEMPLATE_ID: 'template_pwibff4',  // Email Templates > Template ID
 
+abrirReportarError: function () {
+    if (document.getElementById('error-report-overlay')) return;
+    const counter = parseInt(localStorage.getItem('dd_report_counter') || '0') + 1;
+    const now     = new Date();
+    const dateStr = now.toLocaleString('es-DO');
+
+    const overlay = document.createElement('div');
+    overlay.id        = 'error-report-overlay';
+    overlay.className = 'error-report-overlay';
+    overlay.innerHTML = `
+        <div class="error-report-panel">
+            <div class="error-report-header">
+                <span>📧 Reportar Error <span class="error-report-num">#${counter}</span></span>
+                <button class="error-report-close" onclick="Config.cerrarReportarError()">×</button>
+            </div>
+            <p class="error-report-hint">
+                Se adjuntará el Log del sistema y tu configuración actual en el cuerpo del correo.
+            </p>
+            <textarea id="error-report-msg" class="error-report-textarea"
+                placeholder="Diga que cosas considera no funcionan como deberia. Puede escribir cosas de gustos en un parrafo distinto"
+                rows="6"></textarea>
+            <div class="error-report-footer">
+                <span class="error-report-date">🕐 ${dateStr}</span>
+                <button class="btn btn-primary error-report-send-btn"
+                        id="error-report-send"
+                        onclick="Config.enviarReporte(${counter}, '${dateStr.replace(/'/g, "\\'")}')">
+                    📤 Enviar Reporte
+                </button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    setTimeout(() => document.getElementById('error-report-msg')?.focus(), 100);
+},
+
+cerrarReportarError: function () {
+    document.getElementById('error-report-overlay')?.remove();
+},
+
+enviarReporte: function (counter, dateStr) {
+    const msg = (document.getElementById('error-report-msg')?.value || '').trim();
+    if (!msg) { alert('Escribe un mensaje antes de enviar.'); return; }
+
+    const btn = document.getElementById('error-report-send');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Enviando...'; }
+
+    // ── Generar Logger Report como texto ────────────────────────
+    let loggerTxt = 'Logger no disponible en esta sesión.';
+    if (window.DDLogger) {
+        const logs  = DDLogger.getLogs();
+        const stats = DDLogger.getStats();
+        const L = [];
+        L.push('=== DESTINY DRAW — LOG REPORT ===');
+        L.push(`Generado: ${dateStr} | Reporte #${counter}`);
+        L.push(`Entradas: ${logs.length} | Errores: ${logs.filter(e=>!e.ok).length} | Lentas: ${logs.filter(e=>e.slow).length}`);
+        L.push('');
+        L.push('--- ESTADÍSTICAS POR MÉTODO ---');
+        Object.entries(stats)
+            .sort((a,b) => b[1].calls - a[1].calls)
+            .forEach(([k,s]) => {
+                const avg = s.calls > 0 ? (s.totalMs / s.calls).toFixed(1) : '0.0';
+                L.push(`  ${k.padEnd(45)} calls:${s.calls}  avg:${avg}ms  errors:${s.errors}`);
+            });
+        const errors = logs.filter(e => !e.ok);
+        if (errors.length) {
+            L.push('');
+            L.push('--- ERRORES ---');
+            errors.forEach(e => {
+                L.push(`  [#${e.seq}] ${e.ts} | ${e.label}`);
+                L.push(`  Msg: ${e.error}`);
+                if (e.stack) L.push(`  Stack: ${e.stack.split('\n').slice(0,3).join(' | ')}`);
+            });
+        }
+        L.push('');
+        L.push('--- LOG COMPLETO ---');
+        logs.forEach(e => {
+            const flag = !e.ok ? '[ERR]' : e.slow ? '[SLW]' : '[OK] ';
+            L.push(`[${e.seq}] ${e.ts} ${flag} ${e.label}(${(e.args||'').slice(0,80)}) ${e.ms}ms`);
+        });
+        loggerTxt = L.join('\n');
+    }
+
+    // ── Generar Config Export como texto ────────────────────────
+    let configTxt = 'Config no disponible.';
+    try {
+        const claves = [
+            'yugioh_config','yugioh_player_level','dd_player_profile',
+            'dd_content_visibility','dd_welcome_dismissed',
+            'yugioh_favoritas','yugioh_engines','yugioh_decks',
+            'yugioh_music_config','yugioh_meta_folders',
+            'dd_power_scores_cache','yugioh_formacion_notes','yugioh_formacion_mastered',
+        ];
+        const exportObj = { exportDate: dateStr, reportNumber: counter };
+        claves.forEach(k => {
+            const v = localStorage.getItem(k);
+            if (v) { try { exportObj[k] = JSON.parse(v); } catch(_) { exportObj[k] = v; } }
+        });
+        // matchups dinámicos
+        exportObj._matchups = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k?.startsWith('matchup_')) {
+                try { exportObj._matchups[k] = JSON.parse(localStorage.getItem(k)); } catch(_) {}
+            }
+        }
+        configTxt = JSON.stringify(exportObj, null, 2);
+    } catch (e) {
+        configTxt = 'Error al generar config: ' + e.message;
+    }
+
+    // ── Enviar via EmailJS ───────────────────────────────────────
+    // EmailJS limita el cuerpo a ~50KB; truncamos si es necesario
+    const MAX = 18000;
+    emailjs.init({ publicKey: this._EMAILJS_PUBLIC_KEY });
+    emailjs.send(this._EMAILJS_SERVICE_ID, this._EMAILJS_TEMPLATE_ID, {
+        subject:       `REPORTE #${counter} ${dateStr}`,
+        report_number: String(counter),
+        report_date:   dateStr,
+        user_message:  msg,
+        logger_report: loggerTxt.length  > MAX ? loggerTxt.slice(0, MAX)  + '\n...[truncado]' : loggerTxt,
+        config_data:   configTxt.length > MAX ? configTxt.slice(0, MAX) + '\n...[truncado]' : configTxt,
+    }).then(() => {
+        localStorage.setItem('dd_report_counter', String(counter));
+        if (btn) { btn.disabled = false; btn.textContent = '📤 Enviar Reporte'; }
+        this.cerrarReportarError();
+        alert(`✅ Reporte #${counter} enviado a franq0524@gmail.com`);
+    }).catch(err => {
+        if (btn) { btn.disabled = false; btn.textContent = '📤 Enviar Reporte'; }
+        console.error('[ReporteError]', err);
+        alert(`❌ No se pudo enviar.\n${err?.text || JSON.stringify(err)}\n\nVerifica las credenciales EmailJS en Config.`);
+    });
+},
     exportConfig: function () {
         if (ConfigManager.exportConfig()) {
             alert('✅ Backup exportado (decks, engines, matchups, winrates, config y más).');
