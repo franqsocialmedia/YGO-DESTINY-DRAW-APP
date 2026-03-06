@@ -2288,29 +2288,3 @@
 .error-report-send-btn:hover { background: #2778d4; }
 
 
-/* ── CONFIG: Reportar Error (EmailJS) ── ```
-
----
-
-## CAMBIO 5 — Setup EmailJS (una sola vez)
-
-1. Ve a **[emailjs.com](https://www.emailjs.com)** → crear cuenta gratuita
-2. **Email Services** → conecta tu Gmail `franq0524@gmail.com` → copia el **Service ID**
-3. **Email Templates** → crea una nueva plantilla con este contenido:
-```
-To: franq0524@gmail.com
-Subject: {{subject}}
-
-MENSAJE DEL USUARIO:
-{{user_message}}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━
-REPORTE #{{report_number}} — {{report_date}}
-━━━━━━━━━━━━━━━━━━━━━━━━━
-
---- LOG DEL SISTEMA ---
-{{logger_report}}
-
---- CONFIGURACIÓN ---
-{{config_data}}
-*/
