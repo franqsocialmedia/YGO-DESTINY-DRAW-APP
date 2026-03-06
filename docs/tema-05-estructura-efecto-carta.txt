@@ -1,0 +1,117 @@
+================================================================
+  TEMA 5: ESTRUCTURA DE UN EFECTO DE CARTA
+  Nivel: Novato → Casual
+================================================================
+
+Leer mal una carta es uno de los errores más costosos en Yu-Gi-Oh!.
+Cada línea de texto tiene una función específica. Este tema te enseña
+a diseccionar cualquier efecto, incluso uno que nunca hayas visto.
+
+----------------------------------------------------------------
+  LAS 6 PARTES DE UN EFECTO
+----------------------------------------------------------------
+
+1. REQUISITO
+   Condición externa que debe cumplirse para que el efecto pueda activarse.
+   Generalmente aparece al inicio, antes de los dos puntos.
+   Ej: "Si tienes un monstruo 'Nombre' en tu campo:"
+
+2. CONDICIÓN
+   Restricción sobre el estado del juego en el momento de activación.
+   Ej: "Solo puedes activar este efecto una vez por turno."
+   Ej: "No puedes invocar excepto monstruos 'Nombre' el turno que actives esto."
+
+3. COSTO
+   Lo que pagas para activar el efecto. Se paga ANTES de que el efecto resuelva.
+   Si el oponente niega el efecto, el costo ya fue pagado — no se devuelve.
+   Ej: "Descarta 1 carta:" — los dos puntos después del costo son clave.
+   Ej: "Libera este monstruo:"
+
+4. EFECTO / OBJETIVO
+   Lo que hace la carta cuando resuelve. Puede tener objetivo (target) o no.
+   Si dice "selecciona" o "elige", tiene objetivo — el oponente puede responder
+   a la selección. Si no lo dice, el efecto no tiene objetivo.
+
+5. DURACIÓN
+   Por cuánto tiempo aplica el efecto.
+   Ej: "hasta el final del turno", "durante esta Battle Phase", "mientras esté en campo".
+   Si no dice cuánto dura, es permanente o hasta que se quite la carta.
+
+6. RESTRICCIÓN
+   Limitación que aplica DESPUÉS de resolver el efecto. A menudo en una frase
+   separada al final.
+   Ej: "No puedes atacar directamente el turno que actives este efecto."
+   Ej: "No puedes especial invocar el turno que actives esta carta, excepto..."
+
+----------------------------------------------------------------
+  LOS CONECTORES LÓGICOS MÁS IMPORTANTES
+----------------------------------------------------------------
+
+"IF" (si)
+  El efecto puede "miss the timing" — puede ocurrir que las condiciones
+  no se cumplan en el momento exacto y el efecto no se active.
+  Ej: "Si esta carta fue enviada al cementerio" → tiene una ventana específica.
+
+"WHEN" (cuando)
+  Similar a IF pero aún más estricto en timing. Muy común en efectos opcionales
+  que requieren ser "lo último que pasó" para activarse.
+
+"EACH TIME" (cada vez que)
+  El efecto puede activarse múltiples veces en el mismo turno si la condición
+  se repite. No se limita a una vez por ocurrencia.
+
+"THEN" (luego)
+  Las dos partes del efecto se resuelven en orden. No son opcionales entre sí —
+  si falla la primera, la segunda también falla.
+
+"AND IF YOU DO" / "AND ALSO"
+  Ambas partes se resuelven simultáneamente. Si una falla, la otra también falla.
+
+"YOU CAN" (puedes)
+  El efecto es opcional. No estás obligado a activarlo ni a resolver toda su parte.
+
+"ONCE PER TURN" (una vez por turno)
+  Limita la activación a 1 por turno. OJO: hay diferencia entre "una vez por turno
+  por carta" y "una vez por turno por nombre de carta". El segundo limita incluso
+  si tienes copias múltiples.
+
+----------------------------------------------------------------
+  OBJETIVO (TARGET) VS SIN OBJETIVO
+----------------------------------------------------------------
+
+CON OBJETIVO
+  "Selecciona 1 carta en el campo de tu oponente y destrúyela."
+  → El oponente puede responder y remover el objetivo antes de que resuelva.
+  → Si el objetivo ya no está cuando resuelve, el efecto falla.
+
+SIN OBJETIVO
+  "Destruye todos los monstruos en el campo de tu oponente."
+  → No hay selección previa. El efecto resuelve directamente.
+  → El oponente no puede "escapar" por mover la carta — todo aplica al resolver.
+
+----------------------------------------------------------------
+  EJEMPLO PRÁCTICO DISECCIONADO
+----------------------------------------------------------------
+
+Texto: "Si tienes 3 o más cartas en tu mano: descarta 1 carta;
+        roba 2 cartas. Solo puedes activar este efecto una vez por turno."
+
+  • REQUISITO: "Si tienes 3 o más cartas en tu mano"
+  • COSTO: "descarta 1 carta" (pagado antes de resolver)
+  • EFECTO: "roba 2 cartas" (resuelve si el efecto no es negado)
+  • CONDICIÓN/RESTRICCIÓN: "Solo puedes activar este efecto una vez por turno"
+
+Si el oponente niega el efecto, igual descartaste 1 carta. El costo no se devuelve.
+
+----------------------------------------------------------------
+  CONSEJO CLAVE
+----------------------------------------------------------------
+
+Lee siempre en este orden:
+  1. ¿Qué necesito para activarlo? (Requisito)
+  2. ¿Qué pago? (Costo) — ¿vale la pena si me lo niegan?
+  3. ¿Qué hace? (Efecto) — ¿tiene objetivo?
+  4. ¿Qué limitación me queda después? (Restricción)
+
+El jugador que entiende los costos y las restricciones toma mejores
+decisiones que el que solo ve el efecto en bruto.

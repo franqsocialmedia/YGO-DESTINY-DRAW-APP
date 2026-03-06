@@ -1,0 +1,123 @@
+================================================================
+  TEMA 12: VELOCIDAD DE EFECTOS Y CADENAS
+  Nivel: Competitivo
+================================================================
+
+El sistema de cadenas es el motor del juego a nivel técnico.
+Entenderlo completamente es lo que te permite activar tus cartas en el
+momento correcto, responder al oponente sin cometer errores y ganar
+disputas que un jugador sin este conocimiento perdería.
+
+----------------------------------------------------------------
+  SPELL SPEED (VELOCIDAD DE HECHIZO)
+----------------------------------------------------------------
+
+Cada efecto tiene una velocidad. Una cadena solo puede subir de velocidad,
+nunca bajar. Es decir: un efecto de velocidad 2 puede responder a uno de
+velocidad 2 o 1, pero no a uno de velocidad 3.
+
+VELOCIDAD 1
+  Efectos que NO pueden ser activados como respuesta directa a otro efecto.
+  Son la base de la cadena, nunca el eslabón reactivo.
+  • Efectos de monstruo de tipo Activación (Ignition Effects).
+  • Efectos continuos (Continuous Effects) — ni siquiera generan cadena,
+    simplemente aplican mientras la carta esté en campo.
+  • Magias normales, de campo, de equipo, de ritual.
+
+VELOCIDAD 2
+  Pueden responder a velocidad 1 y a velocidad 2.
+  • Quick Effects de monstruos (efectos rápidos que se activan en respuesta).
+  • Magias de Juego Rápido (Quick-Play Spells).
+  • Trampas normales y trampas continuas.
+  • Handtraps (se activan desde la mano como velocidad 2).
+
+VELOCIDAD 3
+  Solo puede responder a velocidad 3.
+  • Trampas Counter (Counter Traps) — Solemn Judgment, Solemn Warning, etc.
+  La única forma de responder a una Counter Trap es con otra Counter Trap.
+
+----------------------------------------------------------------
+  TIPOS DE EFECTOS
+----------------------------------------------------------------
+
+TRIGGER EFFECT (Efecto Gatillo)
+  Se activa automáticamente cuando ocurre un evento específico.
+  
+  Mandatorio: DEBE activarse. No puedes elegir no activarlo.
+    Ej: un efecto que dice "cuando esta carta es destruida, haz X".
+  
+  Opcional: PUEDE activarse si quieres.
+    Ej: "cuando esta carta es enviada al cementerio, puedes..."
+    Ojo: los opcionales pueden "miss the timing" (ver Tema 18).
+
+IGNITION EFFECT (Efecto Ignición)
+  Lo activas voluntariamente durante una ventana abierta en tu turno.
+  Velocidad 1. No puede activarse como respuesta.
+  Ej: "Una vez por turno: puedes..." en la descripción de un monstruo.
+
+QUICK EFFECT (Efecto Rápido)
+  Velocidad 2. Puede activarse en el turno del oponente o en respuesta
+  a sus efectos. Suelen indicarse con "(Quick Effect):" en el texto.
+
+CONTINUOUS EFFECT (Efecto Continuo)
+  Aplica automáticamente mientras la carta esté en campo.
+  No genera cadena — simplemente está activo.
+  Ej: "Los monstruos que controla tu oponente no pueden activar efectos."
+
+----------------------------------------------------------------
+  CÓMO FUNCIONA UNA CADENA
+----------------------------------------------------------------
+
+Una cadena es una secuencia de efectos activados en respuesta mutua.
+Se resuelve al revés: el último activado resuelve primero (LIFO — Last In, First Out).
+
+EJEMPLO:
+  1. Jugador A activa "Ash Blossom" (Vel. 2) — Eslabón 1.
+  2. Jugador B responde con "Called by the Grave" (Vel. 2) — Eslabón 2.
+  
+  Resolución:
+  • "Called by the Grave" resuelve primero (eslabón 2) → destierra Ash del cementerio
+    y la niega.
+  • "Ash Blossom" intenta resolver (eslabón 1) → pero ya no puede porque fue negada.
+
+Nota: Las cadenas siempre se construyen completamente ANTES de resolverse.
+No puedes activar un nuevo efecto a mitad de la resolución.
+
+----------------------------------------------------------------
+  VENTANA DE INTERACCIÓN
+----------------------------------------------------------------
+
+La ventana de interacción es el momento en que puedes activar efectos
+de velocidad 2 o superior como respuesta a lo que el oponente está haciendo.
+
+SE ABRE cuando:
+  • El jugador activo activa un efecto (hechizo, trampa, efecto de monstruo).
+  • El jugador activo realiza una invocación (especial o normal).
+  • El jugador activo realiza una acción visible (cambiar de posición, atacar).
+
+SE CIERRA cuando:
+  • Ambos jugadores pasan sin agregar nada a la cadena.
+  • Cuando la cadena resuelve y ningún jugador agrega otro efecto.
+
+PRIORIDAD EN LA VENTANA:
+  Primero los efectos mandatorios, luego los trigger opcionales del jugador
+  activo, luego los trigger opcionales del oponente, luego los efectos rápidos.
+  El jugador sin nada que activar debe ceder prioridad.
+
+----------------------------------------------------------------
+  ERROR FRECUENTE: ACTIVAR SIN VENTANA
+----------------------------------------------------------------
+
+Si el oponente no ha hecho nada que genere una ventana, no puedes
+activar tu Handtrap. Solo puedes activarla en respuesta a algo.
+
+Un Quick Effect de monstruo tampoco puede activarse en cualquier momento —
+necesita que haya una ventana abierta o que sea tu turno en una fase válida.
+
+----------------------------------------------------------------
+  CONSEJO CLAVE
+----------------------------------------------------------------
+
+El 80% de las disputes en torneo vienen de no entender cuándo hay ventana.
+Si tienes dudas sobre si puedes activar algo, pregunta: ¿hubo una acción o
+efecto de mi oponente que abrió la ventana? Si la respuesta es no, espera.

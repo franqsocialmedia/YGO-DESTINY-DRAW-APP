@@ -1,0 +1,93 @@
+================================================================
+  TEMA 3: TIPOS DE CARTAS BÁSICAS
+  Nivel: Novato
+================================================================
+
+Antes de aprender combos o estrategias, necesitas conocer exactamente
+qué puede hacer cada tipo de carta y cuándo puede usarse. Aquí no hay
+atajos: si confundes una trampa con un hechizo de juego rápido, pierdes.
+
+----------------------------------------------------------------
+  MONSTRUOS
+----------------------------------------------------------------
+
+Son el corazón del juego. Atacan, defienden y activan efectos.
+
+INVOCACIÓN NORMAL
+  • Puedes invocar 1 monstruo boca arriba por turno en posición de ataque.
+  • O puedes "setear" (colocar boca abajo) 1 monstruo por turno en defensa.
+  • Solo 1 invocación normal por turno, salvo que una carta diga lo contrario.
+
+ESTADÍSTICAS CLAVE DE UN MONSTRUO
+  • ATK: puntos de ataque. Se compara al atacar.
+  • DEF: puntos de defensa. Solo importa si está en posición de defensa.
+  • Nivel/Rango: número de estrellas. Afecta cómo se invocan los especiales.
+  • Tipo: Dragón, Guerrero, Mago, etc. Algunas cartas afectan tipos específicos.
+  • Atributo: AGUA, FUEGO, VIENTO, TIERRA, LUZ, OSCURIDAD. Igual, afectan sinergias.
+
+MONSTRUOS DE EFECTO vs MONSTRUOS NORMALES (VAINILLA)
+  • Los monstruos normales no tienen efecto — solo ATK/DEF y un texto de lore.
+  • Los de efecto tienen uno o más efectos activables o continuos.
+  • En la app puedes ver los efectos de cualquier carta desde el Buscador.
+
+CAMBIO DE POSICIÓN
+  • Puedes cambiar un monstruo de ataque a defensa o viceversa 1 vez por turno.
+  • No puedes cambiarlo si acaba de ser invocado ese mismo turno.
+  • Un monstruo que atacó ese turno no puede cambiar de posición.
+
+----------------------------------------------------------------
+  HECHIZOS (MAGIAS)
+----------------------------------------------------------------
+
+Son cartas verdes. Se activan y su efecto resuelve inmediatamente
+(salvo los Continuos y de Campo que permanecen en campo).
+
+TIPOS DE HECHIZOS
+  • Normal: se activa, resuelve y va al cementerio. Ej: Raigeki.
+  • Continuo: permanece en campo y su efecto dura mientras esté ahí.
+  • Equipo: se equipa a un monstruo y modifica sus stats o le da efectos.
+  • Campo: va a la zona de Campo. Solo puede haber 1 por lado del tablero.
+  • Ritual: se usa para realizar una Invocación Ritual específica.
+  • Juego Rápido (Quick-Play): puede activarse en cualquier fase de TU turno,
+    o en el turno del oponente si está boca abajo desde el turno anterior.
+
+IMPORTANTE: Los hechizos normales NO pueden activarse en respuesta directa
+a algo. Necesitan una ventana abierta para jugarse. Si tu oponente activa un
+efecto y tú quieres responder con un hechizo normal, no puedes — necesitas
+un hechizo de juego rápido o una trampa.
+
+----------------------------------------------------------------
+  TRAMPAS
+----------------------------------------------------------------
+
+Son cartas rosadas/moradas. La regla más importante: deben colocarse boca
+abajo primero y no pueden activarse el mismo turno que fueron colocadas
+(salvo excepciones).
+
+TIPOS DE TRAMPAS
+  • Normal: activa su efecto una vez y va al cementerio.
+  • Continua: permanece en campo y sigue activa.
+  • Counter (Contraefecto): velocidad de hechizo 3. Solo puede ser respondida
+    por otra counter trap. Son las más rápidas del juego.
+
+LA REGLA DEL TURNO
+  Si colocas una trampa en MP1, tu oponente puede destruirla antes de que
+  "madure". La trampa solo puede activarse desde el turno del oponente en
+  adelante. Por eso colocarlas en MP2 es la jugada más segura.
+
+¿POR QUÉ IMPORTA SABER QUÉ ES QUÉ?
+  Porque la velocidad de activación cambia todo. Si quieres responder a la
+  jugada del oponente en su turno, necesitas: trampas ya colocadas,
+  hechizos de juego rápido ya colocados, o efectos de monstruo de tipo quick.
+  Un hechizo normal en tu mano no te sirve de nada en el turno del oponente.
+
+----------------------------------------------------------------
+  CONSEJO CLAVE
+----------------------------------------------------------------
+
+Antes de jugar cualquier carta, hazte 3 preguntas:
+  1. ¿Es mi turno o el del oponente?
+  2. ¿El efecto genera cadena o es una acción sin cadena?
+  3. ¿Mi oponente puede responder a esto?
+
+Esas 3 preguntas te evitan el 90% de los errores del novato.

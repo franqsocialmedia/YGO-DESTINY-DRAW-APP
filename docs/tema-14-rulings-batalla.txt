@@ -1,0 +1,125 @@
+================================================================
+  TEMA 14: RULINGS EN FASE DE BATALLA
+  Nivel: Competitivo
+================================================================
+
+La Fase de Batalla tiene más reglas específicas que cualquier otra fase.
+La mayoría de los jugadores la tratan como "declaro ataque y listo",
+pero los rulings de esta fase determinan partidas enteras en torneo.
+
+----------------------------------------------------------------
+  LAS SUBFASES DE LA BATALLA
+----------------------------------------------------------------
+
+START OF BATTLE PHASE
+  El momento en que la Fase de Batalla comienza.
+  Algunos efectos se activan aquí específicamente.
+  Ambos jugadores pueden activar efectos de velocidad 2.
+
+BATTLE STEP (Declaración de Ataque)
+  Declaras qué monstruo ataca y a quién (o ataque directo).
+  El oponente puede responder con Quick Effects o trampas aquí.
+  Si el objetivo del ataque desaparece, ocurre un "Replay".
+
+DAMAGE STEP — LAS 5 SUBFASES DEL DAÑO
+  Son las más importantes y las que más confusión generan:
+  
+  A. Start of Damage Step
+     Se pueden activar efectos que modifican ATK/DEF o cambian posición
+     de los monstruos. También es cuando se voltean los monstruos boca abajo.
+  
+  B. Before Damage Calculation
+     El último momento para cambiar ATK/DEF antes de que se calcule el daño.
+     Aquí se activan cartas como "Rush Recklessly" o similares.
+     SOLO pueden activarse efectos de velocidad 2 que modifican ATK/DEF
+     o que se activan específicamente "en el Damage Step".
+  
+  C. Damage Calculation
+     Los puntos de vida cambian. Se compara ATK vs ATK (o ATK vs DEF).
+     Aquí ocurre el daño de batalla.
+  
+  D. After Damage Calculation
+     Efectos que se activan "después del cálculo de daño" van aquí.
+     También los efectos Flip de monstruos volteados.
+  
+  E. End of Damage Step
+     Los monstruos destruidos por combate son enviados al cementerio aquí.
+     Efectos de "cuando sea destruido por combate" se activan en este punto.
+
+END OF BATTLE PHASE
+  Todos los efectos temporales de la Battle Phase expiran.
+  El juego pasa obligatoriamente a Main Phase 2.
+
+----------------------------------------------------------------
+  DAÑO DE BATALLA vs DAÑO DE EFECTO
+----------------------------------------------------------------
+
+DAÑO DE BATALLA
+  Ocurre cuando un monstruo ataca y los LP cambian por esa razón.
+  Puede ser negado o modificado por cartas específicas que aplican
+  durante la Battle Phase o el Damage Step.
+
+DAÑO DE EFECTO
+  Ocurre cuando un efecto de carta dice "inflige X de daño".
+  No puede ser negado por cartas que solo aplican a daño de batalla.
+  Funciona fuera del Damage Step, en cualquier fase.
+
+CONVERSIÓN DE DAÑO
+  Algunas cartas convierten el daño de batalla en daño de efecto,
+  o hacen que el oponente tome el daño en vez de tú.
+  El orden de prioridad cuando múltiples cartas afectan el daño
+  (de menor a mayor número, el de número más bajo se ejecuta):
+  
+  01. Infligir doble daño de batalla al oponente
+  02. Ambos jugadores toman el daño
+  03. El oponente toma el daño (de alguna forma no estándar)
+  04. El daño de batalla se trata como daño de efecto
+  05. El jugador gana LP en vez de tomar daño
+  06. El daño de batalla se convierte en 0
+  07. El daño de batalla se divide
+  08. El daño de batalla se dobla
+  09. El daño se convierte en una cantidad específica
+  10. No tomas daño bajo ciertas condiciones
+
+  Cuando dos efectos del mismo número se aplican, el daño ocurre
+  1 sola vez y tiene prioridad el jugador cuyo turno es.
+
+----------------------------------------------------------------
+  REPLAY ATTACKS
+----------------------------------------------------------------
+
+Un Replay ocurre cuando el objetivo de un ataque desaparece del campo
+durante el Battle Step (antes de entrar al Damage Step).
+
+Cuando hay un Replay:
+  • El monstruo atacante puede elegir un nuevo objetivo.
+  • O puede elegir no atacar en absoluto.
+  • Si hay nuevos monstruos que aparecieron en campo (por una invocación
+    en respuesta), pueden ser seleccionados como nuevo objetivo.
+
+El Replay solo ocurre en el Battle Step, no durante el Damage Step.
+Si el objetivo desaparece ya dentro del Damage Step, el ataque continúa
+pero no inflige daño de batalla (el objetivo ya no está).
+
+----------------------------------------------------------------
+  LO QUE SOLO PUEDES HACER EN EL DAMAGE STEP
+----------------------------------------------------------------
+
+Durante el Damage Step, hay restricciones muy específicas sobre qué puedes activar.
+En general, SOLO puedes activar:
+  • Efectos de velocidad 2+ que modifiquen ATK/DEF.
+  • Efectos que se activan explícitamente "durante el Damage Step".
+  • Counter Traps (velocidad 3).
+  • Efectos mandatorios.
+
+Casi todas las Handtraps NO pueden activarse durante el Damage Step.
+Casi todas las Trampas Normales tampoco.
+
+----------------------------------------------------------------
+  CONSEJO CLAVE
+----------------------------------------------------------------
+
+En torneo, declarar el ataque y entrar al Damage Step sin dar ventana
+al oponente es un error que puede costarte la partida.
+Siempre anuncia "declaro ataque con X contra Y" y espera antes de pasar
+a calcular el daño. Esa pausa es la ventana de tu oponente para responder.

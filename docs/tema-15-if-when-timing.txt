@@ -1,0 +1,108 @@
+================================================================
+  TEMA 15: IF vs WHEN Y TIMING AVANZADO
+  Nivel: Competitivo
+================================================================
+
+"Miss the timing" es uno de los conceptos más mal entendidos en Yu-Gi-Oh!.
+Un jugador que no entiende la diferencia entre IF y WHEN perderá efectos
+clave en momentos críticos — o los usará fuera de tiempo sin saberlo.
+
+----------------------------------------------------------------
+  LA DIFERENCIA FUNDAMENTAL
+----------------------------------------------------------------
+
+WHEN (cuando) — Efectos OPCIONALES
+  El efecto tiene una ventana muy específica para activarse.
+  Si el evento que lo activa NO fue "lo último que ocurrió" antes de
+  que se abra la nueva ventana de activación, el efecto "miss the timing"
+  y NO puede activarse.
+  
+  "When X: you can do Y" = tiene posibilidad de miss the timing.
+
+IF (si) — Efectos OPCIONALES
+  Más flexible que WHEN. Solo necesita que la condición se haya cumplido
+  en algún momento del proceso, no necesariamente ser lo "último".
+  Menos propenso a miss the timing.
+  
+  "If X: you can do Y" = generalmente no pierde el timing.
+
+WHEN/IF — Efectos MANDATORIOS
+  Si dice "must" o es claramente mandatorio (sin "you can"),
+  NUNCA pierde el timing. Siempre se activa si la condición ocurre.
+
+----------------------------------------------------------------
+  QUÉ SIGNIFICA "MISS THE TIMING"
+----------------------------------------------------------------
+
+Ocurre cuando:
+1. El efecto usa WHEN (opcional).
+2. La condición de activación ocurrió, pero NO fue el último evento antes
+   de que se abra la nueva ventana de activación.
+
+EJEMPLO:
+  La carta X dice: "When this card is sent to the GY: you can add 1 card..."
+  
+  Escenario A: La carta X fue enviada al cementerio como el último paso de
+  un efecto que resolvió. → El efecto PUEDE activarse. No miss the timing.
+  
+  Escenario B: La carta X fue enviada al cementerio como parte de un efecto
+  que también hizo otras cosas después (ej: "envía X al cementerio, luego
+  invoca especialmente Y"). El envío al cementerio NO fue lo último que pasó.
+  → El efecto PIERDE el timing. No puede activarse.
+
+----------------------------------------------------------------
+  EFECTOS MANDATORIOS NUNCA PIERDEN EL TIMING
+----------------------------------------------------------------
+
+Si una carta dice "When X: do Y" sin "you can", es mandatorio.
+Los efectos mandatorios se activan sin importar qué fue "lo último".
+Solo los opcionales tienen el problema del timing.
+
+----------------------------------------------------------------
+  EL TIMING DE ACTIVACIÓN GENERAL
+----------------------------------------------------------------
+
+Al final de una cadena que resuelve, se abre una nueva ventana.
+En esa ventana, los efectos se activan en este orden de prioridad:
+
+1. Efectos mandatorios (SIEMPRE primero).
+2. Efectos Trigger opcionales del jugador activo.
+3. Efectos Trigger opcionales del jugador no activo.
+4. Efectos rápidos (Quick Effects) de ambos jugadores.
+
+Si en ese momento hay múltiples triggers opcionales del mismo jugador,
+ese jugador elige el orden en que los activan.
+
+----------------------------------------------------------------
+  EFECTOS EN ZONA DE CONOCIMIENTO PRIVADO
+----------------------------------------------------------------
+
+Las cartas en la mano y el deck son "conocimiento privado" — el oponente
+no sabe qué hay ahí. Los efectos que se activan desde esas zonas tienen
+una prioridad menor en ciertas reglas del OCG (aunque en TCG aplica igual).
+
+Ej: Ash Blossom activa su efecto desde la mano (conocimiento privado).
+    Después de que la cadena se construye, se revela.
+
+----------------------------------------------------------------
+  "EACH TIME" — SIN LIMITE DE ACTIVACIONES
+----------------------------------------------------------------
+
+Cuando un efecto dice "each time X happens: do Y", puede activarse
+múltiples veces en el mismo turno si la condición se repite.
+No está limitado a "once per turn" implícitamente.
+
+Ej: "Each time a Spell Card is activated: gain 500 LP."
+    Si tu oponente activa 3 hechizos en un turno, ganas 1500 LP total.
+
+----------------------------------------------------------------
+  CONSEJO CLAVE
+----------------------------------------------------------------
+
+Cuando no estés seguro de si tu efecto "miss the timing":
+  1. ¿Dice "when" y "you can"? → Potencial miss.
+  2. ¿El evento que activa el efecto fue lo último que ocurrió? → No miss.
+  3. ¿El efecto es mandatorio? → Nunca miss.
+
+En torneo, ante la duda, declara el efecto y deja que el juez decida.
+No asumir que se puede activar y no asumir que no se puede — preguntar.

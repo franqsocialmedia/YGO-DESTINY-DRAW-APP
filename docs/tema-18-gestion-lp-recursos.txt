@@ -1,0 +1,140 @@
+================================================================
+  TEMA 18: GESTIÓN DE LP Y RECURSOS EN EL DUELO
+  Nivel: Casual → Competitivo
+================================================================
+
+Los LP (Life Points) son el recurso más mal gestionado por jugadores intermedios.
+El jugador novato teme perder LP. El jugador avanzado los usa como herramienta.
+La diferencia entre ambos determina quién gana los duelos ajustados.
+
+----------------------------------------------------------------
+  LOS LP NO SON EL OBJETIVO — SON UN RECURSO
+----------------------------------------------------------------
+
+En Yu-Gi-Oh!, perder LP no te hace perder el duelo si no llegas a 0.
+Ir de 8000 a 4000 es exactamente tan válido como estar en 8000 —
+en ambos casos sigues en el juego.
+
+El error del novato: evitar perder LP a cualquier costo, incluso a costa
+de no activar efectos o de no jugar de forma óptima.
+
+El enfoque correcto: los LP son un recurso que se invierte para ganar ventaja.
+A veces, pagar 2000 LP por activar Solemn Judgment es la mejor inversión
+del duelo porque niegas algo que te habría costado el juego.
+
+----------------------------------------------------------------
+  TIPOS DE "RECURSOS" EN EL DUELO
+----------------------------------------------------------------
+
+En Yu-Gi-Oh! los recursos no son solo LP — son todo lo que tienes disponible:
+
+1. CARTAS EN MANO
+   El recurso más importante del turno. Cada carta que tienes en mano es
+   una opción potencial. Cuando los tienes muchos, tienes libertad.
+   Cuando los tienes pocos, cada decisión pesa más.
+
+2. CARTAS EN CAMPO
+   Los monstruos y mágicas/trampas activas. Representan amenazas actuales
+   y protecciones presentes.
+
+3. CARTAS EN CEMENTERIO
+   En el juego moderno, el cementerio es un recurso activo, no solo un descarte.
+   Muchos decks "gastan" recursos al cementerio para recuperarlos después.
+
+4. CARTAS DESTERRADAS
+   Generalmente el "recurso muerto" — pero algunos decks usan el destierro
+   activamente (Kashtira, decks de Bystial, etc.).
+
+5. LP
+   Cuánto margen de error tienes antes de perder.
+   4000 LP = aguantas un ataque de 4000 más.
+   1000 LP = cualquier ataque directamente te mata.
+
+6. TURNO
+   El tiempo — cuántos turnos lleva el duelo y si la posición actual es
+   sostenible o está empeorando con el tiempo.
+
+----------------------------------------------------------------
+  CUÁNDO VALE LA PENA PAGAR LP
+----------------------------------------------------------------
+
+SIEMPRE vale la pena cuando:
+  • Pagas LP para negar algo que no puedes recuperar de otra forma.
+  • El costo es pequeño comparado con la amenaza que niegas.
+  • Estás en posición ganadora y solo necesitas cerrar el duelo.
+
+EVALÚA CUIDADOSAMENTE cuando:
+  • Ya estás por debajo de 4000 LP — cada pago te acerca al rango mortal.
+  • El efecto que pagas podría no cambiar el resultado del duelo.
+  • El oponente podría tener otro golpe de seguimiento.
+
+NO vale la pena cuando:
+  • Pagas LP para salvar una situación que de todas formas perderás.
+  • Estás en 2000 LP o menos — el margen de error es casi nulo.
+  • El gasto no te da ventaja concreta, solo tiempo.
+
+----------------------------------------------------------------
+  GESTIÓN DE CARTAS EN MANO
+----------------------------------------------------------------
+
+HAND ADVANTAGE (Ventaja de Mano)
+  Tener más cartas que el oponente es ventaja. Pero no es absoluto —
+  5 cartas malas valen menos que 2 cartas buenas.
+  
+  CALIDAD > CANTIDAD en mano.
+
+CUANDO DESCARTAR
+  Algunos efectos te piden descartar como costo. Evalúa:
+  • ¿La carta que descarto tiene utilidad desde el cementerio?
+  • ¿Es una carta que no sirve en esta situación de todas formas?
+  • ¿Vale la pena lo que obtengo a cambio?
+
+NO desperdicies cartas en cadenas que no van a cambiar el resultado.
+Cada carta que gastas innecesariamente es un recurso menos para el turno siguiente.
+
+----------------------------------------------------------------
+  GESTIÓN DEL CAMPO
+----------------------------------------------------------------
+
+SOBRECONSTRUIR EL CAMPO
+  Un error común: invocar más monstruos de los necesarios para ganar.
+  Cada monstruo adicional es un recurso gastado que podría ser necesario después.
+  Pregunta: ¿necesito invocar este quinto monstruo para ganar este turno?
+  Si la respuesta es no, considera guardarlo.
+
+PROTEGER LO NECESARIO, NO TODO
+  Proteger cada carta en campo con una trampa o efecto consume recursos rápidamente.
+  Identifica cuál es la carta más crítica y protege esa.
+  Las demás son prescindibles si el núcleo de la estrategia sobrevive.
+
+DEJAR LP DEL OPONENTE EN 100
+  "El oponente con 100 LP es tan peligroso como con 8000."
+  No desperdicies un combo completo para dejar al oponente en LP bajos sin cerrar.
+  Si no cierras el duelo, ese recurso gastado fue en vano.
+
+----------------------------------------------------------------
+  GESTIÓN DEL DUELO LARGO (GRIND GAME)
+----------------------------------------------------------------
+
+Si el duelo llega al turno 4 o 5:
+  • Evalúa quién tiene más recursos totales (cartas + campo + cementerio + LP).
+  • Si vas arriba en recursos, juega conservador — el tiempo trabaja a tu favor.
+  • Si vas abajo, necesitas asumir riesgos para recuperar ventaja.
+
+DECKOUT (quedarte sin cartas)
+  Si el duelo se extiende mucho, quedarte sin cartas significa perder.
+  Algunos decks usan esto como victoria alternativa (mill).
+  Si tu deck tiene pocos recursos de recuperación, evita dibujar de más.
+
+----------------------------------------------------------------
+  CONSEJO CLAVE
+----------------------------------------------------------------
+
+Al final de cada turno, hazte esta pregunta:
+"¿Tengo más recursos que al inicio de mi turno, menos, o igual?"
+
+Si consistentemente tienes menos recursos cada turno sin estar más cerca
+de ganar, estás siendo outresourced. Necesitas cambiar el plan.
+
+El jugador que mejor gestiona sus recursos en el largo plazo,
+no el que hace los combos más espectaculares, gana los duelos ajustados.

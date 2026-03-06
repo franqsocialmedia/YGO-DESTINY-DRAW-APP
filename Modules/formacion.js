@@ -12,7 +12,25 @@ const Formacion = {
     MASTERED_KEY:  'yugioh_formacion_mastered',
 
     TOPICS: [
-        { id: 'que-es-yugioh', label: '¿Qué es Yu-Gi-Oh!?' }
+        { id: 'que-es-yugioh',            label: '¿Qué es Yu-Gi-Oh!?',                  nivel: 'novato' },
+        { id: 'fases-del-duelo',          label: 'Las Fases del Duelo',                  nivel: 'novato' },
+        { id: 'tipos-cartas-basicas',     label: 'Tipos de Cartas Básicas',              nivel: 'novato' },
+        { id: 'tipos-cartas-especiales',  label: 'Tipos de Cartas Especiales',           nivel: 'novato' },
+        { id: 'estructura-efecto-carta',  label: 'Estructura de un Efecto de Carta',     nivel: 'novato' },
+        { id: 'funciones-cartas',         label: 'Funciones de las Cartas',              nivel: 'novato' },
+        { id: 'mentalidad-jugador',       label: 'Mentalidad del Jugador',               nivel: 'novato' },
+        { id: 'anatomia-deck',            label: 'Anatomía de un Deck Competitivo',      nivel: 'casual' },
+        { id: 'staples-formato',          label: 'Staples del Formato',                  nivel: 'casual' },
+        { id: 'elegir-construir-deck',    label: 'Cómo Elegir y Construir tu Deck',      nivel: 'casual' },
+        { id: 'optimizar-deck',           label: 'Cómo Optimizar tu Deck',               nivel: 'casual' },
+        { id: 'side-deck',                label: 'El Side Deck',                         nivel: 'casual' },
+        { id: 'gestion-lp-recursos',      label: 'Gestión de LP y Recursos',             nivel: 'casual' },
+        { id: 'leer-campo-oponente',      label: 'Leer el Campo del Oponente',           nivel: 'casual' },
+        { id: 'velocidad-efectos',        label: 'Velocidad de Efectos y Cadenas',       nivel: 'competitivo' },
+        { id: 'rulings-invocaciones',     label: 'Rulings de Invocaciones',              nivel: 'competitivo' },
+        { id: 'rulings-batalla',          label: 'Rulings en Fase de Batalla',           nivel: 'competitivo' },
+        { id: 'if-when-timing',           label: 'IF vs WHEN y Timing Avanzado',         nivel: 'competitivo' },
+        { id: 'formatos-diferencias',     label: 'Formatos y sus Diferencias',           nivel: 'competitivo' },
     ],
 
     PLATFORMS: ['PC', 'GBC', 'GBA', 'PS1', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'Físico'],
@@ -310,7 +328,25 @@ const Formacion = {
 
     _getTopicContent: function (topicId) {
         const topics = {
-            'que-es-yugioh': this._topicQueEsYugioh()
+            'que-es-yugioh':           this._topicQueEsYugioh(),
+            'fases-del-duelo':         this._topicFasesDelDuelo(),
+            'tipos-cartas-basicas':    this._topicTiposCartasBasicas(),
+            'tipos-cartas-especiales': this._topicTiposCartasEspeciales(),
+            'estructura-efecto-carta': this._topicEstructuraEfecto(),
+            'funciones-cartas':        this._topicFuncionesCartas(),
+            'mentalidad-jugador':      this._topicMentalidad(),
+            'anatomia-deck':           this._topicAnatomia(),
+            'staples-formato':         this._topicStaples(),
+            'elegir-construir-deck':   this._topicConstruirDeck(),
+            'optimizar-deck':          this._topicOptimizar(),
+            'side-deck':               this._topicSideDeck(),
+            'gestion-lp-recursos':     this._topicGestionLP(),
+            'leer-campo-oponente':     this._topicLeerCampo(),
+            'velocidad-efectos':       this._topicVelocidadEfectos(),
+            'rulings-invocaciones':    this._topicRulingsInvocaciones(),
+            'rulings-batalla':         this._topicRulingsBatalla(),
+            'if-when-timing':          this._topicIfWhen(),
+            'formatos-diferencias':    this._topicFormatos(),
         };
         return topics[topicId] || '<p>Contenido no disponible.</p>';
     },
@@ -443,6 +479,613 @@ _renderMaestrosTab: function () {
     if (window.Meta) return Meta._renderMaestrosSection();
     return '<p class="form-empty">Módulo Meta no disponible.</p>';
 },
+
+// ── CONTENIDO DE TEMAS ────────────────────────────────────────────
+
+    _topicFasesDelDuelo: function () { return `
+        <h2 class="form-nb-title">Las Fases del Duelo</h2>
+        <p class="form-nb-text">Un duelo de Yu-Gi-Oh! no es caótico — tiene una estructura fija de fases que se repite cada turno. Entender cuándo puedes hacer qué cosa es la base de todo lo demás.</p>
+
+        <h3 class="form-nb-subtitle">📋 Las 6 Fases en Orden</h3>
+        <ul class="form-nb-list">
+            <li><strong>1. Draw Phase (DP):</strong> Robas 1 carta. El jugador que va primero en el primer turno NO roba. Algunos efectos obligatorios se activan aquí.</li>
+            <li><strong>2. Standby Phase (SP):</strong> Fase de mantenimiento. Efectos periódicos y costos de mantenimiento se activan aquí. Ambos jugadores pueden responder.</li>
+            <li><strong>3. Main Phase 1 (MP1):</strong> La fase más activa. Puedes invocar, activar hechizos, colocar trampas y activar efectos. Construyes tu campo antes de atacar.</li>
+            <li><strong>4. Battle Phase (BP):</strong> Declaras ataques. El jugador que va primero NO puede atacar en su primer turno. Los ataques se resuelven uno a uno con sus subfases propias.</li>
+            <li><strong>5. Main Phase 2 (MP2):</strong> Igual que MP1 pero después de atacar. Útil para colocar trampas o invocar monstruos que no necesitan atacar este turno.</li>
+            <li><strong>6. End Phase (EP):</strong> Descartas hasta 6 cartas si tienes más. Efectos de "al final del turno" y efectos temporales expiran aquí.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">⚖️ Las 2 Reglas de Oro</h3>
+        <ul class="form-nb-list">
+            <li><strong>Regla 1 — Duelo de caballeros:</strong> Siempre pide permiso antes de pasar de fase. Confirma cada acción importante con tu oponente. En torneo, una jugada no comunicada puede generar problemas serios.</li>
+            <li><strong>Regla 2 — Se juega por partes:</strong> Anuncia qué estás haciendo y espera respuesta antes de continuar. El oponente puede interrumpirte en casi cualquier momento con la carta correcta — darle esa ventana es parte del juego limpio.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">El error más común del novato es actuar sin respetar las fases. Poner una trampa en MP1 la deja activa ese mismo turno — pero el oponente puede destruirla antes de que la uses. Ponerla en MP2 la protege hasta el turno del oponente. Aprender a usar MP2 correctamente separa al jugador intuitivo del que realmente entiende la estructura.</p>
+    `; },
+
+    _topicTiposCartasBasicas: function () { return `
+        <h2 class="form-nb-title">Tipos de Cartas Básicas</h2>
+        <p class="form-nb-text">Antes de aprender combos o estrategias, necesitas saber exactamente qué puede hacer cada tipo de carta y cuándo puede usarse.</p>
+
+        <h3 class="form-nb-subtitle">👾 Monstruos</h3>
+        <ul class="form-nb-list">
+            <li><strong>Invocación Normal:</strong> 1 por turno, boca arriba en ataque, o "seteado" boca abajo en defensa. Sin efectos adicionales.</li>
+            <li><strong>ATK / DEF:</strong> Puntos de ataque y defensa. El ATK se compara al atacar; la DEF solo importa en posición de defensa.</li>
+            <li><strong>Monstruos Normales (Vainilla):</strong> Solo texto de lore — sin efectos. Pero son válidos como materiales de Extra Deck.</li>
+            <li><strong>Monstruos de Efecto:</strong> Tienen uno o más efectos activables o continuos que definen su función.</li>
+            <li><strong>Cambio de Posición:</strong> 1 vez por turno, no si fue invocado ese turno, no si ya atacó.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🟢 Hechizos (Magias)</h3>
+        <ul class="form-nb-list">
+            <li><strong>Normal:</strong> Se activa y va al cementerio. Efecto inmediato.</li>
+            <li><strong>Continuo:</strong> Permanece en campo mientras su efecto esté activo.</li>
+            <li><strong>Equipo:</strong> Se equipa a un monstruo y modifica sus stats o le da efectos.</li>
+            <li><strong>Campo:</strong> Va a la zona de campo. Solo 1 por lado del tablero.</li>
+            <li><strong>Ritual:</strong> Realiza una Invocación Ritual específica.</li>
+            <li><strong>Juego Rápido:</strong> Puede activarse en cualquier fase de TU turno, o en el turno del oponente si estaba boca abajo desde el turno anterior. ¡El único hechizo que puede usarse como respuesta!</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🟣 Trampas</h3>
+        <ul class="form-nb-list">
+            <li><strong>Regla de Oro:</strong> Deben colocarse boca abajo primero. NO pueden activarse el mismo turno que fueron colocadas (salvo excepciones explícitas).</li>
+            <li><strong>Normal:</strong> Activa su efecto una vez y va al cementerio.</li>
+            <li><strong>Continua:</strong> Permanece en campo y sigue activa.</li>
+            <li><strong>Counter (Velocidad 3):</strong> Solo puede ser respondida por otra Counter Trap. Las más rápidas del juego.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Para responder al oponente en su turno necesitas: trampas ya colocadas, hechizos de Juego Rápido boca abajo, o Quick Effects de monstruos en campo. Un hechizo normal en mano no sirve en el turno del oponente. Antes de jugar cualquier carta, pregúntate: ¿es mi turno o el del oponente?</p>
+    `; },
+
+    _topicTiposCartasEspeciales: function () { return `
+        <h2 class="form-nb-title">Tipos de Cartas Especiales (Extra Deck)</h2>
+        <p class="form-nb-text">El Extra Deck guarda hasta 15 cartas especiales que se invocan con mecánicas únicas. En el juego moderno, el Extra Deck es donde está la mayor parte del poder de un deck.</p>
+
+        <h3 class="form-nb-subtitle">🟣 Fusión</h3>
+        <p class="form-nb-text">Marco morado. Requiere una Magia de Fusión que combina los materiales desde mano, campo o cementerio. La <em>Fusión de Contacto</em> es inherente (sin magia), y los materiales regresan al deck, no al cementerio.</p>
+
+        <h3 class="form-nb-subtitle">🔵 Ritual</h3>
+        <p class="form-nb-text">Marco azul claro. Único tipo que llega del deck principal, no del Extra Deck. Necesita la Magia de Ritual correspondiente y tributar monstruos cuyo nivel total iguale o supere el del Ritual.</p>
+
+        <h3 class="form-nb-subtitle">⚪ Sincronía (Synchro)</h3>
+        <p class="form-nb-text">Marco blanco/gris. Necesitas 1 Tuner + 1 o más no-Tuner. La suma exacta de sus niveles debe igualar el del Sincro. Los materiales van al cementerio.</p>
+
+        <h3 class="form-nb-subtitle">⬛ XYZ ("Exceed")</h3>
+        <p class="form-nb-text">Marco negro. Necesitas 2+ monstruos del mismo nivel. Los materiales quedan <em>debajo</em> del XYZ — no están en el cementerio hasta que el XYZ se destruye. Los XYZ tienen Rango, no Nivel. El <em>Caos XYZ</em> permite usar otro XYZ como material para invocar una versión superior.</p>
+
+        <h3 class="form-nb-subtitle">🔷 Link</h3>
+        <p class="form-nb-text">Marco azul oscuro hexagonal. No tienen DEF ni Nivel — tienen Flechas de Link que habilitan zonas del Extra Deck para tus demás monstruos. Son el andamio de los decks modernos. Sin un Link en campo, solo puedes usar 1 zona central del Extra Deck.</p>
+
+        <h3 class="form-nb-subtitle">🟠🟢 Péndulo</h3>
+        <p class="form-nb-text">Marco mitad verde, mitad naranja. Dos cartas Péndulo con escalas distintas se colocan en las Zonas Péndulo. Una vez por turno puedes invocar especialmente todos los monstruos de tu mano cuyo nivel esté dentro del rango de las escalas. Cuando salen del campo, van al tope del Extra Deck boca arriba.</p>
+
+        <h3 class="form-nb-subtitle">📈 Orden de Aprendizaje Recomendado</h3>
+        <ul class="form-nb-list">
+            <li>1. Fusión — más intuitiva</li>
+            <li>2. Sincro — suma de niveles sencilla</li>
+            <li>3. XYZ — mismo nivel, concepto de materiales debajo</li>
+            <li>4. Link — cambia cómo funciona el tablero completo</li>
+            <li>5. Ritual — costoso, necesita conocer el arquetipo</li>
+            <li>6. Péndulo — el más complejo, requiere dominar los anteriores</li>
+        </ul>
+    `; },
+
+    _topicEstructuraEfecto: function () { return `
+        <h2 class="form-nb-title">Estructura de un Efecto de Carta</h2>
+        <p class="form-nb-text">Leer mal una carta es uno de los errores más costosos en Yu-Gi-Oh!. Cada línea de texto tiene una función específica. Este tema te enseña a diseccionar cualquier efecto, incluso uno que nunca hayas visto.</p>
+
+        <h3 class="form-nb-subtitle">🔬 Las 6 Partes de un Efecto</h3>
+        <ul class="form-nb-list">
+            <li><strong>1. Requisito:</strong> Condición externa previa. Generalmente antes de los dos puntos. Ej: "Si tienes un monstruo X en campo:"</li>
+            <li><strong>2. Condición:</strong> Restricción de activación. Ej: "Solo puedes activar este efecto una vez por turno."</li>
+            <li><strong>3. Costo:</strong> Lo que pagas ANTES de que resuelva. Si te niegan el efecto, el costo ya fue pagado y no se devuelve. Los dos puntos después del costo son la señal: "Descarta 1 carta:"</li>
+            <li><strong>4. Efecto/Objetivo:</strong> Lo que hace al resolver. Si dice "selecciona" o "elige", tiene objetivo (target) — el oponente puede responder a la selección. Sin esas palabras, el efecto no tiene objetivo.</li>
+            <li><strong>5. Duración:</strong> Por cuánto tiempo aplica. Si no lo dice, es permanente o hasta que se quite la carta.</li>
+            <li><strong>6. Restricción:</strong> Limitación DESPUÉS de resolver. Ej: "No puedes atacar directamente el turno que actives este efecto."</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔗 Conectores Lógicos Clave</h3>
+        <ul class="form-nb-list">
+            <li><strong>IF (si):</strong> Menos estricto. La condición no necesita ser "lo último" que ocurrió.</li>
+            <li><strong>WHEN (cuando):</strong> Más estricto. El efecto puede perder el timing si no fue lo último que pasó.</li>
+            <li><strong>THEN / AND IF YOU DO:</strong> Las dos partes se resuelven en orden. Si falla la primera, falla la segunda.</li>
+            <li><strong>YOU CAN (puedes):</strong> El efecto es opcional.</li>
+            <li><strong>ONCE PER TURN:</strong> 1 activación por turno. OJO: "once per turn per card name" limita incluso si tienes múltiples copias.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🎯 Con Objetivo vs Sin Objetivo</h3>
+        <ul class="form-nb-list">
+            <li><strong>Con objetivo ("selecciona"):</strong> El oponente puede responder removiendo el objetivo antes de que resuelva.</li>
+            <li><strong>Sin objetivo ("destruye todos"):</strong> No hay selección previa. No pueden escapar por mover la carta.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Lee siempre en este orden: ¿Qué necesito para activarlo? → ¿Qué pago? → ¿Qué hace? → ¿Qué limitación me queda? El jugador que entiende los costos y las restricciones toma mejores decisiones que el que solo ve el efecto en bruto.</p>
+    `; },
+
+    _topicFuncionesCartas: function () { return `
+        <h2 class="form-nb-title">Funciones de las Cartas (Roles)</h2>
+        <p class="form-nb-text">Una carta no vale por sus estadísticas ni por su rareza — vale por lo que hace dentro de tu deck. Identificar la función de cada carta es lo que distingue a alguien que "tiene cartas" de alguien que "juega".</p>
+
+        <h3 class="form-nb-subtitle">⚙️ Cartas Engine (Arman el Combo)</h3>
+        <ul class="form-nb-list">
+            <li><strong>Starter:</strong> Inicia el combo desde la mano sin necesitar otra carta. La pieza más valiosa del engine. Perder una a una Handtrap es el golpe más duro al inicio del turno.</li>
+            <li><strong>Extender:</strong> Continúa o amplía el combo una vez en marcha. No puede iniciar sola, pero sin ella el combo no termina bien. La respuesta a las interrupciones: si te niegan el starter y tienes un extender independiente, puedes seguir.</li>
+            <li><strong>Searcher/Buscador:</strong> Busca cartas específicas del deck hacia la mano. No invoca directamente, pero garantiza que tengas la pieza que necesitas.</li>
+            <li><strong>Bridge (Puente):</strong> Conecta dos piezas que normalmente no interactúan. Transforma el estado del campo para habilitar lo que viene después.</li>
+            <li><strong>Garnet / Brick:</strong> Necesitas en deck para que otro efecto la busque, pero en mano no sirve de nada. Regla: no más de 2 en un deck. Más de eso destruye la consistencia.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🛡️ Cartas Defensivas (Interrumpen)</h3>
+        <ul class="form-nb-list">
+            <li><strong>Handtrap:</strong> Monstruo que activa su efecto desde la mano en respuesta al oponente. No necesita estar en campo. La interrupción estándar del formato moderno.</li>
+            <li><strong>Boardbreaker:</strong> Destruye, regresa o neutraliza el campo ya construido del oponente. Se usa principalmente cuando vas segundo.</li>
+            <li><strong>Anti-Handtrap:</strong> Protege tu combo de las Handtraps del oponente. En decks combo, tan importantes como el combo mismo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🏆 Cartas de Finalización</h3>
+        <ul class="form-nb-list">
+            <li><strong>Boss Monster:</strong> La amenaza final. El monstruo que el oponente debe resolver para sobrevivir. Buenas protecciones lo hacen muy difícil de quitar.</li>
+            <li><strong>Endboard:</strong> No es una carta — es el estado completo de tu campo al terminar tu turno. El objetivo de cualquier combo es llegar al mejor endboard posible.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔄 Las 4 Funciones Universales</h3>
+        <p class="form-nb-text">Cuando no sepas clasificar una carta, usa estas 4 categorías: <strong>Motor</strong> (genera recursos, busca, invoca) · <strong>Interacción</strong> (interrumpe al oponente) · <strong>Protección</strong> (mantiene tu campo o cartas) · <strong>Ventaja de Recursos</strong> (te da más cartas, monstruos o LP).</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">La pregunta correcta al evaluar una carta no es "¿es poderosa?" sino "¿qué función cumple en mi deck?" Una carta sin función clara no debería estar en el deck, sin importar qué tan impresionante parezca en papel.</p>
+    `; },
+
+    _topicMentalidad: function () { return `
+        <h2 class="form-nb-title">Mentalidad del Jugador</h2>
+        <p class="form-nb-text">Las reglas se aprenden en semanas. Los combos se memorizan en días. Pero la mentalidad correcta tarda meses en instalarse — y es lo que determina si realmente mejorarás como jugador.</p>
+
+        <h3 class="form-nb-subtitle">🧠 Mentalidades Correctas</h3>
+        <ul class="form-nb-list">
+            <li><strong>Cartas en contexto:</strong> Las cartas no se evalúan solas — se evalúan en conjunto. Una carta poderosa puede arruinar un deck si contradice su estrategia.</li>
+            <li><strong>Cada carta tiene una función:</strong> No existe la carta inútil. Existe la carta en el deck equivocado. Antes de descartar una carta, pregunta: ¿para qué fue diseñada?</li>
+            <li><strong>Gusto vs conveniencia:</strong> Si quieres ser competitivo, la conveniencia gana siempre. Puedes tener decks de gusto Y decks competitivos — no tienes que elegir uno.</li>
+            <li><strong>Los costos altos no son malos:</strong> Hay cartas que parecen terribles porque descartan 2 o tributan 1000 LP. En el deck correcto, ese costo es exactamente lo que necesitan para activar algo más.</li>
+            <li><strong>Practicar es lo que hace bueno un deck:</strong> El deck en papel es una hipótesis. El deck jugado 50 veces es la respuesta. Muchos decks considerados débiles son fuertes en manos de quien los conoce profundamente.</li>
+            <li><strong>El META no es permanente:</strong> Es el mejor entendimiento colectivo del momento. En 3 meses puede cambiar completamente.</li>
+            <li><strong>Todo deck tiene puntos débiles:</strong> No hay deck invencible. Hay decks que los jugadores no saben cómo vencer porque aún no encontraron el counter correcto.</li>
+            <li><strong>Yu-Gi-Oh! es probabilidad:</strong> Las cartas salen de un deck barajado. Entender esto te evita frustraciones por malas manos y te ayuda a construir decks que maximicen las probabilidades de éxito.</li>
+            <li><strong>Consistencia vs Potencia:</strong> No puedes maximizar ambas al mismo tiempo. Saber qué necesita tu deck es una decisión estratégica, no técnica.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🎯 Cómo Usar el Tipo de Carta Correctamente</h3>
+        <ul class="form-nb-list">
+            <li>¿Es mi turno o el del oponente? → Qué cartas puedo usar activamente.</li>
+            <li>¿Cuántas interacciones tiene el oponente? → Si tiene muchas, no gastes el combo principal todavía.</li>
+            <li>¿Cómo empezó el oponente? → Mano llena y campo vacío = probablemente tiene Handtraps.</li>
+            <li>¿Voy ganando o perdiendo? → Perdiendo: más riesgos. Ganando: juega seguro.</li>
+            <li>¿El oponente hizo un missplay o jugada ilegal? → Detén el juego con calma. Hay un juez para eso.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">La mentalidad es lo que convierte el conocimiento técnico en victoria real. Puedes saber todos los combos del meta y perder constantemente si tu toma de decisiones bajo presión es mala. El mejor entrenamiento no es aprender más combos — es aprender a pensar mejor cuando la jugada correcta no es obvia.</p>
+    `; },
+
+    _topicAnatomia: function () { return `
+        <h2 class="form-nb-title">Anatomía de un Deck Competitivo</h2>
+        <p class="form-nb-text">Todo deck competitivo puede diseccionarse en los mismos componentes. Aprende a leer estas métricas y podrás evaluar cualquier deck que veas, incluso uno que nunca hayas jugado.</p>
+
+        <h3 class="form-nb-subtitle">📊 Los 6 Ejes de Evaluación</h3>
+        <ul class="form-nb-list">
+            <li><strong>Engine / Consistencia:</strong> El conjunto de cartas del combo principal. Mide qué tan probable es armar la estrategia desde la mano inicial. <em>Ideal: 85%+ de partidas abrir con al menos 1 Starter.</em></li>
+            <li><strong>Techo de Poder (The Ceiling):</strong> Qué tan poderoso es el endboard si nadie interrumpió. <em>Ideal: 2+ negaciones, Boardbreakers disponibles, 1 Anti-Meta o Tower.</em></li>
+            <li><strong>The Floor / Resiliencia:</strong> Qué pasa cuando el oponente interrumpe. ¿Puede el deck seguir con 1-2 negaciones recibidas? El "Glass Cannon" no tiene Floor — lo interrumpen y queda muerto. <em>Ideal: sobrepasar 2 negaciones corridas y aún tener una amenaza.</em></li>
+            <li><strong>Slot Non-Engine / Eficiencia:</strong> Espacio libre después del engine para Handtraps, Boardbreakers, tech cards. Un engine de 30 cartas deja solo 10 para non-engine. Un engine de 18 deja 22 — mucha más libertad.</li>
+            <li><strong>Grind Game / Follow-Up:</strong> Qué hace el deck en turnos 3, 4 y 5. ¿Puede rearmar combo? ¿Tiene segunda línea? <em>Ideal: jugadas para turno 3, 4 y 5.</em></li>
+            <li><strong>Fragilidad / Choke Point:</strong> Qué tan vulnerable es el deck a 1 sola carta del meta. Si existe 1 carta que lo apaga completamente, tiene un Choke Point crítico.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔧 Otras Métricas</h3>
+        <ul class="form-nb-list">
+            <li><strong>Lineabilidad:</strong> Qué tan fijo es el camino del combo. Muy lineal = predecible pero poderoso. No-lineal = menos predecible, más complejo.</li>
+            <li><strong>Versatilidad:</strong> Cuántas formas distintas de jugar tiene el deck según la mano.</li>
+            <li><strong>Cartas Multifuncionales:</strong> Cartas que cumplen más de un rol. Son oro — reducen el tamaño del engine sin perder funciones.</li>
+            <li><strong>Tipo de Interacción:</strong> Qué hace al interrumpir: ¿destruye, destierra, regresa al deck, niega? El tipo importa porque el oponente puede tener protecciones contra uno u otro.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">No preguntes solo "¿es poderoso?". Pregunta: ¿es consistente? ¿qué pasa si me niegan? ¿puedo seguir jugando? Un deck con techo de poder perfecto pero sin Floor perderá contra cualquier jugador que haya estudiado sus debilidades.</p>
+    `; },
+
+    _topicStaples: function () { return `
+        <h2 class="form-nb-title">Staples del Formato</h2>
+        <p class="form-nb-text">Un Staple es una carta tan generalmente útil que aparece en la mayoría de los decks del meta, independientemente del arquetipo. No son "las mejores cartas del juego" — son las más versátiles para el meta actual. Y cambian con cada banlist.</p>
+
+        <h3 class="form-nb-subtitle">🤚 Handtraps (Interrupciones desde la Mano)</h3>
+        <ul class="form-nb-list">
+            <li><strong>Ash Blossom:</strong> Niega cualquier efecto que busque, robe o invoque especialmente desde el deck. Una de las más versátiles.</li>
+            <li><strong>Droll &amp; Lock Bird:</strong> Si el oponente agrega 1+ cartas a su mano desde el deck, niega que puedan agregar más ese turno.</li>
+            <li><strong>Infinite Impermanence:</strong> Niega el efecto de un monstruo en campo. Si lo seteas en la primera columna sin carta, da inmunidad a esa columna.</li>
+            <li><strong>Nibiru, the Primal Being:</strong> Si el oponente invocó especialmente 5+ monstruos ese turno, tribútalos todos y dale un Token Nibiru. La respuesta a los combo-decks.</li>
+            <li><strong>Effect Veiler:</strong> Niega el efecto de un monstruo hasta el final del turno. Velocidad 1 desde la mano — limitada pero específica.</li>
+            <li><strong>D.D. Crow:</strong> Destierra 1 carta del cementerio del oponente desde la mano. Específico pero devastador contra decks de cementerio.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🛡️ Anti-Handtraps (Protegen tu Combo)</h3>
+        <ul class="form-nb-list">
+            <li><strong>Called by the Grave:</strong> Destierra 1 carta del cementerio del oponente y niega efectos de ese nombre ese turno. Contraresta Ash, Ghost Belle.</li>
+            <li><strong>Crossout Designator:</strong> Declara un nombre de carta que tienes en tu deck. Niega todos los efectos de cartas con ese nombre ese turno.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💥 Boardbreakers (Destruyen el Campo Rival)</h3>
+        <ul class="form-nb-list">
+            <li><strong>Dark Ruler No More:</strong> Niega todos los efectos de los monstruos del oponente hasta fin de turno. No puede ser respondido. Limpia el camino.</li>
+            <li><strong>Forbidden Droplet:</strong> Manda cartas al cementerio para negar efectos y bajar ATK a la mitad. La respuesta más versátil al campo rival.</li>
+            <li><strong>Evenly Matched:</strong> El oponente destierra hasta tener 1 carta. Devastador si tiene campo lleno.</li>
+            <li><strong>Super Polymerization:</strong> Fusiona usando cartas del campo del oponente. No puede ser respondida. Quita 2+ amenazas en 1 carta.</li>
+            <li><strong>Lightning Storm:</strong> Destruye todos los monstruos de ataque O todas las mágicas/trampas boca abajo. Solo funciona con mano vacía.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">No incluyas un Staple solo porque "es bueno". Pregunta: ¿Su efecto sirve en el meta actual? ¿Su restricción no rompe mi combo? ¿Tengo el espacio en el deck? Un Staple mal incluido es peor que no incluirlo.</p>
+    `; },
+
+    _topicConstruirDeck: function () { return `
+        <h2 class="form-nb-title">Cómo Elegir y Construir tu Deck</h2>
+        <p class="form-nb-text">Elegir mal un deck es el error más costoso en tiempo, dinero y motivación. Este tema te da el proceso completo, desde cero hasta algo funcional que puedas mejorar.</p>
+
+        <h3 class="form-nb-subtitle">🎯 Elegir tu Deck</h3>
+        <ul class="form-nb-list">
+            <li><strong>Define qué quieres:</strong> ¿Torneo o casual? ¿Combos largos, control lento o agresión rápida? ¿Presupuesto limitado?</li>
+            <li><strong>Investiga antes de comprar:</strong> Prueba en un simulador (EDOPro, Master Duel) con un decklist de alguien más. Al menos 10 duelos antes de decidir.</li>
+            <li><strong>Evalúa la curva de aprendizaje:</strong> Un deck difícil en manos inexpertas pierde donde uno fácil ganaría. Empieza con algo que puedas ejecutar correctamente.</li>
+            <li><strong>Considera precio y versión budget:</strong> La versión budget sacrifica algo (consistencia, una pieza del endboard). Evalúa si ese sacrificio es aceptable para tu objetivo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🧩 Entender las Piezas</h3>
+        <ul class="form-nb-list">
+            <li><strong>Core:</strong> Cartas que definen al arquetipo. Sin ellas, el deck no es el deck. Siempre en 3 copias si es posible.</li>
+            <li><strong>Engine:</strong> El conjunto funcional que arma el combo. Puede incluir cartas de otros arquetipos.</li>
+            <li><strong>Non-Engine:</strong> Handtraps, Boardbreakers, tech cards. Define tu adaptación al meta.</li>
+            <li><strong>Tech Card:</strong> Carta no-Staple específica para combatir una amenaza del meta local. Puede ser 1 copia.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔨 Construir desde Cero</h3>
+        <ul class="form-nb-list">
+            <li>Define el endboard que quieres tener al final del turno 1.</li>
+            <li>Arma el engine mínimo que llega a ese endboard.</li>
+            <li>Agrega buscadores, searchers, extenders para consistencia.</li>
+            <li>Evalúa el espacio libre y maximiza el non-engine.</li>
+            <li>Elige el non-engine según el meta local específico.</li>
+            <li>Prueba 10+ partidas y ajusta con razones claras.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">📊 Hipergeometría Básica</h3>
+        <p class="form-nb-text">Probabilidad de robar al menos 1 copia en la mano inicial (5 cartas de 40):</p>
+        <ul class="form-nb-list">
+            <li>1 copia → ~11%</li>
+            <li>2 copias → ~21%</li>
+            <li>3 copias → ~30%</li>
+        </ul>
+        <p class="form-nb-text">Para tener la carta al menos el 50% de las veces, necesitas 8-9 "accesos" (copias + buscadores que la buscan). Por eso los Starters siempre van en 3 más todos sus buscadores.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">El deck no termina en la construcción — termina en el conocimiento. Elige un deck que puedas comprometerte a practicar durante meses, no el que está de moda esta semana.</p>
+    `; },
+
+    _topicOptimizar: function () { return `
+        <h2 class="form-nb-title">Cómo Optimizar tu Deck</h2>
+        <p class="form-nb-text">Un deck construido y un deck optimizado son cosas distintas. La optimización es el proceso continuo de pulirlo hasta que cada carta tiene una razón clara de estar ahí.</p>
+
+        <h3 class="form-nb-subtitle">⚙️ Los 6 Tipos de Optimización</h3>
+        <ul class="form-nb-list">
+            <li><strong>Consistencia:</strong> Reducir bricks, aumentar probabilidad de abrir con Starter. Señal: estás brickeando frecuentemente.</li>
+            <li><strong>Potencia (Combo):</strong> Mejorar la línea principal o agregar una nueva. Señal: el endboard es débil o el oponente lo rompe con recursos normales.</li>
+            <li><strong>Techo de Poder (Endboard):</strong> Hacer el campo final más difícil de romper. Señal: el oponente rompe tu campo con una sola carta.</li>
+            <li><strong>Defensa:</strong> Mejorar respuesta a lo que el meta te hace. Señal: estás perdiendo al mismo tipo de jugada repetidamente.</li>
+            <li><strong>Versatilidad:</strong> Más de 1 ruta para llegar al endboard. Señal: el deck es muy lineal y sin segunda opción al ser interrumpido.</li>
+            <li><strong>Resiliencia (Floor):</strong> Sobrevivir con 1-2 negaciones recibidas. Señal: con 1 Handtrap encima, el deck queda muerto.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔄 El Proceso de Optimización</h3>
+        <ul class="form-nb-list">
+            <li><strong>Identifica el problema específico:</strong> No optimices "en general". ¿Pierdo por inconsistencia, endboard débil, o sin respuesta a X del meta?</li>
+            <li><strong>Haz 1 cambio a la vez:</strong> Si cambias 3 cosas y mejoras, no sabes cuál causó qué.</li>
+            <li><strong>Prueba con suficientes partidas:</strong> Al menos 10-15 partidas para evaluar un cambio correctamente.</li>
+            <li><strong>Documenta:</strong> Anota qué cambiaste y qué efecto tuvo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">✅ Señales de un Deck Bien Optimizado</h3>
+        <ul class="form-nb-list">
+            <li>Rara vez tienes cartas "muertas" en mano que no sirven para nada.</li>
+            <li>El non-engine está exactamente calibrado para el meta local.</li>
+            <li>Las líneas de combo son fluidas porque las conoces a fondo.</li>
+            <li>El deck se siente "tuyo" — no es la lista de YouTube, es tu versión ajustada.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">La optimización nunca termina mientras el meta cambie. Un deck optimizado para el meta de hace 3 meses puede ser mediocre hoy. Trata tu deck como un proyecto en evolución, no como algo terminado.</p>
+    `; },
+
+    _topicSideDeck: function () { return `
+        <h2 class="form-nb-title">El Side Deck</h2>
+        <p class="form-nb-text">El Side Deck es la diferencia entre un jugador que "juega el deck" y uno que "juega el match". Un deck sin Side Deck pensado renuncia a la mitad de la estrategia competitiva.</p>
+
+        <h3 class="form-nb-subtitle">📋 Qué es el Side Deck</h3>
+        <p class="form-nb-text">Zona de hasta 15 cartas que puedes intercambiar libremente con tu Main Deck y Extra Deck entre partidas del mismo match. Reglas: siempre intercambios 1 a 1, el total de cartas en Main y Extra no cambia, solo puedes sidear entre partidas 2 y 3.</p>
+
+        <h3 class="form-nb-subtitle">🎯 Para Qué Sirve</h3>
+        <ul class="form-nb-list">
+            <li><strong>Agregar counters específicos:</strong> Si en la partida 1 confirmaste el deck del oponente, metes las cartas que más lo afectan.</li>
+            <li><strong>Quitar cartas que no sirven:</strong> Algunas cartas del main no tienen uso en ciertos matchups.</li>
+            <li><strong>Cambiar el plan de juego:</strong> Algunos decks tienen un Plan B tan poderoso que la partida 2 es casi un deck diferente.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔨 Cómo Construir el Side Deck</h3>
+        <ul class="form-nb-list">
+            <li>Identifica los 3-4 decks más comunes de tu meta local (no el meta de internet).</li>
+            <li>Para cada deck, identifica su punto débil y qué carta lo apaga.</li>
+            <li>Busca cartas que cubran múltiples matchups — una carta útil contra 3 decks vale más que una contra 1.</li>
+            <li>3 copias para matchups críticos · 2 para útiles · 1 para situacionales.</li>
+            <li>Define de antemano qué sacas del Main para cada situación — no improvises en el momento.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">⚖️ Cuándo Sidear Mucho vs Poco</h3>
+        <ul class="form-nb-list">
+            <li><strong>Sidear mucho:</strong> Si el oponente tiene un mecanismo central que debes apagar, o si tu Plan A claramente no funcionó.</li>
+            <li><strong>Sidear poco o nada:</strong> Si ganaste la partida 1 cómodamente y tu plan A funcionó bien.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🛡️ Anti-Metas Comunes</h3>
+        <ul class="form-nb-list">
+            <li><strong>Contra Combo:</strong> Nibiru, Dimensional Barrier, Summon Limit, Skill Drain.</li>
+            <li><strong>Contra Control:</strong> Monstruos con efectos no negables, Twin Twisters, Cosmic Cyclone.</li>
+            <li><strong>Contra Cementerio:</strong> Dimensional Shifter, Macro Cosmos, Ghost Belle, D.D. Crow.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">El mejor Side Deck no es el que tiene las cartas más poderosas — es el que tiene las más específicas para lo que vas a enfrentar. 15 cartas bien pensadas para tu meta local ganan más que 15 Staples genéricos.</p>
+    `; },
+
+    _topicGestionLP: function () { return `
+        <h2 class="form-nb-title">Gestión de LP y Recursos en el Duelo</h2>
+        <p class="form-nb-text">Los LP son el recurso más mal gestionado por jugadores intermedios. El jugador novato teme perderlos. El jugador avanzado los usa como herramienta. La diferencia determina quién gana los duelos ajustados.</p>
+
+        <h3 class="form-nb-subtitle">💎 Los LP No Son el Objetivo — Son un Recurso</h3>
+        <p class="form-nb-text">Ir de 8000 a 4000 LP es exactamente tan válido como estar en 8000 — en ambos casos sigues en el juego. El error del novato: evitar perder LP a cualquier costo, incluso a costa de no activar efectos correctamente. El enfoque correcto: los LP se invierten para ganar ventaja.</p>
+
+        <h3 class="form-nb-subtitle">📦 Los Recursos del Duelo</h3>
+        <ul class="form-nb-list">
+            <li><strong>Cartas en Mano:</strong> El recurso más importante. Calidad > Cantidad.</li>
+            <li><strong>Cartas en Campo:</strong> Amenazas y protecciones presentes.</li>
+            <li><strong>Cartas en Cementerio:</strong> En el juego moderno, el cementerio es un recurso activo, no solo un descarte.</li>
+            <li><strong>LP:</strong> Margen de error antes de perder.</li>
+            <li><strong>Turno:</strong> Cuántos turnos lleva el duelo y si la posición es sostenible.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">⚖️ Cuándo Vale la Pena Pagar LP</h3>
+        <ul class="form-nb-list">
+            <li><strong>Siempre vale:</strong> Pagas para negar algo irrecuperable, el costo es pequeño vs la amenaza, o estás ganando y solo necesitas cerrar.</li>
+            <li><strong>Evalúa cuidadosamente:</strong> Ya estás por debajo de 4000 LP, el efecto no cambia el resultado, o el oponente podría tener otro golpe.</li>
+            <li><strong>No vale:</strong> Pagas para salvar una situación que perderás de todas formas, o estás en 2000 LP o menos.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🃏 Gestión del Campo</h3>
+        <ul class="form-nb-list">
+            <li><strong>No sobreconstruyas:</strong> Invocar más monstruos de los necesarios gasta recursos para el turno siguiente. ¿Necesito este quinto monstruo para ganar este turno?</li>
+            <li><strong>Protege lo necesario, no todo:</strong> Identifica cuál es la carta más crítica y protege esa. Las demás son prescindibles si el núcleo sobrevive.</li>
+            <li><strong>Cierra si puedes:</strong> "El oponente con 100 LP es tan peligroso como con 8000." No desperdicies un combo completo sin cerrar el duelo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Al final de cada turno, pregúntate: "¿Tengo más recursos que al inicio de mi turno, menos, o igual?" Si consistentemente tienes menos sin estar más cerca de ganar, estás siendo outresourced. El jugador que mejor gestiona sus recursos en el largo plazo gana los duelos ajustados.</p>
+    `; },
+
+    _topicLeerCampo: function () { return `
+        <h2 class="form-nb-title">Leer el Campo del Oponente</h2>
+        <p class="form-nb-text">La habilidad más subestimada del juego no es memorizar combos — es leer lo que el oponente tiene antes de que lo revele. Los jugadores de alto nivel toman decisiones basadas en información deducida, no solo en lo que ven.</p>
+
+        <h3 class="form-nb-subtitle">🔎 Señales que Dan Información</h3>
+        <ul class="form-nb-list">
+            <li><strong>Número de cartas en mano:</strong> 5+ cartas = mano llena, posibles múltiples Handtraps. 1-2 cartas = mano comprometida, menor amenaza inmediata.</li>
+            <li><strong>Cómo manejó el turno anterior:</strong> ¿Pasó rápido? → Mano débil o tiene trampas ya colocadas. ¿Jugó despacio? → Mano compleja o preservando opciones.</li>
+            <li><strong>Cartas boca abajo:</strong> 1 carta = precaución. 3+ cartas = deck de Control o Trampas. 0 cartas = puede tener Handtraps en mano.</li>
+            <li><strong>El deck que está jugando:</strong> Si sabes cuál es, ya sabes sus Handtraps probables, sus combos y sus puntos débiles.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🧩 Deducir las Handtraps</h3>
+        <ul class="form-nb-list">
+            <li>¿Pasó su turno sin usar Handtraps? → Probablemente no tiene en mano o está guardando algo específico.</li>
+            <li>Si ya activó una Handtrap: los decks con 3+ Handtraps pueden tener otra. Los más agresivos ya la gastaron.</li>
+            <li><strong>Ash Blossom:</strong> Si no la activó cuando buscaste, probablemente no la tiene.</li>
+            <li><strong>Nibiru:</strong> Cuenta tus invocaciones especiales. Si llegas a 5 sin que la activen, probablemente no la tiene.</li>
+            <li><strong>Droll:</strong> Si ya agregaste 1 carta del deck a tu mano y no la activaron, probablemente no la tienen.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">⚡ Cómo Responder a lo que Deduces</h3>
+        <ul class="form-nb-list">
+            <li><strong>Si crees que tiene Handtrap:</strong> Activa primero la carta menos crítica como "cebo". Si la gastan en el cebo, tu pieza clave queda libre.</li>
+            <li><strong>Si crees que no tiene nada:</strong> Ejecuta el combo sin rodeos y maximiza el endboard. Pero no asumas al 100%.</li>
+            <li><strong>Si hay backrow desconocido:</strong> Actúa como si fuera la peor trampa para tu combo. Si tienes destructor de trampas, úsalo primero.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">⚠️ Errores Comunes</h3>
+        <ul class="form-nb-list">
+            <li>Asumir que tiene X carta porque perdiste contra ella antes — cada duelo es nuevo.</li>
+            <li>Jugar mecánicamente sin observar al oponente — su comportamiento da información.</li>
+            <li>Ignorar lo que NO hizo — la información más valiosa a veces es que el oponente no activó nada.</li>
+            <li>Paralizarte por sobre-pensar — analiza, decide, actúa.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Al inicio de cada turno del oponente hazte 3 preguntas: ¿Cuántas cartas tiene en mano y qué dice eso? ¿Qué hizo (o no hizo) en mi último turno? ¿Qué necesita hacer en este turno para ganar? La tercera es la más poderosa: si sabes qué necesita para ganar, puedes centrar todos tus recursos en negarlo exactamente.</p>
+    `; },
+
+    _topicVelocidadEfectos: function () { return `
+        <h2 class="form-nb-title">Velocidad de Efectos y Cadenas</h2>
+        <p class="form-nb-text">El sistema de cadenas es el motor técnico del juego. Entenderlo completamente es lo que te permite activar tus cartas en el momento correcto y ganar disputas que un jugador sin este conocimiento perdería.</p>
+
+        <h3 class="form-nb-subtitle">⚡ Spell Speed (Velocidad de Hechizo)</h3>
+        <ul class="form-nb-list">
+            <li><strong>Velocidad 1:</strong> No puede ser activado como respuesta directa. Efectos de tipo Ignition, efectos Continuos, Magias normales/campo/equipo/ritual. Base de la cadena, nunca el eslabón reactivo.</li>
+            <li><strong>Velocidad 2:</strong> Puede responder a velocidad 1 y 2. Quick Effects de monstruos, Magias de Juego Rápido, Trampas normales y continuas, Handtraps.</li>
+            <li><strong>Velocidad 3:</strong> Solo responde a velocidad 3. Counter Traps (Solemn Judgment, Solemn Warning, etc.). La única respuesta a una Counter Trap es otra Counter Trap.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔧 Tipos de Efectos</h3>
+        <ul class="form-nb-list">
+            <li><strong>Trigger Effect (Gatillo):</strong> Se activa automáticamente al ocurrir un evento. <em>Mandatorio</em>: DEBE activarse. <em>Opcional</em>: puede activarse — pero puede "miss the timing".</li>
+            <li><strong>Ignition Effect (Ignición):</strong> Lo activas voluntariamente durante una ventana en tu turno. Velocidad 1. No puede activarse como respuesta.</li>
+            <li><strong>Quick Effect (Efecto Rápido):</strong> Velocidad 2. Puede activarse en el turno del oponente o en respuesta a sus efectos. Indicado con "(Quick Effect):" en el texto.</li>
+            <li><strong>Continuous Effect (Continuo):</strong> Aplica automáticamente mientras la carta esté en campo. No genera cadena — simplemente está activo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔗 Cómo Funciona una Cadena (LIFO)</h3>
+        <p class="form-nb-text">Una cadena es una secuencia de efectos activados en respuesta mutua. Se resuelve al revés: el último activado resuelve primero (Last In, First Out). Las cadenas se construyen completamente ANTES de resolverse.</p>
+        <ul class="form-nb-list">
+            <li>Jugador A activa Ash Blossom (Vel. 2) — Eslabón 1.</li>
+            <li>Jugador B responde con Called by the Grave (Vel. 2) — Eslabón 2.</li>
+            <li>Called by the Grave resuelve primero → niega Ash. Ash intenta resolver → ya fue negada.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🪟 Ventana de Interacción</h3>
+        <p class="form-nb-text">La ventana se abre cuando el jugador activo activa un efecto, realiza una invocación, o ejecuta una acción visible. Se cierra cuando ambos jugadores pasan sin agregar nada a la cadena. El jugador sin nada que activar debe ceder prioridad.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">El 80% de las disputas en torneo vienen de no entender cuándo hay ventana. Si tienes dudas: ¿hubo una acción o efecto del oponente que abrió la ventana? Si la respuesta es no, espera.</p>
+    `; },
+
+    _topicRulingsInvocaciones: function () { return `
+        <h2 class="form-nb-title">Rulings de Invocaciones</h2>
+        <p class="form-nb-text">Saber qué tipo de invocación realizas, cuándo puede ser negada, y qué consecuencias tiene la negación, determina si puedes continuar el combo o no.</p>
+
+        <h3 class="form-nb-subtitle">⚔️ Inherente vs Por Efecto</h3>
+        <ul class="form-nb-list">
+            <li><strong>Invocación Inherente:</strong> La realizas directamente por las reglas del juego, sin necesitar un efecto de carta. Se coloca en el Eslabón 1 o sin cadena. Ej: Invocación Normal, XYZ con 2 del mismo nivel, Sincro con Tuner.</li>
+            <li><strong>Invocación por Efecto:</strong> La realiza un efecto de carta. La cadena ya está en marcha. No puedes responder a la invocación misma, solo al efecto.</li>
+        </ul>
+        <p class="form-nb-text">"Negar una invocación" solo aplica a invocaciones inherentes. No puedes negar una invocación que sea el resultado de resolver un efecto.</p>
+
+        <h3 class="form-nb-subtitle">🚫 Negar la Invocación y sus Consecuencias</h3>
+        <ul class="form-nb-list">
+            <li>El monstruo va al cementerio (o fuera del juego según la regla).</li>
+            <li>Efectos de "si fue invocado exitosamente" NO se activan.</li>
+            <li>Efectos de "si fue enviado al cementerio" SÍ pueden activarse.</li>
+            <li>Los materiales ya enviados NO regresan — van al cementerio normalmente.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">📝 Diferencias Clave por Tipo</h3>
+        <ul class="form-nb-list">
+            <li><strong>XYZ y materiales:</strong> Los materiales debajo del XYZ no están en el cementerio. Los efectos de cementerio no los afectan. Solo van al cementerio cuando el XYZ es destruido.</li>
+            <li><strong>Fichas (Tokens):</strong> Son monstruos. Pueden ser materiales. Pero al dejar el campo desaparecen — no van al cementerio.</li>
+            <li><strong>Link y zonas:</strong> Si no hay zonas del Extra Deck habilitadas, la invocación no puede realizarse aunque tengas los materiales.</li>
+            <li><strong>Péndulo:</strong> Para Invocar Péndulo necesitas ambas escalas activas. Si te niegan una escala durante la colocación, la otra queda pero no puedes invocar.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Antes de intentar una invocación de Extra Deck, confirma: ¿Los materiales son válidos? ¿Hay zona disponible? ¿Mi combo tiene restricciones que bloqueen esta invocación? Muchos combos se rompen porque el jugador no leyó la restricción de una carta que ya resolvió ese mismo turno.</p>
+    `; },
+
+    _topicRulingsBatalla: function () { return `
+        <h2 class="form-nb-title">Rulings en Fase de Batalla</h2>
+        <p class="form-nb-text">La Fase de Batalla tiene más reglas específicas que cualquier otra fase. Los rulings de esta fase determinan partidas enteras en torneo.</p>
+
+        <h3 class="form-nb-subtitle">📋 Las Subfases del Damage Step</h3>
+        <ul class="form-nb-list">
+            <li><strong>A. Start of Damage Step:</strong> Se pueden activar efectos que modifican ATK/DEF o cambian posición. Los monstruos boca abajo se voltean aquí.</li>
+            <li><strong>B. Before Damage Calculation:</strong> Último momento para cambiar ATK/DEF antes del cálculo. Solo efectos de velocidad 2 que modifican ATK/DEF o que aplican explícitamente aquí.</li>
+            <li><strong>C. Damage Calculation:</strong> Los LP cambian. Se compara ATK vs ATK (o ATK vs DEF).</li>
+            <li><strong>D. After Damage Calculation:</strong> Efectos "después del cálculo de daño". Efectos Flip de monstruos volteados.</li>
+            <li><strong>E. End of Damage Step:</strong> Los monstruos destruidos por combate van al cementerio. Efectos "cuando sea destruido por combate" se activan aquí.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">⚡ Daño de Batalla vs Daño de Efecto</h3>
+        <ul class="form-nb-list">
+            <li><strong>Daño de Batalla:</strong> Ocurre cuando un monstruo ataca. Puede ser modificado por cartas durante la Battle Phase o el Damage Step.</li>
+            <li><strong>Daño de Efecto:</strong> "Inflige X de daño" por efecto. No puede ser negado por cartas que solo aplican a daño de batalla. Funciona fuera del Damage Step.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔄 Replay Attacks</h3>
+        <p class="form-nb-text">Un Replay ocurre cuando el objetivo de un ataque desaparece durante el Battle Step. El monstruo atacante puede elegir un nuevo objetivo o no atacar. Solo ocurre en el Battle Step, no durante el Damage Step.</p>
+
+        <h3 class="form-nb-subtitle">🚫 Restricciones en el Damage Step</h3>
+        <p class="form-nb-text">Durante el Damage Step SOLO puedes activar: efectos de velocidad 2+ que modifiquen ATK/DEF, efectos que aplican explícitamente durante el Damage Step, Counter Traps (velocidad 3), y efectos mandatorios. Casi todas las Handtraps y Trampas Normales NO pueden activarse aquí.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">En torneo, siempre anuncia "declaro ataque con X contra Y" y espera antes de calcular el daño. Esa pausa es la ventana de tu oponente para responder. Entrar al Damage Step sin dar esa ventana es un error que puede costarte la partida.</p>
+    `; },
+
+    _topicIfWhen: function () { return `
+        <h2 class="form-nb-title">IF vs WHEN y Timing Avanzado</h2>
+        <p class="form-nb-text">"Miss the timing" es uno de los conceptos más mal entendidos en Yu-Gi-Oh!. Un jugador que no entiende la diferencia entre IF y WHEN perderá efectos clave en momentos críticos.</p>
+
+        <h3 class="form-nb-subtitle">🔍 La Diferencia Fundamental</h3>
+        <ul class="form-nb-list">
+            <li><strong>WHEN (opcional):</strong> El efecto tiene una ventana muy específica. Si el evento que lo activa NO fue "lo último que ocurrió" antes de la nueva ventana de activación, el efecto pierde el timing y NO puede activarse. "When X: you can do Y" = riesgo de miss the timing.</li>
+            <li><strong>IF (opcional):</strong> Más flexible. Solo necesita que la condición se haya cumplido en algún momento del proceso. Generalmente no pierde el timing. "If X: you can do Y" = generalmente seguro.</li>
+            <li><strong>WHEN/IF Mandatorios:</strong> NUNCA pierden el timing. Siempre se activan si la condición ocurre.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">❌ Qué Significa "Miss the Timing"</h3>
+        <p class="form-nb-text">Ocurre cuando: (1) el efecto usa WHEN y es opcional, y (2) la condición de activación ocurrió, pero NO fue el último evento antes de que se abra la nueva ventana.</p>
+        <ul class="form-nb-list">
+            <li><strong>No miss:</strong> La carta X fue enviada al cementerio como el ÚLTIMO paso de un efecto. → El efecto puede activarse.</li>
+            <li><strong>Sí miss:</strong> La carta X fue enviada al cementerio pero después el efecto hizo otras cosas (ej: "envía X al cementerio, LUEGO invoca especialmente Y"). El envío no fue lo último. → El efecto pierde el timing.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">📋 Orden de Activación en la Ventana</h3>
+        <ul class="form-nb-list">
+            <li>1. Efectos mandatorios (siempre primero).</li>
+            <li>2. Efectos Trigger opcionales del jugador activo.</li>
+            <li>3. Efectos Trigger opcionales del jugador no activo.</li>
+            <li>4. Quick Effects de ambos jugadores.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔄 "EACH TIME" — Sin Límite de Activaciones</h3>
+        <p class="form-nb-text">"Each time X happens: do Y" puede activarse múltiples veces en el mismo turno si la condición se repite. No está limitado a una vez por turno implícitamente.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Cuando no estés seguro: ¿Dice "when" y "you can"? → Potencial miss. ¿El evento fue lo último que ocurrió? → No miss. ¿El efecto es mandatorio? → Nunca miss. En torneo, ante la duda, declara el efecto y deja que el juez decida.</p>
+    `; },
+
+    _topicFormatos: function () { return `
+        <h2 class="form-nb-title">Formatos y sus Diferencias</h2>
+        <p class="form-nb-text">Yu-Gi-Oh! no es un solo juego — es varios juegos con las mismas cartas pero reglas distintas. Saber en qué formato estás jugando cambia completamente qué estrategias funcionan y qué rulings aplican.</p>
+
+        <h3 class="form-nb-subtitle">🌍 Formato Avanzado (TCG / OCG — Actual)</h3>
+        <ul class="form-nb-list">
+            <li>El formato estándar moderno. Basado en la Master Rule 5 (vigente desde 2020).</li>
+            <li>Banlist actualizada ~cada 3 meses. Deck: 40-60 cartas. Extra: hasta 15. Side: hasta 15.</li>
+            <li><strong>TCG vs OCG:</strong> Banlists DIFERENTES. Cartas prohibidas en TCG pueden estar libres en OCG. El OCG tiene diferencias de timing y prioridad en casos específicos (efectos en zona privada tienen menor prioridad que en zona pública).</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💻 Master Duel (Digital Oficial)</h3>
+        <p class="form-nb-text">Versión digital de Konami con su propia banlist, diferente a TCG y OCG. El pool de cartas va atrasado respecto al físico. Gratuito en PC, consolas y móvil.</p>
+
+        <h3 class="form-nb-subtitle">🐐 GOAT Format (2005)</h3>
+        <ul class="form-nb-list">
+            <li>Simula el meta de 2005 con las reglas originales.</li>
+            <li>1 sola zona de campo (sin Extra Monster Zones, sin Links ni Sincro ni XYZ ni Péndulos).</li>
+            <li>Los Ignition Effects tenían prioridad al invocar (podías activar un efecto junto con la invocación).</li>
+            <li>Jugadas ilegales = pérdida de la carta y rebarajeo (no solo deshacer).</li>
+            <li>Ritmo completamente diferente al formato moderno.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🎮 Genesys Format</h3>
+        <p class="form-nb-text">Sin banlist — cada carta tiene un valor en puntos y construyes con un presupuesto máximo. No se permiten monstruos Link ni Péndulo. Diseñado para equilibrar sin restricciones directas.</p>
+
+        <h3 class="form-nb-subtitle">⏱️ Time Wizard Format</h3>
+        <p class="form-nb-text">Torneos nostálgicos donde ambos jugadores acuerdan jugar con el cardpool y las reglas de una fecha específica del pasado. Cada "Time Wizard" es un formato diferente según la fecha elegida.</p>
+
+        <h3 class="form-nb-subtitle">📝 Erratas y Terminología</h3>
+        <ul class="form-nb-list">
+            <li>Las erratas cambian el texto oficial de cartas antiguas. Siempre aplica el texto actual, no el de la impresión antigua.</li>
+            <li>"cards you control" = cartas en tu campo · "add" ≠ "draw" · "unaffected" = inafectado · "send to GY" ≠ "discard"</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Cuando veas un decklist de internet, siempre confirma en qué formato fue construido. Un deck de OCG puede tener cartas prohibidas en TCG. El formato cambia todo: las cartas, las estrategias y el ritmo del juego.</p>
+    `; },
+
 };
 
 window.Formacion = Formacion;
@@ -739,7 +1382,7 @@ const Config = {
             <!-- Sección: Roles y Palabras Asociadas -->
             <div class="config-section" data-section-id="config-roles" id="roles-section-wrap">
                 <h3 class="config-section-title" onclick="Config.toggleSection('roles-section')">
-                    ▶ 🎭 Roles y Palabras Asociadas
+                    ▶ Roles y Palabras Asociadas
                 </h3>
                 <div id="roles-section" class="config-section-content" style="display:none;">
                     ${this.renderRolesSection()}
@@ -749,7 +1392,7 @@ const Config = {
             <!-- Sección: Mecánicas y Counters -->
             <div class="config-section" data-section-id="config-specialties">
                 <h3 class="config-section-title" onclick="Config.toggleSection('specialties-section')">
-                    ▶ ⚙️ Mecánicas y Counters
+                    ▶ Mecánicas y Counters
                 </h3>
                 <div id="specialties-section" class="config-section-content" style="display:none;">
                     ${this.renderSpecialtiesSection()}
@@ -759,7 +1402,7 @@ const Config = {
             <!-- Sección: Lista de Staples -->
             <div class="config-section" data-section-id="config-staples">
                 <h3 class="config-section-title" onclick="Config.toggleSection('staples-section')">
-                    ▶ 📌 Lista de Staples
+                    ▶ Lista de Staples
                 </h3>
                 <div id="staples-section" class="config-section-content" style="display:none;">
                     ${this.renderStaplesSection()}
@@ -769,7 +1412,7 @@ const Config = {
             <!-- Sección: Nomenclatura de Efectos -->
             <div class="config-section" data-section-id="config-nomenclature">
                 <h3 class="config-section-title" onclick="Config.toggleSection('nomenclature-section')">
-                    ▶ 🏷️ Nomenclatura de Efectos
+                    ▶ Nomenclatura de Efectos
                 </h3>
                 <div id="nomenclature-section" class="config-section-content" style="display:none;">
                     ${this.renderNomenclatureSection()}
@@ -779,7 +1422,7 @@ const Config = {
             <!-- Sección: Pilares del Internal Score -->
             <div class="config-section" data-section-id="config-pillars">
                 <h3 class="config-section-title" onclick="Config.toggleSection('pillars-section')">
-                    ▶ 🧱 Pilares del Internal Score
+                    ▶ Pilares del Internal Score
                 </h3>
                 <div id="pillars-section" class="config-section-content" style="display:none;">
                     ${this.renderPillarsSection()}
@@ -789,7 +1432,7 @@ const Config = {
             <!-- Sección: Rendimientos Decrecientes -->
             <div class="config-section" data-section-id="config-diminishing">
                 <h3 class="config-section-title" onclick="Config.toggleSection('diminishing-section')">
-                    ▶ 📉 Rendimientos Decrecientes
+                    ▶ Rendimientos Decrecientes
                 </h3>
                 <div id="diminishing-section" class="config-section-content" style="display:none;">
                     ${this.renderDiminishingSection()}
@@ -799,7 +1442,7 @@ const Config = {
             <!-- Sección: Atajos Rápidos -->
             <div class="config-section" data-section-id="config-shortcuts">
                 <h3 class="config-section-title" onclick="Config.toggleSection('shortcuts-section')">
-                    ▶ ⚡Atajos Rápidos
+                    ▶ Atajos Rápidos
                 </h3>
                 <div id="shortcuts-section" class="config-section-content" style="display:none;">
                     ${this.renderShortcutsSection()}
@@ -809,7 +1452,7 @@ const Config = {
             <!-- Sección: Banlist del Formato -->
             <div class="config-section" data-section-id="config-banlist">
                 <h3 class="config-section-title" onclick="Config.toggleSection('banlist-section'); if(window.Banlist) Banlist.renderSection();">
-                    ▶ 🚫 Banlist del Formato
+                    ▶ Banlist del Formato
                 </h3>
                 <div id="banlist-section" class="config-section-content" style="display:none;">
                     <p class="stats-empty">Abre la sección para ver la banlist.</p>
@@ -819,7 +1462,7 @@ const Config = {
             <!-- Sección: Ajustes de Música -->
             <div class="config-section" data-section-id="config-music">
                 <h3 class="config-section-title" onclick="Config.toggleSection('music-section')">
-                    ▶ 🎵 Ajustes de Música
+                    ▶ Ajustes de Música
                 </h3>
                 <div id="music-section" class="config-section-content" style="display:none;">
                     ${this.renderMusicSection()}
@@ -829,7 +1472,7 @@ const Config = {
             <!-- Sección: Maestros del Duelo -->
             <div class="config-section" data-section-id="config-meta-masters">
                 <h3 class="config-section-title" onclick="Config.toggleSection('meta-masters-config-section')">
-                    ▶ 🎓 Maestros del Duelo
+                    ▶ Maestros del Duelo
                 </h3>
                 <div id="meta-masters-config-section" class="config-section-content" style="display:none;">
                     ${this.renderMetaMastersSection()}
@@ -839,7 +1482,7 @@ const Config = {
             <!-- Sección: Fuentes Externas del Meta -->
             <div class="config-section" data-section-id="config-meta-links">
                 <h3 class="config-section-title" onclick="Config.toggleSection('meta-links-config-section')">
-                    ▶ 📚 Fuentes Externas del Meta
+                    ▶ Fuentes Externas del Meta
                 </h3>
                 <div id="meta-links-config-section" class="config-section-content" style="display:none;">
                     ${this.renderMetaLinksSection()}
@@ -850,7 +1493,7 @@ const Config = {
             <!-- Sección: Juegos Alternativos -->
             <div class="config-section" data-section-id="config-formacion-games">
                 <h3 class="config-section-title" onclick="Config.toggleSection('formacion-games-config-section')">
-                    ▶ 🎮 Juegos Alternativos de Yu-Gi-Oh!
+                    ▶ Juegos Alternativos de Yu-Gi-Oh!
                 </h3>
                 <div id="formacion-games-config-section" class="config-section-content" style="display:none;">
                     ${this.renderFormacionGamesSection()}
@@ -860,7 +1503,7 @@ const Config = {
             <!-- Sección: Temas de Formación -->
             <div class="config-section" data-section-id="config-formacion-topics">
                 <h3 class="config-section-title" onclick="Config.toggleSection('formacion-topics-section')">
-                    ▶ 📖 Temas de Formación
+                    ▶ Temas de Formación
                 </h3>
                 <div id="formacion-topics-section" class="config-section-content" style="display:none;">
                     ${this.renderFormacionTopicsSection()}
@@ -869,7 +1512,6 @@ const Config = {
 
             <!-- Botones de acción -->
             <div class="config-actions">
-                <button class="btn btn-primary" onclick="Config.abrirReportarError()" style="background:#1a5fa8;border-color:#2778d4;" title="Envía un reporte de error al desarrollador">📧 Reportar Error</button>
                 <button class="btn btn-success" onclick="Config.generarReporte()" style="background:#4a0015;border-color:#9b1030;" title="Exporta un .txt con el log de ejecución de esta sesión">📋 Generar Reporte</button>
                 <button class="btn btn-primary" onclick="Config.exportConfig()">📥 Exportar Data</button>
                 <button class="btn btn-primary" onclick="Config.importConfig()">📤 Importar Data</button>
@@ -878,34 +1520,25 @@ const Config = {
 
             <!-- Zona de borrado -->
             <div class="config-danger-zone" data-section-id="config-danger-zone">
-    <div class="config-danger-title">⚠️ Zona de borrado</div>
-    <div class="borrar-opciones-grid">
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="decks"> <span>Decks guardados</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="engines"> <span>Engines</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="matchups"> <span>Matchups e Historial</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="winrates"> <span>Winrates</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="favoritas"> <span>Favoritas</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="torneo"> <span>Torneo activo</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="practica"> <span>Estados de práctica</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="cache"> <span>Cache de Estadísticas</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="formacion"> <span>Notas y temas de Formación</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="meta_folders"> <span>Carpetas del Meta</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="config"> <span>Configuración (roles, staples, mecánicas…)</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="perfil"> <span>Perfil y bienvenida</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="fallbacks"> <span>Imágenes y Fallbacks</span></label>
-    </div>
-    <div class="borrar-footer-row">
-        <label class="borrar-select-all-label">
-            <input type="checkbox" id="borrar-select-all" onchange="Config._borrarToggleAll(this.checked)">
-            <span>Seleccionar todo</span>
-        </label>
-        <button class="btn btn-danger" onclick="Config.borrarSeleccion()" style="background:#c0392b;">
-            🗑️ Ejecutar Borrado
-        </button>
-    </div>
-</div>
+                <div class="config-danger-title">⚠️ Zona de borrado</div>
+                <div class="config-danger-buttons">
+                    <button class="btn btn-danger" onclick="Config.borrarTodo()" style="background:#c0392b;">
+                        🗑️ Borrar Data
+                        <small style="display:block;font-weight:normal;font-size:0.7rem;opacity:0.75;">
+                            Toda la configuración de la app
+                        </small>
+                    </button>
+                    <button class="btn btn-danger" data-section-id="config-danger-delete" onclick="Config.borrarDeck()">
+                        🗑️ Borrar Decks & Juego
+                        <small style="display:block;font-weight:normal;font-size:0.7rem;opacity:0.75;">
+                            Decks guardados, winrates, notas, cache de scores
+                        </small>
+                    </button>
 
-<input type="file" id="config-import-file" accept=".txt" style="display:none;" onchange="Config.handleFileImport(this)">
+                </div>
+            </div>
+            
+            <input type="file" id="config-import-file" accept=".txt" style="display:none;" onchange="Config.handleFileImport(this)">
         `;
     },
 
@@ -1571,134 +2204,6 @@ renderNomCategoryOptions: function (selectedId) {
         alert('✅ App restaurada a valores de fábrica.');
     },
 
-abrirReportarError: function () {
-    if (document.getElementById('error-report-overlay')) return;
-    const counter = parseInt(localStorage.getItem('dd_report_counter') || '0') + 1;
-    const now     = new Date();
-    const dateStr = now.toLocaleString('es-DO');
-
-    const overlay = document.createElement('div');
-    overlay.id        = 'error-report-overlay';
-    overlay.className = 'error-report-overlay';
-    overlay.innerHTML = `
-        <div class="error-report-panel">
-            <div class="error-report-header">
-                <span>📧 Reportar Error <span class="error-report-num">#${counter}</span></span>
-                <button class="error-report-close" onclick="Config.cerrarReportarError()">×</button>
-            </div>
-            <p class="error-report-hint">
-                Se adjuntará el Log del sistema y tu configuración actual en el cuerpo del correo.
-            </p>
-            <textarea id="error-report-msg" class="error-report-textarea"
-                placeholder="Diga que cosas considera no funcionan como deberia. Puede escribir cosas de gustos en un parrafo distinto"
-                rows="6"></textarea>
-            <div class="error-report-footer">
-                <span class="error-report-date">🕐 ${dateStr}</span>
-                <button class="btn btn-primary error-report-send-btn"
-                        id="error-report-send"
-                        onclick="Config.enviarReporte(${counter}, '${dateStr.replace(/'/g, "\\'")}')">
-                    📤 Enviar Reporte
-                </button>
-            </div>
-        </div>`;
-    document.body.appendChild(overlay);
-    setTimeout(() => document.getElementById('error-report-msg')?.focus(), 100);
-},
-
-cerrarReportarError: function () {
-    document.getElementById('error-report-overlay')?.remove();
-},
-
-enviarReporte: function (counter, dateStr) {
-    const msg = (document.getElementById('error-report-msg')?.value || '').trim();
-    if (!msg) { alert('Escribe un mensaje antes de enviar.'); return; }
-
-    // ── Logger .txt ──────────────────────────────────────────────
-    let loggerTxt = 'Logger no disponible en esta sesión.';
-    if (window.DDLogger) {
-        const logs  = DDLogger.getLogs();
-        const stats = DDLogger.getStats();
-        const L = [];
-        L.push('================================================================');
-        L.push('  DESTINY DRAW — LOG REPORT');
-        L.push('================================================================');
-        L.push(`  Reporte #${counter} | ${dateStr}`);
-        L.push(`  Entradas: ${logs.length} | Errores: ${logs.filter(e=>!e.ok).length} | Lentas: ${logs.filter(e=>e.slow).length}`);
-        L.push('');
-        L.push('--- ESTADÍSTICAS POR MÉTODO ---');
-        Object.entries(stats).sort((a,b)=>b[1].calls-a[1].calls).forEach(([k,s])=>{
-            const avg = s.calls>0?(s.totalMs/s.calls).toFixed(1):'0.0';
-            L.push(`  ${k.padEnd(45)} calls:${s.calls}  avg:${avg}ms  errors:${s.errors}`);
-        });
-        const errors = logs.filter(e=>!e.ok);
-        if (errors.length) {
-            L.push(''); L.push('--- ERRORES ---');
-            errors.forEach(e=>{
-                L.push(`  [#${e.seq}] ${e.ts} | ${e.label}`);
-                L.push(`  Msg: ${e.error}`);
-                if (e.stack) L.push(`  Stack: ${e.stack.split('\n').slice(0,3).join(' | ')}`);
-            });
-        }
-        L.push(''); L.push('--- LOG COMPLETO ---');
-        logs.forEach(e=>{
-            const flag=!e.ok?'[ERR]':e.slow?'[SLW]':'[OK] ';
-            L.push(`[${e.seq}] ${e.ts} ${flag} ${e.label}(${(e.args||'').slice(0,80)}) ${e.ms}ms`);
-        });
-        loggerTxt = L.join('\n');
-    }
-
-    // ── Config .txt ──────────────────────────────────────────────
-    let configTxt = 'Config no disponible.';
-    try {
-        const claves = [
-            'yugioh_config','yugioh_player_level','dd_player_profile',
-            'dd_content_visibility','yugioh_favoritas','yugioh_engines',
-            'yugioh_decks','yugioh_music_config','yugioh_meta_folders',
-            'yugioh_formacion_notes','yugioh_formacion_mastered',
-        ];
-        const exportObj = { exportDate: dateStr, reportNumber: counter };
-        claves.forEach(k=>{
-            const v=localStorage.getItem(k);
-            if(v){ try{ exportObj[k]=JSON.parse(v); }catch(_){ exportObj[k]=v; } }
-        });
-        exportObj._matchups={};
-        for(let i=0;i<localStorage.length;i++){
-            const k=localStorage.key(i);
-            if(k?.startsWith('matchup_')){ try{ exportObj._matchups[k]=JSON.parse(localStorage.getItem(k)); }catch(_){} }
-        }
-        configTxt = JSON.stringify(exportObj, null, 2);
-    } catch(e){ configTxt='Error al generar config: '+e.message; }
-
-    // ── Descargar ambos archivos ──────────────────────────────────
-    const stamp = dateStr.replace(/[/:, ]/g,'-').slice(0,16);
-    const _dl = (content, filename) => {
-        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href = url; a.download = filename;
-        a.click(); URL.revokeObjectURL(url);
-    };
-    _dl(loggerTxt, `DD_Log_${stamp}.txt`);
-    setTimeout(()=> _dl(configTxt, `DD_Config_${stamp}.txt`), 400);
-
-    // ── Abrir cliente de correo con mailto: ──────────────────────
-    const subject  = encodeURIComponent(`REPORTE #${counter} ${dateStr}`);
-    const body     = encodeURIComponent(
-        `REPORTE #${counter} — ${dateStr}\n\n` +
-        `MENSAJE:\n${msg}\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-        `📎 Adjunta los 2 archivos .txt que se descargaron automáticamente:\n` +
-        `  • ERROR_REPORT_Log_${stamp}.txt\n` +
-        `  • ERROR_REPORT_Config_${stamp}.txt`
-    );
-    setTimeout(()=> {
-        window.location.href = `mailto:franq0524@gmail.com?subject=${subject}&body=${body}`;
-    }, 800);
-
-    localStorage.setItem('dd_report_counter', String(counter));
-    this.cerrarReportarError();
-    alert(`✅ Reporte #${counter}\n\nSe descargaron 2 archivos .txt automáticamente.\nSe abrirá tu cliente de correo — adjunta los archivos al correo. \n Si no tienes la confianza para aceptar el envio automático, puedes enviar los reportes directamente al creador de la APP.`);
-},
     exportConfig: function () {
         if (ConfigManager.exportConfig()) {
             alert('✅ Backup exportado (decks, engines, matchups, winrates, config y más).');
@@ -1801,95 +2306,74 @@ _restoreAndScroll: function(sectionId, anchorId) {
         
     },
     
-    _borrarToggleAll: function (checked) {
-    document.querySelectorAll('.borrar-opcion-cb').forEach(cb => { cb.checked = checked; });
-},
+    borrarDeck: function () {
+        if (!confirm(
+            '¿Borrar TODOS los decks, engines, matchups, winrates, favoritas y estados de práctica?\n' +
+            'La configuración (roles, staples, etc.) no se tocará.\n' +
+            'Esta acción no se puede deshacer.'
+        )) return;
 
-borrarSeleccion: function () {
-    const selected = [...document.querySelectorAll('.borrar-opcion-cb:checked')].map(cb => cb.dataset.key);
-    if (!selected.length) { alert('Selecciona al menos una opción para borrar.'); return; }
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (!k) continue;
+            if (k.startsWith('deck_') || k.startsWith('matchup_') || k.startsWith('pz_states_'))
+                keysToRemove.push(k);
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+        localStorage.removeItem('yugioh_engines');
+        localStorage.removeItem('yugioh_winrates');
+        localStorage.removeItem('pz_winrate_standalone');
+        localStorage.removeItem('yugioh_favoritas');
+        localStorage.removeItem('yugioh_torneo_actual');
+        localStorage.removeItem('yugioh_power_cache');
+        localStorage.removeItem('yugioh_cross_scores');
 
-    const etiquetas = {
-        decks: 'Decks guardados', engines: 'Engines', matchups: 'Matchups e Historial',
-        winrates: 'Winrates', favoritas: 'Favoritas', torneo: 'Torneo activo',
-        practica: 'Estados de práctica', cache: 'Cache de Estadísticas',
-        formacion: 'Notas y temas de Formación', meta_folders: 'Carpetas del Meta',
-        config: 'Configuración (roles, staples, mecánicas…)',
-        perfil: 'Perfil y bienvenida', fallbacks: 'Imágenes y Fallbacks',
-    };
-    const lista = selected.map(k => `• ${etiquetas[k]}`).join('\n');
-    if (!confirm(`⚠️ ¿Borrar lo siguiente?\n\n${lista}\n\nEsta acción NO se puede deshacer.`)) return;
-
-    const rm  = (k)      => localStorage.removeItem(k);
-    const rmP = (prefix) => {
-        const keys = [];
-        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k?.startsWith(prefix)) keys.push(k); }
-        keys.forEach(rm);
-    };
-
-    if (selected.includes('decks')) {
-        rm('yugioh_decks'); rmP('deck_');
-        if (window.Deck) { Deck.cards = {}; Deck.name = 'Mi Deck'; Deck.notes = ''; if (document.getElementById('deck-content')) Deck.render(); }
-    }
-    if (selected.includes('engines')) {
-        rm('yugioh_engines');
+        if (window.Deck) { Deck.cards = {}; Deck.name = 'Mi Deck'; Deck.notes = ''; Deck.render(); }
         if (window.Engines && document.getElementById('mideck-content')) Engines._renderSidebar();
-    }
-    if (selected.includes('matchups')) {
-        rmP('matchup_');
-        if (window.Matchups) Matchups.refreshSection?.();
-        if (window.Duelista) { const el = document.getElementById('duelista-content'); if (el) Duelista.refreshSection(); }
-    }
-    if (selected.includes('winrates')) {
-        rm('yugioh_winrates'); rm('pz_winrate_standalone');
-        if (window.Winrate) Winrate.refreshSection();
-    }
-    if (selected.includes('favoritas')) {
-        rm('yugioh_favoritas');
         if (window.Favoritas) Favoritas.render?.();
-    }
-    if (selected.includes('torneo')) {
-        rm('yugioh_torneo_actual');
-        if (window.Torneo) Torneo._initialized = false;
-    }
-    if (selected.includes('practica')) {
-        rmP('pz_states_');
-    }
-    if (selected.includes('cache')) {
-        rm('yugioh_power_cache'); rm('yugioh_cross_scores'); rm('dd_power_scores_cache');
+        if (window.Winrate)   Winrate.refreshSection();
+        if (window.Duelista)  Duelista.refreshSection();
+        if (window.Torneo)    Torneo._initialized = false;
         if (window.Estadisticas) {
-            Estadisticas.powerScoreCache = null; Estadisticas.crossScores = {};
+            Estadisticas.powerScoreCache = null;
             if (typeof Estadisticas.updateFloatingWidget === 'function') Estadisticas.updateFloatingWidget();
         }
-    }
-    if (selected.includes('formacion')) {
-        rm('yugioh_formacion_notes'); rm('yugioh_formacion_mastered');
-    }
-    if (selected.includes('meta_folders')) {
-        rm('yugioh_meta_folders');
-        if (window.Estadisticas) {
-            Estadisticas.metaDecks = {}; Estadisticas.metaFolders = [];
-            Estadisticas.metaCardLibrary = {}; Estadisticas.metaDeckScores = {};
-            if (document.getElementById('estadisticas-content')) Estadisticas.render();
-        }
-    }
-    if (selected.includes('config')) {
-        rm('yugioh_config');
-        if (window.ConfigManager && typeof ConfigManager._ensureDefaults === 'function') ConfigManager._ensureDefaults();
-    }
-    if (selected.includes('perfil')) {
-        rm('yugioh_player_level'); rm('dd_player_profile');
-        rm('dd_content_visibility'); rm('dd_welcome_dismissed');
-        if (window.Welcome) { Welcome.dismissed = false; Welcome.init(); }
-        if (window.ContentManager) ContentManager.applyAll();
-    }
-    if (selected.includes('fallbacks')) {
-        rm('yugioh_meta_fallbacks'); rm('yugioh_formacion_fallbacks');
-    }
 
-    this.render();
-    alert(`✅ ${selected.length} categoría(s) borrada(s) correctamente.`);
-},
+        alert(`✅ ${keysToRemove.length} deck(s) y toda la data de juego eliminados.`);
+    },
+
+    // borrarMeta eliminado — pestaña Meta ya no existe
+    borrarTodo: function () {
+        if (!confirm(
+            '⚠️ BORRAR TODO ⚠️\n\n' +
+            'Esto eliminará ABSOLUTAMENTE TODA la data:\n' +
+            '• Decks guardados y estados de práctica\n' +
+            '• Engines y Staples\n' +
+            '• Matchups, winrates e historial\n' +
+            '• Favoritas y banlist personalizada\n' +
+            '• Notas y temas de Formación\n' +
+            '• Torneo activo\n' +
+            '• Cache de Estadísticas y Meta\n' +
+            '• Toda la Configuración (roles, mecánicas, nomenclatura, pilares)\n\n' +
+            'La app quedará completamente vacía.\n' +
+            'Esta acción NO se puede deshacer.'
+        )) return;
+
+        // Borrar absolutamente todo el localStorage
+        const allKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k) allKeys.push(k);
+        }
+        allKeys.forEach(k => localStorage.removeItem(k));
+
+        // Resetear módulos en memoria
+        this._resetModulesInMemory();
+        this.render();
+        if (window.Welcome) Welcome.init();
+        alert('✅ Todo borrado. La app está completamente vacía.');
+    },
 
     // Resetea todos los módulos en memoria tras un clear total
     _resetModulesInMemory: function () {
@@ -2917,27 +3401,11 @@ const MusicPlayer = {
 
     toggle: function () {
         const cfg = window.ConfigManager ? ConfigManager.getMusicConfig() : {};
-        if (cfg.enabled === false) return;
-
-        const level = window.ConfigManager ? ConfigManager.getPlayerLevel() : 'default';
-        const path  = cfg.tracks?.[level] || cfg.tracks?.default || 'ots/Climax Theme 2.mp3';
-
-        if (this.audio && !this.audio.paused) {
-            // STOP — detiene y resincroniza pista con el perfil activo
-            this.audio.pause();
-            if (path !== this.currentPath) {
-                this.currentPath = path;
-                this._buildAudio(path, cfg.volume ?? 0.40); // queda pausado en 0
-            } else {
-                this.audio.currentTime = 0;
-            }
-        } else {
-            // PLAY — verifica que la pista sea la del perfil activo
-            if (!this.audio || path !== this.currentPath) {
-                this.currentPath = path;
-                this._buildAudio(path, cfg.volume ?? 0.40);
-            }
+        if (cfg.enabled === false || !this.audio) return;
+        if (this.audio.paused) {
             this.audio.play().catch(() => {});
+        } else {
+            this.audio.pause();
         }
         this._updateButton();
     },
@@ -2967,8 +3435,8 @@ const MusicPlayer = {
         const btn = document.getElementById('music-float-btn');
         if (!btn) return;
         const playing   = this.audio && !this.audio.paused;
-        btn.textContent = playing ? '⏹' : '▶';
-        btn.title       = playing ? 'Detener música' : 'Reproducir música';
+        btn.textContent = playing ? '⏸' : '▶';
+        btn.title       = playing ? 'Pausar música' : 'Reproducir música';
     }
 };
 
@@ -2988,90 +3456,56 @@ const HelpPanel = {
 
     // Contenido de ayuda por pestaña activa
     tabContent: {
-    buscador: `
-        <h4>🔍 Buscador de Cartas</h4>
-        <p>Busca cualquier carta de Yu-Gi-Oh! por nombre, arquetipo, set o palabras clave en su efecto.</p>
-        <ul>
-            <li>Escribe el nombre (o parte) y presiona Enter o el botón Buscar.</li>
-            <li>Usa <strong>Filtros avanzados</strong> para filtrar por tipo, atributo, nivel, etc.</li>
-            <li>El selector de Arquetipo y el de Packs/Sets permiten búsquedas muy específicas.</li>
-            <li>Toca la imagen de la carta para abrir su <strong>Vista de Carta</strong> detallada.</li>
-            <li>Desde la Vista puedes agregarla al Main, Extra o Side Deck, marcarla como Staple o Favorita, y ver sus roles detectados y estado de banlist.</li>
-            <li>El sistema resalta palabras clave en el efecto según la Nomenclatura configurada.</li>
-        </ul>`,
+        buscador: `
+            <h4>🔍 Buscador de Cartas</h4>
+            <p>Aquí puedes buscar cualquier carta de Yu-Gi-Oh! por nombre. Al encontrarla, puedes ver su efecto completo, sus estadísticas y agregarla directamente a tu deck activo.</p>
+            <ul>
+                <li>Escribe el nombre (o parte de él) y presiona Enter o el botón Buscar.</li>
+                <li>Toca la imagen de la carta para abrir su vista detallada.</li>
+                <li>Desde la vista detallada puedes agregarla al Main Deck, Extra Deck o Side Deck.</li>
+                <li>El sistema resalta automáticamente las palabras clave según la nomenclatura que configures.</li>
+            </ul>`,
 
-    mideck: `
-        <h4>🃏 Mi Deck</h4>
-        <p>Tu espacio de construcción y gestión de mazos.</p>
-        <ul>
-            <li><strong>Decklist / Construcción:</strong> sub-tabs para ver tus cartas o armar el deck desde el sidebar.</li>
-            <li><strong>Sidebar:</strong> accede a Engines (combos guardados), Decks guardados, Staples del formato y tus Favoritas.</li>
-            <li><strong>Composición:</strong> el bloque superior muestra tipos, atributos, niveles, y balance de tu deck en tiempo real.</li>
-            <li><strong>Roles:</strong> asigna roles a cada carta para que los tres scores (Internal, External, Counter) los tomen en cuenta.</li>
-            <li><strong>Carta As:</strong> marca una carta como ícono del deck — será su imagen en la lista de decks guardados.</li>
-            <li><strong>Acciones:</strong> guarda, limpia, exporta o importa tu deck en formato .ydk (compatible con YGOPro, EDOPro, etc.).</li>
-            <li><strong>Matchups:</strong> registra resultados contra decks rivales para alimentar el Nivel Duelista.</li>
-        </ul>`,
+        mideck: `
+            <h4>🃏 Mi Deck</h4>
+            <p>Este es tu espacio de construcción. Aquí ves todas las cartas de tu deck activo organizadas por sección.</p>
+            <ul>
+                <li><strong>Composición:</strong> el bloque superior muestra un resumen de tipos, atributos, niveles y más de tu deck actual.</li>
+                <li><strong>Roles:</strong> asigna roles a cada carta (Starter, Negadora, Boss, etc.) para que el Internal Score los tome en cuenta.</li>
+                <li><strong>Carta As:</strong> puedes marcar una carta como insignia de tu deck — será la imagen que representa al deck guardado.</li>
+                <li><strong>Acciones:</strong> guarda, limpia, exporta o importa tu deck en formato .ydk compatible con otras plataformas.</li>
+            </ul>`,
 
-    estadisticas: `
-        <h4>📊 Estadísticas</h4>
-        <p>El centro de análisis. Usa los scores para tomar decisiones de construcción basadas en datos.</p>
-        <ul>
-            <li><strong>Internal Score:</strong> mide la calidad técnica de tu deck en tres pilares — Consistencia, Potencia y Resiliencia — según los roles asignados.</li>
-            <li><strong>Análisis del Deck vs Meta:</strong> cruza las mecánicas de tu deck contra el meta activo. Muestra tu External Score, decks que te amenazan y cartas que te contrarrestan.</li>
-            <li><strong>Winrate:</strong> historial de resultados de tu deck activo contra los rivales que registraste.</li>
-            <li><strong>Top Tier:</strong> ranking de los decks del meta cargado por presencia y poder combinado.</li>
-            <li><strong>Decks del Meta:</strong> visualiza todos los decks importados. Filtra por carpeta/formato.</li>
-            <li><strong>Poder de Cartas:</strong> Power Score de cada carta del meta basado en presencia, mecánicas y capacidad de counter.</li>
-            <li><strong>Counter-Cards:</strong> lista de cartas del meta con función de interrupción activa y su Score de counter.</li>
-            <li><strong>Exportar:</strong> descarga reportes de tu deck o del meta en .txt y .csv.</li>
-            <li><strong>Nivel Duelista:</strong> estadísticas personales de rendimiento basadas en tus matchups registrados.</li>
-        </ul>`,
+        estadisticas: `
+            <h4>📊 Estadísticas</h4>
+            <p>El centro de análisis de la app. Cada sección te da una perspectiva distinta sobre tu deck y el meta:</p>
+            <ul>
+                <li><strong>Análisis del Deck vs Meta:</strong> comparativa entre el poder teórico de tu deck y qué tan bien sobrevive frente al meta seleccionado. Incluye las mecánicas detectadas, cartas amenaza y decks que más te contrarrestan.</li>
+                <li><strong>Internal Score:</strong> mide la calidad técnica de tu deck en tres pilares — Consistencia, Potencia y Resiliencia — basado en los roles asignados.</li>
+                <li><strong>Counter-Deck Score:</strong> indica qué tan capaz es tu deck de interrumpir las estrategias del meta. A mayor puntaje, más disruptivo es tu deck contra el formato.</li>
+                <li><strong>Gestión de Carpetas:</strong> aquí importas los decks del meta en formato .ydk, organizados por fecha de formato.</li>
+                <li><strong>Decks del Meta:</strong> visualiza todos los decks importados. Usa los chips de carpeta para filtrar por uno o varios formatos a la vez.</li>
+                <li><strong>Recurrencia de Cartas:</strong> muestra qué cartas aparecen más veces en el meta y con qué frecuencia promedio por deck.</li>
+                <li><strong>Poder de Cartas del Meta:</strong> calcula un puntaje de poder para cada carta del meta basado en su presencia, mecánicas y capacidad de counter.</li>
+                <li><strong>Counter-Cards del Meta:</strong> lista las cartas del meta que tienen función de interrupción activa contra mecánicas específicas.</li>
+                <li><strong>Exportar:</strong> descarga reportes de tu deck o rankings del meta en .txt y .csv.</li>
+            </ul>`,
 
-    simuladores: `
-        <h4>🎮 Simuladores</h4>
-        <p>Herramientas para practicar y medir tu rendimiento sin necesidad de un oponente.</p>
-        <ul>
-            <li><strong>Mulligan / Hipergeometría:</strong> simula manos iniciales y calcula probabilidades de abrir con piezas clave.</li>
-            <li><strong>Winrate:</strong> registro rápido de partidas por deck y oponente.</li>
-            <li><strong>Torneo (Swiss):</strong> gestiona un torneo local con sistema de rondas suizas, standings y puntos.</li>
-            <li><strong>Duelo en Vivo:</strong> cronómetro maestro con control de LP, turnos y temporizador por jugador.</li>
-            <li><strong>Experimentación:</strong> herramientas analíticas avanzadas para explorar métricas del deck.</li>
-            <li><strong>Campo de Práctica:</strong> campo de duelo visual donde puedes mover cartas, marcar estados y guardar posiciones.</li>
-        </ul>`,
+        config: `
+            <h4>⚙️ Configuración</h4>
+            <p>Aquí personalizas cómo la app analiza las cartas y los decks. Lo que configures aquí afecta directamente a los scores y al resaltado del Buscador.</p>
+            <ul>
+                <li><strong>Roles:</strong> define los roles que puedes asignar a las cartas (Starter, Boss, etc.), sus keywords de detección, y el peso de valor (1.0 = rol genérico de máximo aporte · 0.1 = rol arquetípico de menor aporte general).</li>
+                <li><strong>Especialidades y Counters:</strong> configura pares de mecánicas de juego y sus contrapartes. Esto activa el sistema de Power Score y External Score.</li>
+                <li><strong>Staples del Formato:</strong> agrega cartas que consideras esenciales en el formato actual. El sistema las sugerirá si no las tienes en tu deck.</li>
+                <li><strong>Nomenclatura:</strong> define categorías de texto para que el Buscador resalte partes del efecto de las cartas por color.</li>
+            </ul>`,
 
-    formacion: `
-        <h4>📚 Formación</h4>
-        <p>Tu cuaderno de estudio y biblioteca de recursos para mejorar como jugador.</p>
-        <ul>
-            <li><strong>Apuntes:</strong> crea y organiza notas con título, cuerpo y fecha. Ideal para anotar rulings, combos o estrategias.</li>
-            <li><strong>Temas:</strong> lista de conceptos del juego (Rulings, Fases, Mecánicas, etc.) que puedes marcar como dominados.</li>
-            <li><strong>Juegos Alternativos:</strong> acceso rápido a juegos/plataformas de Yu-Gi-Oh! configuradas en Config.</li>
-            <li><strong>Fuentes:</strong> links a sitios externos del meta (Limitless, YGOPro, etc.) configurados en Config.</li>
-            <li><strong>Maestros:</strong> galería de streamers y jugadores de referencia que configuras en Config.</li>
-        </ul>`,
-
-    config: `
-        <h4>⚙️ Configuración</h4>
-        <p>Personaliza cómo la app analiza cartas y decks. Todo lo que configures aquí afecta directamente los scores y el resaltado.</p>
-        <ul>
-            <li><strong>Contenido de la App:</strong> controla qué secciones son visibles según tu perfil (Novato / Casual / Competitivo). Puedes ajustar cada item individualmente.</li>
-            <li><strong>Roles:</strong> define roles para asignar a cartas (Starter, Boss, etc.), sus keywords de detección y su peso en el Internal Score.</li>
-            <li><strong>Mecánicas y Counters:</strong> configura pares mecánica/counter que activan el Power Score y el External Score.</li>
-            <li><strong>Staples:</strong> cartas esenciales del formato. El sistema las sugiere si no las tienes en el deck.</li>
-            <li><strong>Nomenclatura:</strong> categorías de texto para resaltar partes del efecto de cartas por color en el Buscador.</li>
-            <li><strong>Pilares:</strong> asigna qué roles pesan en Consistencia, Potencia y Resiliencia del Internal Score.</li>
-            <li><strong>Banlist:</strong> gestiona la lista de cartas prohibidas/limitadas por formato personalizado.</li>
-            <li><strong>Atajos Rápidos:</strong> configura hasta 6 accesos directos al botón ⚡ flotante.</li>
-            <li><strong>Música:</strong> asigna pistas por perfil y controla el volumen del botón ▶ flotante.</li>
-            <li><strong>Zona de Borrado:</strong> elimina selectivamente cada tipo de data guardada en la app.</li>
-        </ul>`,
-
-    default: `
-        <h4>❓ Ayuda</h4>
-        <p>Navega entre las pestañas de la app y vuelve a abrir este panel para ver la ayuda específica de cada sección.</p>
-        <p>Usa el botón <strong>FAQ</strong> para respuestas a preguntas frecuentes sobre los scores y el funcionamiento interno.</p>`
-},
+        default: `
+            <h4>❓ Ayuda</h4>
+            <p>Esta pestaña es para ayudarte a ser mejor jugador de Yu-Gi-Oh!.</p>
+            <p>Navega entre las pestañas de la app y vuelve a abrir este panel para ver la ayuda específica de cada sección.</p>`
+    },
 
     faqContent: [
         {
