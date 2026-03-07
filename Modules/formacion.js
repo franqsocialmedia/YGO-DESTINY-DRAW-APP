@@ -1037,6 +1037,7 @@ const Config = {
 
             <!-- Botones de acción -->
             <div class="config-actions">
+                <button class="btn btn-primary" onclick="Config.abrirReportarError()" style="background:#1a5fa8;border-color:#2778d4;" title="Envía un reporte de error al desarrollador">📧 Reportar Error</button>
                 <button class="btn btn-success" onclick="Config.generarReporte()" style="background:#4a0015;border-color:#9b1030;" title="Exporta un .txt con el log de ejecución de esta sesión">📋 Generar Reporte</button>
                 <button class="btn btn-primary" onclick="Config.exportConfig()">📥 Exportar Data</button>
                 <button class="btn btn-primary" onclick="Config.importConfig()">📤 Importar Data</button>
@@ -1738,7 +1739,124 @@ renderNomCategoryOptions: function (selectedId) {
         this.render();
         alert('✅ App restaurada a valores de fábrica.');
     },
+abrirReportarError: function () {
+    if (document.getElementById('error-report-overlay')) return;
+    const counter = parseInt(localStorage.getItem('dd_report_counter') || '0') + 1;
+    const now     = new Date();
+    const dateStr = now.toLocaleString('es-DO');
+    const overlay = document.createElement('div');
+    overlay.id        = 'error-report-overlay';
+    overlay.className = 'error-report-overlay';
+    overlay.innerHTML = `
+        <div class="error-report-panel">
+            <div class="error-report-header">
+                <span>📧 Reportar Error <span class="error-report-num">#${counter}</span></span>
+                <button class="error-report-close" onclick="Config.cerrarReportarError()">×</button>
+            </div>
+            <p class="error-report-hint">
+                Se adjuntará el Log del sistema y tu configuración actual en el cuerpo del correo.
+            </p>
+            <textarea id="error-report-msg" class="error-report-textarea"
+                placeholder="Diga que cosas considera no funcionan como deberia. Puede escribir cosas de gustos en un parrafo distinto"
+                rows="6"></textarea>
+            <div class="error-report-footer">
+                <span class="error-report-date">🕐 ${dateStr}</span>
+                <button class="btn btn-primary error-report-send-btn"
+                        id="error-report-send"
+                        onclick="Config.enviarReporte(${counter}, '${dateStr.replace(/'/g, "\\'")}')">
+                    📤 Enviar Reporte
+                </button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    setTimeout(() => document.getElementById('error-report-msg')?.focus(), 100);
+},
 
+cerrarReportarError: function () {
+    document.getElementById('error-report-overlay')?.remove();
+},
+
+enviarReporte: function (counter, dateStr) {
+    const msg = (document.getElementById('error-report-msg')?.value || '').trim();
+    if (!msg) { alert('Escribe un mensaje antes de enviar.'); return; }
+
+    let loggerTxt = 'Logger no disponible en esta sesión.';
+    if (window.DDLogger) {
+        const logs  = DDLogger.getLogs();
+        const stats = DDLogger.getStats();
+        const L = [];
+        L.push('================================================================');
+        L.push('  DESTINY DRAW — LOG REPORT');
+        L.push('================================================================');
+        L.push(`  Reporte #${counter} | ${dateStr}`);
+        L.push(`  Entradas: ${logs.length} | Errores: ${logs.filter(e=>!e.ok).length} | Lentas: ${logs.filter(e=>e.slow).length}`);
+        L.push('');
+        L.push('--- ESTADÍSTICAS POR MÉTODO ---');
+        Object.entries(stats).sort((a,b)=>b[1].calls-a[1].calls).forEach(([k,s])=>{
+            const avg = s.calls>0?(s.totalMs/s.calls).toFixed(1):'0.0';
+            L.push(`  ${k.padEnd(45)} calls:${s.calls}  avg:${avg}ms  errors:${s.errors}`);
+        });
+        const errors = logs.filter(e=>!e.ok);
+        if (errors.length) {
+            L.push(''); L.push('--- ERRORES ---');
+            errors.forEach(e=>{
+                L.push(`  [#${e.seq}] ${e.ts} | ${e.label}`);
+                L.push(`  Msg: ${e.error}`);
+                if (e.stack) L.push(`  Stack: ${e.stack.split('\n').slice(0,3).join(' | ')}`);
+            });
+        }
+        L.push(''); L.push('--- LOG COMPLETO ---');
+        logs.forEach(e=>{
+            const flag=!e.ok?'[ERR]':e.slow?'[SLW]':'[OK] ';
+            L.push(`[${e.seq}] ${e.ts} ${flag} ${e.label}(${(e.args||'').slice(0,80)}) ${e.ms}ms`);
+        });
+        loggerTxt = L.join('\n');
+    }
+
+    let configTxt = 'Config no disponible.';
+    try {
+        const claves = [
+            'yugioh_config','yugioh_player_level','dd_player_profile',
+            'dd_content_visibility','yugioh_favoritas','yugioh_engines',
+            'yugioh_decks','yugioh_music_config','yugioh_meta_folders',
+            'yugioh_formacion_notes','yugioh_formacion_mastered',
+        ];
+        const exportObj = { exportDate: dateStr, reportNumber: counter };
+        claves.forEach(k=>{ const v=localStorage.getItem(k); if(v){ try{ exportObj[k]=JSON.parse(v); }catch(_){ exportObj[k]=v; } } });
+        exportObj._matchups={};
+        for(let i=0;i<localStorage.length;i++){
+            const k=localStorage.key(i);
+            if(k?.startsWith('matchup_')){ try{ exportObj._matchups[k]=JSON.parse(localStorage.getItem(k)); }catch(_){} }
+        }
+        configTxt = JSON.stringify(exportObj, null, 2);
+    } catch(e){ configTxt='Error al generar config: '+e.message; }
+
+    const stamp = dateStr.replace(/[/:, ]/g,'-').slice(0,16);
+    const _dl = (content, filename) => {
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = filename;
+        a.click(); URL.revokeObjectURL(url);
+    };
+    _dl(loggerTxt, `DD_Log_${stamp}.txt`);
+    setTimeout(()=> _dl(configTxt, `DD_Config_${stamp}.txt`), 400);
+
+    const subject  = encodeURIComponent(`REPORTE #${counter} ${dateStr}`);
+    const body     = encodeURIComponent(
+        `REPORTE #${counter} — ${dateStr}\n\n` +
+        `MENSAJE:\n${msg}\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `📎 Adjunta los 2 archivos .txt que se descargaron automáticamente:\n` +
+        `  • DD_Log_${stamp}.txt\n` +
+        `  • DD_Config_${stamp}.txt`
+    );
+    setTimeout(()=> { window.location.href = `mailto:franq0524@gmail.com?subject=${subject}&body=${body}`; }, 800);
+
+    localStorage.setItem('dd_report_counter', String(counter));
+    this.cerrarReportarError();
+    alert(`✅ Reporte #${counter}\n\nSe descargaron 2 archivos .txt automáticamente.\nSe abrirá tu cliente de correo — adjunta los archivos al correo.\nSi no tienes la confianza para aceptar el envio automático, puedes enviar los reportes directamente al creador de la APP.`);
+},
     exportConfig: function () {
         if (ConfigManager.exportConfig()) {
             alert('✅ Backup exportado (decks, engines, matchups, winrates, config y más).');

@@ -2201,90 +2201,16 @@
 }
 .borrar-select-all-label input[type="checkbox"] { accent-color: #d63031; width: 15px; height: 15px; cursor: pointer; }
 
-/* ── Panel Reportar Error ── */
-.error-report-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.65);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-}
-.error-report-panel {
-    background: #1e0008;
-    border: 2px solid #2778d4;
-    border-radius: 14px;
-    padding: 24px 26px 20px;
-    width: 100%;
-    max-width: 520px;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-.error-report-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text-light);
-}
-.error-report-num {
-    color: #2778d4;
-    margin-left: 6px;
-}
-.error-report-close {
-    background: none;
-    border: none;
-    color: rgba(255,255,255,0.5);
-    font-size: 1.4rem;
-    cursor: pointer;
-    line-height: 1;
-    padding: 0 4px;
-    transition: color 0.15s;
-}
-.error-report-close:hover { color: #fff; }
-.error-report-hint {
-    font-size: 0.8rem;
-    color: rgba(255,255,255,0.45);
-    margin: 0;
-    line-height: 1.5;
-}
-.error-report-textarea {
-    width: 100%;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(39,120,212,0.4);
-    border-radius: 8px;
-    color: var(--text-light);
-    font-size: 0.9rem;
-    padding: 10px 12px;
-    resize: vertical;
-    font-family: inherit;
-    line-height: 1.6;
-    transition: border-color 0.2s;
-}
-.error-report-textarea:focus {
-    outline: none;
-    border-color: #2778d4;
-}
-.error-report-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-.error-report-date {
-    font-size: 0.78rem;
-    color: rgba(255,255,255,0.35);
-}
-.error-report-send-btn {
-    background: #1a5fa8;
-    border-color: #2778d4;
-}
-.error-report-send-btn:hover { background: #2778d4; }
 
-
+/* ── Error Report Overlay ── */
+.error-report-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.error-report-panel{background:#001a33;border:1px solid #2778d4;border-radius:10px;padding:24px;width:min(520px,92vw);display:flex;flex-direction:column;gap:14px;}
+.error-report-header{display:flex;justify-content:space-between;align-items:center;font-size:1.1rem;font-weight:700;color:#7ec8e3;}
+.error-report-num{color:#FFD700;margin-left:6px;}
+.error-report-close{background:none;border:none;color:#aaa;font-size:1.4rem;cursor:pointer;line-height:1;}
+.error-report-close:hover{color:#fff;}
+.error-report-hint{color:#8ab4c8;font-size:.85rem;margin:0;}
+.error-report-textarea{width:100%;background:#002b4d;color:#e0e0e0;border:1px solid #2778d4;border-radius:6px;padding:10px;resize:vertical;font-family:inherit;font-size:.9rem;box-sizing:border-box;}
+.error-report-footer{display:flex;justify-content:space-between;align-items:center;}
+.error-report-date{color:#7ec8e3;font-size:.8rem;}
+.error-report-send-btn{padding:8px 18px;}
