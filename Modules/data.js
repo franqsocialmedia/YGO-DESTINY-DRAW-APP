@@ -116,51 +116,135 @@ const ConfigManager = {
 
         // Staples: estructura simplificada
         staples: {},
+        roleWeights: {
+            'Starter':               1.0,
+            'Starter (normal summon)': 0.5,
+            'Extender':              0.7,
+            'Booster':               0.5,
+            'Boardbreaker':          1.0,
+            'Handtrap':              1.0,
+            'Burner':                0.5,
+            'Draw-engine':           0.7,
+            'Searcher':              1.0,
+            'Searcher (archetype)':  0.7,
+            'Searcher (milling)':    0.5,
+            'Recycler':              0.5,
+            'LP Restore':            0.5,
+            'Protector':             0.7,
+            'Negater':               1.0,
+            'Boss Monster':          0.7,
+            'Stun':                  0.7,
+            'Speed-4':               1.0,
+            'Tower':                 1.0,
+            'Token Summoner':        0.5,
+            'Handloop':              0.7,
+            'Anti-damage':           0.5,
+            'Disruptor':             0.7,
+            'Removal':               0.7,
+            'Grinding Card':         0.7,
+            'Banished Card':         0.7,
+            'Negate-activation':     0.8,
+            'Negate-effect':         1.0,
+            'HARD-once-per-turn':    0.5,
+            'SOFT-once-per-turn':    0.7,
+            'Stun-Banish':           0.5,
+            'Stun-Special':          1.0,
+            'Stun-GY':               0.7,
+            'Stun-Effect':           1.0,
+            'Stun-Draw':             1.0,
+            'Quick-effect':          1.0,
+            'Ignition':              0.5,
+            'Send':                  0.7,
+            'Discard':               1.0,
+            'Pay':                   0.3,
+            'Target':                0.7,
+            'Non-target':            1.0,
+            'Untargetable':          1.0,
+            'Undestroyable':         1.0,
+            'Destroyer':             0.7,
+            'Brick':                 0.2,
+            'Bridge':                0.7
+        },
 
         // Cada categoría tiene UNA configuración directa con 4 campos
         nomenclature: {
     categories: [
         {
-            id: 'effectSpeed',
-            name: 'Velocidad de Efecto',
-            color: '#FF6B6B',
-            conditions: { startsWith: '', contains: ['quick effect'], notContains: [], endsWith: ':' }
+            id: 'invocacionInherente',
+            name: 'Invocación Inherente',
+            color: '#d7a3ef',
+            conditions: {
+                startsWith: ['you can special summon this card', 'you can normal summon this card', 'you can tribute summon this card', 'must be', 'must first be'],
+                contains: ['summon', '(', 'by'],
+                notContains: [';', ':'],
+                endsWith: ['.', ',']
+            }
         },
         {
-            id: 'effectType',
-            name: 'Tipo de Efecto',
-            color: '#4ECDC4',
-            conditions: { startsWith: '', contains: ['target'], notContains: [], endsWith: ';' }
+            id: 'condicionActivacion',
+            name: 'Condición - Activación',
+            color: '#fcff38',
+            conditions: {
+                startsWith: [],
+                contains: [':'],
+                notContains: [';', '.', '●'],
+                endsWith: [':']
+            }
         },
         {
-            id: 'timing',
-            name: 'Momento de Activación',
-            color: '#FFE66D',
-            conditions: { startsWith: 'when', contains: ['summoned'], notContains: [], endsWith: ':' }
+            id: 'costoActivacion',
+            name: 'Costo - Activación',
+            color: '#fda858',
+            conditions: {
+                startsWith: [],
+                contains: [';'],
+                notContains: ['.', ':', '●'],
+                endsWith: [';']
+            }
         },
         {
-            id: 'conditions',
-            name: 'Condición de Activación',
-            color: '#F38181',
-            conditions: { startsWith: 'while', contains: [], notContains: [], endsWith: ':' }
+            id: 'efectosMultiple',
+            name: 'Efectos Múltiple',
+            color: '#83d7ec',
+            conditions: {
+                startsWith: ['●'],
+                contains: ['●'],
+                notContains: [';'],
+                endsWith: [':', '.']
+            }
         },
         {
-            id: 'cost',
-            name: 'Costo de Activación',
-            color: '#AA96DA',
-            conditions: { startsWith: '', contains: ['discard'], notContains: [], endsWith: ';' }
+            id: 'restriccion',
+            name: 'Restricción',
+            color: '#f07a7a',
+            conditions: {
+                startsWith: ['you cannot', 'you can only use', 'except', 'cannot be', 'you can only', 'neither player'],
+                contains: ['also', ',', 'you cannot', 'only', 'use', 'follow', 'cannot be used as', 'be', 'in response', 'per turn', 'per duel'],
+                notContains: [';', '●'],
+                endsWith: []
+            }
         },
         {
-            id: 'effects',
-            name: 'Efectos',
-            color: '#FCBAD3',
-            conditions: { startsWith: '', contains: ['destroy'], notContains: [], endsWith: '.' }
+            id: 'efectoGenerico',
+            name: 'Efecto Genérico',
+            color: '#4bf77e',
+            conditions: {
+                startsWith: [],
+                contains: [',', '.', 'you can'],
+                notContains: [':', '●', 'can only', ';', '"'],
+                endsWith: ['.', ',']
+            }
         },
         {
-            id: 'restrictions',
-            name: 'Restricciones',
-            color: '#FFD3B6',
-            conditions: { startsWith: 'you can only', contains: [], notContains: [], endsWith: 'that turn' }
+            id: 'efectoArquetipico',
+            name: 'Efecto Arquetípico',
+            color: '#8fdb9c',
+            conditions: {
+                startsWith: [],
+                contains: [',', '"', '.', 'you can'],
+                notContains: ['●', ':', 'can only', 'except "', ';'],
+                endsWith: [',', '.']
+            }
         }
     ]
 },
@@ -169,20 +253,41 @@ const ConfigManager = {
             enabled: true,
             crossPenalty: false,
             roleThresholds: {
-                'starter':      { optimal: 13, max: 16, curve: 0.5, crossPenalty: false },
-                'searcher':     { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'boss monster': { optimal: 6,  max: 10, curve: 0.7, crossPenalty: false },
-                'boardbreaker': { optimal: 8,  max: 13, curve: 0.6, crossPenalty: false },
-                'removal':      { optimal: 8,  max: 12, curve: 0.6, crossPenalty: false },
-                'negator':      { optimal: 9,  max: 15, curve: 0.5, crossPenalty: false },
-                'extender':     { optimal: 9,  max: 12, curve: 0.6, crossPenalty: false },
-                'recycle':      { optimal: 6,  max: 10, curve: 0.7, crossPenalty: false }
+                'starter':                 { optimal: 13, max: 16, curve: 0.5, crossPenalty: false },
+                'discard':                 { optimal: 12, max: 20, curve: 0.5, crossPenalty: false },
+                'searcher':                { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'booster':                 { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'handtrap':                { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'burner':                  { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'draw-engine':             { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'searcher (archetype)':    { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'starter (normal summon)': { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'disruptor':               { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'recycler':                { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'LP restore':              { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'searcher (milling)':      { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'negater':                 { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'protector':               { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'Stun':                    { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'Speed-4':                 { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'Tower':                   { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'token summoner':          { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'handloop':                { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'anti-damage':             { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'grinding card':           { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'banished card':           { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
+                'negator':                 { optimal: 9,  max: 15, curve: 0.5, crossPenalty: false },
+                'extender':                { optimal: 9,  max: 12, curve: 0.6, crossPenalty: false },
+                'boardbreaker':            { optimal: 8,  max: 13, curve: 0.6, crossPenalty: false },
+                'removal':                 { optimal: 8,  max: 12, curve: 0.6, crossPenalty: false },
+                'boss monster':            { optimal: 6,  max: 10, curve: 0.7, crossPenalty: false },
+                'recycle':                 { optimal: 6,  max: 10, curve: 0.7, crossPenalty: false }
             }
         },
         pillars: {
-            consistency: ['Searcher', 'Starter'],
-            power:       ['Boss Monster', 'Boardbreaker', 'Booster', 'Removal', 'Disruption'],
-            resilience:  ['Negater', 'Handtrap', 'Extender', 'Recycle']
+            consistency: ['searcher (archetype)', 'searcher', 'searcher (milling)', 'starter', 'draw-engine', 'starter (normal summon)', 'recycler'],
+            power:       ['boardbreaker', 'booster', 'burner', 'boss monster', 'removal', 'Speed-4', 'handloop', 'token summoner', 'untargetable', 'undestroyable'],
+            resilience:  ['negater', 'handtrap', 'protector', 'LP restore', 'disruptor', 'Tower', 'anti-damage', 'Stun', 'extender', 'grinding card', 'banished card']
         },
         // Formato: [pilar que vence, pilar que pierde]
         pillarRPS: [
@@ -202,10 +307,11 @@ const ConfigManager = {
         // ⭐ META MASTERS - Maestros del Juego
         metaMasters: [],
         shortcuts: [
-            { label: 'Decks Guardados', tab: 'mideck',       sectionId: 'saved-decks-sec',  module: 'Deck' },
-            { label: 'Winrate',          tab: 'estadisticas', sectionId: 'winrate-sec',       module: 'Estadisticas' },
-            { label: 'Staples',          tab: 'config',       sectionId: 'staples-section',   module: 'Config' },
-            { label: 'Buscador',         tab: 'buscador',     sectionId: null,                module: null }
+            { label: 'Winrate',              tab: 'estadisticas', sectionId: 'winrate-sec',                  module: 'Estadisticas' },
+            { label: 'Formación - Apuntes',  tab: 'formacion',    sectionId: null,                           module: null },
+            { label: 'Banlist del Formato',  tab: 'config',       sectionId: 'banlist-section',              module: 'Config' },
+            { label: 'Maestros del Duelo',   tab: 'config',       sectionId: 'meta-masters-config-section',  module: 'Config' },
+            { label: 'Campo de Práctica',    tab: 'simuladores',  sectionId: null,                           module: null }
         ]
     },
     
@@ -1024,10 +1130,10 @@ defaultMusicConfig: {
     enabled: true,
     volume: 0.40,
     tracks: {
-        default:     'ots/Climax Theme 2.mp3',
-        novato:      'ots/Climax Theme 5.mp3',
-        casual:      'ots/Climax Theme 5.mp3',
-        competitivo: 'ots/Climax Theme 5.mp3'
+        default:     'ots/Climax_Theme_6.mp3',
+        novato:      'ots/Climax_Theme_7.mp3',
+        casual:      'ots/Climax_Theme_5.mp3',
+        competitivo: 'ots/Climax_Theme_1.mp3'
     }
 },
 

@@ -1057,6 +1057,7 @@ const Config = {
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="cache"> <span>Cache de Estadísticas</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="formacion"> <span>Notas y temas de Formación</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="meta_folders"> <span>Carpetas del Meta</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="banlist"> <span>Banlist del Formato</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="config"> <span>Configuración (roles, staples, mecánicas…)</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="perfil"> <span>Perfil y bienvenida</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="fallbacks"> <span>Imágenes y Fallbacks</span></label>
@@ -1853,6 +1854,7 @@ borrarSeleccion: function () {
         winrates: 'Winrates', favoritas: 'Favoritas', torneo: 'Torneo activo',
         practica: 'Estados de práctica', cache: 'Cache de Estadísticas',
         formacion: 'Notas y temas de Formación', meta_folders: 'Carpetas del Meta',
+        banlist: 'Banlist del Formato',
         config: 'Configuración (roles, staples, mecánicas…)',
         perfil: 'Perfil y bienvenida', fallbacks: 'Imágenes y Fallbacks',
     };
@@ -1910,6 +1912,14 @@ borrarSeleccion: function () {
             Estadisticas.metaDecks = {}; Estadisticas.metaFolders = [];
             Estadisticas.metaCardLibrary = {}; Estadisticas.metaDeckScores = {};
             if (document.getElementById('estadisticas-content')) Estadisticas.render();
+        }
+    }
+    if (selected.includes('banlist')) {
+        rm('yugioh_banlist_data');
+        if (window.Banlist) {
+            Banlist.data = {};
+            const sec = document.getElementById('banlist-section');
+            if (sec && sec.style.display !== 'none' && typeof Banlist.renderSection === 'function') Banlist.renderSection();
         }
     }
     if (selected.includes('config')) {

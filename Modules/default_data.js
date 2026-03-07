@@ -448,9 +448,14 @@ const DefaultData = {
                 empty.staples        = {};
                 empty.pillars        = { consistency: [], power: [], resilience: [] };
                 empty.shortcuts      = [];
+                empty.nomenclature   = { categories: [] };
                 ConfigManager.saveConfig(empty);
                 // Refrescar UI inmediatamente
                 if (typeof Config.render === 'function') Config.render();
+            }
+            if (selected.includes('banlist')) {
+                localStorage.removeItem('yugioh_banlist_data');
+                if (window.Banlist) Banlist.data = {};
             }
         };
 
