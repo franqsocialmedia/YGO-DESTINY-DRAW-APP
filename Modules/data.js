@@ -9,134 +9,113 @@ const ConfigManager = {
     defaultConfig: {
         // Roles: estructura compatible con OLD VERSION
         roles: {
-            'Handtrap': ['from your hand'],
-            'Boardbreaker': ['destroy all', 'destroy'],
-            'Extender': ['special summon this'],
-            'Starter': ['summoned'],
-            'Booster': ['gain'],
-            'Draw-Engine': ['draw 1'],
-            'Burner': ['inflict'],
-            'Recovery': ['from the gy', 'from the graveyard', 'from the banish'],
-            'Negater': ['negate'],
-            'Searcher': ['add', 'from your deck'],
-            'Backrow-Removal': ['destroy', 'remove'],
-            'Banisher': ['remove', 'banish 1', 'banish it'],
-            'Disruption': ['quick-effect'],
-            'Boss Monster': [],
-            'Brick': [],
-            'Bridge': []
+            'Starter':               ['this card is special', 'this card is normal or', "in its owner's possession is banished"],
+            'Starter (normal summon)':['this card is normal summoned'],
+            'Extender':              ['you can special summon', 'in addition to your', 'normal summon 1', 'immediately after this effect resolves', 'monster from your hand'],
+            'Booster':               ['it gains', 'monsters you control gain', 'atk for each', 'this card gains', 'monster gains', 'this card gain', 'atk becomes', 'def becomes', 'level becomes', 'increase', "card's level by", 'target gains', 'increase or decrease its', 'double the atk', 'double the def', 'double piercing'],
+            'Boardbreaker':          ['by tributing', 'tribute', 'destroy them', 'banish it', 'banish them', 'destroy it', 'banish all', 'destroy all', 'tribute it', 'tribute them', 'banish 1', 'banish 2', 'banish 3', 'destroy 1', 'destroy 2', 'destroy 3', 'banish card', 'destroy card', 'shuffle all', 'shuffle them', 'return it', 'return them', 'return 1', 'return 2', 'return 3', 'using monsters', 'attach 1', 'attach 2', 'attach 3', 'attach them', 'attach it', 'you can shuffle 1', 'destroy that', 'banish that', 'return that', 'tribute that', 'shuffle that', 'shuffle it', 'destroy as many', 'take control of', 'banish up to', 'destroy up to', 'your opponent shuffle monsters they control', 'your opponent shuffle cards they control', 'tributing 1', 'tributing 2', 'tributing 3', 'tributing many', 'you can banish all monsters on the field'],
+            'Handtrap':              ['you can send this card from your hand', 'you can discard this card', 'you can activate this card from your hand', 'this card from your hand'],
+            'Burner':                ['must pay', 'your opponent lose', 'takes damage equal to', 'becomes halved', 'damage to', 'inflict damage', 'controller takes damage equal'],
+            'Draw-engine':           ['draw 1', 'draw 2', 'draw 3', 'draw the same', 'you can draw'],
+            'Searcher':              ['you can add', 'add 1', 'add 2', 'add 3', 'from your deck to', 'from your extra deck to', 'from your deck in', 'special summon 1', 'special summon 2', 'special summon 3', 'special summon up to', 'special summon any', 'up to the number', 'send 1', 'send 2', 'you can set', 'banish 1 monster from your deck', 'banish 1'],
+            'Recycler':              ['you can add this card', 'return all', 'from your monsters on', 'return them', 'return it', 'return 1', 'return 2', 'return 3', 'place', 'special summon that', 'special summon it', 'special summon the', 'special summon 1 monster from your gy', 'special summon 1 monster from the banishment', 'special summon both monsters', 'special summon as many monsters', 'special summon 1', 'return the'],
+            'Searcher (milling)':    ['send 1', 'send 2', 'send 3', 'cards of your deck', 'cards of your extra deck', 'top'],
+            'LP Restore':            ['you gain', 'your opponent gains', 'gain lp equal', 'gain for each', 'you can gain', 'lp for each', 'amount of lp'],
+            'Protector':             ['your opponent cannot target', 'your opponent cannot banish', 'cannot target monsters for attacks', 'in your monster zone is unaffected', 'is unaffected', 'cannot be', 'destroy the attacking monster', 'you control are unaffected'],
+            'Negater':               ['the effect', "it's effects", 'its effects', 'that effect', 'the activation', 'their effects are negated', 'have their effects negated', 'that activation', 'on the field are negated', 'negate the'],
+            'Boss Monster':          ['inflict piercing', 'cannot be targeted', 'cannot be destroyed', 'opponent cannot target', 'opponent cannot destroy', 'must be fusion', 'must be tribute', 'must be synchro', 'must be xyz', 'must be link', 'must be pendulum', 'must be ritual', 'must first be', 'must be special'],
+            'Stun':                  ['neither player can special', 'cannot activate their effects', 'neither player can activate', 'both players must', 'your opponent cannot activate', 'cannot activate them', 'cards cannot be activated', 'any card sent to the', 'any'],
+            'Speed-4':               ["in response to this card's activation", 'cannot activate cards or effects in response to this', 'by your opponent resolves'],
+            'Tower':                 ['it is unaffected', 'unaffected by spell/trap effects', 'unaffected by card effects,', "unaffected by other cards' effects.", 'unaffected by other card effects.', 'card is unaffected by trap effects', 'card is unaffected by spell effects'],
+            'Token Summoner':        ['special summon'],
+            'Handloop':              ["look at your opponent's hand", 'each player discards', 'from their hand to', "send 1 random card from your opponent's hand"],
+            'Anti-damage':           ['you take no battle damage', 'you take no effect damage'],
+            'Disruptor':             ["when your opponent", "look at your opponent's extra deck", 'if your opponent activate', "from the main deck to your opponent's hand", 'each player send', 'each player discard', 'target 1 card on the field', 'target 1 monster on the field', 'both players', 'neither player can', 'opponent controls lose'],
+            'Removal':               ["in your opponent's gy", "in your opponent's graveyard", "your opponent controls or in their gy", 'your opponent controls', 'gy is banished instead', 'banished instead', 'target', 'by banishing', 'banish'],
+            'Grinding Card':         ['if this card is in your gy', 'if this card is in the banishment', 'you can banish this card from your gy', 'while this card is in your gy', 'if this card is sent to the gy', 'this card from your field or gy', 'this card from your field or graveyard', 'if this card is sent to the graveyard', 'while this card is in your graveyard', 'you can banish this card from your graveyard', 'if this card is in your graveyard', 'you control is sent to your gy', 'you control is sent to your graveyard', 'this card leaves the field', 'is sent from the field to the gy'],
+            'Banished Card':         ['if this card is banished', 'the banished monster', 'the banished card', 'of your banished monsters', 'this card is sent to the gy, or banished', '1 of your banished', 'you can banish this card'],
+            'Negate-activation':     ['the activation', 'that activation', 'negate the'],
+            'Negate-effect':         ['the effect', "it's effects", 'its effects', 'that effect', 'their effects are negated', 'have their effects negated', 'on the field are negated'],
+            'HARD-once-per-turn':    ['only activate 1', 'only use this effect of', 'only use the previous effect of', 'each effect of'],
+            'SOFT-once-per-turn':    ['once', 'only use this', 'only use those', 'only use each'],
+            'Stun-Banish':           ['cannot banish', 'neither player can banish', 'your opponent cannot banish'],
+            'Stun-Special':          ['neither player can special', 'your opponent cannot special', 'you cannot special summon'],
+            'Stun-GY':               ['neither player can special', 'cannot activate their effects', 'neither player can activate', 'your opponent cannot activate', 'cannot activate them', 'cards cannot be activated', 'any card sent to the', 'is banished instead'],
+            'Stun-Effect':           ['cannot activate their effects', 'neither player can activate', 'your opponent cannot activate', 'cannot activate them', 'cards cannot be activated', 'player must', 'they must'],
+            'Stun-Draw':             ['neither player can draw', 'neither player can add', 'your opponent cannot draw', 'your opponent cannot add', 'if a card(s) is added', 'if a card(s) is draw'],
+            'Quick-effect':          ['quick-effect'],
+            'Ignition':              ['once per turn: you can', 'once per turn: you may', 'once per turn:', 'ignition effect'],
+            'Searcher (archetype)':  ['you can add', 'add 1', 'add 2', 'add 3', 'from your deck to', 'from your extra deck to', 'special summon 1', 'special summon 2', 'special summon 3', 'special summon up to'],
+            'LP Restore':            ['you gain', 'your opponent gains', 'gain lp equal', 'gain for each', 'you can gain', 'lp for each', 'amount of lp'],
+            'Send':                  ['send 1', 'send 2', 'send 3', 'send this card', 'to the gy', 'to your gy'],
+            'Discard':               ['you can discard', 'discard 1', 'discard 2', 'discard this card', 'by discarding'],
+            'Pay':                   ['must pay', 'by paying', 'pay 1000', 'pay 2000', 'pay lp', 'pay lifepoints', 'life points'],
+            'Target':                ['target 1 card', 'target 2 cards', 'target 1 monster', 'target 1 spell', 'target 1 trap', 'target 1 face-up', 'target up to'],
+            'Non-target':            ['destroy all', 'banish all', 'shuffle all', 'tribute all', 'send all', 'destroy them', 'banish them', 'shuffle them', 'tribute them'],
+            'Untargetable':          ['cannot be targeted by', 'cannot be targeted', 'your opponent cannot target'],
+            'Undestroyable':         ['cannot be destroyed by', 'cannot be destroyed', 'is unaffected by destruction'],
+            'Destroyer':             ['destroy 1', 'destroy 2', 'destroy 1 monster', 'destroy 1 spell', 'destroy 1 trap', 'destroy 1 card', 'destroy up to 2'],
+            'Brick':                 [],
+            'Bridge':                []
         },
-        
+
         // RoleConditions: keywords (actúan solos O con condicional)
         roleConditions: {
-            'Handtrap': {
-                conditionals: [],
-                keywords: ['from your hand', 'from the hand', 'from their hand']
-            },
-            'Disruption': {
-                conditionals: ['quick-effect', 'during either player'],
-                keywords: ['negate', 'destroy']
-            },
-            'Boardbreaker': {
-                conditionals: [],
-                keywords: ['destroy all', 'destroy']
-            },
-            'Recovery': {
-                conditionals: [],
-                keywords: ['from the gy', 'from the graveyard', 'from the banish']
-            },
-            'Negater': {
-                conditionals: [],
-                keywords: ['negate']
-            },
-            'Searcher': {
-                conditionals: [],
-                keywords: ['add', 'from your deck']
-            },
-            'Banisher': {
-                conditionals: [],
-                keywords: ['remove', 'banish 1', 'banish it']
-            },
-            'Draw-Engine': {
-                conditionals: [],
-                keywords: ['draw 1']
-            },
-            'Extender': {
-                conditionals: [],
-                keywords: ['special summon this']
-            },
-            'Starter': {
-                conditionals: [],
-                keywords: ['summoned']
-            },
+            'Starter':               { conditionals: [], keywords: ['this card is special', 'this card is normal or', "in its owner's possession is banished"] },
+            'Starter (normal summon)': { conditionals: [], keywords: ['this card is normal summoned'] },
+            'Extender':              { conditionals: [], keywords: ['you can special summon', 'in addition to your', 'normal summon 1', 'immediately after this effect resolves', 'monster from your hand'] },
+            'Booster':               { conditionals: [], keywords: ['it gains', 'monsters you control gain', 'atk for each', 'this card gains', 'monster gains', 'this card gain', 'atk becomes', 'def becomes', 'level becomes', 'increase', "card's level by", 'target gains', 'increase or decrease its', 'double the atk', 'double the def', 'double piercing'] },
+            'Boardbreaker':          { conditionals: [], keywords: ['by tributing', 'tribute', 'destroy them', 'banish it', 'banish them', 'destroy it', 'banish all', 'destroy all', 'tribute it', 'tribute them', 'banish 1', 'banish 2', 'banish 3', 'destroy 1', 'destroy 2', 'destroy 3', 'banish card', 'destroy card', 'shuffle all', 'shuffle them', 'return it', 'return them', 'return 1', 'return 2', 'return 3', 'using monsters', 'attach 1', 'attach 2', 'attach 3', 'attach them', 'attach it', 'you can shuffle 1', 'destroy that', 'banish that', 'return that', 'tribute that', 'shuffle that', 'shuffle it', 'destroy as many', 'take control of', 'banish up to', 'destroy up to', 'your opponent shuffle monsters they control', 'your opponent shuffle cards they control', 'tributing 1', 'tributing 2', 'tributing 3', 'tributing many', 'you can banish all monsters on the field'] },
+            'Handtrap':              { conditionals: [], keywords: ['you can send this card from your hand', 'you can discard this card', 'you can activate this card from your hand', 'this card from your hand'] },
+            'Burner':                { conditionals: [], keywords: ['must pay', 'your opponent lose', 'takes damage equal to', 'becomes halved', 'damage to', 'inflict damage', 'controller takes damage equal'] },
+            'Draw-engine':           { conditionals: [], keywords: ['draw 1', 'draw 2', 'draw 3', 'draw the same', 'you can draw'] },
+            'Searcher':              { conditionals: [], keywords: ['you can add', 'add 1', 'add 2', 'add 3', 'from your deck to', 'from your extra deck to', 'from your deck in', 'special summon 1', 'special summon 2', 'special summon 3', 'special summon up to', 'special summon any', 'up to the number', 'send 1', 'send 2', 'you can set', 'banish 1 monster from your deck', 'banish 1'] },
+            'Recycler':              { conditionals: [], keywords: ['you can add this card', 'return all', 'from your monsters on', 'return them', 'return it', 'return 1', 'return 2', 'return 3', 'place', 'special summon that', 'special summon it', 'special summon the', 'special summon 1 monster from your gy', 'special summon 1 monster from the banishment', 'special summon both monsters', 'special summon as many monsters', 'special summon 1', 'return the'] },
+            'Searcher (milling)':    { conditionals: [], keywords: ['send 1', 'send 2', 'send 3', 'cards of your deck', 'cards of your extra deck', 'top'] },
+            'LP Restore':            { conditionals: [], keywords: ['you gain', 'your opponent gains', 'gain lp equal', 'gain for each', 'you can gain', 'lp for each', 'amount of lp'] },
+            'Protector':             { conditionals: [], keywords: ['your opponent cannot target', 'your opponent cannot banish', 'cannot target monsters for attacks', 'in your monster zone is unaffected', 'is unaffected', 'cannot be', 'destroy the attacking monster', 'you control are unaffected'] },
+            'Negater':               { conditionals: [], keywords: ['the effect', "it's effects", 'its effects', 'that effect', 'the activation', 'their effects are negated', 'have their effects negated', 'that activation', 'on the field are negated', 'negate the'] },
+            'Boss Monster':          { conditionals: [], keywords: ['inflict piercing', 'cannot be targeted', 'cannot be destroyed', 'opponent cannot target', 'opponent cannot destroy', 'must be fusion', 'must be tribute', 'must be synchro', 'must be xyz', 'must be link', 'must be pendulum', 'must be ritual', 'must first be', 'must be special'] },
+            'Stun':                  { conditionals: [], keywords: ['neither player can special', 'cannot activate their effects', 'neither player can activate', 'both players must', 'your opponent cannot activate', 'cannot activate them', 'cards cannot be activated', 'any card sent to the', 'any'] },
+            'Speed-4':               { conditionals: [], keywords: ["in response to this card's activation", 'cannot activate cards or effects in response to this', 'by your opponent resolves'] },
+            'Tower':                 { conditionals: [], keywords: ['it is unaffected', 'unaffected by spell/trap effects', 'unaffected by card effects,', "unaffected by other cards' effects.", 'unaffected by other card effects.', 'card is unaffected by trap effects', 'card is unaffected by spell effects'] },
+            'Token Summoner':        { conditionals: [], keywords: ['special summon'] },
+            'Handloop':              { conditionals: [], keywords: ["look at your opponent's hand", 'each player discards', 'from their hand to', "send 1 random card from your opponent's hand"] },
+            'Anti-damage':           { conditionals: [], keywords: ['you take no battle damage', 'you take no effect damage'] },
+            'Disruptor':             { conditionals: ["when your opponent", 'if your opponent activate', "during your opponent's"], keywords: ["look at your opponent's extra deck", "from the main deck to your opponent's hand", 'each player send', 'each player discard', 'target 1 card on the field', 'target 1 monster on the field', 'both players', 'neither player can', 'opponent controls lose'] },
+            'Removal':               { conditionals: [], keywords: ["in your opponent's gy", "in your opponent's graveyard", "your opponent controls or in their gy", 'your opponent controls', 'gy is banished instead', 'banished instead', 'target', 'by banishing', 'banish'] },
+            'Grinding Card':         { conditionals: [], keywords: ['if this card is in your gy', 'if this card is in the banishment', 'you can banish this card from your gy', 'while this card is in your gy', 'if this card is sent to the gy', 'this card from your field or gy', 'this card from your field or graveyard', 'if this card is sent to the graveyard', 'while this card is in your graveyard', 'you can banish this card from your graveyard', 'if this card is in your graveyard', 'you control is sent to your gy', 'you control is sent to your graveyard', 'this card leaves the field', 'is sent from the field to the gy'] },
+            'Banished Card':         { conditionals: [], keywords: ['if this card is banished', 'the banished monster', 'the banished card', 'of your banished monsters', 'this card is sent to the gy, or banished', '1 of your banished', 'you can banish this card'] },
+            'Negate-activation':     { conditionals: [], keywords: ['the activation', 'that activation', 'negate the'] },
+            'Negate-effect':         { conditionals: [], keywords: ['the effect', "it's effects", 'its effects', 'that effect', 'their effects are negated', 'have their effects negated', 'on the field are negated'] },
+            'HARD-once-per-turn':    { conditionals: [], keywords: ['only activate 1', 'only use this effect of', 'only use the previous effect of', 'each effect of'] },
+            'SOFT-once-per-turn':    { conditionals: [], keywords: ['once', 'only use this', 'only use those', 'only use each'] },
+            'Stun-Banish':           { conditionals: [], keywords: ['cannot banish', 'neither player can banish', 'your opponent cannot banish'] },
+            'Stun-Special':          { conditionals: [], keywords: ['neither player can special', 'your opponent cannot special', 'you cannot special summon'] },
+            'Stun-GY':               { conditionals: [], keywords: ['neither player can special', 'cannot activate their effects', 'neither player can activate', 'your opponent cannot activate', 'cannot activate them', 'cards cannot be activated', 'any card sent to the', 'is banished instead'] },
+            'Stun-Effect':           { conditionals: [], keywords: ['cannot activate their effects', 'neither player can activate', 'your opponent cannot activate', 'cannot activate them', 'cards cannot be activated', 'player must', 'they must'] },
+            'Stun-Draw':             { conditionals: [], keywords: ['neither player can draw', 'neither player can add', 'your opponent cannot draw', 'your opponent cannot add', 'if a card(s) is added', 'if a card(s) is draw'] },
+            'Quick-effect':          { conditionals: ['quick-effect'], keywords: ['once per turn', 'when', 'if'] },
+            'Ignition':              { conditionals: [], keywords: ['once per turn: you can', 'once per turn: you may', 'once per turn:', 'ignition effect'] },
+            'Searcher (archetype)':  { conditionals: [], keywords: ['you can add', 'add 1', 'add 2', 'add 3', 'from your deck to', 'from your extra deck to', 'special summon 1', 'special summon 2', 'special summon 3', 'special summon up to'] },
+            'LP Restore':            { conditionals: [], keywords: ['you gain', 'your opponent gains', 'gain lp equal', 'gain for each', 'you can gain', 'lp for each', 'amount of lp'] },
+            'Send':                  { conditionals: [], keywords: ['send 1', 'send 2', 'send 3', 'send this card', 'to the gy', 'to your gy'] },
+            'Discard':               { conditionals: [], keywords: ['you can discard', 'discard 1', 'discard 2', 'discard this card', 'by discarding'] },
+            'Pay':                   { conditionals: [], keywords: ['must pay', 'by paying', 'pay 1000', 'pay 2000', 'pay lp', 'pay lifepoints', 'life points'] },
+            'Target':                { conditionals: [], keywords: ['target 1 card', 'target 2 cards', 'target 1 monster', 'target 1 spell', 'target 1 trap', 'target 1 face-up', 'target up to'] },
+            'Non-target':            { conditionals: [], keywords: ['destroy all', 'banish all', 'shuffle all', 'tribute all', 'send all', 'destroy them', 'banish them', 'shuffle them', 'tribute them'] },
+            'Untargetable':          { conditionals: [], keywords: ['cannot be targeted by', 'cannot be targeted', 'your opponent cannot target'] },
+            'Undestroyable':         { conditionals: [], keywords: ['cannot be destroyed by', 'cannot be destroyed', 'is unaffected by destruction'] },
+            'Destroyer':             { conditionals: [], keywords: ['destroy 1', 'destroy 2', 'destroy 1 monster', 'destroy 1 spell', 'destroy 1 trap', 'destroy 1 card', 'destroy up to 2'] },
             // ⭐ FORMACION GAMES
             formacionGames: [],
         },
 
-        // Specialties: array de pares
-        specialties: [
-            {
-                id: 'spec_001',
-                specialization: {
-                    name: 'Recursion',
-                    rol: 'Recovery',
-                    keywords: ['from the gy', 'from the graveyard']
-                },
-                counter: {
-                    name: 'Anti-Recursion',
-                    rol: 'Banisher',
-                    keywords: ['banish', 'remove from play']
-                }
-            },
-            {
-                id: 'spec_002',
-                specialization: {
-                    name: 'Negation',
-                    rol: 'Negater',
-                    keywords: ['negate']
-                },
-                counter: {
-                    name: 'Anti-Negate',
-                    rol: '',
-                    keywords: ['cannot be negated', 'unaffected by']
-                }
-            },
-            {
-                id: 'spec_003',
-                specialization: {
-                    name: 'Search',
-                    rol: 'Searcher',
-                    keywords: ['add', 'from your deck to your hand']
-                },
-                counter: {
-                    name: 'Search-Lock',
-                    rol: '',
-                    keywords: ['cannot add', 'cannot search']
-                }
-            }
-        ],
+                // Specialties: array de pares
+        specialties: [],
 
         // Staples: estructura simplificada
-        staples: {
-            "83764718": {
-                id: "83764718",
-                name: "Monster Reborn",
-                imageUrl: "https://images.ygoprodeck.com/images/cards_small/83764718.jpg",
-                type: "Spell Card"
-            },
-            "5318639": {
-                id: "5318639",
-                name: "Mystical Space Typhoon",
-                imageUrl: "https://images.ygoprodeck.com/images/cards_small/5318639.jpg",
-                type: "Spell Card"
-            },
-            "44095762": {
-                id: "44095762",
-                name: "Mirror Force",
-                imageUrl: "https://images.ygoprodeck.com/images/cards_small/44095762.jpg",
-                type: "Trap Card"
-            }
-        },
+        staples: {},
 
         // Cada categoría tiene UNA configuración directa con 4 campos
         nomenclature: {
