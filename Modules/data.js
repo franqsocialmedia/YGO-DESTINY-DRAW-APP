@@ -136,7 +136,7 @@ const ConfigManager = {
             'Stun':                  0.7,
             'Speed-4':               1.0,
             'Tower':                 1.0,
-            'Token Summoner':        0.5,
+            'Token Summoner':        0.3,
             'Handloop':              0.7,
             'Anti-damage':           0.5,
             'Disruptor':             0.7,
@@ -1811,7 +1811,7 @@ const SpecialtyAnalyzer = {
     // Detección interna de roles desde descripción (sin depender de Deck)
     _detectRoles: function(card) {
         if (!window.ConfigManager) return [];
-        const desc = (card.desc || '').toLowerCase();
+        const desc = (card.desc || '').replace(/\r\n|\r|\n/g, ' ').toLowerCase();
         const type = (card.type || '').toLowerCase();
         if (type.includes('normal monster')) return [];
 

@@ -274,7 +274,7 @@ await new Promise(resolve => setTimeout(resolve, 0));
             const text = [
                 card.name,
                 card.type,
-                card.desc,
+                (card.desc || '').replace(/\r\n|\r|\n/g, ' '),
                 card.race,
                 card.attribute
             ].join(' ').toLowerCase();
@@ -1174,10 +1174,11 @@ if (banContainer && window.Banlist) {
         a.click();
     },
 
-    highlightNomenclature: function(desc) {
-        if (!desc || !window.ConfigManager) return desc;
+   highlightNomenclature: function(desc) {
+    if (!desc || !window.ConfigManager) return desc;
+    desc = desc.replace(/\r\n|\r|\n/g, ' ');
 
-        const nomenclature = ConfigManager.getNomenclature();
+    const nomenclature = ConfigManager.getNomenclature();
         
         if (nomenclature && nomenclature.categories) {
             const paragraphs = this.splitIntoParagraphs(desc);
@@ -1206,35 +1207,44 @@ if (banContainer && window.Banlist) {
         const ch = text[i];
 
         if (ch === '\n') {
-            if (i > currentStart) {
-                paragraphs.push({
-                    text:  text.substring(currentStart, i),
-                    start: currentStart,
-                    end:   i
-                });
-            }
+    if (i > currentStart) {
+        const raw = text.substring(currentStart, i);
+        if (raw.trim()) {
+            paragraphs.push({
+                text:  raw.trim(),
+                start: currentStart,
+                end:   i
+            });
+        }
+    }
             paragraphs.push({ text: '\n', start: i, end: i + 1 });
             currentStart = i + 1;
             continue;
         }
 
         if (ch === '.' || ch === ':' || ch === ';') {
-            paragraphs.push({
-                text:  text.substring(currentStart, i + 1),
-                start: currentStart,
-                end:   i + 1
-            });
-            currentStart = i + 1;
-        }
+    const raw = text.substring(currentStart, i + 1);
+    if (raw.trim()) {
+        paragraphs.push({
+            text:  raw.trim(),
+            start: currentStart,
+            end:   i + 1
+        });
+    }
+    currentStart = i + 1;
+}
     }
 
     if (currentStart < text.length) {
+    const raw = text.substring(currentStart);
+    if (raw.trim()) {
         paragraphs.push({
-            text:  text.substring(currentStart),
+            text:  raw.trim(),
             start: currentStart,
             end:   text.length
         });
     }
+}
 
     return paragraphs;
 },
