@@ -379,26 +379,42 @@ const Deck = {
     },
 
     confirmLoadDeck: function (deckName) {
+    this.closeModal();
+
+    const loadingEl = document.createElement('div');
+    loadingEl.id = 'deck-load-overlay';
+    loadingEl.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.78);
+        display:flex;align-items:center;justify-content:center;
+        z-index:9999;flex-direction:column;gap:14px;`;
+    loadingEl.innerHTML = `
+        <div class="power-loading-spinner"></div>
+        <div style="color:#FFD700;font-size:1rem;text-align:center;padding:0 20px;">
+            Cargando <strong>${deckName}</strong>...
+        </div>`;
+    document.body.appendChild(loadingEl);
+
+    setTimeout(() => {
         try {
             const data = JSON.parse(localStorage.getItem(`deck_${deckName}`));
             this.cards = data.cards || data;
             this.name  = deckName;
             this.notes = data.notes || '';
-            
+
             Object.entries(this.cards).forEach(([id, item]) => {
                 if (item.data) {
                     item.roles = this.autoAssignRoles(item.data);
                 }
             });
 
-            this.closeModal();
             this.render();
             this.onDeckLoaded();
         } catch (e) {
             alert('Error al cargar el deck');
+        } finally {
+            document.getElementById('deck-load-overlay')?.remove();
         }
-    },
-
+    }, 50);
+},
     openDeleteDeckPanel: function (deckName) {
         const overlay = document.createElement('div');
         overlay.className = 'deck-overlay';
