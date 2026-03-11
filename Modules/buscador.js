@@ -43,7 +43,7 @@ FILTER_DATA: {
     monsterTypes:     ['Dragon','Warrior','Spellcaster','Zombie','Fiend','Machine','Fairy',
                        'Beast','Beast-Warrior','Winged Beast','Fish','Sea Serpent','Rock',
                        'Dinosaur','Thunder','Insect','Plant','Psychic','Reptile','Aqua',
-                       'Cyberse','Wyrm','Divine-Beast'],
+                       'Pyro','Cyberse','Wyrm','Divine-Beast'],
     monsterSubtypes:  ['Effect','Normal','Ritual','Fusion','Synchro','XYZ','Link','Pendulum',
                        'Tuner','Flip','Gemini','Union','Spirit'],
     spellSubtypes:    ['Normal','Campo','Equipo','Continua','Juego Rápido','Ritual'],
