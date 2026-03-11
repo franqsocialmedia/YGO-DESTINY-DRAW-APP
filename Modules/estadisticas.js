@@ -1758,6 +1758,15 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
         const internalStats = Stats.calculateInternalScore(Deck.cards);
         const analysis      = Stats.calculateExternalScore(Deck.cards, this.powerScoreCache, this.metaDecks);
         const internalScore = parseFloat(internalStats.internalScore);
+        const g1Score = internalStats.g1Score ?? 0;
+        const g2Score = internalStats.g2Score ?? 0;
+        const g1g2Profile = (() => {
+            if (g1Score === 0 && g2Score === 0) return null;
+            const ratio = g1Score / Math.max(g2Score, 0.01);
+            if (ratio > 1.3)  return { label: 'Dependiente del dado', detail: 'Necesita ir primero para desarrollar su plan', icon: '🎲', color: '#fdcb6e' };
+            if (ratio < 0.77) return { label: 'Deck Reactivo',        detail: 'Más cómodo respondiendo al oponente',          icon: '🛡️', color: '#74b9ff' };
+            return             { label: 'Deck Equilibrado',           detail: 'Funciona bien en ambos contextos',              icon: '⚖️', color: '#00b894' };
+        })();
 
         // ── RPS: pilar dominante del deck vs pilar dominante del meta ─────
         const PILLAR_ES = { consistency: 'Consistencia', power: 'Potencia', resilience: 'Resiliencia' };
@@ -1924,9 +1933,46 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
                         <div class="asb-label">External Score</div>
                     </div>
                 </div>
+                ${(analysis.g1Vulnerability !== null && analysis.g2Vulnerability !== null && analysis.hasPowerData) ? `
+                    <div class="analysis-score-box" style="min-width:120px">
+                        <div class="asb-title">Vulnerabilidad</div>
+                        <div style="font-size:0.8rem;margin:4px 0;color:#a29bfe">
+                            G1: <strong>${analysis.g1Vulnerability}/10</strong>
+                            <span style="font-size:0.7rem;opacity:0.7"> — qué tan expuesto está tu juego yendo primero</span>
+                        </div>
+                        <div style="font-size:0.8rem;color:#fd79a8">
+                            G2: <strong>${analysis.g2Vulnerability}/10</strong>
+                            <span style="font-size:0.7rem;opacity:0.7"> — qué tan expuesto está tu juego yendo segundo</span>
+                        </div>
+                    </div>` : ''}
 
                 ${rpsHTML}
-
+                <!-- G1 / G2 SCORES -->
+                ${(g1Score > 0 || g2Score > 0) ? `
+                <div class="analysis-block">
+                    <div class="analysis-block-title">🎯 Perfil Going First / Going Second</div>
+                    <div class="analysis-g1g2-row">
+                        <div class="analysis-g1g2-item">
+                            <span class="analysis-g1g2-label">Going First</span>
+                            <div class="asb-bar-track">
+                                <div class="asb-bar-fill" style="width:${Math.min(100,(g1Score/30)*100)}%;background:#a29bfe"></div>
+                            </div>
+                            <span class="analysis-g1g2-val" style="color:#a29bfe">${g1Score.toFixed(1)}</span>
+                        </div>
+                        <div class="analysis-g1g2-item">
+                            <span class="analysis-g1g2-label">Going Second</span>
+                            <div class="asb-bar-track">
+                                <div class="asb-bar-fill" style="width:${Math.min(100,(g2Score/30)*100)}%;background:#fd79a8"></div>
+                            </div>
+                            <span class="analysis-g1g2-val" style="color:#fd79a8">${g2Score.toFixed(1)}</span>
+                        </div>
+                    </div>
+                    ${g1g2Profile ? `
+                    <div class="analysis-g1g2-profile" style="border-left:3px solid ${g1g2Profile.color};padding-left:10px;margin-top:8px">
+                        <span style="color:${g1g2Profile.color};font-weight:600">${g1g2Profile.icon} ${g1g2Profile.label}</span>
+                        <span class="analysis-g1g2-detail"> — ${g1g2Profile.detail}</span>
+                    </div>` : ''}
+                </div>` : ''}
                 <!-- VEREDICTO -->
                 <div class="analysis-verdict">
                     El deck <strong>${Deck.name}</strong> tiene un poder teórico de

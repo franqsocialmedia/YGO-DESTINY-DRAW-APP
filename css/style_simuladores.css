@@ -5841,3 +5841,9 @@
     border-color: rgba(214,48,49,.4);
     color: #ff8080;
 }
+.analysis-g1g2-row   { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.analysis-g1g2-item  { display: flex; align-items: center; gap: 10px; }
+.analysis-g1g2-label { min-width: 110px; font-size: 0.82rem; opacity: 0.85; }
+.analysis-g1g2-val   { font-weight: 700; font-size: 0.95rem; min-width: 36px; text-align: right; }
+.analysis-g1g2-detail{ font-size: 0.78rem; opacity: 0.7; }
+.analysis-g1g2-profile { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 0.82rem; }
