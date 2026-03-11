@@ -341,3 +341,156 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 - `dd_power_scores_cache` → `yugioh_power_cache` (localStorage)
 - `Stats` ahora vive dentro de `data.js` (no archivo propio)
 - `default_data.js` es módulo nuevo; carga DESPUÉS de `formacion.js` y ANTES de `logger.js`
+
+Actualizaciones:
+
+Reporte de cambios — fragmentos para sustituir
+
+formacion.js
+
+1. Título de sección "Roles y Palabras Asociadas" → "Mecánicas y Roles"
+Antes de: <div id="roles-section" class="config-section-content"
+Después de: ▶ 🎭
+ANTES:  ▶ 🎭 Roles y Palabras Asociadas
+DESPUÉS: ▶ 🎭 Mecánicas y Roles
+
+2. Título "Mecánicas y Counters" → "Counters" (sección y texto de ayuda)
+Antes de: ▶ ⚙️
+Después de: sección de Especialidades
+ANTES:  ▶ ⚙️ Mecánicas y Counters
+DESPUÉS: ▶ ⚙️ Counters
+
+ANTES:  <strong>Mecánicas y Counters:</strong> Conecta roles entre sí.
+DESPUÉS: <strong>Counters:</strong> Conecta roles entre sí.
+(También en HelpPanel línea ~3148)
+
+3. renderRoleCard — panels colapsables + campo "NO contiene"
+Antes de: removeCondKeywordByIndex: function
+Después de: (fin del método renderRoleCard)
+El método completo fue reemplazado. Los cambios estructurales son:
+
+role-card → role-card role-panel
+role-card-header → role-card-header role-panel-header con onclick="Config.toggleRolePanel(...)"
+Se añade <span class="role-panel-arrow">▶</span> y <span class="role-panel-name"> al header
+role-card-body pasa a display:none por defecto
+Botones llevan event.stopPropagation() para no activar el toggle
+Nuevo bloque "NO contiene" entre Condicional y Restringir Nomenclatura, usando Config.addNotContainsFromInput / Config.removeNotContainsByIndex
+
+
+4. addCondKeywordFromInput — añade _restoreAndScroll
+Antes de: removeCondKeyword: function
+Después de: (fin del método)
+ANTES (al final del if exitoso):
+    el.value = ''; 
+    this.render(); 
+
+DESPUÉS:
+    el.value = '';
+    this.render();
+    this._restoreAndScroll('roles-section', `role-anchor-${roleName}`);
+
+5. addConditionalFromInput — añade _restoreAndScroll
+Mismo patrón que el punto 4, dentro del bloque exitoso:
+ANTES:  el.value = ''; this.render();
+DESPUÉS: el.value = ''; this.render(); this._restoreAndScroll('roles-section', `role-anchor-${roleName}`);
+
+6. renameRole — añade _restoreAndScroll
+Antes de: createNewRole: function
+Después de: (fin del método)
+ANTES:
+    if (ConfigManager.renameRole(oldName, newName)) {
+        this.render();
+    }
+
+DESPUÉS:
+    if (ConfigManager.renameRole(oldName, newName)) {
+        this.render();
+        this._restoreAndScroll('roles-section', `role-anchor-${CSS.escape(newName)}`);
+    }
+
+7. Nuevas funciones — después de removeConditional
+Antes de: // =============================== → renderSpecialtiesSection
+Después de: removeConditional: function
+Funciones nuevas añadidas en bloque:
+
+addNotContainsFromInput(el) — igual que addConditionalFromInput pero llama ConfigManager.addNotContainsToRole
+removeNotContainsByIndex(roleName, index) — llama ConfigManager.removeNotContainsFromRole
+toggleRolePanel(roleName) — alterna display de .role-card-body y el ▶/▼ del arrow
+toggleNomPanel(catId) — ídem para las cards de Nomenclatura
+
+
+8. Nomenclatura card — header colapsable
+Antes de: renderNomCategoryOptions: function
+Después de: (fin del método que devuelve el template de la card)
+ANTES:  <div class="role-card" id="nom-anchor-${cat.id}">
+          <div class="role-card-header">
+            ...inputs y botón delete...
+          </div>
+          <div class="role-card-body" style="gap:12px;">
+
+DESPUÉS: <div class="role-card role-panel" id="nom-anchor-${cat.id}">
+           <div class="role-card-header role-panel-header" onclick="Config.toggleNomPanel('${cat.id}')">
+             <span class="role-panel-arrow">▶</span>
+             <span class="role-panel-name" style="...color badge...">nombre</span>
+             ...inputs con event.stopPropagation()...
+           </div>
+           <div class="role-card-body" style="display:none;gap:12px;">
+También: onblur del input de nombre ahora llama Config._restoreAndScroll(...) además del updateNomenclatureCategory.
+
+9. Anchors de Nomenclatura — corrección de IDs
+Toda ocurrencia de:
+this._restoreAndScroll('nomenclature-section', `nomenclature-category-anchor-${catId}`)
+Cambiada a:
+this._restoreAndScroll('nomenclature-section', `nom-anchor-${catId}`)
+(4 ocurrencias en addNomCondKw, removeNomCondKw, removeNomCondKwByIndex)
+
+10. _restoreAndScroll — expande panel al hacer scroll
+Antes de: toggleSection: function
+ANTES:
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+DESPUÉS:
+    if (el) {
+        const body = el.querySelector('.role-card-body');
+        if (body) body.style.display = 'flex';
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+data.js
+
+11. _detectRoles — soporte para notContains
+Antes de: // Analiza una carta: usa roles pre-asignados
+Después de: bloque if (shouldAssign && !roles.includes(roleName))
+ANTES:
+    if (shouldAssign && !roles.includes(roleName)) roles.push(roleName);
+
+DESPUÉS:
+    // notContains: si alguna de estas palabras está en el desc, cancela la asignación
+    if (shouldAssign && roleConditions[roleName]) {
+        const notKws = roleConditions[roleName].notContains || [];
+        if (notKws.some(nk => nk && desc.includes(nk.toLowerCase()))) {
+            shouldAssign = false;
+        }
+    }
+    if (shouldAssign && !roles.includes(roleName)) roles.push(roleName);
+
+12. ConfigManager — dos métodos nuevos
+Antes de: // =============================== (el separador que sigue a removeKeywordFromRoleCondition)
+
+addNotContainsToRole(roleName, kw) — push a roleConditions[roleName].notContains[]
+removeNotContainsFromRole(roleName, index) — splice por índice
+
+
+style_config.css
+
+13. Estilos nuevos — bloque de panel colapsable
+Antes de: .role-card-header {
+Después de: .role-card:hover { ... }
+Clases nuevas añadidas:
+
+.role-panel — quita padding del card base, overflow:hidden
+.role-panel-header — cursor:pointer, user-select:none, padding compacto, hover sutil
+.role-panel-arrow — tamaño y color del indicador ▶/▼
+.role-panel-name — badge de nombre truncado
+.role-panel .role-card-body — padding interno cuando está abierto
+.role-panel .role-name-input — font-size reducido en contexto de panel

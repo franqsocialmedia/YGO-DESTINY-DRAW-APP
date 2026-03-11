@@ -417,7 +417,7 @@ const ContentManager = {
                 <h3 class="config-section-title" onclick="ContentManager._toggleExpand()">
                     ▼ Contenido de la App
                 </h3>
-                <div id="cm-config-body" class="config-section-content">
+                <div id="cm-config-body" class="config-section-content"style="display:none;">
                     <div class="cm-profile-bar">
                         <span class="cm-label">Perfil base:</span>
                         ${['novato','casual','competitivo'].map(p => `

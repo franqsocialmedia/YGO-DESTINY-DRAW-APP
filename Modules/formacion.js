@@ -907,7 +907,7 @@ const Config = {
             <!-- Sección: Roles y Palabras Asociadas -->
             <div class="config-section" data-section-id="config-roles" id="roles-section-wrap">
                 <h3 class="config-section-title" onclick="Config.toggleSection('roles-section')">
-                    ▶ 🎭 Roles y Palabras Asociadas
+                    ▶ 🎭 Mecánicas y Roles
                 </h3>
                 <div id="roles-section" class="config-section-content" style="display:none;">
                     ${this.renderRolesSection()}
@@ -917,7 +917,7 @@ const Config = {
             <!-- Sección: Mecánicas y Counters -->
             <div class="config-section" data-section-id="config-specialties">
                 <h3 class="config-section-title" onclick="Config.toggleSection('specialties-section')">
-                    ▶ ⚙️ Mecánicas y Counters
+                    ▶ ⚙️ Counters
                 </h3>
                 <div id="specialties-section" class="config-section-content" style="display:none;">
                     ${this.renderSpecialtiesSection()}
@@ -1099,10 +1099,11 @@ const Config = {
 
     renderRoleCard: function (roleName) {
         const roleCondition = ConfigManager.getRoleCondition(roleName);
-        const keywords     = roleCondition ? (roleCondition.keywords || []) : [];
+        const keywords     = roleCondition ? (roleCondition.keywords    || []) : [];
         const conditionals = roleCondition ? (roleCondition.conditionals || []) : [];
+        const notContains  = roleCondition ? (roleCondition.notContains  || []) : [];
 
-      const kwChips = keywords.map((kw, idx) => `
+        const kwChips = keywords.map((kw, idx) => `
             <div class="keyword-chip">
                 <span class="chip-text">${kw}</span>
                 <span class="chip-remove" onclick="Config.removeCondKeywordByIndex('${roleName}',${idx})">×</span>
@@ -1114,17 +1115,26 @@ const Config = {
                 <span class="chip-remove" onclick="Config.removeConditionalByIndex('${roleName}',${idx})">×</span>
             </div>`).join('');
 
+        const notChips = notContains.map((nc, idx) => `
+            <div class="keyword-chip conditional-chip">
+                <span class="chip-text">${nc}</span>
+                <span class="chip-remove" onclick="Config.removeNotContainsByIndex('${roleName}',${idx})">×</span>
+            </div>`).join('');
+
         return `
-            <div class="role-card" data-role="${roleName}" id="role-anchor-${roleName}">
-                <div class="role-card-header">
+            <div class="role-card role-panel" data-role="${roleName}" id="role-anchor-${roleName}">
+                <div class="role-card-header role-panel-header" onclick="Config.toggleRolePanel('${roleName}')">
+                    <span class="role-panel-arrow">▶</span>
+                    <span class="role-panel-name">${roleName}</span>
                     <input type="text" class="role-name-input" value="${roleName}"
                         data-original="${roleName}"
                         onblur="Config.renameRole(this)"
-                        onkeydown="if(event.key==='Enter')this.blur()">
-                    <button class="btn-duplicate-role" onclick="Config.duplicateRole('${roleName}')" title="Duplicar rol" style="background:none;border:none;cursor:pointer;font-size:1rem;margin-right:4px;">⧉</button>
-                    <button class="btn-delete-role" onclick="Config.deleteRole('${roleName}')" title="Eliminar rol">🗑️</button>
+                        onkeydown="if(event.key==='Enter')this.blur()"
+                        onclick="event.stopPropagation()">
+                    <button class="btn-duplicate-role" onclick="event.stopPropagation();Config.duplicateRole('${roleName}')" title="Duplicar rol" style="background:none;border:none;cursor:pointer;font-size:1rem;margin-right:4px;">⧉</button>
+                    <button class="btn-delete-role" onclick="event.stopPropagation();Config.deleteRole('${roleName}')" title="Eliminar rol">🗑️</button>
                 </div>
-                <div class="role-card-body">
+                <div class="role-card-body" style="display:none;">
 
                     <label class="config-label">
                         Keyword
@@ -1155,8 +1165,23 @@ const Config = {
                             data-role="${roleName}"
                             onkeydown="if(event.key==='Enter')Config.addConditionalFromInput(this)">
                         <button class="btn btn-sm btn-danger" onclick="Config.addConditionalFromInput(this.previousElementSibling)">+ Agregar</button>
-                    
                     </div>
+
+                    <label class="config-label conditional-label">
+                        NO contiene
+                        <small style="font-weight:normal;">— si ALGUNA está en el efecto, el rol NO se asigna</small>
+                    </label>
+                    <div class="keywords-container">
+                        ${notChips || '<span class="empty-chips">Sin restricciones (ninguna exclusión)</span>'}
+                    </div>
+                    <div class="add-keyword-container">
+                        <input type="text" class="keyword-input conditional-input"
+                            placeholder="Nueva exclusión..."
+                            data-role="${roleName}"
+                            onkeydown="if(event.key==='Enter')Config.addNotContainsFromInput(this)">
+                        <button class="btn btn-sm btn-danger" onclick="Config.addNotContainsFromInput(this.previousElementSibling)">+ Agregar</button>
+                    </div>
+
                     <div class="role-nom-filter-row">
                         <label class="config-label" style="margin-bottom:4px;">
                             Restringir detección a Nomenclatura
@@ -1173,7 +1198,7 @@ const Config = {
                                     const cat = cats.find(c => c.id === catId);
                                     const label = cat ? cat.name : catId;
                                     const borderColor = cat?.color || '#888';
-                                    return `<div class="keyword-chip" style="border-color:${borderColor}">
+                                    return `<div class="keyword-chip" style="border-color:\${borderColor}">
                                         <span class="chip-text">${label}</span>
                                         <span class="chip-remove" onclick="Config.removeRoleNomCat('${roleName}','${catId}')">×</span>
                                     </div>`;
@@ -1233,7 +1258,7 @@ const Config = {
 
     let html = `
         <div class="config-help-text">
-            <p><strong>Mecánicas y Counters:</strong> Conecta roles entre sí. El sistema detectará automáticamente qué cartas ejecutan cada mecánica y cuáles la contrarrestan según los roles asignados.</p>
+            <p><strong>Counters:</strong> Conecta roles entre sí. El sistema detectará automáticamente qué cartas ejecutan cada mecánica y cuáles la contrarrestan según los roles asignados.</p>
             <small>Ejemplo: <em>Searcher ⟷ Handtrap</em> — cualquier carta con rol Handtrap countera a cualquier carta con rol Searcher.</small>
         </div>
         <div style="margin-bottom:var(--spacing-md);">
@@ -1447,18 +1472,22 @@ saveDiminishingRole: function(role) {
             </div>`).join('');
 
         return `
-        <div class="role-card" id="nom-anchor-${cat.id}">
-            <div class="role-card-header">
+        <div class="role-card role-panel" id="nom-anchor-${cat.id}">
+            <div class="role-card-header role-panel-header" onclick="Config.toggleNomPanel('${cat.id}')">
+                <span class="role-panel-arrow">▶</span>
+                <span class="role-panel-name" style="background:${cat.color}33;color:${cat.color};padding:1px 8px;border-radius:4px;font-size:0.85rem;">${cat.name}</span>
                 <input type="color" value="${cat.color}" title="Color de la categoría"
-                    style="width:36px;height:36px;min-width:36px;border:2px solid var(--border-color);border-radius:6px;cursor:pointer;padding:2px;background:transparent;appearance:none;-webkit-appearance:none;"
-                    onchange="ConfigManager.updateNomenclatureCategory('${cat.id}',{color:this.value});Config.render()">
+                    style="width:30px;height:30px;min-width:30px;border:2px solid var(--border-color);border-radius:6px;cursor:pointer;padding:2px;background:transparent;appearance:none;-webkit-appearance:none;margin-left:6px;"
+                    onclick="event.stopPropagation()"
+                    onchange="ConfigManager.updateNomenclatureCategory('${cat.id}',{color:this.value});Config.render();Config._restoreAndScroll('nomenclature-section','nom-anchor-${cat.id}')">
                 <input type="text" class="role-name-input" value="${cat.name}"
-                    onblur="ConfigManager.updateNomenclatureCategory('${cat.id}',{name:this.value})"
+                    onclick="event.stopPropagation()"
+                    onblur="ConfigManager.updateNomenclatureCategory('${cat.id}',{name:this.value});Config.render();Config._restoreAndScroll('nomenclature-section','nom-anchor-${cat.id}')"
                     onkeydown="if(event.key==='Enter')this.blur()">
                 <button class="btn-delete-role" style="margin-left:auto;"
-                    onclick="Config.deleteNomCategory('${cat.id}')">🗑️</button>
+                    onclick="event.stopPropagation();Config.deleteNomCategory('${cat.id}')">🗑️</button>
             </div>
-            <div class="role-card-body" style="gap:12px;">
+            <div class="role-card-body" style="display:none;gap:12px;">
 
                 <label class="config-label">
                     Empieza con:
@@ -1545,16 +1574,17 @@ renderNomCategoryOptions: function (selectedId) {
         const oldName = el.dataset.original;
         const newName = el.value.trim();
         if (newName === oldName) return;
-        if (!newName) { 
-            alert('⚠️ El nombre no puede estar vacío'); 
-            el.value = oldName; 
-            return; 
+        if (!newName) {
+            alert('⚠️ El nombre no puede estar vacío');
+            el.value = oldName;
+            return;
         }
         if (ConfigManager.renameRole(oldName, newName)) {
             this.render();
-        } else { 
-            alert('❌ No se pudo renombrar'); 
-            el.value = oldName; 
+            this._restoreAndScroll('roles-section', `role-anchor-${CSS.escape(newName)}`);
+        } else {
+            alert('❌ No se pudo renombrar');
+            el.value = oldName;
         }
     },
 
@@ -1571,9 +1601,10 @@ renderNomCategoryOptions: function (selectedId) {
         const roleName = el.dataset.role;
         const kw       = el.value.trim().toLowerCase();
         if (!kw) { alert('⚠️ Escribe una keyword'); return; }
-        if (ConfigManager.addKeywordToRoleCondition(roleName, kw)) { 
-            el.value = ''; 
-            this.render(); 
+        if (ConfigManager.addKeywordToRoleCondition(roleName, kw)) {
+            el.value = '';
+            this.render();
+            this._restoreAndScroll('roles-section', `role-anchor-${roleName}`);
         } else {
             alert('❌ No se pudo agregar (puede que ya exista)');
         }
@@ -1589,9 +1620,10 @@ renderNomCategoryOptions: function (selectedId) {
         const roleName = el.dataset.role;
         const val      = el.value.trim().toLowerCase();
         if (!val) { alert('⚠️ Escribe una condicional'); return; }
-        if (ConfigManager.addConditionalToRole(roleName, val)) { 
-            el.value = ''; 
-            this.render(); 
+        if (ConfigManager.addConditionalToRole(roleName, val)) {
+            el.value = '';
+            this.render();
+            this._restoreAndScroll('roles-section', `role-anchor-${roleName}`);
         } else {
             alert('❌ No se pudo agregar (puede que ya exista)');
         }
@@ -1601,6 +1633,48 @@ renderNomCategoryOptions: function (selectedId) {
         if (ConfigManager.removeConditionalFromRole(roleName, conditional)) {
             this.render();
         }
+    },
+
+    addNotContainsFromInput: function (el) {
+        const roleName = el.dataset.role;
+        const val      = el.value.trim().toLowerCase();
+        if (!val) { alert('⚠️ Escribe una exclusión'); return; }
+        if (ConfigManager.addNotContainsToRole(roleName, val)) {
+            el.value = '';
+            this.render();
+            this._restoreAndScroll('roles-section', `role-anchor-${roleName}`);
+        } else {
+            alert('❌ No se pudo agregar (puede que ya exista)');
+        }
+    },
+
+    removeNotContainsByIndex: function (roleName, index) {
+        if (ConfigManager.removeNotContainsFromRole(roleName, index)) {
+            this.render();
+            this._restoreAndScroll('roles-section', `role-anchor-${roleName}`);
+        }
+    },
+
+    toggleRolePanel: function (roleName) {
+        const card = document.getElementById(`role-anchor-${roleName}`);
+        if (!card) return;
+        const body  = card.querySelector('.role-card-body');
+        const arrow = card.querySelector('.role-panel-arrow');
+        if (!body) return;
+        const isOpen = body.style.display !== 'none';
+        body.style.display = isOpen ? 'none' : 'flex';
+        if (arrow) arrow.textContent = isOpen ? '▶' : '▼';
+    },
+
+    toggleNomPanel: function (catId) {
+        const card = document.getElementById(`nom-anchor-${catId}`);
+        if (!card) return;
+        const body  = card.querySelector('.role-card-body');
+        const arrow = card.querySelector('.role-panel-arrow');
+        if (!body) return;
+        const isOpen = body.style.display !== 'none';
+        body.style.display = isOpen ? 'none' : 'flex';
+        if (arrow) arrow.textContent = isOpen ? '▶' : '▼';
     },
 
     // ===============================
@@ -1899,7 +1973,7 @@ enviarReporte: function (counter, dateStr) {
     if (ConfigManager.addNomCondKw(catId, field, kw)) {
         el.value = '';
         this.render();
-        this._restoreAndScroll('nomenclature-section', `nomenclature-category-anchor-${catId}`);
+        this._restoreAndScroll('nomenclature-section', `nom-anchor-${catId}`);
     } else {
         alert('❌ Ya existe esa keyword');
     }
@@ -1908,13 +1982,13 @@ enviarReporte: function (counter, dateStr) {
 removeNomCondKw: function (catId, field, kw) {
         if (ConfigManager.removeNomCondKw(catId, field, kw)) {
             this.render();
-            this._restoreAndScroll('nomenclature-section', `nomenclature-category-anchor-${catId}`);
+            this._restoreAndScroll('nomenclature-section', `nom-anchor-${catId}`);
         }
     },
     removeNomCondKwByIndex: function (catId, field, index) {
         if (ConfigManager.removeNomCondKwByIndex(catId, field, index)) {
             this.render();
-            this._restoreAndScroll('nomenclature-section', `nomenclature-category-anchor-${catId}`);
+            this._restoreAndScroll('nomenclature-section', `nom-anchor-${catId}`);
         }
     },renderNomCategoryOptionsAdd: function(roleName) {
     const cats     = ConfigManager.getNomenclature().categories || [];
@@ -1947,7 +2021,12 @@ _restoreAndScroll: function(sectionId, anchorId) {
         if (sec) sec.style.display = 'block';
         if (anchorId) {
             const el = document.getElementById(anchorId);
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (el) {
+                // Si el elemento es un panel colapsable, expandirlo automáticamente
+                const body = el.querySelector('.role-card-body');
+                if (body) body.style.display = 'flex';
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
     });
 },
@@ -3145,7 +3224,7 @@ const HelpPanel = {
         <ul>
             <li><strong>Contenido de la App:</strong> controla qué secciones son visibles según tu perfil (Novato / Casual / Competitivo). Puedes ajustar cada item individualmente.</li>
             <li><strong>Roles:</strong> define roles para asignar a cartas (Starter, Boss, etc.), sus keywords de detección y su peso en el Internal Score.</li>
-            <li><strong>Mecánicas y Counters:</strong> configura pares mecánica/counter que activan el Power Score y el External Score.</li>
+            <li><strong>Counters:</strong> configura pares mecánica/counter que activan el Power Score y el External Score.</li>
             <li><strong>Staples:</strong> cartas esenciales del formato. El sistema las sugiere si no las tienes en el deck.</li>
             <li><strong>Nomenclatura:</strong> categorías de texto para resaltar partes del efecto de cartas por color en el Buscador.</li>
             <li><strong>Pilares:</strong> asigna qué roles pesan en Consistencia, Potencia y Resiliencia del Internal Score.</li>
