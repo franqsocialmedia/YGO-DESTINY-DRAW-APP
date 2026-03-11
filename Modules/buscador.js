@@ -320,7 +320,35 @@ await new Promise(resolve => setTimeout(resolve, 0));
 
         this.searchInput.focus();
     },
+randomCard: async function () {
+        this.showLoading();
+        try {
+            const url = this.buildApiUrl('');
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Error HTTP');
+            const data = await response.json();
+            let cards = data.data || [];
 
+            cards = this.applyWordFilters(this.applyAdvancedLocalFilter(cards));
+
+            if (cards.length === 0) {
+                this.showMessage('😕 No hay cartas que cumplan los filtros actuales');
+                return;
+            }
+
+            const picked = cards[Math.floor(Math.random() * cards.length)];
+            this.displayResults([picked]);
+
+            const notice = document.createElement('p');
+            notice.className = 'results-cap-notice';
+            notice.textContent = `🎲 Carta aleatoria de un pool de ${cards.length} cartas.`;
+            this.resultsContainer.appendChild(notice);
+
+        } catch (err) {
+            console.error(err);
+            this.showMessage('❌ Error al obtener carta aleatoria');
+        }
+    },
     showLoading: function () {
         this.resultsContainer.innerHTML =
             '<p class="results-placeholder">⏳ Buscando...</p>';

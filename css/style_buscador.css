@@ -133,7 +133,18 @@
     transform: translateY(0);
 }
 
-
+.btn-random {
+    width: 100%;
+    background: linear-gradient(135deg, #4a1a6e, #8b2fc9);
+    color: #f0d060;
+    border: 1px solid #8b2fc9;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+.btn-random:hover {
+    background: linear-gradient(135deg, #6a2a9e, #a94fd9);
+    border-color: #f0d060;
+}
 /* Contenedor de filtros */
 .filters-container {
     padding-top: var(--spacing-md);
