@@ -56,57 +56,69 @@ const ConfigManager = {
             'Undestroyable':         ['cannot be destroyed by', 'cannot be destroyed', 'is unaffected by destruction'],
             'Destroyer':             ['destroy 1', 'destroy 2', 'destroy 1 monster', 'destroy 1 spell', 'destroy 1 trap', 'destroy 1 card', 'destroy up to 2'],
             'Brick':                 [],
-            'Bridge':                []
+            'Bridge':                [],
+            // ── Roles nuevos ──────────────────────────────────────────────────
+            'Sending card':          ['send 1', 'send 2', 'send 3', 'send this card', 'to the gy', 'to your gy', 'you control to the'],
+            'Handwatcher':           ["look at your opponent's hand.", "look at your opponent's"],
+            'Extra-Normal':          ['normal summon 1', 'you can normal summon/set 1 monster in addition'],
+            'Stats reducer':         ['atk for each', 'level becomes', "card's level by", 'increase or decrease its', 'it lose', 'monsters you control lose', 'this card lose', 'monster lose', 'target lose', 'control lose', 'controls lose'],
+            'Starter (Trigger summon)': ['this card is special', 'this card is normal or', "in its owner's possession is banished"]
         },
 
         // RoleConditions: keywords (actúan solos O con condicional)
         roleConditions: {
             'Starter':               { conditionals: [], keywords: ['this card is special', 'this card is normal or', "in its owner's possession is banished"] },
-            'Starter (normal summon)': { conditionals: [], keywords: ['this card is normal summoned'] },
-            'Extender':              { conditionals: [], keywords: ['you can special summon', 'in addition to your', 'normal summon 1', 'immediately after this effect resolves', 'monster from your hand'] },
+            'Starter (normal summon)': { conditionals: [], keywords: ['this card is normal summoned', 'you can normal summon this'] },
+            'Extender':              { conditionals: [], keywords: ['you can special summon', 'in addition to your', 'normal summon 1', 'immediately after this effect resolves', 'monster from your hand', 'special summon both'] },
             'Booster':               { conditionals: [], keywords: ['it gains', 'monsters you control gain', 'atk for each', 'this card gains', 'monster gains', 'this card gain', 'atk becomes', 'def becomes', 'level becomes', 'increase', "card's level by", 'target gains', 'increase or decrease its', 'double the atk', 'double the def', 'double piercing'] },
-            'Boardbreaker':          { conditionals: [], keywords: ['by tributing', 'tribute', 'destroy them', 'banish it', 'banish them', 'destroy it', 'banish all', 'destroy all', 'tribute it', 'tribute them', 'banish 1', 'banish 2', 'banish 3', 'destroy 1', 'destroy 2', 'destroy 3', 'banish card', 'destroy card', 'shuffle all', 'shuffle them', 'return it', 'return them', 'return 1', 'return 2', 'return 3', 'using monsters', 'attach 1', 'attach 2', 'attach 3', 'attach them', 'attach it', 'you can shuffle 1', 'destroy that', 'banish that', 'return that', 'tribute that', 'shuffle that', 'shuffle it', 'destroy as many', 'take control of', 'banish up to', 'destroy up to', 'your opponent shuffle monsters they control', 'your opponent shuffle cards they control', 'tributing 1', 'tributing 2', 'tributing 3', 'tributing many', 'you can banish all monsters on the field'] },
-            'Handtrap':              { conditionals: [], keywords: ['you can send this card from your hand', 'you can discard this card', 'you can activate this card from your hand', 'this card from your hand'] },
+            'Boardbreaker':          { conditionals: ['your opponent control', 'other cards on the field', 'other monsters on the field', 'spell and trap cards'], keywords: ['by tributing', 'tribute', 'destroy them', 'banish it', 'banish them', 'destroy it', 'banish all', 'destroy all', 'tribute it', 'tribute them', 'banish 1', 'banish 2', 'banish 3', 'destroy 1', 'destroy 2', 'destroy 3', 'banish card', 'destroy card', 'shuffle all', 'shuffle them', 'return it', 'return them', 'return 1', 'return 2', 'return 3', 'using monsters', 'attach 1', 'attach 2', 'attach 3', 'attach them', 'attach it', 'you can shuffle 1', 'destroy that', 'banish that', 'return that', 'tribute that', 'shuffle that', 'shuffle it', 'destroy as many', 'take control of', 'banish up to', 'destroy up to', 'your opponent shuffle monsters they control', 'your opponent shuffle cards they control', 'tributing 1', 'tributing 2', 'tributing 3', 'tributing many', 'you can banish all monsters on the field', 'all'], nomenclatureCategories: ['costoActivacion', 'efectosMultiple', 'efectoGenerico', 'efectoArquetipico'] },
+            'Handtrap':              { conditionals: ['your hand', 'your hand.', 'this card from your hand'], keywords: ['you can send this card from your hand', 'you can discard this card', 'you can activate this card from your hand', 'this card from your hand', 'you can activate this from your hand', 'you can activate'], nomenclatureCategories: ['costoActivacion', 'invocacionInherente', 'condicionActivacion'] },
             'Burner':                { conditionals: [], keywords: ['must pay', 'your opponent lose', 'takes damage equal to', 'becomes halved', 'damage to', 'inflict damage', 'controller takes damage equal'] },
             'Draw-engine':           { conditionals: [], keywords: ['draw 1', 'draw 2', 'draw 3', 'draw the same', 'you can draw'] },
-            'Searcher':              { conditionals: [], keywords: ['you can add', 'add 1', 'add 2', 'add 3', 'from your deck to', 'from your extra deck to', 'from your deck in', 'special summon 1', 'special summon 2', 'special summon 3', 'special summon up to', 'special summon any', 'up to the number', 'send 1', 'send 2', 'you can set', 'banish 1 monster from your deck', 'banish 1'] },
-            'Recycler':              { conditionals: [], keywords: ['you can add this card', 'return all', 'from your monsters on', 'return them', 'return it', 'return 1', 'return 2', 'return 3', 'place', 'special summon that', 'special summon it', 'special summon the', 'special summon 1 monster from your gy', 'special summon 1 monster from the banishment', 'special summon both monsters', 'special summon as many monsters', 'special summon 1', 'return the'] },
-            'Searcher (milling)':    { conditionals: [], keywords: ['send 1', 'send 2', 'send 3', 'cards of your deck', 'cards of your extra deck', 'top'] },
+            'Searcher':              { conditionals: ['from your deck', 'from your main deck', 'from your extra deck'], keywords: ['you can add', 'add 1', 'add 2', 'add 3', 'from your deck to', 'from your extra deck to', 'from your deck in', 'special summon 1', 'special summon 2', 'special summon 3', 'special summon up to', 'special summon any', 'up to the number', 'send 1', 'send 2', 'you can set', 'banish 1 monster from your deck', 'banish 1', 'set 1 normal spell/trap', 'set 1 spell/trap', 'set 1 trap', 'set', 'directly'], nomenclatureCategories: ['efectoGenerico', 'efectosMultiple'] },
+            'Recycler':              { conditionals: ['from the gy', 'from your gy', 'from either gy', 'from the graveyard', 'from your graveyard', 'from either graveyard', 'into the'], keywords: ['you can add this card', 'return all', 'from your monsters on', 'return them', 'return it', 'return 1', 'return 2', 'return 3', 'place', 'special summon that', 'special summon it', 'special summon the', 'special summon 1 monster from your gy', 'special summon 1 monster from the banishment', 'special summon both monsters', 'special summon as many monsters', 'special summon 1', 'return the', 'shuffle this card', 'shuffle all', 'shuffle them', 'shuffle it', 'shuffle that', 'shuffle 1'] },
+            'Searcher (milling)':    { conditionals: ['from your deck', 'from your main deck', 'from your extra deck'], keywords: ['send 1', 'send 2', 'send 3', 'cards of your deck', 'cards of your extra deck', 'top'], nomenclatureCategories: ['costoActivacion', 'efectoGenerico', 'efectoArquetipico'] },
             'LP Restore':            { conditionals: [], keywords: ['you gain', 'your opponent gains', 'gain lp equal', 'gain for each', 'you can gain', 'lp for each', 'amount of lp'] },
-            'Protector':             { conditionals: [], keywords: ['your opponent cannot target', 'your opponent cannot banish', 'cannot target monsters for attacks', 'in your monster zone is unaffected', 'is unaffected', 'cannot be', 'destroy the attacking monster', 'you control are unaffected'] },
-            'Negater':               { conditionals: [], keywords: ['the effect', "it's effects", 'its effects', 'that effect', 'the activation', 'their effects are negated', 'have their effects negated', 'that activation', 'on the field are negated', 'negate the'] },
+            'Protector':             { conditionals: [], keywords: ['your opponent cannot target', 'your opponent cannot banish', 'cannot target monsters for attacks', 'in your monster zone is unaffected', 'is unaffected', 'destroy the attacking monster', 'you control are unaffected'], nomenclatureCategories: ['efectoGenerico', 'efectoArquetipico', 'efectosMultiple'] },
+            'Negater':               { conditionals: [], keywords: ['their effects are negated', 'have their effects negated', 'that activation', 'on the field are negated', 'negate the', 'negate that effect', "negate it's effects", 'negate its effects', 'negate the activation', 'negate that activation'], nomenclatureCategories: ['efectoGenerico', 'efectoArquetipico', 'efectosMultiple'] },
             'Boss Monster':          { conditionals: [], keywords: ['inflict piercing', 'cannot be targeted', 'cannot be destroyed', 'opponent cannot target', 'opponent cannot destroy', 'must be fusion', 'must be tribute', 'must be synchro', 'must be xyz', 'must be link', 'must be pendulum', 'must be ritual', 'must first be', 'must be special'] },
             'Stun':                  { conditionals: [], keywords: ['neither player can special', 'cannot activate their effects', 'neither player can activate', 'both players must', 'your opponent cannot activate', 'cannot activate them', 'cards cannot be activated', 'any card sent to the', 'any'] },
             'Speed-4':               { conditionals: [], keywords: ["in response to this card's activation", 'cannot activate cards or effects in response to this', 'by your opponent resolves'] },
             'Tower':                 { conditionals: [], keywords: ['it is unaffected', 'unaffected by spell/trap effects', 'unaffected by card effects,', "unaffected by other cards' effects.", 'unaffected by other card effects.', 'card is unaffected by trap effects', 'card is unaffected by spell effects'] },
-            'Token Summoner':        { conditionals: [], keywords: ['special summon'] },
+            'Token Summoner':        { conditionals: ['token'], keywords: ['special summon'], nomenclatureCategories: ['efectoGenerico', 'efectoArquetipico', 'efectosMultiple'] },
             'Handloop':              { conditionals: [], keywords: ["look at your opponent's hand", 'each player discards', 'from their hand to', "send 1 random card from your opponent's hand"] },
             'Anti-damage':           { conditionals: [], keywords: ['you take no battle damage', 'you take no effect damage'] },
-            'Disruptor':             { conditionals: ["when your opponent", 'if your opponent activate', "during your opponent's"], keywords: ["look at your opponent's extra deck", "from the main deck to your opponent's hand", 'each player send', 'each player discard', 'target 1 card on the field', 'target 1 monster on the field', 'both players', 'neither player can', 'opponent controls lose'] },
-            'Removal':               { conditionals: [], keywords: ["in your opponent's gy", "in your opponent's graveyard", "your opponent controls or in their gy", 'your opponent controls', 'gy is banished instead', 'banished instead', 'target', 'by banishing', 'banish'] },
+            'Disruptor':             { conditionals: ["when your opponent", 'if your opponent activate', "during your opponent's", 'you opponent'], keywords: ["look at your opponent's extra deck", "from the main deck to your opponent's hand", 'each player send', 'each player discard', 'target 1 card on the field', 'target 1 monster on the field', 'both players', 'neither player can', 'opponent controls lose', 'change all face-up', 'your opponent control'], nomenclatureCategories: ['efectoGenerico'] },
+            'Removal':               { conditionals: ['banish it', 'banish them', 'to the banish'], keywords: ["in your opponent's gy", "in your opponent's graveyard", "your opponent controls or in their gy", 'your opponent controls', 'gy is banished instead', 'banished instead', 'by banishing', 'banish'] },
             'Grinding Card':         { conditionals: [], keywords: ['if this card is in your gy', 'if this card is in the banishment', 'you can banish this card from your gy', 'while this card is in your gy', 'if this card is sent to the gy', 'this card from your field or gy', 'this card from your field or graveyard', 'if this card is sent to the graveyard', 'while this card is in your graveyard', 'you can banish this card from your graveyard', 'if this card is in your graveyard', 'you control is sent to your gy', 'you control is sent to your graveyard', 'this card leaves the field', 'is sent from the field to the gy'] },
             'Banished Card':         { conditionals: [], keywords: ['if this card is banished', 'the banished monster', 'the banished card', 'of your banished monsters', 'this card is sent to the gy, or banished', '1 of your banished', 'you can banish this card'] },
-            'Negate-activation':     { conditionals: [], keywords: ['the activation', 'that activation', 'negate the'] },
-            'Negate-effect':         { conditionals: [], keywords: ['the effect', "it's effects", 'its effects', 'that effect', 'their effects are negated', 'have their effects negated', 'on the field are negated'] },
-            'HARD-once-per-turn':    { conditionals: [], keywords: ['only activate 1', 'only use this effect of', 'only use the previous effect of', 'each effect of'] },
-            'SOFT-once-per-turn':    { conditionals: [], keywords: ['once', 'only use this', 'only use those', 'only use each'] },
+            'Negate-activation':     { conditionals: [], keywords: ['negate that activation', 'negate the activation'], nomenclatureCategories: ['efectoGenerico', 'efectoArquetipico', 'efectosMultiple'] },
+            'Negate-effect':         { conditionals: [], keywords: ['their effects are negated', 'have their effects negated', 'on the field are negated', 'negate the effect', 'negate that effects', 'negate its effects', "negate it's effects", 'its effects are negated'], nomenclatureCategories: ['efectoGenerico', 'efectoArquetipico', 'efectosMultiple'] },
+            'HARD-once-per-turn':    { conditionals: [], keywords: ['only activate 1', 'only use this effect of', 'only use the previous effect of', 'each effect of', 'this effect of'], nomenclatureCategories: ['restriccion', 'condicionActivacion'] },
+            'SOFT-once-per-turn':    { conditionals: [], keywords: ['only use this', 'only use those'], nomenclatureCategories: ['condicionActivacion', 'costoActivacion', 'efectoGenerico', 'efectoArquetipico'] },
             'Stun-Banish':           { conditionals: [], keywords: ['cannot banish', 'neither player can banish', 'your opponent cannot banish'] },
-            'Stun-Special':          { conditionals: [], keywords: ['neither player can special', 'your opponent cannot special', 'you cannot special summon'] },
+            'Stun-Special':          { conditionals: [], keywords: ['neither player can special', 'your opponent cannot special'], nomenclatureCategories: ['efectoGenerico', 'efectosMultiple', 'efectoArquetipico'] },
             'Stun-GY':               { conditionals: [], keywords: ['neither player can special', 'cannot activate their effects', 'neither player can activate', 'your opponent cannot activate', 'cannot activate them', 'cards cannot be activated', 'any card sent to the', 'is banished instead'] },
             'Stun-Effect':           { conditionals: [], keywords: ['cannot activate their effects', 'neither player can activate', 'your opponent cannot activate', 'cannot activate them', 'cards cannot be activated', 'player must', 'they must'] },
             'Stun-Draw':             { conditionals: [], keywords: ['neither player can draw', 'neither player can add', 'your opponent cannot draw', 'your opponent cannot add', 'if a card(s) is added', 'if a card(s) is draw'] },
-            'Quick-effect':          { conditionals: ['quick-effect'], keywords: ['once per turn', 'when', 'if'] },
+            'Quick-effect':          { conditionals: ['quick-effect', '(quick-effect)', '(quick-effect):'], keywords: ['once per turn', 'when', 'if', '(quick-effect)', 'during the'], nomenclatureCategories: ['condicionActivacion'] },
             'Ignition':              { conditionals: [], keywords: ['once per turn: you can', 'once per turn: you may', 'once per turn:', 'ignition effect'] },
-            'Searcher (archetype)':  { conditionals: [], keywords: ['you can add', 'add 1', 'add 2', 'add 3', 'from your deck to', 'from your extra deck to', 'special summon 1', 'special summon 2', 'special summon 3', 'special summon up to'] },
+            'Searcher (archetype)':  { conditionals: ['from your deck', 'from your main deck', 'from your extra deck'], keywords: ['you can add', 'add 1', 'add 2', 'add 3', 'from your deck to', 'from your extra deck to', 'special summon 1', 'special summon 2', 'special summon 3', 'special summon up to'], nomenclatureCategories: ['efectoArquetipico', 'efectosMultiple'] },
             'LP Restore':            { conditionals: [], keywords: ['you gain', 'your opponent gains', 'gain lp equal', 'gain for each', 'you can gain', 'lp for each', 'amount of lp'] },
             'Send':                  { conditionals: [], keywords: ['send 1', 'send 2', 'send 3', 'send this card', 'to the gy', 'to your gy'] },
             'Discard':               { conditionals: [], keywords: ['you can discard', 'discard 1', 'discard 2', 'discard this card', 'by discarding'] },
-            'Pay':                   { conditionals: [], keywords: ['must pay', 'by paying', 'pay 1000', 'pay 2000', 'pay lp', 'pay lifepoints', 'life points'] },
-            'Target':                { conditionals: [], keywords: ['target 1 card', 'target 2 cards', 'target 1 monster', 'target 1 spell', 'target 1 trap', 'target 1 face-up', 'target up to'] },
+            'Pay':                   { conditionals: [], keywords: ['must pay', 'by paying', 'pay 1000', 'pay 2000', 'pay lp', 'pay lifepoints', 'life points'], nomenclatureCategories: ['costoActivacion'] },
+            'Target':                { conditionals: [], keywords: ['target 1 card', 'target 2 cards', 'target 1 monster', 'target 1 spell', 'target 1 trap', 'target 1 face-up', 'target up to'], nomenclatureCategories: ['condicionActivacion', 'costoActivacion'] },
             'Non-target':            { conditionals: [], keywords: ['destroy all', 'banish all', 'shuffle all', 'tribute all', 'send all', 'destroy them', 'banish them', 'shuffle them', 'tribute them'] },
             'Untargetable':          { conditionals: [], keywords: ['cannot be targeted by', 'cannot be targeted', 'your opponent cannot target'] },
             'Undestroyable':         { conditionals: [], keywords: ['cannot be destroyed by', 'cannot be destroyed', 'is unaffected by destruction'] },
-            'Destroyer':             { conditionals: [], keywords: ['destroy 1', 'destroy 2', 'destroy 1 monster', 'destroy 1 spell', 'destroy 1 trap', 'destroy 1 card', 'destroy up to 2'] },
+            'Destroyer':             { conditionals: [], keywords: ['destroy 1', 'destroy 2', 'destroy 1 monster', 'destroy 1 spell', 'destroy 1 trap', 'destroy 1 card', 'destroy up to 2', 'destroy it', 'destroy them', 'destroy that', 'destroy both', 'destroy this'] },
+            // ── Roles nuevos ──────────────────────────────────────────────────
+            'Sending card':          { conditionals: ['gy', 'graveyard'], keywords: ['send 1', 'send 2', 'send 3', 'send this card', 'to the gy', 'to your gy', 'you control to the'], nomenclatureCategories: ['costoActivacion', 'efectoGenerico', 'efectosMultiple', 'efectoArquetipico'] },
+            'Handwatcher':           { conditionals: [], keywords: ["look at your opponent's hand.", "look at your opponent's"] },
+            'Extra-Normal':          { conditionals: [], keywords: ['normal summon 1', 'you can normal summon/set 1 monster in addition'] },
+            'Stats reducer':         { conditionals: ['lose', 'atk becomes half', 'def becomes half', 'atk/def becomes half', 'half', 'reduce'], keywords: ['atk for each', 'level becomes', "card's level by", 'increase or decrease its', 'it lose', 'monsters you control lose', 'this card lose', 'monster lose', 'target lose', 'control lose', 'controls lose'] },
+            'Starter (Trigger summon)': { conditionals: [], keywords: ['this card is special', 'this card is normal or', "in its owner's possession is banished"] },
             // ⭐ FORMACION GAMES
             formacionGames: [],
         },
@@ -137,7 +149,7 @@ const ConfigManager = {
             'Speed-4':               1.0,
             'Tower':                 1.0,
             'Token Summoner':        0.3,
-            'Handloop':              0.7,
+            'Handloop':              0.5,
             'Anti-damage':           0.5,
             'Disruptor':             0.7,
             'Removal':               0.7,
@@ -163,7 +175,13 @@ const ConfigManager = {
             'Undestroyable':         1.0,
             'Destroyer':             0.7,
             'Brick':                 0.2,
-            'Bridge':                0.7
+            'Bridge':                0.7,
+            // ── Roles nuevos ──────────────────────────────────────────────────
+            'Sending card':          0.7,
+            'Handwatcher':           1.0,
+            'Extra-Normal':          1.0,
+            'Stats reducer':         0.5,
+            'Starter (Trigger summon)': 1.0
         },
 
         // Cada categoría tiene UNA configuración directa con 4 campos
@@ -174,8 +192,8 @@ const ConfigManager = {
             name: 'Invocación Inherente',
             color: '#d7a3ef',
             conditions: {
-                startsWith: ['you can special summon this card', 'you can normal summon this card', 'you can tribute summon this card', 'must be', 'must first be'],
-                contains: ['summon', '(', 'by'],
+                startsWith: ['you can special summon this card', 'you can normal summon this card', 'you can tribute summon this card', 'must be', 'must first be', 'if you'],
+                contains: ['summon', '(', 'by', 'you can activate this'],
                 notContains: [';', ':'],
                 endsWith: ['.', ',']
             }
@@ -218,8 +236,8 @@ const ConfigManager = {
             name: 'Restricción',
             color: '#f07a7a',
             conditions: {
-                startsWith: ['you cannot', 'you can only use', 'except', 'cannot be', 'you can only', 'neither player'],
-                contains: ['also', ',', 'you cannot', 'only', 'use', 'follow', 'cannot be used as', 'be', 'in response', 'per turn', 'per duel'],
+                startsWith: ['you cannot', 'you can only use', 'except', 'cannot be', 'you can only', 'neither player', 'that set', 'if you activated'],
+                contains: ['also', ',', 'you cannot', 'only', 'use', 'follow', 'cannot be used as', 'be', 'in response', 'per turn', 'per duel', 'cannot be activated'],
                 notContains: [';', '●'],
                 endsWith: []
             }
@@ -231,7 +249,7 @@ const ConfigManager = {
             conditions: {
                 startsWith: [],
                 contains: [',', '.', 'you can'],
-                notContains: [':', '●', 'can only', ';', '"'],
+                notContains: [':', '●', 'can only', ';', '" card', '" monster', '" spell', '" trap', 'cannot be activated', 'you can activate this'],
                 endsWith: ['.', ',']
             }
         },
@@ -242,7 +260,7 @@ const ConfigManager = {
             conditions: {
                 startsWith: [],
                 contains: [',', '"', '.', 'you can'],
-                notContains: ['●', ':', 'can only', 'except "', ';'],
+                notContains: ['●', ':', 'can only', 'except "', ';', 'cannot be activated', 'you can activate this'],
                 endsWith: [',', '.']
             }
         }
@@ -253,40 +271,61 @@ const ConfigManager = {
             enabled: true,
             crossPenalty: false,
             roleThresholds: {
-                'starter':                 { optimal: 13, max: 16, curve: 0.5, crossPenalty: false },
-                'discard':                 { optimal: 12, max: 20, curve: 0.5, crossPenalty: false },
-                'searcher':                { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'booster':                 { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'handtrap':                { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'burner':                  { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'draw-engine':             { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'searcher (archetype)':    { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'starter (normal summon)': { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'disruptor':               { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'recycler':                { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'LP restore':              { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'searcher (milling)':      { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'negater':                 { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'protector':               { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'Stun':                    { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'Speed-4':                 { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'Tower':                   { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'token summoner':          { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'handloop':                { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'anti-damage':             { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'grinding card':           { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'banished card':           { optimal: 10, max: 15, curve: 0.5, crossPenalty: false },
-                'negator':                 { optimal: 9,  max: 15, curve: 0.5, crossPenalty: false },
-                'extender':                { optimal: 9,  max: 12, curve: 0.6, crossPenalty: false },
-                'boardbreaker':            { optimal: 8,  max: 13, curve: 0.6, crossPenalty: false },
-                'removal':                 { optimal: 8,  max: 12, curve: 0.6, crossPenalty: false },
-                'boss monster':            { optimal: 6,  max: 10, curve: 0.7, crossPenalty: false },
-                'recycle':                 { optimal: 6,  max: 10, curve: 0.7, crossPenalty: false }
+                // Todas las claves en lowercase para coincidir con el lookup (roles se lowercasean)
+                'starter':                  { optimal: 13, max: 16,  curve: 0.5, crossPenalty: false },
+                'starter (normal summon)':  { optimal: 9,  max: 16,  curve: 0.5, crossPenalty: true  },
+                'starter (trigger summon)': { optimal: 9,  max: 16,  curve: 0.5, crossPenalty: true  },
+                'extender':                 { optimal: 9,  max: 12,  curve: 0.5, crossPenalty: true  },
+                'booster':                  { optimal: 6,  max: 9,   curve: 0.5, crossPenalty: false },
+                'boardbreaker':             { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: true  },
+                'handtrap':                 { optimal: 9,  max: 18,  curve: 0.5, crossPenalty: true  },
+                'burner':                   { optimal: 6,  max: 18,  curve: 0.5, crossPenalty: false },
+                'draw-engine':              { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'searcher':                 { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'searcher (archetype)':     { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'searcher (milling)':       { optimal: 12, max: 15,  curve: 0.5, crossPenalty: true  },
+                'recycler':                 { optimal: 6,  max: 9,   curve: 0.5, crossPenalty: true  },
+                'lp restore':               { optimal: 9,  max: 12,  curve: 0.5, crossPenalty: false },
+                'protector':                { optimal: 6,  max: 12,  curve: 0.5, crossPenalty: false },
+                'negater':                  { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'boss monster':             { optimal: 6,  max: 12,  curve: 0.5, crossPenalty: false },
+                'stun':                     { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'speed-4':                  { optimal: 12, max: 15,  curve: 0.5, crossPenalty: false },
+                'tower':                    { optimal: 6,  max: 12,  curve: 0.5, crossPenalty: true  },
+                'token summoner':           { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'handloop':                 { optimal: 9,  max: 12,  curve: 0.5, crossPenalty: false },
+                'anti-damage':              { optimal: 9,  max: 12,  curve: 0.5, crossPenalty: false },
+                'disruptor':                { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'removal':                  { optimal: 9,  max: 12,  curve: 0.5, crossPenalty: false },
+                'grinding card':            { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'banished card':            { optimal: 6,  max: 12,  curve: 0.5, crossPenalty: false },
+                'negate-activation':        { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'negate-effect':            { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'hard-once-per-turn':       { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'soft-once-per-turn':       { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'stun-banish':              { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'stun-special':             { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'stun-gy':                  { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'stun-effect':              { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'stun-draw':                { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'quick-effect':             { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'ignition':                 { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'discard':                  { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'pay':                      { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: true  },
+                'target':                   { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'non-target':               { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'untargetable':             { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'undestroyable':            { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'destroyer':                { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'sending card':             { optimal: 9,  max: 15,  curve: 0.5, crossPenalty: false },
+                'handwatcher':              { optimal: 3,  max: 9,   curve: 0.5, crossPenalty: false },
+                'extra-normal':             { optimal: 9,  max: 16,  curve: 0.5, crossPenalty: false },
+                'stats reducer':            { optimal: 6,  max: 12,  curve: 0.5, crossPenalty: false }
             }
         },
         pillars: {
-            consistency: ['searcher (archetype)', 'searcher', 'searcher (milling)', 'starter', 'draw-engine', 'starter (normal summon)', 'recycler'],
-            power:       ['boardbreaker', 'booster', 'burner', 'boss monster', 'removal', 'Speed-4', 'handloop', 'token summoner', 'untargetable', 'undestroyable'],
+            consistency: ['searcher (archetype)', 'searcher', 'searcher (milling)', 'draw-engine', 'starter (normal summon)', 'recycler', 'Starter (Trigger summon)'],
+            power:       ['boardbreaker', 'booster', 'burner', 'boss monster', 'removal', 'Speed-4', 'handloop', 'token summoner', 'untargetable', 'undestroyable', 'Stats reducer'],
             resilience:  ['negater', 'handtrap', 'protector', 'LP restore', 'disruptor', 'Tower', 'anti-damage', 'Stun', 'extender', 'grinding card', 'banished card']
         },
         // Formato: [pilar que vence, pilar que pierde]
@@ -1304,10 +1343,9 @@ const Stats = {
         const roles = (item.roles || []).map(r => r.toLowerCase());
         const desc  = (item.data?.desc || '').toLowerCase();
 
-       if (loc === 'main' || loc === 'extra') totalCards += qty;
-        if (loc !== 'main') continue;
-
-        mainCards += qty;
+        if (loc === 'main' || loc === 'extra') totalCards += qty;
+        if (loc === 'side') continue;
+        if (loc === 'main') mainCards += qty;
 
         const isRestricted  = restrictionTerms.some(t => desc.includes(t));
         const effectiveQty  = isRestricted ? 1 + (qty - 1) * 0.5 : qty;
@@ -1965,34 +2003,28 @@ const NomenclatureAnalyzer = {
     if (!card || !card.desc) return null;
     const nomenclature = window.ConfigManager.getNomenclature();
     const categories   = nomenclature.categories || [];
-    const result       = [];
 
+    // 1. Recopilar todos los segmentos únicos (todos los splits posibles, orden preservado)
+    const seen    = new Set();
+    const allSegs = [];
     categories.forEach(cat => {
         const delimiter = this._getCategoryDelimiter(cat);
-        const segments  = this.splitIntoParagraphs(card.desc, delimiter);
-
-        segments.forEach(seg => {
-            // Evitar duplicar segmentos ya capturados por otra categoría
-            const alreadyCaptured = result.find(r => r.text === seg && r.category !== null);
-            if (alreadyCaptured) return;
-
-            if (this.matchesConditions(seg, cat.conditions)) {
-                // Si ya existe sin categoría, actualizar
-                const existing = result.find(r => r.text === seg);
-                if (existing) {
-                    existing.category = cat.id;
-                    existing.name     = cat.name;
-                    existing.color    = cat.color;
-                } else {
-                    result.push({ text: seg, category: cat.id, name: cat.name, color: cat.color });
-                }
-            } else if (!result.find(r => r.text === seg)) {
-                result.push({ text: seg, category: null, name: null, color: null });
-            }
+        this.splitIntoParagraphs(card.desc, delimiter).forEach(seg => {
+            if (!seen.has(seg)) { seen.add(seg); allSegs.push(seg); }
         });
     });
 
-    return result;
+    // 2. Para cada segmento, asignar la PRIMERA categoría que coincida (orden del array)
+    //    — elimina el falso bloqueo de alreadyCaptured que impedía que categorías
+    //      posteriores evaluaran segmentos ya reclamados por una anterior.
+    return allSegs.map(seg => {
+        for (const cat of categories) {
+            if (this.matchesConditions(seg, cat.conditions)) {
+                return { text: seg, category: cat.id, name: cat.name, color: cat.color };
+            }
+        }
+        return { text: seg, category: null, name: null, color: null };
+    });
 },
 
     // ===============================
