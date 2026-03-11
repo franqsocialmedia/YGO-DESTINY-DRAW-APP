@@ -1,5 +1,5 @@
 # DESTINY DRAW — REPORTE TÉCNICO
-**Versión:** Post-consolidación v2 | **Fecha:** Feb 2026
+**Versión:** Post-consolidación v2.1 | **Fecha:** Mar 2026
 **Stack:** Vanilla JS (ES6 objects) · CSS modular · HTML5 SPA · YGOProDeck API · localStorage
 
 ---
@@ -11,32 +11,33 @@
 index.html  — Shell única. Secciones vacías, JS llena el DOM en runtime.
 ```
 
-### 1.2 JavaScript — 11 módulos (consolidados de 27)
+### 1.2 JavaScript — 11 módulos + 1 módulo de datos por defecto
 
 **Orden de carga en index.html (crítico):**
 ```
 core.js → data.js → buscador.js →
 mideck.js → historial.js → estadisticas.js →
 simuladores.js → simuladores-campo.js → formacion.js →
-logger.js  (SIEMPRE AL FINAL — se carga post-módulos)
+default_data.js → logger.js  (SIEMPRE AL FINAL)
 ```
 
-| Archivo | Objetos globales | Líneas | Absorbe |
-|---------|-----------------|--------|---------|
-| `logger.js` | `DDLogger` | ~250 | Logger no-invasivo. Se carga al final, envuelve todos los objetos globales post-`window.load`. **No modifica ningún módulo fuente.** API: `DDLogger.exportReport()`, `DDLogger.getLogs()`, `DDLogger.getStats()`, `DDLogger.enable/disable/clear()` |
-| `core.js` | `Navigation`, `Shortcuts`, `ContentManager`, `switchTab` | 412 | navigation + utils + contentmanager |
-| `data.js` | `ConfigManager`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 1433 | configmanager + specialty-analyzer + nomenclature-analyzer |
-| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 1915 | buscador + cardviewer + favoritas |
-| `mideck.js` | `Deck`, `Banlist`, `Engines` | 2971 | deck + banlist + engines |
+| Archivo | Objetos globales | Líneas | Descripción |
+|---------|-----------------|--------|-------------|
+| `logger.js` | `DDLogger` | 365 | Logger no-invasivo. Se carga al final, envuelve todos los objetos globales post-`window.load`. **No modifica ningún módulo fuente.** API: `DDLogger.exportReport()`, `DDLogger.getLogs()`, `DDLogger.getStats()`, `DDLogger.enable/disable/clear()`. También intercepta localStorage (setItem/removeItem) y errores globales (`window.error`, `unhandledrejection`). |
+| `core.js` | `Navigation`, `Shortcuts`, `ContentManager`, `switchTab` | 487 | navigation + utils + contentmanager |
+| `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 2091 | Config global, cálculo de rendimientos decrecientes por rol, analizadores de texto de carta |
+| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 1932 | buscador + cardviewer + favoritas |
+| `mideck.js` | `Deck`, `Banlist`, `Engines` | 3013 | deck + banlist (oficial + custom + Genesys) + engines |
 | `historial.js` | `Matchups`, `Duelista` | 783 | matchups + duelista (duplicados eliminados) |
 | `estadisticas.js` | `Estadisticas` | 2350 | — (solo, era demasiado grande) |
-| `simuladores.js` | `Torneo`, `Duelo`, `Hipergeometria` | 2649 | torneo + duelo + hipergeometria |
+| `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria` | 2819 | winrate + torneo + duelo en vivo (con sub-tabs) + hipergeometría |
 | `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3228 | zonapractica + experimentacion |
-| `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | 3000 | formacion + meta + config + welcome + help |
+| `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | 3300 | formacion + meta + config + welcome + help |
+| `default_data.js` | `DefaultData` | 1194 | Inyección única de datos por defecto: decks (.ydk), apuntes, staples, specialties, engines, juegos, maestros y banlist Genesys. Usa flags individuales por tipo. Parchea `Config.resetToDefault`. Se ejecuta en `window.load`. |
 
-**Nota:** `stats.js` y `winrate.js` no existían como archivos independientes — sus funciones estaban integradas en `estadisticas.js` y `deck.js` respectivamente.
+**Nota:** `Stats` vive dentro de `data.js` (no es archivo independiente). `Winrate` y `DueloEnVivo` son los objetos correctos en `simuladores.js`; el antiguo nombre `Duelo` ya no existe.
 
-### 1.3 CSS — 6 archivos (consolidados de 10)
+### 1.3 CSS — 6 archivos (consolidados)
 
 **Orden de carga en index.html:**
 ```html
@@ -47,10 +48,10 @@ style_simuladores.css → style_config.css → responsive_style.css
 | Archivo | Líneas | Absorbe |
 |---------|--------|---------|
 | `style_core.css` | 1322 | style_global + style_welcome + style_cardviewer |
-| `style_buscador.css` | 1017 | — (sin cambio estructural) |
-| `style_mideck.css` | 2193 | — (sin cambio, límite de tamaño) |
-| `style_simuladores.css` | 5844 | style_simuladores + style_estadisticas |
-| `style_config.css` | 2164 | style_config + style_formacion + style_meta |
+| `style_buscador.css` | 1016 | — (sin cambio estructural) |
+| `style_mideck.css` | 2194 | — (sin cambio, límite de tamaño) |
+| `style_simuladores.css` | 5842 | style_simuladores + style_estadisticas |
+| `style_config.css` | 2215 | style_config + style_formacion + style_meta |
 | `responsive_style.css` | 558 | **NUEVO** — todos los @media del proyecto extraídos |
 
 **Todos los archivos CSS tienen sus `@media` eliminados** — viven exclusivamente en `responsive_style.css`.
@@ -65,9 +66,15 @@ style_simuladores.css → style_config.css → responsive_style.css
 | `#mideck-content` | Mi Deck | `Deck.render()` → `#deck-container` |
 | `#estadisticas-content` | Estadísticas | `Estadisticas.render()` |
 | `#simuladores-content` | Simuladores | `Torneo.init()` (lazy) |
-| `#meta-content` | Meta | `Meta.init()` — **oculto en nav** (`display:none`) |
+| `#meta-content` | Meta | `Meta.init()` — **fuera de `Navigation.tabs`**, accesible solo por código |
 | `#formacion-content` | Formación | `Formacion.init()` |
 | `#config-content` | Config | `Config.render()` |
+
+**Navigation.tabs** (orden de navegación con teclado y pestañas visibles):
+```javascript
+['buscador', 'mideck', 'estadisticas', 'simuladores', 'formacion', 'config']
+```
+`meta` está oculto en el nav HTML (`display:none`) y **no figura en `Navigation.tabs`**; solo se activa internamente vía `Meta.init()` o `switchTab('meta')`.
 
 ---
 
@@ -75,7 +82,7 @@ style_simuladores.css → style_config.css → responsive_style.css
 
 | Clave | Módulo | Tipo | Descripción |
 |-------|--------|------|-------------|
-| `yugioh_config` | `ConfigManager` | Object | Config principal: roles, staples, specialties, nomenclature, pillars, metaMasters, metaLinks, formacionGames, formacionTopics, shortcuts, music |
+| `yugioh_config` | `ConfigManager` | Object | Config principal: roles, roleConditions, roleWeights, staples, specialties, nomenclature, pillars, metaMasters, metaLinks, formacionGames, formacionTopics, shortcuts, music |
 | `yugioh_player_level` | `ConfigManager` | String | `'novato'\|'casual'\|'competitivo'\|'default'` — perfil elegido en Welcome y Config |
 | `dd_player_profile` | `ContentManager` | String | `'novato'\|'casual'\|'competitivo'` — controla visibilidad de secciones |
 | `dd_content_visibility` | `ContentManager` | Object | Override manual de visibilidad por sección ID |
@@ -89,8 +96,25 @@ style_simuladores.css → style_config.css → responsive_style.css
 | `yugioh_formacion_fallbacks` | `ConfigManager` | Object | Base64/URL imágenes fallback para Juegos |
 | `yugioh_formacion_notes` | `Formacion` | Array | `[{title,content,date}]` |
 | `yugioh_formacion_mastered` | `Formacion` | Array | IDs de temas dominados |
-| `dd_power_scores_cache` | `Estadisticas` | Object | Cache de Power Scores calculados |
-| `yugioh_meta_folders` | `Estadisticas` | Array | Carpetas del meta con decks .ydk importados |
+| `yugioh_power_cache` | `Estadisticas` | Object | Cache de Power Scores calculados (reemplaza `dd_power_scores_cache`) |
+| `yugioh_cross_scores` | `Estadisticas` | Object | Scores cruzados entre decks del meta |
+| `yugioh_meta_decks` | `Estadisticas` | Array | Decks del meta cargados (.ydk importados) |
+| `yugioh_meta_deck_scores` | `Estadisticas` | Object | Scores calculados de decks del meta |
+| `yugioh_meta_card_library` | `Estadisticas` | Object | Librería de cartas del meta (cache local) |
+| `dd_report_counter` | `DDLogger` | Number | Contador de reportes exportados |
+
+**Flags de DefaultData** (sobreviven a Borrar Data, se eliminan solo con Restaurar Config):
+
+| Clave | Descripción |
+|-------|-------------|
+| `dd_default_decks_loaded` | Decks de ejemplo (.ydk) ya inyectados |
+| `dd_default_notes_loaded` | Apuntes por defecto ya inyectados |
+| `dd_default_staples_loaded` | Staples por defecto ya inyectados |
+| `dd_default_specialties_loaded` | Especialidades por defecto ya inyectadas |
+| `dd_default_engines_loaded` | Engines por defecto ya inyectados |
+| `dd_default_games_loaded` | Juegos de Formación por defecto ya inyectados |
+| `dd_default_masters_loaded` | Maestros del Meta por defecto ya inyectados |
+| `dd_default_genesys_loaded` | Banlist Genesys ya generado desde API |
 
 ---
 
@@ -99,6 +123,8 @@ style_simuladores.css → style_config.css → responsive_style.css
 ```
 data.js (ConfigManager)  ←── buscador, mideck, historial, estadisticas,
                                simuladores, formacion, core (ContentManager)
+
+data.js (Stats)          ←── estadisticas (cálculo de rendimientos decrecientes)
 
 core.js (ContentManager) ←── formacion (applyProfile al cambiar perfil)
                                navigation applyAll() en cada tab change
@@ -114,6 +140,10 @@ formacion.js (Meta)      ←── Sub-tabs Fuentes y Maestros de Formacion dele
 
 formacion.js (Welcome)   ←── llama ConfigManager.savePlayerLevel() Y
                                ContentManager.applyProfile() al hacer enter()
+
+default_data.js          ←── requiere ConfigManager, Deck, Engines, Formacion,
+(DefaultData)                 Meta, Banlist (todos ya cargados antes en index.html)
+                               Parchea Config.resetToDefault al final del load.
 ```
 
 ---
@@ -128,8 +158,10 @@ switchTab(name) → Navigation.showTab(name)
   → si simuladores:       Torneo.init()
   → si formacion:         Formacion.init()
   → si meta:              Meta.init()
+  → si saliendo de simuladores: ZonaPractica._cleanupFloatBtns()
+  → Estadisticas.updateFloatingWidgetVisibility(tabName)
   → ContentManager.applyAll()
-  → Estadisticas.updateFloatingWidgetVisibility()
+  → window.scrollTo({ top:0, behavior:'smooth' })
 ```
 
 ### 5.2 Selección de perfil (Welcome)
@@ -154,7 +186,7 @@ Config.selectPlayerLevel(levelKey)
 ### 5.4 Borrar Todo
 ```
 Config.borrarTodo()
-  → localStorage.clear() completo
+  → localStorage.clear() completo (flags de DefaultData desaparecen)
   → Welcome.dismissed = false
   → localStorage.removeItem('dd_welcome_dismissed')
   → reconstruye config vacía
@@ -162,26 +194,46 @@ Config.borrarTodo()
   → Welcome.init() → muestra panel de nuevo
 ```
 
-### 5.5 Botón flotante de música (MusicPlayer.toggle)
+### 5.5 Restaurar Config (DefaultData)
+```
+Config.resetToDefault()  ← parcheado por DefaultData._patchConfig()
+  → localStorage.clear()
+  → await DefaultData.init()  → re-inyecta TODO (flags limpios)
+```
+
+### 5.6 DefaultData.init() — inyección única por tipo
+```
+window.load → DefaultData.init()
+  → _initNotes()       si no flag dd_default_notes_loaded
+  → _initSpecialties() si no flag dd_default_specialties_loaded
+  → _initGames()       si no flag dd_default_games_loaded
+  → _initMasters()     si no flag dd_default_masters_loaded
+  → _initDecks()       si no flag dd_default_decks_loaded  (fetch API por ID)
+  → _initStaples()     si no flag dd_default_staples_loaded (fetch API)
+  → _initEngines()     si no flag dd_default_engines_loaded (fetch API)
+  → _initGenesys()     si no flag dd_default_genesys_loaded (fetch API completa)
+→ DefaultData._patchConfig()  → sobreescribe Config.resetToDefault
+```
+
+### 5.7 Botón flotante de música (MusicPlayer.toggle)
 ```
 ▶ (detenido) → MusicPlayer.toggle()
-  → lee ConfigManager.getPlayerLevel()  → resuelve cfg.tracks[level]
+  → lee ConfigManager.getPlayerLevel() → resuelve cfg.tracks[level]
   → si path ≠ currentPath: _buildAudio(path) + play
   → si path == currentPath: play directo
   → _updateButton() → '⏹'
 
 ⏹ (reproduciendo) → MusicPlayer.toggle()
-  → lee ConfigManager.getPlayerLevel()  → resuelve cfg.tracks[level]
+  → lee ConfigManager.getPlayerLevel() → resuelve cfg.tracks[level]
   → pause()
   → si path ≠ currentPath: _buildAudio(path)  ← pista actualizada, lista para próximo play
   → si path == currentPath: audio.currentTime = 0
   → _updateButton() → '▶'
 ```
 **Nota:** cambiar Perfil Base en Config llama `MusicPlayer.setTrack(path)` que actualiza
-`currentPath` en caliente. El toggle siempre re-verifica el perfil activo, garantizando
-coherencia aunque el cambio ocurra mientras la música está detenida.
+`currentPath` en caliente. El toggle siempre re-verifica el perfil activo.
 
-### 5.6 Render sidebar Mi Deck
+### 5.8 Render sidebar Mi Deck
 ```
 Engines._renderSidebar()
   → lee _activeTab (engines|decks|staples|favoritas)
@@ -207,7 +259,11 @@ Sub-tabs:  📓 Apuntes | 📖 Temas | 🎮 Juegos | 🔗 Fuentes | 🎓 Maestro
 
 ### Simuladores (`simuladores.js`)
 ```
-Sub-tabs:  Mulligan | Winrate | Torneo | Duelo | Experimentación | Práctica
+Sub-tabs principales (Torneo.simTab):
+  🎲 Mulligan | 📊 Winrate | 🏆 Torneo | ⚔️ Duelo en Vivo | 🧪 Experimentación | 🎴 Zona de Práctica
+
+Sub-tabs de Duelo en Vivo (DueloEnVivo.subTab):
+  ⏱ Cronómetro Estándar | 👑 Cronómetro Master Duel | 🎲 Herramientas
 ```
 
 ### Estadísticas (`estadisticas.js`)
@@ -229,6 +285,7 @@ Secciones (IDs para Shortcuts y ContentManager):
 | 4 | `logger.js` y `parallax.js` referenciados pero inexistentes | `index.html` | Eliminados del orden de carga; nuevo `logger.js` creado (DDLogger) |
 | 5 | `MusicPlayer.init()` cargaba siempre pista `default` ignorando perfil guardado | `formacion.js` → `MusicPlayer.init` | Lee `ConfigManager.getPlayerLevel()` al inicio; resuelve pista del perfil guardado |
 | 6 | Botón ▶/⏸ pausaba en lugar de detener; play no resincronizaba perfil | `formacion.js` → `MusicPlayer.toggle` | Stop real (pause + reset/rebuild); play relee perfil activo antes de reproducir |
+| 7 | `dd_power_scores_cache` inconsistente con claves reales usadas | `estadisticas.js` | Renombrado a `yugioh_power_cache`; clave vieja eliminada en Config.borrarTodo |
 
 ---
 
@@ -239,6 +296,7 @@ Secciones (IDs para Shortcuts y ContentManager):
 Base: https://db.ygoprodeck.com/api/v7/
 cardinfo.php?name=  cardinfo.php?id=  cardinfo.php?fname=
 archetypes.php      cardsets.php
+cardinfo.php        ← fetch completo usado por DefaultData._initGenesys()
 
 Imágenes:
 https://images.ygoprodeck.com/images/cards/{id}.jpg        → full
@@ -260,6 +318,8 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 | `.cv-overlay` / `.card-viewer-overlay` | style_core | Visor de carta |
 | `#welcome-overlay.welcome-visible` | style_core | Panel bienvenida visible |
 | `.cm-profile-btn.cm-profile-active` | style_core | Perfil activo en Config |
+| `.torneo-tab-btn` / `[data-simtab].active` | style_simuladores | Sub-tabs Simuladores |
+| `.duelo-sub-tab.active` | style_simuladores | Sub-tabs Duelo en Vivo |
 
 ---
 
@@ -275,3 +335,9 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 
 **Variables CSS globales** (definidas en `style_core.css`):
 `--gold-color` · `--accent-color` · `--bg-card` · `--text-light` · `--danger-color` · `--spacing-sm/md/lg`
+
+**Objetos renombrados respecto a versiones anteriores:**
+- `Duelo` → `DueloEnVivo` (simuladores.js)
+- `dd_power_scores_cache` → `yugioh_power_cache` (localStorage)
+- `Stats` ahora vive dentro de `data.js` (no archivo propio)
+- `default_data.js` es módulo nuevo; carga DESPUÉS de `formacion.js` y ANTES de `logger.js`
