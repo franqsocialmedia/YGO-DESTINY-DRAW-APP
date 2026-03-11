@@ -1,5 +1,5 @@
 # DESTINY DRAW — REPORTE TÉCNICO
-**Versión:** Post-consolidación v2.1 | **Fecha:** Mar 2026
+**Versión:** Post-consolidación v2.2 | **Fecha:** Mar 2026
 **Stack:** Vanilla JS (ES6 objects) · CSS modular · HTML5 SPA · YGOProDeck API · localStorage
 
 ---
@@ -25,14 +25,14 @@ default_data.js → logger.js  (SIEMPRE AL FINAL)
 |---------|-----------------|--------|-------------|
 | `logger.js` | `DDLogger` | 365 | Logger no-invasivo. Se carga al final, envuelve todos los objetos globales post-`window.load`. **No modifica ningún módulo fuente.** API: `DDLogger.exportReport()`, `DDLogger.getLogs()`, `DDLogger.getStats()`, `DDLogger.enable/disable/clear()`. También intercepta localStorage (setItem/removeItem) y errores globales (`window.error`, `unhandledrejection`). |
 | `core.js` | `Navigation`, `Shortcuts`, `ContentManager`, `switchTab` | 487 | navigation + utils + contentmanager |
-| `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 2091 | Config global, cálculo de rendimientos decrecientes por rol, analizadores de texto de carta |
-| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 1932 | buscador + cardviewer + favoritas |
+| `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | ~2250 | Config global, cálculo de rendimientos decrecientes por rol, analizadores de texto de carta. **v2.2:** nuevas estructuras de scoring (g1g2Roles, roleBasePower, scoringLayers, reliabilityTable), nuevos getters, soporte notContains en _detectRoles, segmentDescription en NomenclatureAnalyzer, g1Score/g2Score en calculateInternalScore, g1Vulnerability/g2Vulnerability en calculateExternalScore. |
+| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | ~1950 | buscador + cardviewer + favoritas. **v2.2:** método `randomCard()`, corrección tipo Pyro en filtros avanzados. |
 | `mideck.js` | `Deck`, `Banlist`, `Engines` | 3013 | deck + banlist (oficial + custom + Genesys) + engines |
 | `historial.js` | `Matchups`, `Duelista` | 783 | matchups + duelista (duplicados eliminados) |
-| `estadisticas.js` | `Estadisticas` | 2350 | — (solo, era demasiado grande) |
+| `estadisticas.js` | `Estadisticas` | ~2420 | — (solo, era demasiado grande). **v2.2:** render de g1Score, g2Score, perfil G1/G2 y vulnerabilidades en sección de análisis. |
 | `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria` | 2819 | winrate + torneo + duelo en vivo (con sub-tabs) + hipergeometría |
 | `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3228 | zonapractica + experimentacion |
-| `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | 3300 | formacion + meta + config + welcome + help |
+| `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | ~3450 | formacion + meta + config + welcome + help. **v2.2:** roles colapsables, campo "NO contiene" por rol, nomenclatura colapsable, títulos de sección actualizados. |
 | `default_data.js` | `DefaultData` | 1194 | Inyección única de datos por defecto: decks (.ydk), apuntes, staples, specialties, engines, juegos, maestros y banlist Genesys. Usa flags individuales por tipo. Parchea `Config.resetToDefault`. Se ejecuta en `window.load`. |
 
 **Nota:** `Stats` vive dentro de `data.js` (no es archivo independiente). `Winrate` y `DueloEnVivo` son los objetos correctos en `simuladores.js`; el antiguo nombre `Duelo` ya no existe.
@@ -48,10 +48,10 @@ style_simuladores.css → style_config.css → responsive_style.css
 | Archivo | Líneas | Absorbe |
 |---------|--------|---------|
 | `style_core.css` | 1322 | style_global + style_welcome + style_cardviewer |
-| `style_buscador.css` | 1016 | — (sin cambio estructural) |
+| `style_buscador.css` | ~1030 | — **v2.2:** clase `.btn-random` añadida |
 | `style_mideck.css` | 2194 | — (sin cambio, límite de tamaño) |
-| `style_simuladores.css` | 5842 | style_simuladores + style_estadisticas |
-| `style_config.css` | 2215 | style_config + style_formacion + style_meta |
+| `style_simuladores.css` | ~5860 | style_simuladores + style_estadisticas. **v2.2:** clases `.analysis-g1g2-*` añadidas |
+| `style_config.css` | ~2260 | style_config + style_formacion + style_meta. **v2.2:** clases `.role-panel*` añadidas |
 | `responsive_style.css` | 558 | **NUEVO** — todos los @media del proyecto extraídos |
 
 **Todos los archivos CSS tienen sus `@media` eliminados** — viven exclusivamente en `responsive_style.css`.
@@ -82,7 +82,7 @@ style_simuladores.css → style_config.css → responsive_style.css
 
 | Clave | Módulo | Tipo | Descripción |
 |-------|--------|------|-------------|
-| `yugioh_config` | `ConfigManager` | Object | Config principal: roles, roleConditions, roleWeights, staples, specialties, nomenclature, pillars, metaMasters, metaLinks, formacionGames, formacionTopics, shortcuts, music |
+| `yugioh_config` | `ConfigManager` | Object | Config principal: roles, roleConditions, roleWeights, staples, specialties, nomenclature, pillars, metaMasters, metaLinks, formacionGames, formacionTopics, shortcuts, music, **g1g2Roles, roleBasePower, scoringLayers, reliabilityTable** |
 | `yugioh_player_level` | `ConfigManager` | String | `'novato'\|'casual'\|'competitivo'\|'default'` — perfil elegido en Welcome y Config |
 | `dd_player_profile` | `ContentManager` | String | `'novato'\|'casual'\|'competitivo'` — controla visibilidad de secciones |
 | `dd_content_visibility` | `ContentManager` | Object | Override manual de visibilidad por sección ID |
@@ -124,7 +124,10 @@ style_simuladores.css → style_config.css → responsive_style.css
 data.js (ConfigManager)  ←── buscador, mideck, historial, estadisticas,
                                simuladores, formacion, core (ContentManager)
 
-data.js (Stats)          ←── estadisticas (cálculo de rendimientos decrecientes)
+data.js (Stats)          ←── estadisticas (cálculo de rendimientos decrecientes,
+                               g1Score/g2Score, g1Vulnerability/g2Vulnerability)
+
+data.js (NomenclatureAnalyzer) ←── Stats.calculateInternalScore (segmentDescription)
 
 core.js (ContentManager) ←── formacion (applyProfile al cambiar perfil)
                                navigation applyAll() en cada tab change
@@ -241,6 +244,26 @@ Engines._renderSidebar()
   → favoritas: _renderFavoritasItems() → Favoritas.getAll()
 ```
 
+### 5.9 Scoring G1/G2 (nuevo en v2.2)
+```
+Stats.calculateInternalScore(cards)
+  → loop principal (sin cambios): roleCounters → pilares → rendimientos decrecientes
+  → loop paralelo G1/G2:
+      por cada carta main:
+        segmentDescription(desc) → fragmentos por categoría de nomenclatura
+        getRoleBasePower(rol)     → L3 base
+        applyLayers(segments)     → L1 × L2 × L4 × L5 (keywords en fragmento correcto)
+        getReliability(pool)      → pool efectivo = copias + searchers del mismo arquetipo
+        cardScore = basePower × layerMult × reliability
+        getRoleG1G2(dominantRole) → 'g1' | 'g2' | 'neutral' (neutral = 50/50)
+  → retorna { ...campos anteriores, g1Score, g2Score }
+
+Stats.calculateExternalScore(deckCards, powerScoreCache, metaDecks)
+  → flujo anterior intacto
+  → al calcular totalThreat: cruza threatCards con g1g2Roles del deck
+  → retorna { ...campos anteriores, g1Vulnerability, g2Vulnerability }
+```
+
 ---
 
 ## 6. SUB-TABS POR PESTAÑA
@@ -273,6 +296,22 @@ Secciones (IDs para Shortcuts y ContentManager):
   meta-decks-sec | power-scores-sec | counter-cards-sec | export-sec | duelista-sec
 ```
 
+### Config — secciones de roles (`formacion.js` → `Config`)
+```
+Sección "Mecánicas y Roles" (antes "Roles y Palabras Asociadas"):
+  Cada rol se muestra como panel colapsable (.role-panel).
+  Header: onclick toggle · arrow ▶/▼ · badge de nombre · inputs con stopPropagation
+  Body (oculto por defecto): keywords · condicional · NO contiene · nomenclatura
+  _restoreAndScroll() expande automáticamente el panel al hacer scroll al anchor.
+
+Sección "Counters" (antes "Mecánicas y Counters"):
+  Sin cambio estructural, solo renombre.
+
+Sección "Nomenclatura":
+  Cada categoría también usa el patrón colapsable (.role-panel).
+  Body oculto por defecto; se expande con toggleNomPanel(catId).
+```
+
 ---
 
 ## 7. BUGS RESUELTOS
@@ -286,6 +325,7 @@ Secciones (IDs para Shortcuts y ContentManager):
 | 5 | `MusicPlayer.init()` cargaba siempre pista `default` ignorando perfil guardado | `formacion.js` → `MusicPlayer.init` | Lee `ConfigManager.getPlayerLevel()` al inicio; resuelve pista del perfil guardado |
 | 6 | Botón ▶/⏸ pausaba en lugar de detener; play no resincronizaba perfil | `formacion.js` → `MusicPlayer.toggle` | Stop real (pause + reset/rebuild); play relee perfil activo antes de reproducir |
 | 7 | `dd_power_scores_cache` inconsistente con claves reales usadas | `estadisticas.js` | Renombrado a `yugioh_power_cache`; clave vieja eliminada en Config.borrarTodo |
+| 8 | Tipo `Pyro` ausente en filtros avanzados del Buscador | `buscador.js` → `FILTER_DATA.monsterTypes` | Añadido `'Pyro'` al array junto a los otros tipos de monstruo |
 
 ---
 
@@ -297,6 +337,7 @@ Base: https://db.ygoprodeck.com/api/v7/
 cardinfo.php?name=  cardinfo.php?id=  cardinfo.php?fname=
 archetypes.php      cardsets.php
 cardinfo.php        ← fetch completo usado por DefaultData._initGenesys()
+                    ← también usado por Buscador.randomCard() (filtros opcionales)
 
 Imágenes:
 https://images.ygoprodeck.com/images/cards/{id}.jpg        → full
@@ -320,6 +361,15 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 | `.cm-profile-btn.cm-profile-active` | style_core | Perfil activo en Config |
 | `.torneo-tab-btn` / `[data-simtab].active` | style_simuladores | Sub-tabs Simuladores |
 | `.duelo-sub-tab.active` | style_simuladores | Sub-tabs Duelo en Vivo |
+| `.btn-random` | style_buscador | Botón Carta Random (gradiente púrpura, ancho completo) |
+| `.role-panel` | style_config | Card colapsable de rol/nomenclatura |
+| `.role-panel-header` | style_config | Header clickeable con cursor pointer y hover sutil |
+| `.role-panel-arrow` | style_config | Indicador ▶/▼ del estado del panel |
+| `.role-panel-name` | style_config | Badge de nombre del rol truncado |
+| `.role-panel .role-card-body` | style_config | Body interno con padding cuando está abierto |
+| `.analysis-g1g2-row` | style_simuladores | Fila de barras Going First / Going Second |
+| `.analysis-g1g2-item` | style_simuladores | Item individual con label, barra y valor |
+| `.analysis-g1g2-profile` | style_simuladores | Indicador textual de perfil del deck (equilibrado/reactivo/dado) |
 
 ---
 
@@ -342,155 +392,86 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 - `Stats` ahora vive dentro de `data.js` (no archivo propio)
 - `default_data.js` es módulo nuevo; carga DESPUÉS de `formacion.js` y ANTES de `logger.js`
 
-Actualizaciones:
+---
 
-Reporte de cambios — fragmentos para sustituir
+## 11. CAMBIOS v2.2 — DETALLE POR ARCHIVO
 
-formacion.js
+### `buscador.js`
+- **`FILTER_DATA.monsterTypes`**: añadido `'Pyro'` (estaba ausente; todos los demás tipos ya existían).
+- **`Buscador.randomCard()`**: método nuevo. Llama a `buildApiUrl('')` con los filtros activos, aplica `applyAdvancedLocalFilter` y `applyWordFilters`, elige una carta al azar del pool resultante y la muestra con `displayResults([picked])`. Muestra un notice con el tamaño del pool. Si no hay cartas que cumplan los filtros, muestra mensaje de error.
 
-1. Título de sección "Roles y Palabras Asociadas" → "Mecánicas y Roles"
-Antes de: <div id="roles-section" class="config-section-content"
-Después de: ▶ 🎭
-ANTES:  ▶ 🎭 Roles y Palabras Asociadas
-DESPUÉS: ▶ 🎭 Mecánicas y Roles
+### `index.html`
+- Añadido botón `#random-btn` con clase `btn btn-random` después del botón `#clear-btn` en la barra de búsqueda del Buscador.
 
-2. Título "Mecánicas y Counters" → "Counters" (sección y texto de ayuda)
-Antes de: ▶ ⚙️
-Después de: sección de Especialidades
-ANTES:  ▶ ⚙️ Mecánicas y Counters
-DESPUÉS: ▶ ⚙️ Counters
+### `style_buscador.css`
+- Añadida clase `.btn-random`: gradiente `#4a1a6e → #8b2fc9`, texto dorado `#f0d060`, `width:100%`, hover con borde dorado.
 
-ANTES:  <strong>Mecánicas y Counters:</strong> Conecta roles entre sí.
-DESPUÉS: <strong>Counters:</strong> Conecta roles entre sí.
-(También en HelpPanel línea ~3148)
+### `data.js` — ConfigManager (nuevas estructuras en defaultConfig)
+- **`g1g2Roles`**: clasifica cada rol existente como `'g1'`, `'g2'` o `'neutral'`. G1 = construye board/protege combo. G2 = disrumpe/rompe board. Neutral = funciona en ambos contextos.
+- **`roleBasePower`**: tabla de poder base L3 por rol (escala 1–10). Negate-activation=10, Boardbreaker=9, Negate-effect/Negater/Tower=8... configurable por el usuario.
+- **`scoringLayers`**: capas L1 (velocidad, cat: `condicionActivacion`), L2 (coste, cat: `costoActivacion`), L4 (restricción, cat: `restriccion`), L5 (alcance, cat: `efectoGenerico`). Cada capa tiene `entries: [{keywords, multiplier}]`.
+- **`reliabilityTable`**: `{1:0.40, 2:0.65, 3:0.85, 4:0.90, 5:0.95}` — fiabilidad por copias en mano de apertura (deck 40, mano 5).
 
-3. renderRoleCard — panels colapsables + campo "NO contiene"
-Antes de: removeCondKeywordByIndex: function
-Después de: (fin del método renderRoleCard)
-El método completo fue reemplazado. Los cambios estructurales son:
+### `data.js` — ConfigManager (nuevos getters)
+Añadidos después de `getRoleCondition`:
+- `getG1G2Roles()` / `getRoleG1G2(roleName)`
+- `getRoleBasePowers()` / `getRoleBasePower(roleName)` (default: 3 si no existe)
+- `getScoringLayers()`
+- `getReliabilityTable()` / `getReliability(copies)` (interpolación para valores fuera de tabla)
 
-role-card → role-card role-panel
-role-card-header → role-card-header role-panel-header con onclick="Config.toggleRolePanel(...)"
-Se añade <span class="role-panel-arrow">▶</span> y <span class="role-panel-name"> al header
-role-card-body pasa a display:none por defecto
-Botones llevan event.stopPropagation() para no activar el toggle
-Nuevo bloque "NO contiene" entre Condicional y Restringir Nomenclatura, usando Config.addNotContainsFromInput / Config.removeNotContainsByIndex
+### `data.js` — ConfigManager (métodos de notContains)
+Añadidos después de `removeKeywordFromRoleCondition`:
+- `addNotContainsToRole(roleName, kw)` — push a `roleConditions[roleName].notContains[]`
+- `removeNotContainsFromRole(roleName, index)` — splice por índice
 
+### `data.js` — SpecialtyAnalyzer._detectRoles
+- Soporte para `notContains` en `roleConditions`: si alguna keyword de `notContains` está en el desc completo, cancela la asignación del rol aunque se hayan cumplido las otras condiciones.
 
-4. addCondKeywordFromInput — añade _restoreAndScroll
-Antes de: removeCondKeyword: function
-Después de: (fin del método)
-ANTES (al final del if exitoso):
-    el.value = ''; 
-    this.render(); 
+### `data.js` — NomenclatureAnalyzer
+- **`segmentDescription(desc)`**: método nuevo. Devuelve `{ categoryId: [textFragment, ...] }`. Divide la descripción de la carta por categorías de nomenclatura usando la misma lógica de `analyzeCard`. Usado por `Stats.calculateInternalScore` para que cada capa del scoring lea solo el fragmento correcto.
 
-DESPUÉS:
-    el.value = '';
-    this.render();
-    this._restoreAndScroll('roles-section', `role-anchor-${roleName}`);
+### `data.js` — Stats.calculateInternalScore
+- Loop principal **sin cambios**: roleCounters → pilares → rendimientos decrecientes → penalización.
+- Añadido **loop paralelo G1/G2** al final del método:
+  - Pre-calcula pool de searchers por arquetipo.
+  - Por cada carta main: obtiene `segmentDescription`, aplica `getRoleBasePower`, multiplica por capas L1/L2/L4/L5 (cada una busca keywords en su categoría de nomenclatura), multiplica por `getReliability(pool efectivo)`.
+  - Clasifica en `g1Score` o `g2Score` según `getRoleG1G2(dominantRole)`. Neutral = 50/50.
+- Retorno extendido con `g1Score` y `g2Score` (campos nuevos, no rompen compatibilidad).
 
-5. addConditionalFromInput — añade _restoreAndScroll
-Mismo patrón que el punto 4, dentro del bloque exitoso:
-ANTES:  el.value = ''; this.render();
-DESPUÉS: el.value = ''; this.render(); this._restoreAndScroll('roles-section', `role-anchor-${roleName}`);
+### `data.js` — Stats.calculateExternalScore
+- `result` inicializado con `g1Vulnerability: null, g2Vulnerability: null`.
+- Al calcular `totalThreat`: cruza cada `threatCard` y sus `countersSpecs` con `g1g2Roles` del deck para separar amenazas en contexto G1 y G2.
+- Calcula `g1Vulnerability` y `g2Vulnerability` como `(threatParcial / baseParcial) × 10`, capped a 10.
 
-6. renameRole — añade _restoreAndScroll
-Antes de: createNewRole: function
-Después de: (fin del método)
-ANTES:
-    if (ConfigManager.renameRole(oldName, newName)) {
-        this.render();
-    }
+### `estadisticas.js` — renderAnalysisSection
+- Extrae `g1Score`, `g2Score` de `internalStats`.
+- Calcula `g1g2Profile` (objeto con `label`, `detail`, `icon`, `color`) según ratio G1/G2:
+  - `ratio > 1.3` → "Dependiente del dado"
+  - `ratio < 0.77` → "Deck Reactivo"
+  - Dentro del rango → "Deck Equilibrado"
+- Añade bloque `<!-- G1 / G2 SCORES -->` con dos barras horizontales (púrpura / rosa) e indicador de perfil, posicionado entre el bloque RPS y el Veredicto.
+- Añade caja de vulnerabilidades G1/G2 junto al External Score, con tooltips explicativos en español para jugadores novatos.
 
-DESPUÉS:
-    if (ConfigManager.renameRole(oldName, newName)) {
-        this.render();
-        this._restoreAndScroll('roles-section', `role-anchor-${CSS.escape(newName)}`);
-    }
+### `style_simuladores.css`
+- Añadidas clases: `.analysis-g1g2-row`, `.analysis-g1g2-item`, `.analysis-g1g2-label`, `.analysis-g1g2-val`, `.analysis-g1g2-detail`, `.analysis-g1g2-profile`.
 
-7. Nuevas funciones — después de removeConditional
-Antes de: // =============================== → renderSpecialtiesSection
-Después de: removeConditional: function
-Funciones nuevas añadidas en bloque:
+### `formacion.js` — Config (sección Roles)
+- Título "Roles y Palabras Asociadas" → **"Mecánicas y Roles"**.
+- Título "Mecánicas y Counters" → **"Counters"** (también en HelpPanel).
+- `renderRoleCard()`: reemplazado completamente. Cada rol es ahora un panel colapsable (`.role-panel`). Header con `onclick="Config.toggleRolePanel(...)"`, flecha ▶/▼, badge de nombre. Body con `display:none` por defecto. Botones de edición llevan `event.stopPropagation()`. Nuevo bloque "NO contiene" entre Condicional y Restringir Nomenclatura.
+- `addCondKeywordFromInput()`: añade `this._restoreAndScroll('roles-section', \`role-anchor-${roleName}\`)` tras el render exitoso.
+- `addConditionalFromInput()`: mismo patrón.
+- `renameRole()`: añade `this._restoreAndScroll` con `CSS.escape(newName)`.
+- Funciones nuevas: `addNotContainsFromInput(el)`, `removeNotContainsByIndex(roleName, index)`, `toggleRolePanel(roleName)`, `toggleNomPanel(catId)`.
+- `_restoreAndScroll()`: expande el `.role-card-body` del elemento destino antes de hacer scroll.
+- Nomenclatura card: mismo patrón colapsable que roles. `onblur` del input de nombre llama `_restoreAndScroll` además de `updateNomenclatureCategory`.
+- Anchors de nomenclatura corregidos: `nomenclature-category-anchor-${catId}` → `nom-anchor-${catId}` (4 ocurrencias).
 
-addNotContainsFromInput(el) — igual que addConditionalFromInput pero llama ConfigManager.addNotContainsToRole
-removeNotContainsByIndex(roleName, index) — llama ConfigManager.removeNotContainsFromRole
-toggleRolePanel(roleName) — alterna display de .role-card-body y el ▶/▼ del arrow
-toggleNomPanel(catId) — ídem para las cards de Nomenclatura
-
-
-8. Nomenclatura card — header colapsable
-Antes de: renderNomCategoryOptions: function
-Después de: (fin del método que devuelve el template de la card)
-ANTES:  <div class="role-card" id="nom-anchor-${cat.id}">
-          <div class="role-card-header">
-            ...inputs y botón delete...
-          </div>
-          <div class="role-card-body" style="gap:12px;">
-
-DESPUÉS: <div class="role-card role-panel" id="nom-anchor-${cat.id}">
-           <div class="role-card-header role-panel-header" onclick="Config.toggleNomPanel('${cat.id}')">
-             <span class="role-panel-arrow">▶</span>
-             <span class="role-panel-name" style="...color badge...">nombre</span>
-             ...inputs con event.stopPropagation()...
-           </div>
-           <div class="role-card-body" style="display:none;gap:12px;">
-También: onblur del input de nombre ahora llama Config._restoreAndScroll(...) además del updateNomenclatureCategory.
-
-9. Anchors de Nomenclatura — corrección de IDs
-Toda ocurrencia de:
-this._restoreAndScroll('nomenclature-section', `nomenclature-category-anchor-${catId}`)
-Cambiada a:
-this._restoreAndScroll('nomenclature-section', `nom-anchor-${catId}`)
-(4 ocurrencias en addNomCondKw, removeNomCondKw, removeNomCondKwByIndex)
-
-10. _restoreAndScroll — expande panel al hacer scroll
-Antes de: toggleSection: function
-ANTES:
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-DESPUÉS:
-    if (el) {
-        const body = el.querySelector('.role-card-body');
-        if (body) body.style.display = 'flex';
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-data.js
-
-11. _detectRoles — soporte para notContains
-Antes de: // Analiza una carta: usa roles pre-asignados
-Después de: bloque if (shouldAssign && !roles.includes(roleName))
-ANTES:
-    if (shouldAssign && !roles.includes(roleName)) roles.push(roleName);
-
-DESPUÉS:
-    // notContains: si alguna de estas palabras está en el desc, cancela la asignación
-    if (shouldAssign && roleConditions[roleName]) {
-        const notKws = roleConditions[roleName].notContains || [];
-        if (notKws.some(nk => nk && desc.includes(nk.toLowerCase()))) {
-            shouldAssign = false;
-        }
-    }
-    if (shouldAssign && !roles.includes(roleName)) roles.push(roleName);
-
-12. ConfigManager — dos métodos nuevos
-Antes de: // =============================== (el separador que sigue a removeKeywordFromRoleCondition)
-
-addNotContainsToRole(roleName, kw) — push a roleConditions[roleName].notContains[]
-removeNotContainsFromRole(roleName, index) — splice por índice
-
-
-style_config.css
-
-13. Estilos nuevos — bloque de panel colapsable
-Antes de: .role-card-header {
-Después de: .role-card:hover { ... }
-Clases nuevas añadidas:
-
-.role-panel — quita padding del card base, overflow:hidden
-.role-panel-header — cursor:pointer, user-select:none, padding compacto, hover sutil
-.role-panel-arrow — tamaño y color del indicador ▶/▼
-.role-panel-name — badge de nombre truncado
-.role-panel .role-card-body — padding interno cuando está abierto
-.role-panel .role-name-input — font-size reducido en contexto de panel
+### `style_config.css`
+- Añadido bloque de clases para paneles colapsables:
+  - `.role-panel`: quita padding del card base, `overflow:hidden`.
+  - `.role-panel-header`: `cursor:pointer`, `user-select:none`, padding compacto, hover sutil.
+  - `.role-panel-arrow`: tamaño y color del indicador ▶/▼.
+  - `.role-panel-name`: badge de nombre truncado.
+  - `.role-panel .role-card-body`: padding interno cuando está abierto.
+  - `.role-panel .role-name-input`: `font-size` reducido en contexto de panel.
