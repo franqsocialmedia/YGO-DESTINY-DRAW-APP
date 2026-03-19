@@ -569,6 +569,16 @@ tryDeckExperimentacion: function (deckName) {
             return;
         }
 
+        // ── Pantalla de carga ────────────────────────────────────────
+        const loadingEl = document.createElement('div');
+        loadingEl.id = 'ydk-import-overlay';
+        loadingEl.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.82);
+            display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;gap:16px;`;
+        loadingEl.innerHTML = `
+            <div class="power-loading-spinner"></div>
+            <p style="color:#f0d060;font-size:1rem;margin:0;">⏳ Importando deck... (${uniqueIds.size} cartas)</p>`;
+        document.body.appendChild(loadingEl);
+
         try {
             const idsArray = Array.from(uniqueIds);
             const url = `https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${idsArray.join(',')}`;
@@ -614,9 +624,11 @@ tryDeckExperimentacion: function (deckName) {
             this.name = filename.replace('.ydk', '');
             this.render();
             this.onDeckLoaded();
+            document.getElementById('ydk-import-overlay')?.remove();
             alert(`Deck importado: ${this.name}`);
 
         } catch (error) {
+            document.getElementById('ydk-import-overlay')?.remove();
             console.error('Error al importar deck:', error);
             alert('Error al importar el deck. Verifica que el archivo sea válido.');
         }

@@ -1,5 +1,5 @@
 # DESTINY DRAW — REPORTE TÉCNICO
-**Versión:** Post-consolidación v2.2 | **Fecha:** Mar 2026
+**Versión:** v2.4 | **Fecha:** Mar 2026
 **Stack:** Vanilla JS (ES6 objects) · CSS modular · HTML5 SPA · YGOProDeck API · localStorage
 
 ---
@@ -21,21 +21,21 @@ simuladores.js → simuladores-campo.js → formacion.js →
 default_data.js → logger.js  (SIEMPRE AL FINAL)
 ```
 
-| Archivo | Objetos globales | Líneas | Descripción |
+| Archivo | Objetos globales | Líneas aprox. | Descripción |
 |---------|-----------------|--------|-------------|
-| `logger.js` | `DDLogger` | 365 | Logger no-invasivo. Se carga al final, envuelve todos los objetos globales post-`window.load`. **No modifica ningún módulo fuente.** API: `DDLogger.exportReport()`, `DDLogger.getLogs()`, `DDLogger.getStats()`, `DDLogger.enable/disable/clear()`. También intercepta localStorage (setItem/removeItem) y errores globales (`window.error`, `unhandledrejection`). |
+| `logger.js` | `DDLogger` | 365 | Logger no-invasivo. Envuelve todos los objetos globales post-`window.load`. API: `DDLogger.exportReport()`, `getLogs()`, `getStats()`, `enable/disable/clear()`. Intercepta localStorage y errores globales. |
 | `core.js` | `Navigation`, `Shortcuts`, `ContentManager`, `switchTab` | 487 | navigation + utils + contentmanager |
-| `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | ~2250 | Config global, cálculo de rendimientos decrecientes por rol, analizadores de texto de carta. **v2.2:** nuevas estructuras de scoring (g1g2Roles, roleBasePower, scoringLayers, reliabilityTable), nuevos getters, soporte notContains en _detectRoles, segmentDescription en NomenclatureAnalyzer, g1Score/g2Score en calculateInternalScore, g1Vulnerability/g2Vulnerability en calculateExternalScore. |
-| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | ~1950 | buscador + cardviewer + favoritas. **v2.2:** método `randomCard()`, corrección tipo Pyro en filtros avanzados. |
-| `mideck.js` | `Deck`, `Banlist`, `Engines` | 3013 | deck + banlist (oficial + custom + Genesys) + engines |
-| `historial.js` | `Matchups`, `Duelista` | 783 | matchups + duelista (duplicados eliminados) |
-| `estadisticas.js` | `Estadisticas` | ~2420 | — (solo, era demasiado grande). **v2.2:** render de g1Score, g2Score, perfil G1/G2 y vulnerabilidades en sección de análisis. |
-| `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria` | 2819 | winrate + torneo + duelo en vivo (con sub-tabs) + hipergeometría |
+| `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | ~2226 | Config global (incl. Scoring G1/G2), cálculo de scores, analizadores de carta. Incluye `duplicateNomenclatureCategory`. |
+| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 1932 | buscador + cardviewer + favoritas + botón Carta Random |
+| `mideck.js` | `Deck`, `Banlist`, `Engines` | ~3020 | deck + banlist + engines |
+| `historial.js` | `Matchups`, `Duelista` | 783 | matchups + duelista |
+| `estadisticas.js` | `Estadisticas` | ~2525 | scores, meta, cross-score, análisis de deck. `recalculateAllMetaDeckScores` es ahora async con enriquecimiento automático. |
+| `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria` | 2819 | winrate + torneo + duelo en vivo + hipergeometría |
 | `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3228 | zonapractica + experimentacion |
-| `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | ~3450 | formacion + meta + config + welcome + help. **v2.2:** roles colapsables, campo "NO contiene" por rol, nomenclatura colapsable, títulos de sección actualizados. |
-| `default_data.js` | `DefaultData` | 1194 | Inyección única de datos por defecto: decks (.ydk), apuntes, staples, specialties, engines, juegos, maestros y banlist Genesys. Usa flags individuales por tipo. Parchea `Config.resetToDefault`. Se ejecuta en `window.load`. |
+| `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | ~3661 | formacion + meta + config completo (Scoring G1/G2, Nomenclatura con pencil/clone/delete, RPS Ninguno) + welcome + help |
+| `default_data.js` | `DefaultData` | 1194 | Inyección única de datos por defecto. Parchea `Config.resetToDefault`. |
 
-**Nota:** `Stats` vive dentro de `data.js` (no es archivo independiente). `Winrate` y `DueloEnVivo` son los objetos correctos en `simuladores.js`; el antiguo nombre `Duelo` ya no existe.
+**Nota:** `Stats` vive dentro de `data.js`. `Winrate` y `DueloEnVivo` son los objetos correctos en `simuladores.js`; el antiguo `Duelo` ya no existe.
 
 ### 1.3 CSS — 6 archivos (consolidados)
 
@@ -45,14 +45,14 @@ style_core.css → style_buscador.css → style_mideck.css →
 style_simuladores.css → style_config.css → responsive_style.css
 ```
 
-| Archivo | Líneas | Absorbe |
+| Archivo | Líneas aprox. | Absorbe |
 |---------|--------|---------|
 | `style_core.css` | 1322 | style_global + style_welcome + style_cardviewer |
-| `style_buscador.css` | ~1030 | — **v2.2:** clase `.btn-random` añadida |
-| `style_mideck.css` | 2194 | — (sin cambio, límite de tamaño) |
-| `style_simuladores.css` | ~5860 | style_simuladores + style_estadisticas. **v2.2:** clases `.analysis-g1g2-*` añadidas |
-| `style_config.css` | ~2260 | style_config + style_formacion + style_meta. **v2.2:** clases `.role-panel*` añadidas |
-| `responsive_style.css` | 558 | **NUEVO** — todos los @media del proyecto extraídos |
+| `style_buscador.css` | 1016 | — |
+| `style_mideck.css` | 2194 | — |
+| `style_simuladores.css` | 5842 | style_simuladores + style_estadisticas |
+| `style_config.css` | ~2260 | style_config + style_formacion + style_meta + clases de Scoring G1/G2 |
+| `responsive_style.css` | 558 | Todos los @media del proyecto |
 
 **Todos los archivos CSS tienen sus `@media` eliminados** — viven exclusivamente en `responsive_style.css`.
 
@@ -66,15 +66,15 @@ style_simuladores.css → style_config.css → responsive_style.css
 | `#mideck-content` | Mi Deck | `Deck.render()` → `#deck-container` |
 | `#estadisticas-content` | Estadísticas | `Estadisticas.render()` |
 | `#simuladores-content` | Simuladores | `Torneo.init()` (lazy) |
-| `#meta-content` | Meta | `Meta.init()` — **fuera de `Navigation.tabs`**, accesible solo por código |
+| `#meta-content` | Meta | `Meta.init()` — fuera de `Navigation.tabs` |
 | `#formacion-content` | Formación | `Formacion.init()` |
 | `#config-content` | Config | `Config.render()` |
 
-**Navigation.tabs** (orden de navegación con teclado y pestañas visibles):
+**Navigation.tabs:**
 ```javascript
 ['buscador', 'mideck', 'estadisticas', 'simuladores', 'formacion', 'config']
 ```
-`meta` está oculto en el nav HTML (`display:none`) y **no figura en `Navigation.tabs`**; solo se activa internamente vía `Meta.init()` o `switchTab('meta')`.
+`meta` está oculto en el nav HTML y no figura en `Navigation.tabs`; se activa internamente vía `Meta.init()` o `switchTab('meta')`.
 
 ---
 
@@ -82,32 +82,32 @@ style_simuladores.css → style_config.css → responsive_style.css
 
 | Clave | Módulo | Tipo | Descripción |
 |-------|--------|------|-------------|
-| `yugioh_config` | `ConfigManager` | Object | Config principal: roles, roleConditions, roleWeights, staples, specialties, nomenclature, pillars, metaMasters, metaLinks, formacionGames, formacionTopics, shortcuts, music, **g1g2Roles, roleBasePower, scoringLayers, reliabilityTable** |
-| `yugioh_player_level` | `ConfigManager` | String | `'novato'\|'casual'\|'competitivo'\|'default'` — perfil elegido en Welcome y Config |
-| `dd_player_profile` | `ContentManager` | String | `'novato'\|'casual'\|'competitivo'` — controla visibilidad de secciones |
-| `dd_content_visibility` | `ContentManager` | Object | Override manual de visibilidad por sección ID |
-| `dd_welcome_dismissed` | `Welcome` | String `'true'` | Panel solo reaparece al hacer Borrar Data |
+| `yugioh_config` | `ConfigManager` | Object | Config principal: roles, roleConditions, roleWeights, staples, specialties, nomenclature, pillars, pillarRPS, **g1g2Roles, roleBasePower, reliabilityTable, scoringLayers**, metaMasters, metaLinks, formacionGames, formacionTopics, shortcuts, music |
+| `yugioh_player_level` | `ConfigManager` | String | `'novato'\|'casual'\|'competitivo'\|'default'` |
+| `dd_player_profile` | `ContentManager` | String | Controla visibilidad de secciones |
+| `dd_content_visibility` | `ContentManager` | Object | Override manual de visibilidad por sección |
+| `dd_welcome_dismissed` | `Welcome` | String `'true'` | Panel reaparece solo al Borrar Data |
 | `yugioh_favoritas` | `Favoritas` | Object | `{cardId: {id,name,type,img,data}}` |
 | `yugioh_engines` | `Engines` | Array | `[{id,name,cards,roles,notes,cover}]` |
 | `yugioh_decks` | `Deck` | Object | Decks guardados `{nombre: {cards,notes}}` |
 | `matchup_${deckName}` | `Matchups` | Array | `[{opponent,wins1st,losses1st,wins2nd,losses2nd,notes}]` |
 | `yugioh_music_config` | `ConfigManager` | Object | `{enabled, volume, tracks:{novato,casual,competitivo}}` |
-| `yugioh_meta_fallbacks` | `ConfigManager` | Object | Base64/URL imágenes fallback para Maestros |
-| `yugioh_formacion_fallbacks` | `ConfigManager` | Object | Base64/URL imágenes fallback para Juegos |
+| `yugioh_meta_fallbacks` | `ConfigManager` | Object | Imágenes fallback para Maestros |
+| `yugioh_formacion_fallbacks` | `ConfigManager` | Object | Imágenes fallback para Juegos |
 | `yugioh_formacion_notes` | `Formacion` | Array | `[{title,content,date}]` |
 | `yugioh_formacion_mastered` | `Formacion` | Array | IDs de temas dominados |
-| `yugioh_power_cache` | `Estadisticas` | Object | Cache de Power Scores calculados (reemplaza `dd_power_scores_cache`) |
-| `yugioh_cross_scores` | `Estadisticas` | Object | Scores cruzados entre decks del meta |
-| `yugioh_meta_decks` | `Estadisticas` | Array | Decks del meta cargados (.ydk importados) |
-| `yugioh_meta_deck_scores` | `Estadisticas` | Object | Scores calculados de decks del meta |
-| `yugioh_meta_card_library` | `Estadisticas` | Object | Librería de cartas del meta (cache local) |
+| `yugioh_power_cache` | `Estadisticas` | Object | Cache de Power Scores calculados |
+| `yugioh_cross_scores` | `Estadisticas` | Object | Cross-scores entre decks del meta (base del External Score del meta) |
+| `yugioh_meta_decks` | `Estadisticas` | Array | Decks del meta importados (.ydk) |
+| `yugioh_meta_deck_scores` | `Estadisticas` | Object | Scores calculados de cada deck del meta |
+| `yugioh_meta_card_library` | `Estadisticas` | Object | Librería de cartas del meta (cache local de la API) |
 | `dd_report_counter` | `DDLogger` | Number | Contador de reportes exportados |
 
 **Flags de DefaultData** (sobreviven a Borrar Data, se eliminan solo con Restaurar Config):
 
 | Clave | Descripción |
 |-------|-------------|
-| `dd_default_decks_loaded` | Decks de ejemplo (.ydk) ya inyectados |
+| `dd_default_decks_loaded` | Decks de ejemplo ya inyectados |
 | `dd_default_notes_loaded` | Apuntes por defecto ya inyectados |
 | `dd_default_staples_loaded` | Staples por defecto ya inyectados |
 | `dd_default_specialties_loaded` | Especialidades por defecto ya inyectadas |
@@ -116,35 +116,55 @@ style_simuladores.css → style_config.css → responsive_style.css
 | `dd_default_masters_loaded` | Maestros del Meta por defecto ya inyectados |
 | `dd_default_genesys_loaded` | Banlist Genesys ya generado desde API |
 
+**Nota:** `g1g2Roles`, `roleBasePower`, `reliabilityTable` y `scoringLayers` viven dentro de `yugioh_config`. Export, Import, Borrar (Config), Reporte y Restaurar Config los cubren automáticamente.
+
+**Zona de Borrado selectivo — opciones disponibles:**
+
+| data-key | Claves eliminadas | En memoria |
+|----------|------------------|------------|
+| `decks` | `yugioh_decks`, prefijos `deck_` | `Deck.cards = {}` |
+| `engines` | `yugioh_engines` | — |
+| `matchups` | prefijos `matchup_` | — |
+| `winrates` | `yugioh_winrates`, `pz_winrate_standalone` | — |
+| `favoritas` | `yugioh_favoritas` | — |
+| `torneo` | `yugioh_torneo_actual` | — |
+| `practica` | prefijos `pz_states_` | — |
+| `cache` | `yugioh_power_cache`, `yugioh_cross_scores`, `yugioh_meta_deck_scores` | `powerScoreCache=null`, `crossScores={}`, `metaDeckScores={}` |
+| `meta_library` | `yugioh_meta_card_library` | `metaCardLibrary={}` |
+| `meta_folders` | `yugioh_meta_folders`, `yugioh_meta_decks`, `yugioh_meta_deck_scores`, `yugioh_cross_scores` | `metaDecks={}`, `metaFolders=[]`, `metaDeckScores={}`, `crossScores={}` |
+| `formacion` | `yugioh_formacion_notes`, `yugioh_formacion_mastered` | — |
+| `banlist` | `yugioh_banlist_data` | — |
+| `config` | `yugioh_config` | — |
+| `perfil` | `yugioh_player_level`, `dd_player_profile`, `dd_content_visibility`, `dd_welcome_dismissed` | — |
+| `fallbacks` | `yugioh_meta_fallbacks`, `yugioh_formacion_fallbacks` | — |
+
 ---
 
 ## 4. DEPENDENCIAS ENTRE MÓDULOS
 
 ```
-data.js (ConfigManager)  ←── buscador, mideck, historial, estadisticas,
+data.js (ConfigManager)  <── buscador, mideck, historial, estadisticas,
                                simuladores, formacion, core (ContentManager)
 
-data.js (Stats)          ←── estadisticas (cálculo de rendimientos decrecientes,
-                               g1Score/g2Score, g1Vulnerability/g2Vulnerability)
+data.js (Stats)          <── estadisticas (Internal Score, External Score,
+                               G1/G2 Score, Counter Deck Score)
 
-data.js (NomenclatureAnalyzer) ←── Stats.calculateInternalScore (segmentDescription)
-
-core.js (ContentManager) ←── formacion (applyProfile al cambiar perfil)
+core.js (ContentManager) <── formacion (applyProfile al cambiar perfil)
                                navigation applyAll() en cada tab change
 
-mideck.js (Engines)      ←── Favoritas.render() delega si _activeTab='favoritas'
+mideck.js (Engines)      <── Favoritas.render() delega si _activeTab='favoritas'
                                Staples: usa campo imageUrl (NO img)
 
-historial.js (Duelista)  ←── lee matchup_${deckName} de todos los decks
+historial.js (Duelista)  <── lee matchup_${deckName} de todos los decks
                                requiere Deck.getSavedDecks()
 
-formacion.js (Meta)      ←── Sub-tabs Fuentes y Maestros de Formacion delegan a
+formacion.js (Meta)      <── Sub-tabs Fuentes y Maestros de Formacion delegan a
                                Meta._renderFuentesSection() / _renderMaestrosSection()
 
-formacion.js (Welcome)   ←── llama ConfigManager.savePlayerLevel() Y
+formacion.js (Welcome)   <── llama ConfigManager.savePlayerLevel() Y
                                ContentManager.applyProfile() al hacer enter()
 
-default_data.js          ←── requiere ConfigManager, Deck, Engines, Formacion,
+default_data.js          <── requiere ConfigManager, Deck, Engines, Formacion,
 (DefaultData)                 Meta, Banlist (todos ya cargados antes en index.html)
                                Parchea Config.resetToDefault al final del load.
 ```
@@ -167,169 +187,238 @@ switchTab(name) → Navigation.showTab(name)
   → window.scrollTo({ top:0, behavior:'smooth' })
 ```
 
-### 5.2 Selección de perfil (Welcome)
+### 5.2 Agregar carta al deck (desde Buscador)
+```
+Buscador.addCard(index)
+  → Deck.syncFromViewer(card.id, card, currentQty + 1)
+  → si carta nueva: autoAssignRoles() + SpecialtyAnalyzer + NomenclatureAnalyzer
+  → Deck.render()  → recalcula Internal Score + G1/G2 Score en tiempo real
+  → External Score se recalcula si powerScoreCache existe
+```
+
+### 5.3 Importar .ydk a Mi Deck
+```
+Deck.importYDK()
+  → input[file] .ydk → parseYDK(content, filename)
+  → overlay de carga "Importando deck... N cartas"
+  → fetch API YGOProDeck (batch por IDs únicos)
+  → construye newCards con autoAssignRoles()
+  → Deck.cards = newCards; Deck.render(); Deck.onDeckLoaded()
+  → elimina overlay → alert "Deck importado"
+```
+
+### 5.4 Cálculo de scores — ciclo completo
+```
+Stats.calculateInternalScore(Deck.cards)
+  → loop de roles → rendimientos decrecientes
+  → G1/G2 Score paralelo: BasePower(L3) × L1 × L2 × L4 × L5 × Reliability
+  → devuelve { internalScore, consistency, power, resilience,
+               g1Score, g2Score, penalty, totalCards, mainCards }
+
+Stats.calculateExternalScore(Deck.cards, powerScoreCache, metaDecks)
+  → cruza specialties del deck con powerScoreCache
+  → RPS modifier (ignorando loser='ninguno')
+  → devuelve { externalScore, g1Vulnerability, g2Vulnerability, ... }
+```
+
+### 5.5 Actualizar Scores del Meta — flujo automático completo (async)
+```
+Estadisticas.recalculateAllMetaDeckScores()  ← async
+  → lista todos los decks con secciones (sin importar si fueron abiertos antes)
+  → crea overlay #meta-update-overlay con spinner + barra de progreso + nombre del deck actual
+
+  FASE 1 (0–60%) Enriquecimiento automático:
+    por cada deck en la lista:
+      → IDs no presentes en metaCardLibrary → fetch API en batches de 10
+      → autoAssignRoles() + SpecialtyAnalyzer para cada carta nueva
+    → _saveMetaCardLibrary()
+
+  FASE 2 (60–92%) Cálculo de scores:
+    por cada deck:
+      → _computeAndSaveMetaDeckScore(folder, filename)
+      → Internal Score + pilares con fakeCards desde la librería
+
+  FASE 3 (92–100%) Cross-Score N×N:
+    → calculateCrossExternalScores()
+    → metaDeckScores[key].externalScore = crossExternalScore
+    → guarda yugioh_cross_scores + yugioh_meta_deck_scores
+
+  → "¡Listo! N decks actualizados" 700ms → overlay desaparece → render()
+```
+Ya no es necesario abrir cada deck manualmente. Un solo clic procesa todos.
+
+### 5.6 Selección de perfil
 ```
 Welcome.enter(tabName, levelKey)
   → ContentManager.applyProfile(levelKey)  → 'dd_player_profile'
   → ConfigManager.savePlayerLevel(levelKey) → 'yugioh_player_level'
   → MusicPlayer.setTrack(cfg.tracks[levelKey])
-  → Welcome.dismiss() → localStorage 'dd_welcome_dismissed' = 'true'
+  → Welcome.dismiss() → 'dd_welcome_dismissed' = 'true'
   → Navigation.showTab(tabName)
 ```
 
-### 5.3 Selección de perfil (Config)
-```
-Config.selectPlayerLevel(levelKey)
-  → ConfigManager.savePlayerLevel(levelKey)
-  → ContentManager.applyProfile(levelKey)
-  → MusicPlayer.setTrack(...)
-  → Config.render()
-```
-
-### 5.4 Borrar Todo
+### 5.7 Borrar Todo / Restaurar Config
 ```
 Config.borrarTodo()
-  → localStorage.clear() completo (flags de DefaultData desaparecen)
-  → Welcome.dismissed = false
-  → localStorage.removeItem('dd_welcome_dismissed')
-  → reconstruye config vacía
-  → Deck.render(), Estadisticas.render(), Favoritas.render()
-  → Welcome.init() → muestra panel de nuevo
+  → localStorage.clear() + _resetModulesInMemory() + Welcome.init()
+
+Config.resetToDefault()  ← parcheado por DefaultData
+  → localStorage.clear() + await DefaultData.init()
 ```
 
-### 5.5 Restaurar Config (DefaultData)
-```
-Config.resetToDefault()  ← parcheado por DefaultData._patchConfig()
-  → localStorage.clear()
-  → await DefaultData.init()  → re-inyecta TODO (flags limpios)
-```
-
-### 5.6 DefaultData.init() — inyección única por tipo
+### 5.8 DefaultData.init() — inyección única por tipo
 ```
 window.load → DefaultData.init()
-  → _initNotes()       si no flag dd_default_notes_loaded
-  → _initSpecialties() si no flag dd_default_specialties_loaded
-  → _initGames()       si no flag dd_default_games_loaded
-  → _initMasters()     si no flag dd_default_masters_loaded
-  → _initDecks()       si no flag dd_default_decks_loaded  (fetch API por ID)
-  → _initStaples()     si no flag dd_default_staples_loaded (fetch API)
-  → _initEngines()     si no flag dd_default_engines_loaded (fetch API)
-  → _initGenesys()     si no flag dd_default_genesys_loaded (fetch API completa)
-→ DefaultData._patchConfig()  → sobreescribe Config.resetToDefault
-```
-
-### 5.7 Botón flotante de música (MusicPlayer.toggle)
-```
-▶ (detenido) → MusicPlayer.toggle()
-  → lee ConfigManager.getPlayerLevel() → resuelve cfg.tracks[level]
-  → si path ≠ currentPath: _buildAudio(path) + play
-  → si path == currentPath: play directo
-  → _updateButton() → '⏹'
-
-⏹ (reproduciendo) → MusicPlayer.toggle()
-  → lee ConfigManager.getPlayerLevel() → resuelve cfg.tracks[level]
-  → pause()
-  → si path ≠ currentPath: _buildAudio(path)  ← pista actualizada, lista para próximo play
-  → si path == currentPath: audio.currentTime = 0
-  → _updateButton() → '▶'
-```
-**Nota:** cambiar Perfil Base en Config llama `MusicPlayer.setTrack(path)` que actualiza
-`currentPath` en caliente. El toggle siempre re-verifica el perfil activo.
-
-### 5.8 Render sidebar Mi Deck
-```
-Engines._renderSidebar()
-  → lee _activeTab (engines|decks|staples|favoritas)
-  → staples: _renderStaplesItems() → imageUrl (NO img)
-  → favoritas: _renderFavoritasItems() → Favoritas.getAll()
-```
-
-### 5.9 Scoring G1/G2 (nuevo en v2.2)
-```
-Stats.calculateInternalScore(cards)
-  → loop principal (sin cambios): roleCounters → pilares → rendimientos decrecientes
-  → loop paralelo G1/G2:
-      por cada carta main:
-        segmentDescription(desc) → fragmentos por categoría de nomenclatura
-        getRoleBasePower(rol)     → L3 base
-        applyLayers(segments)     → L1 × L2 × L4 × L5 (keywords en fragmento correcto)
-        getReliability(pool)      → pool efectivo = copias + searchers del mismo arquetipo
-        cardScore = basePower × layerMult × reliability
-        getRoleG1G2(dominantRole) → 'g1' | 'g2' | 'neutral' (neutral = 50/50)
-  → retorna { ...campos anteriores, g1Score, g2Score }
-
-Stats.calculateExternalScore(deckCards, powerScoreCache, metaDecks)
-  → flujo anterior intacto
-  → al calcular totalThreat: cruza threatCards con g1g2Roles del deck
-  → retorna { ...campos anteriores, g1Vulnerability, g2Vulnerability }
+  → _initNotes / _initSpecialties / _initGames / _initMasters
+  → _initDecks / _initStaples / _initEngines / _initGenesys  (fetch API)
+  → _patchConfig() → sobreescribe Config.resetToDefault
 ```
 
 ---
 
-## 6. SUB-TABS POR PESTAÑA
+## 6. SUB-TABS Y SECCIONES
 
-### Mi Deck (`mideck.js`)
+### Mi Deck
 ```
-Sub-tabs:  Decklist | Construcción
-Sidebar (2×2 grid):  Engines | Decks | Staples | Favoritas
-```
-
-### Formación (`formacion.js`)
-```
-Sub-tabs:  📓 Apuntes | 📖 Temas | 🎮 Juegos | 🔗 Fuentes | 🎓 Maestros
-           (Fuentes y Maestros delegan a Meta._renderFuentesSection/MaestrosSection)
+Sub-tabs: Decklist | Construcción
+Sidebar:  Engines | Decks | Staples | Favoritas
 ```
 
-### Simuladores (`simuladores.js`)
+### Config — secciones colapsables
 ```
-Sub-tabs principales (Torneo.simTab):
-  🎲 Mulligan | 📊 Winrate | 🏆 Torneo | ⚔️ Duelo en Vivo | 🧪 Experimentación | 🎴 Zona de Práctica
+Mecánicas y Roles
+  Panel colapsable por rol.
+  Header: badge nombre (read-only) | ✏️ focusRenameInput | ⧉ duplicateRole | 🗑️ deleteRole
+  Cuerpo: keywords · conditionals · notContains · nomenclaturas · peso en pilares
 
-Sub-tabs de Duelo en Vivo (DueloEnVivo.subTab):
-  ⏱ Cronómetro Estándar | 👑 Cronómetro Master Duel | 🎲 Herramientas
-```
+Counters          — pares mecánica/counter con 🗑️ por par
 
-### Estadísticas (`estadisticas.js`)
-```
-Secciones (IDs para Shortcuts y ContentManager):
-  deck-stats-sec | deck-analysis-sec | winrate-sec | top-tier-sec |
-  meta-decks-sec | power-scores-sec | counter-cards-sec | export-sec | duelista-sec
-```
+Staples           — cartas esenciales del formato
 
-### Config — secciones de roles (`formacion.js` → `Config`)
-```
-Sección "Mecánicas y Roles" (antes "Roles y Palabras Asociadas"):
-  Cada rol se muestra como panel colapsable (.role-panel).
-  Header: onclick toggle · arrow ▶/▼ · badge de nombre · inputs con stopPropagation
-  Body (oculto por defecto): keywords · condicional · NO contiene · nomenclatura
-  _restoreAndScroll() expande automáticamente el panel al hacer scroll al anchor.
+Nomenclatura de Efectos
+  Panel colapsable por categoría.
+  Header: badge coloreado (read-only) | color picker | ✏️ focusNomRenameInput | ⧉ duplicateNomCategory | 🗑️ deleteNomCategory
+  Cuerpo: startsWith · contains · notContains · endsWith
 
-Sección "Counters" (antes "Mecánicas y Counters"):
-  Sin cambio estructural, solo renombre.
+Pilares del Internal Score
+  Roles por pilar + RPS con opción "Ninguno" (ese pilar no activa modifier)
 
-Sección "Nomenclatura":
-  Cada categoría también usa el patrón colapsable (.role-panel).
-  Body oculto por defecto; se expande con toggleNomPanel(catId).
+Scoring Avanzado (G1/G2)
+  G1/G2 por rol | Poder Base (L3) | Fiabilidad por copias | Capas L1/L2/L4/L5 en columnas
+
+Rendimientos Decrecientes
+Atajos Rápidos
+Banlist del Formato
+Música
+Exportar / Importar Data   (importar pide confirmación; exportar muestra detalle del contenido)
+Restaurar Configuración
+Zona de Borrado            (15 categorías selectivas, cache y meta_library separados)
 ```
 
 ---
 
-## 7. BUGS RESUELTOS
+## 7. SISTEMA DE SCORING — DETALLE
+
+### 7.1 Internal Score
+`Stats.calculateInternalScore(cards)`. Loop de roles con rendimientos decrecientes.
+Devuelve `{internalScore, consistency, power, resilience, penalty, totalCards, mainCards}`.
+
+### 7.2 G1/G2 Score (loop paralelo al Internal Score)
+```
+CardScore = BasePower(L3) × L1_mult × L2_mult × L4_mult × L5_mult × Reliability
+
+L1 — Velocidad:   keywords en 'condicionActivacion'
+L2 — Coste:       keywords en 'costoActivacion'
+L4 — Restricción: keywords en 'restriccion'
+L5 — Alcance:     keywords en 'efectoGenerico'
+Reliability: tabla por copias (1→0.40, 2→0.65, 3→0.85, 4→0.90, 5→0.95)
+             + pool indirecto de searchers del mismo arquetipo
+
+g1g2Roles[dominantRole] === 'g1' → g1Score
+g1g2Roles[dominantRole] === 'g2' → g2Score
+'neutral'                        → 50/50
+```
+
+### 7.3 External Score (deck activo)
+`Stats.calculateExternalScore()` — deck vs powerScoreCache.
+RPS modifier ignorando loser='ninguno'.
+Devuelve `{externalScore, g1Vulnerability, g2Vulnerability, ...}`.
+
+### 7.4 External Score (meta) = Cross-Score N×N
+`calculateCrossExternalScores()`. Para cada deck A: amenazas de counters de B ponderadas por internalScore de B y RPS. `crossExternalScore = (1 - threat/baseline) × 10`.
+
+### 7.5 RPS
+Reglas `[ganador, perdedor]`. `perdedor='ninguno'` → ese pilar no tiene counter. Modificadores: ×1.25 ventaja / ×0.75 desventaja / ×1.0 neutral.
+
+### 7.6 Scoring Avanzado — métodos save en Config
+
+| Función | Qué guarda |
+|---------|-----------|
+| `saveG1G2Role(rol, valor)` | Clasificación G1/G2/neutral del rol |
+| `saveRoleBasePower(rol, val)` | Poder Base L3 (0–10) |
+| `saveReliabilityEntry(copias, val)` | Probabilidad por n copias (0–1) |
+| `saveLayerEntryKeywords(lKey, idx, raw)` | Keywords de una entrada de capa |
+| `saveLayerEntryMultiplier(lKey, idx, val)` | Multiplicador de una entrada |
+| `addLayerEntry(lKey)` | Añade entrada vacía a la capa |
+| `removeLayerEntry(lKey, idx)` | Elimina entrada por índice |
+
+---
+
+## 8. SISTEMA DE ROLES Y NOMENCLATURA — GESTIÓN EN CONFIG
+
+### 8.1 Detección de roles
+```
+autoAssignRoles(card) → detectPossibleRoles(card)
+  por cada rol en roleConditions:
+    keywords coinciden en desc
+    AND conditionals (si hay) también coinciden
+    AND notContains (si hay) NO coinciden
+    → rol asignado
+
+roleConditions[roleName]: { keywords:[], conditionals:[], notContains:[] }
+```
+
+### 8.2 Pattern de renombrado con input oculto (roles y nomenclatura)
+El badge de nombre es siempre el elemento visible. El input se oculta con `display:none`.
+
+| Elemento | Roles | Nomenclatura |
+|---------|-------|-------------|
+| Span visible | `id="rpn-${roleName}"` | `id="npn-${cat.id}"` |
+| Input oculto | `id="rni-${roleName}"` | `id="nni-${cat.id}"` |
+| Botón lápiz | `focusRenameInput(roleName)` | `focusNomRenameInput(catId)` |
+| onblur | `renameRole(el)` | `renameNomCategory(catId, el)` |
+| Clonar | `duplicateRole(roleName)` → `ConfigManager.duplicateRole` | `duplicateNomCategory(catId)` → `ConfigManager.duplicateNomenclatureCategory` |
+| Borrar | `deleteRole(roleName)` | `deleteNomCategory(catId)` |
+
+`duplicateNomenclatureCategory(catId)` — deep-copy de la categoría, nuevo ID `custom_` + timestamp, nombre + " (copia)", insertada inmediatamente después de la original. Devuelve el nuevo ID para scroll.
+
+---
+
+## 9. BUGS RESUELTOS
 
 | # | Bug | Archivo | Solución |
 |---|-----|---------|----------|
-| 1 | `_calcWR` y `_getAllMatchupRecords` duplicados 3 veces | `duelista.js` → `historial.js` | Eliminadas las 2 copias extra |
-| 2 | `yugioh_player_level` y `dd_player_profile` desincronizados | `welcome.js` + `config.js` | `enter()` ahora escribe ambas claves |
-| 3 | Welcome Panel reaparecía al recargar | `welcome.js` | `init()` lee `dd_welcome_dismissed`, `dismiss()` la escribe |
-| 4 | `logger.js` y `parallax.js` referenciados pero inexistentes | `index.html` | Eliminados del orden de carga; nuevo `logger.js` creado (DDLogger) |
-| 5 | `MusicPlayer.init()` cargaba siempre pista `default` ignorando perfil guardado | `formacion.js` → `MusicPlayer.init` | Lee `ConfigManager.getPlayerLevel()` al inicio; resuelve pista del perfil guardado |
-| 6 | Botón ▶/⏸ pausaba en lugar de detener; play no resincronizaba perfil | `formacion.js` → `MusicPlayer.toggle` | Stop real (pause + reset/rebuild); play relee perfil activo antes de reproducir |
-| 7 | `dd_power_scores_cache` inconsistente con claves reales usadas | `estadisticas.js` | Renombrado a `yugioh_power_cache`; clave vieja eliminada en Config.borrarTodo |
-| 8 | Tipo `Pyro` ausente en filtros avanzados del Buscador | `buscador.js` → `FILTER_DATA.monsterTypes` | Añadido `'Pyro'` al array junto a los otros tipos de monstruo |
+| 1 | `_calcWR` duplicado 3 veces | `historial.js` | Eliminadas copias extra |
+| 2 | `yugioh_player_level` y `dd_player_profile` desincronizados | `formacion.js` | `enter()` escribe ambas claves |
+| 3 | Welcome reaparecía al recargar | `formacion.js` | `init()` lee `dd_welcome_dismissed` |
+| 4 | `logger.js` referenciado pero inexistente | `index.html` | Nuevo DDLogger creado |
+| 5 | MusicPlayer ignoraba perfil guardado | `formacion.js` | Lee nivel al inicio |
+| 6 | Botón ▶ pausaba en lugar de detener | `formacion.js` | Stop real + rebuild |
+| 7 | `dd_power_scores_cache` inconsistente | `estadisticas.js` | Renombrado a `yugioh_power_cache` |
+| 8 | Pyro ausente en filtros avanzados | `buscador.js` | Añadido a `FILTER_DATA.monsterTypes` |
+| 9 | External Score idéntico para todos los decks del meta | `estadisticas.js` | Cross-score N×N reemplaza al External Score del meta |
+| 10 | Sin pantalla de carga al importar .ydk | `mideck.js` | Overlay en `parseYDK` |
+| 11 | Nombre de rol duplicado (texto + input simultáneos) | `formacion.js` | Badge read-only + ✏️ activa input oculto |
+| 12 | Botones clonar/borrar desaparecidos en rol | `formacion.js` | Restaurados ⧉ 🗑️ |
+| 13 | Config no mostraba nada al cargar | `formacion.js` | `renderScoringSection` llamada pero no definida — error silencioso rompía `Config.render()` completo. Función implementada con sus 7 métodos save. |
+| 14 | Había que abrir cada deck del meta para calcular scores | `estadisticas.js` | `recalculateAllMetaDeckScores` ahora async: descarga cartas faltantes de todos los decks automáticamente en 3 fases |
+| 15 | Borrar "Cache" no limpiaba `metaDeckScores` en memoria | `formacion.js` | Añadido `Estadisticas.metaDeckScores = {}` |
+| 16 | Borrar "Carpetas del Meta" dejaba cross-scores y deck scores | `formacion.js` | Limpia `yugioh_meta_decks`, `yugioh_meta_deck_scores`, `yugioh_cross_scores` |
+| 17 | `segmentDescription` ausente en `NomenclatureAnalyzer` | `data.js` | Reintegrada; sin ella las capas L1–L5 no aplicaban multiplicadores |
 
 ---
 
-## 8. API EXTERNA
+## 10. API EXTERNA
 
 **YGOProDeck** (sin auth, CORS libre)
 ```
@@ -337,7 +426,6 @@ Base: https://db.ygoprodeck.com/api/v7/
 cardinfo.php?name=  cardinfo.php?id=  cardinfo.php?fname=
 archetypes.php      cardsets.php
 cardinfo.php        ← fetch completo usado por DefaultData._initGenesys()
-                    ← también usado por Buscador.randomCard() (filtros opcionales)
 
 Imágenes:
 https://images.ygoprodeck.com/images/cards/{id}.jpg        → full
@@ -346,132 +434,55 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 
 ---
 
-## 9. CLASES CSS CLAVE
+## 11. CLASES CSS CLAVE
 
 | Clase | Archivo CSS | Propósito |
 |-------|------------|-----------|
 | `.tab-content` / `.active` | style_core | Secciones de pestañas |
 | `.engines-sidebar` | style_mideck | Sidebar 4 tabs Mi Deck |
-| `.eng-tab-btn.eng-tab-active` | style_mideck | Tab activo sidebar |
-| `.mideck-subtabs-nav` / `.mideck-subtab-btn.active` | style_mideck | Sub-tabs Decklist/Construcción |
-| `.deck-actions` (grid 3×2) | style_mideck | Botones de acción del deck |
-| `.form-subnav-btn.active` | style_config | Tab activo Formación |
-| `.cv-overlay` / `.card-viewer-overlay` | style_core | Visor de carta |
-| `#welcome-overlay.welcome-visible` | style_core | Panel bienvenida visible |
-| `.cm-profile-btn.cm-profile-active` | style_core | Perfil activo en Config |
-| `.torneo-tab-btn` / `[data-simtab].active` | style_simuladores | Sub-tabs Simuladores |
-| `.duelo-sub-tab.active` | style_simuladores | Sub-tabs Duelo en Vivo |
-| `.btn-random` | style_buscador | Botón Carta Random (gradiente púrpura, ancho completo) |
-| `.role-panel` | style_config | Card colapsable de rol/nomenclatura |
-| `.role-panel-header` | style_config | Header clickeable con cursor pointer y hover sutil |
-| `.role-panel-arrow` | style_config | Indicador ▶/▼ del estado del panel |
-| `.role-panel-name` | style_config | Badge de nombre del rol truncado |
-| `.role-panel .role-card-body` | style_config | Body interno con padding cuando está abierto |
-| `.analysis-g1g2-row` | style_simuladores | Fila de barras Going First / Going Second |
-| `.analysis-g1g2-item` | style_simuladores | Item individual con label, barra y valor |
-| `.analysis-g1g2-profile` | style_simuladores | Indicador textual de perfil del deck (equilibrado/reactivo/dado) |
+| `.cv-overlay` | style_core | Visor de carta |
+| `#welcome-overlay.welcome-visible` | style_core | Panel bienvenida |
+| `.role-panel` / `.role-panel-header` | style_config | Panel colapsable de rol y nomenclatura |
+| `.scoring-layers-grid` | style_config | Grid de columnas L1/L2/L4/L5 |
+| `.scoring-row` / `.scoring-grid` | style_config | Filas en Scoring G1/G2 |
+| `.config-section-block` / `.config-block-title` | style_config | Bloques dentro de Scoring Avanzado |
+| `.scoring-layer-col` / `.scoring-layer-entry` | style_config | Columnas y entradas de capas |
+| `.asb-bar-track` / `.asb-bar-fill` | style_simuladores | Barras de score |
+| `.analysis-g1g2-row` / `.analysis-g1g2-item` | style_simuladores | Bloque G1/G2 en análisis |
+| `#meta-update-overlay` | inline en estadisticas.js | Overlay de carga del Actualizar Scores |
 
 ---
 
-## 10. NOTAS PARA TRABAJAR EFICIENTEMENTE
+## 12. NOTAS PARA TRABAJAR EFICIENTEMENTE
 
-**Para cambios puntuales:** sube solo la función afectada indicando objeto y método. Ej: `Engines._renderStaplesItems` en `mideck.js`.
+**Para cambios puntuales:** sube solo la función afectada indicando objeto y método.
 
-**Para CSS:** todos los ajustes responsive van exclusivamente en `responsive_style.css`. Los 5 archivos principales no tienen `@media`.
+**Para CSS:** todos los ajustes responsive van exclusivamente en `responsive_style.css`.
 
 **Archivos que NO necesitas subir salvo cambios:**
 - `html2canvas_min.js` — librería externa
-- `logger.js` — solo si cambia la lista `TARGETS` o el formato del reporte
+- `logger.js` — solo si cambia `TARGETS` o formato del reporte
 
-**Variables CSS globales** (definidas en `style_core.css`):
+**Variables CSS globales** (en `style_core.css`):
 `--gold-color` · `--accent-color` · `--bg-card` · `--text-light` · `--danger-color` · `--spacing-sm/md/lg`
 
-**Objetos renombrados respecto a versiones anteriores:**
+**Renombrados respecto a versiones anteriores:**
 - `Duelo` → `DueloEnVivo` (simuladores.js)
-- `dd_power_scores_cache` → `yugioh_power_cache` (localStorage)
-- `Stats` ahora vive dentro de `data.js` (no archivo propio)
-- `default_data.js` es módulo nuevo; carga DESPUÉS de `formacion.js` y ANTES de `logger.js`
+- `dd_power_scores_cache` → `yugioh_power_cache`
+- `Stats` vive dentro de `data.js`
+- `default_data.js` carga DESPUÉS de `formacion.js` y ANTES de `logger.js`
 
----
+**Diferencia clave entre los dos External Scores:**
+- Deck activo → `Stats.calculateExternalScore()` → deck vs powerScoreCache
+- Decks del meta → `calculateCrossExternalScores()` → N×N real
 
-## 11. CAMBIOS v2.2 — DETALLE POR ARCHIVO
+**Diferencia clave entre Peso de Rol y Poder Base:**
+- `roleWeights` → escala 0.1–2.0 → Internal Score clásico (rendimientos decrecientes)
+- `roleBasePower` → escala 0–10 → G1/G2 Score únicamente
 
-### `buscador.js`
-- **`FILTER_DATA.monsterTypes`**: añadido `'Pyro'` (estaba ausente; todos los demás tipos ya existían).
-- **`Buscador.randomCard()`**: método nuevo. Llama a `buildApiUrl('')` con los filtros activos, aplica `applyAdvancedLocalFilter` y `applyWordFilters`, elige una carta al azar del pool resultante y la muestra con `displayResults([picked])`. Muestra un notice con el tamaño del pool. Si no hay cartas que cumplan los filtros, muestra mensaje de error.
-
-### `index.html`
-- Añadido botón `#random-btn` con clase `btn btn-random` después del botón `#clear-btn` en la barra de búsqueda del Buscador.
-
-### `style_buscador.css`
-- Añadida clase `.btn-random`: gradiente `#4a1a6e → #8b2fc9`, texto dorado `#f0d060`, `width:100%`, hover con borde dorado.
-
-### `data.js` — ConfigManager (nuevas estructuras en defaultConfig)
-- **`g1g2Roles`**: clasifica cada rol existente como `'g1'`, `'g2'` o `'neutral'`. G1 = construye board/protege combo. G2 = disrumpe/rompe board. Neutral = funciona en ambos contextos.
-- **`roleBasePower`**: tabla de poder base L3 por rol (escala 1–10). Negate-activation=10, Boardbreaker=9, Negate-effect/Negater/Tower=8... configurable por el usuario.
-- **`scoringLayers`**: capas L1 (velocidad, cat: `condicionActivacion`), L2 (coste, cat: `costoActivacion`), L4 (restricción, cat: `restriccion`), L5 (alcance, cat: `efectoGenerico`). Cada capa tiene `entries: [{keywords, multiplier}]`.
-- **`reliabilityTable`**: `{1:0.40, 2:0.65, 3:0.85, 4:0.90, 5:0.95}` — fiabilidad por copias en mano de apertura (deck 40, mano 5).
-
-### `data.js` — ConfigManager (nuevos getters)
-Añadidos después de `getRoleCondition`:
-- `getG1G2Roles()` / `getRoleG1G2(roleName)`
-- `getRoleBasePowers()` / `getRoleBasePower(roleName)` (default: 3 si no existe)
-- `getScoringLayers()`
-- `getReliabilityTable()` / `getReliability(copies)` (interpolación para valores fuera de tabla)
-
-### `data.js` — ConfigManager (métodos de notContains)
-Añadidos después de `removeKeywordFromRoleCondition`:
-- `addNotContainsToRole(roleName, kw)` — push a `roleConditions[roleName].notContains[]`
-- `removeNotContainsFromRole(roleName, index)` — splice por índice
-
-### `data.js` — SpecialtyAnalyzer._detectRoles
-- Soporte para `notContains` en `roleConditions`: si alguna keyword de `notContains` está en el desc completo, cancela la asignación del rol aunque se hayan cumplido las otras condiciones.
-
-### `data.js` — NomenclatureAnalyzer
-- **`segmentDescription(desc)`**: método nuevo. Devuelve `{ categoryId: [textFragment, ...] }`. Divide la descripción de la carta por categorías de nomenclatura usando la misma lógica de `analyzeCard`. Usado por `Stats.calculateInternalScore` para que cada capa del scoring lea solo el fragmento correcto.
-
-### `data.js` — Stats.calculateInternalScore
-- Loop principal **sin cambios**: roleCounters → pilares → rendimientos decrecientes → penalización.
-- Añadido **loop paralelo G1/G2** al final del método:
-  - Pre-calcula pool de searchers por arquetipo.
-  - Por cada carta main: obtiene `segmentDescription`, aplica `getRoleBasePower`, multiplica por capas L1/L2/L4/L5 (cada una busca keywords en su categoría de nomenclatura), multiplica por `getReliability(pool efectivo)`.
-  - Clasifica en `g1Score` o `g2Score` según `getRoleG1G2(dominantRole)`. Neutral = 50/50.
-- Retorno extendido con `g1Score` y `g2Score` (campos nuevos, no rompen compatibilidad).
-
-### `data.js` — Stats.calculateExternalScore
-- `result` inicializado con `g1Vulnerability: null, g2Vulnerability: null`.
-- Al calcular `totalThreat`: cruza cada `threatCard` y sus `countersSpecs` con `g1g2Roles` del deck para separar amenazas en contexto G1 y G2.
-- Calcula `g1Vulnerability` y `g2Vulnerability` como `(threatParcial / baseParcial) × 10`, capped a 10.
-
-### `estadisticas.js` — renderAnalysisSection
-- Extrae `g1Score`, `g2Score` de `internalStats`.
-- Calcula `g1g2Profile` (objeto con `label`, `detail`, `icon`, `color`) según ratio G1/G2:
-  - `ratio > 1.3` → "Dependiente del dado"
-  - `ratio < 0.77` → "Deck Reactivo"
-  - Dentro del rango → "Deck Equilibrado"
-- Añade bloque `<!-- G1 / G2 SCORES -->` con dos barras horizontales (púrpura / rosa) e indicador de perfil, posicionado entre el bloque RPS y el Veredicto.
-- Añade caja de vulnerabilidades G1/G2 junto al External Score, con tooltips explicativos en español para jugadores novatos.
-
-### `style_simuladores.css`
-- Añadidas clases: `.analysis-g1g2-row`, `.analysis-g1g2-item`, `.analysis-g1g2-label`, `.analysis-g1g2-val`, `.analysis-g1g2-detail`, `.analysis-g1g2-profile`.
-
-### `formacion.js` — Config (sección Roles)
-- Título "Roles y Palabras Asociadas" → **"Mecánicas y Roles"**.
-- Título "Mecánicas y Counters" → **"Counters"** (también en HelpPanel).
-- `renderRoleCard()`: reemplazado completamente. Cada rol es ahora un panel colapsable (`.role-panel`). Header con `onclick="Config.toggleRolePanel(...)"`, flecha ▶/▼, badge de nombre. Body con `display:none` por defecto. Botones de edición llevan `event.stopPropagation()`. Nuevo bloque "NO contiene" entre Condicional y Restringir Nomenclatura.
-- `addCondKeywordFromInput()`: añade `this._restoreAndScroll('roles-section', \`role-anchor-${roleName}\`)` tras el render exitoso.
-- `addConditionalFromInput()`: mismo patrón.
-- `renameRole()`: añade `this._restoreAndScroll` con `CSS.escape(newName)`.
-- Funciones nuevas: `addNotContainsFromInput(el)`, `removeNotContainsByIndex(roleName, index)`, `toggleRolePanel(roleName)`, `toggleNomPanel(catId)`.
-- `_restoreAndScroll()`: expande el `.role-card-body` del elemento destino antes de hacer scroll.
-- Nomenclatura card: mismo patrón colapsable que roles. `onblur` del input de nombre llama `_restoreAndScroll` además de `updateNomenclatureCategory`.
-- Anchors de nomenclatura corregidos: `nomenclature-category-anchor-${catId}` → `nom-anchor-${catId}` (4 ocurrencias).
-
-### `style_config.css`
-- Añadido bloque de clases para paneles colapsables:
-  - `.role-panel`: quita padding del card base, `overflow:hidden`.
-  - `.role-panel-header`: `cursor:pointer`, `user-select:none`, padding compacto, hover sutil.
-  - `.role-panel-arrow`: tamaño y color del indicador ▶/▼.
-  - `.role-panel-name`: badge de nombre truncado.
-  - `.role-panel .role-card-body`: padding interno cuando está abierto.
-  - `.role-panel .role-name-input`: `font-size` reducido en contexto de panel.
+**Regla de oro para añadir una sección a Config:**
+1. Añadir el bloque HTML en `Config.render()` con el ID de sección
+2. Definir `renderXxxSection()` que devuelve el HTML interno
+3. Definir los métodos save que llaman `ConfigManager.getConfig()` / `saveConfig(cfg)`
+4. Si hay datos nuevos en `defaultConfig`, añadir los getters correspondientes en `ConfigManager`
+Si se omite el paso 2, `Config.render()` lanza un TypeError silencioso y la pestaña queda en blanco.

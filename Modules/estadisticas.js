@@ -314,25 +314,132 @@ _computeAndSaveMetaDeckScore: function (folderName, deckFilename) {
 },
 
 // Recalcula external scores de todos los decks que ya tienen datos en la biblioteca.
-recalculateAllMetaDeckScores: function () {
-    let count = 0;
+recalculateAllMetaDeckScores: async function () {
+    // ── Construir lista completa de decks a procesar ──────────────
+    const allDecks = [];
     for (const [folder, decks] of Object.entries(this.metaDecks)) {
         (decks || []).forEach(deck => {
             const secs = deck.sections || { main: [], extra: [] };
-            const hasData = [...(secs.main || []), ...(secs.extra || [])]
-                .some(id => this.metaCardLibrary[String(id)]);
-            if (hasData) {
-                this._computeAndSaveMetaDeckScore(folder, deck.filename);
-                count++;
-            }
+            const total = (secs.main || []).length + (secs.extra || []).length;
+            if (total > 0) allDecks.push({ folder, filename: deck.filename, sections: secs });
         });
     }
+    if (allDecks.length === 0) { this.render(); return 0; }
 
-    if (count >= 2) {
-        this.crossScores = this.calculateCrossExternalScores();
-        try {
-            localStorage.setItem('yugioh_cross_scores', JSON.stringify(this.crossScores));
-        } catch (_) {}
+    // ── Overlay de carga ──────────────────────────────────────────
+    let overlay = document.getElementById('meta-update-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'meta-update-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.82);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;gap:14px;';
+        overlay.innerHTML = `
+            <div class="power-loading-spinner"></div>
+            <p id="meta-update-msg" style="color:#f0d060;font-size:1rem;margin:0;max-width:340px;text-align:center;"></p>
+            <div style="width:320px;height:6px;background:rgba(255,255,255,0.12);border-radius:3px;overflow:hidden;">
+                <div id="meta-update-bar" style="height:100%;width:0%;background:#f0d060;border-radius:3px;transition:width 0.2s;"></div>
+            </div>
+            <p id="meta-update-sub" style="color:rgba(255,255,255,0.45);font-size:0.8rem;margin:0;"></p>`;
+        document.body.appendChild(overlay);
+    }
+    const setStatus = (msg, sub, pct) => {
+        const el = document.getElementById('meta-update-msg');
+        const bar = document.getElementById('meta-update-bar');
+        const sub_el = document.getElementById('meta-update-sub');
+        if (el)  el.textContent  = msg;
+        if (bar) bar.style.width = pct + '%';
+        if (sub_el) sub_el.textContent = sub || '';
+    };
+
+    try {
+        // ── FASE 1: enriquecer cartas faltantes de la biblioteca ──
+        for (let di = 0; di < allDecks.length; di++) {
+            const { folder, filename, sections } = allDecks[di];
+            const pct = Math.round((di / allDecks.length) * 60);
+            setStatus(
+                `Analizando deck ${di + 1} de ${allDecks.length}`,
+                filename,
+                pct
+            );
+            const allIds = [
+                ...(sections.main  || []).map(String),
+                ...(sections.extra || []).map(String)
+            ];
+            const uniqueIds = [...new Set(allIds)];
+            const missing   = uniqueIds.filter(id => !this.metaCardLibrary[id]);
+
+            for (let i = 0; i < missing.length; i += 10) {
+                const batch = missing.slice(i, i + 10);
+                try {
+                    const res  = await fetch(
+                        `https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${batch.join(',')}`
+                    );
+                    const json = await res.json();
+                    (json.data || []).forEach(card => {
+                        const roles        = window.Deck?.autoAssignRoles?.(card) ?? [];
+                        const cardWithRoles = { ...card, roles };
+                        const specAnalysis  = window.SpecialtyAnalyzer
+                            ? SpecialtyAnalyzer.analyzeCard(cardWithRoles)
+                            : { specializations: [], counters: [] };
+                        this.metaCardLibrary[String(card.id)] = {
+                            id:              String(card.id),
+                            name:            card.name,
+                            type:            card.type,
+                            desc:            card.desc || '',
+                            roles,
+                            specializations: specAnalysis.specializations || [],
+                            counters:        specAnalysis.counters        || []
+                        };
+                    });
+                } catch (_) {}
+            }
+        }
+        this._saveMetaCardLibrary();
+
+        // ── FASE 2: reconstruir powerScoreCache desde la biblioteca ─
+        setStatus('Calculando Poder de Cartas del meta...', '', 63);
+        const freshCache = this._buildPowerCacheFromLibrary();
+        if (freshCache && freshCache.cards.length > 0) {
+            this.powerScoreCache = freshCache;
+            try {
+                localStorage.setItem('yugioh_power_cache', JSON.stringify(freshCache));
+            } catch (_) {}
+        }
+
+        // ── FASE 3: calcular scores de cada deck ──────────────────
+        setStatus('Calculando Internal Score...', '', 66);
+        let count = 0;
+        for (let di = 0; di < allDecks.length; di++) {
+            const { folder, filename } = allDecks[di];
+            const pct = 65 + Math.round((di / allDecks.length) * 25);
+            setStatus(
+                `Calculando scores ${di + 1} de ${allDecks.length}`,
+                filename,
+                pct
+            );
+            this._computeAndSaveMetaDeckScore(folder, filename);
+            count++;
+        }
+
+        // ── FASE 4: cross-score N×N ───────────────────────────────
+        if (count >= 2) {
+            setStatus('Calculando Cross-Score entre decks...', '', 92);
+            this.crossScores = this.calculateCrossExternalScores();
+            Object.entries(this.crossScores).forEach(([key, cx]) => {
+                if (this.metaDeckScores[key] && cx.crossExternalScore !== null) {
+                    this.metaDeckScores[key].externalScore = cx.crossExternalScore;
+                }
+            });
+            try {
+                localStorage.setItem('yugioh_cross_scores', JSON.stringify(this.crossScores));
+                this._saveMetaDeckScores();
+            } catch (_) {}
+        }
+
+        setStatus('\u00a1Listo!', `${count} deck${count !== 1 ? 's' : ''} actualizados`, 100);
+        await new Promise(r => setTimeout(r, 700));
+
+    } finally {
+        document.getElementById('meta-update-overlay')?.remove();
     }
 
     this.render();
@@ -340,8 +447,7 @@ recalculateAllMetaDeckScores: function () {
         const sec = document.getElementById('meta-decks-sec');
         if (sec) sec.style.display = 'block';
     });
-    
-    return count;
+    return allDecks.length;
 },
     // ===============================
     createFolder: function () {
@@ -1133,6 +1239,75 @@ _renderMetaDeckScoreHTML: function (cached, key) {
         if (cStatsSec) cStatsSec.innerHTML = this.renderDeckStats();
     },
 
+    // Versión offline de calculatePowerScores — usa metaCardLibrary en lugar de la API.
+    // Se llama desde recalculateAllMetaDeckScores para que el powerScoreCache
+    // esté disponible sin necesidad de ejecutar "Actualizar Poder de Cartas" por separado.
+    _buildPowerCacheFromLibrary: function () {
+        const { stats, decksWithData } = this.calculateMetaCardStats();
+        if (stats.length === 0) return null;
+
+        const maxCopies = stats[0].totalCopies;
+        const cards = stats.map(item => ({
+            ...item,
+            baseScore:    Math.round((item.presencePct * 0.6) + ((item.totalCopies / maxCopies) * 100 * 0.4)),
+            cardData:     null,
+            specAnalysis: null,
+            detectedRoles:[],
+            specBonus:    0,
+            counterBonus: 0,
+            powerScore:   0,
+            isCounter:    false
+        }));
+
+        // Llenar desde metaCardLibrary en lugar de la API
+        cards.forEach(item => {
+            const lib = this.metaCardLibrary[String(item.cardId)];
+            if (!lib) return;
+            item.cardData = { id: lib.id, name: lib.name, type: lib.type, desc: lib.desc || '' };
+            item.detectedRoles = lib.roles || [];
+            item.specAnalysis  = {
+                specializations: lib.specializations || [],
+                counters:        lib.counters        || []
+            };
+        });
+
+        const specWeight = {};
+        cards.forEach(card => {
+            (card.specAnalysis?.specializations || []).forEach(spec => {
+                specWeight[spec.name] = (specWeight[spec.name] || 0) + card.baseScore;
+            });
+        });
+        cards.forEach(card => {
+            (card.specAnalysis?.specializations || []).forEach(spec => {
+                card.specBonus += Math.round(((specWeight[spec.name] || 0) / 100) * 15);
+            });
+            card.phase2Score = card.baseScore + card.specBonus;
+        });
+        cards.forEach(card => {
+            card.counterDetails = [];
+            (card.specAnalysis?.counters || []).forEach(ctr => {
+                const countered = cards.filter(c =>
+                    (c.specAnalysis?.specializations || []).some(s => s.name === ctr.countersSpec)
+                );
+                const bonus          = countered.reduce((sum, c) => sum + c.phase2Score, 0);
+                const mechFreq       = specWeight[ctr.countersSpec] || 0;
+                const freqMultiplier = Math.min(2.0, 1 + (mechFreq / 200));
+                const weightedBonus  = Math.round(bonus * 0.4 * freqMultiplier);
+                card.counterBonus += weightedBonus;
+                if (bonus > 0) card.isCounter = true;
+                card.counterDetails.push({ mechanic: ctr.countersSpec, mechFreq: Math.round(mechFreq), freqMultiplier: parseFloat(freqMultiplier.toFixed(2)), bonus: weightedBonus });
+            });
+        });
+        cards.forEach(card => {
+            const raw   = card.baseScore + card.specBonus + card.counterBonus;
+            const multi = Math.min(1.0, Math.max(0.33, parseFloat(card.avgCopies) / 3));
+            card.powerScore = Math.round(raw * multi);
+        });
+        cards.sort((a, b) => b.powerScore - a.powerScore);
+        const maxPower = cards[0]?.powerScore || 1;
+        return { cards, maxPower, decksWithData };
+    },
+
     calculatePowerScores: async function () {
         const { stats, decksWithData } = this.calculateMetaCardStats();
         if (stats.length === 0) return { cards: [], maxPower: 1 };
@@ -1758,15 +1933,6 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
         const internalStats = Stats.calculateInternalScore(Deck.cards);
         const analysis      = Stats.calculateExternalScore(Deck.cards, this.powerScoreCache, this.metaDecks);
         const internalScore = parseFloat(internalStats.internalScore);
-        const g1Score = internalStats.g1Score ?? 0;
-        const g2Score = internalStats.g2Score ?? 0;
-        const g1g2Profile = (() => {
-            if (g1Score === 0 && g2Score === 0) return null;
-            const ratio = g1Score / Math.max(g2Score, 0.01);
-            if (ratio > 1.3)  return { label: 'Dependiente del dado', detail: 'Necesita ir primero para desarrollar su plan', icon: '🎲', color: '#fdcb6e' };
-            if (ratio < 0.77) return { label: 'Deck Reactivo',        detail: 'Más cómodo respondiendo al oponente',          icon: '🛡️', color: '#74b9ff' };
-            return             { label: 'Deck Equilibrado',           detail: 'Funciona bien en ambos contextos',              icon: '⚖️', color: '#00b894' };
-        })();
 
         // ── RPS: pilar dominante del deck vs pilar dominante del meta ─────
         const PILLAR_ES = { consistency: 'Consistencia', power: 'Potencia', resilience: 'Resiliencia' };
@@ -1933,46 +2099,9 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
                         <div class="asb-label">External Score</div>
                     </div>
                 </div>
-                ${(analysis.g1Vulnerability !== null && analysis.g2Vulnerability !== null && analysis.hasPowerData) ? `
-                    <div class="analysis-score-box" style="min-width:120px">
-                        <div class="asb-title">Vulnerabilidad</div>
-                        <div style="font-size:0.8rem;margin:4px 0;color:#a29bfe">
-                            G1: <strong>${analysis.g1Vulnerability}/10</strong>
-                            <span style="font-size:0.7rem;opacity:0.7"> — qué tan expuesto está tu juego yendo primero</span>
-                        </div>
-                        <div style="font-size:0.8rem;color:#fd79a8">
-                            G2: <strong>${analysis.g2Vulnerability}/10</strong>
-                            <span style="font-size:0.7rem;opacity:0.7"> — qué tan expuesto está tu juego yendo segundo</span>
-                        </div>
-                    </div>` : ''}
 
                 ${rpsHTML}
-                <!-- G1 / G2 SCORES -->
-                ${(g1Score > 0 || g2Score > 0) ? `
-                <div class="analysis-block">
-                    <div class="analysis-block-title">🎯 Perfil Going First / Going Second</div>
-                    <div class="analysis-g1g2-row">
-                        <div class="analysis-g1g2-item">
-                            <span class="analysis-g1g2-label">Going First</span>
-                            <div class="asb-bar-track">
-                                <div class="asb-bar-fill" style="width:${Math.min(100,(g1Score/30)*100)}%;background:#a29bfe"></div>
-                            </div>
-                            <span class="analysis-g1g2-val" style="color:#a29bfe">${g1Score.toFixed(1)}</span>
-                        </div>
-                        <div class="analysis-g1g2-item">
-                            <span class="analysis-g1g2-label">Going Second</span>
-                            <div class="asb-bar-track">
-                                <div class="asb-bar-fill" style="width:${Math.min(100,(g2Score/30)*100)}%;background:#fd79a8"></div>
-                            </div>
-                            <span class="analysis-g1g2-val" style="color:#fd79a8">${g2Score.toFixed(1)}</span>
-                        </div>
-                    </div>
-                    ${g1g2Profile ? `
-                    <div class="analysis-g1g2-profile" style="border-left:3px solid ${g1g2Profile.color};padding-left:10px;margin-top:8px">
-                        <span style="color:${g1g2Profile.color};font-weight:600">${g1g2Profile.icon} ${g1g2Profile.label}</span>
-                        <span class="analysis-g1g2-detail"> — ${g1g2Profile.detail}</span>
-                    </div>` : ''}
-                </div>` : ''}
+
                 <!-- VEREDICTO -->
                 <div class="analysis-verdict">
                     El deck <strong>${Deck.name}</strong> tiene un poder teórico de
@@ -2209,7 +2338,7 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
     <button class="btn btn-sm btn-secondary" onclick="Estadisticas.recalculateAllMetaDeckScores()">
         🔄 Actualizar Scores
     </button>
-    <small style="opacity:0.5;">Recalcula internal + external score de todos los decks con datos en biblioteca.</small>
+    <small style="opacity:0.5;">Descarga datos faltantes y recalcula todos los scores. No requiere abrir cada deck.</small>
 </div>
 
                 <div class="meta-decks-scroll">

@@ -954,6 +954,16 @@ const Config = {
                 </div>
             </div>
 
+            <!-- Sección: Scoring Avanzado G1/G2 -->
+            <div class="config-section" data-section-id="config-scoring">
+                <h3 class="config-section-title" onclick="Config.toggleSection('scoring-section')">
+                    ▶ 🎮 Scoring Avanzado (G1/G2)
+                </h3>
+                <div id="scoring-section" class="config-section-content" style="display:none;">
+                    ${this.renderScoringSection()}
+                </div>
+            </div>
+
             <!-- Sección: Rendimientos Decrecientes -->
             <div class="config-section" data-section-id="config-diminishing">
                 <h3 class="config-section-title" onclick="Config.toggleSection('diminishing-section')">
@@ -1055,11 +1065,12 @@ const Config = {
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="favoritas"> <span>Favoritas</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="torneo"> <span>Torneo activo</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="practica"> <span>Estados de práctica</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="cache"> <span>Cache de Estadísticas</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="cache"> <span>Cache de Scores (Power + Cross)</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="meta_library"> <span>Librería de cartas del Meta</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="formacion"> <span>Notas y temas de Formación</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="meta_folders"> <span>Carpetas del Meta</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="meta_folders"> <span>Carpetas del Meta (decks importados)</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="banlist"> <span>Banlist del Formato</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="config"> <span>Configuración (roles, staples, mecánicas…)</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="config"> <span>Configuración (roles, scoring, mecánicas…)</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="perfil"> <span>Perfil y bienvenida</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="fallbacks"> <span>Imágenes y Fallbacks</span></label>
     </div>
@@ -1125,12 +1136,15 @@ const Config = {
             <div class="role-card role-panel" data-role="${roleName}" id="role-anchor-${roleName}">
                 <div class="role-card-header role-panel-header" onclick="Config.toggleRolePanel('${roleName}')">
                     <span class="role-panel-arrow">▶</span>
-                    <span class="role-panel-name">${roleName}</span>
-                    <input type="text" class="role-name-input" value="${roleName}"
+                    <span class="role-panel-name" id="rpn-${roleName}">${roleName}</span>
+                    <input type="text" class="role-name-input" id="rni-${roleName}" value="${roleName}"
                         data-original="${roleName}"
+                        style="display:none;max-width:140px;"
                         onblur="Config.renameRole(this)"
                         onkeydown="if(event.key==='Enter')this.blur()"
                         onclick="event.stopPropagation()">
+                    <button title="Renombrar" onclick="event.stopPropagation();Config.focusRenameInput('${roleName}')"
+                        style="background:none;border:none;cursor:pointer;font-size:0.85rem;opacity:0.7;padding:0 2px;">✏️</button>
                     <button class="btn-duplicate-role" onclick="event.stopPropagation();Config.duplicateRole('${roleName}')" title="Duplicar rol" style="background:none;border:none;cursor:pointer;font-size:1rem;margin-right:4px;">⧉</button>
                     <button class="btn-delete-role" onclick="event.stopPropagation();Config.deleteRole('${roleName}')" title="Eliminar rol">🗑️</button>
                 </div>
@@ -1475,16 +1489,21 @@ saveDiminishingRole: function(role) {
         <div class="role-card role-panel" id="nom-anchor-${cat.id}">
             <div class="role-card-header role-panel-header" onclick="Config.toggleNomPanel('${cat.id}')">
                 <span class="role-panel-arrow">▶</span>
-                <span class="role-panel-name" style="background:${cat.color}33;color:${cat.color};padding:1px 8px;border-radius:4px;font-size:0.85rem;">${cat.name}</span>
+                <span class="role-panel-name" id="npn-${cat.id}" style="background:${cat.color}33;color:${cat.color};padding:1px 8px;border-radius:4px;font-size:0.85rem;">${cat.name}</span>
+                <input type="text" class="role-name-input" id="nni-${cat.id}" value="${cat.name}"
+                    style="display:none;max-width:140px;"
+                    onclick="event.stopPropagation()"
+                    onblur="Config.renameNomCategory('${cat.id}',this)"
+                    onkeydown="if(event.key==='Enter')this.blur()">
                 <input type="color" value="${cat.color}" title="Color de la categoría"
-                    style="width:30px;height:30px;min-width:30px;border:2px solid var(--border-color);border-radius:6px;cursor:pointer;padding:2px;background:transparent;appearance:none;-webkit-appearance:none;margin-left:6px;"
+                    style="width:26px;height:26px;min-width:26px;border:2px solid var(--border-color);border-radius:6px;cursor:pointer;padding:2px;background:transparent;appearance:none;-webkit-appearance:none;margin-left:6px;"
                     onclick="event.stopPropagation()"
                     onchange="ConfigManager.updateNomenclatureCategory('${cat.id}',{color:this.value});Config.render();Config._restoreAndScroll('nomenclature-section','nom-anchor-${cat.id}')">
-                <input type="text" class="role-name-input" value="${cat.name}"
-                    onclick="event.stopPropagation()"
-                    onblur="ConfigManager.updateNomenclatureCategory('${cat.id}',{name:this.value});Config.render();Config._restoreAndScroll('nomenclature-section','nom-anchor-${cat.id}')"
-                    onkeydown="if(event.key==='Enter')this.blur()">
-                <button class="btn-delete-role" style="margin-left:auto;"
+                <button title="Renombrar" onclick="event.stopPropagation();Config.focusNomRenameInput('${cat.id}')"
+                    style="background:none;border:none;cursor:pointer;font-size:0.85rem;opacity:0.7;padding:0 2px;">✏️</button>
+                <button title="Duplicar" onclick="event.stopPropagation();Config.duplicateNomCategory('${cat.id}')"
+                    style="background:none;border:none;cursor:pointer;font-size:1rem;opacity:0.7;padding:0 2px;margin-right:2px;">⧉</button>
+                <button class="btn-delete-role" style="margin-left:2px;"
                     onclick="event.stopPropagation();Config.deleteNomCategory('${cat.id}')">🗑️</button>
             </div>
             <div class="role-card-body" style="display:none;gap:12px;">
@@ -1570,9 +1589,23 @@ renderNomCategoryOptions: function (selectedId) {
         }
     },
 
+    focusRenameInput: function (roleName) {
+        const span  = document.getElementById(`rpn-${roleName}`);
+        const input = document.getElementById(`rni-${roleName}`);
+        if (!input) return;
+        if (span) span.style.display = 'none';
+        input.style.display = 'inline-block';
+        input.focus();
+        input.select();
+    },
+
     renameRole: function (el) {
         const oldName = el.dataset.original;
         const newName = el.value.trim();
+        // Restore display regardless of outcome
+        el.style.display = 'none';
+        const span = document.getElementById(`rpn-${oldName}`);
+        if (span) span.style.display = '';
         if (newName === oldName) return;
         if (!newName) {
             alert('⚠️ El nombre no puede estar vacío');
@@ -1676,6 +1709,36 @@ renderNomCategoryOptions: function (selectedId) {
         body.style.display = isOpen ? 'none' : 'flex';
         if (arrow) arrow.textContent = isOpen ? '▶' : '▼';
     },
+    focusNomRenameInput: function (catId) {
+        const span  = document.getElementById(`npn-${catId}`);
+        const input = document.getElementById(`nni-${catId}`);
+        if (!input) return;
+        if (span)  span.style.display  = 'none';
+        input.style.display = 'inline-block';
+        input.focus();
+        input.select();
+    },
+
+    renameNomCategory: function (catId, el) {
+        const newName = el.value.trim();
+        el.style.display = 'none';
+        const span = document.getElementById(`npn-${catId}`);
+        if (span) span.style.display = '';
+        if (!newName) return;
+        if (window.ConfigManager) {
+            ConfigManager.updateNomenclatureCategory(catId, { name: newName });
+            this.render();
+            this._restoreAndScroll('nomenclature-section', `nom-anchor-${catId}`);
+        }
+    },
+
+    duplicateNomCategory: function (catId) {
+        const newId = window.ConfigManager?.duplicateNomenclatureCategory?.(catId);
+        if (!newId) return;
+        this.render();
+        this._restoreAndScroll('nomenclature-section', `nom-anchor-${newId}`);
+    },
+
 
     // ===============================
     createSpecialtyPair: function() {
@@ -1795,20 +1858,21 @@ renderNomCategoryOptions: function (selectedId) {
     resetToDefault: function () {
         if (!confirm(
             '🔄 RESTAURAR DE FÁBRICA\n\n' +
-            'Esto borrará TODA la data actual (decks, engines, matchups, winrates, etc.)\n' +
-            'y restaurará la configuración al estado original de la app.\n\n' +
-            'Esta acción NO se puede deshacer.'
+            'Esto borrará TODA la data actual:\n' +
+            '• Decks guardados, engines, matchups, winrates\n' +
+            '• Meta (decks, librería, scores)\n' +
+            '• Configuración completa (roles, G1/G2, scoring, pilares)\n' +
+            '• Favoritas, apuntes, torneo, banlist\n\n' +
+            'La app se reiniciará con los valores y datos de fábrica.\n\n' +
+            '⚠️ Esta acción NO se puede deshacer. Si quieres conservar tu progreso, cancela y usa "Exportar Data" primero.'
         )) return;
-        // Limpiar todo el localStorage
         const allKeys = [];
         for (let i = 0; i < localStorage.length; i++) {
             const k = localStorage.key(i);
             if (k) allKeys.push(k);
         }
         allKeys.forEach(k => localStorage.removeItem(k));
-        // Poner config de fábrica
         if (window.ConfigManager) ConfigManager.resetToDefault();
-        // Resetear módulos en memoria
         this._resetModulesInMemory();
         this.render();
         alert('✅ App restaurada a valores de fábrica.');
@@ -1933,9 +1997,9 @@ enviarReporte: function (counter, dateStr) {
 },
     exportConfig: function () {
         if (ConfigManager.exportConfig()) {
-            alert('✅ Backup exportado (decks, engines, matchups, winrates, config y más).');
+            alert('✅ Backup exportado correctamente.\n\nEl archivo contiene:\n• Decks guardados y deck activo\n• Engines y Staples\n• Config completa (roles, G1/G2 scoring, mecánicas, pilares, RPS, nomenclatura)\n• Matchups e Historial\n• Winrates\n• Meta: decks, librería de cartas, scores y cross-scores\n• Favoritas, Torneo, Formación y Banlist\n\nGuárdalo en un lugar seguro para restaurar tu progreso en cualquier momento.');
         } else {
-            alert('❌ No se pudo exportar el backup.');
+            alert('❌ No se pudo exportar el backup. Intenta de nuevo.');
         }
     },
 
@@ -1957,12 +2021,16 @@ enviarReporte: function (counter, dateStr) {
     handleFileImport: async function (el) {
         const file = el.files[0];
         if (!file) return;
+        if (!confirm('⚠️ Importar Data\n\nEsto reemplazará TODA la data actual con el contenido del archivo de backup.\n\nAsegúrate de haber exportado tu data actual si quieres conservarla.\n\n¿Continuar?')) {
+            el.value = '';
+            return;
+        }
         try {
             await ConfigManager.importConfig(file);
             alert('✅ Backup importado correctamente. La app se recargará para aplicar los cambios.');
             location.reload();
         } catch (err) {
-            alert('❌ Error al importar: ' + err);
+            alert('❌ Error al importar: ' + err + '\n\nVerifica que el archivo sea un backup válido generado por esta app.');
             el.value = '';
         }
     },
@@ -2049,10 +2117,11 @@ borrarSeleccion: function () {
     const etiquetas = {
         decks: 'Decks guardados', engines: 'Engines', matchups: 'Matchups e Historial',
         winrates: 'Winrates', favoritas: 'Favoritas', torneo: 'Torneo activo',
-        practica: 'Estados de práctica', cache: 'Cache de Estadísticas',
-        formacion: 'Notas y temas de Formación', meta_folders: 'Carpetas del Meta',
+        practica: 'Estados de práctica', cache: 'Cache de Scores (Power + Cross)',
+        meta_library: 'Librería de cartas del Meta',
+        formacion: 'Notas y temas de Formación', meta_folders: 'Carpetas del Meta (decks importados)',
         banlist: 'Banlist del Formato',
-        config: 'Configuración (roles, staples, mecánicas…)',
+        config: 'Configuración (roles, scoring, mecánicas…)',
         perfil: 'Perfil y bienvenida', fallbacks: 'Imágenes y Fallbacks',
     };
     const lista = selected.map(k => `• ${etiquetas[k]}`).join('\n');
@@ -2095,19 +2164,31 @@ borrarSeleccion: function () {
     }
     if (selected.includes('cache')) {
         rm('yugioh_power_cache'); rm('yugioh_cross_scores'); rm('dd_power_scores_cache');
+        rm('yugioh_meta_deck_scores');
         if (window.Estadisticas) {
-            Estadisticas.powerScoreCache = null; Estadisticas.crossScores = {};
+            Estadisticas.powerScoreCache = null;
+            Estadisticas.crossScores     = {};
+            Estadisticas.metaDeckScores  = {};
             if (typeof Estadisticas.updateFloatingWidget === 'function') Estadisticas.updateFloatingWidget();
+        }
+    }
+    if (selected.includes('meta_library')) {
+        rm('yugioh_meta_card_library');
+        if (window.Estadisticas) {
+            Estadisticas.metaCardLibrary = {};
         }
     }
     if (selected.includes('formacion')) {
         rm('yugioh_formacion_notes'); rm('yugioh_formacion_mastered');
     }
     if (selected.includes('meta_folders')) {
-        rm('yugioh_meta_folders');
+        rm('yugioh_meta_folders'); rm('yugioh_meta_decks');
+        rm('yugioh_meta_deck_scores'); rm('yugioh_cross_scores');
         if (window.Estadisticas) {
-            Estadisticas.metaDecks = {}; Estadisticas.metaFolders = [];
-            Estadisticas.metaCardLibrary = {}; Estadisticas.metaDeckScores = {};
+            Estadisticas.metaDecks      = {};
+            Estadisticas.metaFolders    = [];
+            Estadisticas.metaDeckScores = {};
+            Estadisticas.crossScores    = {};
             if (document.getElementById('estadisticas-content')) Estadisticas.render();
         }
     }
@@ -2226,7 +2307,7 @@ renderPillarsSection: function() {
             </div>`;
     };
 
-   const PILLAR_LABELS = { consistency: 'Consistencia', power: 'Potencia', resilience: 'Resiliencia' };
+   const PILLAR_LABELS = { consistency: 'Consistencia', power: 'Potencia', resilience: 'Resiliencia', ninguno: 'Ninguno' };
     const rps = ConfigManager.getPillarRPS();
 
     const rpsRows = rps.map((pair, i) => `
@@ -2238,7 +2319,7 @@ renderPillarsSection: function() {
             </select>
             <span class="rps-arrow">vence a</span>
             <select class="keyword-input rps-select" onchange="Config.updateRPSRule(${i}, 1, this.value)">
-                ${['consistency','power','resilience'].map(p =>
+                ${['consistency','power','resilience','ninguno'].map(p =>
                     `<option value="${p}" ${pair[1]===p?'selected':''}>${PILLAR_LABELS[p]}</option>`
                 ).join('')}
             </select>
@@ -2258,6 +2339,185 @@ renderPillarsSection: function() {
             <div class="rps-config-grid">${rpsRows}</div>
         </div>`;
 },
+renderScoringSection: function () {
+    const cfg    = window.ConfigManager?.getConfig?.() || {};
+    const g1g2   = cfg.g1g2Roles      || window.ConfigManager?.defaultConfig?.g1g2Roles      || {};
+    const rbp    = cfg.roleBasePower   || window.ConfigManager?.defaultConfig?.roleBasePower   || {};
+    const rel    = cfg.reliabilityTable|| window.ConfigManager?.defaultConfig?.reliabilityTable|| {1:0.40,2:0.65,3:0.85,4:0.90,5:0.95};
+    const layers = cfg.scoringLayers   || window.ConfigManager?.defaultConfig?.scoringLayers   || {};
+    const roles  = window.ConfigManager?.getRoleNames?.() || [];
+
+    const G1G2_OPTS = [
+        { val: 'g1',      label: 'G1 (Going First)',  color: '#a29bfe' },
+        { val: 'g2',      label: 'G2 (Going Second)', color: '#fd79a8' },
+        { val: 'neutral', label: 'Neutral',            color: '#b2bec3' }
+    ];
+
+    const g1g2Rows = roles.length === 0
+        ? '<p style="opacity:0.4;font-size:0.82rem;">No hay roles configurados.</p>'
+        : roles.map(r => {
+            const cur  = g1g2[r] || 'neutral';
+            const opts = G1G2_OPTS.map(o =>
+                `<option value="${o.val}" ${cur===o.val?'selected':''}>${o.label}</option>`
+            ).join('');
+            return `<div class="scoring-row">
+                <span class="scoring-role-name">${r}</span>
+                <select class="keyword-input scoring-sel" onchange="Config.saveG1G2Role('${r}',this.value)">${opts}</select>
+            </div>`;
+        }).join('');
+
+    const rbpRows = roles.length === 0
+        ? '<p style="opacity:0.4;font-size:0.82rem;">No hay roles configurados.</p>'
+        : roles.map(r => {
+            const val = rbp[r] !== undefined ? rbp[r] : 3;
+            return `<div class="scoring-row">
+                <span class="scoring-role-name">${r}</span>
+                <input type="number" class="keyword-input scoring-num" min="0" max="10" step="0.5"
+                    value="${val}" onchange="Config.saveRoleBasePower('${r}',parseFloat(this.value)||0)">
+                <span class="scoring-scale">/ 10</span>
+            </div>`;
+        }).join('');
+
+    const relRows = [1,2,3,4,5].map(n => {
+        const val = rel[n] !== undefined ? rel[n] : 0.65;
+        return `<div class="scoring-row">
+            <span class="scoring-role-name">${n} cop${n===1?'ia':'ias'}</span>
+            <input type="number" class="keyword-input scoring-num" min="0" max="1" step="0.05"
+                value="${val}" onchange="Config.saveReliabilityEntry(${n},parseFloat(this.value)||0)">
+            <span class="scoring-scale">0–1</span>
+        </div>`;
+    }).join('');
+
+    const LAYER_META = {
+        L1: { label: 'L1 — Velocidad', hint: 'Cuándo se activa el efecto', cat: 'condicionActivacion' },
+        L2: { label: 'L2 — Coste',     hint: 'Qué hay que pagar',          cat: 'costoActivacion' },
+        L4: { label: 'L4 — Restricción', hint: 'Limitaciones de uso',      cat: 'restriccion' },
+        L5: { label: 'L5 — Alcance',   hint: 'Qué tan genérico es',        cat: 'efectoGenerico' }
+    };
+
+    const layerCols = ['L1','L2','L4','L5'].map(lKey => {
+        const layer  = layers[lKey] || { entries: [], nomenclatureCategory: LAYER_META[lKey].cat };
+        const entries = (layer.entries || []).map((e, ei) => `
+            <div class="scoring-layer-entry">
+                <div style="display:flex;gap:4px;align-items:center;margin-bottom:2px;">
+                    <input class="keyword-input scoring-layer-kw"
+                        placeholder="keywords separadas por coma"
+                        value="${(e.keywords||[]).join(', ')}"
+                        onchange="Config.saveLayerEntryKeywords('${lKey}',${ei},this.value)">
+                    <button class="btn btn-sm btn-danger" onclick="Config.removeLayerEntry('${lKey}',${ei})">✕</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <span style="font-size:0.72rem;opacity:0.55;">mult:</span>
+                    <input type="number" class="keyword-input scoring-num" min="0" max="2" step="0.05"
+                        value="${e.multiplier}"
+                        onchange="Config.saveLayerEntryMultiplier('${lKey}',${ei},parseFloat(this.value)||1)">
+                </div>
+            </div>`).join('');
+
+        return `<div class="scoring-layer-col">
+            <div class="scoring-layer-col-title">${LAYER_META[lKey].label}
+                <span class="scoring-layer-cat"> (${layer.nomenclatureCategory || LAYER_META[lKey].cat})</span>
+            </div>
+            <small class="config-help-text" style="display:block;margin-bottom:6px;">${LAYER_META[lKey].hint}</small>
+            ${entries || '<p style="font-size:0.78rem;opacity:0.4;margin:4px 0;">Sin entradas</p>'}
+            <button class="btn btn-sm" style="margin-top:6px;width:100%;"
+                onclick="Config.addLayerEntry('${lKey}')">+ Entrada</button>
+        </div>`;
+    }).join('');
+
+    return `
+        <div class="config-help-text">
+            <p>Configura cómo se evalúa cada carta en los scores de <strong>Going First (G1)</strong> y <strong>Going Second (G2)</strong>.</p>
+        </div>
+        <div class="config-section-block">
+            <div class="config-block-title">🎯 Clasificación G1 / G2 por Rol</div>
+            <small class="config-help-text">Define si cada rol aporta al G1, G2, o a ambos por igual (Neutral).</small>
+            <div class="scoring-grid" style="margin-top:8px;">${g1g2Rows}</div>
+        </div>
+        <div class="config-section-block">
+            <div class="config-block-title">⚡ Poder Base por Rol (L3)</div>
+            <small class="config-help-text">Valor 0–10. Punto de partida del Card Score. Distinto al Peso en Pilares.</small>
+            <div class="scoring-grid" style="margin-top:8px;">${rbpRows}</div>
+        </div>
+        <div class="config-section-block">
+            <div class="config-block-title">🎲 Fiabilidad por Copias</div>
+            <small class="config-help-text">Probabilidad estimada de ver la carta en apertura (0–1).</small>
+            <div class="scoring-grid scoring-grid-sm" style="margin-top:8px;">${relRows}</div>
+        </div>
+        <div class="config-section-block">
+            <div class="config-block-title">🔢 Capas de Modificación (L1, L2, L4, L5)</div>
+            <small class="config-help-text">Cada capa multiplica el Card Score según keywords encontradas en su categoría. Keywords separadas por coma.</small>
+            <div class="scoring-layers-grid">${layerCols}</div>
+        </div>
+    `;
+},
+
+saveG1G2Role: function (roleName, value) {
+    const cfg = window.ConfigManager.getConfig();
+    if (!cfg.g1g2Roles) cfg.g1g2Roles = {};
+    cfg.g1g2Roles[roleName] = value;
+    window.ConfigManager.saveConfig(cfg);
+},
+
+saveRoleBasePower: function (roleName, value) {
+    const cfg = window.ConfigManager.getConfig();
+    if (!cfg.roleBasePower) cfg.roleBasePower = {};
+    cfg.roleBasePower[roleName] = value;
+    window.ConfigManager.saveConfig(cfg);
+},
+
+saveReliabilityEntry: function (copies, value) {
+    const cfg = window.ConfigManager.getConfig();
+    if (!cfg.reliabilityTable) cfg.reliabilityTable = {};
+    cfg.reliabilityTable[copies] = Math.min(1, Math.max(0, value));
+    window.ConfigManager.saveConfig(cfg);
+},
+
+saveLayerEntryKeywords: function (lKey, entryIndex, raw) {
+    const cfg = window.ConfigManager.getConfig();
+    if (!cfg.scoringLayers) cfg.scoringLayers = JSON.parse(JSON.stringify(window.ConfigManager.defaultConfig.scoringLayers || {}));
+    const entry = cfg.scoringLayers?.[lKey]?.entries?.[entryIndex];
+    if (!entry) return;
+    entry.keywords = raw.split(',').map(s => s.trim()).filter(Boolean);
+    window.ConfigManager.saveConfig(cfg);
+},
+
+saveLayerEntryMultiplier: function (lKey, entryIndex, val) {
+    const cfg = window.ConfigManager.getConfig();
+    if (!cfg.scoringLayers) cfg.scoringLayers = JSON.parse(JSON.stringify(window.ConfigManager.defaultConfig.scoringLayers || {}));
+    const entry = cfg.scoringLayers?.[lKey]?.entries?.[entryIndex];
+    if (!entry) return;
+    entry.multiplier = val;
+    window.ConfigManager.saveConfig(cfg);
+},
+
+addLayerEntry: function (lKey) {
+    const cfg = window.ConfigManager.getConfig();
+    if (!cfg.scoringLayers) cfg.scoringLayers = JSON.parse(JSON.stringify(window.ConfigManager.defaultConfig.scoringLayers || {}));
+    if (!cfg.scoringLayers[lKey]) cfg.scoringLayers[lKey] = { entries: [], nomenclatureCategory: lKey };
+    cfg.scoringLayers[lKey].entries.push({ keywords: [], multiplier: 1.0 });
+    window.ConfigManager.saveConfig(cfg);
+    this.render();
+    requestAnimationFrame(() => {
+        const sec = document.getElementById('scoring-section');
+        if (sec) sec.style.display = 'block';
+    });
+},
+
+removeLayerEntry: function (lKey, entryIndex) {
+    const cfg = window.ConfigManager.getConfig();
+    if (cfg.scoringLayers?.[lKey]?.entries) {
+        cfg.scoringLayers[lKey].entries.splice(entryIndex, 1);
+    }
+    window.ConfigManager.saveConfig(cfg);
+    this.render();
+    requestAnimationFrame(() => {
+        const sec = document.getElementById('scoring-section');
+        if (sec) sec.style.display = 'block';
+    });
+},
+
+
 renderShortcutsSection: function () {
     const shortcuts = window.ConfigManager?.getShortcuts?.() || [];
     const catalog   = window.Shortcuts?.CATALOG || [];
@@ -3160,11 +3420,12 @@ const HelpPanel = {
         <p>Busca cualquier carta de Yu-Gi-Oh! por nombre, arquetipo, set o palabras clave en su efecto.</p>
         <ul>
             <li>Escribe el nombre (o parte) y presiona Enter o el botón Buscar.</li>
-            <li>Usa <strong>Filtros avanzados</strong> para filtrar por tipo, atributo, nivel, etc.</li>
+            <li>Usa <strong>Carta Random</strong> (🎲) para obtener una carta aleatoria del pool actual.</li>
+            <li>Usa <strong>Filtros avanzados</strong> para filtrar por tipo de carta, atributo, subtipo (Fusion, Synchro, XYZ, Link, Pendulum), tipo de monstruo, nivel/rango, ATK, DEF y Link Rating.</li>
             <li>El selector de Arquetipo y el de Packs/Sets permiten búsquedas muy específicas.</li>
             <li>Toca la imagen de la carta para abrir su <strong>Vista de Carta</strong> detallada.</li>
-            <li>Desde la Vista puedes agregarla al Main, Extra o Side Deck, marcarla como Staple o Favorita, y ver sus roles detectados y estado de banlist.</li>
-            <li>El sistema resalta palabras clave en el efecto según la Nomenclatura configurada.</li>
+            <li>Desde la Vista puedes agregarla al Main, Extra o Side Deck, marcarla como Staple o Favorita, ver sus roles detectados, aporte estimado al deck y estado de banlist.</li>
+            <li>El efecto de la carta se resalta por segmentos según la Nomenclatura configurada en Config.</li>
         </ul>`,
 
     mideck: `
@@ -3173,65 +3434,70 @@ const HelpPanel = {
         <ul>
             <li><strong>Decklist / Construcción:</strong> sub-tabs para ver tus cartas o armar el deck desde el sidebar.</li>
             <li><strong>Sidebar:</strong> accede a Engines (combos guardados), Decks guardados, Staples del formato y tus Favoritas.</li>
-            <li><strong>Composición:</strong> el bloque superior muestra tipos, atributos, niveles, y balance de tu deck en tiempo real.</li>
-            <li><strong>Roles:</strong> asigna roles a cada carta para que los tres scores (Internal, External, Counter) los tomen en cuenta.</li>
+            <li><strong>Composición:</strong> muestra tipos, atributos, niveles y balance de tu deck en tiempo real.</li>
+            <li><strong>Roles:</strong> asigna roles a cada carta (desde el botón en su chip) para que los scores los consideren. Los roles se detectan automáticamente al agregar una carta; puedes sobreescribirlos manualmente.</li>
             <li><strong>Carta As:</strong> marca una carta como ícono del deck — será su imagen en la lista de decks guardados.</li>
-            <li><strong>Acciones:</strong> guarda, limpia, exporta o importa tu deck en formato .ydk (compatible con YGOPro, EDOPro, etc.).</li>
-            <li><strong>Matchups:</strong> registra resultados contra decks rivales para alimentar el Nivel Duelista.</li>
+            <li><strong>Importar .ydk:</strong> carga un deck completo desde un archivo .ydk (formato YGOPro / EDOPro). Muestra pantalla de carga mientras consulta la API.</li>
+            <li><strong>Exportar .ydk:</strong> descarga el deck activo en formato .ydk para usar en otras plataformas o compartir.</li>
+            <li><strong>Guardar / Cargar:</strong> guarda el deck activo en la app o carga uno guardado previamente.</li>
+            <li><strong>Internal Score y Análisis:</strong> visibles en el sub-tab Construcción. Se recalculan automáticamente con cada cambio.</li>
         </ul>`,
 
     estadisticas: `
         <h4>📊 Estadísticas</h4>
         <p>El centro de análisis. Usa los scores para tomar decisiones de construcción basadas en datos.</p>
         <ul>
-            <li><strong>Internal Score:</strong> mide la calidad técnica de tu deck en tres pilares — Consistencia, Potencia y Resiliencia — según los roles asignados.</li>
-            <li><strong>Análisis del Deck vs Meta:</strong> cruza las mecánicas de tu deck contra el meta activo. Muestra tu External Score, decks que te amenazan y cartas que te contrarrestan.</li>
-            <li><strong>Winrate:</strong> historial de resultados de tu deck activo contra los rivales que registraste.</li>
-            <li><strong>Top Tier:</strong> ranking de los decks del meta cargado por presencia y poder combinado.</li>
-            <li><strong>Decks del Meta:</strong> visualiza todos los decks importados. Filtra por carpeta/formato.</li>
-            <li><strong>Poder de Cartas:</strong> Power Score de cada carta del meta basado en presencia, mecánicas y capacidad de counter.</li>
-            <li><strong>Counter-Cards:</strong> lista de cartas del meta con función de interrupción activa y su Score de counter.</li>
-            <li><strong>Exportar:</strong> descarga reportes de tu deck o del meta en .txt y .csv.</li>
-            <li><strong>Nivel Duelista:</strong> estadísticas personales de rendimiento basadas en tus matchups registrados.</li>
+            <li><strong>Internal Score:</strong> mide la calidad técnica del deck activo en tres pilares — Consistencia, Potencia y Resiliencia — según los roles asignados y sus pesos. Se recalcula en cada render.</li>
+            <li><strong>G1/G2 Score:</strong> perfil Going First vs Going Second del deck. Depende de la clasificación G1/G2 de cada rol y las capas de modificación configuradas en Config.</li>
+            <li><strong>Análisis del Deck vs Meta:</strong> cruza las mecánicas del deck activo contra el meta cargado. Muestra External Score (ajustado por RPS), vulnerabilidad G1/G2, decks que amenazan y staples sugeridos.</li>
+            <li><strong>Winrate:</strong> historial de resultados del deck activo contra los rivales registrados.</li>
+            <li><strong>Top Tier:</strong> ranking de todos los decks (meta + guardados) por score. Filtrable por pilar.</li>
+            <li><strong>Decks del Meta:</strong> todos los decks del meta importados. El botón <strong>Actualizar Scores</strong> descarga las cartas faltantes automáticamente y calcula Internal Score + Cross-Score para todos los decks sin necesidad de abrirlos uno por uno.</li>
+            <li><strong>Poder de Cartas:</strong> Power Score de cada carta del meta basado en presencia, mecánicas y counter-bonus. Requiere ejecutarse manualmente.</li>
+            <li><strong>Counter-Cards:</strong> cartas del meta con función de interrupción y su score de counter.</li>
+            <li><strong>Exportar:</strong> descarga reportes del deck o del meta en .txt y .csv.</li>
+            <li><strong>Nivel Duelista:</strong> estadísticas personales de rendimiento basadas en matchups registrados.</li>
         </ul>`,
 
     simuladores: `
         <h4>🎮 Simuladores</h4>
         <p>Herramientas para practicar y medir tu rendimiento sin necesidad de un oponente.</p>
         <ul>
-            <li><strong>Mulligan / Hipergeometría:</strong> simula manos iniciales y calcula probabilidades de abrir con piezas clave.</li>
+            <li><strong>Mulligan / Hipergeometría:</strong> simula manos iniciales y calcula probabilidades de abrir con piezas clave de tu deck activo.</li>
             <li><strong>Winrate:</strong> registro rápido de partidas por deck y oponente.</li>
-            <li><strong>Torneo (Swiss):</strong> gestiona un torneo local con sistema de rondas suizas, standings y puntos.</li>
-            <li><strong>Duelo en Vivo:</strong> cronómetro maestro con control de LP, turnos y temporizador por jugador.</li>
-            <li><strong>Experimentación:</strong> herramientas analíticas avanzadas para explorar métricas del deck.</li>
-            <li><strong>Campo de Práctica:</strong> campo de duelo visual donde puedes mover cartas, marcar estados y guardar posiciones.</li>
+            <li><strong>Torneo (Swiss):</strong> gestiona un torneo local con rondas suizas, standings y puntos.</li>
+            <li><strong>Duelo en Vivo:</strong> cronómetro maestro con control de LP, turnos y temporizador por jugador. Modos estándar y Master Duel.</li>
+            <li><strong>Experimentación:</strong> herramientas analíticas para explorar métricas del deck activo.</li>
+            <li><strong>Campo de Práctica:</strong> campo de duelo visual donde puedes mover cartas, marcar estados y guardar posiciones de campo.</li>
         </ul>`,
 
     formacion: `
         <h4>📚 Formación</h4>
         <p>Tu cuaderno de estudio y biblioteca de recursos para mejorar como jugador.</p>
         <ul>
-            <li><strong>Apuntes:</strong> crea y organiza notas con título, cuerpo y fecha. Ideal para anotar rulings, combos o estrategias.</li>
-            <li><strong>Temas:</strong> lista de conceptos del juego (Rulings, Fases, Mecánicas, etc.) que puedes marcar como dominados.</li>
-            <li><strong>Juegos Alternativos:</strong> acceso rápido a juegos/plataformas de Yu-Gi-Oh! configuradas en Config.</li>
-            <li><strong>Fuentes:</strong> links a sitios externos del meta (Limitless, YGOPro, etc.) configurados en Config.</li>
+            <li><strong>Apuntes:</strong> crea y organiza notas con título, cuerpo y fecha. Ideal para rulings, combos o estrategias.</li>
+            <li><strong>Temas:</strong> conceptos del juego que puedes marcar como dominados para llevar tu progreso.</li>
+            <li><strong>Juegos:</strong> acceso rápido a plataformas de Yu-Gi-Oh! configuradas en Config.</li>
+            <li><strong>Fuentes:</strong> links a sitios del meta (YGOPro, masterduelmeta, etc.) configurados en Config.</li>
             <li><strong>Maestros:</strong> galería de streamers y jugadores de referencia que configuras en Config.</li>
         </ul>`,
 
     config: `
         <h4>⚙️ Configuración</h4>
-        <p>Personaliza cómo la app analiza cartas y decks. Todo lo que configures aquí afecta directamente los scores y el resaltado.</p>
+        <p>Personaliza cómo la app analiza cartas y decks. Todo lo que cambies aquí afecta directamente los scores, la detección de roles y el resaltado de efectos.</p>
         <ul>
-            <li><strong>Contenido de la App:</strong> controla qué secciones son visibles según tu perfil (Novato / Casual / Competitivo). Puedes ajustar cada item individualmente.</li>
-            <li><strong>Roles:</strong> define roles para asignar a cartas (Starter, Boss, etc.), sus keywords de detección y su peso en el Internal Score.</li>
-            <li><strong>Counters:</strong> configura pares mecánica/counter que activan el Power Score y el External Score.</li>
-            <li><strong>Staples:</strong> cartas esenciales del formato. El sistema las sugiere si no las tienes en el deck.</li>
-            <li><strong>Nomenclatura:</strong> categorías de texto para resaltar partes del efecto de cartas por color en el Buscador.</li>
-            <li><strong>Pilares:</strong> asigna qué roles pesan en Consistencia, Potencia y Resiliencia del Internal Score.</li>
-            <li><strong>Banlist:</strong> gestiona la lista de cartas prohibidas/limitadas por formato personalizado.</li>
-            <li><strong>Atajos Rápidos:</strong> configura hasta 6 accesos directos al botón ⚡ flotante.</li>
-            <li><strong>Música:</strong> asigna pistas por perfil y controla el volumen del botón ▶ flotante.</li>
-            <li><strong>Zona de Borrado:</strong> elimina selectivamente cada tipo de data guardada en la app.</li>
+            <li><strong>Mecánicas y Roles:</strong> define roles (Starter, Boss, Handtrap…), sus keywords de detección automática, conditionals, exclusiones (notContains), nomenclatura asociada y peso en pilares. Cada rol es un panel colapsable con botón ✏️ para renombrar, ⧉ para clonar y 🗑️ para borrar.</li>
+            <li><strong>Counters:</strong> configura pares mecánica/counter. Estos activan el Power Score del meta y el External Score del deck activo.</li>
+            <li><strong>Staples:</strong> cartas esenciales del formato. Se sugieren en el Análisis si no están en el deck.</li>
+            <li><strong>Nomenclatura:</strong> categorías de texto para resaltar segmentos del efecto por color. También son la base de las capas L1–L5 del scoring G1/G2.</li>
+            <li><strong>Pilares del Internal Score:</strong> asigna qué roles aportan a Consistencia, Potencia y Resiliencia. Aquí también se configura el RPS (qué pilar vence a cuál) con opción "Ninguno" para pilares sin counter natural.</li>
+            <li><strong>Scoring Avanzado (G1/G2):</strong> define si cada rol aporta al Going First, Going Second o ambos; su Poder Base (L3, escala 0–10); la tabla de fiabilidad por copias; y los multiplicadores de las capas L1, L2, L4 y L5.</li>
+            <li><strong>Rendimientos Decrecientes:</strong> controla cómo cada copia adicional de un rol aporta progresivamente menos al score.</li>
+            <li><strong>Atajos Rápidos:</strong> hasta 6 accesos directos desde el botón ⚡ flotante.</li>
+            <li><strong>Música:</strong> asigna pistas por perfil y controla el volumen.</li>
+            <li><strong>Exportar / Importar Data:</strong> guarda o restaura toda la data de la app en un archivo .txt. Incluye decks, engines, config, scores, meta, matchups y más.</li>
+            <li><strong>Restaurar Configuración:</strong> resetea TODO a los valores de fábrica. Irreversible sin un backup previo.</li>
+            <li><strong>Zona de Borrado:</strong> elimina categorías específicas de data sin afectar las demás.</li>
         </ul>`,
 
     default: `
@@ -3243,27 +3509,43 @@ const HelpPanel = {
     faqContent: [
         {
             q: '¿Para qué es esta app?',
-            a: 'Es una app que ayuda a los jugadores del juego de cartas Yu-Gi-Oh! — ya sean nuevos, casuales, competitivos, profesionales, incluso curiosos — a tomar el juego en sus propias manos y analizar con números sus decisiones a la hora de buscar cartas, construir decks, analizar el META, practicar sus estrategias, aprender mejor rulings básicos, intermedios y avanzados, crear su propia versión del metagame y hasta importar o exportar sus propios decks para abrirlos en otras plataformas o compartirlos con amigos.'
+            a: 'Es una herramienta para jugadores de Yu-Gi-Oh! que quieren analizar con números sus decisiones: buscar cartas, construir decks, entender el meta, practicar estrategias y aprender mecánicas del juego. Funciona con datos reales de la API de YGOProDeck y toda la configuración del análisis es ajustable por el usuario.'
         },
         {
             q: '¿Qué es el Internal Score?',
-            a: 'Es una puntuación de 0 a 10 que mide la calidad técnica de tu deck basándose en los roles que le asignas a cada carta. Evalúa tres pilares con el mismo peso: Consistencia (qué tan bien arrancas), Potencia (qué tan bien cierras) y Resiliencia (qué tan bien aguantas). No mide si el deck gana torneos — mide qué tan bien construido está a nivel de diseño.'
+            a: 'Mide la calidad técnica de tu deck basándose en los roles asignados a cada carta. Evalúa tres pilares — Consistencia (arranque y búsqueda), Potencia (cierre y daño) y Resiliencia (negación y extensión) — usando rendimientos decrecientes para que apilar muchas copias del mismo rol aporte cada vez menos. Se recalcula automáticamente en cada cambio del deck. No mide si el deck gana torneos — mide qué tan bien está construido a nivel de diseño.'
         },
         {
-            q: '¿Qué es el External Score?',
-            a: 'Mide qué tan bien sobrevive tu deck frente al meta actualmente cargado. Toma las mecánicas de tu deck y las cruza contra las cartas del meta que las contrarrestan. A más cartas del meta que te amenazan y mayor su presencia, menor será tu External Score. Es relativo al meta que selecciones, no a un valor fijo.'
+            q: '¿Qué es el G1/G2 Score?',
+            a: 'Mide el perfil Going First vs Going Second del deck. Cada rol tiene una clasificación (G1, G2 o Neutral) y un Poder Base. El score de cada carta se calcula multiplicando ese poder por cuatro capas: velocidad de activación (L1), coste (L2), restricciones de uso (L4) y alcance del efecto (L5), más un factor de fiabilidad según cuántas copias hay en el mazo. El resultado determina si el deck es "Dependiente del dado", "Reactivo" o "Equilibrado". Todo esto es configurable en la sección Scoring Avanzado de Config.'
+        },
+        {
+            q: '¿Qué es el External Score del deck activo?',
+            a: 'Mide qué tan expuesto está tu deck frente al meta cargado. Toma las mecánicas detectadas de tu deck y las cruza contra las cartas del meta que las contrarrestan. A mayor presencia y peso de esas cartas amenazantes, menor el External Score. Se ajusta adicionalmente por el RPS (relación de pilares dominantes): si tu pilar dominante vence al del meta, el score sube 25%; si pierde, baja 25%. Es relativo al meta que tengas cargado.'
+        },
+        {
+            q: '¿Qué es el External Score de los decks del meta?',
+            a: 'Es un Cross-Score N×N: cada deck del meta se mide contra todos los demás decks de esa misma lista. Para cada deck A se suman las amenazas que cada otro deck B puede representar (sus counters apuntando a las mecánicas de A), ponderadas por el Internal Score de B y el RPS entre sus pilares dominantes. El resultado es (1 − amenaza/baseline) × 10. Se calcula al presionar "Actualizar Scores" y ya no requiere abrir cada deck manualmente.'
         },
         {
             q: '¿Qué es el Counter-Deck Score?',
-            a: 'Indica qué tan capaz es tu deck de interrumpir las estrategias del meta. Las cartas de tu deck que tienen función de counter acumulan puntos. Las cartas "brick" (sin uso práctico en mano) generan una penalización proporcional porque reducen la probabilidad de ejecutar esas interrupciones.'
+            a: 'Indica qué tan capaz es tu deck de interrumpir las estrategias del meta. Las cartas con función de counter acumulan puntos proporcionales a la presencia de lo que contrarrestan. Las cartas Brick (sin rol útil) generan penalización porque reducen la probabilidad de ejecutar esas interrupciones.'
         },
         {
             q: '¿Cómo funciona el peso de los roles?',
-            a: 'Cada rol tiene un peso de 0.1 a 1.0. Un peso de 1.0 significa que la carta aporta el 100% de su valor al pilar (rol genérico, útil en cualquier situación). Un peso menor significa que aporta menos (rol arquetípico, útil solo en contexto específico). Esto te permite distinguir un buscador genérico de uno que solo busca cartas de tu arquetipo.'
+            a: 'Cada rol tiene un peso de 0.1 a 2.0 (en la sección Pilares). Un peso de 1.0 es el valor base. Peso mayor a 1.0 amplifica la contribución de ese rol al pilar — útil para roles genéricos como Searcher que impactan en cualquier contexto. Peso menor reduce su contribución — útil para roles arquetípicos que solo funcionan en contexto específico. Este peso afecta el Internal Score. El Poder Base (en Scoring Avanzado) es distinto: afecta solo el G1/G2 Score.'
+        },
+        {
+            q: '¿Cómo exporto e importo toda mi data?',
+            a: 'En Config, el botón "Exportar Data" descarga un archivo .txt con toda la data: decks guardados, engines, config completa (incluyendo roles, G1/G2, scoring layers), matchups, winrates, meta, scores y más. "Importar Data" restaura ese backup completo. La config incluye automáticamente todos los ajustes de Scoring Avanzado porque viven dentro de yugioh_config.'
+        },
+        {
+            q: '¿Qué hace "Restaurar Configuración"?',
+            a: 'Borra absolutamente toda la data de la app (decks, engines, matchups, config, scores, meta, todo) y la reinicia a los valores de fábrica: roles por defecto, mecánicas y counters predefinidos, staples de ejemplo, apuntes iniciales y engines de demostración. Esta acción es irreversible si no tienes un backup previo exportado. No confundir con la Zona de Borrado, que elimina solo las categorías que selecciones.'
         },
         {
             q: '¿Qué son las Especialidades y Counters?',
-            a: 'Son pares de mecánicas configurables. Una Especialidad es un patrón de juego que un deck ejecuta (por ejemplo: "búsqueda de deck"). Un Counter es lo que lo interrumpe (por ejemplo: "niega la búsqueda"). Configurar estos pares activa el Power Score del meta y el External Score de tu deck.'
+            a: 'Son pares de mecánicas configurables en la sección Counters. Una Especialidad es un patrón de juego que un deck ejecuta (por ejemplo: "invocación especial masiva"). Un Counter es lo que lo interrumpe. Configurar estos pares activa el Power Score del meta, el External Score del deck activo y el cross-score entre decks del meta.'
         }
     ],
 

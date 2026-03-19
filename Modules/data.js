@@ -314,148 +314,65 @@ const ConfigManager = {
             { label: 'Campo de Práctica',    tab: 'simuladores',  sectionId: null,                           module: null }
         ],
 
-        // ⭐ SCORING G1/G2 — Clasificación de roles por contexto de juego
+        // ── Scoring G1/G2 ──────────────────────────────────────────
         g1g2Roles: {
-            'Starter':                  'g1',
-            'Starter (normal summon)':  'g1',
-            'Extender':                 'g1',
-            'Booster':                  'g1',
-            'Boss Monster':             'g1',
-            'Tower':                    'g1',
-            'Token Summoner':           'g1',
-            'Ignition':                 'g1',
-            'Stun':                     'g1',
-            'Stun-Banish':              'g1',
-            'Stun-Special':             'g1',
-            'Stun-GY':                  'g1',
-            'Stun-Effect':              'g1',
-            'Stun-Draw':                'g1',
-            'Handtrap':                 'g2',
-            'Boardbreaker':             'g2',
-            'Disruptor':                'g2',
-            'Removal':                  'g2',
-            'Negate-activation':        'g2',
-            'Negate-effect':            'g2',
-            'Negater':                  'g2',
-            'Handloop':                 'g2',
-            'Speed-4':                  'g2',
-            'Anti-damage':              'g2',
-            'Searcher':                 'neutral',
-            'Searcher (archetype)':     'neutral',
-            'Searcher (milling)':       'neutral',
-            'Recycler':                 'neutral',
-            'Draw-engine':              'neutral',
-            'LP Restore':               'neutral',
-            'Protector':                'neutral',
-            'Grinding Card':            'neutral',
-            'Banished Card':            'neutral',
-            'HARD-once-per-turn':       'neutral',
-            'SOFT-once-per-turn':       'neutral',
-            'Quick-effect':             'neutral',
-            'Burner':                   'neutral',
-            'Send':                     'neutral',
-            'Discard':                  'neutral',
-            'Pay':                      'neutral',
-            'Target':                   'neutral',
-            'Non-target':               'neutral',
-            'Untargetable':             'neutral',
-            'Undestroyable':            'neutral',
-            'Destroyer':                'neutral',
-            'Brick':                    'neutral',
-            'Bridge':                   'neutral'
+            'Starter': 'g1', 'Starter(normal summon)': 'g1', 'Extender': 'g1',
+            'Booster': 'g1', 'Boss Monster': 'g1', 'Tower': 'g1',
+            'Token Summoner': 'g1', 'Ignition': 'g1', 'Stun': 'g1',
+            'Stun-Banish': 'g1', 'Stun-Special': 'g1', 'Stun-GY': 'g1',
+            'Stun-Effect': 'g1', 'Stun-Draw': 'g1',
+            'Handtrap': 'g2', 'Boardbreaker': 'g2', 'Disruptor': 'g2',
+            'Removal': 'g2', 'Negate-activation': 'g2', 'Negate-effect': 'g2',
+            'Negater': 'g2', 'Handloop': 'g2', 'Speed-4': 'g2', 'Anti-damage': 'g2',
+            'Searcher': 'neutral', 'Searcher(archetype)': 'neutral', 'Searcher(milling)': 'neutral',
+            'Recycler': 'neutral', 'Draw-engine': 'neutral', 'LP Restore': 'neutral',
+            'Protector': 'neutral', 'Grinding Card': 'neutral', 'Banished Card': 'neutral',
+            'HARD-once-per-turn': 'neutral', 'SOFT-once-per-turn': 'neutral',
+            'Quick-effect': 'neutral', 'Burner': 'neutral', 'Send': 'neutral',
+            'Discard': 'neutral', 'Pay': 'neutral', 'Target': 'neutral',
+            'Non-target': 'neutral', 'Untargetable': 'neutral', 'Undestroyable': 'neutral',
+            'Destroyer': 'neutral', 'Brick': 'neutral', 'Bridge': 'neutral'
         },
-
-        // ⭐ ROLE BASE POWER — Poder base L3 por rol (configurable)
         roleBasePower: {
-            'Negate-activation':        10,
-            'Boardbreaker':             9,
-            'Negate-effect':            8,
-            'Negater':                  8,
-            'Tower':                    8,
-            'Protector':                7,
-            'Stun':                     7,
-            'Stun-Effect':              7,
-            'Stun-Special':             7,
-            'Stun-Draw':                7,
-            'Stun-Banish':              6,
-            'Stun-GY':                  6,
-            'Starter':                  6,
-            'Searcher':                 6,
-            'Searcher (archetype)':     6,
-            'Handtrap':                 6,
-            'Disruptor':                6,
-            'Removal':                  6,
-            'Extender':                 5,
-            'Starter (normal summon)':  5,
-            'Searcher (milling)':       5,
-            'Recycler':                 5,
-            'Boss Monster':             5,
-            'Speed-4':                  5,
-            'Handloop':                 5,
-            'Draw-engine':              4,
-            'Booster':                  4,
-            'Destroyer':                4,
-            'Non-target':               4,
-            'Untargetable':             4,
-            'Undestroyable':            4,
-            'Grinding Card':            4,
-            'Banished Card':            4,
-            'Token Summoner':           3,
-            'Send':                     3,
-            'Discard':                  3,
-            'Target':                   3,
-            'LP Restore':               3,
-            'Quick-effect':             3,
-            'Ignition':                 3,
-            'Anti-damage':              3,
-            'HARD-once-per-turn':       2,
-            'SOFT-once-per-turn':       2,
-            'Burner':                   2,
-            'Pay':                      2,
-            'Bridge':                   2,
-            'Brick':                    1
+            'Negate-activation': 10, 'Boardbreaker': 9,
+            'Negate-effect': 8, 'Negater': 8, 'Tower': 8,
+            'Protector': 7, 'Stun': 7, 'Stun-Effect': 7, 'Stun-Special': 7, 'Stun-Draw': 7,
+            'Stun-Banish': 6, 'Stun-GY': 6, 'Starter': 6, 'Searcher': 6,
+            'Searcher(archetype)': 6, 'Handtrap': 6, 'Disruptor': 6, 'Removal': 6,
+            'Extender': 5, 'Starter(normal summon)': 5, 'Searcher(milling)': 5,
+            'Recycler': 5, 'Boss Monster': 5, 'Speed-4': 5, 'Handloop': 5,
+            'Draw-engine': 4, 'Booster': 4, 'Destroyer': 4, 'Non-target': 4,
+            'Untargetable': 4, 'Undestroyable': 4, 'Grinding Card': 4, 'Banished Card': 4,
+            'Token Summoner': 3, 'Send': 3, 'Discard': 3, 'Target': 3,
+            'LP Restore': 3, 'Quick-effect': 3, 'Ignition': 3, 'Anti-damage': 3,
+            'HARD-once-per-turn': 2, 'SOFT-once-per-turn': 2, 'Burner': 2, 'Pay': 2, 'Bridge': 2,
+            'Brick': 1
         },
-
-        // ⭐ SCORING LAYERS — Capas L1, L2, L4, L5 (multiplicadores por keywords en nomenclatura)
+        reliabilityTable: { 1: 0.40, 2: 0.65, 3: 0.85, 4: 0.90, 5: 0.95 },
         scoringLayers: {
-            L1: {
-                nomenclatureCategory: 'condicionActivacion',
-                entries: [
-                    { keywords: ['quick effect', 'during either player', "during your opponent's turn", 'when your opponent'], multiplier: 1.30 },
-                    { keywords: ["during your opponent's", 'when your opponent activates', 'if your opponent activates'], multiplier: 1.20 },
-                    { keywords: ['when this card is normal summoned', 'when this card is special summoned', 'when this card is summoned'], multiplier: 1.00 },
-                    { keywords: ['continuous', 'as long as', 'while this card'], multiplier: 0.90 }
-                ]
-            },
-            L2: {
-                nomenclatureCategory: 'costoActivacion',
-                entries: [
-                    { keywords: ['discard', 'by discarding', 'send from your hand'], multiplier: 0.85 },
-                    { keywords: ['tribute', 'by tributing', 'send from your field', 'send 1 monster you control'], multiplier: 0.80 },
-                    { keywords: ['pay', 'by paying', 'pay lp', 'life points'], multiplier: 0.95 }
-                ]
-            },
-            L4: {
-                nomenclatureCategory: 'restriccion',
-                entries: [
-                    { keywords: ['once per duel', 'only once while'], multiplier: 0.50 },
-                    { keywords: ['you cannot use other effects', 'you cannot activate', 'you cannot special summon except', 'only from the extra deck'], multiplier: 0.75 },
-                    { keywords: ['once per turn', 'only use this effect once', 'only activate 1'], multiplier: 0.85 }
-                ]
-            },
-            L5: {
-                nomenclatureCategory: 'efectoGenerico',
-                entries: [
-                    { keywords: ['any card your opponent activates', 'any effect', 'any card or effect'], multiplier: 1.00 },
-                    { keywords: ['1 monster', '1 spell', '1 trap', 'target 1', 'one monster your opponent'], multiplier: 0.90 },
-                    { keywords: ['only if', 'only when', 'that includes', 'if it includes'], multiplier: 0.80 },
-                    { keywords: ['"', 'archetype', 'only for'], multiplier: 0.65 }
-                ]
-            }
-        },
-
-        // ⭐ RELIABILITY TABLE — Fiabilidad por copias en mano de apertura (deck 40, mano 5)
-        reliabilityTable: { 1: 0.40, 2: 0.65, 3: 0.85, 4: 0.90, 5: 0.95 }
+            L1: { nomenclatureCategory: 'condicionActivacion', entries: [
+                { keywords: ['quick effect','during either player',"during your opponent's turn",'when your opponent'], multiplier: 1.30 },
+                { keywords: ["during your opponent's",'when your opponent activates','if your opponent activates'], multiplier: 1.20 },
+                { keywords: ['when this card is normal summoned','when this card is special summoned','when this card is summoned'], multiplier: 1.00 },
+                { keywords: ['continuous','as long as','while this card'], multiplier: 0.90 }
+            ]},
+            L2: { nomenclatureCategory: 'costoActivacion', entries: [
+                { keywords: ['discard','by discarding','send from your hand'], multiplier: 0.85 },
+                { keywords: ['tribute','by tributing','send from your field','send 1 monster you control'], multiplier: 0.80 },
+                { keywords: ['pay','by paying','pay lp','life points'], multiplier: 0.95 }
+            ]},
+            L4: { nomenclatureCategory: 'restriccion', entries: [
+                { keywords: ['once per duel','only once while'], multiplier: 0.50 },
+                { keywords: ['you cannot use other effects','you cannot activate','you cannot special summon except','only from the extra deck'], multiplier: 0.75 },
+                { keywords: ['once per turn','only use this effect once','only activate 1'], multiplier: 0.85 }
+            ]},
+            L5: { nomenclatureCategory: 'efectoGenerico', entries: [
+                { keywords: ['any card your opponent activates','any effect','any card or effect'], multiplier: 1.00 },
+                { keywords: ['1 monster','1 spell','1 trap','target 1','one monster your opponent'], multiplier: 0.90 },
+                { keywords: ['only if','only when','that includes','if it includes'], multiplier: 0.80 },
+                { keywords: ['"','archetype','only for'], multiplier: 0.65 }
+            ]}
+        }
     },
     
 
@@ -733,40 +650,7 @@ duplicateRole: function(roleName) {
     getRoleCondition: function (roleName) {
         return (this.getConfig().roleConditions || {})[roleName] || null;
     },
-getG1G2Roles: function () {
-        return this.getConfig().g1g2Roles || {};
-    },
 
-    getRoleG1G2: function (roleName) {
-        return (this.getG1G2Roles()[roleName]) || 'neutral';
-    },
-
-    getRoleBasePowers: function () {
-        return this.getConfig().roleBasePower || {};
-    },
-
-    getRoleBasePower: function (roleName) {
-        const table = this.getRoleBasePowers();
-        return (table[roleName] !== undefined) ? table[roleName] : 3;
-    },
-
-    getScoringLayers: function () {
-        return this.getConfig().scoringLayers || {};
-    },
-
-    getReliabilityTable: function () {
-        return this.getConfig().reliabilityTable || { 1: 0.40, 2: 0.65, 3: 0.85, 4: 0.90, 5: 0.95 };
-    },
-
-    getReliability: function (copies) {
-        const table = this.getReliabilityTable();
-        const n = Math.min(Math.max(Math.round(copies), 1), 5);
-        if (table[n] !== undefined) return table[n];
-        // Interpolación para valores fuera de tabla
-        const keys = Object.keys(table).map(Number).sort((a,b) => a-b);
-        const last = keys[keys.length - 1];
-        return table[last] || 0.95;
-    },
     hasConditions: function (roleName) {
         const condition = this.getRoleCondition(roleName);
         return condition && condition.conditionals && condition.conditionals.length > 0;
@@ -1092,6 +976,20 @@ updateSpecialtyPair: function(id, mechanicRole, counterRole) {
         return true;
     },
 
+    duplicateNomenclatureCategory: function (categoryId) {
+        const config = this.getConfig();
+        if (!config.nomenclature || !config.nomenclature.categories) return null;
+        const idx = config.nomenclature.categories.findIndex(c => c.id === categoryId);
+        if (idx === -1) return null;
+        const original = config.nomenclature.categories[idx];
+        const newCat = JSON.parse(JSON.stringify(original));
+        newCat.id   = 'custom_' + Date.now();
+        newCat.name = original.name + ' (copia)';
+        config.nomenclature.categories.splice(idx + 1, 0, newCat);
+        this.saveConfig(config);
+        return newCat.id;
+    },
+
     deleteNomenclatureCategory: function (categoryId) {
         const config = this.getConfig();
         if (!config.nomenclature || !config.nomenclature.categories) return false;
@@ -1213,6 +1111,17 @@ savePillarRPS: function (rps) {
     const config = this.getConfig();
     config.pillarRPS = rps;
     this.saveConfig(config);
+},
+getG1G2Roles:     function () { return this.getConfig().g1g2Roles     || this.defaultConfig.g1g2Roles     || {}; },
+getRoleG1G2:      function (r) { return (this.getG1G2Roles()[r]) || 'neutral'; },
+getRoleBasePowers: function () { return this.getConfig().roleBasePower || this.defaultConfig.roleBasePower || {}; },
+getRoleBasePower: function (r) { const t = this.getRoleBasePowers(); return t[r] !== undefined ? t[r] : 3; },
+getScoringLayers: function () { return this.getConfig().scoringLayers  || this.defaultConfig.scoringLayers  || {}; },
+getReliabilityTable: function () { return this.getConfig().reliabilityTable || this.defaultConfig.reliabilityTable || {1:0.40,2:0.65,3:0.85,4:0.90,5:0.95}; },
+getReliability: function (copies) {
+    const t = this.getReliabilityTable();
+    const n = Math.min(Math.max(Math.round(copies), 1), 5);
+    return t[n] !== undefined ? t[n] : 0.95;
 },
 getShortcuts: function () {
     const config = this.getConfig();
@@ -1561,78 +1470,6 @@ const Stats = {
 
     const internalScore = Math.max(0, consistency + power + resilience - penalty);
 
-    // ── G1/G2 Score — loop paralelo con sistema de capas ──────────
-    const g1g2Map       = window.ConfigManager?.getG1G2Roles?.()   || {};
-    const layers        = window.ConfigManager?.getScoringLayers?.() || {};
-    const relTable      = window.ConfigManager?.getReliabilityTable?.() || { 1:0.40, 2:0.65, 3:0.85, 4:0.90, 5:0.95 };
-
-    // Función local: fiabilidad por copias con pool efectivo
-    const getReliability = (copies) => {
-        const n = Math.min(Math.max(Math.round(copies), 1), 5);
-        return relTable[n] ?? relTable[Object.keys(relTable).map(Number).sort((a,b)=>b-a)[0]] ?? 0.95;
-    };
-
-    // Pre-calcular pool efectivo de searchers por arquetipo
-    const archetypeSearcherPool = {};
-    for (const [, item] of Object.entries(cards)) {
-        if (item.location !== 'main') continue;
-        const itemRoles = (item.roles || []).map(r => r.toLowerCase());
-        if (!itemRoles.includes('searcher') && !itemRoles.includes('searcher (archetype)')) continue;
-        const arch = (item.data?.archetype || '').toLowerCase().trim();
-        if (!arch) continue;
-        archetypeSearcherPool[arch] = (archetypeSearcherPool[arch] || 0) + (item.qty || 1);
-    }
-
-    // Función local: aplicar capas L1, L2, L4, L5
-    const applyLayers = (desc, segments) => {
-        let mult = 1.0;
-        ['L1','L2','L4','L5'].forEach(lKey => {
-            const layer = layers[lKey];
-            if (!layer) return;
-            const catId    = layer.nomenclatureCategory;
-            const texts    = (segments[catId] || []).join(' ');
-            if (!texts) return;
-            for (const entry of (layer.entries || [])) {
-                const hit = (entry.keywords || []).some(kw => texts.includes(kw.toLowerCase()));
-                if (hit) { mult *= entry.multiplier; break; }
-            }
-        });
-        return mult;
-    };
-
-    let g1Score = 0;
-    let g2Score = 0;
-
-    for (const [, item] of Object.entries(cards)) {
-        if (item.location !== 'main') continue;
-        const qty   = item.qty || 1;
-        const roles = (item.roles || []);
-        if (roles.length === 0) continue;
-
-        const desc     = item.data?.desc || '';
-        const arch     = (item.data?.archetype || '').toLowerCase().trim();
-        const segments = window.NomenclatureAnalyzer?.segmentDescription?.(desc) || {};
-
-        // Pool efectivo: copias directas + searchers del mismo arquetipo (otros)
-        const indirectPool = arch ? (archetypeSearcherPool[arch] || 0) : 0;
-        const effectivePool = Math.min(qty + indirectPool, 5);
-        const reliability   = getReliability(effectivePool);
-
-        // Calcular CardScore para el rol de mayor base power de esta carta
-        const basePowers = roles.map(r => window.ConfigManager?.getRoleBasePower?.(r) ?? 3);
-        const basePower  = Math.max(...basePowers);
-        const layerMult  = applyLayers(desc, segments);
-        const cardScore  = basePower * layerMult * reliability;
-
-        // Clasificar en G1, G2 o neutral según el rol de mayor peso
-        const dominantRole = roles[basePowers.indexOf(basePower)];
-        const g1g2 = g1g2Map[dominantRole] || 'neutral';
-
-        if (g1g2 === 'g1')      g1Score += cardScore;
-        else if (g1g2 === 'g2') g2Score += cardScore;
-        else { g1Score += cardScore * 0.5; g2Score += cardScore * 0.5; }
-    }
-
     return {
         internalScore: parseFloat(internalScore.toFixed(2)),
         consistency:   parseFloat(consistency.toFixed(2)),
@@ -1640,11 +1477,9 @@ const Stats = {
         resilience:    parseFloat(resilience.toFixed(2)),
         totalCards,
         mainCards,
-        penalty:       parseFloat(penalty.toFixed(2)),
-        g1Score:       parseFloat(g1Score.toFixed(2)),
-        g2Score:       parseFloat(g2Score.toFixed(2))
+        penalty:       parseFloat(penalty.toFixed(2))
     };
-},
+},// ===============================
     // ===============================
     getDominantPillar: function (internalResult) {
         const c = parseFloat(internalResult.consistency) || 0;
@@ -1665,7 +1500,7 @@ const Stats = {
         const rpsRules = window.ConfigManager?.getPillarRPS?.()
             || [['resilience','power'],['power','consistency'],['consistency','resilience']];
         const BEATS = {};
-        rpsRules.forEach(([winner, loser]) => { BEATS[winner] = loser; });
+        rpsRules.forEach(([winner, loser]) => { if (loser && loser !== 'ninguno') BEATS[winner] = loser; });
 
         if (BEATS[deckPillar] === metaPillar) return { modifier: 1.25, relation: 'advantage' };
         if (BEATS[metaPillar] === deckPillar) return { modifier: 0.75, relation: 'disadvantage' };
@@ -1832,9 +1667,7 @@ const Stats = {
             hasSpecData:      false,
             baseline:         null,
             totalThreat:      0,
-            threatPct:        0,
-            g1Vulnerability:  null,
-            g2Vulnerability:  null
+            threatPct:        0
         };
 
 if (window.SpecialtyAnalyzer) {
@@ -1932,40 +1765,9 @@ if (powerScoreCache && powerScoreCache.cards) {
                 result.baseline    = maxTheoreticalThreat;
                 result.totalThreat = totalThreat;
                 result.threatPct   = Math.round((totalThreat / maxTheoreticalThreat) * 100);
-
-                // ── G1 / G2 Vulnerability ─────────────────────────────
-                const g1g2Map = window.ConfigManager?.getG1G2Roles?.() || {};
-                const deckRolesG1G2 = {};
-                for (const [, item] of Object.entries(deckCards)) {
-                    (item.roles || []).forEach(r => {
-                        const ctx = g1g2Map[r] || 'neutral';
-                        deckRolesG1G2[r.toLowerCase()] = ctx;
-                    });
-                }
-
-                let g1Threat = 0, g2Threat = 0, g1Base = 0, g2Base = 0;
-                result.threatCards.forEach(tc => {
-                    const specs = tc.countersSpecs || [];
-                    specs.forEach(specName => {
-                        // Buscar el rol del deck que corresponde a esta spec amenazada
-                        const matchedRole = Object.keys(deckRolesG1G2).find(r => r === specName.toLowerCase());
-                        const ctx = matchedRole ? deckRolesG1G2[matchedRole] : 'neutral';
-                        if (ctx === 'g1')      { g1Threat += tc.threatLevel; g1Base += tc.counterBonus; }
-                        else if (ctx === 'g2') { g2Threat += tc.threatLevel; g2Base += tc.counterBonus; }
-                        else {
-                            g1Threat += tc.threatLevel * 0.5; g1Base += tc.counterBonus * 0.5;
-                            g2Threat += tc.threatLevel * 0.5; g2Base += tc.counterBonus * 0.5;
-                        }
-                    });
-                });
-
-                result.g1Vulnerability = g1Base > 0
-                    ? parseFloat(Math.min(10, (g1Threat / g1Base) * 10).toFixed(1)) : 0;
-                result.g2Vulnerability = g2Base > 0
-                    ? parseFloat(Math.min(10, (g2Threat / g2Base) * 10).toFixed(1)) : 0;
             }
 
-        } else if (result.hasPowerData) {
+        }else if (result.hasPowerData) {
             result.externalScore = 0;
         }
 
@@ -2408,7 +2210,6 @@ _getCategoryDelimiter: function (cat) {
         const nomenclature = window.ConfigManager.getNomenclature();
         const categories   = nomenclature.categories || [];
         const result       = {};
-
         categories.forEach(cat => {
             result[cat.id] = [];
             const delimiter = this._getCategoryDelimiter(cat);
@@ -2419,9 +2220,8 @@ _getCategoryDelimiter: function (cat) {
                 }
             });
         });
-
         return result;
-    },
+    }
 };
 
 window.NomenclatureAnalyzer = NomenclatureAnalyzer;
