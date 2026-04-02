@@ -1,0 +1,725 @@
+/* ====================================
+   BUSCADOR STYLES
+   Destiny Draw - Yu-Gi-Oh! App
+   Estilos para el módulo de búsqueda de cartas
+   ==================================== */
+
+/* ====================================
+   CONTENEDOR PRINCIPAL
+   ==================================== */
+
+/* Contenedor del módulo buscador */
+#buscador-content {
+    animation: fadeIn 0.4s ease;
+}
+
+/* Contenedor de búsqueda (input y botones) */
+.search-container {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+}
+
+/* ====================================
+   BARRA DE BÚSQUEDA PRINCIPAL
+   ==================================== */
+
+/* Contenedor de la barra de búsqueda */
+.search-bar {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+/* Input de búsqueda */
+.search-input {
+    flex: 1;
+    min-width: 250px;
+    padding: 12px 16px;
+    font-size: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: rgba(0, 26, 51, 0.6);
+    color: var(--text-light);
+    transition: all var(--transition-normal);
+    outline: none;
+}
+
+/* Placeholder del input */
+.search-input::placeholder {
+    color: rgba(241, 241, 241, 0.5);
+}
+
+/* Estado focus del input */
+.search-input:focus {
+    border-color: var(--gold-color);
+    background: rgba(0, 26, 51, 0.8);
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+/* ====================================
+   BOTONES
+   ==================================== */
+
+/* Botón base */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efecto ripple al hacer click */
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Icono del botón */
+.btn-icon {
+    font-size: 1.2rem;
+}
+
+/* Texto del botón */
+.btn-text {
+    position: relative;
+    z-index: 1;
+}
+
+/* Botón primario - Buscar */
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    color: var(--text-light);
+    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0080ff, var(--accent-color));
+    box-shadow: 0 6px 12px rgba(0, 102, 204, 0.5);
+    transform: translateY(-2px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Botón secundario - Limpiar */
+.btn-secondary {
+    background: rgba(100, 100, 100, 0.3);
+    color: var(--text-light);
+    border: 2px solid rgba(241, 241, 241, 0.3);
+}
+
+.btn-secondary:hover {
+    background: rgba(150, 150, 150, 0.4);
+    border-color: rgba(241, 241, 241, 0.5);
+    transform: translateY(-2px);
+}
+
+.btn-secondary:active {
+    transform: translateY(0);
+}
+
+/* ====================================
+   FILTROS ADICIONALES
+   ==================================== */
+
+/* Contenedor de filtros */
+.filters-container {
+    padding-top: var(--spacing-md);
+    border-top: 1px solid rgba(0, 102, 204, 0.3);
+}
+
+/* Label de filtros */
+.filter-label {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--gold-color);
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Input de filtros */
+.filter-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: rgba(0, 26, 51, 0.6);
+    color: var(--text-light);
+    transition: all var(--transition-normal);
+    outline: none;
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Placeholder del filtro */
+.filter-input::placeholder {
+    color: rgba(241, 241, 241, 0.5);
+}
+
+/* Estado focus del filtro */
+.filter-input:focus {
+    border-color: var(--gold-color);
+    background: rgba(0, 26, 51, 0.8);
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+/* Texto de ayuda */
+.filter-help {
+    display: block;
+    font-size: 0.85rem;
+    color: rgba(241, 241, 241, 0.6);
+    font-style: italic;
+}
+
+/* ====================================
+   CHIPS DE PALABRAS CLAVE
+   Badges visuales de las palabras clave activas
+   ==================================== */
+
+/* Contenedor de chips */
+.filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+    min-height: 20px;
+}
+
+/* Chip individual */
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    color: var(--text-light);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0, 102, 204, 0.4);
+    transition: all var(--transition-fast);
+    animation: chipFadeIn 0.3s ease;
+}
+
+/* Animación de entrada del chip */
+@keyframes chipFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Texto del chip */
+.chip-text {
+    -webkit-user-select: none;
+}
+
+/* Botón de eliminar chip */
+.chip-remove {
+    cursor: pointer;
+    font-size: 1.3rem;
+    line-height: 1;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.8);
+    transition: all var(--transition-fast);
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+/* Hover sobre el botón de eliminar */
+.chip-remove:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    transform: rotate(90deg);
+}
+
+/* Hover sobre el chip completo */
+.filter-chip:hover {
+    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.6);
+    transform: translateY(-2px);
+}
+
+/* ====================================
+   RESULTADOS
+   ==================================== */
+
+/* Contenedor de resultados */
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px;
+    padding: 10px;
+}
+
+
+/* Item de carta individual */
+
+.card-item {
+    background: #002b4d;
+    border-radius: 8px;
+    padding: 6px;
+    text-align: center;
+    font-size: 0.9rem;
+    transition: transform 0.2s;
+}
+
+.card-item:hover {
+    transform: scale(1.05);
+}
+
+.card-image {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+.card-name {
+    margin-top: 4px;
+    font-weight: bold;
+    color: #FFD700;
+}
+
+.card-type {
+    font-size: 0.65rem;
+    color: #f1f1f1;
+}
+
+/* ====================================
+   ESTADOS ESPECIALES
+   ==================================== */
+
+/* Estado de carga */
+.loading {
+    text-align: center;
+    padding: var(--spacing-xl);
+}
+
+.loading::after {
+    content: '⏳ Buscando...';
+    font-size: 1.2rem;
+    color: var(--gold-color);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Sin resultados */
+.no-results {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--warning-color);
+    font-size: 1.1rem;
+}
+
+/* ====================================
+   MODAL DE CARTA
+   ==================================== */
+
+/* Overlay del modal (fondo oscuro) */
+.card-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Contenedor del modal */
+.card-modal {
+    background: var(--bg-card);
+    border-radius: 12px;
+    max-width: 900px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    border: 2px solid var(--gold-color);
+    position: relative;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Botón cerrar modal */
+.modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    z-index: 10;
+}
+
+.modal-close-btn:hover {
+    background: #ff4757;
+    transform: rotate(90deg);
+}
+
+/* Contenido del modal */
+.modal-content {
+    display: flex;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+}
+
+/* Imagen en el modal */
+.modal-image {
+    flex: 0 0 300px;
+}
+
+.modal-image img {
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Información en el modal */
+.modal-info {
+    flex: 1;
+    color: var(--text-light);
+}
+
+.modal-info h3 {
+    color: var(--gold-color);
+    margin-bottom: var(--spacing-md);
+    font-size: 1.5rem;
+}
+
+.modal-info p {
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.6;
+}
+
+.modal-info strong {
+    color: var(--gold-color);
+}
+
+/* Descripción de la carta */
+.modal-description {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+}
+
+.modal-description p {
+    margin-top: var(--spacing-xs);
+    line-height: 1.8;
+    color: rgba(241, 241, 241, 0.9);
+}
+/* ====================================
+   ACCIONES DE CARTA EN BUSCADOR
+   ==================================== */
+
+/* Item de carta con posición relativa para el overlay */
+.card-item {
+    position: relative;
+    cursor: pointer;
+}
+
+/* Estado activo con overlay */
+.card-item-active {
+    position: relative;
+}
+
+/* Overlay oscuro con botones */
+.card-actions-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 8px;
+    z-index: 10;
+}
+
+/* Botones de acción */
+.card-action-btn {
+    padding: 8px 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 100px;
+}
+
+/* Botón Ver */
+.btn-view {
+    background: linear-gradient(135deg, #0066cc, #004080);
+    color: white;
+}
+
+.btn-view:hover {
+    background: linear-gradient(135deg, #0080ff, #0066cc);
+    transform: scale(1.05);
+}
+
+/* Botón Añadir */
+.btn-add {
+    background: linear-gradient(135deg, #00b894, #00a383);
+    color: white;
+}
+
+.btn-add:hover {
+    background: linear-gradient(135deg, #00d9a5, #00b894);
+    transform: scale(1.05);
+}
+
+/* ── Layout Buscador con Favoritas ── */
+.buscador-layout {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+.buscador-main {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ── Panel Favoritas ── */
+.favoritas-panel {
+    width: 200px;
+    min-width: 180px;
+    max-width: 200px;
+    background: rgba(0, 20, 40, 0.7);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    /* scroll interno — misma altura que el área de resultados */
+    max-height: calc(100vh - 220px);
+    display: flex;
+    flex-direction: column;
+}
+.favoritas-header {
+    padding: 8px 12px;
+    font-size: 0.78rem;
+    font-weight: bold;
+    color: var(--gold-color);
+    background: rgba(255, 215, 0, 0.07);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+.favoritas-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* ── Carta en Favoritas ── */
+.fav-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(0, 26, 51, 0.6);
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    padding: 5px 6px;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.15s;
+}
+.fav-item:hover { border-color: rgba(255,215,0,0.4); }
+.fav-item.fav-item-active { border-color: var(--gold-color); }
+
+.fav-img {
+    width: 34px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+.fav-info {
+    flex: 1;
+    min-width: 0;
+}
+.fav-name {
+    font-size: 0.72rem;
+    color: var(--text-light);
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fav-type {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.4);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fav-remove {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.3);
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 2px 4px;
+    flex-shrink: 0;
+    transition: color 0.15s;
+}
+.fav-remove:hover { color: #d63031; }
+
+/* overlay de acciones — igual que buscador */
+.fav-actions-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    z-index: 10;
+}
+/* ====================================
+   RESPONSIVE - TABLET
+   ==================================== */
+@media (max-width: 768px) {
+    /* Barra de búsqueda en columna */
+    .search-bar {
+        flex-direction: column;
+    }
+
+    .search-input {
+        min-width: 100%;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Grid de resultados más compacto */
+    .results-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: var(--spacing-sm);
+    }
+
+    /* Contenedor de búsqueda más compacto */
+    .search-container {
+        padding: var(--spacing-md);
+    }
+
+    /* Modal responsive */
+    .modal-content {
+        flex-direction: column;
+    }
+
+    .modal-image {
+        flex: none;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+}
+
+/* ====================================
+   RESPONSIVE - MÓVIL
+   ==================================== */
+@media (max-width: 480px) {
+    /* Grid de una sola columna */
+    .results-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Botones más compactos */
+    .btn {
+        padding: 10px 16px;
+        font-size: 0.95rem;
+    }
+
+    /* Inputs más compactos */
+    .search-input,
+    .filter-input {
+        font-size: 0.9rem;
+    }
+
+    /* Modal más compacto */
+    .card-modal {
+        width: 95%;
+    }
+
+    .modal-content {
+        padding: var(--spacing-md);
+    }
+
+    .modal-info h3 {
+        font-size: 1.2rem;
+    }
+}

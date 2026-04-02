@@ -1,0 +1,1103 @@
+/* ====================================
+   MI DECK STYLES
+   Destiny Draw - Yu-Gi-Oh! App
+   Estilos para el módulo de gestión de deck
+   ==================================== */
+
+/* ====================================
+   CONTENEDOR PRINCIPAL
+   ==================================== */
+
+#mideck-content {
+    animation: fadeIn 0.4s ease;
+}
+
+/* ====================================
+   ESTADO VACÍO
+   ==================================== */
+
+.deck-empty-state {
+    text-align: center;
+    padding: var(--spacing-xl) var(--spacing-md);
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 2px dashed var(--border-color);
+    margin-bottom: var(--spacing-lg);
+}
+
+.deck-empty-state p {
+    font-size: 1.2rem;
+    color: var(--gold-color);
+    margin-bottom: var(--spacing-sm);
+}
+
+.deck-help {
+    font-size: 0.9rem !important;
+    color: rgba(241, 241, 241, 0.7) !important;
+}
+
+/* ====================================
+   TÍTULO DEL DECK
+   ==================================== */
+
+.deck-title {
+    color: var(--gold-color);
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    background: var(--bg-card);
+    border-radius: 8px;
+    margin-bottom: var(--spacing-md);
+    transition: all var(--transition-normal);
+    border: 2px solid var(--border-color);
+}
+
+.deck-title:hover {
+    background: rgba(0, 102, 204, 0.2);
+    border-color: var(--gold-color);
+    transform: translateX(5px);
+}
+
+/* ====================================
+   TÍTULOS DE SECCIÓN
+   ==================================== */
+
+.deck-section-title {
+    color: var(--text-light);
+    background: var(--secondary-color);
+    padding: var(--spacing-sm);
+    border-radius: 8px;
+    margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    border-left: 4px solid var(--accent-color);
+}
+
+.deck-section-title:hover {
+    background: var(--accent-color);
+    border-left-color: var(--gold-color);
+}
+
+/* ====================================
+   SECCIONES (Main, Extra, Side)
+   ==================================== */
+
+.deck-section {
+    background: var(--bg-card);
+    border-radius: 8px;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid var(--border-color);
+}
+
+.deck-empty {
+    text-align: center;
+    color: rgba(241, 241, 241, 0.5);
+    padding: var(--spacing-md);
+    font-style: italic;
+}
+
+/* ====================================
+   FILAS DE CARTAS
+   ==================================== */
+
+.deck-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    border-radius: 8px;
+    transition: all var(--transition-normal);
+    border: 2px solid transparent;
+}
+
+.deck-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    border-radius: 8px;
+    transition: all var(--transition-normal);
+    border: 2px solid transparent;
+}
+
+.deck-row:hover {
+    border-color: var(--gold-color);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transform: translateX(5px);
+}
+
+.deck-img {
+    flex: 0 0 60px;
+    width: 60px;
+    height: auto;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform var(--transition-fast);
+    border: 2px solid rgba(0, 0, 0, 0.3);
+}
+
+.deck-img:hover {
+    transform: scale(1.1);
+}
+
+.deck-name {
+    flex: 0 0 160px;
+    min-width: 0;
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.deck-name-white {
+    color: white !important;
+}
+
+/* Roles (badges) */
+/* Roles: flex:1 para siempre ocupar el espacio central */
+.deck-roles {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+    align-items: center;
+}
+
+.role-badge {
+    background: var(--accent-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Qty y botones siempre al extremo derecho */
+.deck-qty {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.deck-qty button {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all var(--transition-fast);
+}
+
+.deck-qty button:hover {
+    background: var(--accent-hover);
+    transform: scale(1.1);
+}
+
+.deck-qty button:active {
+    transform: scale(0.95);
+}
+
+.qty-number {
+    font-weight: bold;
+    color: var(--text-dark);
+    min-width: 28px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.deck-buttons {
+    flex-shrink: 0;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.deck-move {
+    background: var(--secondary-color);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    transition: all var(--transition-normal);
+    white-space: nowrap;
+}
+
+.deck-move:hover {
+    background: var(--accent-color);
+    border-color: var(--gold-color);
+}
+
+/* Contenedor de botones */
+.deck-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Botón Rol */
+.deck-role-btn {
+    background: var(--accent-color);
+    color: white;
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all var(--transition-normal);
+    white-space: nowrap;
+}
+
+.deck-role-btn:hover {
+    background: var(--accent-hover);
+    border-color: var(--gold-color);
+    transform: translateY(-2px);
+}
+
+/* ====================================
+   ACCIONES
+   ==================================== */
+
+.deck-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--bg-card);
+    border-radius: 8px;
+    margin-bottom: var(--spacing-md);
+}
+
+.deck-actions button {
+    flex: 1;
+    min-width: 150px;
+}
+
+/* ====================================
+   MODAL / OVERLAY
+   ==================================== */
+
+.deck-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fadeIn 0.3s ease;
+}
+
+.deck-modal {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: var(--spacing-lg);
+    max-width: 500px;
+    width: 90%;
+    border: 2px solid var(--gold-color);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s ease;
+}
+
+.deck-modal h3 {
+    color: var(--gold-color);
+    margin-bottom: var(--spacing-md);
+    font-size: 1.3rem;
+}
+
+.deck-modal input {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: rgba(0, 26, 51, 0.6);
+    color: var(--text-light);
+    margin-bottom: var(--spacing-md);
+    outline: none;
+}
+
+.deck-modal input:focus {
+    border-color: var(--gold-color);
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+.deck-modal-buttons {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.deck-modal-buttons button {
+    flex: 1;
+}
+
+/* Modal de advertencia */
+.deck-modal-warning {
+    border-color: var(--danger-color);
+}
+
+.deck-modal-warning h3 {
+    color: var(--danger-color);
+}
+
+.deck-modal-highlight {
+    color: var(--gold-color);
+    font-weight: bold;
+    font-size: 1.1rem;
+    text-align: center;
+    margin: var(--spacing-sm) 0;
+}
+
+.deck-modal-note {
+    color: rgba(241, 241, 241, 0.7);
+    font-size: 0.9rem;
+    text-align: center;
+    font-style: italic;
+    margin-bottom: var(--spacing-md);
+}
+
+.btn-danger {
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.btn-danger:hover {
+    background: #ff4757;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(214, 48, 49, 0.4);
+}
+
+/* Checkboxes de roles */
+.role-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    max-height: 300px;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+    background: rgba(0, 26, 51, 0.3);
+    border-radius: 8px;
+}
+
+.role-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background var(--transition-fast);
+}
+
+.role-checkbox-label:hover {
+    background: rgba(0, 102, 204, 0.2);
+}
+
+.role-checkbox {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-color);
+}
+
+/* ====================================
+   LISTA DE DECKS GUARDADOS
+   ==================================== */
+
+#deck-list-container {
+    margin-bottom: var(--spacing-xl);
+}
+
+.deck-list-title {
+    color: var(--gold-color);
+    font-size: 1.8rem;
+    margin-bottom: var(--spacing-md);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    background: var(--bg-card);
+    border-radius: 8px;
+    transition: all var(--transition-normal);
+    border: 2px solid var(--border-color);
+}
+
+.deck-list-title:hover {
+    background: rgba(0, 102, 204, 0.2);
+    border-color: var(--gold-color);
+}
+
+.deck-list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--spacing-sm);
+}
+
+.deck-list-item {
+    background: var(--bg-card);
+    border-radius: 8px;
+    padding: var(--spacing-sm);
+    border: 2px solid var(--border-color);
+    position: relative;
+    transition: all var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.deck-list-item:hover {
+    border-color: var(--gold-color);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 102, 204, 0.4);
+}
+
+/* Botón eliminar */
+.deck-delete-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: bold;
+    transition: all var(--transition-fast);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.deck-delete-btn:hover {
+    background: #ff4757;
+    transform: rotate(90deg) scale(1.1);
+}
+
+/* Miniatura */
+.deck-thumbnail {
+    width: 100%;
+    aspect-ratio: 421/614;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--bg-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.deck-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Información del deck */
+.deck-info {
+    flex: 1;
+}
+
+.deck-item-name {
+    color: var(--gold-color);
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+
+.deck-counts {
+    color: var(--text-light);
+    font-size: 0.75rem;
+    margin: 0;
+}
+
+.deck-count-main {
+    color: #90EE90;
+}
+
+.deck-count-extra {
+    color: #FFB6C1;
+}
+
+.deck-count-side {
+    color: #87CEEB;
+}
+
+/* Scores del deck en lista */
+.deck-scores {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(0, 102, 204, 0.3);
+}
+
+.deck-score-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+}
+
+.deck-score-label {
+    color: rgba(241, 241, 241, 0.7);
+}
+
+.deck-score-value {
+    font-weight: bold;
+}
+
+.deck-score-internal {
+    color: var(--gold-color);
+}
+
+.deck-score-external {
+    color: #87CEEB;
+}
+
+/* Botón ver deck */
+.deck-load-btn {
+    width: 100%;
+    margin-top: auto;
+}
+
+/* ====================================
+   BOTONES GENERALES
+   ==================================== */
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-size: 0.95rem;
+}
+
+.btn-primary {
+    background: var(--accent-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.4);
+}
+
+/* ====================================
+   STATS CARD - INTERNAL SCORE
+   ==================================== */
+
+.stats-card {
+    background: linear-gradient(135deg, rgba(0, 51, 102, 0.6), rgba(0, 43, 77, 0.8));
+    border: 2px solid var(--gold-color);
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.stats-header h3 {
+    color: var(--gold-color);
+    font-size: 1.3rem;
+    margin: 0;
+}
+
+.stats-score {
+    font-size: 2rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.stats-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-xs);
+    background: rgba(0, 26, 51, 0.4);
+    border-radius: 6px;
+}
+
+.stat-label {
+    color: var(--text-light);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.stat-value {
+    color: var(--gold-color);
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.stat-count {
+    color: rgba(241, 241, 241, 0.6);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.stats-footer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid rgba(0, 102, 204, 0.3);
+}
+
+.stat-info {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.stat-penalty {
+    color: var(--warning-color);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* ====================================
+   ANIMACIONES
+   ==================================== */
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+/* ====================================
+   ESTILOS PARA BADGES DE SUBTIPOS
+   Destiny Draw - Yu-Gi-Oh! App
+   
+   Agregar al final de style_deck.css
+   ==================================== */
+
+/* Badge de subtipo (amarillo con letras negras) */
+.subtype-badge {
+    display: inline-block;
+    background: #FFD700; /* Amarillo dorado */
+    color: #000000; /* Letras negras */
+    padding: 4px 10px;
+    margin: 2px 4px 2px 0;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    border: 1px solid #DAA520; /* Borde dorado oscuro */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Asegurar que los badges de subtipos se vean bien junto a los de roles */
+.deck-roles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Opcional: Efecto hover en badges de subtipos */
+.subtype-badge:hover {
+    background: #FFC700;
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+}
+
+/* Imagen desaturada para Side Deck */
+.deck-img-desaturated {
+    filter: saturate(10%) !important;
+}
+
+/* Letras blancas con sombra */
+.deck-row .deck-name-white {
+    color: white !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Efecto hover */
+.deck-img-desaturated:hover {
+    filter: saturate(30%);
+    transition: filter 0.3s ease;
+}
+/* ====================================
+   ESTILOS PARA BADGES DE SUBTIPOS
+   Destiny Draw - Yu-Gi-Oh! App
+   
+   Agregar al final de style_deck.css
+   ==================================== */
+
+/* Badge de subtipo (amarillo con letras negras) */
+.subtype-badge {
+    display: inline-block;
+    background: #FFD700; /* Amarillo dorado */
+    color: #000000; /* Letras negras */
+    padding: 4px 10px;
+    margin: 2px 4px 2px 0;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    border: 1px solid #DAA520; /* Borde dorado oscuro */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Asegurar que los badges de subtipos se vean bien junto a los de roles */
+.deck-roles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Opcional: Efecto hover en badges de subtipos */
+.subtype-badge:hover {
+    background: #FFC700;
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+}
+/* ====================================
+   ESTILOS PARA WIDGET FLOTANTE CON THUMBNAILS
+   Destiny Draw - Yu-Gi-Oh! App
+   
+   Agregar al final de style.css o crear archivo separado
+   ==================================== */
+
+/* Modificar widget-deck-item para incluir imagen */
+.widget-deck-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.widget-deck-item:hover {
+    background: linear-gradient(135deg, #2d2d2d, #3a3a3a);
+    border-color: #3498db;
+    transform: translateX(5px);
+}
+
+.widget-deck-item.active {
+    border-color: #FFD700;
+    background: linear-gradient(135deg, #2d2d2d, #1a472a);
+}
+
+/* Thumbnail de la carta en el item del deck */
+.widget-deck-thumbnail {
+    width: 50px;
+    height: 72px;
+    border-radius: 4px;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    border: 1px solid #444;
+    flex-shrink: 0;
+}
+
+/* Contenedor de info del deck */
+.widget-deck-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0; /* Para que funcione text-overflow */
+}
+
+.widget-deck-name {
+    font-weight: bold;
+    color: white;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.widget-deck-counts {
+    color: #FFD700;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Ajustar altura de widget expandido */
+.widget-deck-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* Scrollbar personalizado para lista de decks */
+.widget-deck-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.widget-deck-list::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 3px;
+}
+
+.widget-deck-list::-webkit-scrollbar-thumb {
+    background: #3498db;
+    border-radius: 3px;
+}
+
+.widget-deck-list::-webkit-scrollbar-thumb:hover {
+    background: #5dade2;
+}
+/* ====================================
+   BLOQUE DE ESTADÍSTICAS DEL DECK
+   ==================================== */
+
+.deck-stats-block {
+    background: var(--bg-card);
+    border-radius: 10px;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ds-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.ds-group {
+    flex: 1;
+    min-width: 140px;
+}
+
+.ds-group-title {
+    font-size: 0.72rem;
+    color: var(--gold-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.ds-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.ds-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: rgba(0, 51, 102, 0.4);
+    font-size: 0.78rem;
+    color: rgba(241, 241, 241, 0.8);
+    white-space: nowrap;
+}
+
+.ds-chip strong {
+    color: var(--text-light);
+    font-size: 0.85rem;
+}
+
+@media (max-width: 480px) {
+    .ds-row { flex-direction: column; gap: 8px; }
+    .ds-group { min-width: 0; }
+}
+.role-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+.role-panel-header h3 { margin: 0; }
+
+.carta-as-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--gold-color);
+    cursor: pointer;
+    font-weight: bold;
+    -webkit-user-select: none;
+}
+.carta-as-toggle input[type="checkbox"] {
+    accent-color: var(--gold-color);
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+/* Badge en la carta row */
+.role-badge.badge-carta-as {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+    font-weight: bold;
+}
+
+.deck-notes-textarea {
+    width: 100%;
+    min-height: 120px;
+    background: rgba(0, 26, 51, 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-light);
+    font-size: 0.85rem;
+    padding: 10px 12px;
+    resize: vertical;
+    line-height: 1.6;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+.deck-notes-textarea:focus {
+    outline: none;
+    border-color: var(--gold-color);
+}
+.deck-notes-hint {
+    font-size: 0.72rem;
+    color: rgba(241,241,241,0.35);
+    margin-top: 6px;
+    text-align: right;
+}
+/* Advertencia de saturación de roles */
+.role-warning {
+    display: inline-block;
+    background: rgba(214, 48, 49, 0.2);
+    border: 1px solid #d63031;
+    color: #ff7675;
+    padding: 3px 8px;
+    margin: 2px 4px 2px 0;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: bold;
+}
+/* ====================================
+   RESPONSIVE
+   ==================================== */
+
+@media (max-width: 768px) {
+    .deck-row {
+        grid-template-columns: 60px 1fr;
+        grid-template-areas:
+            "img name"
+            "roles roles"
+            "qty buttons";
+    }
+
+    .deck-img {
+        grid-area: img;
+    }
+
+    .deck-name {
+        grid-area: name;
+    }
+
+    .deck-roles {
+        grid-area: roles;
+        margin: 4px 0;
+    }
+
+    .deck-qty {
+        grid-area: qty;
+    }
+
+    .deck-buttons {
+        grid-area: buttons;
+        flex-direction: row;
+        justify-self: end;
+    }
+
+    .deck-actions {
+        flex-direction: column;
+    }
+
+    .deck-actions button {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .deck-list-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .role-checkboxes {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .deck-img {
+        width: 50px;
+    }
+
+    .deck-name {
+        font-size: 0.85rem;
+    }
+
+    .deck-qty button {
+        width: 25px;
+        height: 25px;
+        font-size: 0.9rem;
+    }
+
+    .deck-move {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+    }
+
+    .deck-modal {
+        width: 95%;
+        padding: var(--spacing-md);
+    }
+}

@@ -1,0 +1,1381 @@
+/* ====================================
+   DECK MODULE
+   Destiny Draw - Yu-Gi-Oh! App
+   GestiÃ³n del Deck del usuario
+   ==================================== */
+
+const Deck = {
+
+    cards: {},
+    name: "Mi Deck",
+    notes: "",
+
+    init: function () {
+        this.container = document.getElementById('deck-container');
+        if (!this.container) return;
+        this.render();
+    },
+
+    // ===============================
+    // CLASIFICACIÃ“N EXTRA DECK
+    // ===============================
+    isExtraDeckCard: function (card) {
+        if (!card || !card.type) return false;
+        const t = card.type.toLowerCase();
+        return (
+            t.includes('fusion') ||
+            t.includes('synchro') ||
+            t.includes('xyz') ||
+            t.includes('link')
+        );
+    },
+
+    // ===============================
+    // ORDENAMIENTO DE CARTAS
+    // ===============================
+    
+    // Determinar tipo de carta para ordenamiento Main Deck
+    getMainDeckCardType: function(card) {
+        if (!card || !card.type) return 999; // Desconocido al final
+        
+        const type = card.type.toLowerCase();
+        
+        // Orden: Ritual → Normal → Effect → Pendulum → Spell → Trap
+        if (type.includes('ritual monster')) return 0;
+        if (type.includes('normal monster')) return 1;
+        if (type.includes('effect monster')) return 2;
+        if (type.includes('pendulum')) return 3;
+        if (type.includes('spell')) return 4;
+        if (type.includes('trap')) return 5;
+        
+        return 999; // Otros al final
+    },
+    
+    // Determinar tipo de carta para ordenamiento Extra Deck
+    getExtraDeckCardType: function(card) {
+        if (!card || !card.type) return 999; // Desconocido al final
+        
+        const type = card.type.toLowerCase();
+        
+        // Orden: Fusion → Synchro → Xyz → Link
+        if (type.includes('fusion')) return 0;
+        if (type.includes('synchro')) return 1;
+        if (type.includes('xyz')) return 2;
+        if (type.includes('link')) return 3;
+        
+        return 999; // Otros al final
+    },
+    
+    // Comparador para ordenamiento
+    compareCards: function(a, b, location) {
+        const cardA = a[1].data;
+        const cardB = b[1].data;
+        
+        if (location === 'main') {
+            // Ordenar Main Deck
+            const typeA = this.getMainDeckCardType(cardA);
+            const typeB = this.getMainDeckCardType(cardB);
+            
+            if (typeA !== typeB) {
+                return typeA - typeB; // Por tipo primero
+            }
+            
+            // Si son del mismo tipo, ordenar alfabéticamente
+            return cardA.name.localeCompare(cardB.name);
+            
+        } else if (location === 'extra') {
+            // Ordenar Extra Deck
+            const typeA = this.getExtraDeckCardType(cardA);
+            const typeB = this.getExtraDeckCardType(cardB);
+            
+            if (typeA !== typeB) {
+                return typeA - typeB; // Por tipo primero
+            }
+            
+            // Si son del mismo tipo, ordenar alfabéticamente
+            return cardA.name.localeCompare(cardB.name);
+            
+        } else {
+            // Side Deck: solo alfabético
+            return cardA.name.localeCompare(cardB.name);
+        }
+    },
+
+    // ===============================
+    // DETECCIÓN DE SUBTIPOS AUTOMÁTICOS
+    // ===============================
+    
+    detectSubtypes: function(card) {
+        if (!card || !card.type) return [];
+        
+        const type = card.type.toLowerCase();
+        const subtypes = [];
+        
+        // Detectar subtipos en el tipo de carta
+        if (type.includes('tuner')) subtypes.push('Tuner');
+        if (type.includes('gemini')) subtypes.push('Gemini');
+        if (type.includes('union')) subtypes.push('Union');
+        if (type.includes('flip')) subtypes.push('Flip');
+        if (type.includes('toon')) subtypes.push('Toon');
+        
+        return subtypes;
+    },
+
+    // ===============================
+    // AUTO-ASIGNACIÓN DE ROLES
+    // ===============================
+    autoAssignRoles: function (card) {
+        const roles = [];
+        const desc = card.desc ? card.desc.toLowerCase() : '';
+        const type = card.type ? card.type.toLowerCase() : '';
+        
+        // AJUSTE: Ignorar Monstruos Normales (sin efecto)
+        // Los Monstruos Normales tienen type que incluye "normal monster"
+        if (type.includes('normal monster')) {
+            return roles; // Retorna array vacío, sin roles asignados
+        }
+        
+        // PASO 3: Obtener roleConditions para roles compuestos
+        const config = ConfigManager.getConfig();
+        const roleConditions = config.roleConditions || {};
+        const roleKeywords = config.roles || {};
+
+        // Verificar cada rol
+        for (const [roleName, keywords] of Object.entries(roleKeywords)) {
+            let shouldAssign = false;
+            
+            // PASO 3: Verificar si este rol tiene condicionales
+            if (roleConditions[roleName]) {
+                const condition = roleConditions[roleName];
+                const conditionals = condition.conditionals || [];
+                const condKeywords = condition.keywords || [];
+                
+                // Si hay condicionales, TODAS deben estar presentes
+                let allConditionsMet = true;
+                if (conditionals.length > 0) {
+                    for (const conditional of conditionals) {
+                        if (!conditional || typeof conditional !== 'string' || !desc.includes(conditional.toLowerCase())) {
+                            allConditionsMet = false;
+                            break;
+                        }
+                    }
+                }
+                
+                // Si todas las condicionales se cumplen, verificar keywords
+                // Si todas las condicionales se cumplen, verificar keywords
+            if (allConditionsMet) {
+                // Al menos UNA keyword debe estar presente
+                for (const keyword of condKeywords) {
+                    if (keyword && typeof keyword === 'string' && desc.includes(keyword.toLowerCase())) {
+                        shouldAssign = true;
+                        break;
+                    }
+                }
+            }
+            } else {
+                // NO tiene condicionales, usar lógica normal
+                for (const keyword of keywords) {
+                    if (keyword && typeof keyword === 'string' && desc.includes(keyword.toLowerCase())) {
+                        shouldAssign = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Asignar rol si cumple
+            if (shouldAssign && !roles.includes(roleName)) {
+                roles.push(roleName);
+            }
+        }
+
+        return roles;
+    },
+
+    // ===============================
+    // SINCRONIZAR DESDE CARDVIEWER
+    // ===============================
+    syncFromViewer: function (id, card, qty) {
+        console.log('🔄 [Deck] syncFromViewer llamado:', { id, cardName: card.name, qty });
+        
+        if (qty <= 0) {
+            console.log('❌ [Deck] Cantidad <= 0, eliminando carta');
+            delete this.cards[id];
+        } else {
+            if (!this.cards[id]) {
+                console.log('➕ [Deck] Nueva carta, creando entrada');
+                
+                // Analizar especialidades de la carta (incluye staples - Paso 2)
+                const specialties = typeof SpecialtyAnalyzer !== 'undefined' 
+                    ? SpecialtyAnalyzer.analyzeCard(card) 
+                    : [];
+                
+                // PASO 4: Analizar nomenclatura de la carta
+                const nomenclature = typeof NomenclatureAnalyzer !== 'undefined'
+                    ? NomenclatureAnalyzer.analyzeCard(card)
+                    : null;
+                
+                // Obtener roles automáticos
+                let roles = this.autoAssignRoles(card);
+                
+                console.log('📊 [Deck] Roles automáticos asignados:', roles);
+                console.log('🎯 [Deck] Especialidades detectadas:', specialties);
+                
+                this.cards[id] = {
+                    data: card,
+                    qty: qty,
+                    location: this.isExtraDeckCard(card) ? 'extra' : 'main',
+                    roles: roles,
+                    specialties: specialties,
+                    nomenclature: nomenclature
+                };
+                
+                console.log('✅ [Deck] Carta agregada:', this.cards[id]);
+            } else {
+                console.log('📝 [Deck] Carta existente, actualizando cantidad');
+                this.cards[id].qty = qty;
+            }
+        }
+        
+        console.log('🎨 [Deck] Llamando a render()');
+        this.render();
+        console.log('✅ [Deck] syncFromViewer completado');
+    },
+
+    changeQty: function (id, delta) {
+        const item = this.cards[id];
+        if (!item) return;
+
+        item.qty += delta;
+        if (item.qty <= 0) delete this.cards[id];
+
+        this.render();
+    },
+
+    toggleLocation: function (id) {
+        const item = this.cards[id];
+        if (!item || item.location === 'extra') return;
+
+        item.location = item.location === 'main' ? 'side' : 'main';
+        this.render();
+    },
+
+    // ===============================
+    // CONTADORES
+    // ===============================
+    count: function (loc) {
+        return Object.values(this.cards)
+            .filter(c => c.location === loc)
+            .reduce((s, c) => s + c.qty, 0);
+    },
+
+    // ===============================
+    // PANEL CAMBIO DE NOMBRE
+    // ===============================
+    openRenamePanel: function () {
+        const overlay = document.createElement('div');
+        overlay.className = 'deck-overlay';
+
+        overlay.innerHTML = `
+            <div class="deck-modal">
+                <h3>Cambiar Nombre del Deck</h3>
+                <input id="deck-name-input" value="${this.name}">
+                <button onclick="Deck.confirmRename()">Cambiar Nombre</button>
+                <button onclick="Deck.closeModal()">Cancelar</button>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+    },
+
+    confirmRename: function () {
+        const val = document.getElementById('deck-name-input').value.trim();
+        if (val) this.name = val;
+        this.closeModal();
+        this.render();
+    },
+
+    closeModal: function () {
+        const overlay = document.querySelector('.deck-overlay');
+        if (overlay) overlay.remove();
+    },
+
+    // ===============================
+    // GESTIÓN DE ROLES
+    // ===============================
+    openRolePanel: function (id) {
+        const item = this.cards[id];
+        if (!item) return;
+
+        // ACTUALIZADO: Obtener roles desde ConfigManager
+        const availableRoles = ConfigManager.getRoleNames();
+
+        const currentRoles = item.roles || [];
+
+        const overlay = document.createElement('div');
+        overlay.className = 'deck-overlay';
+
+        let checkboxesHTML = '';
+        availableRoles.forEach(role => {
+            const isChecked = currentRoles.includes(role) ? 'checked' : '';
+            checkboxesHTML += `
+                <label class="role-checkbox-label">
+                    <input type="checkbox" value="${role}" ${isChecked} class="role-checkbox">
+                    ${role}
+                </label>
+            `;
+        });
+
+        const isCartaAs = this.getCartaAs() === String(id);
+
+        overlay.innerHTML = `
+            <div class="deck-modal">
+                <div class="role-panel-header">
+                    <h3>Asignar Roles</h3>
+                    <label class="carta-as-toggle" title="Marcar como carta insignia del deck">
+                        <input type="checkbox"
+                            id="carta-as-checkbox"
+                            ${isCartaAs ? 'checked' : ''}
+                            onchange="Deck.setCartaAs(this.checked ? '${id}' : null);">
+                        ⭐ Carta As
+                    </label>
+                </div>
+                <p class="deck-modal-highlight">${item.data.name}</p>
+                <div class="role-checkboxes">
+                    ${checkboxesHTML}
+                </div>
+                <div class="deck-modal-buttons">
+                    <button onclick="Deck.assignRoles(${id})">Asignar Rol</button>
+                    <button onclick="Deck.removeRoles(${id})">Quitar Roles</button>
+                    <button onclick="Deck.closeModal()">Cancelar</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+    },
+
+    assignRoles: function (id) {
+        const item = this.cards[id];
+        if (!item) return;
+
+        const checkboxes = document.querySelectorAll('.role-checkbox:checked');
+        const selectedRoles = Array.from(checkboxes).map(cb => cb.value);
+
+        // Preservar "Carta As" — no es un checkbox normal del panel
+        const hadCartaAs = item.roles?.includes('Carta As');
+        item.roles = selectedRoles;
+        if (hadCartaAs) item.roles.push('Carta As');
+
+        this.closeModal();
+        this.render();
+    },
+
+    removeRoles: function (id) {
+        const item = this.cards[id];
+        if (!item) return;
+
+        item.roles = [];
+        this.closeModal();
+        this.render();
+    },
+
+    // ===============================
+    // ACCIONES
+    // ===============================
+    saveDeck: function () {
+        const deckData = {
+            cards:   this.cards,
+            notes:   this.notes || '',
+            savedAt: new Date().getTime()
+        };
+        localStorage.setItem(`deck_${this.name}`, JSON.stringify(deckData));
+        alert('Deck guardado');
+        this.render();
+    },
+
+    getSavedDecks: function () {
+        const decks = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('deck_')) {
+                try {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    const deckName = key.replace('deck_', '');
+                    decks.push({
+                        name: deckName,
+                        cards: data.cards || data,
+                        savedAt: data.savedAt || 0
+                    });
+                } catch (e) {
+                    console.error('Error cargando deck:', key);
+                }
+            }
+        }
+        return decks.sort((a, b) => b.savedAt - a.savedAt);
+    },
+
+    getMostRepeatedCard: function (cards) {
+        let maxQty = 0;
+        let mostRepeated = null;
+        
+        Object.values(cards).forEach(item => {
+            if (item.qty > maxQty) {
+                maxQty = item.qty;
+                mostRepeated = item.data;
+            }
+        });
+        
+        return mostRepeated;
+    },
+
+    openLoadDeckPanel: function (deckName) {
+        const overlay = document.createElement('div');
+        overlay.className = 'deck-overlay';
+
+        overlay.innerHTML = `
+            <div class="deck-modal">
+                <h3>Cargar Deck</h3>
+                <p class="deck-modal-highlight">${deckName}</p>
+                <p class="deck-modal-note">¿Deseas cargar este deck? Se reemplazarán las cartas actuales.</p>
+                <div class="deck-modal-buttons">
+                    <button onclick="Deck.confirmLoadDeck('${deckName}')">Sí, Cargar</button>
+                    <button onclick="Deck.closeModal()">Cancelar</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+    },
+
+    confirmLoadDeck: function (deckName) {
+        try {
+            const data = JSON.parse(localStorage.getItem(`deck_${deckName}`));
+            this.cards = data.cards || data;
+            this.name  = deckName;
+            this.notes = data.notes || '';
+            this.closeModal();
+            this.render();
+            this.onDeckLoaded();
+        } catch (e) {
+            alert('Error al cargar el deck');
+        }
+    },
+
+    openDeleteDeckPanel: function (deckName) {
+        const overlay = document.createElement('div');
+        overlay.className = 'deck-overlay';
+
+        overlay.innerHTML = `
+            <div class="deck-modal deck-modal-warning">
+                <h3>Eliminar Deck</h3>
+                <p class="deck-modal-highlight">${deckName}</p>
+                <p class="deck-modal-note">¿Estás seguro de eliminar este deck? Esta acción no se puede deshacer.</p>
+                <div class="deck-modal-buttons">
+                    <button class="btn-danger" onclick="Deck.confirmDeleteDeck('${deckName}')">Sí, Eliminar</button>
+                    <button onclick="Deck.closeModal()">Cancelar</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+    },
+
+    confirmDeleteDeck: function (deckName) {
+        localStorage.removeItem(`deck_${deckName}`);
+        this.closeModal();
+        this.render();
+    },
+
+    clearDeck: function () {
+        this.cards = {};
+        this.render();
+    },
+
+    exportYDK: function () {
+        let main = '', extra = '', side = '';
+
+        Object.entries(this.cards).forEach(([id, item]) => {
+            // Repetir el ID tantas veces como copias tenga
+            for (let i = 0; i < item.qty; i++) {
+                if (item.location === 'main') main += id + '\n';
+                if (item.location === 'extra') extra += id + '\n';
+                if (item.location === 'side') side += id + '\n';
+            }
+        });
+
+        const content = `#created by Destiny Draw\n#main\n${main}#extra\n${extra}!side\n${side}`;
+        const blob = new Blob([content], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${this.name}.ydk`;
+        a.click();
+    },
+
+    exportTXT: function () {
+        let txt = `${this.name}\n\n`;
+
+        ['main','extra','side'].forEach(loc => {
+            txt += `---- ${loc.toUpperCase()} ----\n`;
+            Object.values(this.cards)
+                .filter(c => c.location === loc)
+                .forEach(c => {
+                    txt += `${c.data.name} - ${c.data.type} - x${c.qty}\n`;
+                });
+            txt += '\n';
+        });
+
+        const blob = new Blob([txt], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${this.name}.txt`;
+        a.click();
+    },
+
+    importYDK: function () {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.ydk';
+        
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const text = await file.text();
+            this.parseYDK(text, file.name);
+        };
+
+        input.click();
+    },
+
+    parseYDK: async function (content, filename) {
+        const lines = content.split('\n').map(l => l.trim()).filter(l => l);
+        
+        let currentSection = '';
+        const cardIds = { main: [], extra: [], side: [] };
+
+        lines.forEach(line => {
+            if (line.startsWith('#main')) {
+                currentSection = 'main';
+            } else if (line.startsWith('#extra')) {
+                currentSection = 'extra';
+            } else if (line.startsWith('!side')) {
+                currentSection = 'side';
+            } else if (line.startsWith('#') || line.startsWith('!')) {
+                // Ignorar otros comentarios
+            } else if (/^\d+$/.test(line)) {
+                // Es un ID de carta
+                if (currentSection) {
+                    cardIds[currentSection].push(line);
+                }
+            }
+        });
+
+        // Contar cantidades
+        const cardCounts = { main: {}, extra: {}, side: {} };
+        
+        ['main', 'extra', 'side'].forEach(section => {
+            cardIds[section].forEach(id => {
+                cardCounts[section][id] = (cardCounts[section][id] || 0) + 1;
+            });
+        });
+
+        // Obtener IDs únicos
+        const uniqueIds = new Set([
+            ...Object.keys(cardCounts.main),
+            ...Object.keys(cardCounts.extra),
+            ...Object.keys(cardCounts.side)
+        ]);
+
+        if (uniqueIds.size === 0) {
+            alert('No se encontraron cartas en el archivo');
+            return;
+        }
+
+        // Buscar cartas en la API
+        try {
+            const idsArray = Array.from(uniqueIds);
+            const url = `https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${idsArray.join(',')}`;
+            
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Error al buscar cartas');
+            
+            const result = await response.json();
+            const cardsData = result.data;
+
+            // Construir nuevo deck
+            const newCards = {};
+
+            cardsData.forEach(card => {
+                const id = card.id.toString();
+                let location = '';
+                let qty = 0;
+
+                if (cardCounts.main[id]) {
+                    location = 'main';
+                    qty = cardCounts.main[id];
+                } else if (cardCounts.extra[id]) {
+                    location = 'extra';
+                    qty = cardCounts.extra[id];
+                } else if (cardCounts.side[id]) {
+                    location = 'side';
+                    qty = cardCounts.side[id];
+                }
+
+                if (qty > 0) {
+                    newCards[id] = {
+                        data: card,
+                        qty: qty,
+                        location: location,
+                        roles: this.autoAssignRoles(card)
+                    };
+                }
+            });
+
+            // Actualizar deck
+            this.cards = newCards;
+            this.name = filename.replace('.ydk', '');
+            this.render();
+            this.onDeckLoaded();
+            alert(`Deck importado: ${this.name}`);
+
+        } catch (error) {
+            console.error('Error al importar deck:', error);
+            alert('Error al importar el deck. Verifica que el archivo sea válido.');
+        }
+    },
+
+    // ===============================
+    // DESPLEGABLES
+    // ===============================
+    toggleSection: function (id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    },
+
+    // ===============================
+    // RENDERIZAR LISTA DE DECKS
+    // ===============================
+    renderDeckList: function () {
+        const savedDecks = this.getSavedDecks();
+        
+        if (savedDecks.length === 0) {
+            return '<p class="deck-empty">No hay decks guardados</p>';
+        }
+
+        let html = '<div class="deck-list-grid">';
+
+        savedDecks.forEach(deck => {
+            // Carta As tiene prioridad sobre la más repetida
+            const cartaAsCard = Object.values(deck.cards)
+                .find(c => c.roles?.includes('Carta As'));
+            const mostRepeatedCard = cartaAsCard || this.getMostRepeatedCard(deck.cards);
+            const imgUrl = mostRepeatedCard 
+                ? mostRepeatedCard.data
+                    ? mostRepeatedCard.data.card_images[0].image_url_small
+                    : mostRepeatedCard.card_images[0].image_url_small
+                : 'https://images.ygoprodeck.com/images/cards/6983839.jpg';
+
+            const mainCount = Object.values(deck.cards)
+                .filter(c => c.location === 'main')
+                .reduce((s, c) => s + c.qty, 0);
+
+            const extraCount = Object.values(deck.cards)
+                .filter(c => c.location === 'extra')
+                .reduce((s, c) => s + c.qty, 0);
+
+            const sideCount = Object.values(deck.cards)
+                .filter(c => c.location === 'side')
+                .reduce((s, c) => s + c.qty, 0);
+
+            // Calcular Internal Score para tier
+            let tierLabel = 'Rogue';
+            let tierClass = 'tier-rogue';
+            let internalScore = 0;
+            
+            if (typeof Stats !== 'undefined') {
+                const stats = Stats.calculateInternalScore(deck.cards);
+                internalScore = parseFloat(stats.internalScore);
+                
+                // Determinar tier según Internal Score
+                if (internalScore >= 7.5) {
+                    tierLabel = 'Tier 1';
+                    tierClass = 'tier-1';
+                } else if (internalScore >= 6) {
+                    tierLabel = 'Tier 2';
+                    tierClass = 'tier-2';
+                } else if (internalScore >= 4) {
+                    tierLabel = 'Tier 3';
+                    tierClass = 'tier-3';
+                }
+            }
+
+            // External Score real si hay powerScoreCache disponible en Estadísticas
+            let externalScore = 0;
+            if (window.Stats && window.Estadisticas?.powerScoreCache) {
+                try {
+                    const ext = Stats.calculateExternalScore(deck.cards, Estadisticas.powerScoreCache);
+                    externalScore = parseFloat(ext.externalScore) || 0;
+                } catch (_) {}
+            }
+
+            html += `
+                <div class="deck-list-item">
+                    <button class="deck-delete-btn" onclick="Deck.openDeleteDeckPanel('${deck.name}')" title="Eliminar deck">
+                        ✖
+                    </button>
+                    <div class="deck-thumbnail">
+                        <img src="${imgUrl}" alt="${deck.name}">
+                    </div>
+                    <div class="deck-info">
+                        <h4 class="deck-item-name">${deck.name}</h4>
+                        <p class="deck-counts">
+                            <span class="deck-count-main">M: ${mainCount}</span> | 
+                            <span class="deck-count-extra">E: ${extraCount}</span> | 
+                            <span class="deck-count-side">S: ${sideCount}</span>
+                        </p>
+                        <div class="deck-scores">
+                            <div class="deck-score-row">
+                                <span class="deck-score-label">Power Level:</span>
+                                <span class="deck-score-value deck-score-internal">${internalScore.toFixed(1)}</span>
+                            </div>
+                            <div class="deck-score-row">
+                                <span class="deck-score-label">Match-up:</span>
+                                <span class="deck-score-value deck-score-external">${externalScore.toFixed(1)}</span>
+                            </div>
+                            ${(() => {
+                                if (!window.Winrate) return '';
+                                const wr = Winrate.getRecord(deck.name);
+                                const total = wr.wins1st + wr.wins2nd + wr.losses1st + wr.losses2nd;
+                                if (total === 0) return '';
+                                const pct = Winrate.calcWinrate(wr.wins1st + wr.wins2nd, wr.losses1st + wr.losses2nd);
+                                const col = pct >= 60 ? '#00b894' : pct >= 45 ? '#fdcb6e' : '#d63031';
+                                return `<div class="deck-score-row">
+                                    <span class="deck-score-label">Winrate:</span>
+                                    <span class="deck-score-value" style="color:${col}">${pct}% <span style="font-size:0.7rem;opacity:0.5">(${total})</span></span>
+                                </div>`;
+                            })()}
+                        </div>
+                    </div>
+                    <button class="btn btn-primary deck-load-btn" onclick="Deck.openLoadDeckPanel('${deck.name}')">
+                        Ver Deck
+                    </button>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        return html;
+    },
+
+    // ===============================
+    // RENDER FILAS
+    // ===============================
+    renderRows: function (location) {
+
+        const entries = Object.entries(this.cards)
+            .filter(([_, c]) => c.location === location)
+            .sort((a, b) => this.compareCards(a, b, location));
+
+        if (entries.length === 0) {
+            return `<p class="deck-empty">Vacio</p>`;
+        }
+
+        let html = '';
+
+        entries.forEach(([id, item]) => {
+
+            const card = item.data;
+            const type = card.type.toLowerCase();
+
+            let color = '';
+            let nameClass = 'deck-name';
+            let qtyColor = '#003366'; // Negro por defecto
+            let imgClass = 'deck-img';
+
+            // SIDE DECK: Estilos especiales (gris + desaturado)
+            if (location === 'side') {
+                color = 'rgba(128, 128, 128, 0.4)'; // Gris claro 40%
+                nameClass = 'deck-name deck-name-white'; // Letras blancas
+                qtyColor = '#ffffff'; // Cantidad en blanco
+                imgClass = 'deck-img deck-img-desaturated'; // Imagen desaturada
+            } 
+            // MAIN DECK Y EXTRA DECK: Colores según tipo
+            else {
+                // Determinar color según tipo de carta
+                if (type.includes('monster')) {
+                    // Monstruos especiales
+                    if (type.includes('synchro')) {
+                        color = '#ffffff'; // Blanco
+                    } else if (type.includes('fusion')) {
+                        color = '#d8b5d8'; // Morado claro
+                    } else if (type.includes('xyz')) {
+                        color = 'rgba(0, 0, 0, 0.85)'; // Negro 85%
+                        nameClass = 'deck-name deck-name-white';
+                        qtyColor = '#ffffff'; // Blanco para Xyz
+                    } else if (type.includes('link')) {
+                        color = '#4169e1'; // Azul
+                        nameClass = 'deck-name deck-name-white';
+                        qtyColor = '#ffffff'; // Blanco para Link
+                    } else if (type.includes('ritual')) {
+                        color = '#b3d9ff'; // Azul claro
+                    } else if (type.includes('pendulum')) {
+                        color = 'linear-gradient(to right, #d9b38c, #b7f7c3)'; // Degradado
+                    } else {
+                        color = '#d9b38c'; // Marrón claro normal
+                    }
+                } else if (type.includes('spell')) {
+                    color = '#b7f7c3'; // Verde claro
+                } else if (type.includes('trap')) {
+                    color = '#ffb3d9'; // Rosa claro
+                } else {
+                    color = '#d9b38c'; // Default
+                }
+            }
+
+            // Si es degradado, usar background en lugar de background-color
+            const backgroundStyle = color.includes('gradient') 
+                ? `background: ${color}` 
+                : `background: ${color}`;
+
+            // DETECTAR SUBTIPOS AUTOMÁTICOS (Tuner, Gemini, Union, Flip, Toon)
+            const subtypes = this.detectSubtypes(card);
+            
+            // Generar badges de SUBTIPOS (amarillos)
+            let subtypesBadges = '';
+            subtypes.forEach(subtype => {
+                subtypesBadges += `<span class="subtype-badge">${subtype}</span>`;
+            });
+
+           // Generar badges de ROLES
+            // Si el rol tiene restricción de nomenclatura, valida que la carta
+            // la cumpla antes de mostrar el badge — igual que detectPossibleRoles
+            // en CardViewer. Sin restricción: se muestra siempre (comportamiento anterior).
+            let rolesBadges = '';
+if (item.roles && item.roles.length > 0) {
+    item.roles.forEach(role => {
+        if (role === 'Carta As') {
+            rolesBadges += `<span class="role-badge badge-carta-as">⭐ Carta As</span>`;
+            return;
+        }
+
+        const cond     = window.ConfigManager?.getRoleCondition?.(role);
+        const nomCatId = cond?.nomenclatureCategory || null;
+
+        if (nomCatId && window.NomenclatureAnalyzer && item.data) {
+            const segments  = NomenclatureAnalyzer.analyzeCard(item.data) || [];
+            const scopeText = segments
+                .filter(s => s.category === nomCatId)
+                .map(s => s.text.toLowerCase())
+                .join(' ');
+            const keywords  = cond?.keywords || [];
+            const passes    = keywords.length === 0 ||
+                keywords.some(kw => scopeText.includes(kw.toLowerCase()));
+            if (!passes) return;
+        }
+
+        rolesBadges += `<span class="role-badge">${role}</span>`;
+    });
+}
+
+// ⭐ ADVERTENCIA DE SATURACIÓN (líneas 885-902, MANTENER)
+let saturationWarning = '';
+const config = window.ConfigManager?.getDiminishingReturns?.();
+if (config && config.enabled) {
+    item.roles.forEach(role => {
+        const threshold = config.roleThresholds?.[role];
+        if (!threshold) return;
+        
+        const roleCount = Object.values(Deck.cards)
+            .filter(c => c.location === 'main' && c.roles.includes(role))
+            .reduce((sum, c) => sum + c.qty, 0);
+        
+        if (roleCount > threshold.max) {
+            saturationWarning += `<span class="role-warning">⚠️ ${role} saturado (${roleCount}/${threshold.max})</span>`;
+        }
+    });
+}
+
+html += `
+    <div class="deck-row" style="${backgroundStyle}">
+        <img src="${card.card_images[0].image_url_small}" 
+             class="${imgClass}"
+             onclick="CardViewer.openFromDeck(${id})">
+        <div class="${nameClass}">${card.name}</div>
+        <div class="deck-roles">
+            ${subtypesBadges}${rolesBadges}${saturationWarning}
+        </div>
+
+                    <div class="deck-qty">
+                        <button onclick="Deck.changeQty(${id}, -1)">◀</button>
+                        <span class="qty-number" style="color: ${qtyColor}">x${item.qty}</span>
+                        <button onclick="Deck.changeQty(${id}, 1)">▶</button>
+                    </div>
+
+                    <div class="deck-buttons">
+                        ${location !== 'extra' ? `
+                            <button class="deck-move" onclick="Deck.toggleLocation(${id})">
+                                ${item.location === 'main' ? 'Side Deck' : 'Main Deck'}
+                            </button>
+                        ` : ''}
+                        
+                        <button class="deck-role-btn" onclick="Deck.openRolePanel(${id})">
+                            Rol
+                        </button>
+                    </div>
+
+                </div>
+            `;
+        });
+
+        return html;
+            },
+renderDeckStatsBlock: function () {
+    const mainCards  = Object.values(this.cards).filter(c => c.location === 'main');
+    const extraCards = Object.values(this.cards).filter(c => c.location === 'extra');
+    const allCards   = [...mainCards, ...extraCards];
+
+    if (allCards.length === 0) return '';
+
+    // ── Tipos de cartas ──────────────────────────────────────────
+    const cardTypes = {};
+    allCards.forEach(item => {
+        const t = item.data.type || '';
+        const qty = item.qty || 1;
+        if (t.toLowerCase().includes('spell'))       cardTypes['Hechizo']  = (cardTypes['Hechizo']  || 0) + qty;
+        else if (t.toLowerCase().includes('trap'))   cardTypes['Trampa']   = (cardTypes['Trampa']   || 0) + qty;
+        else                                         cardTypes['Monstruo'] = (cardTypes['Monstruo'] || 0) + qty;
+    });
+
+    // ── Atributos de monstruos ───────────────────────────────────
+    const attributes = {};
+    allCards.forEach(item => {
+        const t = item.data.type || '';
+        if (!t.toLowerCase().includes('spell') && !t.toLowerCase().includes('trap')) {
+            const attr = item.data.attribute;
+            if (attr) attributes[attr] = (attributes[attr] || 0) + (item.qty || 1);
+        }
+    });
+
+    // ── Raza/Tipo de monstruos ───────────────────────────────────
+    const races = {};
+    allCards.forEach(item => {
+        const t = item.data.type || '';
+        if (!t.toLowerCase().includes('spell') && !t.toLowerCase().includes('trap')) {
+            const race = item.data.race;
+            if (race) races[race] = (races[race] || 0) + (item.qty || 1);
+        }
+    });
+
+    // ── Niveles / Rangos / Rating Link ───────────────────────────
+    const levels = {};
+    allCards.forEach(item => {
+        const t = (item.data.type || '').toLowerCase();
+        if (t.includes('spell') || t.includes('trap')) return;
+        const qty = item.qty || 1;
+        if (t.includes('link')) {
+            const lv = `Link-${item.data.linkval || '?'}`;
+            levels[lv] = (levels[lv] || 0) + qty;
+        } else if (t.includes('xyz')) {
+            const lv = `Rango ${item.data.level || '?'}`;
+            levels[lv] = (levels[lv] || 0) + qty;
+        } else if (item.data.level) {
+            const lv = `Nivel ${item.data.level}`;
+            levels[lv] = (levels[lv] || 0) + qty;
+        }
+    });
+
+    // ── Tipos secundarios ────────────────────────────────────────
+    const secondaryTypes = {};
+    allCards.forEach(item => {
+        const t = (item.data.type || '').toLowerCase();
+        if (t.includes('spell') || t.includes('trap')) return;
+        const qty = item.qty || 1;
+        const detected = this.detectSubtypes(item.data);
+        detected.forEach(st => {
+            secondaryTypes[st] = (secondaryTypes[st] || 0) + qty;
+        });
+    });
+
+    // ── Subtipos de Hechizos ─────────────────────────────────────
+    const spellTypes = {};
+    const spellSubtypeMap = {
+        'Quick-Play': 'Juego Rápido', 'Continuous': 'Continuo',
+        'Field': 'Campo', 'Equip': 'Equipo', 'Ritual': 'Ritual'
+    };
+    allCards.forEach(item => {
+        const t = item.data.type || '';
+        if (!t.toLowerCase().includes('spell')) return;
+        const qty = item.qty || 1;
+        let matched = false;
+        for (const [key, label] of Object.entries(spellSubtypeMap)) {
+            if (t.includes(key)) {
+                spellTypes[label] = (spellTypes[label] || 0) + qty;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) spellTypes['Normal'] = (spellTypes['Normal'] || 0) + qty;
+    });
+
+    // ── Subtipos de Trampas ──────────────────────────────────────
+    const trapTypes = {};
+    const trapSubtypeMap = {
+        'Counter': 'Counter', 'Continuous': 'Continua'
+    };
+    allCards.forEach(item => {
+        const t = item.data.type || '';
+        if (!t.toLowerCase().includes('trap')) return;
+        const qty = item.qty || 1;
+        let matched = false;
+        for (const [key, label] of Object.entries(trapSubtypeMap)) {
+            if (t.includes(key)) {
+                trapTypes[label] = (trapTypes[label] || 0) + qty;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) trapTypes['Normal'] = (trapTypes['Normal'] || 0) + qty;
+    });
+
+    // ── Helper para renderizar filas ─────────────────────────────
+    const renderRow = (obj, colorFn) => Object.entries(obj)
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, v]) => `
+            <span class="ds-chip" style="${colorFn ? colorFn(k) : ''}">
+                ${k} <strong>(${v})</strong>
+            </span>`).join('');
+
+    const attrColors = {
+        'FIRE':'background:rgba(255,80,0,0.25);border-color:#ff5000',
+        'WATER':'background:rgba(0,120,255,0.25);border-color:#0078ff',
+        'EARTH':'background:rgba(140,100,50,0.25);border-color:#8c6432',
+        'WIND':'background:rgba(0,200,100,0.25);border-color:#00c864',
+        'LIGHT':'background:rgba(255,220,0,0.25);border-color:#ffdc00',
+        'DARK':'background:rgba(100,0,180,0.25);border-color:#6400b4',
+        'DIVINE':'background:rgba(255,215,0,0.25);border-color:#ffd700'
+    };
+
+    const attrColorFn = k => attrColors[k] || '';
+
+    const group = (title, content) => content
+        ? `<div class="ds-group">
+               <div class="ds-group-title">${title}</div>
+               <div class="ds-chips">${content}</div>
+           </div>`
+        : '';
+
+    return `
+        <div class="deck-stats-block">
+            <div class="ds-row">
+                ${group('Tipo de Cartas', renderRow(cardTypes, null))}
+                ${Object.keys(attributes).length ? group('Atributos', renderRow(attributes, attrColorFn)) : ''}
+            </div>
+            <div class="ds-row">
+                ${Object.keys(races).length ? group('Tipo de Monstruo', renderRow(races, null)) : ''}
+                ${Object.keys(secondaryTypes).length ? group('Tipos Secundarios', renderRow(secondaryTypes, null)) : ''}
+            </div>
+            <div class="ds-row">
+                ${Object.keys(levels).length ? group('Niveles / Rangos / Link', renderRow(levels, null)) : ''}
+            </div>
+            <div class="ds-row">
+                ${Object.keys(spellTypes).length ? group('Subtipos Hechizo', renderRow(spellTypes, null)) : ''}
+                ${Object.keys(trapTypes).length ? group('Subtipos Trampa', renderRow(trapTypes, null)) : ''}
+            </div>
+        </div>`;
+},// ===============================
+// CARTA AS
+// ===============================
+setCartaAs: function (cardId) {
+    // Quitar "Carta As" de cualquier carta que lo tenga
+    for (const [id, item] of Object.entries(this.cards)) {
+        if (item.roles && item.roles.includes('Carta As')) {
+            this.cards[id].roles = item.roles.filter(r => r !== 'Carta As');
+        }
+    }
+    // Asignar al nuevo si se pasó un id (null = solo quitar)
+    if (cardId && this.cards[cardId]) {
+        if (!this.cards[cardId].roles) this.cards[cardId].roles = [];
+        this.cards[cardId].roles.push('Carta As');
+    }
+},
+
+getCartaAs: function () {
+    for (const [id, item] of Object.entries(this.cards)) {
+        if (item.roles?.includes('Carta As')) return id;
+    }
+    return null;
+},
+// Notifica a todos los módulos que el deck activo cambió.
+// Llamar después de cualquier carga de deck.
+onDeckLoaded: function () {
+    if (window.Estadisticas) {
+        Estadisticas.updateDeckStats();
+        if (typeof Estadisticas.updateFloatingWidget === 'function') {
+            Estadisticas.updateFloatingWidget();
+        }
+    }
+    if (window.Winrate) Winrate.refreshSection();
+},
+    // ===============================
+    // RENDER GENERAL
+    // ===============================
+    render: function () {
+        if (!this.container) return;
+
+        const mainC = this.count('main');
+        const extraC = this.count('extra');
+        const sideC = this.count('side');
+        const totalCards = Object.keys(this.cards).length;
+        const isEmpty = totalCards === 0;
+
+        let html = `
+            <div id="deck-list-container">
+                <h2 class="deck-list-title" onclick="Deck.toggleSection('saved-decks-sec')">
+                    Decks Guardados
+                </h2>
+                <div id="saved-decks-sec"style="display:none;">
+                    ${this.renderDeckList()}
+                </div>
+            </div>
+        `;
+
+        if (isEmpty) {
+            html += `<p>Abra la seccion de Decks Guardados y elija uno o agregue cartas desde la pestaña Buscador.</p>`;
+        } else {
+    html += `
+        <h2 onclick="Deck.openRenamePanel()" class="deck-title">
+            ${this.name} (${mainC})
+        </h2>
+
+        ${this.renderDeckStatsBlock()}
+
+        <h3 onclick="Deck.toggleSection('main-sec')">
+            🃏 Main Deck (${mainC})
+        </h3>
+        <div id="main-sec">${this.renderRows('main')}</div>
+
+        <h3 onclick="Deck.toggleSection('extra-sec')">
+            🃏 Extra Deck (${extraC})
+        </h3>
+        <div id="extra-sec">${this.renderRows('extra')}</div>
+
+        <h3 onclick="Deck.toggleSection('side-sec')">
+            🃏 Side Deck (${sideC})
+        </h3>
+        <div id="side-sec">${this.renderRows('side')}</div>
+    `;
+}
+// SECCIÓN DE NOTAS - solo visible con cartas cargadas
+        if (!isEmpty) {
+            html += `
+                <h3 class="deck-section-title" onclick="Deck.toggleSection('notes-sec')">
+                    📝 Notas del Deck
+                </h3>
+                <div id="notes-sec" class="deck-section-content" style="display:none;">
+                    <textarea
+                        class="deck-notes-textarea"
+                        placeholder="Anota estrategias, combos clave, mulligan ideal, matchups difíciles..."
+                        oninput="Deck.notes = this.value"
+                    >${this.notes || ''}</textarea>
+                    <div class="deck-notes-hint">
+                        Las notas se guardan al presionar "Guardar Deck".
+                    </div>
+                </div>
+            `;
+        }
+
+        // SECCIÓN DE ACCIONES - SIEMPRE VISIBLE
+        html += `
+            <h3 onclick="Deck.toggleSection('actions-sec')"></h3>
+            <div id="actions-sec" class="deck-actions">
+                <button onclick="Deck.saveDeck()" ${isEmpty ? 'disabled' : ''}>Guardar Deck</button>
+                <button onclick="Deck.clearDeck()" ${isEmpty ? 'disabled' : ''}>Limpiar Deck</button>
+                <button onclick="Deck.exportYDK()" ${isEmpty ? 'disabled' : ''}>Exportar Deck (.ydk)</button>
+                <button onclick="Deck.importYDK()">Importar Deck (.ydk)</button>
+                <button onclick="Deck.exportTXT()" ${isEmpty ? 'disabled' : ''}>Descargar Lista (.txt)</button>
+                <button onclick="Deck.downloadDecklist()" ${isEmpty ? 'disabled' : ''}>📸 Descargar Decklist</button>
+            </div>
+        `;
+
+        this.container.innerHTML = html;
+    },
+
+    // ===============================
+    // DESCARGAR DECKLIST VISUAL
+    // ===============================
+    
+    downloadDecklist: async function() {
+        try {
+            // Verificar si html2canvas está disponible
+            if (typeof html2canvas === 'undefined') {
+                alert('⚠️ La librería html2canvas no está cargada.\n\nPor favor, agrega esta línea a tu index.html antes de los scripts:\n\n<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>');
+                return;
+            }
+
+            // Mostrar mensaje de carga
+            const loadingMsg = document.createElement('div');
+            loadingMsg.id = 'decklist-loading';
+            loadingMsg.innerHTML = '<p style="text-align:center;padding:20px;background:#333;color:white;border-radius:8px;">⏳ Generando Decklist...</p>';
+            loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;';
+            document.body.appendChild(loadingMsg);
+
+            // Crear HTML del decklist
+            const decklistHTML = this.generateDecklistHTML();
+            
+            // Crear contenedor temporal
+            const tempContainer = document.createElement('div');
+            tempContainer.id = 'temp-decklist-container';
+            tempContainer.innerHTML = decklistHTML;
+            tempContainer.style.cssText = 'position:absolute;left:-9999px;top:0;background:white;padding:20px;';
+            document.body.appendChild(tempContainer);
+
+            // Esperar un momento para que las imágenes carguen
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Convertir a imagen con html2canvas
+            const canvas = await html2canvas(tempContainer, {
+                backgroundColor: '#ffffff',
+                scale: 2, // Mejor calidad
+                logging: false,
+                useCORS: true, // Permitir imágenes externas
+                allowTaint: true
+            });
+
+            // Convertir canvas a blob y descargar
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${this.name.replace(/[^a-z0-9]/gi, '_')}_decklist.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                // Limpiar
+                document.body.removeChild(tempContainer);
+                document.body.removeChild(loadingMsg);
+            });
+
+        } catch (error) {
+            console.error('Error generando decklist:', error);
+            alert('❌ Error al generar el decklist. Verifica la consola para más detalles.');
+            const loading = document.getElementById('decklist-loading');
+            if (loading) loading.remove();
+        }
+    },
+
+    generateDecklistHTML: function() {
+        const mainCards = Object.entries(this.cards).filter(([_, c]) => c.location === 'main');
+        const extraCards = Object.entries(this.cards).filter(([_, c]) => c.location === 'extra');
+        const sideCards = Object.entries(this.cards).filter(([_, c]) => c.location === 'side');
+
+        // Contar roles en Main Deck
+        const rolesCount = {};
+        mainCards.forEach(([_, item]) => {
+            if (item.roles && item.roles.length > 0) {
+                item.roles.forEach(role => {
+                    rolesCount[role] = (rolesCount[role] || 0) + item.qty;
+                });
+            }
+        });
+
+        let html = `
+            <div style="font-family: Arial, sans-serif; max-width: 1200px; padding: 20px;">
+                <h1 style="text-align: center; margin-bottom: 30px; color: #333;">${this.name}</h1>
+        `;
+
+        // Main Deck
+        if (mainCards.length > 0) {
+            const mainCount = mainCards.reduce((sum, [_, c]) => sum + c.qty, 0);
+            html += `
+                <h2 style="color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px;">
+                    MAIN DECK (${mainCount})
+                </h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-bottom: 30px;">
+            `;
+            mainCards.forEach(([_, item]) => {
+                html += this.generateCardHTML(item);
+            });
+            html += '</div>';
+        }
+
+        // Extra Deck
+        if (extraCards.length > 0) {
+            const extraCount = extraCards.reduce((sum, [_, c]) => sum + c.qty, 0);
+            html += `
+                <h2 style="color: #2c3e50; border-bottom: 3px solid #9b59b6; padding-bottom: 10px;">
+                    EXTRA DECK (${extraCount})
+                </h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-bottom: 30px;">
+            `;
+            extraCards.forEach(([_, item]) => {
+                html += this.generateCardHTML(item);
+            });
+            html += '</div>';
+        }
+
+        // Side Deck
+        if (sideCards.length > 0) {
+            const sideCount = sideCards.reduce((sum, [_, c]) => sum + c.qty, 0);
+            html += `
+                <h2 style="color: #2c3e50; border-bottom: 3px solid #95a5a6; padding-bottom: 10px;">
+                    SIDE DECK (${sideCount})
+                </h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-bottom: 30px;">
+            `;
+            sideCards.forEach(([_, item]) => {
+                html += this.generateCardHTML(item);
+            });
+            html += '</div>';
+        }
+
+        // Roles
+        if (Object.keys(rolesCount).length > 0) {
+            html += `
+                <h2 style="color: #2c3e50; border-bottom: 3px solid #e74c3c; padding-bottom: 10px;">
+                    ROLES
+                </h2>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
+            `;
+            Object.entries(rolesCount)
+                .sort((a, b) => b[1] - a[1]) // Ordenar por cantidad descendente
+                .forEach(([role, count]) => {
+                    html += `
+                        <div style="background: #3498db; color: white; padding: 8px 15px; border-radius: 20px; font-weight: bold;">
+                            ${role}: ${count}
+                        </div>
+                    `;
+                });
+            html += '</div>';
+        }
+
+        html += '</div>';
+        return html;
+    },
+
+    generateCardHTML: function(item) {
+        const card = item.data;
+        const imgUrl = card.card_images[0].image_url_small;
+        
+        return `
+            <div style="text-align: center; position: relative;">
+                <img src="${imgUrl}" 
+                     style="width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
+                     crossorigin="anonymous">
+                <div style="font-size: 11px; margin-top: 5px; font-weight: bold; color: #333;">
+                    ${card.name}
+                </div>
+                <div style="position: absolute; top: 5px; right: 5px; background: rgba(255, 0, 0, 0.9); 
+                            color: white; font-weight: bold; font-size: 18px; padding: 5px 10px; 
+                            border-radius: 50%; min-width: 30px; text-align: center;">
+                    x${item.qty}
+                </div>
+            </div>
+        `;
+    }
+};
+
+window.Deck = Deck;
+document.addEventListener('DOMContentLoaded', () => Deck.init());

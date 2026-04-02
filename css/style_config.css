@@ -1,0 +1,805 @@
+/* ====================================
+   CONFIG STYLES - Destiny Draw
+   ==================================== */
+
+/* ====================================
+   CONTENEDOR PRINCIPAL
+   ==================================== */
+
+#config-content {
+    animation: fadeIn 0.4s ease;
+}
+
+#config-content h2 {
+    color: var(--gold-color);
+    margin-bottom: var(--spacing-lg);
+    font-size: 1.8rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* ====================================
+   SECCIONES
+   ==================================== */
+
+.config-section {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    border: 2px solid var(--border-color);
+}
+
+.config-section-title {
+    color: var(--gold-color);
+    font-size: 1.4rem;
+    margin-bottom: 0;
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    background: rgba(0, 102, 204, 0.2);
+    border-radius: 8px;
+    transition: all var(--transition-normal);
+    -webkit-user-select: none;
+}
+
+.config-section-title:hover {
+    background: rgba(0, 102, 204, 0.35);
+    transform: translateX(4px);
+}
+
+.config-section-content {
+    margin-top: var(--spacing-md);
+}
+
+/* ====================================
+   NUEVO ROL / NUEVO STAPLE
+   ==================================== */
+
+.config-new-role {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: rgba(0, 26, 51, 0.4);
+    border-radius: 8px;
+    border: 2px dashed var(--border-color);
+    flex-wrap: wrap;
+}
+
+.config-input {
+    flex: 1;
+    min-width: 180px;
+    padding: 12px 16px;
+    font-size: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: rgba(0, 26, 51, 0.6);
+    color: var(--text-light);
+    transition: all var(--transition-normal);
+    outline: none;
+}
+
+.config-input:focus {
+    border-color: var(--gold-color);
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+/* ====================================
+   LISTA DE ROLES
+   ==================================== */
+
+.roles-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: var(--spacing-md);
+}
+
+/* ====================================
+   TARJETA DE ROL
+   ==================================== */
+
+.role-card {
+    position: relative; /* Para que botones con position absolute se posicionen correctamente */
+    background: linear-gradient(135deg, rgba(0, 51, 102, 0.4), rgba(0, 43, 77, 0.6));
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    transition: all var(--transition-normal);
+}
+
+.role-card:hover {
+    border-color: var(--gold-color);
+    box-shadow: 0 4px 14px rgba(0, 102, 204, 0.3);
+    transform: translateY(-2px);
+}
+
+.role-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.role-name-input {
+    flex: 1;
+    font-size: 1.15rem;
+    font-weight: bold;
+    color: var(--gold-color);
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    padding: 2px 10px;
+    transition: all var(--transition-fast);
+    outline: none;
+}
+
+.role-name-input:hover { background: rgba(0, 26, 51, 0.3); }
+.role-name-input:focus { background: rgba(0, 26, 51, 0.6); border-color: var(--gold-color); }
+.role-nom-filter-row {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.role-nom-select {
+    background: rgba(0, 26, 51, 0.6);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-light);
+    padding: 5px 8px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    width: 100%;
+}
+.role-nom-select:focus {
+    outline: none;
+    border-color: var(--gold-color);
+}
+.btn-delete-role {
+    margin-left: auto;
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    width: 25px;
+    height: 25px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.btn-delete-role:hover {
+    background: #ff4757;
+    transform: scale(1.1) rotate(8deg);
+}
+
+.role-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.config-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: 2px;
+    display: block;
+}
+
+/* Etiqueta Condicional en rojo */
+.conditional-label {
+    color: #ff6b6b;
+    font-weight: 800;
+    font-size: 0.95rem;
+    margin-top: var(--spacing-sm);
+}
+
+/* ====================================
+   KEYWORDS CONTAINER
+   ==================================== */
+
+.keywords-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 40px;
+    padding: var(--spacing-sm);
+    background: rgba(0, 26, 51, 0.3);
+    border-radius: 8px;
+    border: 1px dashed rgba(0, 102, 204, 0.4);
+}
+
+/* ====================================
+   CHIPS
+   ==================================== */
+
+.keyword-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    color: var(--text-light);
+    padding: 5px 11px;
+    border-radius: 20px;
+    font-size: 0.83rem;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0, 102, 204, 0.3);
+    transition: all var(--transition-fast);
+    animation: chipFadeIn 0.25s ease;
+}
+
+.keyword-chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.5);
+}
+
+/* Chip condicional — rojo */
+.conditional-chip {
+    background: linear-gradient(135deg, #c0392b, #e74c3c) !important;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    box-shadow: 0 2px 6px rgba(231, 76, 60, 0.4);
+}
+
+/* Chips de especialidades */
+.spec-kw-chip {
+    background: linear-gradient(135deg, #1e6fb5, #2980b9) !important;
+}
+
+.counter-kw-chip {
+    background: linear-gradient(135deg, #8e44ad, #9b59b6) !important;
+}
+
+@keyframes chipFadeIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.chip-text { -webkit-user-select: none; }
+
+.chip-remove {
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.75);
+    transition: all var(--transition-fast);
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.chip-remove:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+    transform: rotate(90deg);
+}
+
+.empty-chips {
+    color: rgba(241, 241, 241, 0.38);
+    font-style: italic;
+    font-size: 0.85rem;
+    padding: 4px;
+}
+
+/* ====================================
+   ADD KEYWORD CONTAINER
+   ==================================== */
+
+.add-keyword-container {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-top: 2px;
+}
+
+.keyword-input {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    background: rgba(0, 26, 51, 0.6);
+    color: var(--text-light);
+    transition: all var(--transition-normal);
+    outline: none;
+}
+
+.keyword-input:focus {
+    border-color: var(--gold-color);
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
+}
+
+/* Input condicional — borde rojo */
+.conditional-input {
+    border-color: rgba(231, 76, 60, 0.5) !important;
+}
+
+.conditional-input:focus {
+    border-color: #e74c3c !important;
+    box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.15) !important;
+}
+
+.keyword-input option {
+    background: var(--bg-card);
+    color: var(--text-light);
+}
+
+/* ====================================
+   BOTONES
+   ==================================== */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    color: var(--text-light);
+    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0080ff, var(--accent-color));
+    box-shadow: 0 6px 12px rgba(0, 102, 204, 0.5);
+    transform: translateY(-2px);
+}
+
+.btn-sm {
+    padding: 7px 14px;
+    font-size: 0.85rem;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #c0392b, var(--danger-color));
+    color: white;
+    box-shadow: 0 4px 8px rgba(214, 48, 49, 0.3);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #e74c3c, #ff4757);
+    box-shadow: 0 6px 12px rgba(214, 48, 49, 0.5);
+    transform: translateY(-2px);
+}
+
+/* Botón counter (morado) */
+.btn-counter {
+    background: linear-gradient(135deg, #8e44ad, #9b59b6) !important;
+    color: white;
+    box-shadow: 0 4px 8px rgba(142, 68, 173, 0.3);
+}
+
+.btn-counter:hover {
+    background: linear-gradient(135deg, #9b59b6, #a569bd) !important;
+    transform: translateY(-2px);
+}
+
+/* ====================================
+   ACCIONES
+   ==================================== */
+
+.config-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-xl);
+    flex-wrap: wrap;
+}
+
+/* ====================================
+   HELP TEXT
+   ==================================== */
+
+.config-help-text {
+    background: rgba(0, 102, 204, 0.08);
+    border-left: 4px solid var(--accent-color);
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border-radius: 6px;
+}
+
+.config-help-text p {
+    margin: 4px 0;
+    color: var(--text-light);
+}
+
+.config-help-text small {
+    color: rgba(241, 241, 241, 0.6);
+}
+
+/* ====================================
+   ESPECIALIDADES: PARES HORIZONTALES
+   ==================================== */
+
+.specialty-pairs-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.specialty-pair-row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    background: rgba(0, 26, 51, 0.3);
+    border: 2px solid var(--border-color);
+    border-radius: 14px;
+    padding: var(--spacing-md);
+    transition: all var(--transition-normal);
+}
+
+.specialty-pair-row:hover {
+    border-color: rgba(100, 180, 255, 0.5);
+    box-shadow: 0 4px 16px rgba(0, 102, 204, 0.2);
+}
+
+.specialty-half {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.spec-side {
+    background: rgba(30, 111, 181, 0.12);
+    border: 1px solid rgba(41, 128, 185, 0.35);
+    border-radius: 10px;
+    padding: var(--spacing-sm);
+}
+
+.counter-side {
+    background: rgba(142, 68, 173, 0.12);
+    border: 1px solid rgba(155, 89, 182, 0.35);
+    border-radius: 10px;
+    padding: var(--spacing-sm);
+}
+
+.specialty-half-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.spec-badge {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #5dade2;
+    text-transform: uppercase;
+}
+
+.counter-badge {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #bb8fce;
+    text-transform: uppercase;
+}
+
+.specialty-connector {
+    font-size: 1.8rem;
+    color: rgba(255, 215, 0, 0.6);
+    padding-top: 38px;
+    flex-shrink: 0;
+    -webkit-user-select: none;
+}
+
+/* ====================================
+   STAPLES: GRID DE IMÁGENES
+   ==================================== */
+
+.staples-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) 0;
+}
+
+.staple-img-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.staple-img-card:hover {
+    transform: translateY(-4px);
+}
+
+.staple-img-card img {
+    width: 100%;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    display: block;
+    transition: all var(--transition-normal);
+}
+
+.staple-img-card:hover img {
+    border-color: var(--gold-color);
+    box-shadow: 0 6px 18px rgba(255, 215, 0, 0.3);
+}
+
+.staple-delete-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(214, 48, 49, 0.85);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all var(--transition-fast);
+}
+
+.staple-img-card:hover .staple-delete-btn {
+    opacity: 1;
+}
+
+.staple-delete-btn:hover {
+    background: #ff4757;
+    transform: scale(1.15);
+}
+
+.staple-img-name {
+    font-size: 0.72rem;
+    color: rgba(241, 241, 241, 0.65);
+    text-align: center;
+    line-height: 1.2;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* ====================================
+   ESTILOS PARA BOTÓN GUARDAR NOMENCLATURA
+   Destiny Draw - Yu-Gi-Oh! App
+   
+   Agregar al final de style_config.css
+   ==================================== */
+
+/* Botón de guardar categoría */
+.btn-success {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #45a049, #3d8b40);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.btn-success:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+}
+
+/* Animaciones para mensajes */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Efecto visual al guardar */
+.role-card {
+    transition: border 0.3s ease;
+}
+
+/* Mensajes de configuración */
+.config-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    font-weight: bold;
+}
+
+.config-message-success {
+    background: #4CAF50;
+    color: white;
+}
+
+.config-message-error {
+    background: #f44336;
+    color: white;
+}
+
+.role-weight-label {
+    font-size: 0.75rem;
+    color: rgba(241,241,241,0.55);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 8px;
+}
+.role-weight-display {
+    color: var(--gold-color);
+    font-weight: bold;
+    min-width: 22px;
+}
+.role-weight-input {
+    width: 80px;
+    accent-color: var(--gold-color);
+    cursor: pointer;
+}.role-weight-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+.config-danger-zone {
+    margin-top: 20px;
+    padding: 14px 16px;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    border-radius: 8px;
+    background: rgba(231, 76, 60, 0.05);
+}
+.config-danger-title {
+    font-size: 0.78rem;
+    font-weight: bold;
+    color: rgba(231, 76, 60, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+}
+.config-danger-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+/* Rendimientos Decrecientes */
+.diminishing-role-card {
+    background: rgba(0, 51, 102, 0.3);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.diminishing-role-card h4 {
+    color: #FFD700;
+    margin-bottom: 10px;
+}
+
+.diminishing-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.diminishing-inputs label {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.diminishing-inputs input {
+    margin-top: 5px;
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    color: white;
+    border-radius: 4px;
+}
+
+.diminishing-inputs button {
+    grid-column: 1 / -1;
+    margin-top: 10px;
+}
+/* ====================================
+   RESPONSIVE
+   ==================================== */
+
+@media (max-width: 768px) {
+    .roles-list {
+        grid-template-columns: 1fr;
+    }
+
+    .config-new-role {
+        flex-direction: column;
+    }
+
+    .add-keyword-container {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .specialty-pair-row {
+        flex-direction: column;
+    }
+
+    .specialty-connector {
+        padding-top: 0;
+        text-align: center;
+        transform: rotate(90deg);
+        font-size: 1.4rem;
+    }
+
+    .staples-grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .role-card {
+        padding: var(--spacing-sm);
+    }
+
+    .config-section {
+        padding: var(--spacing-sm);
+    }
+
+    .config-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
