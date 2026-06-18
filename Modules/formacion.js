@@ -3452,28 +3452,30 @@ const HelpPanel = {
         <h4>📊 Estadísticas</h4>
         <p>El centro de análisis. Usa los scores para tomar decisiones de construcción basadas en datos.</p>
         <ul>
-            <li><strong>Internal Score:</strong> mide la calidad técnica del deck activo en tres pilares — Consistencia, Potencia y Resiliencia — según los roles asignados y sus pesos. Se recalcula en cada render.</li>
+            <li><strong>Internal Score:</strong> mide la calidad técnica del deck activo en tres pilares — Consistencia, Potencia y Resiliencia — según los roles asignados y sus pesos. Se recalcula con cada cambio del deck.</li>
             <li><strong>G1/G2 Score:</strong> perfil Going First vs Going Second del deck. Depende de la clasificación G1/G2 de cada rol y las capas de modificación configuradas en Config.</li>
-            <li><strong>Análisis del Deck vs Meta:</strong> cruza las mecánicas del deck activo contra el meta cargado. Muestra External Score (ajustado por RPS), vulnerabilidad G1/G2, decks que amenazan y staples sugeridos.</li>
-            <li><strong>Winrate:</strong> historial de resultados del deck activo contra los rivales registrados.</li>
+            <li><strong>Counter-Deck Score:</strong> mide qué tan capaz es el deck de interrumpir el meta. Las cartas con rol de counter acumulan puntos; los Bricks aplican penalización.</li>
+            <li><strong>Análisis vs Meta:</strong> cruza las mecánicas del deck activo contra el meta cargado. Muestra External Score (ajustado por RPS), vulnerabilidad G1/G2, y decks que representan mayor amenaza.</li>
             <li><strong>Top Tier:</strong> ranking de todos los decks (meta + guardados) por score. Filtrable por pilar.</li>
-            <li><strong>Decks del Meta:</strong> todos los decks del meta importados. El botón <strong>Actualizar Scores</strong> descarga las cartas faltantes automáticamente y calcula Internal Score + Cross-Score para todos los decks sin necesidad de abrirlos uno por uno.</li>
-            <li><strong>Poder de Cartas:</strong> Power Score de cada carta del meta basado en presencia, mecánicas y counter-bonus. Requiere ejecutarse manualmente.</li>
-            <li><strong>Counter-Cards:</strong> cartas del meta con función de interrupción y su score de counter.</li>
-            <li><strong>Exportar:</strong> descarga reportes del deck o del meta en .txt y .csv.</li>
-            <li><strong>Nivel Duelista:</strong> estadísticas personales de rendimiento basadas en matchups registrados.</li>
+            <li><strong>Gestión de Carpetas del Meta:</strong> organiza los decks del meta en carpetas. Desde aquí también se actualiza la lista visible.</li>
+            <li><strong>Decks del Meta:</strong> todos los decks importados (.ydk). El botón <strong>Actualizar Scores</strong> descarga las cartas faltantes y calcula Internal Score + Cross-Score N×N para todos los decks de una vez.</li>
+            <li><strong>Recurrencia de Cartas en el Meta:</strong> muestra con qué frecuencia aparece cada carta en los decks del meta cargados.</li>
+            <li><strong>Poder de Cartas del Meta:</strong> Power Score de cada carta basado en presencia, mecánicas y counter-bonus. Se calcula manualmente con el botón ⚡.</li>
+            <li><strong>Counter-Cards del Meta:</strong> cartas del meta con función de interrupción y su score de counter acumulado.</li>
+            <li><strong>Exportar Datos:</strong> descarga reportes del deck o del meta en .txt y .csv.</li>
+            <li><strong>Tu nivel como Duelista:</strong> estadísticas personales de rendimiento basadas en los matchups registrados en el historial.</li>
         </ul>`,
 
     simuladores: `
         <h4>🎮 Simuladores</h4>
         <p>Herramientas para practicar y medir tu rendimiento sin necesidad de un oponente.</p>
         <ul>
-            <li><strong>Mulligan / Hipergeometría:</strong> simula manos iniciales y calcula probabilidades de abrir con piezas clave de tu deck activo.</li>
-            <li><strong>Winrate:</strong> registro rápido de partidas por deck y oponente.</li>
-            <li><strong>Torneo (Swiss):</strong> gestiona un torneo local con rondas suizas, standings y puntos.</li>
-            <li><strong>Duelo en Vivo:</strong> cronómetro maestro con control de LP, turnos y temporizador por jugador. Modos estándar y Master Duel.</li>
-            <li><strong>Experimentación:</strong> herramientas analíticas para explorar métricas del deck activo.</li>
-            <li><strong>Campo de Práctica:</strong> campo de duelo visual donde puedes mover cartas, marcar estados y guardar posiciones de campo.</li>
+            <li><strong>Mulligan:</strong> simula manos iniciales de tu deck activo. Incluye tres modos: Cálculo Estándar (hipergeometría manual), Cálculo con Mis Decks (usando tus decks guardados) y Prueba Mulligan (simulación visual de apertura).</li>
+            <li><strong>Winrate:</strong> registro rápido de partidas G1/G2 vinculado al deck activo. Lleva el winrate general y por turno (primero/segundo).</li>
+            <li><strong>Torneo:</strong> gestiona un torneo local con sistema suizo — rondas, standings, puntos y bracket.</li>
+            <li><strong>Duelo en Vivo:</strong> cronómetro maestro con control de LP, conteo de turnos y temporizador por jugador. Modos estándar y Master Duel.</li>
+            <li><strong>Experimentación:</strong> herramientas analíticas para explorar métricas y comportamiento del deck activo.</li>
+            <li><strong>Zona de Práctica:</strong> campo de duelo visual donde puedes mover cartas, marcar estados (boca abajo, en posición de ataque/defensa, usado) y guardar posiciones del campo.</li>
         </ul>`,
 
     formacion: `
@@ -3498,6 +3500,7 @@ const HelpPanel = {
             <li><strong>Pilares del Internal Score:</strong> asigna qué roles aportan a Consistencia, Potencia y Resiliencia. Aquí también se configura el RPS (qué pilar vence a cuál) con opción "Ninguno" para pilares sin counter natural.</li>
             <li><strong>Scoring Avanzado (G1/G2):</strong> define si cada rol aporta al Going First, Going Second o ambos; su Poder Base (L3, escala 0–10); la tabla de fiabilidad por copias; y los multiplicadores de las capas L1, L2, L4 y L5.</li>
             <li><strong>Rendimientos Decrecientes:</strong> controla cómo cada copia adicional de un rol aporta progresivamente menos al score.</li>
+            <li><strong>Banlist del Formato:</strong> gestiona la lista de cartas prohibidas, limitadas y semi-limitadas activa. Se indica en la Vista de Carta del Buscador.</li>
             <li><strong>Atajos Rápidos:</strong> hasta 6 accesos directos desde el botón ⚡ flotante.</li>
             <li><strong>Música:</strong> asigna pistas por perfil y controla el volumen.</li>
             <li><strong>Exportar / Importar Data:</strong> guarda o restaura toda la data de la app en un archivo .txt. Incluye decks, engines, config, scores, meta, matchups y más.</li>

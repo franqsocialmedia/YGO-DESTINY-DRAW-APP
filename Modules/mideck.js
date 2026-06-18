@@ -1595,36 +1595,53 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
     downloadDecklist: async function() {
         try {
             if (typeof html2canvas === 'undefined') {
-                alert('⚠️ La librería html2canvas no está cargada.\n\nPor favor, agrega esta línea a tu index.html antes de los scripts:\n\n<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>');
-                return;
+                await new Promise((resolve, reject) => {
+                    const s = document.createElement('script');
+                    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                    s.onload = resolve;
+                    s.onerror = () => reject(new Error('No se pudo cargar html2canvas'));
+                    document.head.appendChild(s);
+                });
             }
 
-            // Mostrar mensaje de carga
             const loadingMsg = document.createElement('div');
             loadingMsg.id = 'decklist-loading';
-            loadingMsg.innerHTML = '<p style="text-align:center;padding:20px;background:#333;color:white;border-radius:8px;">⏳ Generando Decklist...</p>';
-            loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;';
+            loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;min-width:260px;';
+            const setMsg = t => loadingMsg.innerHTML = `<p style="text-align:center;padding:20px;background:#333;color:white;border-radius:8px;">${t}</p>`;
+            setMsg('⏳ Cargando imágenes...');
             document.body.appendChild(loadingMsg);
 
-            // Crear HTML del decklist
-            const decklistHTML = this.generateDecklistHTML();
-            
-            // Crear contenedor temporal
+            // Pre-convertir todas las imágenes a base64 para evitar CORS con html2canvas
+            const imgMap = {};
+            await Promise.all(Object.values(this.cards).map(async item => {
+                const url = item.data?.card_images?.[0]?.image_url_small;
+                if (!url || imgMap[url]) return;
+                try {
+                    const blob = await fetch(url).then(r => r.blob());
+                    imgMap[url] = await new Promise(res => {
+                        const reader = new FileReader();
+                        reader.onload = () => res(reader.result);
+                        reader.readAsDataURL(blob);
+                    });
+                } catch(e) { imgMap[url] = url; }
+            }));
+
+            setMsg('⏳ Generando imagen...');
+
             const tempContainer = document.createElement('div');
             tempContainer.id = 'temp-decklist-container';
-            tempContainer.innerHTML = decklistHTML;
+            tempContainer.innerHTML = this.generateDecklistHTML(imgMap);
             tempContainer.style.cssText = 'position:absolute;left:-9999px;top:0;background:white;padding:20px;';
             document.body.appendChild(tempContainer);
 
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 400));
 
-            // Convertir a imagen con html2canvas
             const canvas = await html2canvas(tempContainer, {
                 backgroundColor: '#ffffff',
                 scale: 2,
                 logging: false,
-                useCORS: true,
-                allowTaint: true
+                useCORS: false,
+                allowTaint: false
             });
 
             canvas.toBlob(blob => {
@@ -1636,20 +1653,19 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-
-                document.body.removeChild(tempContainer);
-                document.body.removeChild(loadingMsg);
+                tempContainer.remove();
+                loadingMsg.remove();
             });
 
         } catch (error) {
             console.error('Error generando decklist:', error);
-            alert('❌ Error al generar el decklist. Verifica la consola para más detalles.');
-            const loading = document.getElementById('decklist-loading');
-            if (loading) loading.remove();
+            alert('❌ Error al generar el decklist. Verifica la consola.');
+            document.getElementById('decklist-loading')?.remove();
+            document.getElementById('temp-decklist-container')?.remove();
         }
     },
 
-    generateDecklistHTML: function() {
+    generateDecklistHTML: function(imgMap = {}) {
         const mainCards = Object.entries(this.cards).filter(([_, c]) => c.location === 'main');
         const extraCards = Object.entries(this.cards).filter(([_, c]) => c.location === 'extra');
         const sideCards = Object.entries(this.cards).filter(([_, c]) => c.location === 'side');
@@ -1678,7 +1694,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-bottom: 30px;">
             `;
             mainCards.forEach(([_, item]) => {
-                html += this.generateCardHTML(item);
+                html += this.generateCardHTML(item, imgMap);
             });
             html += '</div>';
         }
@@ -1692,7 +1708,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-bottom: 30px;">
             `;
             extraCards.forEach(([_, item]) => {
-                html += this.generateCardHTML(item);
+                html += this.generateCardHTML(item, imgMap);
             });
             html += '</div>';
         }
@@ -1706,7 +1722,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-bottom: 30px;">
             `;
             sideCards.forEach(([_, item]) => {
-                html += this.generateCardHTML(item);
+                html += this.generateCardHTML(item, imgMap);
             });
             html += '</div>';
         }
@@ -1734,15 +1750,15 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         return html;
     },
 
-    generateCardHTML: function(item) {
+    generateCardHTML: function(item, imgMap = {}) {
         const card = item.data;
-        const imgUrl = card.card_images[0].image_url_small;
+        const rawUrl = card.card_images[0].image_url_small;
+        const imgUrl = imgMap[rawUrl] || rawUrl;
         
         return `
             <div style="text-align: center; position: relative;">
                 <img src="${imgUrl}" 
-                     style="width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"
-                     crossorigin="anonymous">
+                     style="width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
                 <div style="font-size: 11px; margin-top: 5px; font-weight: bold; color: #333;">
                     ${card.name}
                 </div>
