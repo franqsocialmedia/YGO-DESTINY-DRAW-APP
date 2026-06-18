@@ -1061,6 +1061,7 @@ const Config = {
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="decks"> <span>Decks guardados</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="engines"> <span>Engines</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="matchups"> <span>Matchups e Historial</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="optimizacion"> <span>Datos de Optimización (Deck Testing)</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="winrates"> <span>Winrates</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="favoritas"> <span>Favoritas</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="torneo"> <span>Torneo activo</span></label>
@@ -2116,6 +2117,7 @@ borrarSeleccion: function () {
 
     const etiquetas = {
         decks: 'Decks guardados', engines: 'Engines', matchups: 'Matchups e Historial',
+        optimizacion: 'Datos de Optimización (Deck Testing)',
         winrates: 'Winrates', favoritas: 'Favoritas', torneo: 'Torneo activo',
         practica: 'Estados de práctica', cache: 'Cache de Scores (Power + Cross)',
         meta_library: 'Librería de cartas del Meta',
@@ -2146,6 +2148,9 @@ borrarSeleccion: function () {
         rmP('matchup_');
         if (window.Matchups) Matchups.refreshSection?.();
         if (window.Duelista) { const el = document.getElementById('duelista-content'); if (el) Duelista.refreshSection(); }
+    }
+    if (selected.includes('optimizacion')) {
+        rmP('optimization_');
     }
     if (selected.includes('winrates')) {
         rm('yugioh_winrates'); rm('pz_winrate_standalone');
