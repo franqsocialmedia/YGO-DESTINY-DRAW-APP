@@ -1,559 +1,521 @@
 /* responsive_style.css — Todos los @media queries del proyecto */
 /* Extraido de los CSS del proyecto. Editar aqui para ajustes responsive. */
 
-/* ── style_global.css ── */
+/* ═══════════════════════════════════════════════════
+   BREAKPOINTS USADOS:
+   480px  → móvil pequeño (iPhone SE, Galaxy S)
+   600px  → móvil mediano / landscape
+   700px  → móvil grande / tablet pequeña
+   768px  → tablet portrait
+   ═══════════════════════════════════════════════════ */
+
+
+/* ── style_core.css ── */
 
 @media (max-width: 768px) {
-    /* Header más pequeño */
-    .parallax-header {
-        height: 180px;
-    }
-    
-    /* Logo más pequeño */
-    .logo-text {
-        font-size: 1.5rem;
-    }
-    
-    .main-logo {
-        max-width: 150px;
-    }
-    
-    /* Botones de navegación más compactos */
+    .parallax-header { height: 140px; }
+    .main-logo       { max-width: 130px; }
+    .logo-text       { font-size: 1.4rem; }
+
     .nav-button {
-        padding: var(--spacing-sm);
-        font-size: 0.85rem;
+        padding: 10px 10px;
+        font-size: 0.82rem;
     }
-    
-    /* Menos padding en contenido */
+
     .content-container {
-        padding: var(--spacing-md) var(--spacing-sm);
+        padding: var(--spacing-sm) var(--spacing-xs);
     }
-    
-    /* Títulos más pequeños */
-    .tab-content h2 {
-        font-size: 1.5rem;
-    }
-    
-    /* Botón scroll to top más pequeño */
-    .scroll-top-btn {
-        width: 45px;
-        height: 45px;
-        bottom: 70px;
-        right: 20px;
-        font-size: 1.3rem;
-    }
-    
-    /* Footer más compacto */
-    .main-footer p {
-        font-size: 0.7rem;
-    }
+
+    .tab-content h2 { font-size: 1.4rem; }
+
+    .main-footer p  { font-size: 0.68rem; }
+
+    /* Scroll buttons: alejar del footer en móvil */
+    #scrollTopBtn    { bottom: 80px;  right: 12px; width: 36px; height: 36px; font-size: 15px; }
+    #scrollBottomBtn { bottom: 122px; right: 12px; width: 36px; height: 36px; font-size: 15px; }
 }
 
 @media (max-width: 480px) {
-    /* Header aún más pequeño */
-    .parallax-header {
-        height: 150px;
-    }
-    
-    /* Logo muy compacto */
-    .logo-text {
-        font-size: 1.2rem;
-        letter-spacing: 1px;
-    }
-    
-    /* Botones muy compactos */
+    .parallax-header { height: 110px; }
+    .main-logo       { max-width: 100px; }
+    .logo-text       { font-size: 1.1rem; letter-spacing: 1px; }
+
     .nav-button {
-        font-size: 0.8rem;
-        padding: 0.7rem;
+        font-size: 0.78rem;
+        padding: 9px 8px;
     }
-    
-    /* Footer en dos líneas si es necesario */
-    .main-footer p {
-        font-size: 0.65rem;
-        padding: 0 10px;
-    }
-    
-    /* Botón flotante más compacto */
-    .scroll-top-btn {
-        width: 40px;
-        height: 40px;
-        bottom: 65px;
-        right: 15px;
-        font-size: 1.2rem;
-    }
+
+    .main-footer p { font-size: 0.62rem; padding: 0 8px; }
 }
 
+/* Sección collapsible de Config visible en móvil */
 @media (max-width: 600px) {
     .cm-groups { grid-template-columns: 1fr; }
 }
 
+
 /* ── style_buscador.css ── */
 
-@media (max-width: 480px) {
-    .cv-modal { width: calc(100vw - 32px); }
+@media (max-width: 700px) {
+    /* Ocultar sidebar cover art en móvil */
+    .buscador-cover-sidebar { display: none; }
+    .buscador-layout { flex-direction: column; }
 }
 
 @media (max-width: 768px) {
-    /* Barra de búsqueda en columna */
     .search-bar {
         flex-direction: column;
+        gap: 6px;
     }
 
-    .search-input {
-        min-width: 100%;
-    }
+    .search-input { min-width: 100%; }
 
-    .btn {
+    /* Botones en 2 columnas en tablet, 1 en móvil */
+    .search-bar .btn {
         width: 100%;
         justify-content: center;
     }
 
-    /* Grid de resultados más compacto */
     .results-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
         gap: var(--spacing-sm);
     }
 
-    /* Contenedor de búsqueda más compacto */
-    .search-container {
-        padding: var(--spacing-md);
-    }
+    .search-container { padding: var(--spacing-sm); }
 
-    /* Modal responsive */
-    .modal-content {
-        flex-direction: column;
-    }
+    /* Modal en columna */
+    .modal-content    { flex-direction: column; }
+    .modal-image      { flex: none; max-width: 220px; margin: 0 auto; }
 
-    .modal-image {
-        flex: none;
-        max-width: 300px;
-        margin: 0 auto;
-    }
+    /* Filtros avanzados: label encima */
+    .adv-label { min-width: unset; width: 100%; padding-top: 0; margin-bottom: 2px; }
+    .adv-row   { flex-direction: column; gap: 6px; }
+
+    /* Archetypes y sets en ancho completo */
+    .buscador-archetype-sel { width: 100%; }
+    .buscador-set-sel       { width: 100%; }
+    .buscador-sets-row      { flex-direction: column; align-items: flex-start; gap: 4px; }
 }
 
 @media (max-width: 480px) {
-    /* Grid de una sola columna */
     .results-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 6px;
     }
 
-    /* Botones más compactos */
     .btn {
-        padding: 10px 16px;
-        font-size: 0.95rem;
-    }
-
-    /* Inputs más compactos */
-    .search-input,
-    .filter-input {
+        padding: 10px 14px;
         font-size: 0.9rem;
     }
 
-    /* Modal más compacto */
-    .card-modal {
-        width: 95%;
+    .search-input,
+    .filter-input {
+        font-size: 0.88rem;
     }
 
-    .modal-content {
-        padding: var(--spacing-md);
-    }
+    /* Modal pantalla completa en móvil pequeño */
+    .card-modal         { width: 98%; max-height: 92vh; overflow-y: auto; }
+    .modal-content      { padding: var(--spacing-sm); gap: 10px; }
+    .modal-info h3      { font-size: 1.1rem; }
+    .cv-modal           { width: calc(100vw - 20px); }
 
-    .modal-info h3 {
-        font-size: 1.2rem;
-    }
+    /* Chips de filtro más pequeños */
+    .filter-chips       { gap: 4px; }
+    .adv-chip           { font-size: 0.73rem; padding: 2px 8px; }
+
+    /* Toggle filtros avanzados ocupa todo el ancho */
+    .adv-filters-toggle-row { gap: 6px; }
+    .adv-filters-toggle-btn { width: 100%; text-align: left; }
 }
+
 
 /* ── style_mideck.css ── */
 
-@media (max-width: 480px) {
-    .ds-row { flex-direction: column; gap: 8px; }
+@media (max-width: 768px) {
+    /* Deck row: layout compacto */
+    .deck-name { flex: 0 0 120px; font-size: 0.88rem; }
+
+    /* Ocultar roles en tablet para no saturar */
+    .deck-roles { display: none; }
+}
+
+@media (max-width: 600px) {
+    /* Deck row: grid en 2 columnas con imagen + nombre, roles y controles apilados */
+    .deck-row {
+        display: grid;
+        grid-template-columns: 56px 1fr auto;
+        grid-template-areas:
+            "img  name  qty"
+            "img  roles btns";
+        gap: 4px 8px;
+        align-items: center;
+    }
+
+    .deck-img     { grid-area: img;  width: 52px; }
+    .deck-name    { grid-area: name; flex: none; width: 100%; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .deck-roles   { grid-area: roles; display: flex; }
+    .deck-qty     { grid-area: qty; }
+    .deck-buttons { grid-area: btns; flex-direction: row; gap: 3px; }
+    .deck-move    { font-size: 0.72rem; padding: 3px 6px; }
+
+    /* Stats panel */
+    .ds-row   { flex-direction: column; gap: 6px; }
     .ds-group { min-width: 0; }
+
+    /* Matchups */
+    .matchup-row-main       { gap: 5px; }
+    .matchup-opponent-name  { font-size: 0.78rem; }
+    .matchup-panel          { padding: 16px 12px; }
+
+    /* Score bars */
+    .dsg-bar-label    { width: 60px; font-size: 0.63rem; }
+    .dsg-bar-label-lg { width: 68px; font-size: 0.7rem; }
+    .dsg-group        { min-width: 140px; padding: 8px; }
+}
+
+@media (max-width: 480px) {
+    .deck-img  { width: 46px; }
+    .deck-name { font-size: 0.82rem; }
+
+    .deck-qty button {
+        width: 24px;
+        height: 24px;
+        font-size: 0.85rem;
+    }
+
+    .deck-move    { font-size: 0.7rem; padding: 3px 5px; }
+    .deck-modal   { width: 97%; padding: var(--spacing-sm); }
+
+    /* Engines sidebar: full width en móvil */
+    .engines-sidebar    { flex: none; width: 100%; max-width: none; position: static; }
+    .eng-create-right   { flex: none; width: 100%; }
+    .eng-modal-footer   { flex-direction: column; }
+    .eng-modal-footer .eng-action-btn { width: 100%; }
 }
 
 @media (max-width: 700px) {
     .engines-sidebar { flex: none; width: 100%; max-width: none; position: static; }
-    .eng-create-right { flex: none; width: 100%; }
-    .eng-modal-footer { flex-direction: column; }
-    .eng-modal-footer .eng-action-btn { width: 100%; }
 }
 
-@media (max-width: 600px) {
-    .dsg-bar-label { width: 64px; font-size: 0.65rem; }
-    .dsg-bar-label-lg { width: 72px; font-size: 0.72rem; }
-    .dsg-group { min-width: 150px; padding: 10px; }
-}
-
-@media (max-width: 600px) {
-    .matchup-row-main { gap: 6px; }
-    .matchup-opponent-name { font-size: 0.8rem; }
-    .matchup-panel { padding: 20px 14px 16px; }
-}
-
-@media (max-width: 700px) {
-    .buscador-cover-sidebar { display: none; }
-}
-
-@media (max-width: 600px) {
-    .deck-row {
-        display: grid;
-        grid-template-columns: 60px 1fr;
-        grid-template-areas:
-            "img name"
-            "roles roles"
-            "qty buttons";
-    }
-
-}
-
-@media (max-width: 480px) {
-    .deck-img {
-        width: 50px;
-    }
-
-    .deck-name {
-        font-size: 0.85rem;
-    }
-
-    .deck-qty button {
-        width: 25px;
-        height: 25px;
-        font-size: 0.9rem;
-    }
-
-    .deck-move {
-        font-size: 0.75rem;
-        padding: 4px 8px;
-    }
-
-    .deck-modal {
-        width: 95%;
-        padding: var(--spacing-md);
-    }
-}
 
 /* ── style_estadisticas.css ── */
 
 @media (max-width: 768px) {
-    .mcs-stats {
-        gap: var(--spacing-sm);
-    }
-    .mcs-stat {
-        min-width: 60px;
-    }
-    .meta-card-stats-header {
-        flex-direction: column;
-        gap: 4px;
-        text-align: center;
-    }
-}
+    /* Score bars */
+    .stat-bar-label { min-width: 110px; font-size: 0.82rem; }
 
-@media (max-width: 480px) {
-    .meta-card-stat-item {
-        flex-wrap: wrap;
-    }
-    .mcs-name {
-        flex-basis: 100%;
-        white-space: normal;
-    }
-    .mcs-stats {
-        width: 100%;
-        justify-content: space-around;
-    }
-}
+    /* Meta folders */
+    .meta-folder-item { flex-wrap: wrap; }
+    .folder-name      { flex-basis: 100%; margin-bottom: var(--spacing-xs); }
+    .meta-filter      { flex-direction: column; align-items: stretch; }
+    .meta-filter-select { max-width: 100%; }
+    .folder-chip      { font-size: 0.73rem; padding: 3px 8px; }
 
-@media (max-width: 768px) {
+    /* Deck analysis layout */
+    .deck-analysis-layout   { flex-direction: column; }
+    .deck-selector-panel    { width: 100%; max-height: 100px; }
+    .dsp-row                { flex-direction: row; flex-wrap: wrap; }
+    .dsp-item               { flex-direction: column; align-items: center; gap: 1px; padding: 3px 4px; }
+    .dsp-folder,
+    .dsp-thumb-placeholder  { display: none; }
+    .dsp-name               { font-size: 0.58rem; text-align: center; }
+
+    /* Analysis score row */
+    .analysis-scores-row    { gap: var(--spacing-sm); padding: var(--spacing-sm); }
+    .asb-value              { font-size: 1.8rem; }
+    .analysis-cdeck-count   { display: none; }
+
+    /* Power cards */
     .power-type { display: none; }
     .power-scores-meta { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+    /* Counter decks */
+    .counter-deck-header    { flex-wrap: wrap; gap: var(--spacing-sm); }
+    .ccm-counters           { display: none; }
+
+    /* Meta card stats */
+    .mcs-stats  { gap: var(--spacing-sm); }
+    .mcs-stat   { min-width: 55px; }
+    .meta-card-stats-header { flex-direction: column; gap: 4px; text-align: center; }
+
+    /* Widget flotante deck */
+    .deck-floating-widget          { width: 44px; left: 8px; }
+    .deck-floating-widget.expanded { width: 190px; }
+}
+
+@media (max-width: 640px) {
+    .deck-analysis-layout   { flex-direction: column; }
+    .deck-selector-panel    { width: 100%; max-height: 100px; }
 }
 
 @media (max-width: 480px) {
+    /* Score header */
+    .stats-header   { flex-direction: column; align-items: flex-start; gap: var(--spacing-sm); }
+    .stats-score    { font-size: 1.4rem; }
+    .stat-bar-label { min-width: 92px; font-size: 0.78rem; }
+
+    /* Meta decks */
+    .meta-deck-item { flex: 0 0 110px; }
+
+    /* Analysis scores wrap */
+    .analysis-scores-row { flex-wrap: wrap; }
+    .analysis-vs-divider { flex-direction: row; gap: 6px; }
+    .analysis-score-box  { min-width: 38%; }
+
+    /* Power cards */
     .power-card-item { flex-wrap: wrap; }
     .power-score-box {
         flex-direction: row;
-        gap: 6px;
+        gap: 5px;
         align-items: baseline;
         width: 100%;
         justify-content: flex-end;
     }
     .power-copies-avg { margin-top: 0; }
-}
 
-@media (max-width: 768px) {
-    .counter-deck-header { flex-wrap: wrap; gap: var(--spacing-sm); }
-    .ccm-counters { display: none; }
-}
-
-@media (max-width: 480px) {
+    /* Counter cards */
     .counter-card-meta-item { flex-wrap: wrap; }
     .ccm-score {
         flex-direction: row;
-        gap: 6px;
+        gap: 5px;
         width: 100%;
         justify-content: flex-end;
         align-items: baseline;
     }
+
+    /* Meta card stats */
+    .meta-card-stat-item { flex-wrap: wrap; }
+    .mcs-name   { flex-basis: 100%; white-space: normal; }
+    .mcs-stats  { width: 100%; justify-content: space-around; }
+
+    /* Export grid 1 col */
+    .export-grid { grid-template-columns: 1fr; }
+
+    /* Widget flotante full width al expandir */
+    .deck-floating-widget.expanded { width: calc(100vw - 30px); left: 8px; }
 }
 
-@media (max-width: 768px) {
-    .analysis-scores-row { gap: var(--spacing-sm); padding: var(--spacing-sm); }
-    .asb-value { font-size: 2rem; }
-    .analysis-cdeck-count { display: none; }
-}
-
-@media (max-width: 480px) {
-    .analysis-scores-row { flex-wrap: wrap; }
-    .analysis-vs-divider { flex-direction: row; gap: 6px; }
-    .analysis-score-box { min-width: 40%; }
-}/* ====================================
-
-@media (max-width: 480px) {
-    .export-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 480px) {
-    .folder-chip { font-size: 0.75rem; padding: 4px 10px; }
-}
-
-@media (max-width: 640px) {
-    .deck-analysis-layout { flex-direction: column; }
-    .deck-selector-panel { width: 100%; max-height: 110px; }
-    .dsp-row { flex-direction: row; flex-wrap: wrap; }
-    .dsp-item { flex-direction: column; align-items: center; gap: 1px; padding: 3px 4px; }
-    .dsp-folder, .dsp-thumb-placeholder { display: none; }
-    .dsp-name { font-size: 0.6rem; text-align: center; }
-}
-
-@media (max-width: 768px) {
-    .stat-bar-label {
-        min-width: 120px;
-        font-size: 0.85rem;
-    }
-
-    .meta-folder-item {
-        flex-wrap: wrap;
-    }
-
-    .folder-name {
-        flex-basis: 100%;
-        margin-bottom: var(--spacing-xs);
-    }
-
-    .meta-filter {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .meta-filter-select {
-        max-width: 100%;
-    }
-
-    .deck-floating-widget {
-        width: 48px;
-        left: 10px;
-    }
-
-    .deck-floating-widget.expanded {
-        width: 200px;
-    }
-}
-
-@media (max-width: 480px) {
-    .stats-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-sm);
-    }
-
-    .stats-score {
-        font-size: 1.5rem;
-    }
-
-    .stat-bar-label {
-        min-width: 100px;
-        font-size: 0.8rem;
-    }
-
-    .meta-deck-item {
-        flex: 0 0 120px;
-    }
-
-    .deck-floating-widget.expanded {
-        width: calc(100vw - 40px);
-        left: 10px;
-    }
-}
 
 /* ── style_simuladores.css ── */
 
-@media (max-width: 600px) {
-    .duelo-std-display       { font-size: 3.5rem; }
-    .duelo-timer-player      { font-size: 1.6rem; }
-    .duelo-lp-val            { font-size: 2.2rem; }
-    .duelo-interact-btn      { width: 80px; min-height: 70px; font-size: 1.2rem; }
-    .duelo-md-player-rotated { width: 140px; }
-    .duelo-md-players-row    { min-height: 150px; }
-    .md-score-val            { font-size: 1.5rem; }
-}
-
-@media (max-width:600px) {
-    .pz-field-grid { gap:2px; }
-    .pz-zone { min-height:50px; }
-    .pz-mcv-layout { flex-direction:column; }
-    .pz-mcv-ban-row { flex-direction:row; width:100%; }
-    .pz-modal-box   { padding:14px 10px; }
-    .pz-log-shortcuts { grid-template-columns:repeat(3,1fr); }
-}
-
-@media (max-width: 500px) {
-    .herr-two-col { flex-direction: column; }
-    .herr-panel   { min-width: unset; width: 100%; }
+@media (max-width: 768px) {
+    /* Tabs de simuladores: scroll horizontal */
+    .sim-main-tabs {
+        gap: 4px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 6px;
+    }
+    .sim-tab-btn {
+        flex-shrink: 0;
+        padding: 7px 13px;
+        font-size: 0.78rem;
+    }
 }
 
 @media (max-width: 600px) {
-    .hiper-quick-layout    { flex-direction: column; align-items: center; }
-    .hiper-inputs-col      { width: 100%; }
-    .hiper-deck-layout     { flex-direction: column; }
-    .hiper-deck-sidebar    { flex: none; width: 100%; }
-    .hiper-deck-list       { max-height: 180px; }
-    .hiper-deck-two-col    { flex-direction: column; }
-    .hiper-handsim         { width: 100%; }
-    .hiper-hand-area       { min-width: unset; }
-    .hiper-res-grid        { grid-template-columns: 1fr; }
-}
+    /* Duelo en Vivo */
+    .duelo-std-display   { font-size: 3.2rem; }
+    .duelo-timer-player  { font-size: 1.5rem; }
+    .duelo-lp-val        { font-size: 2rem; }
+    .duelo-interact-btn  { width: 72px; min-height: 64px; font-size: 1.1rem; }
+    .duelo-md-player-rotated { width: 130px; }
+    .duelo-md-players-row    { min-height: 140px; }
+    .md-score-val            { font-size: 1.4rem; }
 
-@media (max-width: 600px) {
-    .torneo-main-tabs { gap: 3px; }
-    .torneo-tab-btn   { padding: 6px 8px; font-size: 0.72rem; }
-    .torneo-match-item { flex-direction: column; }
-    .torneo-match-side { width: 100%; }
+    /* LP controls en columna */
+    .duelo-lp-section { flex-direction: column; gap: 10px; }
+    .duelo-lp-block   { width: 100%; }
+
+    /* Zona de Práctica */
+    .pz-field-grid   { gap: 2px; }
+    .pz-zone         { min-height: 46px; }
+    .pz-mcv-layout   { flex-direction: column; }
+    .pz-mcv-ban-row  { flex-direction: row; width: 100%; }
+    .pz-modal-box    { padding: 12px 9px; }
+    .pz-log-shortcuts { grid-template-columns: repeat(3, 1fr); }
+    .pz-controls-bar { flex-wrap: wrap; gap: 4px; }
+    .pz-ctrl-btn     { font-size: 0.72rem; padding: 4px 8px; }
+    .pz-phase-bar    { gap: 2px; }
+    .pz-phase-btn    { font-size: 0.7rem; padding: 3px 7px; }
+
+    /* Torneo */
+    .torneo-main-tabs   { gap: 3px; }
+    .torneo-tab-btn     { padding: 5px 7px; font-size: 0.7rem; }
+    .torneo-match-item  { flex-direction: column; }
+    .torneo-match-side  { width: 100%; }
     .torneo-match-right { flex-direction: row; }
     .torneo-match-center { flex-direction: row; width: 100%; justify-content: center; }
     .puntos-header, .puntos-row {
-        grid-template-columns: 50px 1fr 32px 32px 44px;
+        grid-template-columns: 46px 1fr 30px 30px 42px;
     }
-    /* Ocultar columnas GW/GL en mobile */
+    /* Ocultar GW/GL en móvil */
     .puntos-header span:nth-child(6),
     .puntos-header span:nth-child(7),
     .puntos-row    span:nth-child(6),
     .puntos-row    span:nth-child(7),
     .puntos-decks  { display: none; }
+
+    /* Hipergeometría */
+    .hiper-quick-layout  { flex-direction: column; align-items: center; }
+    .hiper-inputs-col    { width: 100%; }
+    .hiper-deck-layout   { flex-direction: column; }
+    .hiper-deck-sidebar  { flex: none; width: 100%; }
+    .hiper-deck-list     { max-height: 160px; }
+    .hiper-deck-two-col  { flex-direction: column; }
+    .hiper-handsim       { width: 100%; }
+    .hiper-hand-area     { min-width: unset; }
+    .hiper-res-grid      { grid-template-columns: 1fr; }
+
+    /* Experimentación: sidebar oculta por defecto, activar con scroll */
+    .exp-body    { flex-direction: column; }
+    .exp-sidebar { flex: none; width: 100%; max-height: 200px; }
+    .exp-card-list { max-height: 160px; }
+
+    /* Winrate: columnas en fila en móvil */
+    .sim-wr-wrap { flex-direction: column; }
+    .sim-wr-col  { width: 100%; }
+
+    /* Herramientas (dado/moneda) */
+    .herr-two-col { flex-direction: column; }
+    .herr-panel   { min-width: unset; width: 100%; }
 }
+
+@media (max-width: 480px) {
+    .sim-tab-btn { padding: 6px 9px; font-size: 0.72rem; }
+
+    /* LP panel full width */
+    .duelo-lp-panel-box { width: calc(100vw - 24px); padding: 14px 12px; }
+    .duelo-lp-presets   { gap: 5px; }
+    .duelo-lp-preset    { padding: 6px 10px; font-size: 0.78rem; }
+
+    /* Botones de interacción más pequeños */
+    .duelo-interact-btn  { width: 60px; min-height: 56px; font-size: 1rem; }
+    .duelo-interact-btn span { font-size: 0.65rem; }
+
+    /* Zona práctica: botones control en wrap */
+    .pz-ctrl-btn  { font-size: 0.68rem; padding: 3px 6px; }
+
+    /* Winrate halves en columna */
+    .wr-halves { flex-direction: column; gap: 10px; }
+    .wr-half   { width: 100%; }
+}
+
 
 /* ── style_config.css ── */
 
-@media (max-width: 480px) {
-    .music-track-row    { flex-direction: column; align-items: flex-start; }
-    .music-track-label  { min-width: unset; }
-    .music-track-input  { width: 100%; }
-}
-
 @media (max-width: 768px) {
-    .roles-list {
-        grid-template-columns: 1fr;
-    }
-
-    .config-new-role {
-        flex-direction: column;
-    }
-
-    .add-keyword-container {
-        flex-direction: column;
-    }
-
-    .btn {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .specialty-pair-row {
-        flex-direction: column;
-    }
-
+    .roles-list         { grid-template-columns: 1fr; }
+    .config-new-role    { flex-direction: column; }
+    .add-keyword-container { flex-direction: column; }
+    .specialty-pair-row { flex-direction: column; }
     .specialty-connector {
         padding-top: 0;
         text-align: center;
         transform: rotate(90deg);
         font-size: 1.4rem;
     }
+    .staples-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); }
 
-    .staples-grid {
-        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    }
+    /* Config: botón ancho completo solo dentro de config (no global) */
+    .config-section .btn { width: 100%; justify-content: center; }
 }
 
 @media (max-width: 480px) {
-    .role-card {
-        padding: var(--spacing-sm);
-    }
-
-    .config-section {
-        padding: var(--spacing-sm);
-    }
-
-    .config-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
+    .role-card     { padding: var(--spacing-sm); }
+    .config-section { padding: var(--spacing-sm); }
+    .config-actions { flex-direction: column; align-items: stretch; }
+    .music-track-row   { flex-direction: column; align-items: flex-start; }
+    .music-track-label { min-width: unset; }
+    .music-track-input { width: 100%; }
 }
 
-/* ── style_formacion.css ── */
+
+/* ── style_config.css → Formación ── */
 
 @media (max-width: 700px) {
-    .form-apuntes-layout {
-        grid-template-columns: 1fr;
+    .form-apuntes-layout { grid-template-columns: 1fr; }
+    .form-notebook       { padding: 18px 14px; }
+    .form-notebook::before { left: 32px; }
+
+    /* Sub-nav de formación: scroll horizontal */
+    .form-subnav {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        gap: 4px;
+        padding-bottom: 4px;
     }
-    .form-notebook {
-        padding: 20px 18px;
-    }
-    .form-notebook::before { left: 36px; }
+    .form-subnav-btn { flex-shrink: 0; font-size: 0.8rem; padding: 7px 11px; }
 }
 
 @media (max-width: 480px) {
     .form-juegos-grid {
-        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     }
 }
+
 
 /* ── style_meta.css ── */
 
 @media (max-width: 700px) {
-    .meta-maestros-grid {
-        grid-template-columns: 1fr;
-    }
+    .meta-maestros-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 600px) {
-    .meta-iframe-wrapper {
-        height: 55vh;
-        min-height: 300px;
-    }
-    .meta-tab-btn {
-        font-size: 0.75rem;
-        padding: 5px 10px;
-    }
-    .meta-frame-toolbar {
-        flex-direction: column;
-        align-items: flex-start;
-    }
+    .meta-iframe-wrapper { height: 52vh; min-height: 280px; }
+    .meta-tab-btn        { font-size: 0.73rem; padding: 4px 9px; }
+    .meta-frame-toolbar  { flex-direction: column; align-items: flex-start; }
 }
+
 
 /* ── style_welcome.css ── */
 
 @media (max-width: 480px) {
-    .welcome-panel {
-        padding: 28px 20px 24px;
+    .welcome-panel { padding: 24px 16px 20px; }
+    .welcome-logo  { max-width: 180px; }
+    .wb-icon       { font-size: 1.4rem; width: 32px; }
+    .wb-label      { font-size: 0.95rem; }
+}
+
+
+/* ═══════════════════════════════════════════════════
+   UTILIDADES GLOBALES MOBILE
+   ═══════════════════════════════════════════════════ */
+
+/* Evitar zoom en inputs en iOS */
+@media (max-width: 768px) {
+    input[type="text"],
+    input[type="number"],
+    input[type="search"],
+    select,
+    textarea {
+        font-size: 16px !important;
     }
-    .welcome-logo {
-        max-width: 200px;
+}
+
+/* Touch targets mínimos 44px en móvil (accesibilidad) */
+@media (max-width: 600px) {
+    button,
+    .btn,
+    .nav-button,
+    .deck-qty button,
+    .sim-tab-btn,
+    .torneo-tab-btn,
+    .hiper-tab-btn {
+        min-height: 36px;
     }
-    .wb-icon {
-        font-size: 1.5rem;
-        width: 36px;
-    }
-    .wb-label {
-        font-size: 1rem;
+}
+
+/* Scroll suave nativo en contenedores con overflow */
+@media (max-width: 768px) {
+    .nav-tabs,
+    .sim-main-tabs,
+    .form-subnav,
+    .hiper-tabs,
+    .torneo-main-tabs {
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
     }
 }
