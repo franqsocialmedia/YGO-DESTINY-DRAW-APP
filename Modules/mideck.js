@@ -1593,79 +1593,281 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         return html;
     },
     downloadDecklist: async function() {
+        const loadingMsg = document.createElement('div');
+        loadingMsg.id = 'decklist-loading';
+        loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;min-width:260px;';
+        const setMsg = t => loadingMsg.innerHTML = `<p style="text-align:center;padding:20px;background:#333;color:white;border-radius:8px;">${t}</p>`;
+        setMsg('⏳ Cargando imágenes...');
+        document.body.appendChild(loadingMsg);
+
         try {
-            if (typeof html2canvas === 'undefined') {
-                await new Promise((resolve, reject) => {
-                    const s = document.createElement('script');
-                    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-                    s.onload = resolve;
-                    s.onerror = () => reject(new Error('No se pudo cargar html2canvas'));
-                    document.head.appendChild(s);
+            const mainCards  = Object.values(this.cards).filter(c => c.location === 'main');
+            const extraCards = Object.values(this.cards).filter(c => c.location === 'extra');
+            const sideCards  = Object.values(this.cards).filter(c => c.location === 'side');
+
+            // ── Parámetros de layout ──
+            const SCALE      = 2;          // resolución x2
+            const PAD        = 30 * SCALE;
+            const CARD_W     = 75 * SCALE;
+            const CARD_H     = 110 * SCALE;
+            const GAP_X      = 10 * SCALE;
+            const GAP_Y      = 14 * SCALE;
+            const COLS       = 10;
+            const SECTION_GAP = 40 * SCALE;
+            const TITLE_H    = 60 * SCALE;
+            const SECTION_H  = 36 * SCALE;
+            const NAME_H     = 28 * SCALE;  // altura reservada para nombre bajo la carta
+            const BADGE_R    = 13 * SCALE;
+            const ROLE_H     = 70 * SCALE;
+            const CANVAS_W   = PAD * 2 + COLS * CARD_W + (COLS - 1) * GAP_X;
+
+            // ── Cargar todas las imágenes como HTMLImageElement vía blob ──
+            const loadImg = (url) => new Promise(resolve => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload  = () => resolve(img);
+                img.onerror = () => {
+                    // Segundo intento sin crossOrigin (permite dibujar pero tainta el canvas)
+                    const img2 = new Image();
+                    img2.onload  = () => resolve(img2);
+                    img2.onerror = () => resolve(null);
+                    img2.src = url + '?t=' + Date.now();
+                };
+                img.src = url;
+            });
+
+            const allItems = [...mainCards, ...extraCards, ...sideCards];
+            const urls     = [...new Set(allItems.map(c => c.data?.card_images?.[0]?.image_url_small).filter(Boolean))];
+            const total    = urls.length;
+            let loaded = 0;
+            const imgCache = {};
+            await Promise.all(urls.map(async url => {
+                imgCache[url] = await loadImg(url);
+                loaded++;
+                setMsg(`⏳ Cargando imágenes... (${loaded}/${total})`);
+            }));
+            await new Promise(r => setTimeout(r, 300));
+
+            // ── Calcular roles del main ──
+            const rolesCount = {};
+            mainCards.forEach(item => {
+                (item.roles || []).forEach(r => { rolesCount[r] = (rolesCount[r] || 0) + item.qty; });
+            });
+            const roleEntries = Object.entries(rolesCount).sort((a, b) => b[1] - a[1]);
+
+            // ── Helper: altura de una sección de cartas ──
+            const sectionHeight = (cards) => {
+                if (!cards.length) return 0;
+                const rows = Math.ceil(cards.length / COLS);
+                return SECTION_H + rows * (CARD_H + NAME_H + GAP_Y) + SECTION_GAP;
+            };
+
+            // ── Altura total del canvas ──
+            let canvasH = PAD + TITLE_H;
+            if (mainCards.length)  canvasH += sectionHeight(mainCards);
+            if (extraCards.length) canvasH += sectionHeight(extraCards);
+            if (sideCards.length)  canvasH += sectionHeight(sideCards);
+            if (roleEntries.length) canvasH += SECTION_H + ROLE_H + SECTION_GAP;
+            canvasH += PAD;
+
+            setMsg('⏳ Generando imagen...');
+            const canvas  = document.createElement('canvas');
+            canvas.width  = CANVAS_W;
+            canvas.height = canvasH;
+            const ctx     = canvas.getContext('2d');
+
+            // Fondo blanco
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let y = PAD;
+
+            // ── Título ──
+            ctx.fillStyle = '#222222';
+            ctx.font      = `bold ${28 * SCALE}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText(this.name, CANVAS_W / 2, y + 40 * SCALE);
+            y += TITLE_H;
+
+            // ── Función para dibujar una sección ──
+            const drawSection = (cards, label, lineColor) => {
+                if (!cards.length) return;
+
+                // Encabezado
+                ctx.fillStyle = '#2c3e50';
+                ctx.font      = `bold ${18 * SCALE}px Arial`;
+                ctx.textAlign = 'left';
+                ctx.fillText(label, PAD, y + 22 * SCALE);
+                ctx.strokeStyle = lineColor;
+                ctx.lineWidth   = 3 * SCALE;
+                ctx.beginPath();
+                ctx.moveTo(PAD, y + 30 * SCALE);
+                ctx.lineTo(CANVAS_W - PAD, y + 30 * SCALE);
+                ctx.stroke();
+                y += SECTION_H;
+
+                // Cartas
+                cards.forEach((item, i) => {
+                    const col  = i % COLS;
+                    const row  = Math.floor(i / COLS);
+                    const x    = PAD + col * (CARD_W + GAP_X);
+                    const cardY = y + row * (CARD_H + NAME_H + GAP_Y);
+
+                    // Imagen
+                    const url = item.data?.card_images?.[0]?.image_url_small;
+                    const img = url ? imgCache[url] : null;
+                    if (img) {
+                        ctx.drawImage(img, x, cardY, CARD_W, CARD_H);
+                    } else {
+                        // Placeholder gris
+                        ctx.fillStyle = '#cccccc';
+                        ctx.fillRect(x, cardY, CARD_W, CARD_H);
+                        ctx.fillStyle = '#888';
+                        ctx.font = `${9 * SCALE}px Arial`;
+                        ctx.textAlign = 'center';
+                        ctx.fillText('?', x + CARD_W / 2, cardY + CARD_H / 2);
+                    }
+
+                    // Badge cantidad
+                    const bx = x + CARD_W - BADGE_R + 4 * SCALE;
+                    const by = cardY + BADGE_R - 4 * SCALE;
+                    ctx.fillStyle = 'rgba(220,0,0,0.92)';
+                    ctx.beginPath();
+                    ctx.arc(bx, by, BADGE_R, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font      = `bold ${10 * SCALE}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`x${item.qty}`, bx, by + 4 * SCALE);
+
+                    // Nombre
+                    const nameY = cardY + CARD_H + 4 * SCALE;
+                    ctx.fillStyle = '#222222';
+                    ctx.font      = `${8 * SCALE}px Arial`;
+                    ctx.textAlign = 'center';
+                    // Truncar nombre si es muy largo
+                    let name = item.data?.name || '';
+                    const maxW = CARD_W - 4;
+                    if (ctx.measureText(name).width > maxW) {
+                        while (name.length > 1 && ctx.measureText(name + '…').width > maxW) name = name.slice(0, -1);
+                        name += '…';
+                    }
+                    ctx.fillText(name, x + CARD_W / 2, nameY + 10 * SCALE);
+                });
+
+                const rows = Math.ceil(cards.length / COLS);
+                y += rows * (CARD_H + NAME_H + GAP_Y) + SECTION_GAP;
+            };
+
+            drawSection(mainCards,  `MAIN DECK (${mainCards.reduce((s,c)=>s+c.qty,0)})`,  '#3498db');
+            drawSection(extraCards, `EXTRA DECK (${extraCards.reduce((s,c)=>s+c.qty,0)})`, '#9b59b6');
+            if (sideCards.length)
+                drawSection(sideCards, `SIDE DECK (${sideCards.reduce((s,c)=>s+c.qty,0)})`, '#7f8c8d');
+
+            // ── Roles ──
+            if (roleEntries.length) {
+                ctx.fillStyle = '#2c3e50';
+                ctx.font      = `bold ${18 * SCALE}px Arial`;
+                ctx.textAlign = 'left';
+                ctx.fillText('ROLES', PAD, y + 22 * SCALE);
+                ctx.strokeStyle = '#e74c3c';
+                ctx.lineWidth   = 3 * SCALE;
+                ctx.beginPath();
+                ctx.moveTo(PAD, y + 30 * SCALE);
+                ctx.lineTo(CANVAS_W - PAD, y + 30 * SCALE);
+                ctx.stroke();
+                y += SECTION_H + 6 * SCALE;
+
+                const PILL_H   = 22 * SCALE;
+                const PILL_PAD = 12 * SCALE;
+                const PILL_GAP = 8 * SCALE;
+                let rx = PAD;
+                let ry = y;
+
+                ctx.font = `bold ${9 * SCALE}px Arial`;
+                roleEntries.forEach(([role, count]) => {
+                    const label = `${role}: ${count}`;
+                    const tw    = ctx.measureText(label).width;
+                    const pw    = tw + PILL_PAD * 2;
+
+                    if (rx + pw > CANVAS_W - PAD) { rx = PAD; ry += PILL_H + PILL_GAP; }
+
+                    // Píldora
+                    ctx.fillStyle = '#3498db';
+                    const radius  = PILL_H / 2;
+                    ctx.beginPath();
+                    ctx.moveTo(rx + radius, ry);
+                    ctx.lineTo(rx + pw - radius, ry);
+                    ctx.arcTo(rx + pw, ry, rx + pw, ry + PILL_H, radius);
+                    ctx.lineTo(rx + pw, ry + PILL_H - radius);
+                    ctx.arcTo(rx + pw, ry + PILL_H, rx + pw - radius, ry + PILL_H, radius);
+                    ctx.lineTo(rx + radius, ry + PILL_H);
+                    ctx.arcTo(rx, ry + PILL_H, rx, ry + PILL_H - radius, radius);
+                    ctx.lineTo(rx, ry + radius);
+                    ctx.arcTo(rx, ry, rx + radius, ry, radius);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(label, rx + PILL_PAD, ry + PILL_H / 2 + 3 * SCALE);
+
+                    rx += pw + PILL_GAP;
                 });
             }
 
-            const loadingMsg = document.createElement('div');
-            loadingMsg.id = 'decklist-loading';
-            loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;min-width:260px;';
-            const setMsg = t => loadingMsg.innerHTML = `<p style="text-align:center;padding:20px;background:#333;color:white;border-radius:8px;">${t}</p>`;
-            setMsg('⏳ Cargando imágenes...');
-            document.body.appendChild(loadingMsg);
-
-            // Pre-convertir todas las imágenes a base64 para evitar CORS con html2canvas
-            const imgMap = {};
-            await Promise.all(Object.values(this.cards).map(async item => {
-                const url = item.data?.card_images?.[0]?.image_url_small;
-                if (!url || imgMap[url]) return;
-                try {
-                    const blob = await fetch(url).then(r => r.blob());
-                    imgMap[url] = await new Promise(res => {
-                        const reader = new FileReader();
-                        reader.onload = () => res(reader.result);
-                        reader.readAsDataURL(blob);
-                    });
-                } catch(e) { imgMap[url] = url; }
-            }));
-
-            setMsg('⏳ Generando imagen...');
-
-            const tempContainer = document.createElement('div');
-            tempContainer.id = 'temp-decklist-container';
-            tempContainer.innerHTML = this.generateDecklistHTML(imgMap);
-            tempContainer.style.cssText = 'position:absolute;left:-9999px;top:0;background:white;padding:20px;';
-            document.body.appendChild(tempContainer);
-
-            await new Promise(resolve => setTimeout(resolve, 400));
-
-            const canvas = await html2canvas(tempContainer, {
-                backgroundColor: '#ffffff',
-                scale: 2,
-                logging: false,
-                useCORS: false,
-                allowTaint: false
-            });
-
-            canvas.toBlob(blob => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${this.name.replace(/[^a-z0-9]/gi, '_')}_decklist.png`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                tempContainer.remove();
-                loadingMsg.remove();
-            });
+            // ── Descargar ──
+            try {
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a   = document.createElement('a');
+                    a.href     = url;
+                    a.download = `${this.name.replace(/[^a-z0-9]/gi, '_')}_decklist.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    loadingMsg.remove();
+                });
+            } catch(e) {
+                // Canvas taintado: descargar sin imágenes con placeholder visible
+                console.warn('Canvas taintado, descargando sin imágenes:', e);
+                Object.keys(imgCache).forEach(k => { imgCache[k] = null; });
+                // Re-dibujar con placeholders
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                y = PAD;
+                ctx.fillStyle = '#222222';
+                ctx.font = `bold ${28 * SCALE}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText(this.name, CANVAS_W / 2, y + 40 * SCALE);
+                y += TITLE_H;
+                drawSection(mainCards,  `MAIN DECK (${mainCards.reduce((s,c)=>s+c.qty,0)})`,  '#3498db');
+                drawSection(extraCards, `EXTRA DECK (${extraCards.reduce((s,c)=>s+c.qty,0)})`, '#9b59b6');
+                if (sideCards.length) drawSection(sideCards, `SIDE DECK (${sideCards.reduce((s,c)=>s+c.qty,0)})`, '#7f8c8d');
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a   = document.createElement('a');
+                    a.href     = url;
+                    a.download = `${this.name.replace(/[^a-z0-9]/gi, '_')}_decklist.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    loadingMsg.remove();
+                });
+            }
 
         } catch (error) {
-            console.error('Error generando decklist:', error);
-            alert('❌ Error al generar el decklist. Verifica la consola.');
-            document.getElementById('decklist-loading')?.remove();
-            document.getElementById('temp-decklist-container')?.remove();
+            console.error('=== ERROR DECKLIST ===', error);
+            console.error('Tipo:', error.constructor.name);
+            console.error('Mensaje:', error.message);
+            console.error('Stack:', error.stack);
+            alert('❌ Error: ' + error.message + '\n\nRevisa la consola (F12).');
+            loadingMsg.remove();
         }
     },
 
-    generateDecklistHTML: function(imgMap = {}) {
+    generateDecklistHTML: function() {
         const mainCards = Object.entries(this.cards).filter(([_, c]) => c.location === 'main');
         const extraCards = Object.entries(this.cards).filter(([_, c]) => c.location === 'extra');
         const sideCards = Object.entries(this.cards).filter(([_, c]) => c.location === 'side');
@@ -1694,7 +1896,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-bottom: 30px;">
             `;
             mainCards.forEach(([_, item]) => {
-                html += this.generateCardHTML(item, imgMap);
+                html += this.generateCardHTML(item);
             });
             html += '</div>';
         }
@@ -1708,7 +1910,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-bottom: 30px;">
             `;
             extraCards.forEach(([_, item]) => {
-                html += this.generateCardHTML(item, imgMap);
+                html += this.generateCardHTML(item);
             });
             html += '</div>';
         }
@@ -1722,7 +1924,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-bottom: 30px;">
             `;
             sideCards.forEach(([_, item]) => {
-                html += this.generateCardHTML(item, imgMap);
+                html += this.generateCardHTML(item);
             });
             html += '</div>';
         }
@@ -1750,14 +1952,13 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         return html;
     },
 
-    generateCardHTML: function(item, imgMap = {}) {
+    generateCardHTML: function(item) {
         const card = item.data;
-        const rawUrl = card.card_images[0].image_url_small;
-        const imgUrl = imgMap[rawUrl] || rawUrl;
+        const imgUrl = card.card_images[0].image_url_small;
         
         return `
             <div style="text-align: center; position: relative;">
-                <img src="${imgUrl}" 
+                <img src="${imgUrl}" crossorigin="anonymous"
                      style="width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
                 <div style="font-size: 11px; margin-top: 5px; font-weight: bold; color: #333;">
                     ${card.name}
