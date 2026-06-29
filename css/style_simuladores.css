@@ -5847,3 +5847,169 @@
 .analysis-g1g2-val   { font-weight: 700; font-size: 0.95rem; min-width: 36px; text-align: right; }
 .analysis-g1g2-detail{ font-size: 0.78rem; opacity: 0.7; }
 .analysis-g1g2-profile { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 0.82rem; }
+
+/* ── WINRATE: Fix selectores texto blanco sobre fondo claro ── */
+.wr-round-select,
+.wr-round-input {
+    background: rgba(0, 10, 30, 0.75);
+    color: var(--text-light);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.82rem;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+}
+.wr-round-select:focus,
+.wr-round-input:focus {
+    border-color: var(--gold-color);
+}
+.wr-round-select option {
+    background: #001220;
+    color: var(--text-light);
+}
+
+/* ── WINRATE: Fix global para cualquier select en zona Simuladores ── */
+#simuladores-content select {
+    background: rgba(0, 10, 30, 0.8);
+    color: var(--text-light);
+}
+#simuladores-content select option {
+    background: #001220;
+    color: var(--text-light);
+}
+
+/* ── WINRATE: Nueva Ronda de Duelo ── */
+.wr-divider {
+    border: none;
+    border-top: 1px solid rgba(255, 215, 0, 0.12);
+    margin: 18px 0 14px;
+}
+.wr-round-form {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 215, 0, 0.12);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+.wr-round-form-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--gold-color);
+    margin-bottom: 12px;
+    letter-spacing: 0.02em;
+}
+.wr-round-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.wr-round-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.wr-round-label {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.55);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.wr-add-round-btn {
+    background: rgba(255, 215, 0, 0.12);
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    color: var(--gold-color);
+    border-radius: 7px;
+    padding: 7px 18px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+    width: 100%;
+}
+.wr-add-round-btn:hover { background: rgba(255, 215, 0, 0.22); }
+
+/* ── WINRATE: Historial de rondas ── */
+.wr-rounds-section-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 6px 0 10px;
+}
+.wr-rounds-empty {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.3);
+    text-align: center;
+    padding: 14px 0;
+}
+.wr-rounds-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.wr-round-item {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border-left: 3px solid transparent;
+    padding: 9px 12px;
+}
+.wr-round-win  { border-left-color: #00b894; }
+.wr-round-loss { border-left-color: #d63031; }
+.wr-round-item-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 5px;
+}
+.wr-round-num {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: rgba(255, 215, 0, 0.75);
+    min-width: 26px;
+}
+.wr-round-going-badge {
+    font-size: 0.7rem;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.65);
+    font-weight: 600;
+}
+.wr-round-result-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+.wr-badge-win  { background: rgba(0, 184, 148, 0.15); color: #00b894; }
+.wr-badge-loss { background: rgba(214, 48, 49, 0.15); color: #d63031; }
+.wr-round-del-btn {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 2px 5px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+}
+.wr-round-del-btn:hover { color: #d63031; background: rgba(214, 48, 49, 0.12); }
+.wr-round-item-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.wr-round-item-stats span {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 8px;
+    border-radius: 10px;
+}

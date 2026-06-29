@@ -57,77 +57,80 @@ const Winrate = {
     // ── Render ────────────────────────────────────────────────────
 
     renderSection: function () {
-        // ── Leer desde storage independiente (no ligado a deck) ──
-        const r = this._getStandaloneRecord();
+    const r = this._getStandaloneRecord();
 
-        const wr1   = this.calcWinrate(r.wins1st,   r.losses1st);
-        const wr2   = this.calcWinrate(r.wins2nd,   r.losses2nd);
-        const wrAll = this.calcWinrate(r.wins1st + r.wins2nd, r.losses1st + r.losses2nd);
-        const totalDuels = r.wins1st + r.losses1st + r.wins2nd + r.losses2nd;
+    const wr1   = this.calcWinrate(r.wins1st,   r.losses1st);
+    const wr2   = this.calcWinrate(r.wins2nd,   r.losses2nd);
+    const wrAll = this.calcWinrate(r.wins1st + r.wins2nd, r.losses1st + r.losses2nd);
+    const totalDuels = r.wins1st + r.losses1st + r.wins2nd + r.losses2nd;
 
-        const wrColor = (pct) => {
-            if (pct === null) return 'rgba(255,255,255,0.3)';
-            if (pct >= 60)   return '#00b894';
-            if (pct >= 45)   return '#fdcb6e';
-            return '#d63031';
-        };
+    const wrColor = (pct) => {
+        if (pct === null) return 'rgba(255,255,255,0.3)';
+        if (pct >= 60)   return '#00b894';
+        if (pct >= 45)   return '#fdcb6e';
+        return '#d63031';
+    };
 
-        const counterHTML = (going, label) => {
-            const wins   = r[`wins${going}`];
-            const losses = r[`losses${going}`];
-            const wr     = this.calcWinrate(wins, losses);
-            const pct    = wr !== null ? `${wr}%` : '—';
-            return `
-                <div class="wr-half">
-                    <div class="wr-going-label">${label}</div>
-                    <div class="wr-score-row">
-                        <div class="wr-counter-block">
-                            <div class="wr-counter-btns">
-                                <button class="wr-btn wr-btn-up"
-                                    onclick="Winrate.changeStandalone('${going}','wins',1)">＋</button>
-                                <div class="wr-number" style="color:#00b894">${wins}</div>
-                                <button class="wr-btn wr-btn-down"
-                                    onclick="Winrate.changeStandalone('${going}','wins',-1)">－</button>
-                            </div>
-                            <div class="wr-counter-label">Victorias</div>
-                        </div>
-                        <div class="wr-separator">—</div>
-                        <div class="wr-counter-block">
-                            <div class="wr-counter-btns">
-                                <button class="wr-btn wr-btn-up"
-                                    onclick="Winrate.changeStandalone('${going}','losses',1)">＋</button>
-                                <div class="wr-number" style="color:#d63031">${losses}</div>
-                                <button class="wr-btn wr-btn-down"
-                                    onclick="Winrate.changeStandalone('${going}','losses',-1)">－</button>
-                            </div>
-                            <div class="wr-counter-label">Derrotas</div>
-                        </div>
-                    </div>
-                    <div class="wr-sub-pct" style="color:${wrColor(wr)}">
-                        ${pct}
-                        ${wr !== null ? `<span class="wr-sub-duels">${wins + losses} duelos</span>` : ''}
-                    </div>
-                </div>`;
-        };
-
+    const counterHTML = (going, label) => {
+        const wins   = r[`wins${going}`];
+        const losses = r[`losses${going}`];
+        const wr     = this.calcWinrate(wins, losses);
+        const pct    = wr !== null ? `${wr}%` : '—';
         return `
-            <div class="wr-halves">
-                ${counterHTML('1st', 'Going 1st')}
-                ${counterHTML('2nd', 'Going 2nd')}
-            </div>
-            <div class="wr-general">
-                <div class="wr-general-label">Winrate General</div>
-                <div class="wr-general-pct" style="color:${wrColor(wrAll)}">
-                    ${wrAll !== null ? wrAll + '%' : '—'}
+            <div class="wr-half">
+                <div class="wr-going-label">${label}</div>
+                <div class="wr-score-row">
+                    <div class="wr-counter-block">
+                        <div class="wr-counter-btns">
+                            <button class="wr-btn wr-btn-up"
+                                onclick="Winrate.changeStandalone('${going}','wins',1)">＋</button>
+                            <div class="wr-number" style="color:#00b894">${wins}</div>
+                            <button class="wr-btn wr-btn-down"
+                                onclick="Winrate.changeStandalone('${going}','wins',-1)">－</button>
+                        </div>
+                        <div class="wr-counter-label">Victorias</div>
+                    </div>
+                    <div class="wr-separator">—</div>
+                    <div class="wr-counter-block">
+                        <div class="wr-counter-btns">
+                            <button class="wr-btn wr-btn-up"
+                                onclick="Winrate.changeStandalone('${going}','losses',1)">＋</button>
+                            <div class="wr-number" style="color:#d63031">${losses}</div>
+                            <button class="wr-btn wr-btn-down"
+                                onclick="Winrate.changeStandalone('${going}','losses',-1)">－</button>
+                        </div>
+                        <div class="wr-counter-label">Derrotas</div>
+                    </div>
                 </div>
-                <div class="wr-general-duels">
-                    ${totalDuels > 0
-                        ? `${r.wins1st + r.wins2nd}V · ${r.losses1st + r.losses2nd}D · ${totalDuels} duelos totales`
-                        : 'Sin duelos registrados aún.'}
+                <div class="wr-sub-pct" style="color:${wrColor(wr)}">
+                    ${pct}
+                    ${wr !== null ? `<span class="wr-sub-duels">${wins + losses} duelos</span>` : ''}
                 </div>
+            </div>`;
+    };
+
+    return `
+        <div class="wr-halves">
+            ${counterHTML('1st', 'Going 1st')}
+            ${counterHTML('2nd', 'Going 2nd')}
+        </div>
+        <div class="wr-general">
+            <div class="wr-general-label">Winrate General</div>
+            <div class="wr-general-pct" style="color:${wrColor(wrAll)}">
+                ${wrAll !== null ? wrAll + '%' : '—'}
             </div>
-            <button class="wr-reset-btn" onclick="Winrate.resetStandalone()">↺ Reiniciar contadores</button>`;
-    },
+            <div class="wr-general-duels">
+                ${totalDuels > 0
+                    ? `${r.wins1st + r.wins2nd}V · ${r.losses1st + r.losses2nd}D · ${totalDuels} duelos totales`
+                    : 'Sin duelos registrados aún.'}
+            </div>
+        </div>
+        <button class="wr-reset-btn" onclick="Winrate.resetStandalone()">↺ Reiniciar contadores</button>
+        <hr class="wr-divider">
+        ${this._renderRoundsForm()}
+        <div class="wr-rounds-section-title">📋 Historial de Rondas de Duelo</div>
+        ${this._renderRoundsHistory(r.rounds)}`;
+},
 
     refreshSection: function () {
         const el = document.getElementById('winrate-sec');
@@ -136,14 +139,13 @@ const Winrate = {
     STANDALONE_KEY: 'pz_winrate_standalone',
 
     _getStandaloneRecord: function () {
-        try {
-            return JSON.parse(localStorage.getItem(this.STANDALONE_KEY)) || {
-                wins1st: 0, losses1st: 0, wins2nd: 0, losses2nd: 0
-            };
-        } catch (_) {
-            return { wins1st: 0, losses1st: 0, wins2nd: 0, losses2nd: 0 };
-        }
-    },
+    try {
+        const base = { wins1st: 0, losses1st: 0, wins2nd: 0, losses2nd: 0, rounds: [] };
+        return Object.assign({}, base, JSON.parse(localStorage.getItem(this.STANDALONE_KEY)) || {});
+    } catch (_) {
+        return { wins1st: 0, losses1st: 0, wins2nd: 0, losses2nd: 0, rounds: [] };
+    }
+},
 
     _saveStandaloneRecord: function (r) {
         localStorage.setItem(this.STANDALONE_KEY, JSON.stringify(r));
@@ -158,8 +160,127 @@ const Winrate = {
     },
 
     resetStandalone: function () {
-        this._saveStandaloneRecord({ wins1st: 0, losses1st: 0, wins2nd: 0, losses2nd: 0 });
+    this._saveStandaloneRecord({ wins1st: 0, losses1st: 0, wins2nd: 0, losses2nd: 0, rounds: [] });
+    this.refreshSection();
+},
+// ── Rondas de Duelo ─────────────────────────────────────
+    addRound: function () {
+        const r     = this._getStandaloneRecord();
+        const going = document.getElementById('wr-round-going')?.value || '1st';
+        const result= document.getElementById('wr-round-result')?.value || 'win';
+        const turns = parseInt(document.getElementById('wr-round-turns')?.value) || 0;
+        const winTurn = parseInt(document.getElementById('wr-round-winturn')?.value) || 0;
+        const fieldBreaks  = parseInt(document.getElementById('wr-round-fieldbreaks')?.value) || 0;
+        const interrupts   = parseInt(document.getElementById('wr-round-interrupts')?.value) || 0;
+
+        if (!r.rounds) r.rounds = [];
+        r.rounds.push({
+            num:          r.rounds.length + 1,
+            going,
+            result,
+            turns:        Math.max(0, turns),
+            winTurn:      Math.max(0, winTurn),
+            fieldBreaks:  Math.max(0, fieldBreaks),
+            interrupts:   Math.max(0, interrupts),
+            ts:           Date.now()
+        });
+
+        // Actualizar contadores globales
+        const key = result === 'win' ? 'wins' : 'losses';
+        r[key + going] = (r[key + going] || 0) + 1;
+
+        this._saveStandaloneRecord(r);
         this.refreshSection();
+    },
+
+    deleteRound: function (idx) {
+        const r = this._getStandaloneRecord();
+        if (!r.rounds || !r.rounds[idx]) return;
+        const round = r.rounds[idx];
+
+        // Revertir contador global
+        const key = round.result === 'win' ? 'wins' : 'losses';
+        r[key + round.going] = Math.max(0, (r[key + round.going] || 1) - 1);
+
+        r.rounds.splice(idx, 1);
+        // Renumerar
+        r.rounds.forEach((rd, i) => { rd.num = i + 1; });
+
+        this._saveStandaloneRecord(r);
+        this.refreshSection();
+    },
+
+    _renderRoundsForm: function () {
+        return `
+        <div class="wr-round-form">
+            <div class="wr-round-form-title">＋ Nueva Ronda de Duelo</div>
+            <div class="wr-round-fields">
+                <div class="wr-round-field">
+                    <label class="wr-round-label">Turno</label>
+                    <select id="wr-round-going" class="wr-round-select">
+                        <option value="1st">Going 1st</option>
+                        <option value="2nd">Going 2nd</option>
+                    </select>
+                </div>
+                <div class="wr-round-field">
+                    <label class="wr-round-label">Resultado</label>
+                    <select id="wr-round-result" class="wr-round-select">
+                        <option value="win">Victoria</option>
+                        <option value="loss">Derrota</option>
+                    </select>
+                </div>
+                <div class="wr-round-field">
+                    <label class="wr-round-label">Turnos totales del duelo</label>
+                    <input type="number" id="wr-round-turns" class="wr-round-input"
+                           min="1" max="30" placeholder="Ej: 5">
+                </div>
+                <div class="wr-round-field">
+                    <label class="wr-round-label">Turno en que se ganó</label>
+                    <input type="number" id="wr-round-winturn" class="wr-round-input"
+                           min="1" max="30" placeholder="Ej: 3">
+                </div>
+                <div class="wr-round-field">
+                    <label class="wr-round-label">⚔️ Veces que rompí campo</label>
+                    <input type="number" id="wr-round-fieldbreaks" class="wr-round-input"
+                           min="0" max="20" placeholder="0">
+                </div>
+                <div class="wr-round-field">
+                    <label class="wr-round-label">🛡️ Interrupciones exitosas</label>
+                    <input type="number" id="wr-round-interrupts" class="wr-round-input"
+                           min="0" max="20" placeholder="0">
+                </div>
+            </div>
+            <button class="wr-add-round-btn" onclick="Winrate.addRound()">＋ Registrar Ronda</button>
+        </div>`;
+    },
+
+    _renderRoundsHistory: function (rounds) {
+        if (!rounds || !rounds.length) return `<p class="wr-rounds-empty">Sin rondas registradas aún.</p>`;
+        const goingLabel = { '1st': '1ro', '2nd': '2do' };
+        return `
+        <div class="wr-rounds-list">
+            ${rounds.slice().reverse().map((rd, revIdx) => {
+                const origIdx = rounds.length - 1 - revIdx;
+                const isWin   = rd.result === 'win';
+                return `
+                <div class="wr-round-item ${isWin ? 'wr-round-win' : 'wr-round-loss'}">
+                    <div class="wr-round-item-head">
+                        <span class="wr-round-num">R${rd.num}</span>
+                        <span class="wr-round-going-badge">${goingLabel[rd.going] || rd.going}</span>
+                        <span class="wr-round-result-badge ${isWin ? 'wr-badge-win' : 'wr-badge-loss'}">
+                            ${isWin ? '✅ Victoria' : '❌ Derrota'}
+                        </span>
+                        <button class="wr-round-del-btn" onclick="Winrate.deleteRound(${origIdx})" title="Eliminar">✕</button>
+                    </div>
+                    <div class="wr-round-item-stats">
+                        ${rd.turns    ? `<span>⏱ ${rd.turns} turnos</span>` : ''}
+                        ${rd.winTurn  ? `<span>🏁 Ganó T${rd.winTurn}</span>` : ''}
+                        ${rd.fieldBreaks !== undefined ? `<span>⚔️ Campo: ${rd.fieldBreaks}x</span>` : ''}
+                        ${rd.interrupts  !== undefined ? `<span>🛡️ Interrup: ${rd.interrupts}x</span>` : ''}
+                    </div>
+                </div>`;
+            }).join('')}
+        </div>`;
     },
 };
 

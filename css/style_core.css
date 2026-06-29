@@ -29,7 +29,11 @@
     --transition-normal: 0.3s ease;
     --transition-slow: 0.5s ease;
 }
-
+/* ── Global: opciones de selects legibles en tema oscuro ── */
+select option {
+    background: #1a0008;
+    color: var(--text-light);
+}
 
 * {
     margin: 0;

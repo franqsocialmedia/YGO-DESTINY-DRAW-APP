@@ -1384,88 +1384,208 @@ this.container.innerHTML = html;
 
     getOptimizacion: function() {
         try {
-            return JSON.parse(localStorage.getItem(`optimization_${this.name}`)) || { records: [] };
-        } catch(e) { return { records: [] }; }
+            const raw = JSON.parse(localStorage.getItem(`optimization_${this.name}`));
+            if (!raw) return { sessions: [] };
+            // Migración: formato viejo con records[] → convertir a sesión única
+            if (raw.records && !raw.sessions) {
+                const migrated = { sessions: [] };
+                if (raw.records.length) {
+                    // Cada record viejo se convierte en sesión con rondas sintéticas
+                    raw.records.forEach(rec => {
+                        const rounds = [];
+                        const total = rec.partidas || 0;
+                        for (let i = 0; i < total; i++) {
+                            const isWin = i < (rec.victorias || 0);
+                            rounds.push({
+                                id: rec.id + i,
+                                orden: 'primero',
+                                resultado: isWin ? 'victoria' : 'derrota',
+                                tipoVictoria: isWin ? 'normal' : null,
+                                tipoDerrota: !isWin ? 'normal' : null,
+                                presionTiempo: 'holgado',
+                                comboCompleto: i < (rec.combosCompletos || 0),
+                                brick: i < (rec.brickeadas || 0),
+                                starter: (rec.vecesStarter || 0) > i ? 1 : 0,
+                                extenders: (rec.vecesExtenders || 0) > i ? 1 : 0,
+                                handtraps: (rec.demasiasHandtraps || 0) > i ? 3 : 1,
+                                rompioBoard: i < (rec.vecesRompioBoard || 0),
+                                negoJugada: i < (rec.vecesNegoJugada || 0),
+                                rivalRompio: i < (rec.vecesRivalRompio || 0),
+                                notas: ''
+                            });
+                        }
+                        migrated.sessions.unshift({ id: rec.id, date: rec.date, label: rec.label || '', rounds });
+                    });
+                }
+                return migrated;
+            }
+            return raw;
+        } catch(e) { return { sessions: [] }; }
     },
 
-    saveOptimizacionRecord: function(record) {
+    saveOptimizacionSession: function(session) {
         const data = this.getOptimizacion();
-        data.records.unshift(record);
+        if (!data.sessions) data.sessions = [];
+        data.sessions.unshift(session);
         localStorage.setItem(`optimization_${this.name}`, JSON.stringify(data));
     },
 
     deleteOptimizacionRecord: function(id) {
         const data = this.getOptimizacion();
-        data.records = data.records.filter(r => r.id !== id);
+        data.sessions = (data.sessions || []).filter(s => s.id !== id);
         localStorage.setItem(`optimization_${this.name}`, JSON.stringify(data));
         const pane = document.getElementById('mideck-optimizacion-pane');
         if (pane) pane.innerHTML = this.renderOptimizacionPane();
     },
 
-    calcOptMetrics: function(r) {
-        const p = Math.max(r.partidas || 1, 1);
-        const wr   = Math.round((r.victorias        / p) * 100);
-        const br   = Math.round((r.brickeadas       / p) * 100);
-        const str  = Math.round((r.vecesStarter     / p) * 100);
-        const cr   = Math.round((r.combosCompletos  / p) * 100);
-        const bb   = Math.round((r.vecesRompioBoard / p) * 100);
-        const ctrl = Math.round((r.vecesNegoJugada  / p) * 100);
-        const ht   = Math.round((r.demasiasHandtraps/ p) * 100);
+    deleteOptimizacionRound: function(sessionId, roundId) {
+        const data = this.getOptimizacion();
+        const sess = (data.sessions || []).find(s => s.id === sessionId);
+        if (!sess) return;
+        sess.rounds = sess.rounds.filter(r => r.id !== roundId);
+        localStorage.setItem(`optimization_${this.name}`, JSON.stringify(data));
+        const pane = document.getElementById('mideck-optimizacion-pane');
+        if (pane) pane.innerHTML = this.renderOptimizacionPane();
+    },
+
+    calcOptMetrics: function(session) {
+        const rounds = session.rounds || [];
+        const p = Math.max(rounds.length, 1);
+        const wins        = rounds.filter(r => r.resultado === 'victoria').length;
+        const losses      = rounds.filter(r => r.resultado === 'derrota').length;
+        const bricks      = rounds.filter(r => r.brick).length;
+        const starters    = rounds.filter(r => (r.starter || 0) >= 1).length;
+        const extenders   = rounds.filter(r => (r.extenders || 0) >= 1).length;
+        const combos      = rounds.filter(r => r.comboCompleto).length;
+        const boardBreaks = rounds.filter(r => r.rompioBoard).length;
+        const negates     = rounds.filter(r => r.negoJugada).length;
+        const ftks        = rounds.filter(r => r.tipoVictoria === 'ftk').length;
+        const rendiciones = rounds.filter(r => r.tipoVictoria === 'rendicion').length;
+        const tiempoGan   = rounds.filter(r => r.tipoVictoria === 'tiempo').length;
+        const tiempoPer   = rounds.filter(r => r.tipoDerrota  === 'tiempo').length;
+        const criticos    = rounds.filter(r => r.presionTiempo === 'critico').length;
+        const ajustados   = rounds.filter(r => r.presionTiempo === 'ajustado').length;
+        const rFirst      = rounds.filter(r => r.orden === 'primero');
+        const rSecond     = rounds.filter(r => r.orden === 'segundo');
+        const avgStarter  = rounds.reduce((a, r) => a + (r.starter   || 0), 0) / p;
+        const avgExtender = rounds.reduce((a, r) => a + (r.extenders || 0), 0) / p;
+        const avgHandtrap = rounds.reduce((a, r) => a + (r.handtraps || 0), 0) / p;
+        const htExceso    = rounds.filter(r => (r.handtraps || 0) >= 3).length;
+
+        const wr   = Math.round((wins        / p) * 100);
+        const br   = Math.round((bricks      / p) * 100);
+        const str  = Math.round((starters    / p) * 100);
+        const extr = Math.round((extenders   / p) * 100);
+        const cr   = Math.round((combos      / p) * 100);
+        const bb   = Math.round((boardBreaks / p) * 100);
+        const ctrl = Math.round((negates     / p) * 100);
+        const htRate = Math.round((htExceso  / p) * 100);
         const score = Math.min(100, Math.round(
             (wr * 0.35) + ((100 - br) * 0.20) + (str * 0.15) + (cr * 0.15) + (bb * 0.10) + (ctrl * 0.05)
         ));
-        return { wr, br, str, cr, bb, ctrl, ht, score };
+        return {
+            p, wins, losses, wr, br, str, extr, cr, bb, ctrl, htRate, score,
+            ftks, rendiciones, tiempoGan, tiempoPer, criticos, ajustados,
+            rFirst, rSecond, avgStarter, avgExtender, avgHandtrap
+        };
     },
 
     getOptDiagnostics: function(m) {
         const w = [];
-        if (m.wr  < 40)  w.push('⚠ Win rate muy bajo. Revisa el motor principal del deck.');
-        if (m.br  > 20)  w.push('⚠ Alto nivel de bricks. Reduce cartas situacionales y añade más starters.');
-        if (m.str < 60)  w.push('⚠ Abre starter con poca frecuencia. Añade más cartas que inicien el combo.');
-        if (m.str > 85)  w.push('⚠ Exceso de starters. Considera reducir 1-2 para añadir extenders o handtraps.');
-        if (m.cr  < 40)  w.push('⚠ El motor completa pocos combos. Revisa los ratios del motor.');
-        if (m.bb  < 30)  w.push('⚠ Capacidad Going Second débil. Considera más outs y rompedores de campo.');
-        if (m.ht  > 30)  w.push('⚠ Demasiadas handtraps en mano inicial. Reduce 1-3 para mejorar consistencia.');
+        if (m.wr   < 40) w.push('⚠ Win rate bajo. Revisa el motor principal del deck.');
+        if (m.br   > 20) w.push('⚠ Alto nivel de bricks. Reduce situacionales y añade más starters.');
+        if (m.str  < 60) w.push('⚠ Abre starter con poca frecuencia. Añade más cartas que inicien el combo.');
+        if (m.str  > 85) w.push('⚠ Exceso de starters. Considera reducir 1-2 para añadir extenders o handtraps.');
+        if (m.extr < 30 && m.p >= 5) w.push('⚠ Pocos extenders en mano. El combo se corta fácil ante disrupciones.');
+        if (m.cr   < 40) w.push('⚠ El motor completa pocos combos. Revisa los ratios del motor.');
+        if (m.bb   < 30) w.push('⚠ Going Second débil. Considera más outs y rompedores de campo.');
+        if (m.htRate > 35) w.push('⚠ Exceso de handtraps en mano (3+) frecuente. Reduce 1-2 para mejorar consistencia.');
+        if (m.avgHandtrap < 0.5 && m.p >= 5) w.push('⚠ Casi sin handtraps en mano. Considera sumar 3-6 handtraps al main deck.');
+        if (m.ftks > 0) w.push(`ℹ ${m.ftks} FTK${m.ftks > 1 ? 's' : ''} registrado${m.ftks > 1 ? 's' : ''}. Vigilar restricciones de banlist.`);
+        if (m.tiempoPer > 0) w.push(`⚠ ${m.tiempoPer} derrota${m.tiempoPer > 1 ? 's' : ''} por tiempo. Trabaja la velocidad de tus secuencias.`);
+        if (m.criticos > 0) w.push(`⚠ ${m.criticos} ronda${m.criticos > 1 ? 's' : ''} con tiempo crítico. El deck puede ser lento para torneo.`);
+        if (m.rSecond.length > 0 && m.bb < 30) w.push('⚠ Juegas de segundo frecuentemente pero el Board Break es bajo. Añade más rompedores.');
         return w;
     },
 
-    addOptimizacionSession: function() {
+    addOptimizacionRound: function() {
         if (!Object.keys(this.cards).length) { alert('Carga un deck primero.'); return; }
-        const n = id => parseInt(document.getElementById(id)?.value) || 0;
-        const record = {
-            id:                Date.now(),
-            date:              new Date().toLocaleDateString('es-ES'),
-            label:             document.getElementById('opt-label')?.value.trim() || '',
-            partidas:          n('opt-partidas'),
-            victorias:         n('opt-victorias'),
-            derrotas:          n('opt-derrotas'),
-            brickeadas:        n('opt-brickeadas'),
-            jugables:          n('opt-jugables'),
-            combosCompletos:   n('opt-combos'),
-            vecesStarter:      n('opt-starter'),
-            vecesExtenders:    n('opt-extenders'),
-            demasiasHandtraps: n('opt-handtraps'),
-            vecesRompioBoard:  n('opt-board-break'),
-            vecesNegoJugada:   n('opt-negate'),
-            vecesRivalRompio:  n('opt-rival-broke'),
-            turnosPromedio:    parseFloat(document.getElementById('opt-turnos')?.value) || 0,
-            ganoT2:            n('opt-t2'),
-            ganoT3:            n('opt-t3'),
+        const v  = id => document.getElementById(id)?.value ?? '';
+        const n  = id => parseInt(document.getElementById(id)?.value) || 0;
+        const ck = id => document.getElementById(id)?.checked || false;
+
+        const resultado = v('opt-r-resultado');
+        const orden     = v('opt-r-orden');
+        if (!resultado) { alert('Selecciona Victoria o Derrota.'); return; }
+        if (!orden)     { alert('Selecciona si fuiste Primero o Segundo.'); return; }
+
+        const round = {
+            id:            Date.now(),
+            orden,
+            resultado,
+            tipoVictoria:  resultado === 'victoria' ? (v('opt-r-tipo-vic') || 'normal') : null,
+            tipoDerrota:   resultado === 'derrota'  ? (v('opt-r-tipo-der') || 'normal') : null,
+            presionTiempo: v('opt-r-tiempo') || 'holgado',
+            comboCompleto: ck('opt-r-combo'),
+            brick:         ck('opt-r-brick'),
+            starter:       n('opt-r-starter'),
+            extenders:     n('opt-r-extenders'),
+            handtraps:     n('opt-r-handtraps'),rompioBoard:      n('opt-r-board') > 0,
+vecesRompioBoard: n('opt-r-board'),
+negoJugada:       n('opt-r-negate') > 0,
+interrupciones:   n('opt-r-negate'),
+turnoVictoria:    resultado === 'victoria' ? (n('opt-r-turnovic') || null) : null,
+rivalRompio:      ck('opt-r-rival'),
+notas:            v('opt-r-notas').trim()
         };
-        if (record.partidas === 0) { alert('Ingresa al menos el número de partidas jugadas.'); return; }
-        const editingId = this._editingOptId;
-        if (editingId) {
-            const data = this.getOptimizacion();
-            const idx = data.records.findIndex(r => r.id === editingId);
-            if (idx !== -1) { record.id = editingId; record.date = data.records[idx].date; data.records[idx] = record; }
-            localStorage.setItem(`optimization_${this.name}`, JSON.stringify(data));
-            this._editingOptId = null;
-        } else {
-            this.saveOptimizacionRecord(record);
+
+        const data  = this.getOptimizacion();
+        if (!data.sessions) data.sessions = [];
+        const label = v('opt-label').trim();
+
+        let sess = this._activeSessionId
+            ? data.sessions.find(s => s.id === this._activeSessionId)
+            : null;
+
+        if (!sess) {
+            sess = { id: Date.now() + 1, date: new Date().toLocaleDateString('es-ES'), label, rounds: [] };
+            data.sessions.unshift(sess);
+            this._activeSessionId = sess.id;
+        } else if (label) {
+            sess.label = label;
         }
+
+        sess.rounds.push(round);
+        localStorage.setItem(`optimization_${this.name}`, JSON.stringify(data));
+
+        // Reset campos de ronda (conserva label y sesión activa)
+        ['opt-r-resultado','opt-r-orden','opt-r-tipo-vic','opt-r-tipo-der','opt-r-notas']
+            .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        ['opt-r-combo','opt-r-brick','opt-r-rival']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
+        ['opt-r-starter','opt-r-extenders','opt-r-handtraps','opt-r-board','opt-r-negate']
+            .forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
+        const tvEl = document.getElementById('opt-r-turnovic');
+        if (tvEl) tvEl.value = '';
+        const tEl = document.getElementById('opt-r-tiempo');
+        if (tEl) tEl.value = 'holgado';
+        // Ocultar selects de tipo
+        ['opt-row-tipo-vic','opt-row-tipo-der'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.style.display = 'none';
+        });
+
         const pane = document.getElementById('mideck-optimizacion-pane');
         if (pane) pane.innerHTML = this.renderOptimizacionPane();
     },
+
+    cerrarSesionOptimizacion: function() {
+        this._activeSessionId = null;
+        const pane = document.getElementById('mideck-optimizacion-pane');
+        if (pane) pane.innerHTML = this.renderOptimizacionPane();
+    },
+
+    // Alias por si algo externo sigue llamando addOptimizacionSession
+    addOptimizacionSession: function() { this.addOptimizacionRound(); },
 
         
 calcOptTrend: function(curr, prev, higherIsBetter) {
@@ -1477,118 +1597,274 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
     },
 
     editOptimizacionRecord: function(id) {
+        // Reabrir sesión existente para seguir añadiendo rondas
         const data = this.getOptimizacion();
-        const record = data.records.find(r => r.id === id);
-        if (!record) return;
-        this._editingOptId = id;
+        const sess = (data.sessions || []).find(s => s.id === id);
+        if (!sess) return;
+        this._activeSessionId = id;
         const pane = document.getElementById('mideck-optimizacion-pane');
         if (pane) pane.innerHTML = this.renderOptimizacionPane();
-        const set = (elId, val) => { const el = document.getElementById(elId); if (el) el.value = val ?? 0; };
-        document.getElementById('opt-label').value = record.label || '';
-        set('opt-partidas',    record.partidas);
-        set('opt-victorias',   record.victorias);
-        set('opt-derrotas',    record.derrotas);
-        set('opt-brickeadas',  record.brickeadas);
-        set('opt-jugables',    record.jugables);
-        set('opt-combos',      record.combosCompletos);
-        set('opt-starter',     record.vecesStarter);
-        set('opt-extenders',   record.vecesExtenders);
-        set('opt-handtraps',   record.demasiasHandtraps);
-        set('opt-board-break', record.vecesRompioBoard);
-        set('opt-negate',      record.vecesNegoJugada);
-        set('opt-rival-broke', record.vecesRivalRompio);
-        set('opt-turnos',      record.turnosPromedio);
-        set('opt-t2',          record.ganoT2);
-        set('opt-t3',          record.ganoT3);
+        const lbl = document.getElementById('opt-label');
+        if (lbl) lbl.value = sess.label || '';
         document.getElementById('opt-form-sec')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     },
+
+    _optToggleTipo: function() {
+    const res  = document.getElementById('opt-r-resultado')?.value;
+    const vic  = document.getElementById('opt-row-tipo-vic');
+    const der  = document.getElementById('opt-row-tipo-der');
+    const tvic = document.getElementById('opt-row-turnovic');
+    if (vic)  vic.style.display  = res === 'victoria' ? '' : 'none';
+    if (der)  der.style.display  = res === 'derrota'  ? '' : 'none';
+    if (tvic) tvic.style.display = res === 'victoria' ? '' : 'none';
+},
     renderOptimizacionPane: function() {
         if (!Object.keys(this.cards).length)
             return `<p style="opacity:.6;margin-top:10px;">Carga un deck para usar Optimización.</p>`;
 
-        const records = (this.getOptimizacion().records) || [];
+        const data     = this.getOptimizacion();
+        const sessions = data.sessions || [];
+        const activeSess = this._activeSessionId
+            ? sessions.find(s => s.id === this._activeSessionId) : null;
+        const activeRounds = activeSess ? activeSess.rounds.length : 0;
+        const isActive = !!activeSess;
 
         const badge = (v, ranges) => { for (const [mn,mx,lbl,cls] of ranges) if (v>=mn && v<mx) return [lbl,cls]; return ['—','']; };
         const winB  = v => badge(v,[[65,101,'💎 Competitivo','opt-c-green'],[55,65,'✅ Sólido','opt-c-blue'],[40,55,'⚠ Inestable','opt-c-yellow'],[0,40,'❌ Débil','opt-c-red']]);
-        const brkB  = v => badge(v,[[0,10,'💎 Excelente','opt-c-green'],[10,15,'✅ Aceptable','opt-c-blue'],[15,25,'⚠ Inestable','opt-c-yellow'],[25,101,'❌ Inconsistencia a considerar','opt-c-red']]);
+        const brkB  = v => badge(v,[[0,10,'💎 Excelente','opt-c-green'],[10,15,'✅ Aceptable','opt-c-blue'],[15,25,'⚠ Inestable','opt-c-yellow'],[25,101,'❌ Inconsistencia','opt-c-red']]);
         const strB  = v => v>=70&&v<=85?['✅ Ideal','opt-c-green']:v<60?['❌ Faltan starters','opt-c-red']:v<70?['⚠ Bajo el ideal','opt-c-yellow']:['⚠ Exceso','opt-c-yellow'];
         const cmbB  = v => badge(v,[[60,101,'💎 Consistente','opt-c-green'],[40,60,'✅ Aceptable','opt-c-blue'],[0,40,'❌ Motor inconsistente','opt-c-red']]);
         const scrB  = v => badge(v,[[80,101,'💎 Competitivo','opt-c-green'],[65,80,'✅ Optimizado','opt-c-blue'],[50,65,'⚠ Funcional','opt-c-yellow'],[0,50,'❌ Desbalanceado','opt-c-red']]);
 
-        let html = `
-        <h3 class="deck-section-title" onclick="Deck.toggleSection('opt-form-sec')">${this._editingOptId ? '✏️ Deck Testing — Editando Sesión' : '🎯 Deck Testing — Nueva Sesión'}</h3>
-        <div id="opt-form-sec" class="deck-section-content" ${this._editingOptId ? '' : 'style="display:none;"'}>
+        // ── BARRA DE SESIÓN ACTIVA ────────────────────────────────────────
+        let html = `<div class="opt-session-bar ${isActive ? 'opt-session-active' : ''}">`;
+        if (isActive) {
+            html += `<span class="opt-sess-indicator">🟢 Sesión activa · <b>${activeRounds}</b> ronda${activeRounds !== 1 ? 's' : ''}</span>
+                     <input type="text" id="opt-label" class="opt-input opt-label-inline" placeholder="Etiqueta de sesión..." maxlength="50" value="${(activeSess.label || '').replace(/"/g,'&quot;')}">
+                     <button class="opt-close-sess-btn" onclick="Deck.cerrarSesionOptimizacion()">✅ Cerrar Sesión</button>`;
+        } else {
+            html += `<span class="opt-sess-indicator">⚪ Sin sesión activa</span>
+                     <input type="text" id="opt-label" class="opt-input opt-label-inline" placeholder="Etiqueta (torneo, casual…)" maxlength="50">
+                     <small class="opt-sess-hint">La sesión se abre al registrar la primera ronda</small>`;
+        }
+        html += `</div>`;
+
+        // ── FORMULARIO DE RONDA ───────────────────────────────────────────
+        html += `
+        <h3 class="deck-section-title" onclick="Deck.toggleSection('opt-form-sec')">
+            ➕ Nueva Ronda de Duelo${isActive ? ` <span class="opt-round-count">#${activeRounds + 1}</span>` : ''}
+            </h3>
+        <div id="opt-form-sec" class="deck-section-content" style="display:block;">
             <div class="opt-form-grid">
-                <div class="opt-form-row opt-full">
-                    <label class="opt-lbl">Etiqueta (opcional)</label>
-                    <input type="text" id="opt-label" class="opt-input" placeholder="Torneo regional, Testing casual..." maxlength="50">
+
+                <div class="opt-group-hdr opt-full">⚔ Resultado</div>
+
+                <div class="opt-form-row">
+                    <label class="opt-lbl">¿Resultado?</label>
+                    <select id="opt-r-resultado" class="opt-input" onchange="Deck._optToggleTipo()">
+                        <option value="">— seleccionar —</option>
+                        <option value="victoria">✅ Victoria</option>
+                        <option value="derrota">❌ Derrota</option>
+                    </select>
                 </div>
-                <div class="opt-group-hdr opt-full">⚔ Partidas</div>
-                <div class="opt-form-row"><label class="opt-lbl">Partidas jugadas</label><input type="number" id="opt-partidas" class="opt-input" min="0" value="0"></div>
-                <div class="opt-form-row"><label class="opt-lbl">Victorias</label><input type="number" id="opt-victorias" class="opt-input" min="0" value="0"></div>
-                <div class="opt-form-row"><label class="opt-lbl">Derrotas</label><input type="number" id="opt-derrotas" class="opt-input" min="0" value="0"></div>
-                <div class="opt-group-hdr opt-full">🎲 Consistencia</div>
-                <div class="opt-form-row"><label class="opt-lbl">Manos brickeadas</label><input type="number" id="opt-brickeadas" class="opt-input" min="0" value="0"></div>
-                <div class="opt-form-row"><label class="opt-lbl">Manos jugables</label><input type="number" id="opt-jugables" class="opt-input" min="0" value="0"></div>
-                <div class="opt-form-row"><label class="opt-lbl">Combos completos</label><input type="number" id="opt-combos" class="opt-input" min="0" value="0"></div>
-                <div class="opt-group-hdr opt-full">⚙ Motor del Deck</div>
-                <div class="opt-form-row"><label class="opt-lbl">Veces que abriste starter</label><input type="number" id="opt-starter" class="opt-input" min="0" value="0"></div>
-                <div class="opt-form-row"><label class="opt-lbl">Veces que abriste extenders</label><input type="number" id="opt-extenders" class="opt-input" min="0" value="0"></div>
-                <div class="opt-form-row"><label class="opt-lbl">Demasiados handtraps en mano</label><input type="number" id="opt-handtraps" class="opt-input" min="0" value="0"></div>
-                <div class="opt-group-hdr opt-full">🛡 Control del Rival</div>
-                <div class="opt-form-row"><label class="opt-lbl">Veces que rompiste board</label><input type="number" id="opt-board-break" class="opt-input" min="0" value="0"></div>
-                <div class="opt-form-row"><label class="opt-lbl">Veces que negaste jugada clave</label><input type="number" id="opt-negate" class="opt-input" min="0" value="0"></div>
-                <div class="opt-form-row"><label class="opt-lbl">Veces que el rival rompió tu campo</label><input type="number" id="opt-rival-broke" class="opt-input" min="0" value="0"></div>
-                <div class="opt-group-hdr opt-full">⏱ Duración</div>
-                <div class="opt-form-row"><label class="opt-lbl">Turnos promedio / partida</label><input type="number" id="opt-turnos" class="opt-input" min="0" step="0.1" value="0"></div>
-                <div class="opt-form-row"><label class="opt-lbl">Victorias en Turno 2</label><input type="number" id="opt-t2" class="opt-input" min="0" value="0"></div>
-                <div class="opt-form-row"><label class="opt-lbl">Victorias en Turno 3+</label><input type="number" id="opt-t3" class="opt-input" min="0" value="0"></div>
+
+                <div class="opt-form-row">
+                    <label class="opt-lbl">¿Orden?</label>
+                    <select id="opt-r-orden" class="opt-input">
+                        <option value="">— seleccionar —</option>
+                        <option value="primero">🥇 Voy Primero</option>
+                        <option value="segundo">🥈 Voy Segundo</option>
+                    </select>
+                </div>
+
+                <div class="opt-form-row" id="opt-row-tipo-vic" style="display:none;">
+                    <label class="opt-lbl">Tipo de victoria</label>
+                    <select id="opt-r-tipo-vic" class="opt-input">
+                        <option value="normal">Normal</option>
+                        <option value="ftk">⚡ FTK (Turno 1)</option>
+                        <option value="rendicion">🏳 Rendición rival</option>
+                        <option value="tiempo">⏰ Victoria por tiempo</option>
+                    </select>
+                </div>
+                <div class="opt-form-row" id="opt-row-turnovic" style="display:none;">
+                    <label class="opt-lbl">🏁 Turno en que gané</label>
+                    <input type="number" id="opt-r-turnovic" class="opt-input" min="1" max="20" placeholder="Ej: 3">
+                </div>
+                <div class="opt-form-row" id="opt-row-tipo-der" style="display:none;">
+                    <label class="opt-lbl">Tipo de derrota</label>
+                  <select id="opt-r-tipo-der" class="opt-input">
+                    <option value="normal">Normal</option>
+                    <option value="ftk">🔱 FTK del rival</option>
+                    <option value="rendicion">🏳 Me rendí</option>
+                    <option value="tiempo">⏰ Derrota por tiempo</option>
+                </select>
+                </div>
+
+                <div class="opt-form-row opt-full">
+                    <label class="opt-lbl">Presión de tiempo</label>
+                    
+                    <select id="opt-r-tiempo" class="opt-input">
+                        <option value="holgado">🟢 Holgado</option>
+                        <option value="ajustado">🟡 Ajustado (&lt;60s por turno)</option>
+                        <option value="critico">🔴 Crítico (sin tiempo)</option>
+                    </select>
+                </div>
+
+                <div class="opt-group-hdr opt-full">🃏 Mano Inicial</div>
+
+                <div class="opt-form-row">
+                    <label class="opt-lbl">Starters en mano</label>
+                    <select id="opt-r-starter" class="opt-input">
+                        <option value="0">0</option><option value="1">1</option>
+                        <option value="2">2</option><option value="3">3+</option>
+                    </select>
+                </div>
+
+                <div class="opt-form-row">
+                    <label class="opt-lbl">Extenders en mano</label>
+                    <select id="opt-r-extenders" class="opt-input">
+                        <option value="0">0</option><option value="1">1</option>
+                        <option value="2">2</option><option value="3">3+</option>
+                    </select>
+                </div>
+
+                <div class="opt-form-row">
+                    <label class="opt-lbl">Handtraps en mano</label>
+                    <select id="opt-r-handtraps" class="opt-input">
+                        <option value="0">0</option><option value="1">1</option>
+                        <option value="2">2</option><option value="3">3+</option>
+                    </select>
+                </div>
+
+                <div class="opt-form-row">
+                    <label class="opt-lbl opt-cb-lbl"><input type="checkbox" id="opt-r-brick"> Mano brickeada</label>
+                </div>
+
+                <div class="opt-group-hdr opt-full">⚙ Desarrollo</div>
+
+                <div class="opt-form-row">
+                    <label class="opt-lbl opt-cb-lbl"><input type="checkbox" id="opt-r-combo"> Combo completo</label>
+                </div>
+                <div class="opt-form-row">
+                    <label class="opt-lbl">⚔️ Veces que rompí campo</label>
+                    <input type="number" id="opt-r-board" class="opt-input" min="0" max="15" value="0">
+                </div>
+                <div class="opt-form-row">
+                    <label class="opt-lbl">🛡️ Interrupciones exitosas</label>
+                    <input type="number" id="opt-r-negate" class="opt-input" min="0" max="20" value="0">
+                </div>
+                <div class="opt-form-row">
+                    <label class="opt-lbl opt-cb-lbl"><input type="checkbox" id="opt-r-rival"> El rival rompió mi campo</label>
+                </div>
+
+                <div class="opt-form-row opt-full">
+                    <label class="opt-lbl">Notas rápidas (opcional)</label>
+                    <input type="text" id="opt-r-notas" class="opt-input" placeholder="Ej: brick en extender, rival jugó Ash..." maxlength="120">
+                </div>
+
             </div>
-            <button class="opt-submit-btn" onclick="Deck.addOptimizacionSession()">➕ Registrar Sesión</button>
+            <button class="opt-submit-btn" onclick="Deck.addOptimizacionRound()">➕ Registrar Ronda de Duelo</button>
         </div>`;
 
-        if (records.length > 0) {
-            html += `<h3 class="deck-section-title" style="margin-top:14px;">📊 Historial de Sesiones</h3><div class="opt-records-list">`;
-            records.forEach((r, i) => {
-            const m    = this.calcOptMetrics(r);
-            const prev = records[i + 1] ? this.calcOptMetrics(records[i + 1]) : null;
-            const tr   = (curr, prv, higher) => this.calcOptTrend(curr, prv ?? null, higher);
-            const diag = this.getOptDiagnostics(m);
-            const [sLbl,sCls] = scrB(m.score);
-            const [wLbl,wCls] = winB(m.wr);
-            const [bLbl,bCls] = brkB(m.br);
-            const [stLbl,stCls] = strB(m.str);
-            const [cLbl,cCls] = cmbB(m.cr);
-            html += `
-            <div class="opt-record">
-                <div class="opt-record-hdr">
-                    <span class="opt-rec-date">${r.date}${r.label ? ` — ${r.label}` : ''}</span>
-                    <span class="opt-score-main ${sCls}">${m.score} pts ${tr(m.score, prev?.score, true)} · ${sLbl}</span>
-                    <button class="opt-edit-btn" onclick="Deck.editOptimizacionRecord(${r.id})" title="Editar">✏️</button>
-                    <button class="opt-del-btn" onclick="Deck.deleteOptimizacionRecord(${r.id})" title="Eliminar">🗑</button>
-                </div>
-                <div class="opt-metrics-grid">
-                    <div class="opt-metric"><div class="opt-m-name">Win Rate</div><div class="opt-m-val">${m.wr}% ${tr(m.wr, prev?.wr, true)}</div><div class="opt-m-badge ${wCls}">${wLbl}</div></div>
-                    <div class="opt-metric"><div class="opt-m-name">Brick Rate</div><div class="opt-m-val">${m.br}% ${tr(m.br, prev?.br, false)}</div><div class="opt-m-badge ${bCls}">${bLbl}</div></div>
-                    <div class="opt-metric"><div class="opt-m-name">Starter Rate</div><div class="opt-m-val">${m.str}% ${tr(m.str, prev?.str, true)}</div><div class="opt-m-badge ${stCls}">${stLbl}</div></div>
-                    <div class="opt-metric"><div class="opt-m-name">Combo Rate</div><div class="opt-m-val">${m.cr}% ${tr(m.cr, prev?.cr, true)}</div><div class="opt-m-badge ${cCls}">${cLbl}</div></div>
-                    <div class="opt-metric"><div class="opt-m-name">Board Break</div><div class="opt-m-val">${m.bb}% ${tr(m.bb, prev?.bb, true)}</div><div class="opt-m-badge opt-c-neutral">Going 2nd</div></div>
-                    <div class="opt-metric"><div class="opt-m-name">Control Rate</div><div class="opt-m-val">${m.ctrl}% ${tr(m.ctrl, prev?.ctrl, true)}</div><div class="opt-m-badge opt-c-neutral">Going 1st</div></div>
-                </div>
-                <div class="opt-raw-chips">
-                    <span>🃏 ${r.partidas} partidas</span>
-                    <span>✅ ${r.victorias}V / ❌ ${r.derrotas}D</span>
-                    <span>🧱 ${r.brickeadas} bricks</span>
-                    <span>⚡ ${r.vecesStarter} starters</span>
-                    <span>💥 ${r.combosCompletos} combos</span>
-                    ${r.turnosPromedio ? `<span>⏱ ${r.turnosPromedio} turnos/partida</span>` : ''}
-                </div>
-                ${diag.length ? `<div class="opt-diagnostics">${diag.map(d=>`<div class="opt-diag-item">${d}</div>`).join('')}</div>` : ''}
-            </div>`;
-        });
+        // ── HISTORIAL DE SESIONES ─────────────────────────────────────────
+        if (sessions.length > 0) {
+            html += `<h3 class="deck-section-title" style="margin-top:14px;" onclick="Deck.toggleSection('opt-hist-sec')">
+                📊 Historial de Sesiones <span style="font-size:.72em;opacity:.6">(${sessions.length})</span>
+            </h3><div id="opt-hist-sec" class="deck-section-content">`;
+
+            sessions.forEach((sess, si) => {
+                const m    = this.calcOptMetrics(sess);
+                const prev = sessions[si + 1] ? this.calcOptMetrics(sessions[si + 1]) : null;
+                const tr   = (curr, prv, higher) => this.calcOptTrend(curr, prv ?? null, higher);
+                const diag = this.getOptDiagnostics(m);
+                const [sLbl,sCls]  = scrB(m.score);
+                const [wLbl,wCls]  = winB(m.wr);
+                const [bLbl,bCls]  = brkB(m.br);
+                const [stLbl,stCls]= strB(m.str);
+                const [cLbl,cCls]  = cmbB(m.cr);
+                const isThisActive = sess.id === this._activeSessionId;
+
+                const wrFirst  = m.rFirst.length
+                    ? Math.round(m.rFirst.filter(r=>r.resultado==='victoria').length / m.rFirst.length * 100) : null;
+                const wrSecond = m.rSecond.length
+                    ? Math.round(m.rSecond.filter(r=>r.resultado==='victoria').length / m.rSecond.length * 100) : null;
+
+                html += `
+                <div class="opt-record${isThisActive ? ' opt-record-active' : ''}">
+                    <div class="opt-record-hdr">
+                        <span class="opt-rec-date">
+                            ${sess.date}${sess.label ? ` — ${sess.label}` : ''}
+                            <span class="opt-rounds-pill">${m.p} rondas</span>
+                            ${isThisActive ? '<span class="opt-active-pill">🟢 activa</span>' : ''}
+                        </span>
+                        <span class="opt-score-main ${sCls}">${m.score} pts ${tr(m.score, prev?.score, true)} · ${sLbl}</span>
+                        <button class="opt-edit-btn" onclick="Deck.editOptimizacionRecord(${sess.id})" title="Reabrir sesión">🔁</button>
+                        <button class="opt-del-btn" onclick="Deck.deleteOptimizacionRecord(${sess.id})" title="Eliminar sesión">🗑</button>
+                    </div>
+
+                    <div class="opt-metrics-grid">
+                        <div class="opt-metric"><div class="opt-m-name">Win Rate</div><div class="opt-m-val">${m.wr}% ${tr(m.wr, prev?.wr, true)}</div><div class="opt-m-badge ${wCls}">${wLbl}</div></div>
+                        <div class="opt-metric"><div class="opt-m-name">Brick Rate</div><div class="opt-m-val">${m.br}% ${tr(m.br, prev?.br, false)}</div><div class="opt-m-badge ${bCls}">${bLbl}</div></div>
+                        <div class="opt-metric"><div class="opt-m-name">Starter Rate</div><div class="opt-m-val">${m.str}% ${tr(m.str, prev?.str, true)}</div><div class="opt-m-badge ${stCls}">${stLbl}</div></div>
+                        <div class="opt-metric"><div class="opt-m-name">Combo Rate</div><div class="opt-m-val">${m.cr}% ${tr(m.cr, prev?.cr, true)}</div><div class="opt-m-badge ${cCls}">${cLbl}</div></div>
+                        <div class="opt-metric"><div class="opt-m-name">Board Break</div><div class="opt-m-val">${m.bb}% ${tr(m.bb, prev?.bb, true)}</div><div class="opt-m-badge opt-c-neutral">Going 2nd</div></div>
+                        <div class="opt-metric"><div class="opt-m-name">Control Rate</div><div class="opt-m-val">${m.ctrl}% ${tr(m.ctrl, prev?.ctrl, true)}</div><div class="opt-m-badge opt-c-neutral">Going 1st</div></div>
+                    </div>
+
+                    <div class="opt-order-split">
+                        ${wrFirst  !== null ? `<span class="opt-order-chip opt-order-first">🥇 Primero: ${wrFirst}% WR (${m.rFirst.length})</span>` : ''}
+                        ${wrSecond !== null ? `<span class="opt-order-chip opt-order-second">🥈 Segundo: ${wrSecond}% WR (${m.rSecond.length})</span>` : ''}
+                    </div>
+
+                    <div class="opt-raw-chips">
+                        <span>🃏 ${m.p} rondas · ✅ ${m.wins}V / ❌ ${m.losses}D</span>
+                        <span>🧱 ${sess.rounds.filter(r=>r.brick).length} bricks</span>
+                        <span>⚡ ø${m.avgStarter.toFixed(1)} starters</span>
+                        <span>🔗 ø${m.avgExtender.toFixed(1)} extenders</span>
+                        <span>🖐 ø${m.avgHandtrap.toFixed(1)} HT</span>
+                        ${m.ftks       ? `<span>⚡ ${m.ftks} FTK${m.ftks>1?'s':''}</span>` : ''}
+                        ${m.rendiciones? `<span>🏳 ${m.rendiciones} rendición${m.rendiciones>1?'es':''}</span>` : ''}
+                        ${m.tiempoGan  ? `<span>⏰ ${m.tiempoGan} ganada${m.tiempoGan>1?'s':''} x tiempo</span>` : ''}
+                        ${m.tiempoPer  ? `<span>⏰ ${m.tiempoPer} perdida${m.tiempoPer>1?'s':''} x tiempo</span>` : ''}
+                        ${m.criticos   ? `<span>🔴 ${m.criticos} crítico${m.criticos>1?'s':''}</span>` : ''}
+                        ${m.ajustados  ? `<span>🟡 ${m.ajustados} ajustado${m.ajustados>1?'s':''}</span>` : ''}
+                    </div>
+
+                    ${diag.length ? `<div class="opt-diagnostics">${diag.map(d=>`<div class="opt-diag-item">${d}</div>`).join('')}</div>` : ''}
+
+                    <details class="opt-rounds-detail">
+                        <summary class="opt-rounds-summary">Ver rondas individuales (${sess.rounds.length})</summary>
+                        <div class="opt-rounds-table">
+                            ${sess.rounds.map((r, ri) => {
+                                const orden  = r.orden === 'primero' ? '🥇' : '🥈';
+                                const res    = r.resultado === 'victoria' ? '✅' : '❌';
+                                const tipoV  = r.tipoVictoria === 'ftk' ? ' FTK' : r.tipoVictoria === 'rendicion' ? ' Rend.' : r.tipoVictoria === 'tiempo' ? ' Tpo.' : '';
+                                const tipoD  = r.tipoDerrota === 'ftk' ? ' FTK' : r.tipoDerrota === 'rendicion' ? ' Rend.' : r.tipoDerrota === 'tiempo' ? ' Tpo.' : '';
+                                const tiempo = r.presionTiempo === 'critico' ? '🔴' : r.presionTiempo === 'ajustado' ? '🟡' : '🟢';
+                                return `<div class="opt-round-row">
+                                    <span class="opt-rn">#${ri+1}</span>
+                                    <span>${orden}</span>
+                                    <span>${res}${tipoV}${tipoD}</span>
+                                    <span title="Tiempo">${tiempo}</span>
+                                    <span title="Starters">⚡${r.starter||0}</span>
+                                    <span title="Extenders">🔗${r.extenders||0}</span>
+                                    <span title="Handtraps">🖐${r.handtraps||0}</span>
+                                    ${r.brick        ? '<span class="opt-tag-brick" title="Brick">🧱</span>' : ''}
+                                    ${r.comboCompleto? '<span class="opt-tag-combo" title="Combo">💥</span>' : ''}
+                                    ${r.rompioBoard  ? `<span title="Campos rotos">⚔️${r.vecesRompioBoard ?? 1}</span>` : ''}
+                                    ${r.negoJugada   ? `<span title="Interrupciones">🛡${r.interrupciones ?? 1}</span>` : ''}
+                                    ${r.turnoVictoria? `<span title="Ganó en turno ${r.turnoVictoria}">🏁T${r.turnoVictoria}</span>` : ''}
+                                    ${r.notas        ? `<span class="opt-round-nota" title="${r.notas.replace(/"/g,'&quot;')}">📝</span>` : ''}
+                                    <button class="opt-round-del" onclick="Deck.deleteOptimizacionRound(${sess.id},${r.id})" title="Eliminar ronda">×</button>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </details>
+                </div>`;
+            });
             html += `</div>`;
         } else {
-            html += `<p class="opt-empty-msg">Registra tu primera sesión de testing para comenzar a analizar tu deck.</p>`;
+            html += `<p class="opt-empty-msg">Registra rondas para comenzar a analizar tu deck.</p>`;
         }
         return html;
     },
