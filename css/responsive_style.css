@@ -166,7 +166,7 @@
     .matchup-row-main       { gap: 5px; }
     .matchup-opponent-name  { font-size: 0.78rem; }
     .matchup-panel          { padding: 16px 12px; }
-
+    
     /* Score bars */
     .dsg-bar-label    { width: 60px; font-size: 0.63rem; }
     .dsg-bar-label-lg { width: 68px; font-size: 0.7rem; }

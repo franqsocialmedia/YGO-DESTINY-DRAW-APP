@@ -126,10 +126,7 @@ const Winrate = {
             </div>
         </div>
         <button class="wr-reset-btn" onclick="Winrate.resetStandalone()">↺ Reiniciar contadores</button>
-        <hr class="wr-divider">
-        ${this._renderRoundsForm()}
-        <div class="wr-rounds-section-title">📋 Historial de Rondas de Duelo</div>
-        ${this._renderRoundsHistory(r.rounds)}`;
+      `;
 },
 
     refreshSection: function () {
@@ -143,7 +140,7 @@ const Winrate = {
         const base = { wins1st: 0, losses1st: 0, wins2nd: 0, losses2nd: 0, rounds: [] };
         return Object.assign({}, base, JSON.parse(localStorage.getItem(this.STANDALONE_KEY)) || {});
     } catch (_) {
-        return { wins1st: 0, losses1st: 0, wins2nd: 0, losses2nd: 0, rounds: [] };
+        return { wins1st: 0, losses1st: 0, wins2nd: 0, losses2nd: 0};
     }
 },
 
@@ -160,7 +157,7 @@ const Winrate = {
     },
 
     resetStandalone: function () {
-    this._saveStandaloneRecord({ wins1st: 0, losses1st: 0, wins2nd: 0, losses2nd: 0, rounds: [] });
+    this._saveStandaloneRecord({ wins1st: 0, losses1st: 0, wins2nd: 0, losses2nd: 0});
     this.refreshSection();
 },
 // ── Rondas de Duelo ─────────────────────────────────────
