@@ -2295,6 +2295,17 @@
 .opt-c-green  { background: rgba(76,175,80,.2);  color: #81C784; }
 .opt-c-blue   { background: rgba(33,150,243,.2); color: #64B5F6; }
 .opt-c-yellow { background: rgba(255,193,7,.2);  color: #FFD54F; }
+.opt-session-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,193,7,.2);
+    border: 1px solid rgba(255,193,7,.35);
+    border-radius: 20px;
+    padding: 3px 8px;
+}
+.opt-dl-btn { background: none; border: none; cursor: pointer; font-size: .95rem; opacity: .7; transition: opacity .2s; }
+.opt-dl-btn:hover { opacity: 1; }
 .opt-c-red    { background: rgba(244,67,54,.2);  color: #E57373; }
 .opt-c-neutral{ background: rgba(255,255,255,.1); color: var(--text-light); }
 

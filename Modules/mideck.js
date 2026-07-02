@@ -1810,9 +1810,11 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                             </span>
                         </span>
                         <span class="opt-score-main ${sCls}">${m.score} pts ${tr(m.score, prev?.score, true)} · ${sLbl}</span>
-                        <button class="opt-edit-btn" onclick="Deck.editOptimizacionRecord(${sess.id})" title="Reabrir sesión">🔁</button>
-                        <button class="opt-del-btn" onclick="Deck.deleteOptimizacionRecord(${sess.id})" title="Eliminar sesión">🗑</button>
-                    </div>
+                        <span class="opt-session-actions">
+                            <button class="opt-dl-btn" onclick="Deck.exportYDK()" title="Descargar Deck">⬇️</button>
+                            <button class="opt-edit-btn" onclick="Deck.editOptimizacionRecord(${sess.id})" title="Reabrir sesión">🔁</button>
+                            <button class="opt-del-btn" onclick="Deck.deleteOptimizacionRecord(${sess.id})" title="Eliminar sesión">🗑</button>
+                        </span> </div>
 
                     <div class="opt-metrics-grid">
                         <div class="opt-metric"><div class="opt-m-name">Win Rate</div><div class="opt-m-val">${m.wr}% ${tr(m.wr, prev?.wr, true)}</div><div class="opt-m-badge ${wCls}">${wLbl}</div></div>
