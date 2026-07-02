@@ -137,9 +137,51 @@
 
     /* Ocultar roles en tablet para no saturar */
     .deck-roles { display: none; }
+    /* Stats section: contener overflow */
+    .stats-section { max-width: 100%; overflow-x: hidden; }
+
+    /* Sub-tabs deck-stats-block (Main/Extra/Side/Composición/Gráfica) */
+    .dstab-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+    }
+    .dstab-btn { flex-shrink: 0; padding: 5px 12px; font-size: 0.74rem; }
 }
 
 @media (max-width: 600px) {
+    /* Matchup panel: full-bleed en móvil (borde a borde) */
+    .matchup-overlay { padding: 0; }
+    .matchup-panel {
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+
+    .matchup-wr-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .matchup-wr-field { width: 100%; }
+    .matchup-input-sm { width: 100%; }
+
+    .matchup-deck-src-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .matchup-select  { width: 100%; min-width: 0; }
+    .matchup-btn-ydk { width: 100%; justify-content: center; }
+
+    /* Stats section: filas que rompían contenedor con nombres/valores largos */
+    .stats-header          { flex-wrap: wrap; gap: 6px; }
+    .counter-breakdown-row { flex-wrap: wrap; }
+    .counter-card-contrib  { white-space: normal; margin-left: 0; text-align: right; }
+
+    .dstab-btn { padding: 4px 10px; font-size: 0.7rem; }
     /* Deck row: grid en 2 columnas con imagen + nombre, roles y controles apilados */
     .deck-row {
         display: grid;
@@ -312,6 +354,11 @@
         padding: 7px 13px;
         font-size: 0.78rem;
     }
+    /* Zona de Práctica: tablero reducido proporcionalmente */
+    .pz-field-grid-wrap { --pz-cw: 58px; --pz-ch: 80px; }
+    .pz-field-other-side,
+    .pz-field-side       { flex: 0 0 84px; }
+    .pz-field-area-wrap  { gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
 
 @media (max-width: 600px) {
@@ -330,6 +377,18 @@
 
     /* Zona de Práctica */
     .pz-field-grid   { gap: 2px; }
+    .pz-field-grid-wrap  { --pz-cw: 32px; --pz-ch: 46px; }
+    .pz-field-other-side,
+    .pz-field-side        { flex: 0 0 46px; }
+    .pz-field-area-wrap   { gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .pz-field-side-btns .pz-row-label { flex-shrink: 1; font-size: .5rem; }
+    .pz-field-side-btns .pz-mini-btn  { padding: 2px 5px; font-size: .62rem; }
+
+    /* Cartas de Hand/Main/Extra/GY/Banish/Other: reducidas junto al tablero */
+    :root {
+        --pz-cw: 52px; --pz-ch: 76px;
+        --pz-cw-sm: 32px; --pz-ch-sm: 47px;
+    }
     .pz-zone         { min-height: 46px; }
     .pz-mcv-layout   { flex-direction: column; }
     .pz-mcv-ban-row  { flex-direction: row; width: 100%; }
@@ -396,7 +455,13 @@
 
     /* Zona práctica: botones control en wrap */
     .pz-ctrl-btn  { font-size: 0.68rem; padding: 3px 6px; }
-
+.pz-field-grid-wrap  { --pz-cw: 26px; --pz-ch: 37px; }
+    .pz-field-other-side,
+    .pz-field-side        { flex: 0 0 38px; }
+    :root {
+        --pz-cw: 42px; --pz-ch: 62px;
+        --pz-cw-sm: 26px; --pz-ch-sm: 38px;
+    }
     /* Winrate halves en columna */
     .wr-halves { flex-direction: column; gap: 10px; }
     .wr-half   { width: 100%; }
@@ -477,6 +542,10 @@
     .welcome-logo  { max-width: 180px; }
     .wb-icon       { font-size: 1.4rem; width: 32px; }
     .wb-label      { font-size: 0.95rem; }
+
+    .matchup-overlay { padding: 0; }
+    .matchup-panel   { padding: 14px 10px; display:block;}
+    .dstab-btn       { padding: 4px 8px; font-size: 0.66rem; }
 }
 
 
