@@ -1,6 +1,13 @@
 # DESTINY DRAW — REPORTE TÉCNICO
-**Versión:** v2.4 | **Fecha:** Mar 2026
+**Versión:** v2.5 | **Fecha:** Jul 2026 (auditado línea por línea contra el código fuente)
 **Stack:** Vanilla JS (ES6 objects) · CSS modular · HTML5 SPA · YGOProDeck API · localStorage
+
+> **Nota de auditoría:** este reporte fue verificado contra los 18 archivos fuente actuales.
+> El footer de `index.html` marca **VERSION 3.5** — el número de versión de este documento
+> (v2.5) es independiente y solo referencia la revisión del propio reporte.
+> Cambios relevantes encontrados desde la última versión: nueva pestaña **Optimización**
+> (deck testing) en Mi Deck, conteos de líneas actualizados, y una inconsistencia real
+> en el sistema G1/G2 Score documentada en la sección 7.2 — léela antes de tocar ese código.
 
 ---
 
@@ -8,7 +15,10 @@
 
 ### 1.1 HTML
 ```
-index.html  — Shell única. Secciones vacías, JS llena el DOM en runtime.
+index.html — Shell SPA. El Buscador trae su HTML estático completo (barra de
+              búsqueda, filtros, sets); el resto de secciones (#mideck-content,
+              #estadisticas-content, #simuladores-content, #meta-content,
+              #formacion-content) están vacías y el JS llena el DOM en runtime.
 ```
 
 ### 1.2 JavaScript — 11 módulos + 1 módulo de datos por defecto
@@ -21,19 +31,19 @@ simuladores.js → simuladores-campo.js → formacion.js →
 default_data.js → logger.js  (SIEMPRE AL FINAL)
 ```
 
-| Archivo | Objetos globales | Líneas aprox. | Descripción |
+| Archivo | Objetos globales | Líneas | Descripción |
 |---------|-----------------|--------|-------------|
 | `logger.js` | `DDLogger` | 365 | Logger no-invasivo. Envuelve todos los objetos globales post-`window.load`. API: `DDLogger.exportReport()`, `getLogs()`, `getStats()`, `enable/disable/clear()`. Intercepta localStorage y errores globales. |
 | `core.js` | `Navigation`, `Shortcuts`, `ContentManager`, `switchTab` | 487 | navigation + utils + contentmanager |
-| `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | ~2226 | Config global (incl. Scoring G1/G2), cálculo de scores, analizadores de carta. Incluye `duplicateNomenclatureCategory`. |
-| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 1932 | buscador + cardviewer + favoritas + botón Carta Random |
-| `mideck.js` | `Deck`, `Banlist`, `Engines` | ~3020 | deck + banlist + engines |
+| `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 2226 | Config global (incl. estructuras de Scoring G1/G2 — ver nota en 7.2), cálculo de scores, analizadores de carta. Incluye `duplicateNomenclatureCategory`. |
+| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 1960 | buscador + cardviewer + favoritas + botón Carta Random |
+| `mideck.js` | `Deck`, `Banlist`, `Engines` | 3741 | deck + banlist + engines + **Optimización (deck testing) — nuevo sub-tab, ver 6** |
 | `historial.js` | `Matchups`, `Duelista` | 783 | matchups + duelista |
-| `estadisticas.js` | `Estadisticas` | ~2525 | scores, meta, cross-score, análisis de deck. `recalculateAllMetaDeckScores` es ahora async con enriquecimiento automático. |
-| `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria` | 2819 | winrate + torneo + duelo en vivo + hipergeometría |
+| `estadisticas.js` | `Estadisticas` | 2525 | scores, meta, cross-score, análisis de deck. `recalculateAllMetaDeckScores` es async con enriquecimiento automático. |
+| `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria` | 2937 | winrate + torneo + duelo en vivo + hipergeometría |
 | `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3228 | zonapractica + experimentacion |
-| `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | ~3661 | formacion + meta + config completo (Scoring G1/G2, Nomenclatura con pencil/clone/delete, RPS Ninguno) + welcome + help |
-| `default_data.js` | `DefaultData` | 1194 | Inyección única de datos por defecto. Parchea `Config.resetToDefault`. |
+| `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | 3669 | formacion + meta + config completo (Scoring G1/G2 UI, Nomenclatura con pencil/clone/delete, RPS Ninguno, etiqueta y borrado de Optimización) + welcome + help |
+| `default_data.js` | `DefaultData` | 1228 | Inyección única de datos por defecto. Parchea `Config.resetToDefault`. |
 
 **Nota:** `Stats` vive dentro de `data.js`. `Winrate` y `DueloEnVivo` son los objetos correctos en `simuladores.js`; el antiguo `Duelo` ya no existe.
 
@@ -45,16 +55,16 @@ style_core.css → style_buscador.css → style_mideck.css →
 style_simuladores.css → style_config.css → responsive_style.css
 ```
 
-| Archivo | Líneas aprox. | Absorbe |
+| Archivo | Líneas | Absorbe |
 |---------|--------|---------|
-| `style_core.css` | 1322 | style_global + style_welcome + style_cardviewer |
-| `style_buscador.css` | 1016 | — |
-| `style_mideck.css` | 2194 | — |
-| `style_simuladores.css` | 5842 | style_simuladores + style_estadisticas |
-| `style_config.css` | ~2260 | style_config + style_formacion + style_meta + clases de Scoring G1/G2 |
-| `responsive_style.css` | 558 | Todos los @media del proyecto |
+| `style_core.css` | 1326 | style_global + style_welcome + style_cardviewer |
+| `style_buscador.css` | 1028 | — |
+| `style_mideck.css` | 2376 | — (incluye ~72 reglas `.opt-*` del panel de Optimización) |
+| `style_simuladores.css` | 6014 | style_simuladores + style_estadisticas |
+| `style_config.css` | 2278 | style_config + style_formacion + style_meta + clases de Scoring G1/G2 |
+| `responsive_style.css` | 608 | Todos los @media del proyecto |
 
-**Todos los archivos CSS tienen sus `@media` eliminados** — viven exclusivamente en `responsive_style.css`.
+**Todos los archivos CSS tienen sus `@media` eliminados** — viven exclusivamente en `responsive_style.css` (verificado: 0 ocurrencias en los 5 archivos temáticos, 28 en `responsive_style.css`).
 
 ---
 
@@ -82,14 +92,15 @@ style_simuladores.css → style_config.css → responsive_style.css
 
 | Clave | Módulo | Tipo | Descripción |
 |-------|--------|------|-------------|
-| `yugioh_config` | `ConfigManager` | Object | Config principal: roles, roleConditions, roleWeights, staples, specialties, nomenclature, pillars, pillarRPS, **g1g2Roles, roleBasePower, reliabilityTable, scoringLayers**, metaMasters, metaLinks, formacionGames, formacionTopics, shortcuts, music |
+| `yugioh_config` | `ConfigManager` | Object | Config principal: roles, roleConditions, roleWeights, staples, specialties, nomenclature, pillars, pillarRPS, **g1g2Roles, roleBasePower, reliabilityTable, scoringLayers** (ver nota 7.2), metaMasters, metaLinks, formacionGames, formacionTopics, shortcuts, music |
 | `yugioh_player_level` | `ConfigManager` | String | `'novato'\|'casual'\|'competitivo'\|'default'` |
 | `dd_player_profile` | `ContentManager` | String | Controla visibilidad de secciones |
 | `dd_content_visibility` | `ContentManager` | Object | Override manual de visibilidad por sección |
 | `dd_welcome_dismissed` | `Welcome` | String `'true'` | Panel reaparece solo al Borrar Data |
 | `yugioh_favoritas` | `Favoritas` | Object | `{cardId: {id,name,type,img,data}}` |
 | `yugioh_engines` | `Engines` | Array | `[{id,name,cards,roles,notes,cover}]` |
-| `yugioh_decks` | `Deck` | Object | Decks guardados `{nombre: {cards,notes}}` |
+| `deck_${nombre}` (prefijo, 1 clave por deck) | `Deck` | Object | Decks guardados: `{cards, notes, savedAt}`. `getSavedDecks()` escanea `localStorage` por el prefijo `deck_`. **No existe un único objeto `yugioh_decks`** — esa clave es una referencia legacy que solo se usa como limpieza de seguridad en Borrar Data / Exportar Reporte, nunca se escribe en el flujo normal. |
+| `optimization_${nombre}` | `Deck` | Object | **Nuevo.** Datos de la pestaña 🎯 Optimización (testing de matchups): `{sessions:[{id,date,label,rounds:[{id,orden,resultado,tipoVictoria,tipoDerrota,presionTiempo,comboCompleto,brick,starter,extenders,handtraps,rompioBoard,negoJugada,rivalRompio,notas}]}]}`. Incluye migración automática desde un formato viejo `records[]`. |
 | `matchup_${deckName}` | `Matchups` | Array | `[{opponent,wins1st,losses1st,wins2nd,losses2nd,notes}]` |
 | `yugioh_music_config` | `ConfigManager` | Object | `{enabled, volume, tracks:{novato,casual,competitivo}}` |
 | `yugioh_meta_fallbacks` | `ConfigManager` | Object | Imágenes fallback para Maestros |
@@ -118,13 +129,14 @@ style_simuladores.css → style_config.css → responsive_style.css
 
 **Nota:** `g1g2Roles`, `roleBasePower`, `reliabilityTable` y `scoringLayers` viven dentro de `yugioh_config`. Export, Import, Borrar (Config), Reporte y Restaurar Config los cubren automáticamente.
 
-**Zona de Borrado selectivo — opciones disponibles:**
+**Zona de Borrado selectivo — opciones disponibles (16 categorías):**
 
 | data-key | Claves eliminadas | En memoria |
 |----------|------------------|------------|
-| `decks` | `yugioh_decks`, prefijos `deck_` | `Deck.cards = {}` |
+| `decks` | prefijo `deck_` (+ limpieza legacy de `yugioh_decks`) | `Deck.cards = {}` |
 | `engines` | `yugioh_engines` | — |
 | `matchups` | prefijos `matchup_` | — |
+| `optimizacion` | prefijos `optimization_` | — |
 | `winrates` | `yugioh_winrates`, `pz_winrate_standalone` | — |
 | `favoritas` | `yugioh_favoritas` | — |
 | `torneo` | `yugioh_torneo_actual` | — |
@@ -146,8 +158,8 @@ style_simuladores.css → style_config.css → responsive_style.css
 data.js (ConfigManager)  <── buscador, mideck, historial, estadisticas,
                                simuladores, formacion, core (ContentManager)
 
-data.js (Stats)          <── estadisticas (Internal Score, External Score,
-                               G1/G2 Score, Counter Deck Score)
+data.js (Stats)          <── estadisticas, mideck (Deck.render usa
+                               calculateInternalScore — ver nota 7.2 sobre G1/G2)
 
 core.js (ContentManager) <── formacion (applyProfile al cambiar perfil)
                                navigation applyAll() en cada tab change
@@ -155,11 +167,14 @@ core.js (ContentManager) <── formacion (applyProfile al cambiar perfil)
 mideck.js (Engines)      <── Favoritas.render() delega si _activeTab='favoritas'
                                Staples: usa campo imageUrl (NO img)
 
+mideck.js (Deck)         <── Optimización usa Deck.name como clave
+                               (`optimization_${this.name}`), independiente de cards
+
 historial.js (Duelista)  <── lee matchup_${deckName} de todos los decks
                                requiere Deck.getSavedDecks()
 
 formacion.js (Meta)      <── Sub-tabs Fuentes y Maestros de Formacion delegan a
-                               Meta._renderFuentesSection() / _renderMaestrosSection()
+                               Meta._renderFuentesSection() / Meta._renderMaestrosSection()
 
 formacion.js (Welcome)   <── llama ConfigManager.savePlayerLevel() Y
                                ContentManager.applyProfile() al hacer enter()
@@ -177,14 +192,14 @@ default_data.js          <── requiere ConfigManager, Deck, Engines, Formacio
 ```
 switchTab(name) → Navigation.showTab(name)
   → oculta todos .tab-content, activa #name-content
-  → si mideck:            Engines.init()
-  → si simuladores:       Torneo.init()
-  → si formacion:         Formacion.init()
-  → si meta:              Meta.init()
-  → si saliendo de simuladores: ZonaPractica._cleanupFloatBtns()
   → Estadisticas.updateFloatingWidgetVisibility(tabName)
-  → ContentManager.applyAll()
+  → si simuladores:       Torneo.init()
+  → si mideck:             Engines.init()
+  → si saliendo de simuladores: ZonaPractica._cleanupFloatBtns()
+  → si meta:               Meta.init()
+  → si formacion:          Formacion.init()
   → window.scrollTo({ top:0, behavior:'smooth' })
+  → ContentManager.applyAll()
 ```
 
 ### 5.2 Agregar carta al deck (desde Buscador)
@@ -192,7 +207,8 @@ switchTab(name) → Navigation.showTab(name)
 Buscador.addCard(index)
   → Deck.syncFromViewer(card.id, card, currentQty + 1)
   → si carta nueva: autoAssignRoles() + SpecialtyAnalyzer + NomenclatureAnalyzer
-  → Deck.render()  → recalcula Internal Score + G1/G2 Score en tiempo real
+  → Deck.render()  → recalcula Internal Score en tiempo real
+    (Stats.calculateInternalScore — el G1/G2 Score NO se recalcula aquí, ver 7.2)
   → External Score se recalcula si powerScoreCache existe
 ```
 
@@ -210,10 +226,11 @@ Deck.importYDK()
 ### 5.4 Cálculo de scores — ciclo completo
 ```
 Stats.calculateInternalScore(Deck.cards)
-  → loop de roles → rendimientos decrecientes
-  → G1/G2 Score paralelo: BasePower(L3) × L1 × L2 × L4 × L5 × Reliability
+  → loop de roles → rendimientos decrecientes por pilar (consistency/power/resilience)
   → devuelve { internalScore, consistency, power, resilience,
-               g1Score, g2Score, penalty, totalCards, mainCards }
+               totalCards, mainCards, penalty }
+  → (el campo g1Score/g2Score que versiones previas de este reporte mencionaban
+     NO existe en el objeto devuelto actualmente — ver nota 7.2)
 
 Stats.calculateExternalScore(Deck.cards, powerScoreCache, metaDecks)
   → cruza specialties del deck con powerScoreCache
@@ -280,8 +297,18 @@ window.load → DefaultData.init()
 
 ### Mi Deck
 ```
-Sub-tabs: Decklist | Construcción
+Sub-tabs: Decklist | Construcción | Optimización
 Sidebar:  Engines | Decks | Staples | Favoritas
+
+Optimización (🎯) — nuevo sub-tab de deck testing por matchup:
+  → registra "rondas de duelo" con: orden (1º/2º), resultado, tipo de victoria/derrota,
+    presión de tiempo, combo completo, brick, starter, extenders, handtraps,
+    rompió board, negó jugada, rival rompió, notas.
+  → agrupa rondas en "sesiones" (etiquetables: torneo, casual…), con badges de
+    calidad (winrate, brick rate, % starters, consistencia de combo, score).
+  → persiste en `optimization_${deckName}` vía Deck.getOptimizacion() /
+    saveOptimizacionSession() / addOptimizacionRound() / renderOptimizacionPane().
+  → migra automáticamente datos de un formato antiguo `records[]` a `sessions[]`.
 ```
 
 ### Config — secciones colapsables
@@ -305,6 +332,8 @@ Pilares del Internal Score
 
 Scoring Avanzado (G1/G2)
   G1/G2 por rol | Poder Base (L3) | Fiabilidad por copias | Capas L1/L2/L4/L5 en columnas
+  ⚠️ Panel funcional (guarda en yugioh_config), pero el motor de scoring todavía
+  no consume estos valores — ver nota 7.2.
 
 Rendimientos Decrecientes
 Atajos Rápidos
@@ -312,7 +341,7 @@ Banlist del Formato
 Música
 Exportar / Importar Data   (importar pide confirmación; exportar muestra detalle del contenido)
 Restaurar Configuración
-Zona de Borrado            (15 categorías selectivas, cache y meta_library separados)
+Zona de Borrado            (16 categorías selectivas, cache y meta_library separados)
 ```
 
 ---
@@ -321,9 +350,25 @@ Zona de Borrado            (15 categorías selectivas, cache y meta_library sepa
 
 ### 7.1 Internal Score
 `Stats.calculateInternalScore(cards)`. Loop de roles con rendimientos decrecientes.
-Devuelve `{internalScore, consistency, power, resilience, penalty, totalCards, mainCards}`.
+Devuelve `{internalScore, consistency, power, resilience, totalCards, mainCards, penalty}`.
 
-### 7.2 G1/G2 Score (loop paralelo al Internal Score)
+### 7.2 G1/G2 Score — ⚠️ DISEÑO GUARDADO, CÁLCULO NO CONECTADO
+
+**Estado real verificado en el código (Jul 2026): esta funcionalidad está a medias.**
+
+Lo que SÍ existe y funciona:
+- Estructuras de config en `data.js`: `g1g2Roles`, `roleBasePower`, `reliabilityTable`, `scoringLayers`, con sus getters (`getG1G2Roles`, `getRoleBasePower`, `getReliability`, `getScoringLayers`).
+- Panel de Config completo en `formacion.js` ("Scoring Avanzado (G1/G2)") con los 7 métodos save de la sección 7.6, que sí leen/escriben `yugioh_config` correctamente.
+- Clases CSS en `style_simuladores.css` (`.analysis-g1g2-row`, `.analysis-g1g2-item`, `.analysis-g1g2-label`, `.analysis-g1g2-val`, `.analysis-g1g2-detail`, `.analysis-g1g2-profile`) — **pero ninguna de estas clases aparece referenciada en ningún archivo `.js`**, es decir, CSS huérfano a la espera de un renderer.
+
+Lo que NO existe actualmente:
+- No hay ninguna función que calcule `g1Score` / `g2Score` en todo el proyecto (búsqueda exhaustiva: 0 coincidencias).
+- `Stats.calculateInternalScore()` NO devuelve `g1Score` ni `g2Score`.
+- `Deck.render()` NO recalcula ningún G1/G2 Score en tiempo real.
+- La fórmula descrita más abajo (BasePower × L1 × L2 × L4 × L5 × Reliability) representa el **diseño previsto**, no una fórmula implementada — no hay ningún lugar del código que la ejecute.
+- `segmentDescription()` (NomenclatureAnalyzer, `data.js:2208`) está definida pero no se invoca desde ningún otro punto del código; es la pieza que debería alimentar las capas L1/L2/L4/L5 y actualmente no está conectada.
+
+**Fórmula prevista (pendiente de implementar):**
 ```
 CardScore = BasePower(L3) × L1_mult × L2_mult × L4_mult × L5_mult × Reliability
 
@@ -338,6 +383,7 @@ g1g2Roles[dominantRole] === 'g1' → g1Score
 g1g2Roles[dominantRole] === 'g2' → g2Score
 'neutral'                        → 50/50
 ```
+**Antes de trabajar en esta área:** confirma con el usuario si el objetivo es (a) terminar de conectar el cálculo con la config ya guardada, o (b) el panel de Config quedó adelantado a propósito y el cálculo vendrá después. No asumas que ya funciona.
 
 ### 7.3 External Score (deck activo)
 `Stats.calculateExternalScore()` — deck vs powerScoreCache.
@@ -351,6 +397,7 @@ Devuelve `{externalScore, g1Vulnerability, g2Vulnerability, ...}`.
 Reglas `[ganador, perdedor]`. `perdedor='ninguno'` → ese pilar no tiene counter. Modificadores: ×1.25 ventaja / ×0.75 desventaja / ×1.0 neutral.
 
 ### 7.6 Scoring Avanzado — métodos save en Config
+Estos métodos SÍ funcionan (guardan correctamente en `yugioh_config`); lo que falta es el consumidor de estos datos (ver 7.2).
 
 | Función | Qué guarda |
 |---------|-----------|
@@ -414,7 +461,7 @@ El badge de nombre es siempre el elemento visible. El input se oculta con `displ
 | 14 | Había que abrir cada deck del meta para calcular scores | `estadisticas.js` | `recalculateAllMetaDeckScores` ahora async: descarga cartas faltantes de todos los decks automáticamente en 3 fases |
 | 15 | Borrar "Cache" no limpiaba `metaDeckScores` en memoria | `formacion.js` | Añadido `Estadisticas.metaDeckScores = {}` |
 | 16 | Borrar "Carpetas del Meta" dejaba cross-scores y deck scores | `formacion.js` | Limpia `yugioh_meta_decks`, `yugioh_meta_deck_scores`, `yugioh_cross_scores` |
-| 17 | `segmentDescription` ausente en `NomenclatureAnalyzer` | `data.js` | Reintegrada; sin ella las capas L1–L5 no aplicaban multiplicadores |
+| 17 | `segmentDescription` ausente en `NomenclatureAnalyzer` | `data.js` | Reintegrada como función; **nota (Jul 2026): sigue sin ser invocada desde ningún otro módulo — ver 7.2, las capas L1–L5 aún no aplican multiplicadores en tiempo de ejecución** |
 
 ---
 
@@ -423,9 +470,11 @@ El badge de nombre es siempre el elemento visible. El input se oculta con `displ
 **YGOProDeck** (sin auth, CORS libre)
 ```
 Base: https://db.ygoprodeck.com/api/v7/
-cardinfo.php?name=  cardinfo.php?id=  cardinfo.php?fname=
-archetypes.php      cardsets.php
-cardinfo.php        ← fetch completo usado por DefaultData._initGenesys()
+cardinfo.php?id=      búsqueda/lookup por ID (batch con IDs separados por coma)
+cardinfo.php?fname=   búsqueda difusa por nombre (usada por el buscador; no se usa ?name=)
+archetypes.php        lista de arquetipos
+cardsets.php          lista de packs/sets
+cardinfo.php          fetch completo sin filtros, usado por DefaultData._initGenesys()
 
 Imágenes:
 https://images.ygoprodeck.com/images/cards/{id}.jpg        → full
@@ -447,8 +496,9 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 | `.scoring-row` / `.scoring-grid` | style_config | Filas en Scoring G1/G2 |
 | `.config-section-block` / `.config-block-title` | style_config | Bloques dentro de Scoring Avanzado |
 | `.scoring-layer-col` / `.scoring-layer-entry` | style_config | Columnas y entradas de capas |
-| `.asb-bar-track` / `.asb-bar-fill` | style_simuladores | Barras de score |
-| `.analysis-g1g2-row` / `.analysis-g1g2-item` | style_simuladores | Bloque G1/G2 en análisis |
+| `.asb-bar-track` / `.asb-bar-fill` | style_simuladores | Barras de score (Internal/External) en Análisis |
+| `.analysis-g1g2-row` / `.analysis-g1g2-item` | style_simuladores | **Huérfanas** — definidas pero sin ninguna referencia en JS (ver 7.2) |
+| `.opt-*` (form, session-bar, badges…) | style_mideck | Panel de Optimización (deck testing) en Mi Deck |
 | `#meta-update-overlay` | inline en estadisticas.js | Overlay de carga del Actualizar Scores |
 
 ---
@@ -477,8 +527,12 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 - Decks del meta → `calculateCrossExternalScores()` → N×N real
 
 **Diferencia clave entre Peso de Rol y Poder Base:**
-- `roleWeights` → escala 0.1–2.0 → Internal Score clásico (rendimientos decrecientes)
-- `roleBasePower` → escala 0–10 → G1/G2 Score únicamente
+- `roleWeights` → escala 0.1–2.0 → Internal Score clásico (rendimientos decrecientes) — ACTIVO
+- `roleBasePower` → escala 0–10 → pensado para G1/G2 Score — guardado en config, aún sin consumidor (ver 7.2)
+
+**Pendiente conocido (no es bug, es feature a medio construir):**
+- El sistema G1/G2 Score (config + UI completos) no tiene motor de cálculo conectado.
+  Ver detalle completo en la sección 7.2 antes de asumir que "ya existe".
 
 **Regla de oro para añadir una sección a Config:**
 1. Añadir el bloque HTML en `Config.render()` con el ID de sección
