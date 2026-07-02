@@ -2255,6 +2255,24 @@
 }
 .opt-record-hdr { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .opt-rec-date { font-size: .78rem; opacity: .65; flex: 1; }
+.opt-rec-deck-id {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 4px;
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--gold-color, #FFD700);
+    opacity: .85;
+}
+.opt-rec-deck-img {
+    width: 20px;
+    height: 29px;
+    object-fit: cover;
+    border-radius: 3px;
+    border: 1px solid rgba(255,215,0,.3);
+    flex-shrink: 0;
+}
 .opt-score-main {
     font-size: .82rem;
     font-weight: 700;

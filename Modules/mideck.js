@@ -1655,6 +1655,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             ➕ Nueva Ronda de Duelo${isActive ? ` <span class="opt-round-count">#${activeRounds + 1}</span>` : ''}
             </h3>
         <div id="opt-form-sec" class="deck-section-content" style="display:block;">
+            <div class="opt-record opt-form-card">
             <div class="opt-form-grid">
 
                 <div class="opt-group-hdr opt-full">⚔ Resultado</div>
@@ -1764,6 +1765,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
 
             </div>
             <button class="opt-submit-btn" onclick="Deck.addOptimizacionRound()">➕ Registrar Ronda de Duelo</button>
+            </div>
         </div>`;
 
         // ── HISTORIAL DE SESIONES ─────────────────────────────────────────
@@ -1771,6 +1773,12 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             html += `<h3 class="deck-section-title" style="margin-top:14px;" onclick="Deck.toggleSection('opt-hist-sec')">
                 📊 Historial de Sesiones <span style="font-size:.72em;opacity:.6">(${sessions.length})</span>
             </h3><div id="opt-hist-sec" class="deck-section-content">`;
+
+            const cartaAsCard = Object.values(this.cards).find(c => c.roles?.includes('Carta As'));
+            const coverCard   = cartaAsCard || this.getMostRepeatedCard(this.cards);
+            const coverImg    = coverCard
+                ? (coverCard.data ? coverCard.data.card_images[0].image_url_small : coverCard.card_images[0].image_url_small)
+                : 'https://images.ygoprodeck.com/images/cards/6983839.jpg';
 
             sessions.forEach((sess, si) => {
                 const m    = this.calcOptMetrics(sess);
@@ -1796,6 +1804,10 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                             ${sess.date}${sess.label ? ` — ${sess.label}` : ''}
                             <span class="opt-rounds-pill">${m.p} rondas</span>
                             ${isThisActive ? '<span class="opt-active-pill">🟢 activa</span>' : ''}
+                            <span class="opt-rec-deck-id">
+                                <img src="${coverImg}" alt="${this.name}" class="opt-rec-deck-img">
+                                ${this.name}
+                            </span>
                         </span>
                         <span class="opt-score-main ${sCls}">${m.score} pts ${tr(m.score, prev?.score, true)} · ${sLbl}</span>
                         <button class="opt-edit-btn" onclick="Deck.editOptimizacionRecord(${sess.id})" title="Reabrir sesión">🔁</button>
