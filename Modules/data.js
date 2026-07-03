@@ -316,7 +316,7 @@ const ConfigManager = {
 
         // ── Scoring G1/G2 ──────────────────────────────────────────
         g1g2Roles: {
-            'Starter': 'g1', 'Starter(normal summon)': 'g1', 'Extender': 'g1',
+            'Starter': 'g1', 'Starter (normal summon)': 'g1', 'Extender': 'g1',
             'Booster': 'g1', 'Boss Monster': 'g1', 'Tower': 'g1',
             'Token Summoner': 'g1', 'Ignition': 'g1', 'Stun': 'g1',
             'Stun-Banish': 'g1', 'Stun-Special': 'g1', 'Stun-GY': 'g1',
@@ -324,7 +324,7 @@ const ConfigManager = {
             'Handtrap': 'g2', 'Boardbreaker': 'g2', 'Disruptor': 'g2',
             'Removal': 'g2', 'Negate-activation': 'g2', 'Negate-effect': 'g2',
             'Negater': 'g2', 'Handloop': 'g2', 'Speed-4': 'g2', 'Anti-damage': 'g2',
-            'Searcher': 'neutral', 'Searcher(archetype)': 'neutral', 'Searcher(milling)': 'neutral',
+            'Searcher': 'neutral', 'Searcher (archetype)': 'neutral', 'Searcher (milling)': 'neutral',
             'Recycler': 'neutral', 'Draw-engine': 'neutral', 'LP Restore': 'neutral',
             'Protector': 'neutral', 'Grinding Card': 'neutral', 'Banished Card': 'neutral',
             'HARD-once-per-turn': 'neutral', 'SOFT-once-per-turn': 'neutral',
@@ -338,8 +338,8 @@ const ConfigManager = {
             'Negate-effect': 8, 'Negater': 8, 'Tower': 8,
             'Protector': 7, 'Stun': 7, 'Stun-Effect': 7, 'Stun-Special': 7, 'Stun-Draw': 7,
             'Stun-Banish': 6, 'Stun-GY': 6, 'Starter': 6, 'Searcher': 6,
-            'Searcher(archetype)': 6, 'Handtrap': 6, 'Disruptor': 6, 'Removal': 6,
-            'Extender': 5, 'Starter(normal summon)': 5, 'Searcher(milling)': 5,
+            'Searcher (archetype)': 6, 'Handtrap': 6, 'Disruptor': 6, 'Removal': 6,
+            'Extender': 5, 'Starter (normal summon)': 5, 'Searcher (milling)': 5,
             'Recycler': 5, 'Boss Monster': 5, 'Speed-4': 5, 'Handloop': 5,
             'Draw-engine': 4, 'Booster': 4, 'Destroyer': 4, 'Non-target': 4,
             'Untargetable': 4, 'Undestroyable': 4, 'Grinding Card': 4, 'Banished Card': 4,
@@ -1405,6 +1405,9 @@ const Stats = {
     let mainCards = 0;
     let totalCards = 0;
 
+    let g1Score = 0;
+    let g2Score = 0;
+
     const getRoleWeight = (roleName) => window.ConfigManager?.getRoleWeight?.(roleName) ?? 1.0;
 
     for (const [, item] of Object.entries(cards)) {
@@ -1425,6 +1428,35 @@ const Stats = {
             const weight = getRoleWeight(r);
             if (!roleCounters[r]) { roleCounters[r] = 0; roleWeights[r] = weight; }
             roleCounters[r] += effectiveQty;
+        });
+
+        // ── G1/G2 Score (Going First / Going Second) ──────────────
+        const rawDesc  = item.data?.desc || '';
+        const segments = window.NomenclatureAnalyzer?.segmentDescription
+            ? NomenclatureAnalyzer.segmentDescription(rawDesc) : {};
+        const layers = window.ConfigManager?.getScoringLayers?.() || {};
+
+        const layerMult = ['L1', 'L2', 'L4', 'L5'].reduce((mult, lKey) => {
+            const layer = layers[lKey];
+            if (!layer) return mult;
+            const text  = (segments[layer.nomenclatureCategory] || []).join(' ');
+            const entry = (layer.entries || []).find(en =>
+                (en.keywords || []).some(kw => text.includes(kw.toLowerCase())));
+            return mult * (entry ? entry.multiplier : 1.0);
+        }, 1.0);
+
+        const reliability = window.ConfigManager?.getReliability
+            ? ConfigManager.getReliability(qty) : 1.0;
+
+        (item.roles || []).forEach(roleOriginal => {
+            const basePower = window.ConfigManager?.getRoleBasePower
+                ? ConfigManager.getRoleBasePower(roleOriginal) : 3;
+            const cardScore = basePower * layerMult * reliability;
+            const context   = window.ConfigManager?.getRoleG1G2
+                ? ConfigManager.getRoleG1G2(roleOriginal) : 'neutral';
+            if (context === 'g1')      g1Score += cardScore;
+            else if (context === 'g2') g2Score += cardScore;
+            else { g1Score += cardScore * 0.5; g2Score += cardScore * 0.5; }
         });
     }
 
@@ -1477,7 +1509,9 @@ const Stats = {
         resilience:    parseFloat(resilience.toFixed(2)),
         totalCards,
         mainCards,
-        penalty:       parseFloat(penalty.toFixed(2))
+        penalty:       parseFloat(penalty.toFixed(2)),
+        g1Score:       parseFloat(g1Score.toFixed(2)),
+        g2Score:       parseFloat(g2Score.toFixed(2)),
     };
 },// ===============================
     // ===============================
@@ -1667,7 +1701,9 @@ const Stats = {
             hasSpecData:      false,
             baseline:         null,
             totalThreat:      0,
-            threatPct:        0
+            threatPct:        0,
+            g1Vulnerability:  null,
+            g2Vulnerability:  null,
         };
 
 if (window.SpecialtyAnalyzer) {
@@ -1770,7 +1806,35 @@ if (powerScoreCache && powerScoreCache.cards) {
         }else if (result.hasPowerData) {
             result.externalScore = 0;
         }
+if (result.hasPowerData && result.hasSpecData && window.ConfigManager?.getRoleG1G2) {
+            const classify = (specNames) => {
+                const ctxs = specNames.map(s => ConfigManager.getRoleG1G2(s));
+                if (ctxs.includes('g1') && !ctxs.includes('g2')) return 'g1';
+                if (ctxs.includes('g2') && !ctxs.includes('g1')) return 'g2';
+                return 'neutral';
+            };
+            let g1Threat = 0, g2Threat = 0, g1Base = 0, g2Base = 0;
 
+            result.threatCards.forEach(tc => {
+                const ctx = classify(tc.countersSpecs);
+                if (ctx === 'g1') g1Threat += tc.threatLevel;
+                else if (ctx === 'g2') g2Threat += tc.threatLevel;
+            });
+
+            (powerScoreCache.cards || [])
+                .filter(c => c.isCounter && c.counterBonus > 0)
+                .forEach(c => {
+                    const specs = (c.specAnalysis?.counters || []).map(x => x.countersSpec).filter(Boolean);
+                    const ctx   = classify(specs);
+                    if (ctx === 'g1') g1Base += c.counterBonus;
+                    else if (ctx === 'g2') g2Base += c.counterBonus;
+                });
+
+            result.g1Vulnerability = g1Base > 0
+                ? parseFloat(Math.max(0, (1 - Math.min(1, g1Threat / g1Base)) * 10).toFixed(1)) : null;
+            result.g2Vulnerability = g2Base > 0
+                ? parseFloat(Math.max(0, (1 - Math.min(1, g2Threat / g2Base)) * 10).toFixed(1)) : null;
+        }
         if (result.threatCards.length > 0 && metaDecks) {
             const threatIds = new Set(result.threatCards.map(c => String(c.cardId)));
             const allDecks  = [];

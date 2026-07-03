@@ -146,21 +146,26 @@ calculateCrossExternalScores: function () {
         let totalThreat  = 0;
         let baseline     = 0;
         const matchups   = [];
+        let g1Threat = 0, g2Threat = 0, g1Base = 0, g2Base = 0;
 
         profiles.forEach(deckB => {
             if (deckB.key === deckA.key) return;
 
-            // → copias de counters de B que apuntan a mecánicas de A
-            let threat = 0;
+            let threat = 0, g1SpecThreat = 0, g2SpecThreat = 0;
             Object.entries(deckB.ownCounters).forEach(([spec, copies]) => {
                 if (deckA.ownMechanics[spec]) {
-                    threat += copies * Math.sqrt(deckA.ownMechanics[spec]);
+                    const specThreat = copies * Math.sqrt(deckA.ownMechanics[spec]);
+                    threat += specThreat;
+                    const ctx = window.ConfigManager?.getRoleG1G2 ? ConfigManager.getRoleG1G2(spec) : 'neutral';
+                    if (ctx === 'g1') g1SpecThreat += specThreat;
+                    else if (ctx === 'g2') g2SpecThreat += specThreat;
                 }
             });
 
             // Escalar por internal score de B (un deck más fuerte golpea más fuerte)
             const bStrength = deckB.internalScore / maxInternalScore;
-            threat *= (0.5 + bStrength * 0.5);
+            const scale = (0.5 + bStrength * 0.5);
+            threat *= scale; g1SpecThreat *= scale; g2SpecThreat *= scale;
 
             // Modificador RPS (pilares)
             let rpsModifier = 1.0;
@@ -169,13 +174,19 @@ calculateCrossExternalScores: function () {
                 const rps = Stats.calculateRPSModifier(deckB.dominantPillar, deckA.dominantPillar);
                 rpsModifier = rps.modifier;
             }
-            threat *= rpsModifier;
+            threat *= rpsModifier; g1SpecThreat *= rpsModifier; g2SpecThreat *= rpsModifier;
 
-            const maxPossible = Object.values(deckB.ownCounters).reduce((s, v) => s + v, 0)
-                              * (0.5 + bStrength * 0.5) * 1.25;
+            const maxPossible = Object.values(deckB.ownCounters).reduce((s, v) => s + v, 0) * scale * 1.25;
+            const g1Max = Object.entries(deckB.ownCounters)
+                .filter(([s]) => (window.ConfigManager?.getRoleG1G2?.(s) || 'neutral') === 'g1')
+                .reduce((s, [, v]) => s + v, 0) * scale * 1.25;
+            const g2Max = Object.entries(deckB.ownCounters)
+                .filter(([s]) => (window.ConfigManager?.getRoleG1G2?.(s) || 'neutral') === 'g2')
+                .reduce((s, [, v]) => s + v, 0) * scale * 1.25;
 
-            baseline    += maxPossible;
-            totalThreat += threat;
+            baseline    += maxPossible; totalThreat += threat;
+            g1Base += g1Max; g2Base += g2Max;
+            g1Threat += g1SpecThreat; g2Threat += g2SpecThreat;
 
             if (threat > 0) {
                 matchups.push({
@@ -196,6 +207,8 @@ calculateCrossExternalScores: function () {
 
         result[deckA.key] = {
             crossExternalScore,
+            g1Vulnerability: g1Base > 0 ? parseFloat(Math.max(0,(1-Math.min(1,g1Threat/g1Base))*10).toFixed(1)) : null,
+            g2Vulnerability: g2Base > 0 ? parseFloat(Math.max(0,(1-Math.min(1,g2Threat/g2Base))*10).toFixed(1)) : null,
             totalThreat:  parseFloat(totalThreat.toFixed(2)),
             baseline:     parseFloat(baseline.toFixed(2)),
             matchups:     matchups.slice(0, 5),
@@ -307,6 +320,8 @@ _computeAndSaveMetaDeckScore: function (folderName, deckFilename) {
             power:       parseFloat(internalResult.power),
             resilience:  parseFloat(internalResult.resilience)
         } : null,
+        g1Score: internalResult ? parseFloat(internalResult.g1Score) : null,
+        g2Score: internalResult ? parseFloat(internalResult.g2Score) : null,
         externalScore,
         calculatedAt:  Date.now()
     };
@@ -1950,6 +1965,14 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
             ? parseFloat(Math.min(10, externalScoreRaw * rps.modifier).toFixed(1))
             : null;
 
+            const g1g2Profile = (() => {
+            const g1 = internalStats.g1Score || 0, g2 = internalStats.g2Score || 0;
+            if (g1 === 0 && g2 === 0) return '';
+            if (g1 > g2 * 1.3) return '🎲 Deck dependiente del dado — necesita ir primero.';
+            if (g2 > g1 * 1.3) return '🛡️ Deck reactivo — más cómodo yendo segundo.';
+            return '⚖️ Deck equilibrado entre Going First y Going Second.';
+        })();
+
         const iColor = internalScore >= 20 ? '#00b894' : internalScore >= 10 ? '#fdcb6e' : '#d63031';
         const eColor = externalScore === null ? '#636e72'
                      : externalScore >= 7 ? '#00b894'
@@ -2098,6 +2121,30 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
                         </div>` : '<div class="asb-bar-track"></div>'}
                         <div class="asb-label">External Score</div>
                     </div>
+                    <div class="analysis-block">
+                    <div class="analysis-block-title">🎲 Going First / Going Second</div>
+                    <div class="analysis-g1g2-row">
+                        <div class="analysis-g1g2-item">
+                            <span class="analysis-g1g2-label">Fortaleza G1</span>
+                            <span class="analysis-g1g2-val">${internalStats.g1Score}</span>
+                        </div>
+                        <div class="analysis-g1g2-item">
+                            <span class="analysis-g1g2-label">Fortaleza G2</span>
+                            <span class="analysis-g1g2-val">${internalStats.g2Score}</span>
+                        </div>
+                        ${analysis.g1Vulnerability !== null ? `
+                        <div class="analysis-g1g2-item">
+                            <span class="analysis-g1g2-label">Vulnerabilidad G1</span>
+                            <span class="analysis-g1g2-val">${analysis.g1Vulnerability}/10</span>
+                        </div>` : ''}
+                        ${analysis.g2Vulnerability !== null ? `
+                        <div class="analysis-g1g2-item">
+                            <span class="analysis-g1g2-label">Vulnerabilidad G2</span>
+                            <span class="analysis-g1g2-val">${analysis.g2Vulnerability}/10</span>
+                        </div>` : ''}
+                    </div>
+                    <div class="analysis-g1g2-detail analysis-g1g2-profile">${g1g2Profile}</div>
+                </div>
                 </div>
 
                 ${rpsHTML}
