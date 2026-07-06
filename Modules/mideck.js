@@ -1819,7 +1819,8 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     ? Math.round(m.rFirst.filter(r=>r.resultado==='victoria').length / m.rFirst.length * 100) : null;
                 const wrSecond = m.rSecond.length
                     ? Math.round(m.rSecond.filter(r=>r.resultado==='victoria').length / m.rSecond.length * 100) : null;
-
+                const lrFirst  = wrFirst  !== null ? 100 - wrFirst  : null;
+                const lrSecond = wrSecond !== null ? 100 - wrSecond : null;
                 html += `
                 <div class="opt-record${isThisActive ? ' opt-record-active' : ''}">
                     <div class="opt-record-hdr">
@@ -1849,8 +1850,8 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     </div>
 
                     <div class="opt-order-split">
-                        ${wrFirst  !== null ? `<span class="opt-order-chip opt-order-first">🥇 Primero: ${wrFirst}% WR (${m.rFirst.length})</span>` : ''}
-                        ${wrSecond !== null ? `<span class="opt-order-chip opt-order-second">🥈 Segundo: ${wrSecond}% WR (${m.rSecond.length})</span>` : ''}
+                        ${wrFirst  !== null ? `<span class="opt-order-chip opt-order-first">🥇 Primero (${m.rFirst.length}): ${wrFirst}% WR · ${lrFirst}% LR (${m.rFirst.filter(r=>r.resultado==='victoria').length}V/${m.rFirst.filter(r=>r.resultado==='derrota').length}D)</span>` : ''}
+                        ${wrSecond !== null ? `<span class="opt-order-chip opt-order-second">🥈 Segundo (${m.rSecond.length}): ${wrSecond}% WR · ${lrSecond}% LR (${m.rSecond.filter(r=>r.resultado==='victoria').length}V/${m.rSecond.filter(r=>r.resultado==='derrota').length}D)</span>` : ''}
                     </div>
 
                     <div class="opt-turn-dist-block">
