@@ -7,6 +7,8 @@
 const Matchups = {
 
     STORAGE_PREFIX: 'matchup_',
+    _sortBy: 'duelos',           // 'duelos' | 'victorias' | 'derrotas'
+    _activeFilterDeck: null,     // nombre exacto del deck seleccionado para filtrar Historial de Sesiones
 
     // ─── PERSISTENCIA ────────────────────────────────────────
     _key: function () {
@@ -46,50 +48,8 @@ _totals: function (m) {
     renderSection: function () {
         if (!window.Deck?.name) return '';
 
-        const list = this.getAll();
-        const count = list.length;
-
-        let rows = '';
-        if (count === 0) {
-            rows = `<p class="matchup-empty">Sin enfrentamientos registrados aún.</p>`;
-        } else {
-            list.forEach((m, i) => {
-                const { w, l, total } = this._totals(m);
-                const pct   = total > 0 ? Math.round((w / total) * 100) : null;
-                const col   = pct === null ? 'rgba(255,255,255,0.3)' : pct >= 60 ? '#00b894' : pct >= 45 ? '#fdcb6e' : '#d63031';
-                const hasDeck = m.cardData && Object.keys(m.cardData).length > 0;
-                const wr1pct = (m.wins1st||0)+(m.losses1st||0) > 0
-                    ? Math.round(((m.wins1st||0) / ((m.wins1st||0)+(m.losses1st||0))) * 100) : null;
-                const wr2pct = (m.wins2nd||0)+(m.losses2nd||0) > 0
-                    ? Math.round(((m.wins2nd||0) / ((m.wins2nd||0)+(m.losses2nd||0))) * 100) : null;
-
-                rows += `
-                <div class="matchup-row" id="matchup-row-${i}">
-                    <div class="matchup-row-main">
-                        <div class="matchup-opponent-name">${m.opponentName || '—'}</div>
-                        <div class="matchup-stats">
-                            <span class="matchup-wr" style="color:${col}">
-                                ${w}W – ${l}L${pct !== null ? ` · ${pct}%` : ''}
-                            </span>
-                            <span class="matchup-wr-detail">
-                                1ro: ${m.wins1st||0}W/${m.losses1st||0}L${wr1pct!==null?` (${wr1pct}%)`:''}
-                                &nbsp;·&nbsp;
-                                2do: ${m.wins2nd||0}W/${m.losses2nd||0}L${wr2pct!==null?` (${wr2pct}%)`:''}
-                            </span>
-                        </div>
-                        <div class="matchup-row-btns">
-                            ${hasDeck ? `<button class="matchup-btn matchup-btn-deck"
-                                onclick="Matchups.openDeckPanel(${i})">🃏 Ver Deck</button>` : ''}
-                            <button class="matchup-btn matchup-btn-edit"
-                                    onclick="Matchups.openEditPanel(${i})">✏️ Editar</button>
-                            <button class="matchup-btn matchup-btn-del"
-                                    onclick="Matchups.deleteRecord(${i})">✕</button>
-                        </div>
-                    </div>
-                    ${m.notes ? `<div class="matchup-notes-preview">${m.notes}</div>` : ''}
-                </div>`;
-            });
-        }
+        const count = this.getAll().length;
+        const rows  = this._renderRows();
 
         return `
             <h3 class="deck-section-title" onclick="Deck.toggleSection('matchups-sec')">
@@ -101,6 +61,11 @@ _totals: function (m) {
                             onclick="Matchups.openAddPanel()">＋ Agregar enfrentamiento</button>
                     ${count > 0 ? `<button class="matchup-btn matchup-btn-clear"
                             onclick="Matchups.clearAll()">🗑 Borrar todo</button>` : ''}
+                    ${count > 1 ? `<select class="matchup-sort-sel" onchange="Matchups.setSortBy(this.value)">
+                        <option value="duelos"    ${this._sortBy==='duelos'?'selected':''}>Ordenar: Duelos</option>
+                        <option value="victorias" ${this._sortBy==='victorias'?'selected':''}>Ordenar: Victorias</option>
+                        <option value="derrotas"  ${this._sortBy==='derrotas'?'selected':''}>Ordenar: Derrotas</option>
+                    </select>` : ''}
                 </div>
                 <div class="matchup-list" id="matchup-list">
                     ${rows}
@@ -108,36 +73,34 @@ _totals: function (m) {
             </div>`;
     },
 
-    // Refresca solo la lista interna (evita re-render completo del deck)
-    _refreshList: function () {
-        const listEl = document.getElementById('matchup-list');
-        const badgeEl = document.querySelector('.matchup-count-badge');
-        if (!listEl) { if (window.Deck) Deck.render(); return; }
+    // Genera las filas ordenadas según _sortBy, resaltando el deck filtrado si aplica
+    _renderRows: function () {
+        const list = this.getAll();
+        if (!list.length) return `<p class="matchup-empty">Sin enfrentamientos registrados aún.</p>`;
 
-        const list  = this.getAll();
-        const count = list.length;
-
-        if (badgeEl) badgeEl.textContent = count;
-
-        if (count === 0) {
-            listEl.innerHTML = `<p class="matchup-empty">Sin enfrentamientos registrados aún.</p>`;
-            return;
-        }
+        const sorted = list
+            .map((m, i) => ({ m, i, ...this._totals(m) }))
+            .sort((a, b) => {
+                if (this._sortBy === 'victorias') return b.w - a.w;
+                if (this._sortBy === 'derrotas')  return b.l - a.l;
+                return b.total - a.total;
+            });
 
         let rows = '';
-        list.forEach((m, i) => {
-            const { w, l, total } = this._totals(m);
+        sorted.forEach(({ m, i, w, l, total }) => {
             const pct   = total > 0 ? Math.round((w / total) * 100) : null;
             const col   = pct === null ? 'rgba(255,255,255,0.3)' : pct >= 60 ? '#00b894' : pct >= 45 ? '#fdcb6e' : '#d63031';
             const hasDeck = m.cardData && Object.keys(m.cardData).length > 0;
             const wr1pct = (m.wins1st||0)+(m.losses1st||0) > 0
-                ? Math.round(((m.wins1st||0)/((m.wins1st||0)+(m.losses1st||0)))*100) : null;
+                ? Math.round(((m.wins1st||0) / ((m.wins1st||0)+(m.losses1st||0))) * 100) : null;
             const wr2pct = (m.wins2nd||0)+(m.losses2nd||0) > 0
-                ? Math.round(((m.wins2nd||0)/((m.wins2nd||0)+(m.losses2nd||0)))*100) : null;
+                ? Math.round(((m.wins2nd||0) / ((m.wins2nd||0)+(m.losses2nd||0))) * 100) : null;
+            const isSelected = this._activeFilterDeck === m.opponentName;
+            const safeName = (m.opponentName || '').replace(/'/g, "\\'");
 
             rows += `
-            <div class="matchup-row" id="matchup-row-${i}">
-                <div class="matchup-row-main">
+            <div class="matchup-row${isSelected ? ' matchup-row-selected' : ''}" id="matchup-row-${i}">
+                <div class="matchup-row-main" onclick="Matchups.selectDeckFilter('${safeName}')">
                     <div class="matchup-opponent-name">${m.opponentName || '—'}</div>
                     <div class="matchup-stats">
                         <span class="matchup-wr" style="color:${col}">
@@ -151,18 +114,45 @@ _totals: function (m) {
                     </div>
                     <div class="matchup-row-btns">
                         ${hasDeck ? `<button class="matchup-btn matchup-btn-deck"
-                            onclick="Matchups.openDeckPanel(${i})">🃏 Ver Deck</button>` : ''}
+                            onclick="event.stopPropagation();Matchups.openDeckPanel(${i})">🃏 Ver Deck</button>` : ''}
                         <button class="matchup-btn matchup-btn-edit"
-                                onclick="Matchups.openEditPanel(${i})">✏️ Editar</button>
+                                onclick="event.stopPropagation();Matchups.openEditPanel(${i})">✏️ Editar</button>
                         <button class="matchup-btn matchup-btn-del"
-                                onclick="Matchups.deleteRecord(${i})">✕</button>
+                                onclick="event.stopPropagation();Matchups.deleteRecord(${i})">✕</button>
                     </div>
                 </div>
                 ${m.notes ? `<div class="matchup-notes-preview">${m.notes}</div>` : ''}
             </div>`;
         });
+        return rows;
+    },
 
-        listEl.innerHTML = rows;
+    setSortBy: function (key) {
+        this._sortBy = key;
+        this._refreshList();
+    },
+
+    // Selección exclusiva de deck: filtra "Historial de Sesiones" en Optimización
+    selectDeckFilter: function (name) {
+        this._activeFilterDeck = (this._activeFilterDeck === name) ? null : name;
+        const pane = document.getElementById('mideck-optimizacion-pane');
+        if (pane && window.Deck) pane.innerHTML = Deck.renderOptimizacionPane();
+    },
+
+    clearDeckFilter: function () {
+        this._activeFilterDeck = null;
+        const pane = document.getElementById('mideck-optimizacion-pane');
+        if (pane && window.Deck) pane.innerHTML = Deck.renderOptimizacionPane();
+    },
+
+    // Refresca solo la lista interna (evita re-render completo del deck)
+    _refreshList: function () {
+        const listEl  = document.getElementById('matchup-list');
+        const badgeEl = document.querySelector('.matchup-count-badge');
+        if (!listEl) { if (window.Deck) Deck.render(); return; }
+
+        badgeEl && (badgeEl.textContent = this.getAll().length);
+        listEl.innerHTML = this._renderRows();
     },
 
     // ─── PANEL AGREGAR ────────────────────────────────────────

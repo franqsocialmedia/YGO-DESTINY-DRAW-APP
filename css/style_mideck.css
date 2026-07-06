@@ -1058,6 +1058,12 @@
     transition: border-color 0.15s;
 }
 .matchup-row:hover { border-color: rgba(255,215,0,0.2); }
+.matchup-row-main { cursor: pointer; }
+.matchup-row-selected { border-color: #FFD700; background: rgba(255,215,0,0.06); }
+.matchup-sort-sel {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.75); border-radius: 6px; font-size: 0.74rem; padding: 4px 8px;
+}
 
 .matchup-row-main {
     display: flex;
@@ -2230,6 +2236,26 @@
     background: #1a0008;
     color: var(--text-light);
 }
+.opt-filter-banner {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.35);
+    border-radius: 8px; padding: 8px 12px; font-size: 0.8rem; color: #FFD700;
+    margin: 8px 0 14px;
+}
+.opt-filter-clear-btn {
+    background: rgba(214,48,49,0.15); border: 1px solid rgba(214,48,49,0.4);
+    color: #ff6b6b; border-radius: 6px; padding: 3px 9px; font-size: 0.72rem; cursor: pointer;
+}
+.opt-filter-clear-btn:hover { background: rgba(214,48,49,0.28); }
+.opt-oppdeck-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.opt-ydk-btn {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.75); border-radius: 6px; padding: 5px 10px;
+    font-size: 0.76rem; cursor: pointer;
+}
+.opt-ydk-btn:hover { background: rgba(255,255,255,0.12); }
+.opt-oppdeck-status { font-size: 0.72rem; color: rgba(255,255,255,0.6); }
+
 .opt-submit-btn {
     background: var(--gold-color);
     color: #000;

@@ -1346,20 +1346,6 @@ if (!isEmpty) {
     html += `<div data-section-id="deck-chart">${this.renderDeckStatsBlock()}</div>`;
 
     html += `
-        <h3 class="deck-section-title" onclick="Deck.toggleSection('notes-sec')">📝 Notas del Deck</h3>
-        <div id="notes-sec" class="deck-section-content" style="display:none;">
-            <textarea class="deck-notes-textarea"
-                placeholder="Anota estrategias, combos clave, mulligan ideal, matchups difíciles..."
-                oninput="Deck.notes = this.value"
-            >${this.notes || ''}</textarea>
-            <div class="deck-notes-hint">Las notas se guardan al presionar "Guardar Deck".</div>
-        </div>`;
-
-    if (window.Matchups) {
-        html += `<div data-section-id="deck-matchups">${Matchups.renderSection()}</div>`;
-    }
-
-    html += `
         <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('construccion-deck-stats-sec')">
             📈 Deck Activo - Internal Score
         </h3>
@@ -1453,11 +1439,12 @@ this.container.innerHTML = html;
         const p = Math.max(rounds.length, 1);
         const wins        = rounds.filter(r => r.resultado === 'victoria').length;
         const losses      = rounds.filter(r => r.resultado === 'derrota').length;
-        const bricks      = rounds.filter(r => (r.bricks || 0) >= 1 || r.brick).length;
+        const bricks      = rounds.filter(r => r.brick).length;
         const starters    = rounds.filter(r => (r.starter || 0) >= 1).length;
         const extenders   = rounds.filter(r => (r.extenders || 0) >= 1).length;
-        const combos      = rounds.filter(r => r.comboCompleto).length;
+        const rivalInterr = rounds.filter(r => (r.rivalInterrupciones || 0) >= 1 || r.comboCompleto).length;
         const boardBreaks = rounds.filter(r => r.rompioBoard).length;
+        const rivalBreaks = rounds.filter(r => (r.vecesRivalRompioBoard || 0) >= 1 || r.rivalRompio).length;
         const negates     = rounds.filter(r => r.negoJugada).length;
         const ftks        = rounds.filter(r => r.tipoVictoria === 'ftk').length;
         const rendiciones = rounds.filter(r => r.tipoVictoria === 'rendicion').length;
@@ -1470,6 +1457,8 @@ this.container.innerHTML = html;
         const avgStarter  = rounds.reduce((a, r) => a + (r.starter   || 0), 0) / p;
         const avgExtender = rounds.reduce((a, r) => a + (r.extenders || 0), 0) / p;
         const avgHandtrap = rounds.reduce((a, r) => a + (r.handtraps || 0), 0) / p;
+        const avgRivalInterr  = rounds.reduce((a, r) => a + (r.rivalInterrupciones    || 0), 0) / p;
+        const avgRivalBreaks  = rounds.reduce((a, r) => a + (r.vecesRivalRompioBoard  || 0), 0) / p;
         const htExceso    = rounds.filter(r => (r.handtraps || 0) >= 3).length;
 
         // ── Distribución de duelos por turno (ganados/perdidos) ──────
@@ -1489,17 +1478,18 @@ this.container.innerHTML = html;
         const br   = Math.round((bricks      / p) * 100);
         const str  = Math.round((starters    / p) * 100);
         const extr = Math.round((extenders   / p) * 100);
-        const cr   = Math.round((combos      / p) * 100);
+        const ri   = Math.round((rivalInterr / p) * 100);
+        const rib  = Math.round((rivalBreaks / p) * 100);
         const bb   = Math.round((boardBreaks / p) * 100);
         const ctrl = Math.round((negates     / p) * 100);
         const htRate = Math.round((htExceso  / p) * 100);
         const score = Math.min(100, Math.round(
-            (wr * 0.35) + ((100 - br) * 0.20) + (str * 0.15) + (cr * 0.15) + (bb * 0.10) + (ctrl * 0.05)
+            (wr * 0.35) + ((100 - br) * 0.20) + (str * 0.15) + ((100 - ri) * 0.15) + (bb * 0.10) + (ctrl * 0.05)
         ));
         return {
-            p, wins, losses, wr, br, str, extr, cr, bb, ctrl, htRate, score,
+            p, wins, losses, wr, br, str, extr, ri, rib, bb, ctrl, htRate, score,
             ftks, rendiciones, tiempoGan, tiempoPer, criticos, ajustados,
-            rFirst, rSecond, avgStarter, avgExtender, avgHandtrap,
+            rFirst, rSecond, avgStarter, avgExtender, avgHandtrap, avgRivalInterr, avgRivalBreaks,
             turnDist, turnTotal
         };
     },
@@ -1511,7 +1501,8 @@ this.container.innerHTML = html;
         if (m.str  < 60) w.push('⚠ Abre starter con poca frecuencia. Añade más cartas que inicien el combo.');
         if (m.str  > 85) w.push('⚠ Exceso de starters. Considera reducir 1-2 para añadir extenders o handtraps.');
         if (m.extr < 30 && m.p >= 5) w.push('⚠ Pocos extenders en mano. El combo se corta fácil ante disrupciones.');
-        if (m.cr   < 40) w.push('⚠ El motor completa pocos combos. Revisa los ratios del motor.');
+        if (m.ri   > 45) w.push('⚠ El rival interrumpe tus jugadas con frecuencia. Añade más protección u outs a hand traps.');
+        if (m.rib  > 30) w.push('⚠ El rival rompe tu campo seguido. Refuerza la resiliencia post-disrupción.');
         if (m.bb   < 30) w.push('⚠ Going Second débil. Considera más outs y rompedores de campo.');
         if (m.htRate > 35) w.push('⚠ Exceso de handtraps en mano (3+) frecuente. Reduce 1-2 para mejorar consistencia.');
         if (m.avgHandtrap < 0.5 && m.p >= 5) w.push('⚠ Casi sin handtraps en mano. Considera sumar 3-6 handtraps al main deck.');
@@ -1533,14 +1524,19 @@ this.container.innerHTML = html;
         if (!resultado) { alert('Selecciona Victoria o Derrota.'); return; }
         if (!orden)     { alert('Selecciona si fuiste Primero o Segundo.'); return; }
 
+        const oppName  = v('opt-r-oppname').trim();
+        const oppNotes = v('opt-r-oppnotes').trim();
+
         const round = {
             id:            Date.now(),
             orden,
             resultado,
+            oppDeck:       oppName || null,
             tipoVictoria:  resultado === 'victoria' ? (v('opt-r-tipo-vic') || 'normal') : null,
             tipoDerrota:   resultado === 'derrota'  ? (v('opt-r-tipo-der') || 'normal') : null,
             presionTiempo: v('opt-r-tiempo') || 'holgado',
-            comboCompleto: ck('opt-r-combo'),
+            rivalInterrumpio:      n('opt-r-combo') > 0,
+            rivalInterrupciones:   n('opt-r-combo'),
             bricks:        n('opt-r-bricks'),
             starter:       n('opt-r-starter'),
             extenders:     n('opt-r-extenders'),
@@ -1550,7 +1546,8 @@ negoJugada:       n('opt-r-negate') > 0,
 interrupciones:   n('opt-r-negate'),
 turnoVictoria:    resultado === 'victoria' ? (n('opt-r-turnovic') || null) : null,
 turnoDerrota:     resultado === 'derrota'  ? (n('opt-r-turnoder') || null) : null,
-rivalRompio:      ck('opt-r-rival'),
+rivalRompioBoard:      n('opt-r-rival') > 0,
+vecesRivalRompioBoard: n('opt-r-rival'),
 notas:            v('opt-r-notas').trim()
         };
 
@@ -1573,12 +1570,14 @@ notas:            v('opt-r-notas').trim()
         sess.rounds.push(round);
         localStorage.setItem(`optimization_${this.name}`, JSON.stringify(data));
 
+        this._syncRoundToMatchup(oppName, round, oppNotes);
+
         // Reset campos de ronda (conserva label y sesión activa)
-        ['opt-r-resultado','opt-r-orden','opt-r-tipo-vic','opt-r-tipo-der','opt-r-notas']
+        ['opt-r-resultado','opt-r-orden','opt-r-tipo-vic','opt-r-tipo-der','opt-r-notas','opt-r-oppname','opt-r-oppnotes']
             .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-        ['opt-r-combo','opt-r-rival']
-        .forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
-        ['opt-r-starter','opt-r-extenders','opt-r-handtraps','opt-r-bricks','opt-r-board','opt-r-negate']
+        const oppStatusEl = document.getElementById('opt-oppdeck-status');
+        if (oppStatusEl) oppStatusEl.textContent = '';
+        ['opt-r-starter','opt-r-extenders','opt-r-handtraps','opt-r-bricks','opt-r-board','opt-r-negate','opt-r-combo','opt-r-rival']
             .forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
         const tvEl = document.getElementById('opt-r-turnovic');
         if (tvEl) tvEl.value = '';
@@ -1593,6 +1592,66 @@ notas:            v('opt-r-notas').trim()
 
         const pane = document.getElementById('mideck-optimizacion-pane');
         if (pane) pane.innerHTML = this.renderOptimizacionPane();
+    },
+
+   _pendingOppCardData: null,
+
+    _importOppYDK: function() {
+        if (!window.Matchups) return;
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.ydk';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const statusEl = document.getElementById('opt-oppdeck-status');
+            if (statusEl) statusEl.textContent = '⏳ Importando .ydk...';
+            try {
+                const text  = await file.text();
+                const cards = await Matchups._parseYDKToCards(text);
+                if (!cards || !Object.keys(cards).length) {
+                    if (statusEl) statusEl.textContent = '❌ No se pudieron resolver las cartas';
+                    return;
+                }
+                this._pendingOppCardData = cards;
+                const nameEl = document.getElementById('opt-r-oppname');
+                if (nameEl && !nameEl.value.trim()) nameEl.value = file.name.replace('.ydk', '');
+                if (statusEl) statusEl.textContent = `✅ YDK importado (${Object.keys(cards).length} cartas únicas)`;
+            } catch (_) {
+                if (statusEl) statusEl.textContent = '❌ Error al procesar el archivo';
+            }
+        };
+        input.click();
+    },
+
+    // Crea o actualiza el registro de Matchups correspondiente al nombre exacto ingresado
+    _syncRoundToMatchup: function(name, round, oppNotes) {
+        if (!name || !window.Matchups) { this._pendingOppCardData = null; return; }
+
+        const list = Matchups.getAll();
+        let rec = list.find(m => m.opponentName === name);
+        const isWin   = round.resultado === 'victoria';
+        const isFirst = round.orden === 'primero';
+
+        if (!rec) {
+            rec = {
+                id: Matchups._uid(), opponentName: name,
+                wins1st: 0, losses1st: 0, wins2nd: 0, losses2nd: 0,
+                notes: '', cardData: null, createdAt: Date.now()
+            };
+            list.push(rec);
+        }
+
+        if (isWin && isFirst)        rec.wins1st   = (rec.wins1st   || 0) + 1;
+        else if (!isWin && isFirst)  rec.losses1st = (rec.losses1st || 0) + 1;
+        else if (isWin && !isFirst)  rec.wins2nd   = (rec.wins2nd   || 0) + 1;
+        else                         rec.losses2nd = (rec.losses2nd || 0) + 1;
+
+        if (this._pendingOppCardData && !rec.cardData) rec.cardData = this._pendingOppCardData;
+        if (oppNotes) rec.notes = rec.notes ? `${rec.notes}\n${oppNotes}` : oppNotes;
+
+        Matchups.save(list);
+        this._pendingOppCardData = null;
     },
 
     cerrarSesionOptimizacion: function() {
@@ -1652,11 +1711,32 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         const winB  = v => badge(v,[[65,101,'💎 Competitivo','opt-c-green'],[55,65,'✅ Sólido','opt-c-blue'],[40,55,'⚠ Inestable','opt-c-yellow'],[0,40,'❌ Débil','opt-c-red']]);
         const brkB  = v => badge(v,[[0,10,'💎 Excelente','opt-c-green'],[10,15,'✅ Aceptable','opt-c-blue'],[15,25,'⚠ Inestable','opt-c-yellow'],[25,101,'❌ Inconsistencia','opt-c-red']]);
         const strB  = v => v>=70&&v<=85?['✅ Ideal','opt-c-green']:v<60?['❌ Faltan starters','opt-c-red']:v<70?['⚠ Bajo el ideal','opt-c-yellow']:['⚠ Exceso','opt-c-yellow'];
-        const cmbB  = v => badge(v,[[60,101,'💎 Consistente','opt-c-green'],[40,60,'✅ Aceptable','opt-c-blue'],[0,40,'❌ Motor inconsistente','opt-c-red']]);
+        const riB   = v => badge(v,[[0,15,'💎 Resiliente','opt-c-green'],[15,30,'✅ Controlado','opt-c-blue'],[30,45,'⚠ Vulnerable','opt-c-yellow'],[45,101,'❌ Muy interrumpido','opt-c-red']]);
         const scrB  = v => badge(v,[[80,101,'💎 Competitivo','opt-c-green'],[65,80,'✅ Optimizado','opt-c-blue'],[50,65,'⚠ Funcional','opt-c-yellow'],[0,50,'❌ Desbalanceado','opt-c-red']]);
 
+        // ── NOTAS DEL DECK + HISTORIAL DE ENFRENTAMIENTOS (movido desde Construcción) ──
+        let html = `
+        <h3 class="deck-section-title" onclick="Deck.toggleSection('notes-sec')">📝 Notas del Deck</h3>
+        <div id="notes-sec" class="deck-section-content" style="display:none;">
+            <textarea class="deck-notes-textarea"
+                placeholder="Anota estrategias, combos clave, mulligan ideal, matchups difíciles..."
+                oninput="Deck.notes = this.value"
+            >${this.notes || ''}</textarea>
+            <div class="deck-notes-hint">Las notas se guardan al presionar "Guardar Deck".</div>
+        </div>`;
+
+        if (window.Matchups) {
+            html += `<div data-section-id="deck-matchups">${Matchups.renderSection()}</div>`;
+            if (Matchups._activeFilterDeck) {
+                html += `<div class="opt-filter-banner">
+                    🎯 Mostrando Historial de Sesiones solo vs <b>${Matchups._activeFilterDeck}</b>
+                    <button class="opt-filter-clear-btn" onclick="Matchups.clearDeckFilter()">✕ Quitar filtro</button>
+                </div>`;
+            }
+        }
+
         // ── BARRA DE SESIÓN ACTIVA ────────────────────────────────────────
-        let html = `<div class="opt-session-bar ${isActive ? 'opt-session-active' : ''}">`;
+        html += `<div class="opt-session-bar ${isActive ? 'opt-session-active' : ''}">`;
         if (isActive) {
             html += `<span class="opt-sess-indicator">🟢 Sesión activa · <b>${activeRounds}</b> ronda${activeRounds !== 1 ? 's' : ''}</span>
                      <input type="text" id="opt-label" class="opt-input opt-label-inline" placeholder="Etiqueta de sesión..." maxlength="50" value="${(activeSess.label || '').replace(/"/g,'&quot;')}">
@@ -1675,7 +1755,30 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             </h3>
         <div id="opt-form-sec" class="deck-section-content" style="display:block;">
             <div class="opt-record opt-form-card">
+            <datalist id="opt-matchup-suggestions">
+                ${(window.Matchups ? Matchups.getAll() : []).map(m =>
+                    `<option value="${(m.opponentName || '').replace(/"/g,'&quot;')}">`).join('')}
+            </datalist>
             <div class="opt-form-grid">
+
+                <div class="opt-group-hdr opt-full">🎯 Rival</div>
+
+                <div class="opt-form-row opt-full">
+                    <label class="opt-lbl">Deck del oponente</label>
+                    <input type="text" id="opt-r-oppname" class="opt-input" list="opt-matchup-suggestions"
+                           placeholder="Ej: Dragon Link, Snake-Eye Fire King..." maxlength="60">
+                </div>
+                <div class="opt-form-row opt-full">
+                    <label class="opt-lbl">Deck rival (.ydk, opcional)</label>
+                    <div class="opt-oppdeck-row">
+                        <button type="button" class="opt-ydk-btn" onclick="Deck._importOppYDK()">📂 Importar .ydk</button>
+                        <span id="opt-oppdeck-status" class="opt-oppdeck-status"></span>
+                    </div>
+                </div>
+                <div class="opt-form-row opt-full">
+                    <label class="opt-lbl">Notas del deck rival (opcional)</label>
+                    <input type="text" id="opt-r-oppnotes" class="opt-input" placeholder="Ej: control endboard, cuidado con Droll..." maxlength="200">
+                </div>
 
                 <div class="opt-group-hdr opt-full">⚔ Resultado</div>
 
@@ -1771,7 +1874,8 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 <div class="opt-group-hdr opt-full">⚙ Desarrollo</div>
 
                 <div class="opt-form-row">
-                    <label class="opt-lbl opt-cb-lbl"><input type="checkbox" id="opt-r-combo"> Combo completo</label>
+                    <label class="opt-lbl">🛑 Interrupciones importantes de parte del rival</label>
+                    <input type="number" id="opt-r-combo" class="opt-input" min="0" max="20" value="0">
                 </div>
                 <div class="opt-form-row">
                     <label class="opt-lbl">⚔️ Veces que rompí campo</label>
@@ -1782,7 +1886,8 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     <input type="number" id="opt-r-negate" class="opt-input" min="0" max="20" value="0">
                 </div>
                 <div class="opt-form-row">
-                    <label class="opt-lbl opt-cb-lbl"><input type="checkbox" id="opt-r-rival"> El rival rompió mi campo</label>
+                    <label class="opt-lbl">💢 Veces que mi oponente rompió el campo</label>
+                    <input type="number" id="opt-r-rival" class="opt-input" min="0" max="15" value="0">
                 </div>
 
                 <div class="opt-form-row opt-full">
@@ -1796,9 +1901,16 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         </div>`;
 
         // ── HISTORIAL DE SESIONES ─────────────────────────────────────────
+        const filterDeck  = window.Matchups ? Matchups._activeFilterDeck : null;
+        const viewSessions = filterDeck
+            ? sessions
+                .map(s => ({ ...s, rounds: (s.rounds || []).filter(r => r.oppDeck === filterDeck) }))
+                .filter(s => s.rounds.length > 0)
+            : sessions;
+
         if (sessions.length > 0) {
             html += `<h3 class="deck-section-title" style="margin-top:14px;" onclick="Deck.toggleSection('opt-hist-sec')">
-                📊 Historial de Sesiones <span style="font-size:.72em;opacity:.6">(${sessions.length})</span>
+                📊 Historial de Sesiones <span style="font-size:.72em;opacity:.6">(${viewSessions.length})</span>
             </h3><div id="opt-hist-sec" class="deck-section-content">`;
 
             const cartaAsCard = Object.values(this.cards).find(c => c.roles?.includes('Carta As'));
@@ -1807,16 +1919,19 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 ? (coverCard.data ? coverCard.data.card_images[0].image_url_small : coverCard.card_images[0].image_url_small)
                 : 'https://images.ygoprodeck.com/images/cards/6983839.jpg';
 
-            sessions.forEach((sess, si) => {
+            if (filterDeck && viewSessions.length === 0) {
+                html += `<p class="opt-empty-msg">Sin rondas registradas vs "${filterDeck}".</p>`;
+            }
+            viewSessions.forEach((sess, si) => {
                 const m    = this.calcOptMetrics(sess);
-                const prev = sessions[si + 1] ? this.calcOptMetrics(sessions[si + 1]) : null;
+                const prev = viewSessions[si + 1] ? this.calcOptMetrics(viewSessions[si + 1]) : null;
                 const tr   = (curr, prv, higher) => this.calcOptTrend(curr, prv ?? null, higher);
                 const diag = this.getOptDiagnostics(m);
                 const [sLbl,sCls]  = scrB(m.score);
                 const [wLbl,wCls]  = winB(m.wr);
                 const [bLbl,bCls]  = brkB(m.br);
                 const [stLbl,stCls]= strB(m.str);
-                const [cLbl,cCls]  = cmbB(m.cr);
+                const [riLbl,riCls] = riB(m.ri);
                 const isThisActive = sess.id === this._activeSessionId;
 
                 const wrFirst  = m.rFirst.length
@@ -1848,7 +1963,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                         <div class="opt-metric"><div class="opt-m-name">Win Rate</div><div class="opt-m-val">${m.wr}% ${tr(m.wr, prev?.wr, true)}</div><div class="opt-m-badge ${wCls}">${wLbl}</div></div>
                         <div class="opt-metric"><div class="opt-m-name">Brick Rate</div><div class="opt-m-val">${m.br}% ${tr(m.br, prev?.br, false)}</div><div class="opt-m-badge ${bCls}">${bLbl}</div></div>
                         <div class="opt-metric"><div class="opt-m-name">Starter Rate</div><div class="opt-m-val">${m.str}% ${tr(m.str, prev?.str, true)}</div><div class="opt-m-badge ${stCls}">${stLbl}</div></div>
-                        <div class="opt-metric"><div class="opt-m-name">Combo Rate</div><div class="opt-m-val">${m.cr}% ${tr(m.cr, prev?.cr, true)}</div><div class="opt-m-badge ${cCls}">${cLbl}</div></div>
+                        <div class="opt-metric"><div class="opt-m-name">Interrupción Rival</div><div class="opt-m-val">${m.ri}% ${tr(m.ri, prev?.ri, false)}</div><div class="opt-m-badge ${riCls}">${riLbl}</div></div>
                         <div class="opt-metric"><div class="opt-m-name">Board Break</div><div class="opt-m-val">${m.bb}% ${tr(m.bb, prev?.bb, true)}</div><div class="opt-m-badge opt-c-neutral">Going 2nd</div></div>
                         <div class="opt-metric"><div class="opt-m-name">Control Rate</div><div class="opt-m-val">${m.ctrl}% ${tr(m.ctrl, prev?.ctrl, true)}</div><div class="opt-m-badge opt-c-neutral">Going 1st</div></div>
                     </div>
@@ -1911,15 +2026,16 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                                 return `<div class="opt-round-row">
                                     <span class="opt-rn">#${ri+1}</span>
                                     <span>${orden}</span>
-                                    <span>${res}${tipoV}${tipoD}</span>
+                                    <span>${res}${tipoV}${tipoD}${r.oppDeck ? ` vs ${r.oppDeck}` : ''}</span>
                                     <span title="Tiempo">${tiempo}</span>
                                     <span title="Starters">⚡${r.starter||0}</span>
                                     <span title="Extenders">🔗${r.extenders||0}</span>
                                     <span title="Handtraps">🖐${r.handtraps||0}</span>
-                                    ${(r.bricks || r.brick) ? `<span class="opt-tag-brick" title="Bricks en mano">🧱${r.bricks || 1}</span>` : ''} : ''}
-                                    ${r.comboCompleto? '<span class="opt-tag-combo" title="Combo">💥</span>' : ''}
+                                    ${r.brick        ? '<span class="opt-tag-brick" title="Brick">🧱</span>' : ''}
+                                    ${(r.rivalInterrupciones || r.comboCompleto) ? `<span class="opt-tag-combo" title="Interrupciones del rival">🛑${r.rivalInterrupciones || 1}</span>` : ''}
                                     ${r.rompioBoard  ? `<span title="Campos rotos">⚔️${r.vecesRompioBoard ?? 1}</span>` : ''}
                                     ${r.negoJugada   ? `<span title="Interrupciones">🛡${r.interrupciones ?? 1}</span>` : ''}
+                                    ${(r.vecesRivalRompioBoard || r.rivalRompio) ? `<span title="Veces que el rival rompió mi campo">💢${r.vecesRivalRompioBoard || 1}</span>` : ''}
                                     ${r.turnoVictoria? `<span title="Ganó en turno ${r.turnoVictoria}">🏁T${r.turnoVictoria}</span>` : ''}
                                     ${r.turnoDerrota ? `<span title="Perdió en turno ${r.turnoDerrota}">💀T${r.turnoDerrota}</span>` : ''}
                                     ${r.notas        ? `<span class="opt-round-nota" title="${r.notas.replace(/"/g,'&quot;')}">📝</span>` : ''}
