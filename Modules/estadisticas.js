@@ -151,7 +151,7 @@ calculateCrossExternalScores: function () {
         profiles.forEach(deckB => {
             if (deckB.key === deckA.key) return;
 
-            let threat = 0, g1SpecThreat = 0, g2SpecThreat = 0;
+           let threat = 0, g1SpecThreat = 0, g2SpecThreat = 0;
             Object.entries(deckB.ownCounters).forEach(([spec, copies]) => {
                 if (deckA.ownMechanics[spec]) {
                     const specThreat = copies * Math.sqrt(deckA.ownMechanics[spec]);
@@ -263,6 +263,7 @@ enrichAndScoreMetaDeck: async function (folderName, deckFilename) {
                     name:            card.name,
                     type:            card.type,
                     desc:            card.desc || '',
+                    archetype:       card.archetype || '',
                     roles,
                     specializations: specAnalysis.specializations || [],
                     counters:        specAnalysis.counters        || []
@@ -287,7 +288,7 @@ _computeAndSaveMetaDeckScore: function (folderName, deckFilename) {
     if (!entry) return;
     if (!fakeCards[id]) {
         fakeCards[id] = {
-            data:     { id, name: entry.name, type: entry.type, desc: entry.desc || '', roles: entry.roles },
+            data:     { id, name: entry.name, type: entry.type, desc: entry.desc || '', archetype: entry.archetype || '', roles: entry.roles },
                 qty:      0,
                 location: loc,
                 roles:    entry.roles
@@ -400,6 +401,7 @@ recalculateAllMetaDeckScores: async function () {
                             name:            card.name,
                             type:            card.type,
                             desc:            card.desc || '',
+                            archetype:       card.archetype || '',
                             roles,
                             specializations: specAnalysis.specializations || [],
                             counters:        specAnalysis.counters        || []

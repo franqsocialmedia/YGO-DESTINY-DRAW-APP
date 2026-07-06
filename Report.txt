@@ -1,13 +1,17 @@
 # DESTINY DRAW — REPORTE TÉCNICO
-**Versión:** v2.5 | **Fecha:** Jul 2026 (auditado línea por línea contra el código fuente)
+**Versión:** v2.6 | **Fecha:** Jul 2026 (auditado línea por línea contra el código fuente)
 **Stack:** Vanilla JS (ES6 objects) · CSS modular · HTML5 SPA · YGOProDeck API · localStorage
 
-> **Nota de auditoría:** este reporte fue verificado contra los 18 archivos fuente actuales.
-> El footer de `index.html` marca **VERSION 3.5** — el número de versión de este documento
-> (v2.5) es independiente y solo referencia la revisión del propio reporte.
-> Cambios relevantes encontrados desde la última versión: nueva pestaña **Optimización**
-> (deck testing) en Mi Deck, conteos de líneas actualizados, y una inconsistencia real
-> en el sistema G1/G2 Score documentada en la sección 7.2 — léela antes de tocar ese código.
+> **Nota de auditoría:** este reporte fue verificado contra los 19 archivos fuente actuales.
+> El footer de `index.html` marca **VERSION 3.6** — el número de versión de este documento
+> (v2.6) es independiente y solo referencia la revisión del propio reporte.
+> Cambio relevante encontrado desde la última versión: el sistema G1/G2 Score, que la v2.5
+> de este reporte documentaba como "diseño guardado, cálculo no conectado", ahora está
+> completamente implementado y renderizado en pantalla. `Stats.calculateInternalScore`
+> devuelve `g1Score`/`g2Score` reales, `segmentDescription` sí se invoca, las capas
+> L1/L2/L4/L5 sí aplican multiplicadores, y el panel "Going First / Going Second" en
+> Análisis de Deck ya usa las clases CSS que antes estaban huérfanas. Sección 7.2
+> reescrita por completo — léela antes de asumir el estado anterior.
 
 ---
 
@@ -35,11 +39,11 @@ default_data.js → logger.js  (SIEMPRE AL FINAL)
 |---------|-----------------|--------|-------------|
 | `logger.js` | `DDLogger` | 365 | Logger no-invasivo. Envuelve todos los objetos globales post-`window.load`. API: `DDLogger.exportReport()`, `getLogs()`, `getStats()`, `enable/disable/clear()`. Intercepta localStorage y errores globales. |
 | `core.js` | `Navigation`, `Shortcuts`, `ContentManager`, `switchTab` | 487 | navigation + utils + contentmanager |
-| `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 2226 | Config global (incl. estructuras de Scoring G1/G2 — ver nota en 7.2), cálculo de scores, analizadores de carta. Incluye `duplicateNomenclatureCategory`. |
+| `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 2307 | Config global (incl. estructuras y motor de Scoring G1/G2 — ver 7.2), cálculo de scores, analizadores de carta. Incluye `duplicateNomenclatureCategory`. |
 | `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 1960 | buscador + cardviewer + favoritas + botón Carta Random |
 | `mideck.js` | `Deck`, `Banlist`, `Engines` | 3741 | deck + banlist + engines + **Optimización (deck testing) — nuevo sub-tab, ver 6** |
 | `historial.js` | `Matchups`, `Duelista` | 783 | matchups + duelista |
-| `estadisticas.js` | `Estadisticas` | 2525 | scores, meta, cross-score, análisis de deck. `recalculateAllMetaDeckScores` es async con enriquecimiento automático. |
+| `estadisticas.js` | `Estadisticas` | 2574 | scores, meta, cross-score, análisis de deck. `recalculateAllMetaDeckScores` es async con enriquecimiento automático. `renderDeckAnalysis()` ahora también pinta el bloque G1/G2 (ver 7.2). |
 | `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria` | 2937 | winrate + torneo + duelo en vivo + hipergeometría |
 | `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3228 | zonapractica + experimentacion |
 | `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | 3669 | formacion + meta + config completo (Scoring G1/G2 UI, Nomenclatura con pencil/clone/delete, RPS Ninguno, etiqueta y borrado de Optimización) + welcome + help |
@@ -208,7 +212,7 @@ Buscador.addCard(index)
   → Deck.syncFromViewer(card.id, card, currentQty + 1)
   → si carta nueva: autoAssignRoles() + SpecialtyAnalyzer + NomenclatureAnalyzer
   → Deck.render()  → recalcula Internal Score en tiempo real
-    (Stats.calculateInternalScore — el G1/G2 Score NO se recalcula aquí, ver 7.2)
+    (Stats.calculateInternalScore — el mismo cálculo también actualiza g1Score/g2Score, ver 7.2)
   → External Score se recalcula si powerScoreCache existe
 ```
 
@@ -227,10 +231,9 @@ Deck.importYDK()
 ```
 Stats.calculateInternalScore(Deck.cards)
   → loop de roles → rendimientos decrecientes por pilar (consistency/power/resilience)
+  → EN EL MISMO LOOP, por carta: calcula G1/G2 Score (ver fórmula completa en 7.2)
   → devuelve { internalScore, consistency, power, resilience,
-               totalCards, mainCards, penalty }
-  → (el campo g1Score/g2Score que versiones previas de este reporte mencionaban
-     NO existe en el objeto devuelto actualmente — ver nota 7.2)
+               totalCards, mainCards, penalty, g1Score, g2Score }
 
 Stats.calculateExternalScore(Deck.cards, powerScoreCache, metaDecks)
   → cruza specialties del deck con powerScoreCache
@@ -332,8 +335,8 @@ Pilares del Internal Score
 
 Scoring Avanzado (G1/G2)
   G1/G2 por rol | Poder Base (L3) | Fiabilidad por copias | Capas L1/L2/L4/L5 en columnas
-  ⚠️ Panel funcional (guarda en yugioh_config), pero el motor de scoring todavía
-  no consume estos valores — ver nota 7.2.
+  ✅ Panel funcional (guarda en yugioh_config) Y consumido en tiempo real por
+  Stats.calculateInternalScore() — ver 7.2.
 
 Rendimientos Decrecientes
 Atajos Rápidos
@@ -352,25 +355,72 @@ Zona de Borrado            (16 categorías selectivas, cache y meta_library sepa
 `Stats.calculateInternalScore(cards)`. Loop de roles con rendimientos decrecientes.
 Devuelve `{internalScore, consistency, power, resilience, totalCards, mainCards, penalty}`.
 
-### 7.2 G1/G2 Score — ⚠️ DISEÑO GUARDADO, CÁLCULO NO CONECTADO
+### 7.2 G1/G2 Score — IMPLEMENTADO Y CONECTADO (antes documentado como pendiente)
 
-**Estado real verificado en el código (Jul 2026): esta funcionalidad está a medias.**
+**Estado real verificado en el código (Jul 2026): la v2.5 de este reporte decía que esta
+funcionalidad estaba "a medias" (config + UI sin motor de cálculo). Eso ya no es correcto —
+el motor existe, se ejecuta en cada render de deck y se pinta en pantalla.**
 
-Lo que SÍ existe y funciona:
-- Estructuras de config en `data.js`: `g1g2Roles`, `roleBasePower`, `reliabilityTable`, `scoringLayers`, con sus getters (`getG1G2Roles`, `getRoleBasePower`, `getReliability`, `getScoringLayers`).
-- Panel de Config completo en `formacion.js` ("Scoring Avanzado (G1/G2)") con los 7 métodos save de la sección 7.6, que sí leen/escriben `yugioh_config` correctamente.
-- Clases CSS en `style_simuladores.css` (`.analysis-g1g2-row`, `.analysis-g1g2-item`, `.analysis-g1g2-label`, `.analysis-g1g2-val`, `.analysis-g1g2-detail`, `.analysis-g1g2-profile`) — **pero ninguna de estas clases aparece referenciada en ningún archivo `.js`**, es decir, CSS huérfano a la espera de un renderer.
+Cálculo — dentro del mismo loop de `Stats.calculateInternalScore()` (`data.js`, dentro del
+`for` sobre `cards`, dominio `loc === 'main'`):
 
-Lo que NO existe actualmente:
-- No hay ninguna función que calcule `g1Score` / `g2Score` en todo el proyecto (búsqueda exhaustiva: 0 coincidencias).
-- `Stats.calculateInternalScore()` NO devuelve `g1Score` ni `g2Score`.
-- `Deck.render()` NO recalcula ningún G1/G2 Score en tiempo real.
-- La fórmula descrita más abajo (BasePower × L1 × L2 × L4 × L5 × Reliability) representa el **diseño previsto**, no una fórmula implementada — no hay ningún lugar del código que la ejecute.
-- `segmentDescription()` (NomenclatureAnalyzer, `data.js:2208`) está definida pero no se invoca desde ningún otro punto del código; es la pieza que debería alimentar las capas L1/L2/L4/L5 y actualmente no está conectada.
-
-**Fórmula prevista (pendiente de implementar):**
 ```
-CardScore = BasePower(L3) × L1_mult × L2_mult × L4_mult × L5_mult × Reliability
+Por cada carta (loc='main'):
+  1. segments = NomenclatureAnalyzer.segmentDescription(rawDesc)
+     → segmenta la descripción en categorías de nomenclatura
+       (condicionActivacion, costoActivacion, restriccion, efectoGenerico...)
+
+  2. layerMult = producto de L1 x L2 x L4 x L5
+     por cada capa (layers = ConfigManager.getScoringLayers()):
+       texto = segments[layer.nomenclatureCategory]
+       busca la primera entry cuyo keyword aparezca en el texto
+       multiplica por su .multiplier (si no matchea ninguna: x1.0)
+
+  3. pool = qty de la carta
+     + copias de cualquier Searcher en el main que mencione su nombre/arquetipo
+       en su propia descripción (pool indirecto vía buscadores)
+
+  4. reliability = ConfigManager.getReliability(pool)
+     tabla por copias: 1→0.40, 2→0.65, 3→0.85, 4→0.90, 5→0.95 (config., default)
+
+  5. por cada rol de la carta (item.roles):
+       basePower = ConfigManager.getRoleBasePower(rol)      // L3, default 3
+       cardScore = basePower x layerMult x reliability
+       context   = ConfigManager.getRoleG1G2(rol)           // 'g1'|'g2'|'neutral'
+       g1 → g1Score += cardScore
+       g2 → g2Score += cardScore
+       'neutral' → mitad y mitad (g1Score += cardScore*0.5, g2Score += cardScore*0.5)
+```
+
+`Stats.calculateInternalScore()` devuelve `g1Score` y `g2Score` (redondeados a 2 decimales)
+junto al resto de campos ya documentados en 7.1.
+
+**Clasificación G1/G2 por rol (default, `g1g2Roles` en `data.js`)** — coherente con el
+metagame competitivo real: roles de apertura de mano/setup (`Starter`, `Extender`, `Booster`,
+`Boss Monster`, `Tower`, `Token Summoner`, `Ignition`, familia `Stun-*`) → **g1**. Roles de
+respuesta/interacción (`Handtrap`, `Boardbreaker`, `Disruptor`, `Removal`,
+`Negate-activation`, `Negate-effect`, `Negater`, `Handloop`, `Speed-4`, `Anti-damage`) →
+**g2**. El resto (`Searcher*`, `Recycler`, `Draw-engine`, `Protector`, etc.) → **neutral**.
+
+**Renderizado** — `Estadisticas.renderDeckAnalysis()` (`estadisticas.js`):
+- Bloque "Going First / Going Second" con `internalStats.g1Score` / `g2Score` en las clases
+  `.analysis-g1g2-row/-item/-label/-val` — **ya no son huérfanas**, están en uso.
+- `g1g2Profile`: frase de diagnóstico según proporción g1/g2 (diferencia >1.3x → "dependiente
+  del dado" o "reactivo"; si no, "equilibrado") en `.analysis-g1g2-profile`.
+- Si `analysis.hasPowerData && analysis.hasSpecData`, también muestra `g1Vulnerability` /
+  `g2Vulnerability` (0-10), calculados en `Stats.calculateExternalScore()`.
+
+**Detalle a tener en cuenta (no es un bug, es una decisión de diseño existente):**
+`g1Vulnerability`/`g2Vulnerability` clasifican las **specialties/mecánicas** que counterean
+al deck reutilizando `ConfigManager.getRoleG1G2()` — la misma tabla pensada para **roles**
+de carta, no para nombres de mecánica. Si una specialty no coincide textualmente con una key
+de `g1g2Roles`, `classify()` cae en `'neutral'` y esa amenaza no suma a ninguna de las dos
+vulnerabilidades. Antes de tocar esta área, confirma con el usuario si quiere una tabla
+G1/G2 separada para specialties o si reutilizar la de roles es intencional.
+
+**Fórmula (ya implementada, no solo prevista):**
+```
+CardScore = BasePower(L3) x L1_mult x L2_mult x L4_mult x L5_mult x Reliability
 
 L1 — Velocidad:   keywords en 'condicionActivacion'
 L2 — Coste:       keywords en 'costoActivacion'
@@ -383,7 +433,6 @@ g1g2Roles[dominantRole] === 'g1' → g1Score
 g1g2Roles[dominantRole] === 'g2' → g2Score
 'neutral'                        → 50/50
 ```
-**Antes de trabajar en esta área:** confirma con el usuario si el objetivo es (a) terminar de conectar el cálculo con la config ya guardada, o (b) el panel de Config quedó adelantado a propósito y el cálculo vendrá después. No asumas que ya funciona.
 
 ### 7.3 External Score (deck activo)
 `Stats.calculateExternalScore()` — deck vs powerScoreCache.
@@ -461,7 +510,8 @@ El badge de nombre es siempre el elemento visible. El input se oculta con `displ
 | 14 | Había que abrir cada deck del meta para calcular scores | `estadisticas.js` | `recalculateAllMetaDeckScores` ahora async: descarga cartas faltantes de todos los decks automáticamente en 3 fases |
 | 15 | Borrar "Cache" no limpiaba `metaDeckScores` en memoria | `formacion.js` | Añadido `Estadisticas.metaDeckScores = {}` |
 | 16 | Borrar "Carpetas del Meta" dejaba cross-scores y deck scores | `formacion.js` | Limpia `yugioh_meta_decks`, `yugioh_meta_deck_scores`, `yugioh_cross_scores` |
-| 17 | `segmentDescription` ausente en `NomenclatureAnalyzer` | `data.js` | Reintegrada como función; **nota (Jul 2026): sigue sin ser invocada desde ningún otro módulo — ver 7.2, las capas L1–L5 aún no aplican multiplicadores en tiempo de ejecución** |
+| 17 | `segmentDescription` ausente en `NomenclatureAnalyzer` | `data.js` | Reintegrada como función; **resuelto (Jul 2026): ahora sí es invocada desde `calculateInternalScore()` — las capas L1–L5 aplican multiplicadores en tiempo de ejecución, ver 7.2** |
+| 18 | G1/G2 Score sin motor de cálculo (config + UI sin consumidor) | `data.js`, `estadisticas.js` | Implementado el cálculo dentro de `calculateInternalScore()` (BasePower × capas × Reliability, repartido en g1Score/g2Score) y su render en `renderDeckAnalysis()` — ver 7.2 |
 
 ---
 
@@ -497,7 +547,8 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 | `.config-section-block` / `.config-block-title` | style_config | Bloques dentro de Scoring Avanzado |
 | `.scoring-layer-col` / `.scoring-layer-entry` | style_config | Columnas y entradas de capas |
 | `.asb-bar-track` / `.asb-bar-fill` | style_simuladores | Barras de score (Internal/External) en Análisis |
-| `.analysis-g1g2-row` / `.analysis-g1g2-item` | style_simuladores | **Huérfanas** — definidas pero sin ninguna referencia en JS (ver 7.2) |
+| `.analysis-block` / `.analysis-block-title` | style_simuladores | Bloques de sección dentro de Análisis de Deck (Mecánicas, G1/G2, etc.) |
+| `.analysis-g1g2-row` / `.analysis-g1g2-item` / `.analysis-g1g2-profile` | style_simuladores | En uso — pintan `g1Score`/`g2Score`/`g1g2Profile` en `Estadisticas.renderDeckAnalysis()` (ver 7.2) |
 | `.opt-*` (form, session-bar, badges…) | style_mideck | Panel de Optimización (deck testing) en Mi Deck |
 | `#meta-update-overlay` | inline en estadisticas.js | Overlay de carga del Actualizar Scores |
 
@@ -528,11 +579,13 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 
 **Diferencia clave entre Peso de Rol y Poder Base:**
 - `roleWeights` → escala 0.1–2.0 → Internal Score clásico (rendimientos decrecientes) — ACTIVO
-- `roleBasePower` → escala 0–10 → pensado para G1/G2 Score — guardado en config, aún sin consumidor (ver 7.2)
+- `roleBasePower` → escala 0–10 → alimenta el G1/G2 Score — ACTIVO (ver 7.2)
 
-**Pendiente conocido (no es bug, es feature a medio construir):**
-- El sistema G1/G2 Score (config + UI completos) no tiene motor de cálculo conectado.
-  Ver detalle completo en la sección 7.2 antes de asumir que "ya existe".
+**Nota de diseño abierta (no es bug):**
+- Las vulnerabilidades G1/G2 del External Score (`g1Vulnerability`/`g2Vulnerability`)
+  reutilizan la tabla `g1g2Roles` (pensada para roles de carta) aplicada sobre nombres de
+  specialty/mecánica. Confirmar con el usuario si se quiere una tabla G1/G2 propia para
+  specialties antes de tocar esa parte de `calculateExternalScore()`. Ver 7.2.
 
 **Regla de oro para añadir una sección a Config:**
 1. Añadir el bloque HTML en `Config.render()` con el ID de sección

@@ -1445,8 +1445,25 @@ const Stats = {
             return mult * (entry ? entry.multiplier : 1.0);
         }, 1.0);
 
+        // Pool efectivo: copias directas + copias de Searchers que alcanzan esta carta
+        let pool = qty;
+        const cardName      = (item.data?.name      || '').toLowerCase();
+        const cardArchetype = (item.data?.archetype || '').toLowerCase();
+        if (cardName || cardArchetype) {
+            Object.values(cards).forEach(other => {
+                if (other === item || other.location !== 'main') return;
+                const isSearcher = (other.roles || [])
+                    .some(r => r.toLowerCase().startsWith('searcher'));
+                if (!isSearcher) return;
+                const otherDesc = (other.data?.desc || '').toLowerCase();
+                const reaches = (cardName && otherDesc.includes(cardName))
+                    || (cardArchetype && otherDesc.includes(cardArchetype));
+                if (reaches) pool += (other.qty || 1);
+            });
+        }
+
         const reliability = window.ConfigManager?.getReliability
-            ? ConfigManager.getReliability(qty) : 1.0;
+            ? ConfigManager.getReliability(pool) : 1.0;
 
         (item.roles || []).forEach(roleOriginal => {
             const basePower = window.ConfigManager?.getRoleBasePower
