@@ -1472,6 +1472,19 @@ this.container.innerHTML = html;
         const avgHandtrap = rounds.reduce((a, r) => a + (r.handtraps || 0), 0) / p;
         const htExceso    = rounds.filter(r => (r.handtraps || 0) >= 3).length;
 
+        // ── Distribución de duelos por turno (ganados/perdidos) ──────
+        const turnMap = {};
+        rounds.forEach(r => {
+            const t = r.turnoVictoria || r.turnoDerrota;
+            if (!t) return;
+            if (!turnMap[t]) turnMap[t] = { wins: 0, losses: 0 };
+            if (r.resultado === 'victoria') turnMap[t].wins++; else turnMap[t].losses++;
+        });
+        const turnDist = Object.keys(turnMap)
+            .map(t => ({ turn: parseInt(t), wins: turnMap[t].wins, losses: turnMap[t].losses }))
+            .sort((a, b) => a.turn - b.turn);
+        const turnTotal = turnDist.reduce((a, td) => a + td.wins + td.losses, 0);
+
         const wr   = Math.round((wins        / p) * 100);
         const br   = Math.round((bricks      / p) * 100);
         const str  = Math.round((starters    / p) * 100);
@@ -1486,7 +1499,8 @@ this.container.innerHTML = html;
         return {
             p, wins, losses, wr, br, str, extr, cr, bb, ctrl, htRate, score,
             ftks, rendiciones, tiempoGan, tiempoPer, criticos, ajustados,
-            rFirst, rSecond, avgStarter, avgExtender, avgHandtrap
+            rFirst, rSecond, avgStarter, avgExtender, avgHandtrap,
+            turnDist, turnTotal
         };
     },
 
@@ -1535,6 +1549,7 @@ vecesRompioBoard: n('opt-r-board'),
 negoJugada:       n('opt-r-negate') > 0,
 interrupciones:   n('opt-r-negate'),
 turnoVictoria:    resultado === 'victoria' ? (n('opt-r-turnovic') || null) : null,
+turnoDerrota:     resultado === 'derrota'  ? (n('opt-r-turnoder') || null) : null,
 rivalRompio:      ck('opt-r-rival'),
 notas:            v('opt-r-notas').trim()
         };
@@ -1567,10 +1582,12 @@ notas:            v('opt-r-notas').trim()
             .forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
         const tvEl = document.getElementById('opt-r-turnovic');
         if (tvEl) tvEl.value = '';
+        const tdEl = document.getElementById('opt-r-turnoder');
+        if (tdEl) tdEl.value = '';
         const tEl = document.getElementById('opt-r-tiempo');
         if (tEl) tEl.value = 'holgado';
         // Ocultar selects de tipo
-        ['opt-row-tipo-vic','opt-row-tipo-der'].forEach(id => {
+        ['opt-row-tipo-vic','opt-row-tipo-der','opt-row-turnovic','opt-row-turnoder'].forEach(id => {
             const el = document.getElementById(id); if (el) el.style.display = 'none';
         });
 
@@ -1614,9 +1631,11 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
     const vic  = document.getElementById('opt-row-tipo-vic');
     const der  = document.getElementById('opt-row-tipo-der');
     const tvic = document.getElementById('opt-row-turnovic');
+    const tder = document.getElementById('opt-row-turnoder');
     if (vic)  vic.style.display  = res === 'victoria' ? '' : 'none';
     if (der)  der.style.display  = res === 'derrota'  ? '' : 'none';
     if (tvic) tvic.style.display = res === 'victoria' ? '' : 'none';
+    if (tder) tder.style.display = res === 'derrota'  ? '' : 'none';
 },
     renderOptimizacionPane: function() {
         if (!Object.keys(this.cards).length)
@@ -1699,6 +1718,10 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     <option value="rendicion">🏳 Me rendí</option>
                     <option value="tiempo">⏰ Derrota por tiempo</option>
                 </select>
+                </div>
+                <div class="opt-form-row" id="opt-row-turnoder" style="display:none;">
+                    <label class="opt-lbl">💀 Turno en que perdí</label>
+                    <input type="number" id="opt-r-turnoder" class="opt-input" min="1" max="20" placeholder="Ej: 4">
                 </div>
 
                 <div class="opt-form-row opt-full">
@@ -1830,6 +1853,31 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                         ${wrSecond !== null ? `<span class="opt-order-chip opt-order-second">🥈 Segundo: ${wrSecond}% WR (${m.rSecond.length})</span>` : ''}
                     </div>
 
+                    <div class="opt-turn-dist-block">
+                        <div class="opt-turn-dist-title">⏱ Distribución de Duelos por Turno</div>
+                        ${m.turnTotal > 0 ? `
+                        <div class="opt-turn-dist-bar">
+                            ${m.turnDist.map(td => {
+                                const segTotal = td.wins + td.losses;
+                                const winPct   = Math.round((td.wins / segTotal) * 100);
+                                const lossPct  = 100 - winPct;
+                                return `<div class="opt-turn-dist-seg" style="flex-grow:${segTotal};" title="Turno ${td.turn}: ${td.wins}V / ${td.losses}D">
+                                            ${td.wins   ? `<div class="opt-turn-seg-win" style="width:${winPct}%"></div>`   : ''}
+                                            ${td.losses ? `<div class="opt-turn-seg-loss" style="width:${lossPct}%"></div>` : ''}
+                                        </div>`;
+                            }).join('')}
+                        </div>
+                        <div class="opt-turn-dist-labels">
+                            ${m.turnDist.map(td => `<span class="opt-turn-dist-lbl" style="flex-grow:${td.wins + td.losses};">T${td.turn}</span>`).join('')}
+                        </div>
+                        <div class="opt-turn-dist-legend">
+                            <span><i class="opt-turn-dot opt-turn-dot-win"></i> Victoria</span>
+                            <span><i class="opt-turn-dot opt-turn-dot-loss"></i> Derrota</span>
+                            <span class="opt-turn-dist-count">${m.turnTotal} de ${m.p} rondas con turno registrado</span>
+                        </div>` : `
+                        <p class="opt-turn-dist-empty">Aún no hay rondas con turno registrado. Usa "🏁 Turno en que gané" / "💀 Turno en que perdí" al registrar.</p>`}
+                    </div>
+
                     <div class="opt-raw-chips">
                         <span>🃏 ${m.p} rondas · ✅ ${m.wins}V / ❌ ${m.losses}D</span>
                         <span>🧱 ${sess.rounds.filter(r=>r.brick).length} bricks</span>
@@ -1868,6 +1916,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                                     ${r.rompioBoard  ? `<span title="Campos rotos">⚔️${r.vecesRompioBoard ?? 1}</span>` : ''}
                                     ${r.negoJugada   ? `<span title="Interrupciones">🛡${r.interrupciones ?? 1}</span>` : ''}
                                     ${r.turnoVictoria? `<span title="Ganó en turno ${r.turnoVictoria}">🏁T${r.turnoVictoria}</span>` : ''}
+                                    ${r.turnoDerrota ? `<span title="Perdió en turno ${r.turnoDerrota}">💀T${r.turnoDerrota}</span>` : ''}
                                     ${r.notas        ? `<span class="opt-round-nota" title="${r.notas.replace(/"/g,'&quot;')}">📝</span>` : ''}
                                     <button class="opt-round-del" onclick="Deck.deleteOptimizacionRound(${sess.id},${r.id})" title="Eliminar ronda">×</button>
                                 </div>`;
