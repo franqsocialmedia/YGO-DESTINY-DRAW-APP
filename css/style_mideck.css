@@ -1507,7 +1507,14 @@
     font-size: 0.7rem;
     color: rgba(241,241,241,0.4);
 }
-
+.eng-item-pts {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 8px;
+    display: inline-block;
+    width: fit-content;
+}
 .eng-item-stats {
     font-size: 0.72rem;
     color: rgba(241,241,241,0.65);

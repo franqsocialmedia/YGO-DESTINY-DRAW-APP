@@ -1368,9 +1368,9 @@ html += `<div id="mideck-optimizacion-pane" style="display:none;">${!isEmpty ? t
 this.container.innerHTML = html;
     },
 
-    getOptimizacion: function() {
-        try {
-            const raw = JSON.parse(localStorage.getItem(`optimization_${this.name}`));
+    getOptimizacion: function(deckName) {
+    try {
+        const raw = JSON.parse(localStorage.getItem(`optimization_${deckName || this.name}`));
             if (!raw) return { sessions: [] };
             // Migración: formato viejo con records[] → convertir a sesión única
             if (raw.records && !raw.sessions) {
@@ -1408,7 +1408,23 @@ this.container.innerHTML = html;
             return raw;
         } catch(e) { return { sessions: [] }; }
     },
+// Clasificación de un score de sesión de Optimización (mismos rangos que
+    // scrB en renderOptimizacionPane). Reutilizada por el sidebar de Decks.
+    getSessionScoreBadge: function(score) {
+        if (score >= 80) return ['💎 Competitivo', 'opt-c-green'];
+        if (score >= 65) return ['✅ Optimizado', 'opt-c-blue'];
+        if (score >= 50) return ['⚠ Funcional', 'opt-c-yellow'];
+        return ['❌ Desbalanceado', 'opt-c-red'];
+    },
 
+    // Score de la última sesión de Optimización registrada para un deck
+    // (por nombre). Devuelve null si el deck no tiene sesiones aún.
+    getLastSessionScore: function(deckName) {
+        const data = this.getOptimizacion(deckName);
+        const sessions = data.sessions || [];
+        if (!sessions.length) return null;
+        return this.calcOptMetrics(sessions[0]).score;
+    },
     saveOptimizacionSession: function(session) {
         const data = this.getOptimizacion();
         if (!data.sessions) data.sessions = [];
@@ -3228,7 +3244,13 @@ _renderSavedDeckItems: function () {
                 .filter(c => c.location === 'main').reduce((s, c) => s + c.qty, 0);
             const extraCount = Object.values(deck.cards)
                 .filter(c => c.location === 'extra').reduce((s, c) => s + c.qty, 0);
-
+// Pts: score de la última sesión de Optimización (si existe)
+            let ptsHtml = '';
+            const lastScore = Deck.getLastSessionScore(deck.name);
+            if (lastScore !== null) {
+                const [ptsLbl, ptsCls] = Deck.getSessionScoreBadge(lastScore);
+                ptsHtml = `<div class="eng-item-pts ${ptsCls}">Pts: ${lastScore} · ${ptsLbl}</div>`;
+            }
             // Winrate si está disponible
             let wrHtml = '';
             if (window.Winrate) {
@@ -3248,6 +3270,7 @@ _renderSavedDeckItems: function () {
     <div class="eng-item-info">
         <div class="eng-item-name">${deck.name}</div>
         <div class="eng-item-counts">M:${mainCount} · E:${extraCount}</div>
+        ${ptsHtml}
         ${wrHtml}
     </div>
     <div class="eng-item-btns">
