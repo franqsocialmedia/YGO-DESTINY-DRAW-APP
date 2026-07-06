@@ -1453,7 +1453,7 @@ this.container.innerHTML = html;
         const p = Math.max(rounds.length, 1);
         const wins        = rounds.filter(r => r.resultado === 'victoria').length;
         const losses      = rounds.filter(r => r.resultado === 'derrota').length;
-        const bricks      = rounds.filter(r => r.brick).length;
+        const bricks      = rounds.filter(r => (r.bricks || 0) >= 1 || r.brick).length;
         const starters    = rounds.filter(r => (r.starter || 0) >= 1).length;
         const extenders   = rounds.filter(r => (r.extenders || 0) >= 1).length;
         const combos      = rounds.filter(r => r.comboCompleto).length;
@@ -1541,7 +1541,7 @@ this.container.innerHTML = html;
             tipoDerrota:   resultado === 'derrota'  ? (v('opt-r-tipo-der') || 'normal') : null,
             presionTiempo: v('opt-r-tiempo') || 'holgado',
             comboCompleto: ck('opt-r-combo'),
-            brick:         ck('opt-r-brick'),
+            bricks:        n('opt-r-bricks'),
             starter:       n('opt-r-starter'),
             extenders:     n('opt-r-extenders'),
             handtraps:     n('opt-r-handtraps'),rompioBoard:      n('opt-r-board') > 0,
@@ -1576,9 +1576,9 @@ notas:            v('opt-r-notas').trim()
         // Reset campos de ronda (conserva label y sesión activa)
         ['opt-r-resultado','opt-r-orden','opt-r-tipo-vic','opt-r-tipo-der','opt-r-notas']
             .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-        ['opt-r-combo','opt-r-brick','opt-r-rival']
+        ['opt-r-combo','opt-r-rival']
         .forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
-        ['opt-r-starter','opt-r-extenders','opt-r-handtraps','opt-r-board','opt-r-negate']
+        ['opt-r-starter','opt-r-extenders','opt-r-handtraps','opt-r-bricks','opt-r-board','opt-r-negate']
             .forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
         const tvEl = document.getElementById('opt-r-turnovic');
         if (tvEl) tvEl.value = '';
@@ -1761,7 +1761,11 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 </div>
 
                 <div class="opt-form-row">
-                    <label class="opt-lbl opt-cb-lbl"><input type="checkbox" id="opt-r-brick"> Mano brickeada</label>
+                    <label class="opt-lbl">Bricks en mano</label>
+                    <select id="opt-r-bricks" class="opt-input">
+                        <option value="0">0</option><option value="1">1</option>
+                        <option value="2">2</option><option value="3">3+</option>
+                    </select>
                 </div>
 
                 <div class="opt-group-hdr opt-full">⚙ Desarrollo</div>
@@ -1881,7 +1885,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
 
                     <div class="opt-raw-chips">
                         <span>🃏 ${m.p} rondas · ✅ ${m.wins}V / ❌ ${m.losses}D</span>
-                        <span>🧱 ${sess.rounds.filter(r=>r.brick).length} bricks</span>
+                        <span>🧱 ${sess.rounds.filter(r=>(r.bricks||0)>=1 || r.brick).length} bricks</span>
                         <span>⚡ ø${m.avgStarter.toFixed(1)} starters</span>
                         <span>🔗 ø${m.avgExtender.toFixed(1)} extenders</span>
                         <span>🖐 ø${m.avgHandtrap.toFixed(1)} HT</span>
@@ -1912,7 +1916,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                                     <span title="Starters">⚡${r.starter||0}</span>
                                     <span title="Extenders">🔗${r.extenders||0}</span>
                                     <span title="Handtraps">🖐${r.handtraps||0}</span>
-                                    ${r.brick        ? '<span class="opt-tag-brick" title="Brick">🧱</span>' : ''}
+                                    ${(r.bricks || r.brick) ? `<span class="opt-tag-brick" title="Bricks en mano">🧱${r.bricks || 1}</span>` : ''} : ''}
                                     ${r.comboCompleto? '<span class="opt-tag-combo" title="Combo">💥</span>' : ''}
                                     ${r.rompioBoard  ? `<span title="Campos rotos">⚔️${r.vecesRompioBoard ?? 1}</span>` : ''}
                                     ${r.negoJugada   ? `<span title="Interrupciones">🛡${r.interrupciones ?? 1}</span>` : ''}
