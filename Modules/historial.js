@@ -56,17 +56,13 @@ _totals: function (m) {
                 ⚔️ Historial de Enfrentamientos <span class="matchup-count-badge">${count}</span>
             </h3>
             <div id="matchups-sec" class="deck-section-content" style="display:none;">
-                <div class="matchup-toolbar">
-                    <button class="matchup-btn matchup-btn-add"
-                            onclick="Matchups.openAddPanel()">＋ Agregar enfrentamiento</button>
-                    ${count > 0 ? `<button class="matchup-btn matchup-btn-clear"
-                            onclick="Matchups.clearAll()">🗑 Borrar todo</button>` : ''}
-                    ${count > 1 ? `<select class="matchup-sort-sel" onchange="Matchups.setSortBy(this.value)">
+                ${count > 1 ? `<div class="matchup-toolbar">
+                    <select class="matchup-sort-sel" onchange="Matchups.setSortBy(this.value)">
                         <option value="duelos"    ${this._sortBy==='duelos'?'selected':''}>Ordenar: Duelos</option>
                         <option value="victorias" ${this._sortBy==='victorias'?'selected':''}>Ordenar: Victorias</option>
                         <option value="derrotas"  ${this._sortBy==='derrotas'?'selected':''}>Ordenar: Derrotas</option>
-                    </select>` : ''}
-                </div>
+                    </select>
+                </div>` : ''}
                 <div class="matchup-list" id="matchup-list">
                     ${rows}
                 </div>
@@ -115,8 +111,6 @@ _totals: function (m) {
                     <div class="matchup-row-btns">
                         ${hasDeck ? `<button class="matchup-btn matchup-btn-deck"
                             onclick="event.stopPropagation();Matchups.openDeckPanel(${i})">🃏 Ver Deck</button>` : ''}
-                        <button class="matchup-btn matchup-btn-edit"
-                                onclick="event.stopPropagation();Matchups.openEditPanel(${i})">✏️ Editar</button>
                         <button class="matchup-btn matchup-btn-del"
                                 onclick="event.stopPropagation();Matchups.deleteRecord(${i})">✕</button>
                     </div>

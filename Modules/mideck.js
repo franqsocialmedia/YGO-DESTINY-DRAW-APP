@@ -1789,7 +1789,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         <h3 class="deck-section-title" onclick="Deck.toggleSection('opt-form-sec')">
             ➕ Nueva Ronda de Duelo${isActive ? ` <span class="opt-round-count">#${activeRounds + 1}</span>` : ''}
             </h3>
-        <div id="opt-form-sec" class="deck-section-content" style="display:block;">
+        <div id="opt-form-sec" class="deck-section-content" style="display:none;">
             <div class="opt-record opt-form-card">
             <datalist id="opt-matchup-suggestions">
                 ${(window.Matchups ? Matchups.getAll() : []).map(m =>
