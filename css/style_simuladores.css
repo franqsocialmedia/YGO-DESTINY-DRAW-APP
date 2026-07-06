@@ -2290,7 +2290,12 @@
     position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
     background:rgba(5,15,30,.96); border:1px solid rgba(255,215,0,.35);
     border-radius:8px; padding:5px; display:flex; flex-direction:column; gap:4px;
-    z-index:200; box-shadow:0 6px 20px rgba(0,0,0,.7); min-width:96px;
+    z-index:9999; box-shadow:0 6px 20px rgba(0,0,0,.7); min-width:96px;
+}
+/* Mientras el menú de opciones está abierto, el contenedor no debe recortarlo */
+.pz-multi-zone.pz-menu-open,
+.pz-zone.pz-menu-open {
+    overflow: visible !important;
 }
 .pz-zmenu-btn {
     padding:6px 10px; border-radius:6px; border:none; cursor:pointer;

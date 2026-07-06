@@ -890,6 +890,7 @@ overlay.innerHTML = `
     const elId = `pz-zone-${zone}`;
     const containerEl = document.getElementById(elId);
     if (!containerEl) return;
+    containerEl.classList.add('pz-menu-open');
 
     let anchor = containerEl;
     if (zoneType === 'multi' && slotIndex !== null) {
@@ -902,6 +903,8 @@ overlay.innerHTML = `
     menu.id = 'pz-zone-menu-active';
     if (zone === 'hand') {
         menu.innerHTML = `
+            <button class="pz-zmenu-btn pz-zmenu-ver"
+                    onclick="ZonaPractica._zmView('hand',${slotIndex},event)">Ver</button>
             <button class="pz-zmenu-btn pz-zmenu-activate"
                     onclick="ZonaPractica._zmActivate('hand',${slotIndex},'multi',event)" onmouseup="ZonaPractica._zmActivate('hand',${slotIndex},'multi',event)">Activar</button>
             <button class="pz-zmenu-btn pz-zmenu-move"
@@ -944,17 +947,20 @@ _startLongPress: function (zone, e) {
         this._closeZoneMenus();
         const containerEl = document.getElementById('pz-zone-hand');
         if (!containerEl) return;
+        containerEl.classList.add('pz-menu-open');
         const slots = containerEl.querySelectorAll('.pz-card-slot');
         const anchor = slots[idx] || containerEl;
         const sub = document.createElement('div');
         sub.className = 'pz-action-submenu pz-quick-action';
         sub.innerHTML = `
+            <button class="pz-zmenu-btn pz-zmenu-ver"
+                    onclick="ZonaPractica._zmView('hand',${idx},event)">Ver</button>
             <button class="pz-zmenu-btn pz-zmenu-activate"
                     onclick="ZonaPractica._zmActivate('hand',${idx},'multi',event)" onmouseup="ZonaPractica._zmActivate('hand',${idx},'multi',event)">Activar</button>
             <button class="pz-zmenu-btn pz-zmenu-move"
                     onclick="ZonaPractica._zmStartMove('hand',${idx},'multi',event)" onmouseup="ZonaPractica._zmStartMove('hand',${idx},'multi',event)">Mover</button>`;
         anchor.appendChild(sub);
-        const close = (e2) => { if (!sub.contains(e2.target)) { sub.remove(); document.removeEventListener('click', close, true); } };
+        const close = (e2) => { if (!sub.contains(e2.target)) { sub.remove(); containerEl.classList.remove('pz-menu-open'); document.removeEventListener('click', close, true); } };
         setTimeout(() => document.addEventListener('click', close, true), 50);
     },
 _startLongPressMulti: function (zone, idx, e) {
@@ -972,6 +978,7 @@ _startLongPressMulti: function (zone, idx, e) {
         const elId = `pz-zone-${zone}`;
         const containerEl = document.getElementById(elId);
         if (!containerEl) return;
+        containerEl.classList.add('pz-menu-open');
 
         if (navigator.vibrate) navigator.vibrate(20);
 
@@ -989,13 +996,13 @@ _startLongPressMulti: function (zone, idx, e) {
         
         containerEl.appendChild(sub);
 
-        const close = (e2) => { if (!sub.contains(e2.target)) { sub.remove(); document.removeEventListener('click', close, true); } };
+        const close = (e2) => { if (!sub.contains(e2.target)) { sub.remove(); containerEl.classList.remove('pz-menu-open'); document.removeEventListener('click', close, true); } };
         setTimeout(() => document.addEventListener('click', close, true), 10);
     },
-    _closeZoneMenus: function () {
+   _closeZoneMenus: function () {
         document.querySelectorAll('.pz-zone-menu, .pz-action-submenu').forEach(m => m.remove());
+        document.querySelectorAll('.pz-menu-open').forEach(el => el.classList.remove('pz-menu-open'));
     },
-
     _zmView: function (zone, slotIndex, e) {
         e?.stopPropagation();
         this._closeZoneMenus();
