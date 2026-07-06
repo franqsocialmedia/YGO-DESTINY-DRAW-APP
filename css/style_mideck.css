@@ -949,6 +949,20 @@
     margin-top: 6px;
     text-align: right;
 }
+.deck-notes-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+.opt-notes-save-btn {
+    margin-top: 0;
+}
+.opt-notes-status {
+    font-size: 0.75rem;
+    color: #81C784;
+    font-weight: 600;
+}
 /* Saturación de roles — borde en el badge existente */
 .role-badge.badge-near-saturated {
     border: 1px solid #e67e22;

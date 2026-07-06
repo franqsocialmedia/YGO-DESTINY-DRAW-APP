@@ -323,7 +323,24 @@ const Deck = {
             if (panel) panel.innerHTML = Estadisticas.renderDeckSelectorPanel();
         }
     },
+// Guardado rápido de solo las notas desde Optimización, sin navegar a
+    // Decklist ni disparar "Guardar Deck". No toca cards ni savedAt salvo
+    // que el deck todavía no tuviera ningún guardado previo.
+    saveNotes: function () {
+        let raw = {};
+        try { raw = JSON.parse(localStorage.getItem(`deck_${this.name}`)) || {}; } catch (e) { raw = {}; }
+        raw.cards   = raw.cards   || this.cards;
+        raw.savedAt = raw.savedAt || new Date().getTime();
+        raw.notes   = this.notes || '';
+        localStorage.setItem(`deck_${this.name}`, JSON.stringify(raw));
 
+        const statusEl = document.getElementById('opt-notes-status');
+        if (statusEl) {
+            statusEl.textContent = '✅ Notas guardadas';
+            clearTimeout(this._notesStatusTimeout);
+            this._notesStatusTimeout = setTimeout(() => { statusEl.textContent = ''; }, 2500);
+        }
+    },
     getSavedDecks: function () {
         const decks = [];
         for (let i = 0; i < localStorage.length; i++) {
@@ -1738,7 +1755,10 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 placeholder="Anota estrategias, combos clave, mulligan ideal, matchups difíciles..."
                 oninput="Deck.notes = this.value"
             >${this.notes || ''}</textarea>
-            <div class="deck-notes-hint">Las notas se guardan al presionar "Guardar Deck".</div>
+            <div class="deck-notes-actions">
+                <button class="opt-submit-btn opt-notes-save-btn" onclick="Deck.saveNotes()">💾 Guardar Notas</button>
+                <span id="opt-notes-status" class="opt-notes-status"></span>
+            </div>
         </div>`;
 
         if (window.Matchups) {
