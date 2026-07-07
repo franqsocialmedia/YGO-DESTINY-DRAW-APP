@@ -3,16 +3,16 @@
 
 :root {
     /* Colores principales - Destiny Draw Theme */
-    --primary-color: #4a0015;        /* Rojo vino oscuro - Color base */
-    --secondary-color: #6b001f;      /* Rojo vino medio */
-    --accent-color: #9b1030;         /* Rojo vino brillante */
-    --accent-hover: #7d0c26;         /* Rojo vino hover */
+    --primary-color: #2d0a4e;        /* Morado oscuro - Color base */
+    --secondary-color: #4a1172;      /* Morado medio */
+    --accent-color: #7b2cbf;         /* Morado brillante */
+    --accent-hover: #5e1f94;         /* Morado hover */
     --gold-color: #ffd700;           /* Dorado - Yu-Gi-Oh! */
     --text-light: #f1f1f1;           /* Texto claro */
-    --text-dark: #4a0015;            /* Texto oscuro */
-    --bg-dark: #1a0008;              /* Fondo muy oscuro */
-    --bg-card: #2d0012;              /* Fondo de tarjetas */
-    --border-color: #9b1030;         /* Color de bordes */
+    --text-dark: #2d0a4e;            /* Texto oscuro */
+    --bg-dark: #0f0119;              /* Fondo muy oscuro */
+    --bg-card: #1e0836;              /* Fondo de tarjetas */
+    --border-color: #7b2cbf;         /* Color de bordes */
     --success-color: #00b894;        /* Verde - éxito */
     --warning-color: #fdcb6e;        /* Amarillo - advertencia */
     --danger-color: #d63031;         /* Rojo - peligro */
@@ -31,7 +31,7 @@
 }
 /* ── Global: opciones de selects legibles en tema oscuro ── */
 select option {
-    background: #1a0008;
+    background: #0f0119;
     color: var(--text-light);
 }
 
@@ -125,7 +125,7 @@ body {
 .main-navigation {
     position: sticky;
     top: 0;
-    background: rgba(74, 0, 21, 0.95);
+    background: rgba(45, 10, 78, 0.95);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     z-index: 100;
     border-bottom: 2px solid var(--accent-color);
@@ -195,14 +195,14 @@ body {
 
 /* Estado hover del botón */
 .nav-button:hover {
-    background: rgba(155, 16, 48, 0.2);
+    background: rgba(123, 44, 191, 0.2);
     color: var(--gold-color);
 }
 
 /* Estado activo del botón - IMPORTANTE: color amarillo */
 .nav-button.active {
     border-bottom-color: var(--gold-color);
-    background: rgba(155, 16, 48, 0.3);
+    background: rgba(123, 44, 191, 0.3);
     color: var(--gold-color);
 }
 
@@ -252,7 +252,7 @@ body {
     bottom: 90px;
     right: 20px;
     background: #FFD700;
-    color: #4a0015;
+    color: #2d0a4e;
     border: none;
     border-radius: 50%;
     width: 40px;
@@ -273,7 +273,7 @@ body {
     bottom: 135px;
     right: 20px;
     background: #FFD700;
-    color: #4a0015;
+    color: #2d0a4e;
     border: none;
     border-radius: 50%;
     width: 40px;
@@ -358,7 +358,7 @@ body {
 }
 
 .help-panel {
-    background: var(--bg-card, #1a0008);
+    background: var(--bg-card, #0f0119);
     border: 1px solid var(--border-color, rgba(255,215,0,0.2));
     border-radius: 12px;
     width: min(420px, 95vw);
@@ -456,7 +456,7 @@ body {
     align-items: center;
     gap: 8px;
     padding: 10px 14px;
-    background: rgba(74,0,21,0.3);
+    background: rgba(45,10,78,0.3);
     border: none;
     color: var(--text-light, #f1f1f1);
     font-size: 0.85rem;
@@ -465,7 +465,7 @@ body {
     cursor: pointer;
     transition: background 0.15s;
 }
-.faq-question:hover { background: rgba(74,0,21,0.55); }
+.faq-question:hover { background: rgba(45,10,78,0.55); }
 .faq-arrow { font-size: 0.65rem; flex-shrink: 0; color: var(--gold-color, #FFD700); }
 
 .faq-answer {
@@ -762,7 +762,7 @@ body {
     transition: transform 0.2s, background 0.2s;
 }
 .cm-switch input:checked + .cm-slider {
-    background: rgba(155, 16, 48, 0.7);
+    background: rgba(123, 44, 191, 0.7);
 }
 .cm-switch input:checked + .cm-slider::before {
     transform: translateX(16px);
@@ -797,7 +797,7 @@ body {
 }
 
 .welcome-panel {
-    background: linear-gradient(160deg, #1a0008 0%, #2d0012 60%, #1a0008 100%);
+    background: linear-gradient(160deg, #0f0119 0%, #1e0836 60%, #0f0119 100%);
     border: 1px solid rgba(255, 215, 0, 0.25);
     border-radius: 16px;
     padding: 40px 36px 32px;
@@ -987,7 +987,7 @@ body {
 
 /* ── Panel principal ─────────────────────────────────────────────── */
 .card-viewer-overlay {
-    background: var(--bg-card, #2d0012);
+    background: var(--bg-card, #1e0836);
     color: var(--text-light, #f1f1f1);
     width: 400px;
     max-height: 90vh;
@@ -1126,7 +1126,7 @@ body {
     margin: 4px 0;
 }
 .cv-qty-btn {
-    background: linear-gradient(135deg, var(--accent-color, #9b1030), var(--secondary-color, #6b001f));
+    background: linear-gradient(135deg, var(--accent-color, #7b2cbf), var(--secondary-color, #4a1172));
     border: none;
     cursor: pointer;
     color: var(--text-light, #f1f1f1);
@@ -1143,7 +1143,7 @@ body {
                 transform  var(--transition-fast, 0.2s ease);
 }
 .cv-qty-btn:hover {
-    background: linear-gradient(135deg, #c0143c, var(--accent-color, #9b1030));
+    background: linear-gradient(135deg, #9b2fd6, var(--accent-color, #7b2cbf));
     transform: scale(1.08);
 }
 .cv-qty-count {
@@ -1238,7 +1238,7 @@ body {
     margin-bottom: 10px;
 }
 .cv-role-chip {
-    background: rgba(74, 0, 21, 0.6);
+    background: rgba(45, 10, 78, 0.6);
     border: 1px solid rgba(255, 215, 0, 0.25);
     border-radius: 20px;
     padding: 3px 10px;

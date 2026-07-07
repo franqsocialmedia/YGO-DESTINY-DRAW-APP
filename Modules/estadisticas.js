@@ -2522,7 +2522,7 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
             </div>`;
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('duelista-sec'); if(window.Duelista) Duelista.refreshSection();">
-                🎖️ Tu nivel como Duelista
+                🎖️ Nivel como Piloto del Deck
             </h3>
             <div id="duelista-sec" class="stats-section" style="display:none;">
                 <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">

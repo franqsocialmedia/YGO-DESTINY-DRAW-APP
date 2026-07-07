@@ -1897,8 +1897,16 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         const riB   = v => badge(v,[[0,15,'💎 Resiliente','opt-c-green'],[15,30,'✅ Controlado','opt-c-blue'],[30,45,'⚠ Vulnerable','opt-c-yellow'],[45,101,'❌ Muy interrumpido','opt-c-red']]);
         const scrB  = v => badge(v,[[80,101,'💎 Competitivo','opt-c-green'],[65,80,'✅ Optimizado','opt-c-blue'],[50,65,'⚠ Funcional','opt-c-yellow'],[0,50,'❌ Desbalanceado','opt-c-red']]);
 
-        // ── COMPLEJIDAD DEL DECK ───────────────────────────────────────────
+        // ── NIVEL COMO PILOTO DEL DECK (Historial de Sesiones) ───────────────
         let html = `
+        <h3 class="deck-section-title" onclick="Deck.toggleSection('piloto-sec'); if(window.Duelista) Duelista.refreshSection();">🎖️ Nivel como Piloto del Deck</h3>
+        <div id="piloto-sec" class="deck-section-content" style="display:none;">
+            <div id="duelista-content-opt">
+                <p class="stats-empty">Abre esta sección para ver tu perfil.</p>
+            </div>
+        </div>
+
+        <!-- ── COMPLEJIDAD DEL DECK ── -->
         <h3 class="deck-section-title" onclick="Deck.toggleSection('cxd-sec')">🧩 Complejidad del Deck</h3>
         <div id="cxd-sec" class="deck-section-content" style="display:none;">
             <div id="cxd-summary">${this._renderComplejidadSummary()}</div>

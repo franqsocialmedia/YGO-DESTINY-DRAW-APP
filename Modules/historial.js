@@ -559,21 +559,29 @@ window.Matchups = Matchups;
 
 
 
-// ── Duelista — perfil del jugador: nivel por duelos totales, WR global, mejores decks (mín. 5 duelos) ──
-
+// ── Duelista — "Nivel como Piloto del Deck": nivel de dominio del deck activo,
+//    calculado EXCLUSIVAMENTE con las rondas registradas en Historial de Sesiones
+//    (Deck.getOptimizacion() → optimization_${deckName}, pestaña Optimización).
+//    Ya no tiene relación con Matchups / Historial de Enfrentamientos (winrate manual
+//    por rival) ni con datos agregados de otros decks: es el nivel del deck cargado.
+//    Se renderiza en dos lugares con el mismo contenido: Estadísticas (#duelista-content)
+//    y Mi Deck → Optimización, arriba de Complejidad del Deck (#duelista-content-opt).
 const Duelista = {
 
-    // Niveles por duelos totales
+    // Niveles por rondas totales registradas en Historial de Sesiones del deck activo.
+    // Escala reducida respecto a la versión anterior (que sumaba TODOS los decks a lo
+    // largo de toda la vida de la app): aquí solo cuentan las rondas de prueba de un
+    // único deck, un volumen naturalmente mucho menor.
     LEVELS: [
-        { min: 0,    label: 'Novato',         icon: '🥚' },
-        { min: 10,   label: 'Aprendiz',        icon: '🌱' },
-        { min: 25,   label: 'Duelista',        icon: '⚡' },
-        { min: 50,   label: 'Rival',           icon: '🔥' },
-        { min: 100,  label: 'Competidor',      icon: '🏅' },
-        { min: 200,  label: 'Semi-Pro',        icon: '💎' },
-        { min: 400,  label: 'Pro',             icon: '👑' },
-        { min: 800,  label: 'Élite',           icon: '🌟' },
-        { min: 1500, label: 'Legendario',      icon: '🐉' },
+        { min: 0,   label: 'Novato',         icon: '🥚' },
+        { min: 5,   label: 'Aprendiz',       icon: '🌱' },
+        { min: 15,  label: 'Piloto',         icon: '⚡' },
+        { min: 30,  label: 'Rival',          icon: '🔥' },
+        { min: 50,  label: 'Competidor',     icon: '🏅' },
+        { min: 100, label: 'Semi-Pro',       icon: '💎' },
+        { min: 200, label: 'Pro',            icon: '👑' },
+        { min: 400, label: 'Élite',          icon: '🌟' },
+        { min: 800, label: 'Legendario',     icon: '🐉' },
     ],
 
     getLevel: function (totalDuels) {
@@ -582,44 +590,33 @@ const Duelista = {
             if (totalDuels >= l.min) level = l;
             else break;
         }
-        // Próximo nivel
         const idx  = this.LEVELS.indexOf(level);
         const next = this.LEVELS[idx + 1] || null;
         return { ...level, next, totalDuels };
     },
 
-    // Agrega todos los records de todos los decks guardados
     _calcWR: function (w, l) {
         const t = w + l;
         return t === 0 ? null : Math.round((w / t) * 100);
     },
 
-    _getAllMatchupRecords: function () {
+    // Todas las rondas de todas las sesiones del deck activo (o el indicado por nombre)
+    _getAllRounds: function (deckName) {
         if (!window.Deck) return [];
-        const decks = Deck.getSavedDecks();
-        const all   = [];
-        decks.forEach(deck => {
-            try {
-                const raw = localStorage.getItem(`matchup_${deck.name}`);
-                const records = JSON.parse(raw) || [];
-                records.forEach(m => {
-                    if (m.wins1st !== undefined) { all.push({ ...m, _deckName: deck.name }); }
-                    else all.push({ ...m, wins1st: m.wins||0, losses1st: m.losses||0, wins2nd: 0, losses2nd: 0, _deckName: deck.name });
-                });
-            } catch (_) {}
-        });
-        return all;
+        const data = Deck.getOptimizacion(deckName);
+        const rounds = [];
+        (data.sessions || []).forEach(s => (s.rounds || []).forEach(r => rounds.push(r)));
+        return rounds;
     },
 
-    getGlobalStats: function () {
+    getDeckStats: function (deckName) {
         if (!window.Deck) return null;
-        const all = this._getAllMatchupRecords();
+        const rounds = this._getAllRounds(deckName);
         let w1 = 0, l1 = 0, w2 = 0, l2 = 0;
-        all.forEach(m => {
-            w1 += m.wins1st   || 0;
-            l1 += m.losses1st || 0;
-            w2 += m.wins2nd   || 0;
-            l2 += m.losses2nd || 0;
+        rounds.forEach(r => {
+            const isWin = r.resultado === 'victoria';
+            if (r.orden === 'primero') { isWin ? w1++ : l1++; }
+            else if (r.orden === 'segundo') { isWin ? w2++ : l2++; }
         });
         return {
             wins1st: w1, losses1st: l1,
@@ -632,57 +629,26 @@ const Duelista = {
             wrAll: this._calcWR(w1 + w2, l1 + l2)
         };
     },
-    getBestDecks: function () {
-        if (!window.Deck) return null;
-        const allRecords = this._getAllMatchupRecords();
-        const result     = { general: null, going1st: null, going2nd: null };
-        let bestAll = -1, best1st = -1, best2nd = -1;
-
-        // Agrupar por deck del jugador
-        const byDeck = {};
-        allRecords.forEach(m => {
-            const dk = m._deckName;
-            if (!byDeck[dk]) byDeck[dk] = { w1:0, l1:0, w2:0, l2:0 };
-            byDeck[dk].w1 += m.wins1st   || 0;
-            byDeck[dk].l1 += m.losses1st || 0;
-            byDeck[dk].w2 += m.wins2nd   || 0;
-            byDeck[dk].l2 += m.losses2nd || 0;
-        });
-
-        Object.entries(byDeck).forEach(([name, r]) => {
-            const total = r.w1 + r.l1 + r.w2 + r.l2;
-            if (total < 5) return;
-            const pAll = this._calcWR(r.w1+r.w2, r.l1+r.l2);
-            const p1st = this._calcWR(r.w1, r.l1);
-            const p2nd = this._calcWR(r.w2, r.l2);
-            if (pAll !== null && pAll > bestAll) { bestAll = pAll; result.general  = { name, pct: pAll, duels: total }; }
-            if (p1st !== null && p1st > best1st) { best1st = p1st; result.going1st = { name, pct: p1st, duels: r.w1+r.l1 }; }
-            if (p2nd !== null && p2nd > best2nd) { best2nd = p2nd; result.going2nd = { name, pct: p2nd, duels: r.w2+r.l2 }; }
-        });
-
-        return result;
-    },
 
     renderSection: function () {
-        if (!window.Winrate) {
-            return `<p class="stats-empty">Módulo de Winrate no disponible.</p>`;
+        const deckName = window.Deck?.name;
+        if (!window.Deck || !deckName || !Object.keys(Deck.cards || {}).length) {
+            return `<p class="stats-empty">Carga un deck para ver su Nivel como Piloto.</p>`;
         }
 
-        const g = this.getGlobalStats();
+        const g = this.getDeckStats(deckName);
         if (!g || g.totalDuels === 0) {
             return `
                 <div class="duelista-empty">
                     <div class="duelista-empty-icon">🥚</div>
-                    <p>Aún no tienes duelos registrados.</p>
-                    <small>Ve a <strong>Mi Deck → Historial de Enfrentamientos</strong> y registra tus partidas.</small>
+                    <p>Este deck aún no tiene rondas registradas.</p>
+                    <small>Ve a <strong>Mi Deck → Optimización</strong> y registra rondas en Historial de Sesiones.</small>
                 </div>`;
         }
 
         const lv    = this.getLevel(g.totalDuels);
-        const best  = this.getBestDecks();
         const wrCol = (p) => p === null ? 'rgba(255,255,255,0.3)' : p >= 60 ? '#00b894' : p >= 45 ? '#fdcb6e' : '#d63031';
 
-        // Barra de progreso al siguiente nivel
         const progressBar = lv.next
             ? `<div class="duelista-progress-track">
                    <div class="duelista-progress-bar"
@@ -694,15 +660,6 @@ const Duelista = {
                </div>`
             : `<div class="duelista-progress-label">Nivel máximo alcanzado 🏆</div>`;
 
-        const bestDeckRow = (deck, label) => deck
-            ? `<div class="duelista-best-row">
-                   <span class="duelista-best-label">${label}</span>
-                   <span class="duelista-best-name">${deck.name}</span>
-                   <span class="duelista-best-pct" style="color:${wrCol(deck.pct)}">${deck.pct}%</span>
-                   <span class="duelista-best-duels">(${deck.duels})</span>
-               </div>`
-            : `<div class="duelista-best-row"><span class="duelista-best-label">${label}</span><span class="duelista-best-duels">Sin datos suficientes (mín. 5 duelos)</span></div>`;
-
         return `
             <div class="duelista-card">
 
@@ -711,15 +668,15 @@ const Duelista = {
                     <div class="duelista-level-icon">${lv.icon}</div>
                     <div class="duelista-level-info">
                         <div class="duelista-level-label">${lv.label}</div>
-                        <div class="duelista-level-duels">${g.totalDuels} duelos totales</div>
+                        <div class="duelista-level-duels">${g.totalDuels} rondas registradas · ${deckName}</div>
                     </div>
                 </div>
                 ${progressBar}
 
                 <div class="duelista-divider"></div>
 
-                <!-- Winrate como jugador -->
-                <div class="duelista-subtitle">Winrate como Jugador</div>
+                <!-- Winrate del deck activo (Historial de Sesiones) -->
+                <div class="duelista-subtitle">Winrate del Deck (Historial de Sesiones)</div>
                 <div class="duelista-wr-grid">
                     <div class="duelista-wr-cell">
                         <div class="duelista-wr-val" style="color:${wrCol(g.wrAll)}">
@@ -744,22 +701,15 @@ const Duelista = {
                     </div>
                 </div>
 
-                <div class="duelista-divider"></div>
-
-                <!-- Mejores decks -->
-                <div class="duelista-subtitle">Winrate del Deck</div>
-                <div class="duelista-best-list">
-                    ${bestDeckRow(best?.general,  '🏆 Mayor WR')}
-                    ${bestDeckRow(best?.going1st, '⚡ Mejor 1st')}
-                    ${bestDeckRow(best?.going2nd, '🛡️ Mejor 2nd')}
-                </div>
-
             </div>`;
     },
 
+    // Refresca todas las instancias visibles del bloque (Estadísticas + Mi Deck → Optimización)
     refreshSection: function () {
-        const el = document.getElementById('duelista-content');
-        if (el) el.innerHTML = this.renderSection();
+        ['duelista-content', 'duelista-content-opt'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = this.renderSection();
+        });
     }
 };
 

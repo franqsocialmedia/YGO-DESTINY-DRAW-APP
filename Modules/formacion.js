@@ -3462,7 +3462,8 @@ const HelpPanel = {
             <li><strong>Recurrencia de Cartas en el Meta:</strong> muestra con qué frecuencia aparece cada carta en los decks del meta cargados.</li>
             <li><strong>Poder de Cartas del Meta:</strong> Power Score de cada carta basado en presencia, mecánicas y counter-bonus. Se calcula manualmente con el botón ⚡.</li>
             <li><strong>Exportar Datos:</strong> descarga reportes del deck o del meta en .txt y .csv.</li>
-            <li><strong>Tu nivel como Duelista:</strong> estadísticas personales de rendimiento basadas en los matchups registrados en el historial.</li>
+            <li><strong>Nivel como Piloto del Deck:</strong> nivel de dominio del deck activo según las rondas registradas en <strong>Historial de Sesiones</strong> (Mi Deck → Optimización) — Winrate General, Going 1st y Going 2nd. También visible arriba de Complejidad del Deck en Optimización. Ya no usa el Historial de Enfrentamientos (Matchups).</li>
+            <li><strong>Historial de Enfrentamientos:</strong> registro manual de W/L por rival, en Mi Deck → Optimización. Independiente del Nivel como Piloto.</li>
         </ul>`,
 
     simuladores: `
