@@ -12,12 +12,14 @@ const Formacion = {
     MASTERED_KEY:  'yugioh_formacion_mastered',
 
     TOPICS: [
-        { id: 'que-es-yugioh',           label: '¿Qué es Yu-Gi-Oh!?' },
-        { id: 'fases-del-duelo',         label: 'Las Fases del Duelo' },
-        { id: 'tipos-cartas-basicas',    label: 'Tipos de Cartas Básicas' },
-        { id: 'tipos-cartas-especiales', label: 'Tipos de Cartas Especiales' },
-        { id: 'estructura-efecto-carta', label: 'Estructura de un Efecto de Carta' },
-        { id: 'staples-formato',         label: 'Staples del Formato' },
+        { id: 'que-es-yugioh',           label: '¿Qué es Yu-Gi-Oh!?',               level: 'Básico' },
+        { id: 'vocabulario-legal',       label: 'Vocabulario Legal del Juego',      level: 'Básico' },
+        { id: 'fases-del-duelo',         label: 'Las Fases del Duelo',              level: 'Básico' },
+        { id: 'tipos-cartas-basicas',    label: 'Tipos de Cartas Básicas',          level: 'Fundamental' },
+        { id: 'estructura-efecto-carta', label: 'Estructura de un Efecto de Carta', level: 'Intermedio' },
+        { id: 'tipos-cartas-especiales', label: 'Tipos de Cartas Especiales',       level: 'Intermedio' },
+        { id: 'cadenas-prioridad',       label: 'Cadenas, Prioridad y Spell Speed', level: 'Avanzado' },
+        { id: 'staples-formato',         label: 'Staples del Formato',              level: 'Competitivo' },
     ],
 
     PLATFORMS: ['PC', 'GBC', 'GBA', 'PS1', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'Físico'],
@@ -43,6 +45,7 @@ const Formacion = {
                         onclick="Formacion.switchTab('apuntes')">📓 Apuntes</button>
                 ${activeTopics.map(t => `
                     <button class="form-subnav-btn${this.activeTab === t.id ? ' active' : ''}"
+                            title="Nivel: ${t.level || ''}"
                             onclick="Formacion.switchTab('${t.id}')">📖 ${t.label}</button>
                 `).join('')}
                 <button class="form-subnav-btn${this.activeTab === 'juegos' ? ' active' : ''}"
@@ -247,6 +250,7 @@ const Formacion = {
         return `
             <div class="form-topic-container">
                 <div class="form-notebook">
+                    ${topic.level ? `<span class="form-nb-level-badge">Nivel: ${topic.level}</span>` : ''}
                     ${html}
                 </div>
                 ${!mastered.includes(topic.id) ? `
@@ -316,10 +320,12 @@ const Formacion = {
     _getTopicContent: function (topicId) {
         const topics = {
             'que-es-yugioh':           this._topicQueEsYugioh(),
+            'vocabulario-legal':       this._topicVocabularioLegal(),
             'fases-del-duelo':         this._topicFasesDelDuelo(),
             'tipos-cartas-basicas':    this._topicTiposCartasBasicas(),
-            'tipos-cartas-especiales': this._topicTiposCartasEspeciales(),
             'estructura-efecto-carta': this._topicEstructuraEfecto(),
+            'tipos-cartas-especiales': this._topicTiposCartasEspeciales(),
+            'cadenas-prioridad':       this._topicCadenasPrioridad(),
             'staples-formato':         this._topicStaples(),
         };
         return topics[topicId] || '<p>Contenido no disponible.</p>';
@@ -382,6 +388,31 @@ const Formacion = {
             </p>
         `;
     },
+
+    _topicVocabularioLegal: function () { return `
+        <h2 class="form-nb-title">Vocabulario Legal del Juego</h2>
+        <p class="form-nb-text">Antes de aprender cartas, aprende el idioma. En Yu-Gi-Oh! cada palabra de un efecto es una acción legal distinta — confundirlas es la causa número uno de errores de novato.</p>
+
+        <h3 class="form-nb-subtitle">⚔️ Las 4 Acciones que Nunca Son lo Mismo</h3>
+        <ul class="form-nb-list">
+            <li><strong>Destruir:</strong> Manda la carta al cementerio como resultado de un efecto o batalla. Se puede negar con cartas que "protegen de destrucción".</li>
+            <li><strong>Enviar al Cementerio (Send/Mill):</strong> Mover una carta ahí sin que sea "destrucción". No activa efectos que dicen "si es destruido".</li>
+            <li><strong>Tributar:</strong> Costo de Invocación (o efecto) que manda una carta al cementerio como parte de invocar otro monstruo. No es destrucción ni cuenta como "enviado por efecto" para la mayoría de propósitos.</li>
+            <li><strong>Desterrar (Banish):</strong> Saca la carta del juego (Removed from Play). No pasa por el cementerio — cartas que reviven desde cementerio no pueden tocarla.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🎯 Objetivo (Target) vs Sin Objetivo</h3>
+        <p class="form-nb-text">Si el efecto dice "selecciona" o "target", el oponente puede reaccionar sobre esa carta antes de que resuelva (ej: cambiándola de posición o protegiéndola). Si dice "todos los monstruos" o no menciona selección, no hay ventana de reacción por objetivo.</p>
+
+        <h3 class="form-nb-subtitle">🚫 Negar (Negate)</h3>
+        <ul class="form-nb-list">
+            <li><strong>Negar la activación:</strong> El efecto nunca resuelve. Si tenía costo, el costo ya se pagó y se pierde igual.</li>
+            <li><strong>Negar el efecto:</strong> La activación cuenta como "usada" (once per turn se consume) pero no pasa nada al resolver.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Cuando leas cualquier carta nueva, pregúntate primero: ¿destruye, envía, tributa o destierra? ¿Tiene objetivo? ¿Niega activación o efecto? Estas 4 preguntas resuelven la mayoría de las confusiones de reglas.</p>
+    `; },
 
     _topicFasesDelDuelo: function () { return `
         <h2 class="form-nb-title">Las Fases del Duelo</h2>
@@ -506,6 +537,32 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">Lee siempre en este orden: ¿Qué necesito para activarlo? → ¿Qué pago? → ¿Qué hace? → ¿Qué limitación me queda? El jugador que entiende los costos y las restricciones toma mejores decisiones que el que solo ve el efecto en bruto.</p>
+    `; },
+
+    _topicCadenasPrioridad: function () { return `
+        <h2 class="form-nb-title">Cadenas, Prioridad y Spell Speed</h2>
+        <p class="form-nb-text">Yu-Gi-Oh! moderno no se trata de jugar tu turno — se trata de saber cuándo interrumpir el del rival. Esta lección separa al jugador intuitivo del que realmente entiende el juego.</p>
+
+        <h3 class="form-nb-subtitle">⚡ Spell Speed (Velocidad de Conjuro)</h3>
+        <ul class="form-nb-list">
+            <li><strong>Velocidad 1:</strong> Invocaciones normales, Magias Normales/Equipo/Campo/Ritual, efectos de monstruo que no digan "Quick Effect". Solo se activan cuando NO hay nada en cadena.</li>
+            <li><strong>Velocidad 2:</strong> Magias de Juego Rápido, Trampas, efectos de monstruo marcados como "Quick Effect". Pueden responder a Velocidad 1 y 2.</li>
+            <li><strong>Velocidad 3:</strong> Counter Traps. Solo pueden ser respondidas por otra Velocidad 3.</li>
+            <li><strong>Regla de oro:</strong> Una carta de menor velocidad NUNCA puede responder a una de mayor velocidad ya en cadena.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔗 Cómo se Arma y Resuelve una Cadena</h3>
+        <ul class="form-nb-list">
+            <li>Cada jugador con prioridad puede añadir un eslabón (link) si tiene una carta que cumpla la velocidad requerida.</li>
+            <li>La cadena resuelve en orden inverso: último eslabón en entrar, primero en resolver (LIFO).</li>
+            <li>Si el eslabón 1 (el original) es negado, el resto de la cadena resuelve igual desde el eslabón más alto hacia abajo — no se cancela toda la cadena.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">👑 Prioridad</h3>
+        <p class="form-nb-text">El turno pasa por "puntos de prioridad" (antes de Battle Phase, antes de cada ataque, etc.) donde el jugador en turno puede activar algo primero; si no lo hace, pasa la prioridad al rival, quien puede responder con Velocidad 2 o 3 antes de que continúe la acción.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Antes de pasar de fase pregúntate: ¿tengo algo de Velocidad 2 o 3 que quiera activar aquí? Una vez que sueltas la prioridad y el rival actúa, perdiste la ventana. Aprender a identificar estas ventanas es la base de jugar interrupciones (handtraps, counter traps) correctamente.</p>
     `; },
 
     _topicStaples: function () { return `
