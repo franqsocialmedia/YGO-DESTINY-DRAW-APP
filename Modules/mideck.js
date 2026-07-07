@@ -323,7 +323,8 @@ const Deck = {
             if (panel) panel.innerHTML = Estadisticas.renderDeckSelectorPanel();
         }
     },
-// Guardado rápido de solo las notas desde Optimización, sin navegar a
+
+    // Guardado rápido de solo las notas desde Optimización, sin navegar a
     // Decklist ni disparar "Guardar Deck". No toca cards ni savedAt salvo
     // que el deck todavía no tuviera ningún guardado previo.
     saveNotes: function () {
@@ -341,6 +342,7 @@ const Deck = {
             this._notesStatusTimeout = setTimeout(() => { statusEl.textContent = ''; }, 2500);
         }
     },
+
     getSavedDecks: function () {
         const decks = [];
         for (let i = 0; i < localStorage.length; i++) {
@@ -1360,6 +1362,7 @@ html += `</div>`;
 html += `<div id="mideck-construccion-pane" style="display:none;">`;
 
 if (!isEmpty) {
+    html += `<div id="construccion-complejidad-box">${this.renderComplejidadResultCard()}</div>`;
     html += `<div data-section-id="deck-chart">${this.renderDeckStatsBlock()}</div>`;
 
     html += `
@@ -1386,8 +1389,8 @@ this.container.innerHTML = html;
     },
 
     getOptimizacion: function(deckName) {
-    try {
-        const raw = JSON.parse(localStorage.getItem(`optimization_${deckName || this.name}`));
+        try {
+            const raw = JSON.parse(localStorage.getItem(`optimization_${deckName || this.name}`));
             if (!raw) return { sessions: [] };
             // Migración: formato viejo con records[] → convertir a sesión única
             if (raw.records && !raw.sessions) {
@@ -1425,7 +1428,8 @@ this.container.innerHTML = html;
             return raw;
         } catch(e) { return { sessions: [] }; }
     },
-// Clasificación de un score de sesión de Optimización (mismos rangos que
+
+    // Clasificación de un score de sesión de Optimización (mismos rangos que
     // scrB en renderOptimizacionPane). Reutilizada por el sidebar de Decks.
     getSessionScoreBadge: function(score) {
         if (score >= 80) return ['💎 Competitivo', 'opt-c-green'];
@@ -1442,6 +1446,7 @@ this.container.innerHTML = html;
         if (!sessions.length) return null;
         return this.calcOptMetrics(sessions[0]).score;
     },
+
     saveOptimizacionSession: function(session) {
         const data = this.getOptimizacion();
         if (!data.sessions) data.sessions = [];
@@ -1729,6 +1734,151 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
     if (tvic) tvic.style.display = res === 'victoria' ? '' : 'none';
     if (tder) tder.style.display = res === 'derrota'  ? '' : 'none';
 },
+    // ═══════════════════════════════════════════════════════════════════
+    // COMPLEJIDAD DEL DECK — clasificador de dificultad de uso/aprendizaje
+    // ═══════════════════════════════════════════════════════════════════
+    CXD_PREGUNTAS: [
+        { titulo: '1. Flujo del deck', grupo: 'aprender', texto: '¿Cuál describe mejor sus combos?',
+          opciones: ['Siempre hago casi las mismas jugadas.', 'Tengo varias rutas dependiendo de la mano.', 'Cada mano cambia completamente mi forma de jugar.'] },
+        { titulo: '2. Ejecución', grupo: 'aprender', texto: '¿Cómo son sus combos?',
+          opciones: ['Cortos y fáciles de recordar.', 'Necesitan práctica.', 'Muy largos y fáciles de fallar.'] },
+        { titulo: '3. Margen de error', grupo: 'aprender', texto: 'Si un novato se equivoca...',
+          opciones: ['Puede seguir jugando normalmente.', 'Pierde bastante ventaja.', 'Probablemente perdió el turno.'] },
+        { titulo: '4. Lectura', grupo: 'aprender', texto: 'Las cartas del deck...',
+          opciones: ['Son fáciles de entender.', 'Algunas requieren releerlas.', 'Muchas necesitan reglas avanzadas.'] },
+        { titulo: '5. Recursos', grupo: 'dominar', texto: 'Durante la partida...',
+          opciones: ['Solo debo controlar pocos recursos.', 'Debo controlar varios recursos.', 'Debo controlar muchísimos recursos.'] },
+        { titulo: '6. Decisiones', grupo: 'dominar', texto: 'Durante un turno...',
+          opciones: ['La mayoría de jugadas son evidentes.', 'Hay varias decisiones importantes.', 'Cada decisión cambia la partida.'] },
+        { titulo: '7. Conocimiento del rival', grupo: 'dominar', texto: 'Para jugar bien este deck...',
+          opciones: ['No necesito conocer mucho el meta.', 'Conviene conocer el meta.', 'Debo conocer muy bien casi todos los enfrentamientos.'] },
+        { titulo: '8. Adaptación', grupo: 'dominar', texto: 'Cuando el rival interrumpe...',
+          opciones: ['El deck sigue funcionando.', 'Debo cambiar parte del plan.', 'Casi siempre debo improvisar completamente.'] }
+    ],
+
+    getComplejidad: function (deckName) {
+        try { return JSON.parse(localStorage.getItem(`complejidad_${deckName || this.name}`)); }
+        catch (e) { return null; }
+    },
+
+    _complejidadNivel: function (total) {
+        if (total <= 11) return { titulo: '🟢 Ideal para empezar', color: '#81C784',
+            texto: 'Este deck es una excelente opción para jugadores nuevos. Su curva de aprendizaje es amable y permite comprender los fundamentos del juego sin sentirse abrumado.' };
+        if (total <= 15) return { titulo: '🟢 Principiante', color: '#81C784',
+            texto: 'El deck requiere aprender algunos conceptos y practicar ciertas secuencias, pero sigue siendo apropiado para jugadores con poca experiencia.' };
+        if (total <= 18) return { titulo: '🟡 Intermedio', color: '#FFD54F',
+            texto: 'Es recomendable para jugadores que ya dominan las reglas básicas y desean comenzar a enfrentarse a decisiones y situaciones más complejas.' };
+        if (total <= 21) return { titulo: '🟠 Avanzado', color: '#FFB74D',
+            texto: 'Este deck exige una buena comprensión de las reglas, experiencia práctica y capacidad para adaptarse durante la partida.' };
+        return { titulo: '🔴 Experto', color: '#E57373',
+            texto: 'Pensado para jugadores con mucha experiencia. Aprenderlo y jugarlo realmente bien requiere dominar numerosas interacciones, decisiones y enfrentamientos.' };
+    },
+
+    _complejidadTextoAprender: function (aprender) {
+        if (aprender <= 5) return '📖 Curva de aprendizaje: Baja. En pocas partidas un jugador nuevo debería comprender su funcionamiento básico.';
+        if (aprender <= 8) return '📖 Curva de aprendizaje: Media. Requiere practicar varias líneas de juego antes de sentirse cómodo.';
+        return '📖 Curva de aprendizaje: Alta. Un jugador nuevo necesitará bastante estudio y práctica antes de jugarlo con confianza.';
+    },
+
+    _complejidadTextoDominar: function (dominar) {
+        if (dominar <= 5) return '🎯 Techo de habilidad: Bajo. Una vez aprendido, dominarlo no resulta especialmente complicado.';
+        if (dominar <= 8) return '🎯 Techo de habilidad: Medio. Siempre habrá espacio para mejorar la toma de decisiones y optimizar el rendimiento.';
+        return '🎯 Techo de habilidad: Alto. Incluso jugadores experimentados seguirán encontrando formas de optimizar su juego con este deck.';
+    },
+
+    _renderComplejidadSummary: function () {
+        const data = this.getComplejidad();
+        if (!data) return `<p class="cxd-empty-hint">Aún no evaluado. Complétalo para ver su clasificación aquí y en Decklist.</p>`;
+        const nivel = this._complejidadNivel(data.total);
+        return `<div class="cxd-summary-line">
+            <span class="cxd-summary-badge">${nivel.titulo}</span>
+            <span>Aprender ${data.aprender}/12 · Dominar ${data.dominar}/12 · Total ${data.total}/24</span>
+            <span class="cxd-summary-date">${new Date(data.evaluatedAt).toLocaleDateString('es-ES')}</span>
+        </div>`;
+    },
+
+    _renderComplejidadForm: function () {
+        const prev    = this.getComplejidad();
+        const prevAns = prev?.answers || [];
+        const qs = this.CXD_PREGUNTAS.map((p, i) => `
+            <div class="cxd-pregunta">
+                <h4>${p.titulo}</h4>
+                <p>${p.texto}</p>
+                ${p.opciones.map((o, j) => `
+                    <label class="cxd-opcion">
+                        <input type="radio" name="cxd-p${i}" value="${j + 1}" ${(prevAns[i] ? prevAns[i] === j + 1 : j === 0) ? 'checked' : ''}>
+                        ${o}
+                    </label>`).join('')}
+            </div>`).join('');
+        return `${qs}<button class="opt-submit-btn cxd-submit-btn" onclick="Deck.calcularComplejidad()">Clasificar Deck</button>`;
+    },
+
+    toggleComplejidadForm: function () {
+        const wrap = document.getElementById('cxd-form-wrap');
+        const btn  = document.getElementById('cxd-toggle-btn');
+        if (!wrap) return;
+        const opening = wrap.style.display === 'none';
+        wrap.style.display = opening ? 'block' : 'none';
+        if (btn) btn.textContent = opening ? '✖ Cancelar evaluación' : '🧩 Evaluar Complejidad del Deck';
+    },
+
+    calcularComplejidad: function () {
+        let aprender = 0, dominar = 0;
+        const answers = [];
+        this.CXD_PREGUNTAS.forEach((p, i) => {
+            const el  = document.querySelector(`input[name="cxd-p${i}"]:checked`);
+            const val = el ? Number(el.value) : 1;
+            answers.push(val);
+            if (p.grupo === 'aprender') aprender += val; else dominar += val;
+        });
+        const total = aprender + dominar;
+        localStorage.setItem(`complejidad_${this.name}`, JSON.stringify({
+            answers, aprender, dominar, total, evaluatedAt: new Date().getTime()
+        }));
+
+        const sum = document.getElementById('cxd-summary');
+        if (sum) sum.innerHTML = this._renderComplejidadSummary();
+        this.toggleComplejidadForm();
+
+        const box = document.getElementById('construccion-complejidad-box');
+        if (box) box.innerHTML = this.renderComplejidadResultCard();
+    },
+
+    renderComplejidadResultCard: function () {
+        const data = this.getComplejidad();
+        if (!data) {
+            return `<div class="cxd-result-empty">
+                <p>🧩 Este deck no ha sido evaluado en su nivel de dificultad de uso y aprendizaje.</p>
+                <p>Si deseas establecer esta información, pasa a <strong>Optimización</strong> y genera una <strong>Clasificación de Dificultad</strong>.</p>
+            </div>`;
+        }
+        const nivel = this._complejidadNivel(data.total);
+        return `<div class="cxd-result-card">
+            <div class="cxd-result-hdr">
+                <span class="cxd-result-title">${nivel.titulo}</span>
+                <span class="cxd-result-date">Evaluado el ${new Date(data.evaluatedAt).toLocaleDateString('es-ES')}</span>
+            </div>
+            <div class="cxd-bar-row">
+                <label>📖 Curva de aprendizaje</label>
+                <div class="cxd-bar-track"><div class="cxd-bar-fill" style="width:${data.aprender / 12 * 100}%;background:#64B5F6"></div></div>
+                <span class="cxd-bar-val">${data.aprender}/12</span>
+            </div>
+            <p class="cxd-bar-desc">${this._complejidadTextoAprender(data.aprender)}</p>
+            <div class="cxd-bar-row">
+                <label>🎯 Techo de habilidad</label>
+                <div class="cxd-bar-track"><div class="cxd-bar-fill" style="width:${data.dominar / 12 * 100}%;background:#FFD54F"></div></div>
+                <span class="cxd-bar-val">${data.dominar}/12</span>
+            </div>
+            <p class="cxd-bar-desc">${this._complejidadTextoDominar(data.dominar)}</p>
+            <div class="cxd-bar-row">
+                <label>Dificultad General</label>
+                <div class="cxd-bar-track"><div class="cxd-bar-fill" style="width:${data.total / 24 * 100}%;background:${nivel.color}"></div></div>
+                <span class="cxd-bar-val">${data.total}/24</span>
+            </div>
+            <p class="cxd-result-text">${nivel.texto}</p>
+        </div>`;
+    },
+
     renderOptimizacionPane: function() {
         if (!Object.keys(this.cards).length)
             return `<p style="opacity:.6;margin-top:10px;">Carga un deck para usar Optimización.</p>`;
@@ -1747,8 +1897,19 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         const riB   = v => badge(v,[[0,15,'💎 Resiliente','opt-c-green'],[15,30,'✅ Controlado','opt-c-blue'],[30,45,'⚠ Vulnerable','opt-c-yellow'],[45,101,'❌ Muy interrumpido','opt-c-red']]);
         const scrB  = v => badge(v,[[80,101,'💎 Competitivo','opt-c-green'],[65,80,'✅ Optimizado','opt-c-blue'],[50,65,'⚠ Funcional','opt-c-yellow'],[0,50,'❌ Desbalanceado','opt-c-red']]);
 
-        // ── NOTAS DEL DECK + HISTORIAL DE ENFRENTAMIENTOS (movido desde Construcción) ──
+        // ── COMPLEJIDAD DEL DECK ───────────────────────────────────────────
         let html = `
+        <h3 class="deck-section-title" onclick="Deck.toggleSection('cxd-sec')">🧩 Complejidad del Deck</h3>
+        <div id="cxd-sec" class="deck-section-content" style="display:none;">
+            <div id="cxd-summary">${this._renderComplejidadSummary()}</div>
+            <button class="opt-submit-btn cxd-toggle-btn" id="cxd-toggle-btn"
+                    onclick="Deck.toggleComplejidadForm()">🧩 Evaluar Complejidad del Deck</button>
+            <div id="cxd-form-wrap" class="cxd-form-wrap" style="display:none;">
+                ${this._renderComplejidadForm()}
+            </div>
+        </div>
+
+        <!-- ── NOTAS DEL DECK + HISTORIAL DE ENFRENTAMIENTOS (movido desde Construcción) ── -->
         <h3 class="deck-section-title" onclick="Deck.toggleSection('notes-sec')">📝 Notas del Deck</h3>
         <div id="notes-sec" class="deck-section-content" style="display:none;">
             <textarea class="deck-notes-textarea"
@@ -1789,7 +1950,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         <h3 class="deck-section-title" onclick="Deck.toggleSection('opt-form-sec')">
             ➕ Nueva Ronda de Duelo${isActive ? ` <span class="opt-round-count">#${activeRounds + 1}</span>` : ''}
             </h3>
-        <div id="opt-form-sec" class="deck-section-content" style="display:none;">
+        <div id="opt-form-sec" class="deck-section-content" style="display:block;">
             <div class="opt-record opt-form-card">
             <datalist id="opt-matchup-suggestions">
                 ${(window.Matchups ? Matchups.getAll() : []).map(m =>
@@ -3264,13 +3425,15 @@ _renderSavedDeckItems: function () {
                 .filter(c => c.location === 'main').reduce((s, c) => s + c.qty, 0);
             const extraCount = Object.values(deck.cards)
                 .filter(c => c.location === 'extra').reduce((s, c) => s + c.qty, 0);
-// Pts: score de la última sesión de Optimización (si existe)
+
+            // Pts: score de la última sesión de Optimización (si existe)
             let ptsHtml = '';
             const lastScore = Deck.getLastSessionScore(deck.name);
             if (lastScore !== null) {
                 const [ptsLbl, ptsCls] = Deck.getSessionScoreBadge(lastScore);
                 ptsHtml = `<div class="eng-item-pts ${ptsCls}">Pts: ${lastScore} · ${ptsLbl}</div>`;
             }
+
             // Winrate si está disponible
             let wrHtml = '';
             if (window.Winrate) {

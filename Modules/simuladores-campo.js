@@ -705,7 +705,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                     <div class="pz-mcv-info-col">
                         <div class="pz-mcv-type">${card.type || ''}</div>
                         ${statsHtml}
-                        <div class="pz-mcv-desc">${card.desc || ''}</div>
+                        <div class="pz-mcv-desc" id="pz-mcv-desc-text">${card.desc || (card.id ? 'Cargando descripción...' : '')}</div>
                     </div>
                 </div>
                 ${addIdx >= 0 ? `<button class="pz-mcv-add-btn"
@@ -713,6 +713,30 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                     ➕ Añadir a Other Options</button>` : ''}
             </div>`;
         document.body.appendChild(overlay);
+
+        // Las cartas restauradas desde una Marca de Estado (recargadas vía
+        // _loadStatesFromDeck) vienen "slim" — sin `desc` ni `banlist_info`, para no
+        // saturar localStorage (ver _slimEntry/_saveStatesToDeck). Si falta el desc,
+        // se completa aquí mismo con un fetch puntual por ID, sin tocar el guardado slim.
+        if (!card.desc && card.id) {
+            fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${card.id}`)
+                .then(r => r.json())
+                .then(data => {
+                    const full = data?.data?.[0];
+                    const descEl = document.getElementById('pz-mcv-desc-text');
+                    if (descEl) descEl.textContent = full?.desc || 'Descripción no disponible.';
+                    if (full?.banlist_info) {
+                        const banRow = document.querySelector('#pz-minicv-overlay .pz-mcv-ban-row');
+                        if (banRow) {
+                            banRow.innerHTML = `${fmtBan('TCG', full.banlist_info.ban_tcg)}${fmtBan('OCG', full.banlist_info.ban_ocg)}`;
+                        }
+                    }
+                })
+                .catch(() => {
+                    const descEl = document.getElementById('pz-mcv-desc-text');
+                    if (descEl) descEl.textContent = 'No se pudo cargar la descripción.';
+                });
+        }
     },
 
     // ═══════════════════════════════════════════════════════

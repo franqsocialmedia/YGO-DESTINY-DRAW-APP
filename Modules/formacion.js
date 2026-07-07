@@ -3461,7 +3461,6 @@ const HelpPanel = {
             <li><strong>Decks del Meta:</strong> todos los decks importados (.ydk). El botón <strong>Actualizar Scores</strong> descarga las cartas faltantes y calcula Internal Score + Cross-Score N×N para todos los decks de una vez.</li>
             <li><strong>Recurrencia de Cartas en el Meta:</strong> muestra con qué frecuencia aparece cada carta en los decks del meta cargados.</li>
             <li><strong>Poder de Cartas del Meta:</strong> Power Score de cada carta basado en presencia, mecánicas y counter-bonus. Se calcula manualmente con el botón ⚡.</li>
-            <li><strong>Counter-Cards del Meta:</strong> cartas del meta con función de interrupción y su score de counter acumulado.</li>
             <li><strong>Exportar Datos:</strong> descarga reportes del deck o del meta en .txt y .csv.</li>
             <li><strong>Tu nivel como Duelista:</strong> estadísticas personales de rendimiento basadas en los matchups registrados en el historial.</li>
         </ul>`,

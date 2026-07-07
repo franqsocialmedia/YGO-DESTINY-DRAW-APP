@@ -764,4 +764,3 @@ const Duelista = {
 };
 
 window.Duelista = Duelista;
-

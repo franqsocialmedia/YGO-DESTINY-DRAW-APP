@@ -2445,6 +2445,12 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
                 </div>
             </div>`;
 
+        // Counter-Cards del Meta — oculto a pedido (Jul 2026). Se mantiene la lógica
+        // (renderCounterCardStats, toggleSection('counter-cards-sec'), refresh en
+        // loadPowerScores) intacta a nivel de código; simplemente no se inyecta el
+        // bloque en el DOM para que el usuario no vea el contenedor ni su contenido.
+        // Para reactivarlo: descomentar el bloque de abajo.
+        /*
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('counter-cards-sec')">
                 🛡️ Counter-Cards del Meta
@@ -2452,6 +2458,7 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
             <div id="counter-cards-sec" class="stats-section" style="display:none;">
                 ${this.renderCounterCardStats()}
             </div>`;
+        */
 
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('export-sec')">

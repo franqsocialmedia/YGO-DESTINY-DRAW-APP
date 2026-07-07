@@ -949,20 +949,6 @@
     margin-top: 6px;
     text-align: right;
 }
-.deck-notes-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 8px;
-}
-.opt-notes-save-btn {
-    margin-top: 0;
-}
-.opt-notes-status {
-    font-size: 0.75rem;
-    color: #81C784;
-    font-weight: 600;
-}
 /* Saturación de roles — borde en el badge existente */
 .role-badge.badge-near-saturated {
     border: 1px solid #e67e22;
@@ -1521,14 +1507,7 @@
     font-size: 0.7rem;
     color: rgba(241,241,241,0.4);
 }
-.eng-item-pts {
-    font-size: 0.68rem;
-    font-weight: 600;
-    padding: 1px 6px;
-    border-radius: 8px;
-    display: inline-block;
-    width: fit-content;
-}
+
 .eng-item-stats {
     font-size: 0.72rem;
     color: rgba(241,241,241,0.65);
@@ -2450,3 +2429,97 @@
     cursor: pointer; font-size: 1.1em; padding: 0 3px; line-height: 1;
 }
 .opt-round-del:hover { color: #f66; }
+/* ── COMPLEJIDAD DEL DECK (Optimización + tarjeta en Decklist) ────────── */
+.cxd-empty-hint {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.5);
+    font-style: italic;
+    margin: 4px 0 10px;
+}
+.cxd-summary-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 10px;
+}
+.cxd-summary-badge { font-weight: 700; color: var(--gold-color); }
+.cxd-summary-date { margin-left: auto; font-size: 0.68rem; opacity: 0.55; }
+.cxd-toggle-btn { display: block; }
+.cxd-form-wrap { margin-top: 12px; }
+.cxd-pregunta {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,215,0,.15);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+}
+.cxd-pregunta h4 { margin: 0 0 4px; color: var(--gold-color); font-size: 0.85rem; }
+.cxd-pregunta p { margin: 0 0 8px; font-size: 0.78rem; color: rgba(255,255,255,0.7); }
+.cxd-opcion {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-light);
+    padding: 4px 0;
+    cursor: pointer;
+}
+.cxd-opcion input { accent-color: var(--gold-color); margin-right: 6px; }
+.cxd-submit-btn { width: 100%; text-align: center; }
+
+/* Tarjeta de resultado (Decklist) */
+.cxd-result-empty {
+    background: rgba(255,255,255,0.04);
+    border: 1px dashed rgba(255,255,255,0.2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.65);
+    margin: 10px 0 14px;
+}
+.cxd-result-empty p { margin: 0 0 4px; }
+.cxd-result-empty p:last-child { margin-bottom: 0; }
+.cxd-result-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,215,0,.2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 10px 0 14px;
+}
+.cxd-result-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.cxd-result-title { font-size: 1rem; font-weight: 700; color: var(--gold-color); }
+.cxd-result-date { font-size: 0.68rem; opacity: 0.55; }
+.cxd-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.cxd-bar-row label {
+    width: 150px;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.7);
+}
+.cxd-bar-track {
+    flex: 1;
+    height: 10px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 5px;
+    overflow: hidden;
+    min-width: 60px;
+}
+.cxd-bar-fill { height: 100%; border-radius: 5px; transition: width .35s ease; }
+.cxd-bar-val { width: 40px; flex-shrink: 0; font-size: 0.72rem; font-weight: 700; color: rgba(255,255,255,0.6); text-align: right; }
+.cxd-bar-desc { font-size: 0.72rem; color: rgba(255,255,255,0.55); margin: 2px 0 10px; }
+.cxd-result-text {
+    font-size: 0.82rem;
+    color: var(--text-light);
+    margin-top: 8px;
+    border-top: 1px solid rgba(255,215,0,.12);
+    padding-top: 10px;
+}
