@@ -1,17 +1,25 @@
 # DESTINY DRAW — REPORTE TÉCNICO
-**Versión:** v2.6 | **Fecha:** Jul 2026 (auditado línea por línea contra el código fuente)
+**Versión:** v2.7 | **Fecha:** Jul 2026 (auditado línea por línea contra el código fuente)
 **Stack:** Vanilla JS (ES6 objects) · CSS modular · HTML5 SPA · YGOProDeck API · localStorage
 
 > **Nota de auditoría:** este reporte fue verificado contra los 19 archivos fuente actuales.
-> El footer de `index.html` marca **VERSION 3.6** — el número de versión de este documento
-> (v2.6) es independiente y solo referencia la revisión del propio reporte.
-> Cambio relevante encontrado desde la última versión: el sistema G1/G2 Score, que la v2.5
-> de este reporte documentaba como "diseño guardado, cálculo no conectado", ahora está
-> completamente implementado y renderizado en pantalla. `Stats.calculateInternalScore`
-> devuelve `g1Score`/`g2Score` reales, `segmentDescription` sí se invoca, las capas
-> L1/L2/L4/L5 sí aplican multiplicadores, y el panel "Going First / Going Second" en
-> Análisis de Deck ya usa las clases CSS que antes estaban huérfanas. Sección 7.2
-> reescrita por completo — léela antes de asumir el estado anterior.
+> El footer de `index.html` marca **VERSION 5.0** — el número de versión de este documento
+> (v2.7) es independiente y solo referencia la revisión del propio reporte.
+> Cambios relevantes encontrados desde la v2.6 (`mideck.js` / `historial.js` — ver 6.1 y 6.2,
+> nuevo, léelos antes de asumir el estado anterior):
+> 1. **Complejidad del Deck** — nuevo clasificador de dificultad de uso/aprendizaje (quiz de
+>    8 preguntas) dentro de Mi Deck → Optimización, con resultado también visible en
+>    Construcción. Persiste en `complejidad_${deckName}`.
+> 2. **Duelista ("Nivel como Piloto del Deck") reescrito por completo** — antes agregaba
+>    duelos de TODOS los decks a lo largo de toda la vida de la app; ahora se calcula
+>    EXCLUSIVAMENTE con las rondas de Optimización del deck activo, con una escala de
+>    niveles reducida y nueva. Se renderiza en dos sitios (Estadísticas y Mi Deck →
+>    Optimización) con el mismo contenido.
+> 3. Los enfrentamientos de **Matchups** (Historial de Enfrentamientos) ahora son
+>    clicables y filtran el "Historial de Sesiones" de Optimización por rival —
+>    `Matchups.selectDeckFilter()` / `clearDeckFilter()`.
+>
+> El sistema G1/G2 Score sigue completamente implementado (ver 7.2, sin cambios desde v2.6).
 
 ---
 
@@ -38,15 +46,15 @@ default_data.js → logger.js  (SIEMPRE AL FINAL)
 | Archivo | Objetos globales | Líneas | Descripción |
 |---------|-----------------|--------|-------------|
 | `logger.js` | `DDLogger` | 365 | Logger no-invasivo. Envuelve todos los objetos globales post-`window.load`. API: `DDLogger.exportReport()`, `getLogs()`, `getStats()`, `enable/disable/clear()`. Intercepta localStorage y errores globales. |
-| `core.js` | `Navigation`, `Shortcuts`, `ContentManager`, `switchTab` | 487 | navigation + utils + contentmanager |
-| `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 2307 | Config global (incl. estructuras y motor de Scoring G1/G2 — ver 7.2), cálculo de scores, analizadores de carta. Incluye `duplicateNomenclatureCategory`. |
+| `core.js` | `Navigation`, `Shortcuts`, `ContentManager`, `switchTab` | 490 | navigation + utils + contentmanager |
+| `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 2311 | Config global (incl. estructuras y motor de Scoring G1/G2 — ver 7.2), cálculo de scores, analizadores de carta. Incluye `duplicateNomenclatureCategory`. `exportConfig()` cubre también las claves dinámicas `optimization_`/`complejidad_` (ver 6.1/6.2). |
 | `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 1960 | buscador + cardviewer + favoritas + botón Carta Random |
-| `mideck.js` | `Deck`, `Banlist`, `Engines` | 3741 | deck + banlist + engines + **Optimización (deck testing) — nuevo sub-tab, ver 6** |
-| `historial.js` | `Matchups`, `Duelista` | 783 | matchups + duelista |
-| `estadisticas.js` | `Estadisticas` | 2574 | scores, meta, cross-score, análisis de deck. `recalculateAllMetaDeckScores` es async con enriquecimiento automático. `renderDeckAnalysis()` ahora también pinta el bloque G1/G2 (ver 7.2). |
+| `mideck.js` | `Deck`, `Banlist`, `Engines` | 4131 | deck + banlist + engines + Optimización (deck testing) + **Complejidad del Deck — nuevo clasificador, ver 6.1** |
+| `historial.js` | `Matchups`, `Duelista` | 715 | matchups + duelista. **`Duelista` reescrito — ya no agrega todos los decks, ver 6.2.** Matchups ahora filtra Optimización por rival (`selectDeckFilter`). |
+| `estadisticas.js` | `Estadisticas` | 2599 | scores, meta, cross-score, análisis de deck. `recalculateAllMetaDeckScores` es async con enriquecimiento automático. `renderDeckAnalysis()` ahora también pinta el bloque G1/G2 (ver 7.2) y aloja `#duelista-content` (ver 6.2). |
 | `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria` | 2937 | winrate + torneo + duelo en vivo + hipergeometría |
-| `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3228 | zonapractica + experimentacion |
-| `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | 3669 | formacion + meta + config completo (Scoring G1/G2 UI, Nomenclatura con pencil/clone/delete, RPS Ninguno, etiqueta y borrado de Optimización) + welcome + help |
+| `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3259 | zonapractica + experimentacion |
+| `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | 3735 | formacion + meta + config completo (Scoring G1/G2 UI, Nomenclatura con pencil/clone/delete, RPS Ninguno, etiqueta y borrado de Optimización) + welcome + help. Zona de Borrado "Optimización" ahora limpia también `complejidad_` (ver 3). |
 | `default_data.js` | `DefaultData` | 1228 | Inyección única de datos por defecto. Parchea `Config.resetToDefault`. |
 
 **Nota:** `Stats` vive dentro de `data.js`. `Winrate` y `DueloEnVivo` son los objetos correctos en `simuladores.js`; el antiguo `Duelo` ya no existe.
@@ -63,10 +71,10 @@ style_simuladores.css → style_config.css → responsive_style.css
 |---------|--------|---------|
 | `style_core.css` | 1326 | style_global + style_welcome + style_cardviewer |
 | `style_buscador.css` | 1028 | — |
-| `style_mideck.css` | 2376 | — (incluye ~72 reglas `.opt-*` del panel de Optimización) |
-| `style_simuladores.css` | 6014 | style_simuladores + style_estadisticas |
-| `style_config.css` | 2278 | style_config + style_formacion + style_meta + clases de Scoring G1/G2 |
-| `responsive_style.css` | 608 | Todos los @media del proyecto |
+| `style_mideck.css` | 2524 | — (incluye 94 reglas `.opt-*` del panel de Optimización + nuevas `.cxd-*` de Complejidad del Deck, ver 6.1) |
+| `style_simuladores.css` | 6019 | style_simuladores + style_estadisticas |
+| `style_config.css` | 2292 | style_config + style_formacion + style_meta + clases de Scoring G1/G2 |
+| `responsive_style.css` | 611 | Todos los @media del proyecto |
 
 **Todos los archivos CSS tienen sus `@media` eliminados** — viven exclusivamente en `responsive_style.css` (verificado: 0 ocurrencias en los 5 archivos temáticos, 28 en `responsive_style.css`).
 
@@ -104,7 +112,8 @@ style_simuladores.css → style_config.css → responsive_style.css
 | `yugioh_favoritas` | `Favoritas` | Object | `{cardId: {id,name,type,img,data}}` |
 | `yugioh_engines` | `Engines` | Array | `[{id,name,cards,roles,notes,cover}]` |
 | `deck_${nombre}` (prefijo, 1 clave por deck) | `Deck` | Object | Decks guardados: `{cards, notes, savedAt}`. `getSavedDecks()` escanea `localStorage` por el prefijo `deck_`. **No existe un único objeto `yugioh_decks`** — esa clave es una referencia legacy que solo se usa como limpieza de seguridad en Borrar Data / Exportar Reporte, nunca se escribe en el flujo normal. |
-| `optimization_${nombre}` | `Deck` | Object | **Nuevo.** Datos de la pestaña 🎯 Optimización (testing de matchups): `{sessions:[{id,date,label,rounds:[{id,orden,resultado,tipoVictoria,tipoDerrota,presionTiempo,comboCompleto,brick,starter,extenders,handtraps,rompioBoard,negoJugada,rivalRompio,notas}]}]}`. Incluye migración automática desde un formato viejo `records[]`. |
+| `optimization_${nombre}` | `Deck` | Object | Datos de la pestaña 🎯 Optimización (testing de matchups): `{sessions:[{id,date,label,rounds:[{id,orden,resultado,tipoVictoria,tipoDerrota,presionTiempo,comboCompleto,brick,starter,extenders,handtraps,rompioBoard,negoJugada,rivalRompio,notas}]}]}`. Incluye migración automática desde un formato viejo `records[]`. `Duelista.getDeckStats()` lee estas rondas para calcular el Nivel como Piloto (ver 6.2). |
+| `complejidad_${nombre}` | `Deck` | Object | **Nuevo.** Resultado del clasificador "Complejidad del Deck" (Mi Deck → Optimización): `{answers:[8 valores 1-3], aprender, dominar, total, evaluatedAt}`. Ver 6.1. |
 | `matchup_${deckName}` | `Matchups` | Array | `[{opponent,wins1st,losses1st,wins2nd,losses2nd,notes}]` |
 | `yugioh_music_config` | `ConfigManager` | Object | `{enabled, volume, tracks:{novato,casual,competitivo}}` |
 | `yugioh_meta_fallbacks` | `ConfigManager` | Object | Imágenes fallback para Maestros |
@@ -140,7 +149,7 @@ style_simuladores.css → style_config.css → responsive_style.css
 | `decks` | prefijo `deck_` (+ limpieza legacy de `yugioh_decks`) | `Deck.cards = {}` |
 | `engines` | `yugioh_engines` | — |
 | `matchups` | prefijos `matchup_` | — |
-| `optimizacion` | prefijos `optimization_` | — |
+| `optimizacion` | prefijos `optimization_` y `complejidad_` | — |
 | `winrates` | `yugioh_winrates`, `pz_winrate_standalone` | — |
 | `favoritas` | `yugioh_favoritas` | — |
 | `torneo` | `yugioh_torneo_actual` | — |
@@ -174,8 +183,12 @@ mideck.js (Engines)      <── Favoritas.render() delega si _activeTab='favori
 mideck.js (Deck)         <── Optimización usa Deck.name como clave
                                (`optimization_${this.name}`), independiente de cards
 
-historial.js (Duelista)  <── lee matchup_${deckName} de todos los decks
-                               requiere Deck.getSavedDecks()
+historial.js (Duelista)  <── YA NO lee matchup_${deckName}. Lee EXCLUSIVAMENTE
+                               optimization_${Deck.name} (rondas del deck activo) vía
+                               Deck.getOptimizacion() — ver 6.2
+
+historial.js (Matchups)  <── selectDeckFilter()/clearDeckFilter() re-renderizan
+                               #mideck-optimizacion-pane (Deck.renderOptimizacionPane)
 
 formacion.js (Meta)      <── Sub-tabs Fuentes y Maestros de Formacion delegan a
                                Meta._renderFuentesSection() / Meta._renderMaestrosSection()
@@ -303,7 +316,7 @@ window.load → DefaultData.init()
 Sub-tabs: Decklist | Construcción | Optimización
 Sidebar:  Engines | Decks | Staples | Favoritas
 
-Optimización (🎯) — nuevo sub-tab de deck testing por matchup:
+Optimización (🎯) — sub-tab de deck testing por matchup:
   → registra "rondas de duelo" con: orden (1º/2º), resultado, tipo de victoria/derrota,
     presión de tiempo, combo completo, brick, starter, extenders, handtraps,
     rompió board, negó jugada, rival rompió, notas.
@@ -312,7 +325,67 @@ Optimización (🎯) — nuevo sub-tab de deck testing por matchup:
   → persiste en `optimization_${deckName}` vía Deck.getOptimizacion() /
     saveOptimizacionSession() / addOptimizacionRound() / renderOptimizacionPane().
   → migra automáticamente datos de un formato antiguo `records[]` a `sessions[]`.
+  → orden de bloques dentro del pane: 🎖️ Nivel como Piloto (6.2) → 🧩 Complejidad
+    del Deck (6.1) → 📝 Notas del Deck → ⚔️ Historial de Enfrentamientos (Matchups)
+    → barra de sesión activa → 📊 Historial de Sesiones (rondas).
 ```
+
+### 6.1 Complejidad del Deck — NUEVO (clasificador de dificultad de uso/aprendizaje)
+
+Quiz de 8 preguntas fijas (`Deck.CXD_PREGUNTAS`) repartidas en dos grupos de 4, cada
+respuesta vale 1-3 puntos:
+```
+grupo 'aprender' (curva de entrada): flujo del deck, ejecución de combos, margen de
+                                       error para un novato, lectura de cartas
+grupo 'dominar'   (techo de habilidad): recursos a controlar, densidad de decisiones,
+                                       conocimiento del meta requerido, adaptación
+                                       ante interrupción rival
+```
+`Deck.calcularComplejidad()` suma cada grupo (0-12 c/u, total 0-24) y guarda en
+`complejidad_${Deck.name}` (`{answers, aprender, dominar, total, evaluatedAt}`).
+`Deck._complejidadNivel(total)` clasifica en 5 tramos, coherentes con el juego
+competitivo real (curva de aprendizaje vs. techo de habilidad son ejes independientes,
+igual que en la práctica un deck puede ser fácil de aprender pero difícil de pilotar
+al máximo nivel, o viceversa):
+```
+0-11   🟢 Ideal para empezar
+12-15  🟢 Principiante
+16-18  🟡 Intermedio
+19-21  🟠 Avanzado
+22-24  🔴 Experto
+```
+Se renderiza en **dos** lugares con `Deck.renderComplejidadResultCard()`:
+- Mi Deck → Optimización → bloque "🧩 Complejidad del Deck" (con el formulario).
+- Mi Deck → Construcción → `#construccion-complejidad-box` (solo resultado, sin form).
+No se recalcula solo — el jugador debe re-evaluar manualmente si cambia el deck.
+Cubierto por `ConfigManager.exportConfig()` (prefijo `complejidad_`) y por la Zona de
+Borrado bajo la opción "Optimización" (ver 3).
+
+### 6.2 Duelista / "Nivel como Piloto del Deck" — REESCRITO (antes: agregado global)
+
+**Cambio de diseño importante respecto a versiones anteriores del reporte:** `Duelista`
+ya NO suma duelos de todos los decks guardados a lo largo de la vida de la app. Ahora
+`Duelista.getDeckStats(deckName)` lee EXCLUSIVAMENTE las rondas de
+`Deck.getOptimizacion(deckName)` (pestaña Optimización) del **deck actualmente cargado**
+— no tiene relación con `Matchups` (winrate manual por rival) ni con otros decks.
+
+```
+Duelista.LEVELS (por rondas totales del deck activo, escala reducida):
+  0 Novato · 5 Aprendiz · 15 Piloto · 30 Rival · 50 Competidor ·
+  100 Semi-Pro · 200 Pro · 400 Élite · 800 Legendario
+```
+`Duelista.renderSection()` pinta nivel actual, barra de progreso al siguiente nivel, y
+winrate general / going 1st / going 2nd calculado solo con esas rondas.
+`Duelista.refreshSection()` re-renderiza **ambas** instancias visibles a la vez:
+`#duelista-content` (Estadísticas) y `#duelista-content-opt` (Mi Deck → Optimización,
+sobre Complejidad del Deck).
+
+**Integración nueva con Matchups:** cada fila de "⚔️ Historial de Enfrentamientos"
+(dentro de Optimización) es clicable — `Matchups.selectDeckFilter(nombreRival)` filtra
+la sección "📊 Historial de Sesiones" (rondas) para mostrar solo las de ese rival,
+re-renderizando `#mideck-optimizacion-pane`. `clearDeckFilter()` quita el filtro. Esto
+es puramente visual/UI, no afecta el cálculo de `Duelista` (que siempre usa TODAS las
+rondas del deck, filtradas o no).
 
 ### Config — secciones colapsables
 ```
@@ -550,6 +623,9 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 | `.analysis-block` / `.analysis-block-title` | style_simuladores | Bloques de sección dentro de Análisis de Deck (Mecánicas, G1/G2, etc.) |
 | `.analysis-g1g2-row` / `.analysis-g1g2-item` / `.analysis-g1g2-profile` | style_simuladores | En uso — pintan `g1Score`/`g2Score`/`g1g2Profile` en `Estadisticas.renderDeckAnalysis()` (ver 7.2) |
 | `.opt-*` (form, session-bar, badges…) | style_mideck | Panel de Optimización (deck testing) en Mi Deck |
+| `.cxd-*` (pregunta, opcion, bar-track/fill, result-card…) | style_mideck | **Nuevo.** Quiz y tarjeta de resultado de Complejidad del Deck (ver 6.1) |
+| `.duelista-*` (card, level-block, progress-track, wr-grid…) | style_simuladores | Bloque "Nivel como Piloto del Deck" (ver 6.2), en Estadísticas y Mi Deck → Optimización |
+| `.matchup-row-selected` / `.opt-filter-banner` | style_mideck | Estado visual del filtro Matchups → Historial de Sesiones (ver 6.2) |
 | `#meta-update-overlay` | inline en estadisticas.js | Overlay de carga del Actualizar Scores |
 
 ---
@@ -572,6 +648,10 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 - `dd_power_scores_cache` → `yugioh_power_cache`
 - `Stats` vive dentro de `data.js`
 - `default_data.js` carga DESPUÉS de `formacion.js` y ANTES de `logger.js`
+
+**Cambio de comportamiento (no es un rename, es un cambio de alcance — jul 2026):**
+- `Duelista` ya NO es un agregado global de todos los decks; ahora es por-deck-activo,
+  leyendo solo `optimization_${deckName}`. Ver 6.2 antes de tocar `historial.js`.
 
 **Diferencia clave entre los dos External Scores:**
 - Deck activo → `Stats.calculateExternalScore()` → deck vs powerScoreCache
