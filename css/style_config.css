@@ -27,14 +27,14 @@
     margin-bottom: 0;
     cursor: pointer;
     padding: var(--spacing-sm);
-    background: rgba(155, 16, 48, 0.2);
+    background: rgba(123, 44, 191, 0.2);
     border-radius: 8px;
     transition: all var(--transition-normal);
     -webkit-user-select: none;
 }
 
 .config-section-title:hover {
-    background: rgba(155, 16, 48, 0.35);
+    background: rgba(123, 44, 191, 0.35);
     transform: translateX(4px);
 }
 
@@ -82,7 +82,7 @@
 
 .role-card {
     position: relative; /* Para que botones con position absolute se posicionen correctamente */
-    background: linear-gradient(135deg, rgba(74, 0, 21, 0.4), rgba(45, 0, 18, 0.6));
+    background: linear-gradient(135deg, rgba(45, 10, 78, 0.4), rgba(45, 0, 18, 0.6));
     border: 2px solid var(--border-color);
     border-radius: 12px;
     padding: var(--spacing-md);
@@ -91,7 +91,7 @@
 
 .role-card:hover {
     border-color: var(--gold-color);
-    box-shadow: 0 4px 14px rgba(155, 16, 48, 0.3);
+    box-shadow: 0 4px 14px rgba(123, 44, 191, 0.3);
     transform: translateY(-2px);
 }
 
@@ -111,7 +111,7 @@
 }
 
 .role-panel-header:hover {
-    background: rgba(155, 16, 48, 0.15);
+    background: rgba(123, 44, 191, 0.15);
 }
 
 .role-panel-arrow {
@@ -241,7 +241,7 @@
     padding: var(--spacing-sm);
     background: rgba(26, 0, 8, 0.3);
     border-radius: 8px;
-    border: 1px dashed rgba(155, 16, 48, 0.4);
+    border: 1px dashed rgba(123, 44, 191, 0.4);
 }
 
 
@@ -255,14 +255,14 @@
     border-radius: 20px;
     font-size: 0.83rem;
     font-weight: 600;
-    box-shadow: 0 2px 6px rgba(155, 16, 48, 0.3);
+    box-shadow: 0 2px 6px rgba(123, 44, 191, 0.3);
     transition: all var(--transition-fast);
     animation: chipFadeIn 0.25s ease;
 }
 
 .keyword-chip:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(155, 16, 48, 0.5);
+    box-shadow: 0 4px 8px rgba(123, 44, 191, 0.5);
 }
 
 /* Chip condicional — rojo */
@@ -375,12 +375,12 @@
 .btn-primary {
     background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
     color: var(--text-light);
-    box-shadow: 0 4px 8px rgba(155, 16, 48, 0.3);
+    box-shadow: 0 4px 8px rgba(123, 44, 191, 0.3);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #c0143c, var(--accent-color));
-    box-shadow: 0 6px 12px rgba(155, 16, 48, 0.5);
+    background: linear-gradient(135deg, #9b2fd6, var(--accent-color));
+    box-shadow: 0 6px 12px rgba(123, 44, 191, 0.5);
     transform: translateY(-2px);
 }
 
@@ -425,7 +425,7 @@
 
 
 .config-help-text {
-    background: rgba(155, 16, 48, 0.08);
+    background: rgba(123, 44, 191, 0.08);
     border-left: 4px solid var(--accent-color);
     padding: var(--spacing-sm) var(--spacing-md);
     margin-bottom: var(--spacing-md);
@@ -461,7 +461,7 @@
 
 .specialty-pair-row:hover {
     border-color: rgba(100, 180, 255, 0.5);
-    box-shadow: 0 4px 16px rgba(155, 16, 48, 0.2);
+    box-shadow: 0 4px 16px rgba(123, 44, 191, 0.2);
 }
 
 .specialty-half {
@@ -714,7 +714,7 @@
 }
 /* Rendimientos Decrecientes */
 .diminishing-role-card {
-    background: rgba(74, 0, 21, 0.3);
+    background: rgba(45, 10, 78, 0.3);
     border: 1px solid rgba(255, 215, 0, 0.2);
     border-radius: 8px;
     padding: 15px;
@@ -785,9 +785,9 @@
 }
 .ban-format-chip:hover { background: rgba(255,255,255,0.12); color: #fff; }
 .ban-chip-active {
-    background: rgba(155,16,48,0.2);
-    border-color: #9b1030;
-    color: #c0445e;
+    background: rgba(123,44,191,0.2);
+    border-color: #7b2cbf;
+    color: #c77dff;
     font-weight: 600;
 }
 .ban-hint { font-size: 0.72rem; color: rgba(255,255,255,0.3); margin: 0 0 12px; }
@@ -1013,7 +1013,7 @@
 
 /* ── Secciones colapsables (Juegos) ────────────────────────────── */
 .form-section {
-    background: var(--bg-card, #2d0012);
+    background: var(--bg-card, #1e0836);
     border: 1px solid rgba(255, 215, 0, 0.12);
     border-radius: 10px;
     margin-bottom: 16px;
@@ -1115,7 +1115,7 @@
 .form-apunte-btn:hover { opacity: 0.85; transform: scale(1.02); }
 
 .form-apunte-btn--save {
-    background: linear-gradient(135deg, #9b1030, #6b001f);
+    background: linear-gradient(135deg, #7b2cbf, #4a1172);
     color: #fff;
 }
 .form-apunte-btn--download {
@@ -1151,8 +1151,8 @@
 }
 
 .form-apunte-import-btn {
-    background: rgba(155, 16, 48, 0.2);
-    border: 1px solid rgba(155, 16, 48, 0.4);
+    background: rgba(123, 44, 191, 0.2);
+    border: 1px solid rgba(123, 44, 191, 0.4);
     color: #7ec8ff;
     border-radius: 5px;
     padding: 3px 10px;
@@ -1160,7 +1160,7 @@
     cursor: pointer;
     transition: background 0.2s;
 }
-.form-apunte-import-btn:hover { background: rgba(155, 16, 48, 0.38); }
+.form-apunte-import-btn:hover { background: rgba(123, 44, 191, 0.38); }
 
 .form-notes-list {
     padding: 8px;
@@ -1213,7 +1213,7 @@
     transition: opacity 0.2s;
 }
 .form-note-btn:hover { opacity: 0.8; }
-.form-note-btn--open { background: rgba(155,16,48,0.3); color: #7ec8ff; }
+.form-note-btn--open { background: rgba(123,44,191,0.3); color: #7ec8ff; }
 .form-note-btn--dl   { background: rgba(255,215,0,0.12); color: #e05a5a; }
 .form-note-btn--del  { background: rgba(214,48,49,0.15); color: #ff7675; }
 
@@ -1293,7 +1293,7 @@
 
 /* ── Footer de tema ─────────────────────────────────────────────── */
 .form-topic-footer {
-    background: var(--bg-card, #2d0012);
+    background: var(--bg-card, #1e0836);
     border: 1px solid rgba(255, 215, 0, 0.12);
     border-top: none;
     border-radius: 0 0 10px 10px;
@@ -1429,7 +1429,7 @@
     gap: 3px;
 }
 .form-platform-badge {
-    background: rgba(74,0,21,0.55);
+    background: rgba(45,10,78,0.55);
     border: 1px solid rgba(255,215,0,0.2);
     border-radius: 20px;
     padding: 1px 7px;
@@ -1522,7 +1522,7 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    background: rgba(74,0,21,0.4);
+    background: rgba(45,10,78,0.4);
     border: 1px solid rgba(255,215,0,0.18);
     border-radius: 20px;
     padding: 3px 10px;
@@ -1539,7 +1539,7 @@
     flex-shrink: 0;
 }
 .form-platform-check-label:hover {
-    background: rgba(74,0,21,0.7);
+    background: rgba(45,10,78,0.7);
     border-color: rgba(255,215,0,0.4);
 }
 
@@ -1557,8 +1557,8 @@
 .form-game-file-btn:hover { background: rgba(255,215,0,0.22); }
 
 .form-games-add-btn {
-    background: rgba(155,16,48,0.2);
-    border: 1px solid rgba(155,16,48,0.4);
+    background: rgba(123,44,191,0.2);
+    border: 1px solid rgba(123,44,191,0.4);
     color: #7ec8ff;
     border-radius: 7px;
     padding: 8px 16px;
@@ -1567,10 +1567,10 @@
     transition: background 0.2s;
     width: 100%;
 }
-.form-games-add-btn:hover { background: rgba(155,16,48,0.38); }
+.form-games-add-btn:hover { background: rgba(123,44,191,0.38); }
 
 .form-games-save-btn {
-    background: linear-gradient(135deg, var(--accent-color,#9b1030), var(--secondary-color,#6b001f));
+    background: linear-gradient(135deg, var(--accent-color,#7b2cbf), var(--secondary-color,#4a1172));
     border: none;
     color: #fff;
     border-radius: 7px;
@@ -1590,7 +1590,7 @@
 
 /* ── Secciones colapsables (mismo patrón que Estadísticas) ─────── */
 .meta-section {
-    background: var(--bg-card, #2d0012);
+    background: var(--bg-card, #1e0836);
     border: 1px solid rgba(255, 215, 0, 0.12);
     border-radius: 10px;
     margin-bottom: 16px;
@@ -1725,7 +1725,7 @@
 }
 
 .meta-format-badge {
-    background: rgba(74, 0, 21, 0.55);
+    background: rgba(45, 10, 78, 0.55);
     border: 1px solid rgba(255, 215, 0, 0.22);
     border-radius: 20px;
     padding: 2px 9px;
@@ -1831,8 +1831,8 @@
 }
 
 .meta-frame-open-btn {
-    background: rgba(155, 16, 48, 0.35);
-    border: 1px solid rgba(155, 16, 48, 0.5);
+    background: rgba(123, 44, 191, 0.35);
+    border: 1px solid rgba(123, 44, 191, 0.5);
     color: #7ec8ff;
     border-radius: 5px;
     padding: 4px 10px;
@@ -1844,8 +1844,8 @@
     flex-shrink: 0;
 }
 .meta-frame-open-btn:hover {
-    background: rgba(155, 16, 48, 0.55);
-    border-color: #9b1030;
+    background: rgba(123, 44, 191, 0.55);
+    border-color: #7b2cbf;
     color: #fff;
 }
 
@@ -2023,7 +2023,7 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    background: rgba(74, 0, 21, 0.4);
+    background: rgba(45, 10, 78, 0.4);
     border: 1px solid rgba(255, 215, 0, 0.18);
     border-radius: 20px;
     padding: 3px 10px;
@@ -2040,7 +2040,7 @@
     flex-shrink: 0;
 }
 .meta-format-check-label:hover {
-    background: rgba(74, 0, 21, 0.7);
+    background: rgba(45, 10, 78, 0.7);
     border-color: rgba(255, 215, 0, 0.4);
 }
 
@@ -2050,8 +2050,8 @@
 
 .meta-links-add-btn,
 .meta-masters-add-btn {
-    background: rgba(155, 16, 48, 0.2);
-    border: 1px solid rgba(155, 16, 48, 0.4);
+    background: rgba(123, 44, 191, 0.2);
+    border: 1px solid rgba(123, 44, 191, 0.4);
     color: #7ec8ff;
     border-radius: 7px;
     padding: 8px 16px;
@@ -2061,11 +2061,11 @@
     width: 100%;
 }
 .meta-links-add-btn:hover,
-.meta-masters-add-btn:hover { background: rgba(155, 16, 48, 0.38); }
+.meta-masters-add-btn:hover { background: rgba(123, 44, 191, 0.38); }
 
 .meta-links-save-btn,
 .meta-masters-save-btn {
-    background: linear-gradient(135deg, var(--accent-color, #9b1030), var(--secondary-color, #6b001f));
+    background: linear-gradient(135deg, var(--accent-color, #7b2cbf), var(--secondary-color, #4a1172));
     border: none;
     color: #fff;
     border-radius: 7px;

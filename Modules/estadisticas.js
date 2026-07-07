@@ -330,6 +330,16 @@ _computeAndSaveMetaDeckScore: function (folderName, deckFilename) {
 },
 
 // Recalcula external scores de todos los decks que ya tienen datos en la biblioteca.
+// Botón único "Actualizar Data" (arriba de Top Tier): ejecuta en secuencia lo que antes
+// hacían por separado "Actualizar Scores" (Decks del Meta) y "Recalcular" (Poder de
+// Cartas del Meta). Se deja primero el recálculo de scores del meta (que ya reconstruye
+// una versión offline del powerScoreCache a partir de metaCardLibrary) y al final
+// loadPowerScores() para dejar el cache con los valores frescos consultados a la API.
+actualizarData: async function () {
+    await this.recalculateAllMetaDeckScores();
+    await this.loadPowerScores();
+},
+
 recalculateAllMetaDeckScores: async function () {
     // ── Construir lista completa de decks a procesar ──────────────
     const allDecks = [];
@@ -1466,7 +1476,7 @@ _renderMetaDeckScoreHTML: function (cached, key) {
             <div class="power-scores-meta">
                 Análisis sobre <strong>${dwd}</strong> decks del meta ·
                 <button class="btn btn-sm btn-secondary" onclick="Estadisticas.loadPowerScores()"
-                    style="margin-left:8px;">🔄 Recalcular</button>
+                    style="margin-left:8px;display:none;">🔄 Recalcular</button>
             </div>
             <div class="power-legend">
                 <span><span class="power-dot" style="background:#0066cc;"></span> Especialización</span>
@@ -1600,7 +1610,7 @@ this._getSavedDecksForTopTier().forEach(mine => {
     if (allDecks.length === 0) {
         return `<p class="stats-empty">
             No hay decks con scores calculados.<br>
-            <small>Importa decks del meta y usa "Actualizar Scores".</small>
+            <small>Importa decks del meta y usa "Actualizar Data".</small>
         </p>`;
     }
 
@@ -2346,6 +2356,14 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
 
         let html = `<h2>Estadísticas</h2>`;
 
+        html += `
+            <div class="stats-global-update-row" style="display:flex;gap:8px;align-items:center;margin:0 0 var(--spacing-md);">
+                <button class="btn btn-primary" onclick="Estadisticas.actualizarData()">
+                    🔄 Actualizar Data
+                </button>
+                <small style="opacity:0.5;">Descarga datos faltantes y recalcula Scores de Decks del Meta + Poder de Cartas del Meta.</small>
+            </div>`;
+
         
         html += `
             <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('top-tier-sec'); Estadisticas._refreshTopTier()">
@@ -2383,7 +2401,7 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
                     <label>Filtrar por carpeta:</label>
                     ${folderChips}
                 </div>
-<div style="display:flex;gap:8px;margin-bottom:var(--spacing-sm);align-items:center;">
+<div style="display:flex;gap:8px;margin-bottom:var(--spacing-sm);align-items:center;display:none;">
     <button class="btn btn-sm btn-secondary" onclick="Estadisticas.recalculateAllMetaDeckScores()">
         🔄 Actualizar Scores
     </button>

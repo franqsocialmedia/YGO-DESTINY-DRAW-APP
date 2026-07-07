@@ -103,12 +103,12 @@
 .btn-primary {
     background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
     color: var(--text-light);
-    box-shadow: 0 4px 8px rgba(155, 16, 48, 0.3);
+    box-shadow: 0 4px 8px rgba(123, 44, 191, 0.3);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #c0143c, var(--accent-color));
-    box-shadow: 0 6px 12px rgba(155, 16, 48, 0.5);
+    background: linear-gradient(135deg, #9b2fd6, var(--accent-color));
+    box-shadow: 0 6px 12px rgba(123, 44, 191, 0.5);
     transform: translateY(-2px);
 }
 
@@ -149,7 +149,7 @@
 /* Contenedor de filtros */
 .filters-container {
     padding-top: var(--spacing-md);
-    border-top: 1px solid rgba(155, 16, 48, 0.3);
+    border-top: 1px solid rgba(123, 44, 191, 0.3);
 }
 
 /* Label de filtros */
@@ -216,7 +216,7 @@
     border-radius: 20px;
     font-size: 0.9rem;
     font-weight: 600;
-    box-shadow: 0 2px 6px rgba(155, 16, 48, 0.4);
+    box-shadow: 0 2px 6px rgba(123, 44, 191, 0.4);
     transition: all var(--transition-fast);
     animation: chipFadeIn 0.3s ease;
 }
@@ -263,7 +263,7 @@
 
 /* Hover sobre el chip completo */
 .filter-chip:hover {
-    box-shadow: 0 4px 8px rgba(155, 16, 48, 0.6);
+    box-shadow: 0 4px 8px rgba(123, 44, 191, 0.6);
     transform: translateY(-2px);
 }
 
@@ -280,7 +280,7 @@
 /* Item de carta individual */
 
 .card-item {
-    background: #2d0012;
+    background: #1e0836;
     border-radius: 8px;
     padding: 6px;
     text-align: center;
@@ -497,13 +497,13 @@
 
 /* Botón Ver */
 .btn-view {
-    background: linear-gradient(135deg, #9b1030, #6b001f);
+    background: linear-gradient(135deg, #7b2cbf, #4a1172);
     color: white;
     transform: scale(0.85);
 }
 
 .btn-view:hover {
-    background: linear-gradient(135deg, #c0143c, #9b1030);
+    background: linear-gradient(135deg, #9b2fd6, #7b2cbf);
     transform: scale(1.05);
 }
 
@@ -709,8 +709,8 @@
 .adv-chip:hover { background: rgba(255,255,255,0.13); color: #fff; }
 .adv-chip-active {
     background: rgba(90,160,255,0.22);
-    border-color: #9b1030;
-    color: #c0445e;
+    border-color: #7b2cbf;
+    color: #c77dff;
     font-weight: 600;
 }
 .adv-input-group { display: flex; align-items: center; gap: 8px; }
@@ -724,7 +724,7 @@
     width: 90px;
     outline: none;
 }
-.adv-input:focus { border-color: #9b1030; }
+.adv-input:focus { border-color: #7b2cbf; }
 
 
 /* ── Selector de Arquetipos ──────────────────────────────── */
@@ -819,7 +819,7 @@
 }
 
 .cv-modal {
-    background: linear-gradient(135deg, rgba(74, 0, 21, 0.97), rgba(26, 0, 8, 0.99));
+    background: linear-gradient(135deg, rgba(45, 10, 78, 0.97), rgba(26, 0, 8, 0.99));
     border: 2px solid var(--border-color);
     border-radius: 12px;
     padding: var(--spacing-md);
@@ -931,7 +931,7 @@
     background: rgba(26, 0, 8, 0.3);
     border-radius: 8px;
     padding: 10px 12px;
-    border: 1px dashed rgba(155, 16, 48, 0.35);
+    border: 1px dashed rgba(123, 44, 191, 0.35);
 }
 
 .cv-qty-block {
@@ -1023,7 +1023,7 @@
     transition: background 0.2s, border-color 0.2s;
 }
 .cv-action-btn:hover {
-    background: rgba(155, 16, 48, 0.3);
+    background: rgba(123, 44, 191, 0.3);
     border-color: var(--gold-color);
     color: #fff;
-}   
+}
