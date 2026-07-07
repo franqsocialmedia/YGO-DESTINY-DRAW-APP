@@ -245,6 +245,9 @@ const ContentManager = {
         { id: 'deck-role-btn',        group: 'Mi Deck', label: 'Botón Rol (por carta)',          novato: false, casual: true, competitivo: true },
         { id: 'deck-experimentacion', group: 'Mi Deck', label: 'Botón Experimentación',          novato: false, casual: true, competitivo: true },
         { id: 'deck-matchups',        group: 'Mi Deck', label: 'Historial de Enfrentamientos',   novato: false, casual: true, competitivo: true },
+        { id: 'deck-piloto',          group: 'Mi Deck', label: 'Nivel como Piloto del Deck',      novato: false, casual: true, competitivo: true },
+        { id: 'deck-complejidad',     group: 'Mi Deck', label: 'Complejidad del Deck',            novato: false, casual: true, competitivo: true },
+        { id: 'deck-notas',          group: 'Mi Deck', label: 'Notas del Deck',                  novato: true,  casual: true, competitivo: true },
 
         { id: 'sim-mulligan',         group: 'Simuladores', label: 'Mulligan / Hipergeometría',          novato: false, casual: false, competitivo: true },
         { id: 'sim-torneo',           group: 'Simuladores', label: 'Torneo (Swiss)',                      novato: false, casual: true,  competitivo: true },

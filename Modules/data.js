@@ -466,17 +466,21 @@ const ConfigManager = {
                 'yugioh_cross_scores', 'yugioh_meta_decks', 'yugioh_meta_card_library',
                 'yugioh_meta_deck_scores', 'yugioh_favoritas', 'yugioh_formacion_notes',
                 'yugioh_formacion_mastered', 'yugioh_torneo_actual',
-                'dd_content_visibility', 'dd_player_profile'
+                'dd_content_visibility', 'dd_player_profile',
+                'yugioh_music_config', 'yugioh_player_level',
+                'yugioh_meta_fallbacks', 'yugioh_formacion_fallbacks'
             ];
             staticKeys.forEach(k => {
                 const v = localStorage.getItem(k);
                 if (v !== null) snapshot[k] = v;
             });
-            // Claves dinámicas: deck_, matchup_, pz_states_
+            // Claves dinámicas: deck_, matchup_, pz_states_, optimization_ (Historial de Sesiones
+            // / Nivel como Piloto del Deck), complejidad_ (Complejidad del Deck)
             for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i);
                 if (!k) continue;
-                if (k.startsWith('deck_') || k.startsWith('matchup_') || k.startsWith('pz_states_')) {
+                if (k.startsWith('deck_') || k.startsWith('matchup_') || k.startsWith('pz_states_')
+                    || k.startsWith('optimization_') || k.startsWith('complejidad_')) {
                     snapshot[k] = localStorage.getItem(k);
                 }
             }

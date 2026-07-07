@@ -1899,14 +1899,17 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
 
         // ── NIVEL COMO PILOTO DEL DECK (Historial de Sesiones) ───────────────
         let html = `
+        <div data-section-id="deck-piloto">
         <h3 class="deck-section-title" onclick="Deck.toggleSection('piloto-sec'); if(window.Duelista) Duelista.refreshSection();">🎖️ Nivel como Piloto del Deck</h3>
         <div id="piloto-sec" class="deck-section-content" style="display:none;">
             <div id="duelista-content-opt">
                 <p class="stats-empty">Abre esta sección para ver tu perfil.</p>
             </div>
         </div>
+        </div>
 
         <!-- ── COMPLEJIDAD DEL DECK ── -->
+        <div data-section-id="deck-complejidad">
         <h3 class="deck-section-title" onclick="Deck.toggleSection('cxd-sec')">🧩 Complejidad del Deck</h3>
         <div id="cxd-sec" class="deck-section-content" style="display:none;">
             <div id="cxd-summary">${this._renderComplejidadSummary()}</div>
@@ -1916,8 +1919,10 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 ${this._renderComplejidadForm()}
             </div>
         </div>
+        </div>
 
         <!-- ── NOTAS DEL DECK + HISTORIAL DE ENFRENTAMIENTOS (movido desde Construcción) ── -->
+        <div data-section-id="deck-notas">
         <h3 class="deck-section-title" onclick="Deck.toggleSection('notes-sec')">📝 Notas del Deck</h3>
         <div id="notes-sec" class="deck-section-content" style="display:none;">
             <textarea class="deck-notes-textarea"
@@ -1928,6 +1933,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 <button class="opt-submit-btn opt-notes-save-btn" onclick="Deck.saveNotes()">💾 Guardar Notas</button>
                 <span id="opt-notes-status" class="opt-notes-status"></span>
             </div>
+        </div>
         </div>`;
 
         if (window.Matchups) {

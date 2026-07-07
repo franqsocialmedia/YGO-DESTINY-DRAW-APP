@@ -2014,8 +2014,8 @@ enviarReporte: function (counter, dateStr) {
         const claves = [
             'yugioh_config','yugioh_player_level','dd_player_profile',
             'dd_content_visibility','yugioh_favoritas','yugioh_engines',
-            'yugioh_decks','yugioh_music_config','yugioh_meta_folders',
-            'yugioh_formacion_notes','yugioh_formacion_mastered',
+            'yugioh_music_config','yugioh_meta_decks','yugioh_meta_fallbacks',
+            'yugioh_formacion_notes','yugioh_formacion_mastered','yugioh_formacion_fallbacks',
         ];
         const exportObj = { exportDate: dateStr, reportNumber: counter };
         claves.forEach(k=>{ const v=localStorage.getItem(k); if(v){ try{ exportObj[k]=JSON.parse(v); }catch(_){ exportObj[k]=v; } } });
@@ -2055,7 +2055,7 @@ enviarReporte: function (counter, dateStr) {
 },
     exportConfig: function () {
         if (ConfigManager.exportConfig()) {
-            alert('✅ Backup exportado correctamente.\n\nEl archivo contiene:\n• Decks guardados y deck activo\n• Engines y Staples\n• Config completa (roles, G1/G2 scoring, mecánicas, pilares, RPS, nomenclatura)\n• Matchups e Historial\n• Winrates\n• Meta: decks, librería de cartas, scores y cross-scores\n• Favoritas, Torneo, Formación y Banlist\n\nGuárdalo en un lugar seguro para restaurar tu progreso en cualquier momento.');
+            alert('✅ Backup exportado correctamente.\n\nEl archivo contiene:\n• Decks guardados y deck activo\n• Engines y Staples\n• Config completa (roles, G1/G2 scoring, mecánicas, pilares, RPS, nomenclatura)\n• Matchups (Historial de Enfrentamientos) e Historial de Sesiones / Optimización (incluye Nivel como Piloto del Deck y Complejidad del Deck)\n• Winrates\n• Meta: decks, librería de cartas, scores y cross-scores\n• Favoritas, Torneo, Formación (apuntes, temas dominados, fallbacks de imágenes) y Banlist\n• Música y Perfil de contenido (novato/casual/competitivo)\n\nGuárdalo en un lugar seguro para restaurar tu progreso en cualquier momento.');
         } else {
             alert('❌ No se pudo exportar el backup. Intenta de nuevo.');
         }
@@ -2207,7 +2207,8 @@ borrarSeleccion: function () {
         if (window.Duelista) { const el = document.getElementById('duelista-content'); if (el) Duelista.refreshSection(); }
     }
     if (selected.includes('optimizacion')) {
-        rmP('optimization_');
+        rmP('optimization_'); rmP('complejidad_');
+        if (window.Duelista) { const el = document.getElementById('duelista-content-opt'); if (el) Duelista.refreshSection(); }
     }
     if (selected.includes('winrates')) {
         rm('yugioh_winrates'); rm('pz_winrate_standalone');
@@ -2269,6 +2270,7 @@ borrarSeleccion: function () {
     if (selected.includes('perfil')) {
         rm('yugioh_player_level'); rm('dd_player_profile');
         rm('dd_content_visibility'); rm('dd_welcome_dismissed');
+        rm('yugioh_music_config');
         if (window.Welcome) { Welcome.dismissed = false; Welcome.init(); }
         if (window.ContentManager) ContentManager.applyAll();
     }
@@ -3503,6 +3505,7 @@ const HelpPanel = {
             <li><strong>Exportar .ydk:</strong> descarga el deck activo en formato .ydk para usar en otras plataformas o compartir.</li>
             <li><strong>Guardar / Cargar:</strong> guarda el deck activo en la app o carga uno guardado previamente.</li>
             <li><strong>Internal Score y Análisis:</strong> visibles en el sub-tab Construcción. Se recalculan automáticamente con cada cambio.</li>
+            <li><strong>Optimización:</strong> sub-tab con <strong>Nivel como Piloto del Deck</strong> (dominio del deck según rondas registradas), <strong>Complejidad del Deck</strong> (evaluación de dificultad), <strong>Notas del Deck</strong> y <strong>Historial de Enfrentamientos</strong> (W/L manual por rival). Aquí también registras cada ronda jugada (rival, resultado, going first/second) para alimentar el <strong>Historial de Sesiones</strong>.</li>
         </ul>`,
 
     estadisticas: `
@@ -3515,9 +3518,10 @@ const HelpPanel = {
             <li><strong>Análisis vs Meta:</strong> cruza las mecánicas del deck activo contra el meta cargado. Muestra External Score (ajustado por RPS), vulnerabilidad G1/G2, y decks que representan mayor amenaza.</li>
             <li><strong>Top Tier:</strong> ranking de todos los decks (meta + guardados) por score. Filtrable por pilar.</li>
             <li><strong>Gestión de Carpetas del Meta:</strong> organiza los decks del meta en carpetas. Desde aquí también se actualiza la lista visible.</li>
-            <li><strong>Decks del Meta:</strong> todos los decks importados (.ydk). El botón <strong>Actualizar Scores</strong> descarga las cartas faltantes y calcula Internal Score + Cross-Score N×N para todos los decks de una vez.</li>
+            <li><strong>Actualizar Data:</strong> botón único arriba de Top Tier. Descarga las cartas faltantes y recalcula de una vez los scores de <strong>Decks del Meta</strong> y el <strong>Poder de Cartas del Meta</strong> — ya no hace falta entrar a cada sección por separado.</li>
+            <li><strong>Decks del Meta:</strong> todos los decks importados (.ydk).</li>
             <li><strong>Recurrencia de Cartas en el Meta:</strong> muestra con qué frecuencia aparece cada carta en los decks del meta cargados.</li>
-            <li><strong>Poder de Cartas del Meta:</strong> Power Score de cada carta basado en presencia, mecánicas y counter-bonus. Se calcula manualmente con el botón ⚡.</li>
+            <li><strong>Poder de Cartas del Meta:</strong> Power Score de cada carta basado en presencia, mecánicas y counter-bonus. Se actualiza junto con los Decks del Meta al presionar <strong>Actualizar Data</strong>.</li>
             <li><strong>Exportar Datos:</strong> descarga reportes del deck o del meta en .txt y .csv.</li>
             <li><strong>Nivel como Piloto del Deck:</strong> nivel de dominio del deck activo según las rondas registradas en <strong>Historial de Sesiones</strong> (Mi Deck → Optimización) — Winrate General, Going 1st y Going 2nd. También visible arriba de Complejidad del Deck en Optimización. Ya no usa el Historial de Enfrentamientos (Matchups).</li>
             <li><strong>Historial de Enfrentamientos:</strong> registro manual de W/L por rival, en Mi Deck → Optimización. Independiente del Nivel como Piloto.</li>
@@ -3559,6 +3563,7 @@ const HelpPanel = {
             <li><strong>Rendimientos Decrecientes:</strong> controla cómo cada copia adicional de un rol aporta progresivamente menos al score.</li>
             <li><strong>Banlist del Formato:</strong> gestiona la lista de cartas prohibidas, limitadas y semi-limitadas activa. Se indica en la Vista de Carta del Buscador.</li>
             <li><strong>Atajos Rápidos:</strong> hasta 6 accesos directos desde el botón ⚡ flotante.</li>
+            <li><strong>Contenido de la App:</strong> muestra u oculta pestañas y secciones individuales según un perfil base (Novato/Casual/Competitivo), con override manual por sección.</li>
             <li><strong>Música:</strong> asigna pistas por perfil y controla el volumen.</li>
             <li><strong>Exportar / Importar Data:</strong> guarda o restaura toda la data de la app en un archivo .txt. Incluye decks, engines, config, scores, meta, matchups y más.</li>
             <li><strong>Restaurar Configuración:</strong> resetea TODO a los valores de fábrica. Irreversible sin un backup previo.</li>
@@ -3590,7 +3595,7 @@ const HelpPanel = {
         },
         {
             q: '¿Qué es el External Score de los decks del meta?',
-            a: 'Es un Cross-Score N×N: cada deck del meta se mide contra todos los demás decks de esa misma lista. Para cada deck A se suman las amenazas que cada otro deck B puede representar (sus counters apuntando a las mecánicas de A), ponderadas por el Internal Score de B y el RPS entre sus pilares dominantes. El resultado es (1 − amenaza/baseline) × 10. Se calcula al presionar "Actualizar Scores" y ya no requiere abrir cada deck manualmente.'
+            a: 'Es un Cross-Score N×N: cada deck del meta se mide contra todos los demás decks de esa misma lista. Para cada deck A se suman las amenazas que cada otro deck B puede representar (sus counters apuntando a las mecánicas de A), ponderadas por el Internal Score de B y el RPS entre sus pilares dominantes. El resultado es (1 − amenaza/baseline) × 10. Se calcula al presionar "Actualizar Data" (arriba de Top Tier) y ya no requiere abrir cada deck manualmente.'
         },
         {
             q: '¿Qué es el Counter-Deck Score?',
@@ -3602,7 +3607,11 @@ const HelpPanel = {
         },
         {
             q: '¿Cómo exporto e importo toda mi data?',
-            a: 'En Config, el botón "Exportar Data" descarga un archivo .txt con toda la data: decks guardados, engines, config completa (incluyendo roles, G1/G2, scoring layers), matchups, winrates, meta, scores y más. "Importar Data" restaura ese backup completo. La config incluye automáticamente todos los ajustes de Scoring Avanzado porque viven dentro de yugioh_config.'
+            a: 'En Config, el botón "Exportar Data" descarga un archivo .txt con toda la data: decks guardados, engines, config completa (incluyendo roles, G1/G2, scoring layers), Matchups (Historial de Enfrentamientos), Historial de Sesiones/Optimización (incluye Nivel como Piloto del Deck y Complejidad del Deck), winrates, meta, scores, música, perfil de contenido y fallbacks de imágenes. "Importar Data" restaura ese backup completo reemplazando toda la data actual.'
+        },
+        {
+            q: '¿Qué es el "Nivel como Piloto del Deck"?',
+            a: 'Mide qué tan dominado tienes tu deck activo según las rondas que registras en Historial de Sesiones (Mi Deck → Optimización → Nueva Ronda de Duelo): Winrate general, Going 1st y Going 2nd. Se ve tanto en Estadísticas como arriba de Complejidad del Deck en Optimización. No tiene relación con el Historial de Enfrentamientos (Matchups), que es un registro manual e independiente por rival.'
         },
         {
             q: '¿Qué hace "Restaurar Configuración"?',
