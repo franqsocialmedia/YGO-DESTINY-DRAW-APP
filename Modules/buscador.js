@@ -71,9 +71,54 @@ SUBTYPE_API_MAP: {
     'Spirit':  'Spirit Monster',
 },
 
+// ── IMAGEN LATERAL (Config > Contenido de la App) ──
+    SIDEBAR_IMG_KEY: 'dd_buscador_sidebar_img',
+    SIDEBAR_IMAGES: [
+        'Protagonistas', 'Kaiba', 'Joe', 'Main Monsters', 'Protas', 'Antagonistas',
+        'Jaiden', 'Jesse', 'Jazz', 'Playmaker', 'Borre', 'Burner', 'Revolution', 'Puppet'
+    ],
 
+    getSidebarImage: function () {
+        const stored = localStorage.getItem(this.SIDEBAR_IMG_KEY);
+        return this.SIDEBAR_IMAGES.includes(stored) ? stored : 'Protagonistas';
+    },
+
+    setSidebarImage: function (name) {
+        if (!this.SIDEBAR_IMAGES.includes(name)) name = 'Protagonistas';
+        localStorage.setItem(this.SIDEBAR_IMG_KEY, name);
+        this._applySidebarImage();
+    },
+
+    _applySidebarImage: function () {
+        const img = document.getElementById('buscador-cover-img');
+        if (!img) return;
+        const name = this.getSidebarImage();
+        img.src = `img/${name}.webp`;
+        img.alt = `Yu-Gi-Oh! ${name}`;
+    },
+
+    renderSidebarImagePicker: function () {
+        const current = this.getSidebarImage();
+        return `
+            <div id="cm-sidebarimg-wrap" class="cm-sidebarimg-row">
+                ${this.SIDEBAR_IMAGES.map(name => `
+                    <button class="cm-sidebarimg-thumb ${current === name ? 'cm-sidebarimg-active' : ''}"
+                            onclick="Buscador.setSidebarImage('${name}'); Buscador._refreshSidebarImageUI();"
+                            title="${name}">
+                        <img src="img/${name}.webp" alt="${name}" loading="lazy">
+                        <span>${name}</span>
+                    </button>
+                `).join('')}
+            </div>`;
+    },
+
+    _refreshSidebarImageUI: function () {
+        const wrap = document.getElementById('cm-sidebarimg-wrap');
+        if (wrap) wrap.outerHTML = this.renderSidebarImagePicker();
+    },
     init: function () {
 
+        this._applySidebarImage();
         this.searchInput = document.getElementById('card-search-input');
         this.filterInput = document.getElementById('additional-filters');
         this.searchBtn = document.getElementById('search-btn');

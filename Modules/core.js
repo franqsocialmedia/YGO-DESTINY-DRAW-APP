@@ -274,7 +274,51 @@ const ContentManager = {
         { id: 'config-danger-zone',     group: 'Configuración', label: 'Zona de Borrado',             novato: false, casual: true,  competitivo: true },
         { id: 'config-danger-delete',   group: 'Configuración', label: '↳ Botón Borrar Decks',        novato: false, casual: true,  competitivo: true },
     ],
+// ── FONDO DE LA APP (Config > Contenido de la App) ──
+    BG_THEME_KEY: 'dd_bg_theme',
+    BG_THEMES: [
+        { id: 'purple', label: 'Morado Oscuro', swatch: '#2d0a4e' },
+        { id: 'wine',   label: 'Rojo Vino',     swatch: '#4e0e1a' },
+        { id: 'black',  label: 'Negro',         swatch: '#1a1a1a' },
+        { id: 'navy',   label: 'Azul Navy',     swatch: '#001233' },
+    ],
 
+    getBgTheme: function() {
+        return localStorage.getItem(this.BG_THEME_KEY) || 'purple';
+    },
+
+    setBgTheme: function(themeId) {
+        if (!this.BG_THEMES.some(t => t.id === themeId)) themeId = 'purple';
+        localStorage.setItem(this.BG_THEME_KEY, themeId);
+        this.applyBgTheme(themeId);
+    },
+
+    applyBgTheme: function(themeId) {
+        const theme = themeId || this.getBgTheme();
+        if (theme === 'purple') document.body.removeAttribute('data-bg-theme');
+        else document.body.setAttribute('data-bg-theme', theme);
+    },
+
+    renderBgThemeUI: function() {
+        const current = this.getBgTheme();
+        return `
+            <div class="cm-theme-row">
+                ${this.BG_THEMES.map(t => `
+                    <button class="cm-theme-swatch ${current === t.id ? 'cm-theme-active' : ''}"
+                            style="background:${t.swatch}"
+                            title="${t.label}"
+                            onclick="ContentManager.setBgTheme('${t.id}'); ContentManager._refreshBgThemeUI();"></button>
+                `).join('')}
+            </div>
+            <div class="cm-theme-labels">
+                ${this.BG_THEMES.map(t => `<span class="cm-theme-label">${t.label}</span>`).join('')}
+            </div>`;
+    },
+
+    _refreshBgThemeUI: function() {
+        const wrap = document.getElementById('cm-bgtheme-wrap');
+        if (wrap) wrap.innerHTML = this.renderBgThemeUI();
+    },
     _load: function() {
         try { return JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || {}; }
         catch (_) { return {}; }
@@ -430,6 +474,17 @@ const ContentManager = {
                             </button>`).join('')}
                     </div>
                     <p class="cm-hint">Cambiar el perfil restablece la visibilidad a sus valores por defecto. Luego puedes ajustar cada sección individualmente.</p>
+                    
+                    <div class="cm-appearance-block">
+                        <div class="cm-group-title">🎨 Fondo de la App</div>
+                        <div id="cm-bgtheme-wrap">${this.renderBgThemeUI()}</div>
+                    </div>
+
+                    <div class="cm-appearance-block">
+                        <div class="cm-group-title">🖼️ Imagen del Buscador (lateral izquierdo)</div>
+                        ${window.Buscador ? Buscador.renderSidebarImagePicker() : '<p class="cm-hint">Módulo Buscador no disponible.</p>'}
+                    </div>
+
                     <div class="cm-groups">
                         ${Object.entries(groups).map(([gName, items]) => `
                             <div class="cm-group">
@@ -489,3 +544,4 @@ const ContentManager = {
 };
 
 window.ContentManager = ContentManager;
+ContentManager.applyBgTheme();

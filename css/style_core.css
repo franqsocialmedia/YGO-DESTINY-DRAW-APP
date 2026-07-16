@@ -58,6 +58,17 @@ body {
     position: relative;
 }
 
+/* ── Fondo de la App: temas alternativos (Config > Contenido de la App) ── */
+body[data-bg-theme="wine"] {
+    background: linear-gradient(135deg, #190205 0%, #4e0e1a 100%);
+}
+body[data-bg-theme="black"] {
+    background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+}
+body[data-bg-theme="navy"] {
+    background: linear-gradient(135deg, #00040d 0%, #001233 100%);
+}
+
 
 .parallax-header {
     position: relative;
@@ -640,6 +651,38 @@ body {
 .app-hidden {
     display: none !important;
 }
+
+/* ── Fondo de la App: swatches ── */
+.cm-appearance-block { margin-bottom: var(--spacing-md); }
+.cm-theme-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.cm-theme-swatch {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.15);
+    cursor: pointer; padding: 0;
+    transition: transform 0.15s, border-color 0.15s;
+}
+.cm-theme-swatch:hover { transform: scale(1.1); }
+.cm-theme-active { border-color: var(--gold-color); box-shadow: 0 0 0 2px rgba(255,215,0,0.25); }
+.cm-theme-labels { display: flex; gap: 10px; flex-wrap: wrap; }
+.cm-theme-label { font-size: 0.7rem; color: rgba(255,255,255,0.45); width: 34px; text-align: center; }
+
+/* ── Imagen del Buscador: miniaturas ── */
+.cm-sidebarimg-row {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px;
+}
+.cm-sidebarimg-thumb {
+    background: rgba(26,0,8,0.4); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; padding: 4px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    transition: border-color 0.15s;
+}
+.cm-sidebarimg-thumb:hover { border-color: var(--gold-color); }
+.cm-sidebarimg-thumb img {
+    width: 100%; height: 60px; object-fit: cover; object-position: top center; border-radius: 5px;
+}
+.cm-sidebarimg-thumb span { font-size: 0.62rem; color: rgba(255,255,255,0.6); text-align: center; line-height: 1.1; }
+.cm-sidebarimg-active { border-color: var(--gold-color); box-shadow: 0 0 0 2px rgba(255,215,0,0.2); }
+.cm-sidebarimg-active span { color: var(--gold-color); }
 
 /* ── Panel Contenido de la App (Config) ── */
 
