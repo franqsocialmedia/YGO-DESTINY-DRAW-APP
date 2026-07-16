@@ -256,6 +256,7 @@
 
 @media (max-width: 700px) {
     .engines-sidebar { flex: none; width: 100%; max-width: none; position: static; }
+    .mideck-flex-wrap #deck-container { min-width: 0; flex-basis: 100%; }
 }
 
 
@@ -285,6 +286,15 @@
     .analysis-scores-row    { gap: var(--spacing-sm); padding: var(--spacing-sm); }
     .asb-value              { font-size: 1.8rem; }
     .analysis-cdeck-count   { display: none; }
+
+    .analysis-threat-item,
+    .analysis-cdeck-item,
+    .analysis-staple-item  { flex-wrap: wrap; }
+    .analysis-threat-nums  { flex-direction: row; width: 100%; justify-content: space-between; margin-top: 4px; }
+    .analysis-cdeck-folder,
+    .analysis-staple-type  { overflow-wrap: break-word; }
+    .analysis-verdict,
+    .rps-text               { overflow-wrap: break-word; }
 
     /* Power cards */
     .power-type { display: none; }
@@ -323,6 +333,7 @@
     .analysis-vs-divider { flex-direction: row; gap: 6px; }
     .analysis-score-box  { min-width: 38%; }
 
+    .analysis-g1g2-label { min-width: 90px; }
     /* Power cards */
     .power-card-item { flex-wrap: wrap; }
     .power-score-box {

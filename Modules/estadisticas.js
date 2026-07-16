@@ -2133,7 +2133,9 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
                         </div>` : '<div class="asb-bar-track"></div>'}
                         <div class="asb-label">External Score</div>
                     </div>
-                    <div class="analysis-block">
+                </div>
+
+                <div class="analysis-block">
                     <div class="analysis-block-title">🎲 Going First / Going Second</div>
                     <div class="analysis-g1g2-row">
                         <div class="analysis-g1g2-item">
@@ -2156,7 +2158,6 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
                         </div>` : ''}
                     </div>
                     <div class="analysis-g1g2-detail analysis-g1g2-profile">${g1g2Profile}</div>
-                </div>
                 </div>
 
                 ${rpsHTML}
