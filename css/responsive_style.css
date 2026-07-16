@@ -448,16 +448,19 @@
     .puntos-row    span:nth-child(7),
     .puntos-decks  { display: none; }
 
-    /* Hipergeometría */
+ /* Hipergeometría */
     .hiper-quick-layout  { flex-direction: column; align-items: center; }
     .hiper-inputs-col    { width: 100%; }
     .hiper-deck-layout   { flex-direction: column; }
     .hiper-deck-sidebar  { flex: none; width: 100%; }
     .hiper-deck-list     { max-height: 160px; }
+    .hiper-deck-panel    { min-width: 0; width: 100%; }
     .hiper-deck-two-col  { flex-direction: column; }
+    .hiper-minideck-wrap { min-width: 0; width: 100%; }
     .hiper-handsim       { width: 100%; }
     .hiper-hand-area     { min-width: unset; }
     .hiper-res-grid      { grid-template-columns: 1fr; }
+    .hiper-chart-area    { max-width: 100%; }
 
     /* Experimentación: sidebar oculta por defecto, activar con scroll */
     .exp-body    { flex-direction: column; }
