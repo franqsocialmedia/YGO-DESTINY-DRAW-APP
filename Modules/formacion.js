@@ -2204,7 +2204,7 @@ borrarSeleccion: function () {
     if (selected.includes('matchups')) {
         rmP('matchup_');
         if (window.Matchups) Matchups.refreshSection?.();
-        if (window.Duelista) { const el = document.getElementById('duelista-content'); if (el) Duelista.refreshSection(); }
+        if (window.Duelista) { const el = document.getElementById('duelista-content-opt'); if (el) Duelista.refreshSection(); }
     }
     if (selected.includes('optimizacion')) {
         rmP('optimization_'); rmP('complejidad_');
@@ -2297,7 +2297,7 @@ borrarSeleccion: function () {
             if (document.getElementById('historial-content')) Matchups.refreshSection?.();
         }
         if (window.Duelista) {
-            const el = document.getElementById('duelista-content');
+            const el = document.getElementById('duelista-content-opt');
             if (el) Duelista.refreshSection();
         }
         if (window.Estadisticas) {

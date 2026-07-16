@@ -2520,21 +2520,7 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
                     </div>
                 </div>
             </div>`;
-        html += `
-            <h3 class="stats-section-title" onclick="Estadisticas.toggleSection('duelista-sec'); if(window.Duelista) Duelista.refreshSection();">
-                🎖️ Nivel como Piloto del Deck
-            </h3>
-            <div id="duelista-sec" class="stats-section" style="display:none;">
-                <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
-                    <button class="btn btn-sm" onclick="if(window.Duelista) Duelista.refreshSection()" title="Actualizar datos">
-                        🔄 Actualizar
-                    </button>
-                </div>
-                <div id="duelista-content">
-                    <p class="stats-empty">Abre esta sección para ver tu perfil.</p>
-                </div>
-            </div>
-        `;
+        
         this.container.innerHTML = html;
     },
 // Devuelve los decks guardados del usuario con scores calculados al vuelo
