@@ -359,7 +359,8 @@ await new Promise(resolve => setTimeout(resolve, 0));
         
         this.filterWords = [];
         this.renderChips();
-
+        this.resetAdvancedFilters(true);
+        
         this.resultsContainer.innerHTML =
             '<p class="results-placeholder">Utiliza el buscador para encontrar cartas de Yu-Gi-Oh!</p>';
 
@@ -749,7 +750,7 @@ _populateCardsetSel: function (sel) {
     });
 },
 
-resetAdvancedFilters: function() {
+resetAdvancedFilters: function(skipSearch) {
     Object.assign(this.advancedFilters, {
         cardCategory:'', attribute:'', monsterType:'', monsterSubtype:'',
         spellSubtype:'', trapSubtype:'', level:'', linkval:'', scale:'', atk:'', def:'',
@@ -763,6 +764,7 @@ resetAdvancedFilters: function() {
     this._updateFilterSummary();
     if (this.filterPanelOpen) this.renderFilterPanel();
     this.autoSearch();
+    if (!skipSearch) this.autoSearch();
 },
     
 };
