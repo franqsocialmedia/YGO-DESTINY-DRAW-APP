@@ -849,6 +849,14 @@ const html = `
 
             <hr class="cv-hr">
 
+            <div class="cv-release-block">
+                <p><b>Lanzamiento TCG:</b> <span id="cv-tcg-date">Cargando...</span></p>
+                <p><b>Lanzamiento OCG:</b> <span id="cv-ocg-date">Cargando...</span></p>
+                <p id="cv-availability-row" style="display:none"><b>Disponible en:</b> <span id="cv-availability"></span></p>
+            </div>
+
+            <hr class="cv-hr">
+
             <div class="cv-sets-block">
                 <span class="cv-sets-label">📦 Pack / Set</span>
                 <div id="cv-sets-list" class="cv-sets-list">Cargando...</div>
@@ -872,19 +880,47 @@ const html = `
         fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${card.id}&misc=yes`)
             .then(r => r.json())
             .then(data => {
-                const sets = data?.data?.[0]?.card_sets;
+                const info = data?.data?.[0];
+                const misc = info?.misc_info?.[0] || {};
+
+                const sets = info?.card_sets;
                 const el   = document.getElementById('cv-sets-list');
-                if (!el) return;
-                if (!sets?.length) { el.textContent = 'No disponible'; return; }
-                const unique = [...new Map(sets.map(s => [s.set_name, s])).values()];
-                el.innerHTML = unique.map(s => {
-                    const year = s.set_release_date ? s.set_release_date.substring(0,4) : '';
-                    return `<span onclick="CardViewer.openSetInBuscador('${s.set_name.replace(/'/g,"\\'")}'); return false;" style="display:inline-block;background:rgba(0,51,102,0.5);border:1px solid rgba(255,215,0,0.2);border-radius:4px;padding:2px 7px;margin:2px 3px 2px 0;font-size:0.75rem;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='rgba(255,215,0,0.6)'" onmouseout="this.style.borderColor='rgba(255,215,0,0.2)'">${s.set_name}${year ? ` (${year})` : ''}</span>`;
-                }).join('');
+                if (el) {
+                    if (!sets?.length) { el.textContent = 'No disponible'; }
+                    else {
+                        const unique = [...new Map(sets.map(s => [s.set_name, s])).values()];
+                        el.innerHTML = unique.map(s => {
+                            const year = s.set_release_date ? s.set_release_date.substring(0,4) : '';
+                            return `<span onclick="CardViewer.openSetInBuscador('${s.set_name.replace(/'/g,"\\'")}'); return false;" style="display:inline-block;background:rgba(0,51,102,0.5);border:1px solid rgba(255,215,0,0.2);border-radius:4px;padding:2px 7px;margin:2px 3px 2px 0;font-size:0.75rem;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='rgba(255,215,0,0.6)'" onmouseout="this.style.borderColor='rgba(255,215,0,0.2)'">${s.set_name}${year ? ` (${year})` : ''}</span>`;
+                        }).join('');
+                    }
+                }
+
+                const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-ES') : 'No disponible';
+                const tcgEl = document.getElementById('cv-tcg-date');
+                const ocgEl = document.getElementById('cv-ocg-date');
+                if (tcgEl) tcgEl.textContent = fmtDate(misc.tcg_date);
+                if (ocgEl) ocgEl.textContent = fmtDate(misc.ocg_date);
+
+                const formats = (misc.formats || []).map(f => f.toLowerCase());
+                const availability = [];
+                if (formats.includes('master duel')) availability.push('Master Duel');
+                if (formats.includes('duel links'))   availability.push('Duel Links');
+
+                const availRow = document.getElementById('cv-availability-row');
+                const availEl  = document.getElementById('cv-availability');
+                if (availRow && availEl && availability.length) {
+                    availEl.textContent = availability.join(' / ');
+                    availRow.style.display = '';
+                }
             })
             .catch(() => {
                 const el = document.getElementById('cv-sets-list');
                 if (el) el.textContent = 'No disponible';
+                const tcgEl = document.getElementById('cv-tcg-date');
+                const ocgEl = document.getElementById('cv-ocg-date');
+                if (tcgEl) tcgEl.textContent = 'No disponible';
+                if (ocgEl) ocgEl.textContent = 'No disponible';
             });
 
         const overlay = document.getElementById('cv-overlay');

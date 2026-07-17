@@ -922,6 +922,7 @@
     margin-bottom: 8px;
 }
 .cv-stats-block p { margin: 2px 0; }
+.cv-release-block p { margin: 2px 0; font-size: 0.85rem; }
 
 .cv-desc-block {
     white-space: pre-wrap;
