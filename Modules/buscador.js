@@ -800,6 +800,9 @@ const statsHtml = card.atk !== undefined ? `
     <p><b>Tipo:</b> ${isMonster ? (card.race || '-') : '—'}</p>
     <p><b>ATK:</b> ${card.atk}</p>
     <p><b>DEF:</b> ${card.def}</p>
+    <p><b>Arquetipo:</b> ${card.archetype
+        ? `<a href="#" class="cv-archetype-link" onclick="CardViewer.openArchetypeInBuscador('${card.archetype.replace(/'/g,"\\'")}'); return false;">${card.archetype}</a>`
+        : '—'}</p>
 ` : '';
 
         const ban = card.banlist_info || {};
@@ -1887,6 +1890,21 @@ openPointsEditor: function (formatName, cardId, cardName, currentPoints) {
                 Buscador.advancedFilters.cardset = setName;
                 const sel = document.getElementById('buscador-set-sel');
                 if (sel) sel.value = setName;
+                Buscador._updateFilterSummary();
+                Buscador.autoSearch();
+            });
+        }, 80);
+    },
+    openArchetypeInBuscador: function (archetypeName) {
+        document.getElementById('cv-overlay')?.remove();
+        if (window.Navigation) Navigation.showTab('buscador');
+        setTimeout(() => {
+            if (!window.Buscador) return;
+            Buscador.clear();
+            Buscador._loadArchetypes().then(() => {
+                Buscador.advancedFilters.archetype = archetypeName;
+                const sel = document.getElementById('buscador-archetype-sel');
+                if (sel) sel.value = archetypeName;
                 Buscador._updateFilterSummary();
                 Buscador.autoSearch();
             });
