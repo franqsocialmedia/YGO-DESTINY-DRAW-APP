@@ -792,12 +792,15 @@ const CardViewer = {
             `<img src="${img.image_url_small}" class="cv-thumb">`
         ).join('');
 
-        const statsHtml = card.atk !== undefined ? `
-            <p><b>Atributo:</b> ${card.attribute || '-'}</p>
-            <p><b>Nivel:</b> ${card.level || '-'}</p>
-            <p><b>ATK:</b> ${card.atk}</p>
-            <p><b>DEF:</b> ${card.def}</p>
-        ` : '';
+        const isMonster = (card.type || '').includes('Monster');
+
+const statsHtml = card.atk !== undefined ? `
+    <p><b>Nivel:</b> ${card.level || '-'}</p>
+    <p><b>Atributo:</b> ${card.attribute || '-'}</p>
+    <p><b>Tipo:</b> ${isMonster ? (card.race || '-') : '—'}</p>
+    <p><b>ATK:</b> ${card.atk}</p>
+    <p><b>DEF:</b> ${card.def}</p>
+` : '';
 
         const ban = card.banlist_info || {};
 
@@ -821,7 +824,7 @@ const html = `
             <hr class="cv-hr">
 
             <div class="cv-stats-block">
-                <p><b>Tipo:</b> ${card.type}</p>
+                <p><b>Carta:</b> ${card.type}</p>
                 ${statsHtml}
             </div>
 

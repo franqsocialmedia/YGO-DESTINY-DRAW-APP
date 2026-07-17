@@ -1000,7 +1000,7 @@
 }
 .cv-card-id {
     font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.28);
+    color: var(--gold-color);
 }
 
 .cv-action-row {
