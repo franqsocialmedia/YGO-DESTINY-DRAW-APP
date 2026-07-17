@@ -1,10 +1,10 @@
 # DESTINY DRAW — REPORTE TÉCNICO
-**Versión:** v2.7 | **Fecha:** Jul 2026 (auditado línea por línea contra el código fuente)
+**Versión:** v2.8 | **Fecha:** Jul 2026 (auditado línea por línea contra el código fuente)
 **Stack:** Vanilla JS (ES6 objects) · CSS modular · HTML5 SPA · YGOProDeck API · localStorage
 
 > **Nota de auditoría:** este reporte fue verificado contra los 19 archivos fuente actuales.
 > El footer de `index.html` marca **VERSION 5.0** — el número de versión de este documento
-> (v2.7) es independiente y solo referencia la revisión del propio reporte.
+> (v2.8) es independiente y solo referencia la revisión del propio reporte.
 > Cambios relevantes encontrados desde la v2.6 (`mideck.js` / `historial.js` — ver 6.1 y 6.2,
 > nuevo, léelos antes de asumir el estado anterior):
 > 1. **Complejidad del Deck** — nuevo clasificador de dificultad de uso/aprendizaje (quiz de
@@ -20,6 +20,27 @@
 >    `Matchups.selectDeckFilter()` / `clearDeckFilter()`.
 >
 > El sistema G1/G2 Score sigue completamente implementado (ver 7.2, sin cambios desde v2.6).
+>
+> Cambios relevantes desde la v2.7 (`buscador.js` / `style_buscador.css` — CardViewer,
+> ver 5.9, nuevo, léelos antes de asumir el estado anterior del panel "Ver"):
+> 1. **Bloque de stats reordenado y renombrado** — orden ahora Nivel → Atributo → Tipo (antes
+>    Atributo → Nivel, sin Tipo). El antiguo campo `card.type` (Effect Monster / Spell Card /
+>    Trap Card…) ahora se rotula **"Carta:"**; el nuevo campo `card.type` **"Tipo:"** muestra
+>    `card.race` (la Clase de monstruo — Dragón, Guerrero, etc.) y cae en "—" si la carta no
+>    es monstruo. Evita la confusión histórica Tipo/Clase del juego.
+> 2. **"Arquetipo:" añadido debajo de DEF** — enlace clicable (sin subrayado) que cierra el
+>    CardViewer, cambia a la pestaña Buscador y ejecuta la búsqueda con ese arquetipo como
+>    filtro activo, vía el nuevo `CardViewer.openArchetypeInBuscador()` (gemelo de
+>    `openSetInBuscador`). Sin arquetipo → "—" sin enlace.
+> 3. **"Lanzamiento TCG:" / "Lanzamiento OCG:" y "Disponible en:" (Master Duel / Duel Links)**
+>    añadidos arriba de "📦 Pack / Set", poblados de forma async reutilizando el fetch
+>    `misc=yes` que ya existía para los sets. "Disponible en:" solo se muestra si hay al
+>    menos un formato; si no hay ninguno, la fila entera queda oculta.
+> 4. **Bug corregido:** ese fetch leía `tcg_date`/`ocg_date`/`formats` en la raíz del objeto
+>    de la carta, pero con `misc=yes` la API los anida dentro de `misc_info[0]`. Por eso
+>    ninguna carta mostraba fecha ni disponibilidad. Ver bug #19 en sección 9.
+> 5. **`ID:` del CardViewer ahora en `--gold-color`** (antes gris translúcido casi ilegible
+>    sobre el fondo oscuro).
 
 ---
 
@@ -48,7 +69,7 @@ default_data.js → logger.js  (SIEMPRE AL FINAL)
 | `logger.js` | `DDLogger` | 365 | Logger no-invasivo. Envuelve todos los objetos globales post-`window.load`. API: `DDLogger.exportReport()`, `getLogs()`, `getStats()`, `enable/disable/clear()`. Intercepta localStorage y errores globales. |
 | `core.js` | `Navigation`, `Shortcuts`, `ContentManager`, `switchTab` | 490 | navigation + utils + contentmanager |
 | `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 2311 | Config global (incl. estructuras y motor de Scoring G1/G2 — ver 7.2), cálculo de scores, analizadores de carta. Incluye `duplicateNomenclatureCategory`. `exportConfig()` cubre también las claves dinámicas `optimization_`/`complejidad_` (ver 6.1/6.2). |
-| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 1960 | buscador + cardviewer + favoritas + botón Carta Random |
+| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | ~2050 | buscador + cardviewer + favoritas + botón Carta Random. `CardViewer.open()` ahora también resuelve Lanzamiento TCG/OCG, disponibilidad MD/DL y el link de Arquetipo — ver 5.9 |
 | `mideck.js` | `Deck`, `Banlist`, `Engines` | 4131 | deck + banlist + engines + Optimización (deck testing) + **Complejidad del Deck — nuevo clasificador, ver 6.1** |
 | `historial.js` | `Matchups`, `Duelista` | 715 | matchups + duelista. **`Duelista` reescrito — ya no agrega todos los decks, ver 6.2.** Matchups ahora filtra Optimización por rival (`selectDeckFilter`). |
 | `estadisticas.js` | `Estadisticas` | 2599 | scores, meta, cross-score, análisis de deck. `recalculateAllMetaDeckScores` es async con enriquecimiento automático. `renderDeckAnalysis()` ahora también pinta el bloque G1/G2 (ver 7.2) y aloja `#duelista-content` (ver 6.2). |
@@ -70,7 +91,7 @@ style_simuladores.css → style_config.css → responsive_style.css
 | Archivo | Líneas | Absorbe |
 |---------|--------|---------|
 | `style_core.css` | 1326 | style_global + style_welcome + style_cardviewer |
-| `style_buscador.css` | 1028 | — |
+| `style_buscador.css` | ~1045 | — (+ `.cv-archetype-link`, `.cv-release-block`, `.cv-card-id` ahora en gold — ver 5.9 y 11) |
 | `style_mideck.css` | 2524 | — (incluye 94 reglas `.opt-*` del panel de Optimización + nuevas `.cxd-*` de Complejidad del Deck, ver 6.1) |
 | `style_simuladores.css` | 6019 | style_simuladores + style_estadisticas |
 | `style_config.css` | 2292 | style_config + style_formacion + style_meta + clases de Scoring G1/G2 |
@@ -306,6 +327,28 @@ window.load → DefaultData.init()
   → _initDecks / _initStaples / _initEngines / _initGenesys  (fetch API)
   → _patchConfig() → sobreescribe Config.resetToDefault
 ```
+
+### 5.9 Abrir CardViewer (panel "Ver" de carta) — NUEVO detalle documentado
+```
+CardViewer.open(card)
+  → pinta overlay síncrono con lo que ya trae `card`:
+      Carta: card.type (antes rotulado "Tipo:")
+      Nivel → Atributo → Tipo (card.race; "—" si no es monstruo) → ATK → DEF
+      Arquetipo: card.archetype como link, o "—" sin link si no tiene
+      ID: card.id (en --gold-color)
+  → fetch cardinfo.php?id=${card.id}&misc=yes (un único fetch, async)
+      → card_sets  → rellena "📦 Pack / Set" (ya existía)
+      → misc_info[0].tcg_date / ocg_date → "Lanzamiento TCG:" / "Lanzamiento OCG:"
+        (fmtDate → toLocaleDateString('es-ES'); "No disponible" si falta)
+      → misc_info[0].formats → "Disponible en:" (Master Duel / Duel Links).
+        Fila oculta por completo si no hay match en ninguno de los dos.
+  → click en Arquetipo → CardViewer.openArchetypeInBuscador(name)
+      → cierra overlay → Navigation.showTab('buscador') → Buscador.clear()
+      → Buscador._loadArchetypes() → advancedFilters.archetype = name → autoSearch()
+      (mismo patrón que CardViewer.openSetInBuscador para sets)
+```
+**Importante:** `tcg_date`, `ocg_date` y `formats` SOLO existen dentro de `misc_info[0]`
+cuando se pasa `misc=yes` — nunca en la raíz del objeto de la carta. Ver bug #19.
 
 ---
 
@@ -585,6 +628,7 @@ El badge de nombre es siempre el elemento visible. El input se oculta con `displ
 | 16 | Borrar "Carpetas del Meta" dejaba cross-scores y deck scores | `formacion.js` | Limpia `yugioh_meta_decks`, `yugioh_meta_deck_scores`, `yugioh_cross_scores` |
 | 17 | `segmentDescription` ausente en `NomenclatureAnalyzer` | `data.js` | Reintegrada como función; **resuelto (Jul 2026): ahora sí es invocada desde `calculateInternalScore()` — las capas L1–L5 aplican multiplicadores en tiempo de ejecución, ver 7.2** |
 | 18 | G1/G2 Score sin motor de cálculo (config + UI sin consumidor) | `data.js`, `estadisticas.js` | Implementado el cálculo dentro de `calculateInternalScore()` (BasePower × capas × Reliability, repartido en g1Score/g2Score) y su render en `renderDeckAnalysis()` — ver 7.2 |
+| 19 | CardViewer nunca mostraba Lanzamiento TCG/OCG ni disponibilidad en Master Duel/Duel Links (para NINGUNA carta) | `buscador.js` | El fetch `misc=yes` leía `tcg_date`/`ocg_date`/`formats` en la raíz del objeto de la carta; la API los devuelve anidados en `misc_info[0]`. Corregido leyendo `info.misc_info?.[0]` — ver 5.9 |
 
 ---
 
@@ -595,6 +639,9 @@ El badge de nombre es siempre el elemento visible. El input se oculta con `displ
 Base: https://db.ygoprodeck.com/api/v7/
 cardinfo.php?id=      búsqueda/lookup por ID (batch con IDs separados por coma)
 cardinfo.php?fname=   búsqueda difusa por nombre (usada por el buscador; no se usa ?name=)
+cardinfo.php?id=&misc=yes   usado en CardViewer.open() (ver 5.9) para sets, fechas de
+                             lanzamiento y disponibilidad MD/DL. Con misc=yes, tcg_date,
+                             ocg_date y formats viajan DENTRO de misc_info[0], no en la raíz.
 archetypes.php        lista de arquetipos
 cardsets.php          lista de packs/sets
 cardinfo.php          fetch completo sin filtros, usado por DefaultData._initGenesys()
@@ -613,6 +660,9 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 | `.tab-content` / `.active` | style_core | Secciones de pestañas |
 | `.engines-sidebar` | style_mideck | Sidebar 4 tabs Mi Deck |
 | `.cv-overlay` | style_core | Visor de carta |
+| `.cv-archetype-link` | style_buscador | **Nuevo.** Link "Arquetipo:" sin subrayado (ver 5.9), llama a `CardViewer.openArchetypeInBuscador()` |
+| `.cv-release-block` | style_buscador | **Nuevo.** Contenedor de "Lanzamiento TCG/OCG" y "Disponible en:" (ver 5.9) |
+| `.cv-card-id` | style_buscador | Ahora en `var(--gold-color)` (antes `rgba(255,255,255,0.28)`, poco legible) |
 | `#welcome-overlay.welcome-visible` | style_core | Panel bienvenida |
 | `.role-panel` / `.role-panel-header` | style_config | Panel colapsable de rol y nomenclatura |
 | `.scoring-layers-grid` | style_config | Grid de columnas L1/L2/L4/L5 |
