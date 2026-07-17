@@ -23,6 +23,7 @@ const Deck = {
         this.container = document.getElementById('deck-container');
         if (!this.container) return;
         this.render();
+        this.createSaveFloatingBtn();
     },
 
     // ===============================
@@ -323,7 +324,26 @@ const Deck = {
             if (panel) panel.innerHTML = Estadisticas.renderDeckSelectorPanel();
         }
     },
+// ===============================
+    // Botón flotante "Guardar Deck" — acceso rápido en Mi Deck.
+    // Ocupa el mismo espacio que "Lista de Decks" (Estadisticas) pero
+    // se muestra en la condición contraria: solo en la pestaña Mi Deck.
+    createSaveFloatingBtn: function () {
+        if (document.getElementById('deck-save-float-btn')) return;
+        const btn = document.createElement('button');
+        btn.id          = 'deck-save-float-btn';
+        btn.className   = 'deck-save-float-btn';
+        btn.textContent = '💾';
+        btn.title       = 'Guardar Deck';
+        btn.onclick     = () => this.saveDeck();
+        document.body.appendChild(btn);
+    },
 
+    updateSaveFloatingBtnVisibility: function (tabName) {
+        const btn = document.getElementById('deck-save-float-btn');
+        if (!btn) return;
+        btn.style.display = tabName === 'mideck' ? '' : 'none';
+    },
     // Guardado rápido de solo las notas desde Optimización, sin navegar a
     // Decklist ni disparar "Guardar Deck". No toca cards ni savedAt salvo
     // que el deck todavía no tuviera ningún guardado previo.

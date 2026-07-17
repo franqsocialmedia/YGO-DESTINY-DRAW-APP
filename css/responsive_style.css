@@ -312,6 +312,7 @@
     /* Widget flotante deck */
     .deck-floating-widget          { width: 44px; left: 8px; }
     .deck-floating-widget.expanded { width: 190px; }
+    .deck-save-float-btn           { left: 8px; }
 }
 
 @media (max-width: 640px) {

@@ -59,6 +59,9 @@ const Navigation = {
         if (window.Estadisticas && typeof Estadisticas.updateFloatingWidgetVisibility === 'function') {
             Estadisticas.updateFloatingWidgetVisibility(tabName);
         }
+        if (window.Deck && typeof Deck.updateSaveFloatingBtnVisibility === 'function') {   
+            Deck.updateSaveFloatingBtnVisibility(tabName);                                  
+        }                                                                                    
         if (tabName === 'simuladores' && window.Torneo) Torneo.init();
         if (tabName === 'mideck' && window.Engines) Engines.init();
         if (previousTab === 'simuladores' && tabName !== 'simuladores' && window.ZonaPractica) {

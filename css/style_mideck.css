@@ -216,6 +216,33 @@
     background: var(--accent-color);
     border-color: var(--gold-color);
 }
+/* ── BOTÓN FLOTANTE GUARDAR DECK (Mi Deck) ── */
+.deck-save-float-btn {
+    position: fixed;
+    bottom: 80px;
+    left: 20px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #c0c0c0;
+    color: #222;
+    border: none;
+    cursor: pointer;
+    font-size: 0.75rem;
+    line-height: 1;
+    z-index: 998;
+    opacity: 0.4;
+    transition: opacity 0.2s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    padding: 0;
+}
+.deck-save-float-btn:hover {
+    opacity: 1;
+    transform: scale(1.12);
+}
 
 /* Contenedor de botones */
 .deck-buttons {
