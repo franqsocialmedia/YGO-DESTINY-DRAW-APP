@@ -1523,6 +1523,7 @@ this.container.innerHTML = html;
         const avgStarter  = rounds.reduce((a, r) => a + (r.starter   || 0), 0) / p;
         const avgExtender = rounds.reduce((a, r) => a + (r.extenders || 0), 0) / p;
         const avgHandtrap = rounds.reduce((a, r) => a + (r.handtraps || 0), 0) / p;
+        const avgBoardbreaker = rounds.reduce((a, r) => a + (r.boardbreakers || 0), 0) / p;
         const avgRivalInterr  = rounds.reduce((a, r) => a + (r.rivalInterrupciones    || 0), 0) / p;
         const avgRivalBreaks  = rounds.reduce((a, r) => a + (r.vecesRivalRompioBoard  || 0), 0) / p;
         const htExceso    = rounds.filter(r => (r.handtraps || 0) >= 3).length;
@@ -1555,7 +1556,7 @@ this.container.innerHTML = html;
         return {
             p, wins, losses, wr, br, str, extr, ri, rib, bb, ctrl, htRate, score,
             ftks, rendiciones, tiempoGan, tiempoPer, criticos, ajustados,
-            rFirst, rSecond, avgStarter, avgExtender, avgHandtrap, avgRivalInterr, avgRivalBreaks,
+            rFirst, rSecond, avgStarter, avgExtender, avgHandtrap, avgBoardbreaker, avgRivalInterr, avgRivalBreaks,
             turnDist, turnTotal
         };
     },
@@ -1570,6 +1571,7 @@ this.container.innerHTML = html;
         if (m.ri   > 45) w.push('⚠ El rival interrumpe tus jugadas con frecuencia. Añade más protección u outs a hand traps.');
         if (m.rib  > 30) w.push('⚠ El rival rompe tu campo seguido. Refuerza la resiliencia post-disrupción.');
         if (m.bb   < 30) w.push('⚠ Going Second débil. Considera más outs y rompedores de campo.');
+        if (m.avgBoardbreaker < 0.5 && m.rSecond.length >= 3) w.push('⚠ Pocos Boardbreakers en mano jugando de segundo. Considera sumar cartas que rompan el campo rival (Raigeki, Dark Ruler No More, Evenly Matched, etc.).');
         if (m.htRate > 35) w.push('⚠ Exceso de handtraps en mano (3+) frecuente. Reduce 1-2 para mejorar consistencia.');
         if (m.avgHandtrap < 0.5 && m.p >= 5) w.push('⚠ Casi sin handtraps en mano. Considera sumar 3-6 handtraps al main deck.');
         if (m.ftks > 0) w.push(`ℹ ${m.ftks} FTK${m.ftks > 1 ? 's' : ''} registrado${m.ftks > 1 ? 's' : ''}. Vigilar restricciones de banlist.`);
@@ -1606,7 +1608,9 @@ this.container.innerHTML = html;
             bricks:        n('opt-r-bricks'),
             starter:       n('opt-r-starter'),
             extenders:     n('opt-r-extenders'),
-            handtraps:     n('opt-r-handtraps'),rompioBoard:      n('opt-r-board') > 0,
+            handtraps:     n('opt-r-handtraps'),
+            boardbreakers: n('opt-r-boardbreaker'),
+            rompioBoard:      n('opt-r-board') > 0,
 vecesRompioBoard: n('opt-r-board'),
 negoJugada:       n('opt-r-negate') > 0,
 interrupciones:   n('opt-r-negate'),
@@ -1643,7 +1647,7 @@ notas:            v('opt-r-notas').trim()
             .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
         const oppStatusEl = document.getElementById('opt-oppdeck-status');
         if (oppStatusEl) oppStatusEl.textContent = '';
-        ['opt-r-starter','opt-r-extenders','opt-r-handtraps','opt-r-bricks','opt-r-board','opt-r-negate','opt-r-combo','opt-r-rival']
+        ['opt-r-starter','opt-r-extenders','opt-r-handtraps','opt-r-boardbreaker','opt-r-bricks','opt-r-board','opt-r-negate','opt-r-combo','opt-r-rival']
             .forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
         const tvEl = document.getElementById('opt-r-turnovic');
         if (tvEl) tvEl.value = '';
@@ -2022,7 +2026,15 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 </div>
 
                 <div class="opt-form-row">
-                    <label class="opt-lbl">Bricks en mano</label>
+                    <label class="opt-lbl">Boardbreaker en mano</label>
+                    <select id="opt-r-boardbreaker" class="opt-input">
+                        <option value="0">0</option><option value="1">1</option>
+                        <option value="2">2</option><option value="3">3+</option>
+                    </select>
+                </div>
+
+                <div class="opt-form-row">
+                    <label class="opt-lbl">Bricks/Tech en mano</label>
                     <select id="opt-r-bricks" class="opt-input">
                         <option value="0">0</option><option value="1">1</option>
                         <option value="2">2</option><option value="3">3+</option>
@@ -2286,6 +2298,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                         <span>⚡ ø${m.avgStarter.toFixed(1)} starters</span>
                         <span>🔗 ø${m.avgExtender.toFixed(1)} extenders</span>
                         <span>🖐 ø${m.avgHandtrap.toFixed(1)} HT</span>
+                        <span>🧨 ø${m.avgBoardbreaker.toFixed(1)} BB</span>
                         ${m.ftks       ? `<span>⚡ ${m.ftks} FTK${m.ftks>1?'s':''}</span>` : ''}
                         ${m.rendiciones? `<span>🏳 ${m.rendiciones} rendición${m.rendiciones>1?'es':''}</span>` : ''}
                         ${m.tiempoGan  ? `<span>⏰ ${m.tiempoGan} ganada${m.tiempoGan>1?'s':''} x tiempo</span>` : ''}
@@ -2313,6 +2326,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                                     <span title="Starters">⚡${r.starter||0}</span>
                                     <span title="Extenders">🔗${r.extenders||0}</span>
                                     <span title="Handtraps">🖐${r.handtraps||0}</span>
+                                    <span title="Boardbreakers en mano">🧨${r.boardbreakers||0}</span>
                                     ${r.brick        ? '<span class="opt-tag-brick" title="Brick">🧱</span>' : ''}
                                     ${(r.rivalInterrupciones || r.comboCompleto) ? `<span class="opt-tag-combo" title="Interrupciones del rival">🛑${r.rivalInterrupciones || 1}</span>` : ''}
                                     ${r.rompioBoard  ? `<span title="Campos rotos">⚔️${r.vecesRompioBoard ?? 1}</span>` : ''}
