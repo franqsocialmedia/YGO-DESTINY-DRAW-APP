@@ -1,10 +1,20 @@
 # DESTINY DRAW — REPORTE TÉCNICO
-**Versión:** v2.8 | **Fecha:** Jul 2026 (auditado línea por línea contra el código fuente)
+**Versión:** v2.9 | **Fecha:** Jul 2026 (auditado línea por línea contra el código fuente)
 **Stack:** Vanilla JS (ES6 objects) · CSS modular · HTML5 SPA · YGOProDeck API · localStorage
 
 > **Nota de auditoría:** este reporte fue verificado contra los 19 archivos fuente actuales.
-> El footer de `index.html` marca **VERSION 5.0** — el número de versión de este documento
-> (v2.8) es independiente y solo referencia la revisión del propio reporte.
+> El footer de `index.html` marca **VERSION 6.4** — el número de versión de este documento
+> (v2.9) es independiente y solo referencia la revisión del propio reporte.
+> Cambio relevante desde la v2.8 (`mideck.js` — Optimización, ver 6.3, nuevo):
+> 1. **Nuevo campo "Boardbreaker en mano"** en el formulario de Rondas de Duelo, ubicado
+>    entre Handtraps y Bricks. Cuenta cartas que rompen campo jugando de segundo (Raigeki,
+>    Dark Ruler No More, Evenly Matched, etc.). Se guarda como `round.boardbreakers`,
+>    alimenta un promedio propio (`avgBoardbreaker`) y una sugerencia nueva en
+>    `getOptDiagnostics()`. No afecta el cálculo de Brick Rate ni ningún otro campo.
+> 2. **"Bricks en mano" renombrado a "Bricks/Tech en mano"** — cambio solo de rótulo visible;
+>    a nivel de cálculo (Brick Rate, diagnósticos, export a Matchups) sigue considerándose
+>    negativo/brick exactamente igual que antes, sin ningún campo o id nuevo.
+>
 > Cambios relevantes encontrados desde la v2.6 (`mideck.js` / `historial.js` — ver 6.1 y 6.2,
 > nuevo, léelos antes de asumir el estado anterior):
 > 1. **Complejidad del Deck** — nuevo clasificador de dificultad de uso/aprendizaje (quiz de
@@ -67,14 +77,14 @@ default_data.js → logger.js  (SIEMPRE AL FINAL)
 | Archivo | Objetos globales | Líneas | Descripción |
 |---------|-----------------|--------|-------------|
 | `logger.js` | `DDLogger` | 365 | Logger no-invasivo. Envuelve todos los objetos globales post-`window.load`. API: `DDLogger.exportReport()`, `getLogs()`, `getStats()`, `enable/disable/clear()`. Intercepta localStorage y errores globales. |
-| `core.js` | `Navigation`, `Shortcuts`, `ContentManager`, `switchTab` | 490 | navigation + utils + contentmanager |
+| `core.js` | `Navigation`, `Shortcuts`, `ContentManager`, `switchTab` | 549 | navigation + utils + contentmanager |
 | `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 2311 | Config global (incl. estructuras y motor de Scoring G1/G2 — ver 7.2), cálculo de scores, analizadores de carta. Incluye `duplicateNomenclatureCategory`. `exportConfig()` cubre también las claves dinámicas `optimization_`/`complejidad_` (ver 6.1/6.2). |
-| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | ~2050 | buscador + cardviewer + favoritas + botón Carta Random. `CardViewer.open()` ahora también resuelve Lanzamiento TCG/OCG, disponibilidad MD/DL y el link de Arquetipo — ver 5.9 |
-| `mideck.js` | `Deck`, `Banlist`, `Engines` | 4131 | deck + banlist + engines + Optimización (deck testing) + **Complejidad del Deck — nuevo clasificador, ver 6.1** |
-| `historial.js` | `Matchups`, `Duelista` | 715 | matchups + duelista. **`Duelista` reescrito — ya no agrega todos los decks, ver 6.2.** Matchups ahora filtra Optimización por rival (`selectDeckFilter`). |
-| `estadisticas.js` | `Estadisticas` | 2599 | scores, meta, cross-score, análisis de deck. `recalculateAllMetaDeckScores` es async con enriquecimiento automático. `renderDeckAnalysis()` ahora también pinta el bloque G1/G2 (ver 7.2) y aloja `#duelista-content` (ver 6.2). |
+| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 2064 | buscador + cardviewer + favoritas + botón Carta Random. `CardViewer.open()` ahora también resuelve Lanzamiento TCG/OCG, disponibilidad MD/DL y el link de Arquetipo — ver 5.9 |
+| `mideck.js` | `Deck`, `Banlist`, `Engines` | 4216 | deck + banlist + engines + Optimización (deck testing) + **Complejidad del Deck — clasificador, ver 6.1** + **campo Boardbreaker en mano — nuevo, ver 6.3** |
+| `historial.js` | `Matchups`, `Duelista` | 877 | matchups + duelista. **`Duelista` reescrito — ya no agrega todos los decks, ver 6.2.** Matchups ahora filtra Optimización por rival (`selectDeckFilter`). |
+| `estadisticas.js` | `Estadisticas` | 2586 | scores, meta, cross-score, análisis de deck. `recalculateAllMetaDeckScores` es async con enriquecimiento automático. `renderDeckAnalysis()` ahora también pinta el bloque G1/G2 (ver 7.2) y aloja `#duelista-content` (ver 6.2). |
 | `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria` | 2937 | winrate + torneo + duelo en vivo + hipergeometría |
-| `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3259 | zonapractica + experimentacion |
+| `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3269 | zonapractica + experimentacion |
 | `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | 3735 | formacion + meta + config completo (Scoring G1/G2 UI, Nomenclatura con pencil/clone/delete, RPS Ninguno, etiqueta y borrado de Optimización) + welcome + help. Zona de Borrado "Optimización" ahora limpia también `complejidad_` (ver 3). |
 | `default_data.js` | `DefaultData` | 1228 | Inyección única de datos por defecto. Parchea `Config.resetToDefault`. |
 
@@ -361,8 +371,8 @@ Sidebar:  Engines | Decks | Staples | Favoritas
 
 Optimización (🎯) — sub-tab de deck testing por matchup:
   → registra "rondas de duelo" con: orden (1º/2º), resultado, tipo de victoria/derrota,
-    presión de tiempo, combo completo, brick, starter, extenders, handtraps,
-    rompió board, negó jugada, rival rompió, notas.
+    presión de tiempo, combo completo, starter, extenders, handtraps, boardbreaker en
+    mano (ver 6.3), bricks/tech en mano, rompió board, negó jugada, rival rompió, notas.
   → agrupa rondas en "sesiones" (etiquetables: torneo, casual…), con badges de
     calidad (winrate, brick rate, % starters, consistencia de combo, score).
   → persiste en `optimization_${deckName}` vía Deck.getOptimizacion() /
@@ -429,6 +439,34 @@ la sección "📊 Historial de Sesiones" (rondas) para mostrar solo las de ese r
 re-renderizando `#mideck-optimizacion-pane`. `clearDeckFilter()` quita el filtro. Esto
 es puramente visual/UI, no afecta el cálculo de `Duelista` (que siempre usa TODAS las
 rondas del deck, filtradas o no).
+
+### 6.3 Campo "Boardbreaker en mano" y renombrado "Bricks/Tech en mano" — NUEVO
+
+En el formulario de Rondas de Duelo (Mi Deck → Optimización → 🃏 Mano Inicial), entre
+Handtraps y Bricks, se agregó un nuevo select `opt-r-boardbreaker` (0/1/2/3+) para
+registrar cuántas cartas rompe-campo (Boardbreakers: Raigeki, Dark Ruler No More,
+Evenly Matched, etc.) trae el jugador en la mano inicial — relevante especialmente
+jugando de segundo, donde el plan de juego depende de romper el campo del rival.
+
+```
+Guardado:    round.boardbreakers = n('opt-r-boardbreaker')  (addOptimizacionRound)
+Métrica:     m.avgBoardbreaker — promedio de boardbreakers por ronda (calcOptMetrics)
+Sugerencia:  getOptDiagnostics() — si avgBoardbreaker < 0.5 y hay ≥3 rondas jugando de
+             segundo (m.rSecond.length >= 3): "⚠ Pocos Boardbreakers en mano jugando de
+             segundo. Considera sumar cartas que rompan el campo rival (...)"
+Visible en:  chip de resumen de sesión (🧨 øX.X BB) y en el detalle de cada ronda
+             individual (🧨X junto al tag de Handtraps).
+```
+
+El campo es completamente independiente del cálculo de Brick Rate — no resta ni suma
+a `bricks`/`br`, solo alimenta su propio promedio y su propia sugerencia.
+
+**"Bricks en mano" → "Bricks/Tech en mano":** cambio puramente de rótulo visible en el
+`<label>` del formulario. El id (`opt-r-bricks`), el campo guardado (`round.bricks`) y
+todo el cálculo (Brick Rate, diagnósticos de exceso de bricks, exportación a Matchups)
+siguen tratando ese valor exactamente igual que antes — como negativo/brick. No hay
+distinción real entre "brick puro" y "tech situacional" a nivel de datos, solo de
+nomenclatura visible para el usuario.
 
 ### Config — secciones colapsables
 ```
