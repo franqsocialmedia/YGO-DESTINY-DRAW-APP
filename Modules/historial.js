@@ -154,70 +154,52 @@ _totals: function (m) {
     // ─── EXPORTAR / IMPORTAR HISTORIAL DE ENFRENTAMIENTOS (.txt) ─────
     exportTXT: function () {
         const list = this.getAll();
-        if (!list.length) { alert('Sin enfrentamientos para exportar.'); return; }
+        const sessions = window.Deck ? (Deck.getOptimizacion().sessions || []) : [];
+        if (!list.length && !sessions.length) { alert('Sin enfrentamientos ni sesiones para exportar.'); return; }
 
-        const header = `# Destiny Draw - Historial de Enfrentamientos\n# Deck: ${window.Deck?.name || ''}\n# Exportado: ${new Date().toLocaleString('es-ES')}\n`;
-        const blob = new Blob([header + JSON.stringify(list, null, 2)], { type: 'text/plain' });
+        const payload = { matchups: list, sessions };
+        const header = `# Destiny Draw - Historial de Enfrentamientos + Sesiones\n# Deck: ${window.Deck?.name || ''}\n# Exportado: ${new Date().toLocaleString('es-ES')}\n`;
+        const blob = new Blob([header + JSON.stringify(payload, null, 2)], { type: 'text/plain' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = `${(window.Deck?.name || 'deck').replace(/[^a-z0-9]/gi, '_')}_enfrentamientos.txt`;
         a.click();
     },
-// Genera 1 ronda sintética por cada W/L de los registros importados y las agrupa
-    // en una sesión nueva dentro de optimization_${deckName}, para que cuenten en
-    // Historial de Sesiones y en Nivel como Piloto del Deck.
-    _addImportedSessionRounds: function (records) {
-        if (!window.Deck?.name) return 0;
+// Copia las sesiones COMPLETAS (rondas reales: turnos, starters, extenders,
+    // bricks, etc.) tal como están en el deck de origen — nada sintético, para
+    // que el score de Optimización coincida exactamente con el deck original.
+    // Si todas las rondas de una sesión son contra el mismo rival, se etiqueta
+    // para el borrado vinculado con Historial de Enfrentamientos.
+    _importRealSessions: function (sessions) {
+        if (!Array.isArray(sessions) || !sessions.length || !window.Deck?.name) return 0;
         const deckName = window.Deck.name;
         let raw;
         try { raw = JSON.parse(localStorage.getItem(`optimization_${deckName}`)) || {}; } catch (_) { raw = {}; }
         if (!raw.sessions) raw.sessions = [];
 
-        const mkRound = (orden, resultado, oppDeck) => ({
-            id: Date.now() + Math.random(),
-            orden, resultado, oppDeck,
-            tipoVictoria:  resultado === 'victoria' ? 'normal' : null,
-            tipoDerrota:   resultado === 'derrota'  ? 'normal' : null,
-            presionTiempo: 'holgado',
-            rivalInterrumpio: false, rivalInterrupciones: 0,
-            bricks: 0, starter: 0, extenders: 0, handtraps: 0,
-            rompioBoard: false, vecesRompioBoard: 0,
-            negoJugada: false, interrupciones: 0,
-            turnoVictoria: null, turnoDerrota: null,
-            rivalRompioBoard: false, vecesRivalRompioBoard: 0,
-            notas: 'Importado desde Historial de Enfrentamientos'
-        });
-
-        // Una sesión SEPARADA por cada registro/rival importado, para que
-        // todos aparezcan como tarjetas propias en Historial de Sesiones
-        // (y no se mezclen los cálculos de distintos rivales en una sola).
         const now = Date.now();
-        let totalRounds = 0;
+        const newSessions = [];
 
-        records.forEach((rec, idx) => {
-            const name = (rec.opponentName || '').trim();
-            if (!name) return;
+        sessions.forEach((sess, idx) => {
+            if (!sess?.rounds?.length) return;
+            const oppNames  = new Set(sess.rounds.map(r => r.oppDeck).filter(Boolean));
+            const singleOpp = oppNames.size === 1 ? [...oppNames][0] : null;
 
-            const rounds = [];
-            for (let i = 0; i < (rec.wins1st   || 0); i++) rounds.push(mkRound('primero', 'victoria', name));
-            for (let i = 0; i < (rec.losses1st || 0); i++) rounds.push(mkRound('primero', 'derrota',  name));
-            for (let i = 0; i < (rec.wins2nd   || 0); i++) rounds.push(mkRound('segundo', 'victoria', name));
-            for (let i = 0; i < (rec.losses2nd || 0); i++) rounds.push(mkRound('segundo', 'derrota',  name));
-            if (!rounds.length) return;
-
-            raw.sessions.unshift({
+            newSessions.push({
                 id: now + idx,
-                date: new Date().toLocaleDateString('es-ES'),
-                label: `📥 Importado vs ${name}`,
-                _importedMatchup: name,   // vincula esta sesión con su registro en Historial de Enfrentamientos
-                rounds
+                date: sess.date || new Date().toLocaleDateString('es-ES'),
+                label: sess.label ? `📥 ${sess.label}` : '📥 Sesión importada',
+                _importedMatchup: singleOpp || undefined,
+                rounds: sess.rounds.map(r => ({ ...r, id: `${now}-${idx}-${r.id}` }))
             });
-            totalRounds += rounds.length;
         });
 
-        if (!totalRounds) return 0;
+        if (!newSessions.length) return 0;
+        // Se antepone el bloque completo de una sola vez (sin unshift por iteración)
+        // para conservar el mismo orden que traía el archivo exportado.
+        raw.sessions = newSessions.concat(raw.sessions);
         localStorage.setItem(`optimization_${deckName}`, JSON.stringify(raw));
-        return totalRounds;
+        return newSessions.length;
     },
 
     importTXT: function () {
@@ -237,19 +219,27 @@ _totals: function (m) {
     // Sesiones ni Nivel como Piloto del Deck.
     _mergeImported: function (text) {
         const jsonStr = text.split('\n').filter(l => !l.trim().startsWith('#')).join('\n');
-        let imported;
+        let payload;
         try {
-            imported = JSON.parse(jsonStr);
-            if (!Array.isArray(imported)) throw new Error('formato inválido');
+            payload = JSON.parse(jsonStr);
         } catch (_) {
-            alert('❌ Archivo inválido. Debe ser un .txt de Historial de Enfrentamientos exportado desde Destiny Draw.');
+            alert('❌ Archivo inválido. Debe ser un .txt exportado desde Destiny Draw.');
+            return;
+        }
+
+        // Compatibilidad con exports viejos (array plano, sin sesiones completas)
+        const importedMatchups = Array.isArray(payload) ? payload : (payload.matchups || []);
+        const importedSessions = Array.isArray(payload) ? [] : (payload.sessions || []);
+
+        if (!importedMatchups.length && !importedSessions.length) {
+            alert('❌ El archivo no contiene enfrentamientos ni sesiones.');
             return;
         }
 
         const list = this.getAll();
         let added = 0, merged = 0;
 
-        imported.forEach(rec => {
+        importedMatchups.forEach(rec => {
             const name = (rec.opponentName || '').trim();
             if (!name) return;
             const existing = list.find(m => (m.opponentName || '').trim().toLowerCase() === name.toLowerCase());
@@ -281,14 +271,14 @@ _totals: function (m) {
         });
 
         this.save(list);
-        const roundsAdded = this._addImportedSessionRounds(imported);
+        const sessionsAdded = this._importRealSessions(importedSessions);
         this._activeFilterDeck = null; // evita que un filtro previo oculte las sesiones recién importadas
 
         const pane = document.getElementById('mideck-optimizacion-pane');
         if (pane && window.Deck) pane.innerHTML = Deck.renderOptimizacionPane();
         else this._refreshList();
 
-        alert(`✅ Importado: ${added} nuevo(s), ${merged} fusionado(s) en Enfrentamientos.\n📊 ${roundsAdded} ronda(s) agregada(s) a Historial de Sesiones (1 sesión por rival, cuentan para Nivel como Piloto).\nℹ️ El turno de cada duelo no se puede reconstruir: Historial de Enfrentamientos nunca guardó ese dato.`);
+        alert(`✅ Importado: ${added} nuevo(s), ${merged} fusionado(s) en Enfrentamientos.\n📊 ${sessionsAdded} sesión(es) completa(s) copiada(s) a Historial de Sesiones — mismas rondas, turnos y métricas que en el deck de origen.`);
     },
     // ─── PANEL AGREGAR ────────────────────────────────────────
     openAddPanel: function () {
