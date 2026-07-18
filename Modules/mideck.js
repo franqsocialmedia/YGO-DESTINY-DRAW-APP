@@ -1476,8 +1476,16 @@ this.container.innerHTML = html;
 
     deleteOptimizacionRecord: function(id) {
         const data = this.getOptimizacion();
+        const sess = (data.sessions || []).find(s => s.id === id);
         data.sessions = (data.sessions || []).filter(s => s.id !== id);
         localStorage.setItem(`optimization_${this.name}`, JSON.stringify(data));
+
+        // Vínculo con Historial de Enfrentamientos: si esta sesión vino de un import,
+        // borra también su registro correspondiente en Matchups.
+        if (sess?._importedMatchup && window.Matchups) {
+            Matchups._removeRecordByName(sess._importedMatchup);
+        }
+
         const pane = document.getElementById('mideck-optimizacion-pane');
         if (pane) pane.innerHTML = this.renderOptimizacionPane();
     },

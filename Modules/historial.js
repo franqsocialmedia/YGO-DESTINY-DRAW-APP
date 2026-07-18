@@ -56,13 +56,15 @@ _totals: function (m) {
                 ⚔️ Historial de Enfrentamientos <span class="matchup-count-badge">${count}</span>
             </h3>
             <div id="matchups-sec" class="deck-section-content" style="display:none;">
-                ${count > 1 ? `<div class="matchup-toolbar">
-                    <select class="matchup-sort-sel" onchange="Matchups.setSortBy(this.value)">
+                <div class="matchup-toolbar">
+                    ${count > 1 ? `<select class="matchup-sort-sel" onchange="Matchups.setSortBy(this.value)">
                         <option value="duelos"    ${this._sortBy==='duelos'?'selected':''}>Ordenar: Duelos</option>
                         <option value="victorias" ${this._sortBy==='victorias'?'selected':''}>Ordenar: Victorias</option>
                         <option value="derrotas"  ${this._sortBy==='derrotas'?'selected':''}>Ordenar: Derrotas</option>
-                    </select>
-                </div>` : ''}
+                    </select>` : ''}
+                    <button class="matchup-btn matchup-btn-ydk" onclick="Matchups.exportTXT()" title="Descargar Historial de Enfrentamientos">⬇️ Exportar</button>
+                    <button class="matchup-btn matchup-btn-ydk" onclick="Matchups.importTXT()" title="Importar Historial de Enfrentamientos">⬆️ Importar</button>
+                </div>
                 <div class="matchup-list" id="matchup-list">
                     ${rows}
                 </div>
@@ -149,6 +151,145 @@ _totals: function (m) {
         listEl.innerHTML = this._renderRows();
     },
 
+    // ─── EXPORTAR / IMPORTAR HISTORIAL DE ENFRENTAMIENTOS (.txt) ─────
+    exportTXT: function () {
+        const list = this.getAll();
+        if (!list.length) { alert('Sin enfrentamientos para exportar.'); return; }
+
+        const header = `# Destiny Draw - Historial de Enfrentamientos\n# Deck: ${window.Deck?.name || ''}\n# Exportado: ${new Date().toLocaleString('es-ES')}\n`;
+        const blob = new Blob([header + JSON.stringify(list, null, 2)], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${(window.Deck?.name || 'deck').replace(/[^a-z0-9]/gi, '_')}_enfrentamientos.txt`;
+        a.click();
+    },
+// Genera 1 ronda sintética por cada W/L de los registros importados y las agrupa
+    // en una sesión nueva dentro de optimization_${deckName}, para que cuenten en
+    // Historial de Sesiones y en Nivel como Piloto del Deck.
+    _addImportedSessionRounds: function (records) {
+        if (!window.Deck?.name) return 0;
+        const deckName = window.Deck.name;
+        let raw;
+        try { raw = JSON.parse(localStorage.getItem(`optimization_${deckName}`)) || {}; } catch (_) { raw = {}; }
+        if (!raw.sessions) raw.sessions = [];
+
+        const mkRound = (orden, resultado, oppDeck) => ({
+            id: Date.now() + Math.random(),
+            orden, resultado, oppDeck,
+            tipoVictoria:  resultado === 'victoria' ? 'normal' : null,
+            tipoDerrota:   resultado === 'derrota'  ? 'normal' : null,
+            presionTiempo: 'holgado',
+            rivalInterrumpio: false, rivalInterrupciones: 0,
+            bricks: 0, starter: 0, extenders: 0, handtraps: 0,
+            rompioBoard: false, vecesRompioBoard: 0,
+            negoJugada: false, interrupciones: 0,
+            turnoVictoria: null, turnoDerrota: null,
+            rivalRompioBoard: false, vecesRivalRompioBoard: 0,
+            notas: 'Importado desde Historial de Enfrentamientos'
+        });
+
+        // Una sesión SEPARADA por cada registro/rival importado, para que
+        // todos aparezcan como tarjetas propias en Historial de Sesiones
+        // (y no se mezclen los cálculos de distintos rivales en una sola).
+        const now = Date.now();
+        let totalRounds = 0;
+
+        records.forEach((rec, idx) => {
+            const name = (rec.opponentName || '').trim();
+            if (!name) return;
+
+            const rounds = [];
+            for (let i = 0; i < (rec.wins1st   || 0); i++) rounds.push(mkRound('primero', 'victoria', name));
+            for (let i = 0; i < (rec.losses1st || 0); i++) rounds.push(mkRound('primero', 'derrota',  name));
+            for (let i = 0; i < (rec.wins2nd   || 0); i++) rounds.push(mkRound('segundo', 'victoria', name));
+            for (let i = 0; i < (rec.losses2nd || 0); i++) rounds.push(mkRound('segundo', 'derrota',  name));
+            if (!rounds.length) return;
+
+            raw.sessions.unshift({
+                id: now + idx,
+                date: new Date().toLocaleDateString('es-ES'),
+                label: `📥 Importado vs ${name}`,
+                _importedMatchup: name,   // vincula esta sesión con su registro en Historial de Enfrentamientos
+                rounds
+            });
+            totalRounds += rounds.length;
+        });
+
+        if (!totalRounds) return 0;
+        localStorage.setItem(`optimization_${deckName}`, JSON.stringify(raw));
+        return totalRounds;
+    },
+
+    importTXT: function () {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.txt';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            this._mergeImported(await file.text());
+        };
+        input.click();
+    },
+
+    // Fusiona por nombre de rival (sin distinguir mayúsc./minúsc.): si existe, suma W/L;
+    // si no existe, se agrega como registro nuevo con id propio. No toca Historial de
+    // Sesiones ni Nivel como Piloto del Deck.
+    _mergeImported: function (text) {
+        const jsonStr = text.split('\n').filter(l => !l.trim().startsWith('#')).join('\n');
+        let imported;
+        try {
+            imported = JSON.parse(jsonStr);
+            if (!Array.isArray(imported)) throw new Error('formato inválido');
+        } catch (_) {
+            alert('❌ Archivo inválido. Debe ser un .txt de Historial de Enfrentamientos exportado desde Destiny Draw.');
+            return;
+        }
+
+        const list = this.getAll();
+        let added = 0, merged = 0;
+
+        imported.forEach(rec => {
+            const name = (rec.opponentName || '').trim();
+            if (!name) return;
+            const existing = list.find(m => (m.opponentName || '').trim().toLowerCase() === name.toLowerCase());
+
+            if (existing) {
+                existing.wins1st   = (existing.wins1st   || 0) + (rec.wins1st   || 0);
+                existing.losses1st = (existing.losses1st || 0) + (rec.losses1st || 0);
+                existing.wins2nd   = (existing.wins2nd   || 0) + (rec.wins2nd   || 0);
+                existing.losses2nd = (existing.losses2nd || 0) + (rec.losses2nd || 0);
+                if (rec.notes && !(existing.notes || '').includes(rec.notes)) {
+                    existing.notes = existing.notes ? `${existing.notes}\n${rec.notes}` : rec.notes;
+                }
+                if (!existing.cardData && rec.cardData) existing.cardData = rec.cardData;
+                merged++;
+            } else {
+                list.push({
+                    id:           this._uid(),
+                    opponentName: name,
+                    wins1st:      rec.wins1st   || 0,
+                    losses1st:    rec.losses1st || 0,
+                    wins2nd:      rec.wins2nd   || 0,
+                    losses2nd:    rec.losses2nd || 0,
+                    notes:        rec.notes || '',
+                    cardData:     rec.cardData || null,
+                    createdAt:    Date.now()
+                });
+                added++;
+            }
+        });
+
+        this.save(list);
+        const roundsAdded = this._addImportedSessionRounds(imported);
+        this._activeFilterDeck = null; // evita que un filtro previo oculte las sesiones recién importadas
+
+        const pane = document.getElementById('mideck-optimizacion-pane');
+        if (pane && window.Deck) pane.innerHTML = Deck.renderOptimizacionPane();
+        else this._refreshList();
+
+        alert(`✅ Importado: ${added} nuevo(s), ${merged} fusionado(s) en Enfrentamientos.\n📊 ${roundsAdded} ronda(s) agregada(s) a Historial de Sesiones (1 sesión por rival, cuentan para Nivel como Piloto).\nℹ️ El turno de cada duelo no se puede reconstruir: Historial de Enfrentamientos nunca guardó ese dato.`);
+    },
     // ─── PANEL AGREGAR ────────────────────────────────────────
     openAddPanel: function () {
         this._closeOverlay();
@@ -513,8 +654,39 @@ _totals: function (m) {
     deleteRecord: function (index) {
         const list = this.getAll();
         if (!list[index]) return;
-        if (!confirm(`¿Eliminar el registro de "${list[index].opponentName}"?`)) return;
+        const name = list[index].opponentName;
+        if (!confirm(`¿Eliminar el registro de "${name}"?`)) return;
         list.splice(index, 1);
+        this.save(list);
+        this._removeImportedSessions(name);
+
+        const pane = document.getElementById('mideck-optimizacion-pane');
+        if (pane && window.Deck) pane.innerHTML = Deck.renderOptimizacionPane();
+        else this._refreshList();
+    },
+
+    // Borra las sesiones que este import generó para ese rival (no toca sesiones
+    // registradas a mano, aunque compartan nombre de rival).
+    _removeImportedSessions: function (opponentName) {
+        if (!window.Deck?.name || !opponentName) return;
+        const deckName = window.Deck.name;
+        let raw;
+        try { raw = JSON.parse(localStorage.getItem(`optimization_${deckName}`)) || {}; } catch (_) { raw = {}; }
+        if (!raw.sessions?.length) return;
+        const target = opponentName.trim().toLowerCase();
+        const before = raw.sessions.length;
+        raw.sessions = raw.sessions.filter(s => (s._importedMatchup || '').trim().toLowerCase() !== target);
+        if (raw.sessions.length !== before) {
+            localStorage.setItem(`optimization_${deckName}`, JSON.stringify(raw));
+        }
+    },
+
+    // Borra el registro de Enfrentamientos que corresponde a un rival (llamado
+    // desde mideck.js al borrar una sesión importada).
+    _removeRecordByName: function (opponentName) {
+        if (!opponentName) return;
+        const target = opponentName.trim().toLowerCase();
+        const list = this.getAll().filter(m => (m.opponentName || '').trim().toLowerCase() !== target);
         this.save(list);
         this._refreshList();
     },
