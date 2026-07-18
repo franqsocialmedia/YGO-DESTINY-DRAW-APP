@@ -1658,6 +1658,7 @@ notas:            v('opt-r-notas').trim()
 
         const pane = document.getElementById('mideck-optimizacion-pane');
         if (pane) pane.innerHTML = this.renderOptimizacionPane();
+        this._refreshRoundModalIfOpen();
     },
 
    _pendingOppCardData: null,
@@ -1746,9 +1747,9 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         this._activeSessionId = id;
         const pane = document.getElementById('mideck-optimizacion-pane');
         if (pane) pane.innerHTML = this.renderOptimizacionPane();
+        this.openRoundModal();
         const lbl = document.getElementById('opt-label');
         if (lbl) lbl.value = sess.label || '';
-        document.getElementById('opt-form-sec')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     },
 
     _optToggleTipo: function() {
@@ -1907,93 +1908,11 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         </div>`;
     },
 
-    renderOptimizacionPane: function() {
-        if (!Object.keys(this.cards).length)
-            return `<p style="opacity:.6;margin-top:10px;">Carga un deck para usar Optimización.</p>`;
-
-        const data     = this.getOptimizacion();
-        const sessions = data.sessions || [];
-        const activeSess = this._activeSessionId
-            ? sessions.find(s => s.id === this._activeSessionId) : null;
-        const activeRounds = activeSess ? activeSess.rounds.length : 0;
-        const isActive = !!activeSess;
-
-        const badge = (v, ranges) => { for (const [mn,mx,lbl,cls] of ranges) if (v>=mn && v<mx) return [lbl,cls]; return ['—','']; };
-        const winB  = v => badge(v,[[65,101,'💎 Competitivo','opt-c-green'],[55,65,'✅ Sólido','opt-c-blue'],[40,55,'⚠ Inestable','opt-c-yellow'],[0,40,'❌ Débil','opt-c-red']]);
-        const brkB  = v => badge(v,[[0,10,'💎 Excelente','opt-c-green'],[10,15,'✅ Aceptable','opt-c-blue'],[15,25,'⚠ Inestable','opt-c-yellow'],[25,101,'❌ Inconsistencia','opt-c-red']]);
-        const strB  = v => v>=70&&v<=85?['✅ Ideal','opt-c-green']:v<60?['❌ Faltan starters','opt-c-red']:v<70?['⚠ Bajo el ideal','opt-c-yellow']:['⚠ Exceso','opt-c-yellow'];
-        const riB   = v => badge(v,[[0,15,'💎 Resiliente','opt-c-green'],[15,30,'✅ Controlado','opt-c-blue'],[30,45,'⚠ Vulnerable','opt-c-yellow'],[45,101,'❌ Muy interrumpido','opt-c-red']]);
-        const scrB  = v => badge(v,[[80,101,'💎 Competitivo','opt-c-green'],[65,80,'✅ Optimizado','opt-c-blue'],[50,65,'⚠ Funcional','opt-c-yellow'],[0,50,'❌ Desbalanceado','opt-c-red']]);
-
-        // ── NIVEL COMO PILOTO DEL DECK (Historial de Sesiones) ───────────────
-        let html = `
-        <div data-section-id="deck-piloto">
-        <h3 class="deck-section-title" onclick="Deck.toggleSection('piloto-sec'); if(window.Duelista) Duelista.refreshSection();">🎖️ Nivel como Piloto del Deck</h3>
-        <div id="piloto-sec" class="deck-section-content" style="display:none;">
-            <div id="duelista-content-opt">
-                <p class="stats-empty">Abre esta sección para ver tu perfil.</p>
-            </div>
-        </div>
-        </div>
-
-        <!-- ── COMPLEJIDAD DEL DECK ── -->
-        <div data-section-id="deck-complejidad">
-        <h3 class="deck-section-title" onclick="Deck.toggleSection('cxd-sec')">🧩 Complejidad del Deck</h3>
-        <div id="cxd-sec" class="deck-section-content" style="display:none;">
-            <div id="cxd-summary">${this._renderComplejidadSummary()}</div>
-            <button class="opt-submit-btn cxd-toggle-btn" id="cxd-toggle-btn"
-                    onclick="Deck.toggleComplejidadForm()">🧩 Evaluar Complejidad del Deck</button>
-            <div id="cxd-form-wrap" class="cxd-form-wrap" style="display:none;">
-                ${this._renderComplejidadForm()}
-            </div>
-        </div>
-        </div>
-
-        <!-- ── NOTAS DEL DECK + HISTORIAL DE ENFRENTAMIENTOS (movido desde Construcción) ── -->
-        <div data-section-id="deck-notas">
-        <h3 class="deck-section-title" onclick="Deck.toggleSection('notes-sec')">📝 Notas del Deck</h3>
-        <div id="notes-sec" class="deck-section-content" style="display:none;">
-            <textarea class="deck-notes-textarea"
-                placeholder="Anota estrategias, combos clave, mulligan ideal, matchups difíciles..."
-                oninput="Deck.notes = this.value"
-            >${this.notes || ''}</textarea>
-            <div class="deck-notes-actions">
-                <button class="opt-submit-btn opt-notes-save-btn" onclick="Deck.saveNotes()">💾 Guardar Notas</button>
-                <span id="opt-notes-status" class="opt-notes-status"></span>
-            </div>
-        </div>
-        </div>`;
-
-        if (window.Matchups) {
-            html += `<div data-section-id="deck-matchups">${Matchups.renderSection()}</div>`;
-            if (Matchups._activeFilterDeck) {
-                html += `<div class="opt-filter-banner">
-                    🎯 Mostrando Historial de Sesiones solo vs <b>${Matchups._activeFilterDeck}</b>
-                    <button class="opt-filter-clear-btn" onclick="Matchups.clearDeckFilter()">✕ Quitar filtro</button>
-                </div>`;
-            }
-        }
-
-        // ── BARRA DE SESIÓN ACTIVA ────────────────────────────────────────
-        html += `<div class="opt-session-bar ${isActive ? 'opt-session-active' : ''}">`;
-        if (isActive) {
-            html += `<span class="opt-sess-indicator">🟢 Sesión activa · <b>${activeRounds}</b> ronda${activeRounds !== 1 ? 's' : ''}</span>
-                     <input type="text" id="opt-label" class="opt-input opt-label-inline" placeholder="Etiqueta de sesión..." maxlength="50" value="${(activeSess.label || '').replace(/"/g,'&quot;')}">
-                     <button class="opt-close-sess-btn" onclick="Deck.cerrarSesionOptimizacion()">✅ Cerrar Sesión</button>`;
-        } else {
-            html += `<span class="opt-sess-indicator">⚪ Sin sesión activa</span>
-                     <input type="text" id="opt-label" class="opt-input opt-label-inline" placeholder="Etiqueta (torneo, casual…)" maxlength="50">
-                     <small class="opt-sess-hint">La sesión se abre al registrar la primera ronda</small>`;
-        }
-        html += `</div>`;
-
-        // ── FORMULARIO DE RONDA ───────────────────────────────────────────
-        html += `
-        <h3 class="deck-section-title" onclick="Deck.toggleSection('opt-form-sec')">
-            ➕ Nueva Ronda de Duelo${isActive ? ` <span class="opt-round-count">#${activeRounds + 1}</span>` : ''}
-            </h3>
-        <div id="opt-form-sec" class="deck-section-content" style="display:block;">
-            <div class="opt-record opt-form-card">
+    // ═══════════════════════════════════════════════════════════════════
+    // MODAL FLOTANTE — Nueva Ronda de Duelo (reemplaza el desplegable)
+    // ═══════════════════════════════════════════════════════════════════
+    _renderRoundFormFields: function() {
+        return `
             <datalist id="opt-matchup-suggestions">
                 ${(window.Matchups ? Matchups.getAll() : []).map(m =>
                     `<option value="${(m.opponentName || '').replace(/"/g,'&quot;')}">`).join('')}
@@ -2136,8 +2055,132 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
 
             </div>
             <button class="opt-submit-btn" onclick="Deck.addOptimizacionRound()">➕ Registrar Ronda de Duelo</button>
+        `;
+    },
+
+    openRoundModal: function() {
+        if (!Object.keys(this.cards).length) { alert('Carga un deck primero.'); return; }
+        if (document.getElementById('opt-round-modal-overlay')) return;
+        const overlay = document.createElement('div');
+        overlay.id = 'opt-round-modal-overlay';
+        overlay.className = 'opt-round-modal-overlay';
+        overlay.innerHTML = this._renderRoundModalBox();
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) Deck.closeRoundModal(); });
+        document.body.appendChild(overlay);
+    },
+
+    closeRoundModal: function() {
+        document.getElementById('opt-round-modal-overlay')?.remove();
+    },
+
+    _refreshRoundModalIfOpen: function() {
+        const overlay = document.getElementById('opt-round-modal-overlay');
+        if (overlay) overlay.innerHTML = this._renderRoundModalBox();
+    },
+
+    _renderRoundModalBox: function() {
+        const data      = this.getOptimizacion();
+        const activeSess = this._activeSessionId
+            ? (data.sessions || []).find(s => s.id === this._activeSessionId) : null;
+        const activeRounds = activeSess ? activeSess.rounds.length : 0;
+        return `
+        <div class="opt-round-modal-box">
+            <div class="opt-round-modal-hdr">
+                <span>➕ Nueva Ronda de Duelo${activeSess ? ` <span class="opt-round-count">#${activeRounds + 1}</span>` : ''}</span>
+                <button class="opt-round-modal-close" onclick="Deck.closeRoundModal()">✕</button>
+            </div>
+            <div class="opt-round-modal-body">
+                <div class="opt-record opt-form-card">
+                    ${this._renderRoundFormFields()}
+                </div>
             </div>
         </div>`;
+    },
+    renderOptimizacionPane: function() {
+        if (!Object.keys(this.cards).length)
+            return `<p style="opacity:.6;margin-top:10px;">Carga un deck para usar Optimización.</p>`;
+
+        const data     = this.getOptimizacion();
+        const sessions = data.sessions || [];
+        const activeSess = this._activeSessionId
+            ? sessions.find(s => s.id === this._activeSessionId) : null;
+        const activeRounds = activeSess ? activeSess.rounds.length : 0;
+        const isActive = !!activeSess;
+
+        const badge = (v, ranges) => { for (const [mn,mx,lbl,cls] of ranges) if (v>=mn && v<mx) return [lbl,cls]; return ['—','']; };
+        const winB  = v => badge(v,[[65,101,'💎 Competitivo','opt-c-green'],[55,65,'✅ Sólido','opt-c-blue'],[40,55,'⚠ Inestable','opt-c-yellow'],[0,40,'❌ Débil','opt-c-red']]);
+        const brkB  = v => badge(v,[[0,10,'💎 Excelente','opt-c-green'],[10,15,'✅ Aceptable','opt-c-blue'],[15,25,'⚠ Inestable','opt-c-yellow'],[25,101,'❌ Inconsistencia','opt-c-red']]);
+        const strB  = v => v>=70&&v<=85?['✅ Ideal','opt-c-green']:v<60?['❌ Faltan starters','opt-c-red']:v<70?['⚠ Bajo el ideal','opt-c-yellow']:['⚠ Exceso','opt-c-yellow'];
+        const riB   = v => badge(v,[[0,15,'💎 Resiliente','opt-c-green'],[15,30,'✅ Controlado','opt-c-blue'],[30,45,'⚠ Vulnerable','opt-c-yellow'],[45,101,'❌ Muy interrumpido','opt-c-red']]);
+        const scrB  = v => badge(v,[[80,101,'💎 Competitivo','opt-c-green'],[65,80,'✅ Optimizado','opt-c-blue'],[50,65,'⚠ Funcional','opt-c-yellow'],[0,50,'❌ Desbalanceado','opt-c-red']]);
+
+        // ── NIVEL COMO PILOTO DEL DECK (Historial de Sesiones) ───────────────
+        let html = `
+        <div data-section-id="deck-piloto">
+        <h3 class="deck-section-title" onclick="Deck.toggleSection('piloto-sec'); if(window.Duelista) Duelista.refreshSection();">🎖️ Nivel como Piloto del Deck</h3>
+        <div id="piloto-sec" class="deck-section-content" style="display:none;">
+            <div id="duelista-content-opt">
+                <p class="stats-empty">Abre esta sección para ver tu perfil.</p>
+            </div>
+        </div>
+        </div>
+
+        <!-- ── COMPLEJIDAD DEL DECK ── -->
+        <div data-section-id="deck-complejidad">
+        <h3 class="deck-section-title" onclick="Deck.toggleSection('cxd-sec')">🧩 Complejidad del Deck</h3>
+        <div id="cxd-sec" class="deck-section-content" style="display:none;">
+            <div id="cxd-summary">${this._renderComplejidadSummary()}</div>
+            <button class="opt-submit-btn cxd-toggle-btn" id="cxd-toggle-btn"
+                    onclick="Deck.toggleComplejidadForm()">🧩 Evaluar Complejidad del Deck</button>
+            <div id="cxd-form-wrap" class="cxd-form-wrap" style="display:none;">
+                ${this._renderComplejidadForm()}
+            </div>
+        </div>
+        </div>
+
+        <!-- ── NOTAS DEL DECK + HISTORIAL DE ENFRENTAMIENTOS (movido desde Construcción) ── -->
+        <div data-section-id="deck-notas">
+        <h3 class="deck-section-title" onclick="Deck.toggleSection('notes-sec')">📝 Notas del Deck</h3>
+        <div id="notes-sec" class="deck-section-content" style="display:none;">
+            <textarea class="deck-notes-textarea"
+                placeholder="Anota estrategias, combos clave, mulligan ideal, matchups difíciles..."
+                oninput="Deck.notes = this.value"
+            >${this.notes || ''}</textarea>
+            <div class="deck-notes-actions">
+                <button class="opt-submit-btn opt-notes-save-btn" onclick="Deck.saveNotes()">💾 Guardar Notas</button>
+                <span id="opt-notes-status" class="opt-notes-status"></span>
+            </div>
+        </div>
+        </div>`;
+
+        if (window.Matchups) {
+            html += `<div data-section-id="deck-matchups">${Matchups.renderSection()}</div>`;
+            if (Matchups._activeFilterDeck) {
+                html += `<div class="opt-filter-banner">
+                    🎯 Mostrando Historial de Sesiones solo vs <b>${Matchups._activeFilterDeck}</b>
+                    <button class="opt-filter-clear-btn" onclick="Matchups.clearDeckFilter()">✕ Quitar filtro</button>
+                </div>`;
+            }
+        }
+
+        // ── BARRA DE SESIÓN ACTIVA ────────────────────────────────────────
+        html += `<div class="opt-session-bar ${isActive ? 'opt-session-active' : ''}">`;
+        if (isActive) {
+            html += `<span class="opt-sess-indicator">🟢 Sesión activa · <b>${activeRounds}</b> ronda${activeRounds !== 1 ? 's' : ''}</span>
+                     <input type="text" id="opt-label" class="opt-input opt-label-inline" placeholder="Etiqueta de sesión..." maxlength="50" value="${(activeSess.label || '').replace(/"/g,'&quot;')}">
+                     <button class="opt-close-sess-btn" onclick="Deck.cerrarSesionOptimizacion()">✅ Cerrar Sesión</button>`;
+        } else {
+            html += `<span class="opt-sess-indicator">⚪ Sin sesión activa</span>
+                     <input type="text" id="opt-label" class="opt-input opt-label-inline" placeholder="Etiqueta (torneo, casual…)" maxlength="50">
+                     <small class="opt-sess-hint">La sesión se abre al registrar la primera ronda</small>`;
+        }
+        html += `</div>`;
+
+        // ── BOTÓN FLOTANTE: NUEVA RONDA DE DUELO ────────────────────────────
+        html += `
+        <button class="opt-fab-round-btn" onclick="Deck.openRoundModal()">
+            ➕ Nueva Ronda de Duelo${isActive ? ` <span class="opt-round-count">#${activeRounds + 1}</span>` : ''}
+        </button>`;
 
         // ── HISTORIAL DE SESIONES ─────────────────────────────────────────
         const filterDeck  = window.Matchups ? Matchups._activeFilterDeck : null;
