@@ -930,7 +930,7 @@ overlay.innerHTML = `
             <button class="pz-zmenu-btn pz-zmenu-ver"
                     onclick="ZonaPractica._zmView('hand',${slotIndex},event)">Ver</button>
             <button class="pz-zmenu-btn pz-zmenu-activate"
-                    onclick="ZonaPractica._zmActivate('hand',${slotIndex},'multi',event)" onmouseup="ZonaPractica._zmActivate('hand',${slotIndex},'multi',event)">Activar</button>
+                    onclick="ZonaPractica._zmActivate('hand',${slotIndex},'multi',event)">Activar</button>
             <button class="pz-zmenu-btn pz-zmenu-move"
                     onclick="ZonaPractica._zmStartMove('hand',${slotIndex},'multi',event)" onmouseup="ZonaPractica._zmStartMove('hand',${slotIndex},'multi',event)">Mover</button>`;
     } else {
@@ -980,7 +980,7 @@ _startLongPress: function (zone, e) {
             <button class="pz-zmenu-btn pz-zmenu-ver"
                     onclick="ZonaPractica._zmView('hand',${idx},event)">Ver</button>
             <button class="pz-zmenu-btn pz-zmenu-activate"
-                    onclick="ZonaPractica._zmActivate('hand',${idx},'multi',event)" onmouseup="ZonaPractica._zmActivate('hand',${idx},'multi',event)">Activar</button>
+                    onclick="ZonaPractica._zmActivate('hand',${idx},'multi',event)">Activar</button>
             <button class="pz-zmenu-btn pz-zmenu-move"
                     onclick="ZonaPractica._zmStartMove('hand',${idx},'multi',event)" onmouseup="ZonaPractica._zmStartMove('hand',${idx},'multi',event)">Mover</button>`;
         anchor.appendChild(sub);
@@ -1012,7 +1012,7 @@ _startLongPressMulti: function (zone, idx, e) {
         sub.className = 'pz-action-submenu pz-quick-action';
         sub.innerHTML = `
             <button class="pz-zmenu-btn pz-zmenu-activate"
-                    onclick="ZonaPractica._zmActivate('${zone}',null,'field',event)" onmouseup="ZonaPractica._zmActivate('${zone}',null,'field',event)">Activar</button>
+                    onclick="ZonaPractica._zmActivate('${zone}',null,'field',event)">Activar</button>
             ${hasMats ? `<button class="pz-zmenu-btn"
                     onclick="ZonaPractica._showDetachMenu('${zone}',event)" onmouseup="ZonaPractica._showDetachMenu('${zone}',event)">⛓ Desacoplar</button>` : ''}
             <button class="pz-zmenu-btn pz-zmenu-move"
