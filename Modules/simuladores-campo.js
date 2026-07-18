@@ -187,7 +187,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                                  onclick="ZonaPractica._onMultiZoneClick(event,'banish')"></div>
                             <div class="pz-field-side-btns">
                                 <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('banish')">👁</button>
-                                <span class="pz-row-label">Banish</span>
+                                <span class="pz-row-label" id="pz-label-banish">Banish</span>
                             </div>
                         </div>
                         <div class="pz-field-side-zone">
@@ -195,7 +195,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                                  onclick="ZonaPractica._onMultiZoneClick(event,'gy')"></div>
                             <div class="pz-field-side-btns">
                                 <button class="pz-mini-btn" onclick="ZonaPractica.openDeckViewer('gy')">👁</button>
-                                <span class="pz-row-label">GY</span>
+                                <span class="pz-row-label" id="pz-label-gy">GY</span>
                             </div>
                         </div>
                     </div>
@@ -206,7 +206,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
 
                 <!-- Mano -->
                 <div class="pz-zone-row pz-hand-row" >
-                    <span class="pz-row-label">Hand</span>
+                    <span class="pz-row-label" id="pz-label-hand">Hand</span>
                     <div class="pz-multi-zone pz-hand-zone" id="pz-zone-hand"
                          onclick="ZonaPractica._onMultiZoneClick(event,'hand')"></div>
                     <button class="pz-mini-btn pz-zone-eye-btn"
@@ -225,7 +225,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                     <button class="pz-mini-btn pz-zone-eye-btn"
                             id="pz-hide-btn-main" title="Voltear todas (Main)"
                             onclick="ZonaPractica._flipAllInZone('main')">🔄</button>
-                    <span class="pz-row-label">Main</span>
+                    <span class="pz-row-label" id="pz-label-main">Main</span>
                     <div class="pz-multi-zone pz-main-zone" id="pz-zone-main"
                          onclick="ZonaPractica._onMultiZoneClick(event,'main')"></div>
                 </div>
@@ -236,7 +236,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                     <button class="pz-mini-btn pz-zone-eye-btn"
                             id="pz-hide-btn-extra" title="Voltear todas (Extra)"
                             onclick="ZonaPractica._flipAllInZone('extra')">🔄</button>
-                    <span class="pz-row-label">Extra</span>
+                    <span class="pz-row-label" id="pz-label-extra">Extra</span>
                     <div class="pz-multi-zone pz-extra-zone" id="pz-zone-extra"
                          onclick="ZonaPractica._onMultiZoneClick(event,'extra')"></div>
                 </div>
@@ -2543,6 +2543,15 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica');
             el.appendChild(badge);
         }
     },
+_updateZoneCount: function (zoneName, count) {
+        const labels = { hand:['pz-label-hand','Hand'], main:['pz-label-main','Main'],
+                          extra:['pz-label-extra','Extra'], gy:['pz-label-gy','GY'],
+                          banish:['pz-label-banish','Banish'] };
+        const entry = labels[zoneName];
+        if (!entry) return;
+        const labelEl = document.getElementById(entry[0]);
+        if (labelEl) labelEl.textContent = `${entry[1]} (${count})`;
+    },
 
     _renderZone: function (zoneName) {
         const el = document.getElementById(`pz-zone-${zoneName}`);
@@ -2550,6 +2559,7 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica');
         const cards = this[zoneName];
         if (!Array.isArray(cards)) return;
         el.innerHTML = '';
+        this._updateZoneCount(zoneName, cards.length);
         if (!cards.length) return;
 
         const isBanish  = zoneName === 'banish';

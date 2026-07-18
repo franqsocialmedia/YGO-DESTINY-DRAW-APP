@@ -2319,7 +2319,9 @@
 .pz-row-label {
     font-size:.62rem; font-weight:700; color:rgba(255,255,255,.32);
     text-transform:uppercase; letter-spacing:.04em; flex-shrink:0; width:34px;
+    white-space:nowrap;
 }
+.pz-zone-row .pz-row-label { width:56px; }
 
 /* Botones pequeños (👁 🔀 🙈) */
 .pz-mini-btn {
