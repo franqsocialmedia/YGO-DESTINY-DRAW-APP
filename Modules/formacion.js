@@ -32,7 +32,11 @@ const Formacion = {
         { id: 'rulings-invocaciones',    label: 'Rulings de Invocaciones',          level: 'Avanzado' },
         { id: 'rulings-batalla',         label: 'Rulings en Fase de Batalla',       level: 'Avanzado' },
         { id: 'if-when-timing',          label: 'IF vs WHEN y Timing Avanzado',     level: 'Avanzado' },
-        // ── Módulos siguientes (pendiente desarrollar) ──
+        // ── MÓDULO 5 — Metajuego y Torneo ──
+        { id: 'leer-campo-oponente',     label: 'Leer el Campo del Oponente',       level: 'Competitivo' },
+        { id: 'gestion-lp-recursos',     label: 'Gestión de LP y Recursos',         level: 'Competitivo' },
+        { id: 'formatos-diferencias',    label: 'Formatos y sus Diferencias',       level: 'Competitivo' },
+        { id: 'side-deck',               label: 'El Side Deck',                    level: 'Competitivo' },
     ],
 
     PLATFORMS: ['PC', 'GBC', 'GBA', 'PS1', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'Físico'],
@@ -348,6 +352,10 @@ const Formacion = {
             'rulings-invocaciones':    this._topicRulingsInvocaciones(),
             'rulings-batalla':         this._topicRulingsBatalla(),
             'if-when-timing':          this._topicIfWhenTiming(),
+            'leer-campo-oponente':     this._topicLeerCampoOponente(),
+            'gestion-lp-recursos':     this._topicGestionLpRecursos(),
+            'formatos-diferencias':    this._topicFormatosDiferencias(),
+            'side-deck':               this._topicSideDeck(),
         };
         return topics[topicId] || '<p>Contenido no disponible.</p>';
     },
@@ -1005,6 +1013,195 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">Cuando no estés seguro de si tu efecto "miss the timing": 1) ¿Dice "when" y "you can"? → Potencial miss. 2) ¿El evento que activa el efecto fue lo último que ocurrió? → No miss. 3) ¿El efecto es mandatorio? → Nunca miss. En torneo, ante la duda, declara el efecto y deja que el juez decida.</p>
+    `; },
+
+    _topicLeerCampoOponente: function () { return `
+        <h2 class="form-nb-title">Leer el Campo del Oponente</h2>
+        <p class="form-nb-text">La habilidad más subestimada del juego no es memorizar combos — es leer lo que el oponente tiene antes de que lo revele. Los jugadores de alto nivel toman decisiones basadas en información deducida, no solo en lo que ven directamente.</p>
+
+        <h3 class="form-nb-subtitle">🔎 Por Qué Leer el Campo Importa</h3>
+        <p class="form-nb-text">Cada vez que activas una carta sin leer al oponente, estás tomando una decisión a ciegas. A veces funciona, pero el jugador consistente no depende de la suerte — deduce y actúa con información. Leer el campo te permite saber si es seguro activar tu combo o esperar, identificar qué Handtrap o trampa probablemente tiene el oponente, decidir si gastas tus recursos anti-handtrap ahora o los guardas, y adaptar tu plan de juego en tiempo real.</p>
+
+        <h3 class="form-nb-subtitle">📡 Señales que Dan Información</h3>
+        <ul class="form-nb-list">
+            <li><strong>Número de cartas en mano:</strong> 5+ cartas al inicio del turno del oponente = mano llena, muchas opciones, posibles múltiples Handtraps o combo completo. 1-2 cartas = mano comprometida, probablemente ya gastó sus Handtraps o fue afectado por algún efecto — menor amenaza inmediata.</li>
+            <li><strong>Cómo manejó el turno anterior:</strong> ¿pasó el turno rápido? Probablemente tiene una mano débil o planea interrumpirte con trampas ya colocadas. ¿Jugó despacio y deliberadamente? Está calculando — su mano es compleja o tiene opciones que quiere preservar. ¿No activó nada durante tu turno? Puede que no tenga Handtraps, o está guardando respuesta para algo específico.</li>
+            <li><strong>Cartas boca abajo en el backrow:</strong> 1 carta boca abajo puede ser trampa o Quick-Play — juega con precaución. 3+ cartas boca abajo indica deck de Control o Trampas, alto riesgo al combo. 0 cartas boca abajo te da más libertad para actuar, pero puede tener Handtraps en mano.</li>
+            <li><strong>El deck que está jugando:</strong> si sabes qué deck es, ya sabes sus Handtraps probables, sus combos, sus puntos débiles y qué busca hacer. Si no lo sabes, los primeros 2-3 efectos activados te lo revelan — guarda esa información.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🤚 Deducir las Handtraps</h3>
+        <ul class="form-nb-list">
+            <li><strong>¿Pasó su turno sin usar Handtraps?</strong> → Probablemente no tiene en mano o está guardando algo específico. Más seguro para ejecutar combo.</li>
+            <li><strong>¿Ya activó una Handtrap este turno?</strong> → Los decks que juegan 3+ Handtraps pueden tener otra; los decks más agresivos pueden haberla gastado ya.</li>
+            <li><strong>Ash Blossom:</strong> el oponente que sabe tu deck la usará contra tu buscador. Si no la activó cuando buscaste, probablemente no la tiene.</li>
+            <li><strong>Nibiru:</strong> solo importa si estás en tu quinta invocación especial. Puedes contar tus invocaciones y decidir si vale continuar o cerrar antes.</li>
+            <li><strong>Droll:</strong> si ya agregaste una carta a tu mano desde el deck este turno y no te la activaron, probablemente no la tiene.</li>
+            <li><strong>Impermanence:</strong> si no la activaron cuando invocaste el primer monstruo con efecto, puede que no la tengan (o estén esperando algo más importante).</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🧭 Cómo Responder a lo que Deduces</h3>
+        <ul class="form-nb-list">
+            <li><strong>Si crees que tiene Handtrap:</strong> activa primero la carta menos crítica como "cebo". Si gastan la Handtrap en el cebo, tu pieza clave queda libre. Si no la usan en el cebo, avanza con más confianza.</li>
+            <li><strong>Si crees que no tiene nada:</strong> puedes ejecutar el combo sin rodeos y maximizar el endboard. Pero no asumas al 100% — el oponente podría estar esperando un momento específico para activar su respuesta.</li>
+            <li><strong>Si hay backrow y no sabes qué es:</strong> actúa como si fuera la peor trampa posible para tu combo. Si tienes destructor de trampas en mano, úsalo primero. Si no tienes respuesta a trampas, considera si vale más atacar con un monstruo menor primero para "revelar" qué hay boca abajo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔄 Leer el Campo en Partidas 2 y 3 (Side Deck)</h3>
+        <p class="form-nb-text">Después de la partida 1 ya sabes qué deck juega el oponente, qué Handtraps usó (o no usó), si tiene mucho backrow o juega más en mano, y qué le costó más trabajo hacer contra tu deck. Usa esa información para sidear y para adaptar cómo juegas la partida 2 (ver Tema: El Side Deck). Si sideó agresivamente contra tu combo — lo notarás si su comportamiento cambia drásticamente — puede que tenga cartas anti-combo que no te esperabas.</p>
+
+        <h3 class="form-nb-subtitle">⚠️ Errores Comunes al Leer el Campo</h3>
+        <ul class="form-nb-list">
+            <li>Asumir que tiene X carta porque perdiste contra ella antes — cada duelo es nuevo, la experiencia informa pero no determina.</li>
+            <li>Jugar mecánicamente sin observar al oponente — la velocidad a la que mueve cartas, dónde pone la vista, cuándo vacila, todo da información.</li>
+            <li>Ignorar lo que NO hizo — la información más valiosa a veces es que el oponente no activó nada.</li>
+            <li>Sobre-pensar y quedarte paralizado — leer el campo debe hacerse rápido: analizas, decides, actúas.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Al inicio de cada turno del oponente hazte 3 preguntas: 1) ¿Cuántas cartas tiene en mano y qué dice eso? 2) ¿Qué hizo (o no hizo) en MI último turno? 3) ¿Qué necesita hacer en este turno para ganar? La tercera pregunta es la más poderosa — si sabes qué necesita tu oponente para ganar, puedes centrar todos tus recursos en negarlo exactamente.</p>
+    `; },
+
+    _topicGestionLpRecursos: function () { return `
+        <h2 class="form-nb-title">Gestión de LP y Recursos</h2>
+        <p class="form-nb-text">Los LP (Life Points) son el recurso más mal gestionado por jugadores intermedios. El jugador novato teme perder LP. El jugador avanzado los usa como herramienta. La diferencia entre ambos determina quién gana los duelos ajustados.</p>
+
+        <h3 class="form-nb-subtitle">💰 Los LP No Son el Objetivo — Son un Recurso</h3>
+        <p class="form-nb-text">En Yu-Gi-Oh!, perder LP no te hace perder el duelo si no llegas a 0. Ir de 8000 a 4000 es exactamente tan válido como estar en 8000 — en ambos casos sigues en el juego. El error del novato es evitar perder LP a cualquier costo, incluso a costa de no activar efectos o de no jugar de forma óptima. El enfoque correcto: los LP son un recurso que se invierte para ganar ventaja. A veces, pagar 2000 LP por activar Solemn Judgment es la mejor inversión del duelo porque niegas algo que te habría costado el juego.</p>
+
+        <h3 class="form-nb-subtitle">📦 Tipos de "Recursos" en el Duelo</h3>
+        <ul class="form-nb-list">
+            <li><strong>Cartas en mano:</strong> el recurso más importante del turno. Cada carta que tienes en mano es una opción potencial. Con muchas tienes libertad; con pocas, cada decisión pesa más.</li>
+            <li><strong>Cartas en campo:</strong> los monstruos y mágicas/trampas activas. Representan amenazas actuales y protecciones presentes.</li>
+            <li><strong>Cartas en cementerio:</strong> en el juego moderno es un recurso activo, no solo un descarte. Muchos decks "gastan" recursos al cementerio para recuperarlos después.</li>
+            <li><strong>Cartas desterradas:</strong> generalmente el "recurso muerto" — pero algunos decks usan el destierro activamente (Kashtira, decks de Bystial, etc.).</li>
+            <li><strong>LP:</strong> cuánto margen de error tienes antes de perder. 4000 LP = aguantas un ataque de 4000 más. 1000 LP = cualquier ataque directamente te mata.</li>
+            <li><strong>Turno:</strong> el tiempo — cuántos turnos lleva el duelo y si la posición actual es sostenible o está empeorando con el tiempo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">⚖️ Cuándo Vale la Pena Pagar LP</h3>
+        <ul class="form-nb-list">
+            <li><strong>Siempre vale la pena cuando:</strong> pagas LP para negar algo que no puedes recuperar de otra forma; el costo es pequeño comparado con la amenaza que niegas; estás en posición ganadora y solo necesitas cerrar el duelo.</li>
+            <li><strong>Evalúa cuidadosamente cuando:</strong> ya estás por debajo de 4000 LP — cada pago te acerca al rango mortal; el efecto que pagas podría no cambiar el resultado del duelo; el oponente podría tener otro golpe de seguimiento.</li>
+            <li><strong>No vale la pena cuando:</strong> pagas LP para salvar una situación que de todas formas perderás; estás en 2000 LP o menos — el margen de error es casi nulo; el gasto no te da ventaja concreta, solo tiempo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🃏 Gestión de Cartas en Mano</h3>
+        <ul class="form-nb-list">
+            <li><strong>Hand Advantage:</strong> tener más cartas que el oponente es ventaja, pero no es absoluto — 5 cartas malas valen menos que 2 cartas buenas. Calidad &gt; cantidad en mano.</li>
+            <li><strong>Cuándo descartar:</strong> algunos efectos te piden descartar como costo. Evalúa: ¿la carta que descarto tiene utilidad desde el cementerio? ¿es una carta que no sirve en esta situación de todas formas? ¿vale la pena lo que obtengo a cambio? No desperdicies cartas en cadenas que no van a cambiar el resultado.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🏟️ Gestión del Campo</h3>
+        <ul class="form-nb-list">
+            <li><strong>Sobreconstruir el campo:</strong> un error común es invocar más monstruos de los necesarios para ganar. Cada monstruo adicional es un recurso gastado que podría ser necesario después. Pregunta: ¿necesito invocar este quinto monstruo para ganar este turno?</li>
+            <li><strong>Proteger lo necesario, no todo:</strong> proteger cada carta en campo consume recursos rápidamente. Identifica cuál es la carta más crítica y protege esa — las demás son prescindibles si el núcleo de la estrategia sobrevive.</li>
+            <li><strong>Dejar al oponente en 100 LP:</strong> el oponente con 100 LP es tan peligroso como con 8000. No desperdicies un combo completo para dejarlo en LP bajos sin cerrar el duelo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🕐 Gestión del Duelo Largo (Grind Game)</h3>
+        <p class="form-nb-text">Si el duelo llega al turno 4 o 5, evalúa quién tiene más recursos totales (cartas + campo + cementerio + LP). Si vas arriba en recursos, juega conservador — el tiempo trabaja a tu favor. Si vas abajo, necesitas asumir riesgos para recuperar ventaja. El Deckout (quedarte sin cartas) también es una forma de perder si el duelo se extiende mucho — algunos decks usan esto como victoria alternativa (mill); si tu deck tiene pocos recursos de recuperación, evita robar de más.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Al final de cada turno, hazte esta pregunta: "¿Tengo más recursos que al inicio de mi turno, menos, o igual?" Si consistentemente tienes menos recursos cada turno sin estar más cerca de ganar, estás siendo outresourced — necesitas cambiar el plan. El jugador que mejor gestiona sus recursos en el largo plazo, no el que hace los combos más espectaculares, gana los duelos ajustados.</p>
+    `; },
+
+    _topicFormatosDiferencias: function () { return `
+        <h2 class="form-nb-title">Formatos y sus Diferencias</h2>
+        <p class="form-nb-text">Yu-Gi-Oh! no es un solo juego — es varios juegos con las mismas cartas pero reglas distintas. Saber en qué formato estás jugando cambia completamente qué cartas son válidas, qué estrategias funcionan y qué rulings aplican.</p>
+
+        <h3 class="form-nb-subtitle">🏆 Formato Avanzado (TCG / OCG — Actual)</h3>
+        <p class="form-nb-text">El formato estándar moderno. Se basa en la Master Rule 5 (vigente desde 2020) y es el que usa la mayoría de los torneos oficiales de Konami.</p>
+        <ul class="form-nb-list">
+            <li>Banlist actualizada ~cada 3 meses (Prohibidas, Limitadas, Semi-Limitadas).</li>
+            <li>Sistema de zonas con Extra Monster Zones — solo 2 zonas del Extra disponibles por defecto. Los Links habilitan más zonas.</li>
+            <li>Deck: 40-60 cartas. Extra Deck: hasta 15. Side Deck: hasta 15.</li>
+            <li>Match de 3 partidas (Best of 3), con Side Deck entre partidas.</li>
+        </ul>
+        <p class="form-nb-text"><strong>TCG vs OCG:</strong> TCG (Trading Card Game) es la versión occidental (América, Europa); OCG (Original Card Game) es la versión oriental (Japón, Asia). La banlist es DIFERENTE — cartas prohibidas en TCG pueden estar libres en OCG. Algunas cartas son exclusivas de OCG o llegaron antes allá. Las reglas de timing y prioridad tienen diferencias menores en casos específicos: en OCG, los efectos activados en zona privada (mano) tienen menor prioridad que los de zona pública (campo) en ciertas ventanas.</p>
+
+        <h3 class="form-nb-subtitle">💻 Master Duel (Digital Oficial)</h3>
+        <p class="form-nb-text">Versión digital de Konami, gratuita en PC, consolas y móvil. Tiene su propia banlist, diferente a TCG y OCG — puede ser más o menos restrictiva. Usa tiendas de cartas con gemas (moneda del juego) y torneos con clasificatorias oficiales. El pool de cartas va atrasado respecto al físico.</p>
+
+        <h3 class="form-nb-subtitle">🐐 GOAT Format</h3>
+        <p class="form-nb-text">Formato nostálgico que simula el meta de 2005 (la época del "GOAT" o meta óptimo). No usa las Master Rules modernas.</p>
+        <ul class="form-nb-list">
+            <li>6 cartas en mano máximo, 1 sola zona de campo (sin Extra Monster Zones ni Link mechanics).</li>
+            <li>Los Ignition Effects del jugador activo tienen prioridad al invocar (podías activar un efecto al mismo tiempo que invocabas, antes de que el oponente pudiera responder).</li>
+            <li>Las jugadas ilegales resultan en la pérdida de la carta y un rebarajeo, no simplemente se deshacen.</li>
+            <li>Los monstruos trampa ocupan tanto el backrow original como la zona de monstruos. Si no puedes pagar el costo de LP de un efecto, la carta se destruye.</li>
+            <li>Sin Extra Deck, sin Links, sin Sincro, sin XYZ ni Péndulos. Se juega con el pool de cartas de 2005.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">⚖️ Genesys Format</h3>
+        <p class="form-nb-text">Formato alternativo independiente de Konami. No hay banlist — en cambio, cada carta tiene un valor en puntos y construyes tu deck con un presupuesto máximo. Las cartas que no aparecen en la lista de puntos valen 0 (libres). No se permiten monstruos Link ni Péndulo. Diseñado para equilibrar el juego sin restricciones directas.</p>
+
+        <h3 class="form-nb-subtitle">⏳ Time Wizard Format</h3>
+        <p class="form-nb-text">No es un meta fijo — es una categoría de torneos nostálgicos donde ambos jugadores acuerdan jugar con el cardpool y las reglas de una fecha específica del pasado (ej: "Format de Octubre 2010"). Cada Time Wizard es un formato diferente según la fecha elegida.</p>
+
+        <h3 class="form-nb-subtitle">📝 Erratas en las Cartas</h3>
+        <p class="form-nb-text">Algunas cartas tuvieron cambios en su texto oficial a lo largo de los años. Las versiones más antiguas pueden tener texto diferente al actual, pero siempre aplica el texto oficial más reciente, no el de la impresión antigua. Ej: "Monster Reborn" fue erratada para especificar que invoca del cementerio de cualquier jugador, no solo el tuyo. Si hay discrepancia, el texto actual en el ruling oficial de Konami prevalece.</p>
+
+        <h3 class="form-nb-subtitle">🌐 Terminología: Diferencias TCG vs OCG</h3>
+        <ul class="form-nb-list">
+            <li><strong>"cards you control"</strong> = cartas en tu campo (no en mano).</li>
+            <li><strong>"add"</strong> = agregar a la mano (no robar del deck). <strong>"draw"</strong> = robar del deck específicamente.</li>
+            <li><strong>"unaffected"</strong> = inafectado por efectos. <strong>"cannot be destroyed"</strong> = indestructible.</li>
+            <li><strong>"negate the effect"</strong> ≠ "negate the activation" (son cosas distintas).</li>
+            <li><strong>"special summon"</strong> ≠ "normal summon". <strong>"send to the GY"</strong> ≠ "discard" (enviar desde campo ≠ descartar desde mano).</li>
+            <li><strong>"any player"</strong> = ambos jugadores, no solo uno.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Cuando veas un decklist de internet, siempre confirma en qué formato fue construido. Un deck de OCG puede tener cartas prohibidas en TCG. Un deck de GOAT no tiene sentido en el formato moderno. El formato cambia todo: las cartas, las estrategias, los rulings y el ritmo del juego.</p>
+    `; },
+
+    _topicSideDeck: function () { return `
+        <h2 class="form-nb-title">El Side Deck</h2>
+        <p class="form-nb-text">El Side Deck es la diferencia entre un jugador que "juega el deck" y uno que "juega el match". Un deck sin Side Deck pensado es un deck que renuncia a la mitad de la estrategia competitiva antes de empezar.</p>
+
+        <h3 class="form-nb-subtitle">📋 Qué Es el Side Deck</h3>
+        <p class="form-nb-text">Es una zona de hasta 15 cartas que puedes intercambiar libremente con tu Main Deck y Extra Deck entre partidas del mismo match.</p>
+        <ul class="form-nb-list">
+            <li>La cantidad de cartas en tu Main Deck y Extra Deck no puede cambiar entre partidas (si empezaste con 40 en Main, terminas con 40).</li>
+            <li>Puedes hacer todos los intercambios que quieras, pero siempre 1 a 1.</li>
+            <li>El oponente ve qué cambias visualmente (sabe que cambiaste X cartas), pero no sabe exactamente qué metiste o sacaste.</li>
+            <li>Solo puedes sidear entre partidas 2 y 3, no antes de la 1.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🎯 Para Qué Sirve</h3>
+        <ul class="form-nb-list">
+            <li><strong>Agregar counters específicos:</strong> si en la partida 1 confirmas qué deck juega el oponente, mete las cartas que más lo afectan. Ej: si juega Labrynth, metes Anti-Spell Fragrance o Spell Canceller.</li>
+            <li><strong>Quitar cartas que no sirven:</strong> algunas cartas de tu main deck no tienen uso en ciertos matchups. Ej: Anti-Handtraps contra un deck sin Handtraps — sabes que no necesitas Crossout Designator.</li>
+            <li><strong>Cambiar el plan de juego completamente:</strong> algunos decks tienen un "plan B" de Side Deck tan poderoso que la partida 2 es casi un deck diferente. Ej: meter un engine de "going second" si el oponente ganó el coin flip y elige ir primero.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🛠️ Cómo Construir el Side Deck</h3>
+        <ul class="form-nb-list">
+            <li><strong>Paso 1 — Identifica los 3-4 decks más comunes del meta local:</strong> no el meta global de internet — el meta de tu torneo específico.</li>
+            <li><strong>Paso 2 — Para cada deck, identifica su punto débil:</strong> ¿qué carta o efecto lo apaga completamente? ¿qué lo hace más lento o inconsistente?</li>
+            <li><strong>Paso 3 — Busca cartas que cubran múltiples matchups:</strong> una carta que sirve contra 3 decks es mejor que una que solo sirve contra 1.</li>
+            <li><strong>Paso 4 — Define cuántas copias incluir:</strong> 3 copias si el matchup es crítico y la necesitas casi siempre; 2 si es útil pero no urgente; 1 si es muy situacional o ya la tienes en el Main.</li>
+            <li><strong>Paso 5 — Decide qué sacas del Main para cada situación:</strong> tenerlo definido de antemano, sin improvisar, es la clave del siding efectivo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">⏱️ Cuándo Sidear y Cuándo No</h3>
+        <ul class="form-nb-list">
+            <li><strong>Sidear mucho:</strong> si el oponente tiene un mecanismo central que debes apagar; si tu plan A claramente no funcionó en la partida 1; si el oponente sideó también — asume que tiene counters para tu plan A.</li>
+            <li><strong>Sidear poco o nada:</strong> si ganaste la partida 1 cómodamente — tu plan A funcionó; si tus Side Cards no son relevantes para este matchup específico; si cambiar mucho rompe la consistencia de tu deck.</li>
+            <li><strong>¿Sidear contra tu propio estilo?</strong> a veces, si ganaste la partida 1 y el oponente sideó agresivamente contra ti, meter algunas cartas "inesperadas" puede sorprenderlo. Ej: si eres un deck combo y el oponente mete Anti-Combo cards, podrías sidear un engine de Control alternativo que no esperan.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🛡️ Anti-Metas Comunes por Tipo de Deck</h3>
+        <ul class="form-nb-list">
+            <li><strong>Contra Combo Decks:</strong> Nibiru (si invocan 5+ en turno 1), Dimensional Barrier (declara el tipo de invocación especial del combo), Summon Limit (limita las invocaciones especiales por turno), Skill Drain (niega efectos de monstruos en campo).</li>
+            <li><strong>Contra Control Decks:</strong> monstruos con efectos que no pueden ser negados, cartas de robo masivo para superar las interrupciones, Twin Twisters / Cosmic Cyclone (destruye backrow).</li>
+            <li><strong>Contra Decks de Cementerio:</strong> Dimensional Shifter (todo va desterrado ese turno), Macro Cosmos / Dimensional Fissure (desterrar en vez de al cementerio), D.D. Crow / Ghost Belle (responde efectos de cementerio).</li>
+            <li><strong>Contra Graveyard Recursion:</strong> Necrovalley (el campo que bloquea el uso del cementerio), Imperial Iron Wall (nada puede ser desterrado — frena Outs al cementerio).</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">El mejor Side Deck no es el que tiene las cartas más poderosas — es el que tiene las cartas más específicas para lo que vas a enfrentar. Un jugador con 15 cartas bien pensadas para su meta local gana más que uno con 15 Staples genéricos que sirven para "todo pero no para nada específico".</p>
     `; },
 
     // ===============================
