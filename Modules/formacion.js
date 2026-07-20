@@ -18,8 +18,11 @@ const Formacion = {
         { id: 'fases-del-duelo',         label: 'Las Fases del Duelo',              level: 'Básico' },
         { id: 'tipos-cartas-basicas',    label: 'Tipos de Cartas Básicas',          level: 'Fundamental' },
         { id: 'tipos-cartas-especiales', label: 'Tipos de Cartas Especiales',       level: 'Intermedio' },
-        // ── Módulos siguientes (pendiente reordenar/expandir al desarrollarlos) ──
+        // ── MÓDULO 2 — Lectura de Cartas y Mentalidad ──
         { id: 'estructura-efecto-carta', label: 'Estructura de un Efecto de Carta', level: 'Intermedio' },
+        { id: 'funciones-de-las-cartas', label: 'Funciones de las Cartas (Roles)',  level: 'Intermedio' },
+        { id: 'mentalidad-del-jugador',  label: 'Mentalidad del Jugador',           level: 'Intermedio' },
+        // ── Módulos siguientes (pendiente reordenar/expandir al desarrollarlos) ──
         { id: 'cadenas-prioridad',       label: 'Cadenas, Prioridad y Spell Speed', level: 'Avanzado' },
         { id: 'staples-formato',         label: 'Staples del Formato',              level: 'Competitivo' },
     ],
@@ -327,6 +330,8 @@ const Formacion = {
             'tipos-cartas-basicas':    this._topicTiposCartasBasicas(),
             'estructura-efecto-carta': this._topicEstructuraEfecto(),
             'tipos-cartas-especiales': this._topicTiposCartasEspeciales(),
+            'funciones-de-las-cartas': this._topicFuncionesCartas(),
+            'mentalidad-del-jugador':  this._topicMentalidadJugador(),
             'cadenas-prioridad':       this._topicCadenasPrioridad(),
             'staples-formato':         this._topicStaples(),
         };
@@ -537,31 +542,119 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">🔬 Las 6 Partes de un Efecto</h3>
         <ul class="form-nb-list">
-            <li><strong>1. Requisito:</strong> Condición externa previa. Generalmente antes de los dos puntos. Ej: "Si tienes un monstruo X en campo:"</li>
-            <li><strong>2. Condición:</strong> Restricción de activación. Ej: "Solo puedes activar este efecto una vez por turno."</li>
-            <li><strong>3. Costo:</strong> Lo que pagas ANTES de que resuelva. Si te niegan el efecto, el costo ya fue pagado y no se devuelve. Los dos puntos después del costo son la señal: "Descarta 1 carta:"</li>
-            <li><strong>4. Efecto/Objetivo:</strong> Lo que hace al resolver. Si dice "selecciona" o "elige", tiene objetivo (target) — el oponente puede responder a la selección. Sin esas palabras, el efecto no tiene objetivo.</li>
-            <li><strong>5. Duración:</strong> Por cuánto tiempo aplica. Si no lo dice, es permanente o hasta que se quite la carta.</li>
-            <li><strong>6. Restricción:</strong> Limitación DESPUÉS de resolver. Ej: "No puedes atacar directamente el turno que actives este efecto."</li>
+            <li><strong>1. Requisito:</strong> Condición externa que debe cumplirse para que el efecto pueda activarse. Generalmente aparece al inicio, antes de los dos puntos. Ej: "Si tienes un monstruo 'Nombre' en tu campo:"</li>
+            <li><strong>2. Condición:</strong> Restricción sobre el estado del juego en el momento de activación. Ej: "Solo puedes activar este efecto una vez por turno." / "No puedes invocar excepto monstruos 'Nombre' el turno que actives esto."</li>
+            <li><strong>3. Costo:</strong> Lo que pagas ANTES de que el efecto resuelva. Si el oponente niega el efecto, el costo ya fue pagado — no se devuelve. Los dos puntos después del costo son clave: "Descarta 1 carta:" / "Libera este monstruo:"</li>
+            <li><strong>4. Efecto/Objetivo:</strong> Lo que hace la carta cuando resuelve. Si dice "selecciona" o "elige", tiene objetivo (target) — el oponente puede responder a la selección. Si no lo dice, el efecto no tiene objetivo.</li>
+            <li><strong>5. Duración:</strong> Por cuánto tiempo aplica el efecto. Ej: "hasta el final del turno", "durante esta Battle Phase", "mientras esté en campo". Si no dice cuánto dura, es permanente o hasta que se quite la carta.</li>
+            <li><strong>6. Restricción:</strong> Limitación que aplica DESPUÉS de resolver el efecto, a menudo en una frase separada al final. Ej: "No puedes atacar directamente el turno que actives este efecto."</li>
         </ul>
 
         <h3 class="form-nb-subtitle">🔗 Conectores Lógicos Clave</h3>
         <ul class="form-nb-list">
-            <li><strong>IF (si):</strong> Menos estricto. La condición no necesita ser "lo último" que ocurrió.</li>
-            <li><strong>WHEN (cuando):</strong> Más estricto. El efecto puede perder el timing si no fue lo último que pasó.</li>
-            <li><strong>THEN / AND IF YOU DO:</strong> Las dos partes se resuelven en orden. Si falla la primera, falla la segunda.</li>
-            <li><strong>YOU CAN (puedes):</strong> El efecto es opcional.</li>
-            <li><strong>ONCE PER TURN:</strong> 1 activación por turno. OJO: "once per turn per card name" limita incluso si tienes múltiples copias.</li>
+            <li><strong>IF (si):</strong> El efecto puede "miss the timing" en casos específicos, pero es más flexible que WHEN — solo necesita que la condición se haya cumplido en algún momento del proceso. Ej: "Si esta carta fue enviada al cementerio" tiene una ventana específica.</li>
+            <li><strong>WHEN (cuando):</strong> Similar a IF pero más estricto en timing. Muy común en efectos opcionales que requieren ser "lo último que pasó" para activarse (ver Tema: IF vs WHEN y Timing Avanzado).</li>
+            <li><strong>EACH TIME (cada vez que):</strong> El efecto puede activarse múltiples veces en el mismo turno si la condición se repite — no se limita a una vez por ocurrencia.</li>
+            <li><strong>THEN (luego):</strong> Las dos partes del efecto se resuelven en orden. No son opcionales entre sí — si falla la primera, la segunda también falla.</li>
+            <li><strong>AND IF YOU DO / AND ALSO:</strong> Ambas partes se resuelven simultáneamente. Si una falla, la otra también falla.</li>
+            <li><strong>YOU CAN (puedes):</strong> El efecto es opcional. No estás obligado a activarlo ni a resolver toda su parte.</li>
+            <li><strong>ONCE PER TURN (una vez por turno):</strong> Limita la activación a 1 por turno. OJO: hay diferencia entre "una vez por turno por carta" y "una vez por turno por nombre de carta" — el segundo limita incluso si tienes copias múltiples.</li>
         </ul>
 
-        <h3 class="form-nb-subtitle">🎯 Con Objetivo vs Sin Objetivo</h3>
+        <h3 class="form-nb-subtitle">🎯 Objetivo (Target) vs Sin Objetivo</h3>
         <ul class="form-nb-list">
-            <li><strong>Con objetivo ("selecciona"):</strong> El oponente puede responder removiendo el objetivo antes de que resuelva.</li>
-            <li><strong>Sin objetivo ("destruye todos"):</strong> No hay selección previa. No pueden escapar por mover la carta.</li>
+            <li><strong>Con objetivo</strong> ("Selecciona 1 carta en el campo de tu oponente y destrúyela"): el oponente puede responder y remover el objetivo antes de que resuelva. Si el objetivo ya no está cuando resuelve, el efecto falla.</li>
+            <li><strong>Sin objetivo</strong> ("Destruye todos los monstruos en el campo de tu oponente"): no hay selección previa. El efecto resuelve directamente y el oponente no puede "escapar" moviendo la carta — todo aplica al resolver.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🧪 Ejemplo Práctico Diseccionado</h3>
+        <p class="form-nb-text">Texto: <em>"Si tienes 3 o más cartas en tu mano: descarta 1 carta; roba 2 cartas. Solo puedes activar este efecto una vez por turno."</em></p>
+        <ul class="form-nb-list">
+            <li><strong>Requisito:</strong> "Si tienes 3 o más cartas en tu mano"</li>
+            <li><strong>Costo:</strong> "descarta 1 carta" (pagado antes de resolver)</li>
+            <li><strong>Efecto:</strong> "roba 2 cartas" (resuelve si el efecto no es negado)</li>
+            <li><strong>Condición/Restricción:</strong> "Solo puedes activar este efecto una vez por turno"</li>
+        </ul>
+        <p class="form-nb-text">Si el oponente niega el efecto, igual descartaste 1 carta. El costo no se devuelve.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Lee siempre en este orden: 1. ¿Qué necesito para activarlo? (Requisito) 2. ¿Qué pago? (Costo) — ¿vale la pena si me lo niegan? 3. ¿Qué hace? (Efecto) — ¿tiene objetivo? 4. ¿Qué limitación me queda después? (Restricción). El jugador que entiende los costos y las restricciones toma mejores decisiones que el que solo ve el efecto en bruto.</p>
+    `; },
+
+    _topicFuncionesCartas: function () { return `
+        <h2 class="form-nb-title">Funciones de las Cartas (Roles)</h2>
+        <p class="form-nb-text">Una carta no vale por sus estadísticas ni por su rareza — vale por lo que hace dentro de tu deck. Aprender a identificar la función de cada carta es lo que distingue a alguien que "tiene cartas" de alguien que "juega".</p>
+
+        <h3 class="form-nb-subtitle">⚙️ Cartas Engine (las que arman tu combo)</h3>
+        <ul class="form-nb-list">
+            <li><strong>Starter (Arrancadora):</strong> Inicia tu combo desde la mano sin necesitar otra carta previa. Es la pieza más valiosa del engine — perderla a una Handtrap es el golpe más duro al inicio del turno.</li>
+            <li><strong>Extender (Extendedora):</strong> Continúa o amplía tu combo después de que ya está en marcha. No puede iniciar la línea sola, pero es la respuesta a las interrupciones: si te niegan el starter y tienes un extender independiente, puedes seguir.</li>
+            <li><strong>Searcher (Buscadora):</strong> Busca cartas específicas del deck y las lleva a la mano. No invoca directamente, pero garantiza que tengas la pieza que necesitas. Los mejores buscan al activarse, no al ser destruidos.</li>
+            <li><strong>Bridge (Puente):</strong> Conecta dos piezas que normalmente no interactúan. No inicia ni cierra — transforma el estado del campo para habilitar lo que viene después.</li>
+            <li><strong>Garnet / Brick (Ladrillo):</strong> Carta que necesitas en el deck para que otro efecto la busque, pero que en mano no sirve de nada. Regla general: no más de 2 Garnets en un deck, o la consistencia cae drásticamente.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🛡️ Cartas Defensivas (las que interrumpen)</h3>
+        <ul class="form-nb-list">
+            <li><strong>Handtrap (Trampa de Mano):</strong> Monstruo que activa su efecto desde la mano en respuesta a algo del oponente. No necesita estar en campo para funcionar — la interrupción estándar del formato moderno. Ej: Ash Blossom, Impermanence, Nibiru.</li>
+            <li><strong>Boardbreaker (Rompe-Campo):</strong> Destruye, regresa o neutraliza el campo ya construido del oponente. Se usan principalmente cuando vas segundo. Ej: Raigeki, Dark Ruler No More, Evenly Matched.</li>
+            <li><strong>Anti-Handtrap (Anti-Trampa de Mano):</strong> Protege tu combo de las Handtraps del oponente. "Crossout Designator" y "Called by the Grave" son los ejemplos más claros — en decks combo, son tan importantes como el combo mismo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🏆 Cartas de Finalización (lo que gana el duelo)</h3>
+        <ul class="form-nb-list">
+            <li><strong>Boss Monster (Monstruo Jefe):</strong> La amenaza final del combo. El oponente necesita resolverlo para sobrevivir — y si tiene buenas protecciones, hacerlo es muy difícil. Un buen Boss Monster niega, destruye, es indestructible o tiene alta ATK.</li>
+            <li><strong>Endboard (Campo Final):</strong> No es una carta — es el estado completo de tu campo cuando terminas tu turno. Un endboard fuerte = varios Boss Monsters con diferentes tipos de negación.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🧭 Las 4 Funciones Universales</h3>
+        <p class="form-nb-text">Más allá de los nombres específicos, toda carta en el juego hace una de estas:</p>
+        <ul class="form-nb-list">
+            <li><strong>Motor:</strong> te ayuda a generar recursos, buscar o invocar más cartas.</li>
+            <li><strong>Interacción:</strong> interrumpe o responde al oponente.</li>
+            <li><strong>Protección:</strong> mantiene tu campo o tus cartas en el juego.</li>
+            <li><strong>Ventaja de Recursos:</strong> te da más cartas, monstruos o LP que el oponente.</li>
+        </ul>
+        <p class="form-nb-text">Cuando no sepas dónde clasificar una carta, usa estas 4 categorías.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">El error más frecuente del novato es evaluar una carta por su ATK o porque "se ve poderosa". La pregunta correcta es: ¿qué función cumple en mi deck? Una carta que no cumple ninguna función concreta es una carta que no debería estar en el deck, sin importar qué tan impresionante parezca en papel.</p>
+    `; },
+
+    _topicMentalidadJugador: function () { return `
+        <h2 class="form-nb-title">Mentalidad del Jugador</h2>
+        <p class="form-nb-text">Las reglas se aprenden en semanas. Los combos se memorizan en días. Pero la mentalidad correcta tarda meses o años en instalarse — y es lo que determina si realmente mejorarás como jugador.</p>
+
+        <h3 class="form-nb-subtitle">🎮 El Juego Ya No Es para Niños (y Eso Es Bueno)</h3>
+        <p class="form-nb-text">Invocar un monstruo, subirle el ATK y atacar era la estrategia estándar hace 20 años. Hoy, esa jugada en turno 1 es básicamente pasar el turno. El juego creció porque adultos con mentalidad estratégica entraron a la comunidad y elevaron el nivel. No tienes que llegar a ese nivel de golpe, pero sí entender que el estándar de juego promedio ya no es el que ves en el anime.</p>
+
+        <h3 class="form-nb-subtitle">🧠 Las Mentalidades Correctas</h3>
+        <ul class="form-nb-list">
+            <li><strong>"Siempre habrá una carta mejor para mi estrategia":</strong> no todas las cartas que hacen lo mismo son iguales en tu deck. El contexto importa — la mejor carta genérica puede ser peor que una específica que encaje con tu plan de juego.</li>
+            <li><strong>"Las cartas no se evalúan solas — se evalúan en conjunto":</strong> una carta poderosa puede arruinar un deck si contradice su estrategia. Antes de agregarla, pregúntate: ¿qué hace en mano vacía? ¿ayuda al combo o lo interrumpe?</li>
+            <li><strong>"Cada carta fue creada con una función específica":</strong> no existe la carta inútil, existe la carta usada en el deck equivocado. Antes de descartar una carta, pregunta para qué fue diseñada.</li>
+            <li><strong>"Gusto vs conveniencia":</strong> si quieres ser competitivo, la conveniencia gana siempre. Puedes tener decks de gusto y decks competitivos — no tienes que elegir uno, pero en el deck de torneo las decisiones deben ser funcionales.</li>
+            <li><strong>"Los costos altos no son malos — depende del deck":</strong> el "disadvantage" de una carta es el "advantage" de otra en el deck correcto.</li>
+            <li><strong>"Practicar un deck es lo que lo hace bueno, no las cartas solas":</strong> el deck en papel es una hipótesis; el deck jugado 50 veces es la respuesta.</li>
+            <li><strong>"El META es el conjunto de las mejores cartas descubiertas hasta ahora":</strong> no es permanente ni definitivo — es el mejor entendimiento colectivo del momento, y puede cambiar en 3 meses.</li>
+            <li><strong>"Todo deck tiene puntos débiles — incluyendo el meta":</strong> no hay deck invencible, solo decks cuyo counter aún nadie ha encontrado.</li>
+            <li><strong>"Los decks no-meta pueden ganar — pero les falta consistencia":</strong> pueden vencer a cualquier deck meta en una partida, pero hacerlo consistentemente en 7+ rondas requiere mucho más conocimiento del meta para compensar.</li>
+            <li><strong>"Yu-Gi-Oh! es un juego de probabilidad y estadística":</strong> entender esto evita frustraciones cuando "no salió lo que necesitabas" y ayuda a construir decks que maximicen probabilidades.</li>
+            <li><strong>"Consistencia vs Potencia — siempre hay que elegir":</strong> no puedes maximizar ambas al mismo tiempo. Saber qué necesita tu deck es una decisión estratégica, no técnica.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔍 Cómo Usar el Tipo de Carta Correctamente</h3>
+        <p class="form-nb-text">Antes de activar cualquier carta, pregúntate:</p>
+        <ul class="form-nb-list">
+            <li><strong>¿Es mi turno o el del oponente?</strong> Determina qué cartas puedes usar activamente.</li>
+            <li><strong>¿Cuántas interacciones tiene el oponente (que yo sepa)?</strong> Si tiene muchas, no gastes tu combo principal todavía.</li>
+            <li><strong>¿Cómo empezó el oponente?</strong> Mano llena y campo vacío probablemente significa Handtraps.</li>
+            <li><strong>¿Cuántas partidas llevamos en el match?</strong> En la 2da y 3ra partida, el Side Deck cambia todo.</li>
+            <li><strong>¿Voy ganando o perdiendo?</strong> Si vas perdiendo, vale asumir más riesgos. Si vas ganando, juega seguro.</li>
         </ul>
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
-        <p class="form-nb-text">Lee siempre en este orden: ¿Qué necesito para activarlo? → ¿Qué pago? → ¿Qué hace? → ¿Qué limitación me queda? El jugador que entiende los costos y las restricciones toma mejores decisiones que el que solo ve el efecto en bruto.</p>
+        <p class="form-nb-text">La mentalidad es lo que convierte el conocimiento técnico en victoria real. Puedes saber todos los combos del meta y perder constantemente si tu toma de decisiones bajo presión es mala. El mejor entrenamiento no es aprender más combos — es aprender a pensar mejor en los momentos donde la jugada correcta no es obvia.</p>
     `; },
 
     _topicCadenasPrioridad: function () { return `
