@@ -12,12 +12,14 @@ const Formacion = {
     MASTERED_KEY:  'yugioh_formacion_mastered',
 
     TOPICS: [
+        // ── MÓDULO 1 — Fundamentos del Juego ──
         { id: 'que-es-yugioh',           label: '¿Qué es Yu-Gi-Oh!?',               level: 'Básico' },
         { id: 'vocabulario-legal',       label: 'Vocabulario Legal del Juego',      level: 'Básico' },
         { id: 'fases-del-duelo',         label: 'Las Fases del Duelo',              level: 'Básico' },
         { id: 'tipos-cartas-basicas',    label: 'Tipos de Cartas Básicas',          level: 'Fundamental' },
-        { id: 'estructura-efecto-carta', label: 'Estructura de un Efecto de Carta', level: 'Intermedio' },
         { id: 'tipos-cartas-especiales', label: 'Tipos de Cartas Especiales',       level: 'Intermedio' },
+        // ── Módulos siguientes (pendiente reordenar/expandir al desarrollarlos) ──
+        { id: 'estructura-efecto-carta', label: 'Estructura de un Efecto de Carta', level: 'Intermedio' },
         { id: 'cadenas-prioridad',       label: 'Cadenas, Prioridad y Spell Speed', level: 'Avanzado' },
         { id: 'staples-formato',         label: 'Staples del Formato',              level: 'Competitivo' },
     ],
@@ -420,57 +422,77 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">📋 Las 6 Fases en Orden</h3>
         <ul class="form-nb-list">
-            <li><strong>1. Draw Phase (DP):</strong> Robas 1 carta. El jugador que va primero en el primer turno NO roba. Algunos efectos obligatorios se activan aquí.</li>
-            <li><strong>2. Standby Phase (SP):</strong> Fase de mantenimiento. Efectos periódicos y costos de mantenimiento se activan aquí. Ambos jugadores pueden responder.</li>
-            <li><strong>3. Main Phase 1 (MP1):</strong> La fase más activa. Puedes invocar, activar hechizos, colocar trampas y activar efectos. Construyes tu campo antes de atacar.</li>
-            <li><strong>4. Battle Phase (BP):</strong> Declaras ataques. El jugador que va primero NO puede atacar en su primer turno. Los ataques se resuelven uno a uno con sus subfases propias.</li>
-            <li><strong>5. Main Phase 2 (MP2):</strong> Igual que MP1 pero después de atacar. Útil para colocar trampas o invocar monstruos que no necesitan atacar este turno.</li>
-            <li><strong>6. End Phase (EP):</strong> Descartas hasta 6 cartas si tienes más. Efectos de "al final del turno" y efectos temporales expiran aquí.</li>
+            <li><strong>1. Draw Phase (DP):</strong> Robas 1 carta. El jugador que va primero en el primer turno NO roba. Algunos efectos se activan obligatoriamente aquí (triggers de "inicio de turno"), y el oponente puede activar efectos de velocidad 2 en respuesta a tu robo.</li>
+            <li><strong>2. Standby Phase (SP):</strong> Parece vacía, pero es donde muchos efectos de mantenimiento se activan — costos de mantener ciertos monstruos en campo, efectos periódicos. Ambos jugadores pueden activar efectos aquí.</li>
+            <li><strong>3. Main Phase 1 (MP1):</strong> La fase más activa del turno. Puedes invocar monstruos (1 invocación normal por turno), activar hechizos, colocar trampas boca abajo, activar efectos de monstruos y cambiar posición. Aquí construyes tu campo antes de atacar.</li>
+            <li><strong>4. Battle Phase (BP):</strong> Declaras ataques con tus monstruos. El jugador que va primero en el primer turno NO puede atacar. Tiene subfases propias (Start, Battle Step, Damage Step, End — ver Tema: Rulings en Fase de Batalla) y los ataques se resuelven uno a uno.</li>
+            <li><strong>5. Main Phase 2 (MP2):</strong> Igual que MP1, pero después de atacar. Útil para colocar trampas o invocar monstruos que no necesitan atacar. No puedes cambiar la posición de un monstruo que ya atacó ese turno.</li>
+            <li><strong>6. End Phase (EP):</strong> Ambos jugadores descartan hasta tener 6 cartas en mano si tienen más. Efectos de "al final del turno" se resuelven aquí, y algunos efectos temporales expiran.</li>
         </ul>
 
-        <h3 class="form-nb-subtitle">⚖️ Las 2 Reglas de Oro</h3>
+        <h3 class="form-nb-subtitle">⚖️ Las 2 Reglas de Oro en un Duelo</h3>
         <ul class="form-nb-list">
-            <li><strong>Regla 1 — Duelo de caballeros:</strong> Siempre pide permiso antes de pasar de fase. Confirma cada acción importante con tu oponente. En torneo, una jugada no comunicada puede generar problemas serios.</li>
-            <li><strong>Regla 2 — Se juega por partes:</strong> Anuncia qué estás haciendo y espera respuesta antes de continuar. El oponente puede interrumpirte en casi cualquier momento con la carta correcta — darle esa ventana es parte del juego limpio.</li>
+            <li><strong>Regla 1 — Es un duelo de caballeros:</strong> Siempre pide permiso antes de pasar de fase ("¿Pasamos a batalla?"). Confirma con tu oponente cada acción importante. Mantener el estado del juego claro evita disputas y malentendidos — en torneo, una jugada no comunicada puede generar problemas serios.</li>
+            <li><strong>Regla 2 — Se juega por partes:</strong> Cada vez que hagas algo, anuncia qué estás haciendo y espera respuesta. No resuelvas varios pasos de golpe sin dar ventana al oponente. Un oponente puede interrumpirte en casi cualquier momento si tiene la carta correcta — darle esa ventana es parte del juego limpio.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔄 Lo que Cambia entre el Turno 1 y los Siguientes</h3>
+        <ul class="form-nb-list">
+            <li><strong>Turno 1 (jugador que va primero):</strong> Sin robo en Draw Phase, sin ataque en Battle Phase. Por eso ir primero significa protegerte con un buen campo, no ganar rápido.</li>
+            <li><strong>Turno 2 en adelante:</strong> El juego está completamente abierto. El jugador que va segundo tiene la ventaja de atacar primero y ver el campo rival antes de decidir.</li>
         </ul>
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
-        <p class="form-nb-text">El error más común del novato es actuar sin respetar las fases. Poner una trampa en MP1 la deja activa ese mismo turno — pero el oponente puede destruirla antes de que la uses. Ponerla en MP2 la protege hasta el turno del oponente. Aprender a usar MP2 correctamente separa al jugador intuitivo del que realmente entiende la estructura.</p>
+        <p class="form-nb-text">El error más común del novato es actuar sin pensar en las fases. Poner una trampa en MP1 la deja vulnerable ese turno porque el oponente puede destruirla antes de que "madure". Ponerla en MP2 (después de atacar) la protege hasta el turno del oponente. Aprender a usar MP2 correctamente es lo que separa a un jugador intuitivo de uno que realmente entiende la estructura del juego.</p>
     `; },
 
     _topicTiposCartasBasicas: function () { return `
         <h2 class="form-nb-title">Tipos de Cartas Básicas</h2>
-        <p class="form-nb-text">Antes de aprender combos o estrategias, necesitas saber exactamente qué puede hacer cada tipo de carta y cuándo puede usarse.</p>
+        <p class="form-nb-text">Antes de aprender combos o estrategias, necesitas conocer exactamente qué puede hacer cada tipo de carta y cuándo puede usarse. Aquí no hay atajos: si confundes una trampa con un hechizo de juego rápido, pierdes.</p>
 
         <h3 class="form-nb-subtitle">👾 Monstruos</h3>
+        <p class="form-nb-text">Son el corazón del juego. Atacan, defienden y activan efectos.</p>
         <ul class="form-nb-list">
-            <li><strong>Invocación Normal:</strong> 1 por turno, boca arriba en ataque, o "seteado" boca abajo en defensa. Sin efectos adicionales.</li>
-            <li><strong>ATK / DEF:</strong> Puntos de ataque y defensa. El ATK se compara al atacar; la DEF solo importa en posición de defensa.</li>
-            <li><strong>Monstruos Normales (Vainilla):</strong> Solo texto de lore — sin efectos. Pero son válidos como materiales de Extra Deck.</li>
-            <li><strong>Monstruos de Efecto:</strong> Tienen uno o más efectos activables o continuos que definen su función.</li>
-            <li><strong>Cambio de Posición:</strong> 1 vez por turno, no si fue invocado ese turno, no si ya atacó.</li>
+            <li><strong>Invocación Normal:</strong> Puedes invocar 1 monstruo boca arriba por turno en posición de ataque, o "setear" (colocar boca abajo) 1 monstruo por turno en defensa. Solo 1 invocación normal por turno, salvo que una carta diga lo contrario.</li>
+            <li><strong>ATK / DEF:</strong> Puntos de ataque y defensa. El ATK se compara al atacar; la DEF solo importa si el monstruo está en posición de defensa.</li>
+            <li><strong>Nivel / Rango:</strong> Número de estrellas. Afecta cómo se invocan los monstruos especiales (Sincro, XYZ, Ritual).</li>
+            <li><strong>Tipo y Atributo:</strong> Tipo (Dragón, Guerrero, Mago, etc.) y Atributo (AGUA, FUEGO, VIENTO, TIERRA, LUZ, OSCURIDAD). Algunas cartas afectan tipos o atributos específicos — revisa esto en el Buscador de la app.</li>
+            <li><strong>Monstruos Normales (Vainilla) vs de Efecto:</strong> Los normales no tienen efecto — solo ATK/DEF y texto de lore. Los de efecto tienen uno o más efectos activables o continuos.</li>
+            <li><strong>Cambio de Posición:</strong> 1 vez por turno. No puedes cambiarlo si fue invocado ese mismo turno, ni si ya atacó ese turno.</li>
         </ul>
 
         <h3 class="form-nb-subtitle">🟢 Hechizos (Magias)</h3>
+        <p class="form-nb-text">Cartas verdes. Se activan y su efecto resuelve inmediatamente (salvo los Continuos y de Campo, que permanecen en campo).</p>
         <ul class="form-nb-list">
-            <li><strong>Normal:</strong> Se activa y va al cementerio. Efecto inmediato.</li>
-            <li><strong>Continuo:</strong> Permanece en campo mientras su efecto esté activo.</li>
+            <li><strong>Normal:</strong> Se activa, resuelve y va al cementerio. Ej: Raigeki.</li>
+            <li><strong>Continuo:</strong> Permanece en campo y su efecto dura mientras esté ahí.</li>
             <li><strong>Equipo:</strong> Se equipa a un monstruo y modifica sus stats o le da efectos.</li>
-            <li><strong>Campo:</strong> Va a la zona de campo. Solo 1 por lado del tablero.</li>
-            <li><strong>Ritual:</strong> Realiza una Invocación Ritual específica.</li>
-            <li><strong>Juego Rápido:</strong> Puede activarse en cualquier fase de TU turno, o en el turno del oponente si estaba boca abajo desde el turno anterior. ¡El único hechizo que puede usarse como respuesta!</li>
+            <li><strong>Campo:</strong> Va a la zona de Campo. Solo puede haber 1 por lado del tablero.</li>
+            <li><strong>Ritual:</strong> Se usa para realizar una Invocación Ritual específica.</li>
+            <li><strong>Juego Rápido (Quick-Play):</strong> Puede activarse en cualquier fase de TU turno, o en el turno del oponente si está boca abajo desde el turno anterior.</li>
         </ul>
+        <p class="form-nb-text">Importante: los hechizos normales NO pueden activarse en respuesta directa a algo — necesitan una ventana abierta para jugarse. Si tu oponente activa un efecto y quieres responder, necesitas un hechizo de juego rápido o una trampa.</p>
 
         <h3 class="form-nb-subtitle">🟣 Trampas</h3>
+        <p class="form-nb-text">Cartas rosadas/moradas. La regla más importante: deben colocarse boca abajo primero y no pueden activarse el mismo turno que fueron colocadas (salvo excepciones).</p>
         <ul class="form-nb-list">
-            <li><strong>Regla de Oro:</strong> Deben colocarse boca abajo primero. NO pueden activarse el mismo turno que fueron colocadas (salvo excepciones explícitas).</li>
             <li><strong>Normal:</strong> Activa su efecto una vez y va al cementerio.</li>
             <li><strong>Continua:</strong> Permanece en campo y sigue activa.</li>
-            <li><strong>Counter (Velocidad 3):</strong> Solo puede ser respondida por otra Counter Trap. Las más rápidas del juego.</li>
+            <li><strong>Counter (Contraefecto):</strong> Velocidad de hechizo 3. Solo puede ser respondida por otra counter trap. Son las más rápidas del juego.</li>
         </ul>
+        <p class="form-nb-text"><strong>La regla del turno:</strong> si colocas una trampa en MP1, tu oponente puede destruirla antes de que "madure" — solo puede activarse desde el turno del oponente en adelante. Por eso colocarlas en MP2 es la jugada más segura.</p>
+
+        <h3 class="form-nb-subtitle">❓ ¿Por Qué Importa Saber Qué es Qué?</h3>
+        <p class="form-nb-text">Porque la velocidad de activación cambia todo. Si quieres responder a la jugada del oponente en su turno, necesitas: trampas ya colocadas, hechizos de juego rápido ya colocados, o efectos de monstruo de tipo quick. Un hechizo normal en tu mano no te sirve de nada en el turno del oponente.</p>
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
-        <p class="form-nb-text">Para responder al oponente en su turno necesitas: trampas ya colocadas, hechizos de Juego Rápido boca abajo, o Quick Effects de monstruos en campo. Un hechizo normal en mano no sirve en el turno del oponente. Antes de jugar cualquier carta, pregúntate: ¿es mi turno o el del oponente?</p>
+        <p class="form-nb-text">Antes de jugar cualquier carta, hazte 3 preguntas:</p>
+        <ul class="form-nb-list">
+            <li>1. ¿Es mi turno o el del oponente?</li>
+            <li>2. ¿El efecto genera cadena o es una acción sin cadena?</li>
+            <li>3. ¿Mi oponente puede responder a esto?</li>
+        </ul>
+        <p class="form-nb-text">Esas 3 preguntas te evitan el 90% de los errores del novato.</p>
     `; },
 
     _topicTiposCartasEspeciales: function () { return `
@@ -504,6 +526,9 @@ const Formacion = {
             <li>5. Ritual — costoso, necesita conocer el arquetipo</li>
             <li>6. Péndulo — el más complejo, requiere dominar los anteriores</li>
         </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Un error común es creer que el Extra Deck es "opcional". En el juego moderno, el Extra Deck es donde está la mayor parte del poder de un deck. Un deck sin Extra Deck bien construido es un deck que no puede responder a amenazas reales. Aprende al menos Fusión, Sincro y XYZ antes de intentar un deck competitivo.</p>
     `; },
 
     _topicEstructuraEfecto: function () { return `
