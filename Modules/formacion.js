@@ -22,9 +22,17 @@ const Formacion = {
         { id: 'estructura-efecto-carta', label: 'Estructura de un Efecto de Carta', level: 'Intermedio' },
         { id: 'funciones-de-las-cartas', label: 'Funciones de las Cartas (Roles)',  level: 'Intermedio' },
         { id: 'mentalidad-del-jugador',  label: 'Mentalidad del Jugador',           level: 'Intermedio' },
-        // ── Módulos siguientes (pendiente reordenar/expandir al desarrollarlos) ──
+        // ── MÓDULO 3 — Construcción y Optimización de Mazo ──
+        { id: 'elegir-construir-deck',      label: 'Elegir y Construir tu Deck',        level: 'Competitivo' },
+        { id: 'staples-formato',            label: 'Staples del Formato',               level: 'Competitivo' },
+        { id: 'anatomia-deck-competitivo',  label: 'Anatomía de un Deck Competitivo',   level: 'Competitivo' },
+        { id: 'optimizar-deck',             label: 'Cómo Optimizar tu Deck',            level: 'Competitivo' },
+        // ── MÓDULO 4 — Motor Técnico del Juego ──
         { id: 'cadenas-prioridad',       label: 'Cadenas, Prioridad y Spell Speed', level: 'Avanzado' },
-        { id: 'staples-formato',         label: 'Staples del Formato',              level: 'Competitivo' },
+        { id: 'rulings-invocaciones',    label: 'Rulings de Invocaciones',          level: 'Avanzado' },
+        { id: 'rulings-batalla',         label: 'Rulings en Fase de Batalla',       level: 'Avanzado' },
+        { id: 'if-when-timing',          label: 'IF vs WHEN y Timing Avanzado',     level: 'Avanzado' },
+        // ── Módulos siguientes (pendiente desarrollar) ──
     ],
 
     PLATFORMS: ['PC', 'GBC', 'GBA', 'PS1', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'Físico'],
@@ -332,8 +340,14 @@ const Formacion = {
             'tipos-cartas-especiales': this._topicTiposCartasEspeciales(),
             'funciones-de-las-cartas': this._topicFuncionesCartas(),
             'mentalidad-del-jugador':  this._topicMentalidadJugador(),
+            'elegir-construir-deck':     this._topicElegirConstruirDeck(),
+            'staples-formato':           this._topicStaples(),
+            'anatomia-deck-competitivo': this._topicAnatomiaDeckCompetitivo(),
+            'optimizar-deck':            this._topicOptimizarDeck(),
             'cadenas-prioridad':       this._topicCadenasPrioridad(),
-            'staples-formato':         this._topicStaples(),
+            'rulings-invocaciones':    this._topicRulingsInvocaciones(),
+            'rulings-batalla':         this._topicRulingsBatalla(),
+            'if-when-timing':          this._topicIfWhenTiming(),
         };
         return topics[topicId] || '<p>Contenido no disponible.</p>';
     },
@@ -659,61 +673,338 @@ const Formacion = {
 
     _topicCadenasPrioridad: function () { return `
         <h2 class="form-nb-title">Cadenas, Prioridad y Spell Speed</h2>
-        <p class="form-nb-text">Yu-Gi-Oh! moderno no se trata de jugar tu turno — se trata de saber cuándo interrumpir el del rival. Esta lección separa al jugador intuitivo del que realmente entiende el juego.</p>
+        <p class="form-nb-text">El sistema de cadenas es el motor del juego a nivel técnico. Entenderlo completamente es lo que te permite activar tus cartas en el momento correcto, responder al oponente sin cometer errores y ganar disputas que un jugador sin este conocimiento perdería.</p>
 
-        <h3 class="form-nb-subtitle">⚡ Spell Speed (Velocidad de Conjuro)</h3>
+        <h3 class="form-nb-subtitle">⚡ Spell Speed (Velocidad de Hechizo)</h3>
+        <p class="form-nb-text">Cada efecto tiene una velocidad. Una cadena solo puede subir de velocidad, nunca bajar: un efecto de velocidad 2 puede responder a uno de velocidad 2 o 1, pero no a uno de velocidad 3.</p>
         <ul class="form-nb-list">
-            <li><strong>Velocidad 1:</strong> Invocaciones normales, Magias Normales/Equipo/Campo/Ritual, efectos de monstruo que no digan "Quick Effect". Solo se activan cuando NO hay nada en cadena.</li>
-            <li><strong>Velocidad 2:</strong> Magias de Juego Rápido, Trampas, efectos de monstruo marcados como "Quick Effect". Pueden responder a Velocidad 1 y 2.</li>
-            <li><strong>Velocidad 3:</strong> Counter Traps. Solo pueden ser respondidas por otra Velocidad 3.</li>
-            <li><strong>Regla de oro:</strong> Una carta de menor velocidad NUNCA puede responder a una de mayor velocidad ya en cadena.</li>
+            <li><strong>Velocidad 1:</strong> Efectos que NO pueden activarse como respuesta directa a otro efecto — son la base de la cadena, nunca el eslabón reactivo. Incluye Efectos de Ignición (Ignition Effects) de monstruo, Efectos Continuos (ni siquiera generan cadena, solo aplican mientras la carta esté en campo), y Magias Normales, de Campo, de Equipo y de Ritual.</li>
+            <li><strong>Velocidad 2:</strong> Pueden responder a velocidad 1 y a velocidad 2. Incluye Quick Effects de monstruo, Magias de Juego Rápido (Quick-Play), Trampas Normales y Continuas, y las Handtraps (se activan desde la mano como velocidad 2).</li>
+            <li><strong>Velocidad 3:</strong> Solo puede responder a velocidad 3. Son las Trampas Counter (Counter Traps) — Solemn Judgment, Solemn Warning, etc. La única forma de responder a una Counter Trap es con otra Counter Trap.</li>
         </ul>
 
-        <h3 class="form-nb-subtitle">🔗 Cómo se Arma y Resuelve una Cadena</h3>
+        <h3 class="form-nb-subtitle">🧩 Tipos de Efectos</h3>
         <ul class="form-nb-list">
-            <li>Cada jugador con prioridad puede añadir un eslabón (link) si tiene una carta que cumpla la velocidad requerida.</li>
-            <li>La cadena resuelve en orden inverso: último eslabón en entrar, primero en resolver (LIFO).</li>
+            <li><strong>Trigger Effect (Efecto Gatillo):</strong> se activa automáticamente cuando ocurre un evento específico. Puede ser <em>mandatorio</em> (DEBE activarse, ej. "cuando esta carta es destruida, haz X") u <em>opcional</em> (PUEDE activarse, ej. "cuando esta carta es enviada al cementerio, puedes..." — los opcionales pueden "miss the timing", ver Tema: IF vs WHEN y Timing Avanzado).</li>
+            <li><strong>Ignition Effect (Efecto Ignición):</strong> lo activas voluntariamente durante una ventana abierta en tu turno. Velocidad 1, no puede activarse como respuesta. Ej: "Una vez por turno: puedes..." en la descripción de un monstruo.</li>
+            <li><strong>Quick Effect (Efecto Rápido):</strong> velocidad 2. Puede activarse en el turno del oponente o en respuesta a sus efectos. Se indican con "(Quick Effect):" en el texto.</li>
+            <li><strong>Continuous Effect (Efecto Continuo):</strong> aplica automáticamente mientras la carta esté en campo. No genera cadena, simplemente está activo. Ej: "Los monstruos que controla tu oponente no pueden activar efectos."</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔗 Cómo Funciona una Cadena</h3>
+        <p class="form-nb-text">Una cadena es una secuencia de efectos activados en respuesta mutua. Se resuelve al revés: el último activado resuelve primero (LIFO — Last In, First Out).</p>
+        <ul class="form-nb-list">
+            <li><strong>Ejemplo:</strong> Jugador A activa Ash Blossom (Vel. 2) — Eslabón 1. Jugador B responde con Called by the Grave (Vel. 2) — Eslabón 2. Resolución: Called by the Grave resuelve primero (eslabón 2) y destierra a Ash del cementerio, negándola. Ash Blossom intenta resolver (eslabón 1) pero ya no puede porque fue negada.</li>
+            <li>Las cadenas siempre se construyen completamente ANTES de resolverse. No puedes activar un nuevo efecto a mitad de la resolución.</li>
             <li>Si el eslabón 1 (el original) es negado, el resto de la cadena resuelve igual desde el eslabón más alto hacia abajo — no se cancela toda la cadena.</li>
         </ul>
 
-        <h3 class="form-nb-subtitle">👑 Prioridad</h3>
-        <p class="form-nb-text">El turno pasa por "puntos de prioridad" (antes de Battle Phase, antes de cada ataque, etc.) donde el jugador en turno puede activar algo primero; si no lo hace, pasa la prioridad al rival, quien puede responder con Velocidad 2 o 3 antes de que continúe la acción.</p>
+        <h3 class="form-nb-subtitle">👑 Ventana de Interacción</h3>
+        <p class="form-nb-text">Es el momento en que puedes activar efectos de velocidad 2 o superior como respuesta a lo que el oponente está haciendo.</p>
+        <ul class="form-nb-list">
+            <li><strong>Se abre cuando:</strong> el jugador activo activa un efecto (hechizo, trampa, efecto de monstruo), realiza una invocación (especial o normal), o realiza una acción visible (cambiar de posición, atacar).</li>
+            <li><strong>Se cierra cuando:</strong> ambos jugadores pasan sin agregar nada a la cadena, o cuando la cadena resuelve y ningún jugador agrega otro efecto.</li>
+            <li><strong>Prioridad en la ventana:</strong> primero los efectos mandatorios, luego los trigger opcionales del jugador activo, luego los trigger opcionales del oponente, y por último los efectos rápidos. El jugador sin nada que activar debe ceder prioridad.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🚫 Error Frecuente: Activar sin Ventana</h3>
+        <p class="form-nb-text">Si el oponente no ha hecho nada que genere una ventana, no puedes activar tu Handtrap — solo puedes activarla en respuesta a algo. Un Quick Effect de monstruo tampoco puede activarse en cualquier momento: necesita que haya una ventana abierta o que sea tu turno en una fase válida.</p>
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
-        <p class="form-nb-text">Antes de pasar de fase pregúntate: ¿tengo algo de Velocidad 2 o 3 que quiera activar aquí? Una vez que sueltas la prioridad y el rival actúa, perdiste la ventana. Aprender a identificar estas ventanas es la base de jugar interrupciones (handtraps, counter traps) correctamente.</p>
+        <p class="form-nb-text">El 80% de las disputas en torneo vienen de no entender cuándo hay ventana. Si tienes dudas sobre si puedes activar algo, pregunta: ¿hubo una acción o efecto de mi oponente que abrió la ventana? Si la respuesta es no, espera.</p>
     `; },
 
     _topicStaples: function () { return `
         <h2 class="form-nb-title">Staples del Formato</h2>
-        <p class="form-nb-text">Un Staple es una carta tan generalmente útil que aparece en la mayoría de los decks del meta, independientemente del arquetipo. No son "las mejores cartas del juego" — son las más versátiles para el meta actual. Y cambian con cada banlist.</p>
+        <p class="form-nb-text">Un Staple es una carta tan generalmente útil que aparece en la mayoría de los decks del meta, independientemente del arquetipo. No son "las mejores cartas del juego" — son las más versátiles para el meta actual. Y cambian con cada banlist y cada expansión.</p>
+
+        <h3 class="form-nb-subtitle">❓ Qué Hace a una Carta Ser Staple</h3>
+        <ul class="form-nb-list">
+            <li>Tiene efecto sin ser específica de un arquetipo.</li>
+            <li>Su función es universalmente útil (negar, destruir, buscar).</li>
+            <li>No contradice las restricciones de la mayoría de los decks.</li>
+            <li>Su presencia en el meta justifica su inclusión defensiva u ofensiva.</li>
+        </ul>
+        <p class="form-nb-text">Una carta puede ser Staple en un meta y completamente prescindible en otro. Por eso el criterio de "Staple eterno" casi no existe — todo cambia.</p>
 
         <h3 class="form-nb-subtitle">🤚 Handtraps (Interrupciones desde la Mano)</h3>
         <ul class="form-nb-list">
-            <li><strong>Ash Blossom:</strong> Niega cualquier efecto que busque, robe o invoque especialmente desde el deck. Una de las más versátiles.</li>
-            <li><strong>Droll &amp; Lock Bird:</strong> Si el oponente agrega 1+ cartas a su mano desde el deck, niega que puedan agregar más ese turno.</li>
-            <li><strong>Infinite Impermanence:</strong> Niega el efecto de un monstruo en campo. Si lo seteas en la primera columna sin carta, da inmunidad a esa columna.</li>
-            <li><strong>Nibiru, the Primal Being:</strong> Si el oponente invocó especialmente 5+ monstruos ese turno, tribútalos todos y dale un Token Nibiru. La respuesta a los combo-decks.</li>
+            <li><strong>Ash Blossom &amp; Joyous Spring:</strong> Niega cualquier efecto que busque, robe o invoque especialmente desde el deck. Una de las más versátiles del juego.</li>
+            <li><strong>Droll &amp; Lock Bird:</strong> Si el oponente agrega 1+ cartas a su mano desde el deck en un turno, niega que puedan agregar más ese mismo turno.</li>
+            <li><strong>Maxx "C":</strong> Roba 1 carta cada vez que el oponente invoca especialmente ese turno. Prohibida en TCG, pero la más icónica del juego.</li>
+            <li><strong>Mulcharmy Fuwalos / Purulia:</strong> Hacen robar cartas si el oponente invoca monstruos de cierto tipo bajo ciertas condiciones.</li>
+            <li><strong>Ghost Belle &amp; Haunted Mansion:</strong> Niega efectos del cementerio, zonas desterradas o efectos de turno extra.</li>
             <li><strong>Effect Veiler:</strong> Niega el efecto de un monstruo hasta el final del turno. Velocidad 1 desde la mano — limitada pero específica.</li>
-            <li><strong>D.D. Crow:</strong> Destierra 1 carta del cementerio del oponente desde la mano. Específico pero devastador contra decks de cementerio.</li>
+            <li><strong>Infinite Impermanence:</strong> Niega el efecto de un monstruo en campo. Juego Rápido, puede usarse en el turno del oponente. Si lo seteas en la primera columna sin carta, te da inmunidad a esa columna.</li>
+            <li><strong>Nibiru, the Primal Being:</strong> Si el oponente ha invocado especialmente 5+ monstruos en ese turno, puedes tributarlos todos y dar un Token Nibiru. La respuesta a los combo-decks.</li>
+            <li><strong>D.D. Crow:</strong> Destierra 1 carta del cementerio del oponente desde la mano. Muy específico pero devastador contra decks que usan el cementerio.</li>
         </ul>
 
         <h3 class="form-nb-subtitle">🛡️ Anti-Handtraps (Protegen tu Combo)</h3>
         <ul class="form-nb-list">
-            <li><strong>Called by the Grave:</strong> Destierra 1 carta del cementerio del oponente y niega efectos de ese nombre ese turno. Contraresta Ash, Ghost Belle.</li>
-            <li><strong>Crossout Designator:</strong> Declara un nombre de carta que tienes en tu deck. Niega todos los efectos de cartas con ese nombre ese turno.</li>
+            <li><strong>Called by the Grave:</strong> Destierra 1 carta del cementerio del oponente y niega efectos de cartas con ese nombre ese turno. Contraresta Ash, Ghost Belle.</li>
+            <li><strong>Crossout Designator:</strong> Declara un nombre de carta que tienes en tu deck. Niega todos los efectos de cartas con ese nombre ese turno. Respuesta a casi cualquier Handtrap.</li>
         </ul>
 
-        <h3 class="form-nb-subtitle">💥 Boardbreakers (Destruyen el Campo Rival)</h3>
+        <h3 class="form-nb-subtitle">💥 Boardbreakers (Destruyen el Campo del Oponente)</h3>
+        <p class="form-nb-text">Para usar cuando vas segundo y el oponente ya tiene campo construido.</p>
         <ul class="form-nb-list">
-            <li><strong>Dark Ruler No More:</strong> Niega todos los efectos de los monstruos del oponente hasta fin de turno. No puede ser respondido. Limpia el camino.</li>
+            <li><strong>Raigeki / Dark Hole:</strong> Destruye todos los monstruos del oponente. Clásico.</li>
+            <li><strong>Dark Ruler No More:</strong> Niega todos los efectos de los monstruos del oponente hasta el final del turno. No pueden ser respondidos. Limpia el camino.</li>
             <li><strong>Forbidden Droplet:</strong> Manda cartas al cementerio para negar efectos y bajar ATK a la mitad. La respuesta más versátil al campo rival.</li>
-            <li><strong>Evenly Matched:</strong> El oponente destierra hasta tener 1 carta. Devastador si tiene campo lleno.</li>
+            <li><strong>Evenly Matched:</strong> El oponente desterrará cartas hasta tener 1. Devastador si el oponente tiene campo lleno y tú tienes pocos recursos.</li>
             <li><strong>Super Polymerization:</strong> Fusiona usando cartas del campo del oponente. No puede ser respondida. Quita 2+ amenazas en 1 carta.</li>
-            <li><strong>Lightning Storm:</strong> Destruye todos los monstruos de ataque O todas las mágicas/trampas boca abajo. Solo funciona con mano vacía.</li>
+            <li><strong>Lightning Storm:</strong> Destruye todos los monstruos de ataque O todos los mágicas/trampas boca abajo del oponente. Solo funciona con mano vacía.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">👑 Monstruos Endboard Universales</h3>
+        <p class="form-nb-text">Van al campo del oponente o se usan en el campo para cerrar el duelo.</p>
+        <ul class="form-nb-list">
+            <li><strong>I:P Masquerena:</strong> Link 2. Permite invocar Links en el turno del oponente. Acceso al Extra Deck como respuesta.</li>
+            <li><strong>S:P Little Knight:</strong> Link 2. Destierra temporalmente cualquier monstruo en campo. Una de las mejores cartas del formato actual.</li>
+            <li><strong>Accesscode Talker:</strong> Link 4. Efecto de destrucción continua al invocar el Link correcto. Cierra duelos por sí solo.</li>
+            <li><strong>Chaos Angel:</strong> Sincro 10. Inafectado por hechizos/trampas y puede desterrar al hacer daño. Endboard de alto impacto.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">📜 Magias y Trampas de Utilidad</h3>
+        <ul class="form-nb-list">
+            <li><strong>Monster Reborn:</strong> Invoca especialmente 1 monstruo del cementerio de cualquiera.</li>
+            <li><strong>Solemn Judgment:</strong> Niega 1 invocación, hechizo o trampa pagando la mitad de LP.</li>
+            <li><strong>Solemn Warning / Solemn Strike:</strong> Más específicas pero siguen siendo poderosas.</li>
+            <li><strong>Dimensional Barrier:</strong> Declara 1 tipo de invocación especial (Fusión, Sincro, etc.). El oponente no puede usar ese tipo en ese turno.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">✅ Cómo Usar Este Conocimiento</h3>
+        <p class="form-nb-text">No incluyas un Staple solo porque "es bueno". Pregunta:</p>
+        <ul class="form-nb-list">
+            <li>1. ¿Su efecto me sirve en el meta actual?</li>
+            <li>2. ¿Su restricción no rompe mi combo?</li>
+            <li>3. ¿Tengo el espacio en el deck sin sacrificar consistencia?</li>
+        </ul>
+        <p class="form-nb-text">Un Staple mal incluido es peor que no incluirlo. Si una Handtrap te deja sin poder jugar tu combo, no la metas por moda.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">El criterio más importante para elegir Staples: ¿qué es lo que más me amenaza en el meta actual? Construye tu selección de non-engine en función de eso, no en función de lo que está de moda en los videos.</p>
+    `; },
+
+    _topicAnatomiaDeckCompetitivo: function () { return `
+        <h2 class="form-nb-title">Anatomía de un Deck Competitivo</h2>
+        <p class="form-nb-text">Todo deck competitivo puede diseccionarse en los mismos componentes. Aprende a leer estas métricas y podrás evaluar cualquier deck que veas, incluso uno que nunca hayas jugado.</p>
+
+        <h3 class="form-nb-subtitle">📐 Los 6 Ejes de Evaluación</h3>
+        <ul class="form-nb-list">
+            <li><strong>1. Engine — Consistencia:</strong> qué tan probable es que el deck arme su estrategia desde la mano inicial. Ideal: 85%+ de las partidas abriendo con al menos 1 Starter (13+ cartas del engine). Pregunta clave: ¿cuántas cartas del deck "activan" el plan de juego?</li>
+            <li><strong>2. Techo de Poder (The Ceiling):</strong> qué tan poderoso es el endboard si el oponente no interrumpió nada. Ideal: 2+ negaciones en campo, con Boardbreakers disponibles y al menos 1 carta anti-meta que el oponente no pueda remover fácilmente.</li>
+            <li><strong>3. The Floor — Resiliencia:</strong> qué pasa cuando el oponente interrumpe el combo. Ideal: sobrepasar 2 negaciones corridas y aun así tener una amenaza en campo. Sin Floor = "Glass Cannon" (lo interrumpes y queda muerto). La solución son los Extenders.</li>
+            <li><strong>4. Slot Non-Engine — Eficiencia:</strong> el espacio que le queda al deck para Handtraps, Boardbreakers y tech cards después del engine. Un engine de 18 deja 22 para non-engine — mucha libertad. Un engine de 30 en un deck de 40 deja muy poco.</li>
+            <li><strong>5. Grind Game / Follow-Up:</strong> qué hace el deck en los turnos 3, 4 y 5 si el duelo se extiende. Ideal: tener jugadas para esos turnos. Sin Grind Game, el deck pierde automáticamente si no cierra rápido.</li>
+            <li><strong>6. Fragilidad / Choke Point:</strong> qué tan vulnerable es el deck a una sola carta o combo del oponente. Pregunta clave: ¿qué carta del meta me destruye completamente?</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">📈 Otras Métricas Importantes</h3>
+        <ul class="form-nb-list">
+            <li><strong>Linealidad:</strong> qué tan fijo es el camino del combo. Un deck lineal es predecible pero poderoso; uno no-lineal tiene múltiples caminos, menos predecible pero más complejo de aprender.</li>
+            <li><strong>Versatilidad:</strong> cuántas formas distintas de jugar tiene el deck según la mano y el oponente.</li>
+            <li><strong>Cartas Multifuncionales:</strong> cumplen más de un rol en el mismo deck (ej. Starter y Extender según el contexto). Son oro: reducen el tamaño efectivo del engine sin perder funciones.</li>
+            <li><strong>Tipo de Interacción:</strong> ¿destruye, destierra, regresa al deck, niega activaciones, niega efectos? Importa porque el oponente puede tener protecciones contra uno u otro.</li>
+            <li><strong>Novedad:</strong> qué tan expuesta está la mecánica del deck al meta. Un deck nuevo sorprende porque nadie tiene counters preparados; uno viejo ya es conocido por todos.</li>
         </ul>
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
-        <p class="form-nb-text">No incluyas un Staple solo porque "es bueno". Pregunta: ¿Su efecto sirve en el meta actual? ¿Su restricción no rompe mi combo? ¿Tengo el espacio en el deck? Un Staple mal incluido es peor que no incluirlo.</p>
+        <p class="form-nb-text">Cuando evalúes tu deck, no preguntes solo "¿es poderoso?". Pregunta: ¿es consistente? ¿qué pasa si me niegan? ¿puedo seguir jugando? Un deck con 10/10 de techo de poder pero 2/10 de Floor perderá contra cualquier jugador que haya estudiado sus weaknesses. El balance entre estos 6 ejes es lo que hace a un deck realmente competitivo.</p>
+    `; },
+
+    _topicElegirConstruirDeck: function () { return `
+        <h2 class="form-nb-title">Cómo Elegir y Construir tu Deck</h2>
+        <p class="form-nb-text">Elegir mal un deck es el error más costoso en tiempo, dinero y motivación. Construirlo mal es el segundo. Este tema te da el proceso completo, desde cero hasta tener algo funcional que puedas mejorar.</p>
+
+        <h3 class="form-nb-subtitle">🎯 Parte 1: Elegir tu Deck</h3>
+        <ul class="form-nb-list">
+            <li><strong>Paso 1 — Define qué quieres del deck:</strong> ¿torneos o casual? ¿combos largos, control lento o agresión rápida? ¿presupuesto limitado? ¿fácil de aprender o difícil pero poderoso?</li>
+            <li><strong>Paso 2 — Investiga antes de comprar:</strong> prueba el deck en un simulador (EDOPro, Master Duel, Dueling Nexus) al menos 10 duelos antes de decidir. Revisa tutoriales y comentarios de jugadores experimentados. Analiza si el deck es o fue meta y cuánto tiempo le queda antes de la próxima banlist.</li>
+            <li><strong>Paso 3 — Evalúa la curva de aprendizaje:</strong> decks fáciles tienen línea de combo fija y pocas decisiones; decks difíciles tienen múltiples líneas y la diferencia entre buen y mal piloto es enorme. Empieza con algo que puedas ejecutar bien antes de subir dificultad.</li>
+            <li><strong>Paso 4 — Considera rareza y precio:</strong> existen opciones budget que juegan al 70-80% del nivel original, sacrificando consistencia, una pieza del endboard o velocidad. Evalúa si ese sacrificio es aceptable para tu objetivo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🧩 Parte 2: Entender las Piezas</h3>
+        <ul class="form-nb-list">
+            <li><strong>Core:</strong> las cartas que definen al arquetipo. Sin ellas, el deck no es el deck. Fijas e irremplazables — siempre en 3 copias si es posible.</li>
+            <li><strong>Engine:</strong> el conjunto funcional que arma el combo. Puede incluir cartas de otros arquetipos que complementan.</li>
+            <li><strong>Non-Engine:</strong> todo lo que no forma parte del combo pero protege, interrumpe o cierra (Handtraps, Boardbreakers, tech cards). Define tu adaptación al meta.</li>
+            <li><strong>Tech Card:</strong> carta no-Staple específica para combatir una amenaza del meta local. Puede ser 1 sola copia y no siempre aparece en decklists genéricos.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔨 Parte 3: Construir desde Cero</h3>
+        <ul class="form-nb-list">
+            <li><strong>Paso 1:</strong> define el plan de juego o endboard — ¿qué quieres tener en campo al final de tu primer turno? Trabaja hacia atrás.</li>
+            <li><strong>Paso 2:</strong> arma el engine mínimo con las cartas que más directamente llevan al endboard, sin preocuparte del tamaño del deck todavía.</li>
+            <li><strong>Paso 3:</strong> agrega consistencia — buscadores, extenders, todo lo que aumenta la probabilidad de abrir con el starter.</li>
+            <li><strong>Paso 4:</strong> revisa el espacio libre de 40 — ¿puedes recortar el engine sin sacrificar consistencia? El objetivo es maximizar el non-engine.</li>
+            <li><strong>Paso 5:</strong> elige el non-engine según el meta — ¿contra qué decks juegas? ¿cuántos Boardbreakers necesitas? ¿necesitas anti-handtraps?</li>
+            <li><strong>Paso 6:</strong> prueba y ajusta — 10 partidas contra lo que esperas encontrar, anota qué nunca usaste y qué te hizo falta.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">📊 Hipergeometría Básica</h3>
+        <p class="form-nb-text">Probabilidad de robar al menos 1 copia de una carta en la mano inicial (5 cartas de un deck de 40) según cuántas copias tienes:</p>
+        <ul class="form-nb-list">
+            <li><strong>1 copia</strong> → ~11% de probabilidad</li>
+            <li><strong>2 copias</strong> → ~21%</li>
+            <li><strong>3 copias</strong> → ~30%</li>
+        </ul>
+        <p class="form-nb-text">Si necesitas tener la carta en mano al menos 50% de las veces, necesitas al menos 8-9 copias (contando searchers que buscan esa carta). Esto explica por qué los Starters siempre van en 3, más todos sus buscadores: para maximizar la probabilidad de abrir con la pieza que activa todo.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">El deck no termina en la construcción — termina en el conocimiento. El mejor deck del mundo en manos de alguien que no lo conoce profundamente pierde contra un deck mediocre en manos de quien lo domina completamente. Elige un deck que puedas comprometerte a practicar durante meses, no el que está de moda esta semana.</p>
+    `; },
+
+    _topicOptimizarDeck: function () { return `
+        <h2 class="form-nb-title">Cómo Optimizar tu Deck</h2>
+        <p class="form-nb-text">Un deck construido y un deck optimizado son cosas distintas. La construcción es el primer borrador. La optimización es el proceso continuo de pulirlo hasta que cada carta en el deck tiene una razón clara de estar ahí, y cada carta fuera del deck tiene una razón clara de no estar.</p>
+
+        <h3 class="form-nb-subtitle">🔧 Los 6 Tipos de Optimización</h3>
+        <ul class="form-nb-list">
+            <li><strong>1. Consistencia:</strong> reduce Garnets al mínimo (0-2), agrega buscadores de buscadores, recorta cartas situacionales que no sirven en mano inicial. Señal: brickeas frecuentemente o hay turnos sin nada que hacer.</li>
+            <li><strong>2. Potencia (Combo):</strong> estudia si un extender habilita un endboard más fuerte, revisa si el Extra Deck está optimizado para las líneas que realmente usas. Señal: el endboard final es débil o el oponente lo rompe fácilmente.</li>
+            <li><strong>3. Techo de Poder (Endboard):</strong> agrega protecciones al Boss Monster, busca un Lock más específico, considera cartas de Extra Deck con efectos continuos. Señal: el oponente rompe tu campo consistentemente con recursos básicos.</li>
+            <li><strong>4. Defensa:</strong> analiza con qué cartas estás perdiendo más seguido y ajusta el ratio de Handtraps para ese meta. Señal: pierdes al mismo tipo de jugada repetidamente sin poder responder.</li>
+            <li><strong>5. Versatilidad:</strong> busca Extenders alternativos desde diferentes estados del campo, agrega un "Plan B" y Bridges que conecten piezas que normalmente no interactúan. Señal: el deck es muy lineal y sin segunda opción si le niegan el primer paso.</li>
+            <li><strong>6. Resiliencia (Floor):</strong> agrega Extenders que activen después de una negación, busca cartas de "recovery". Señal: con 1 Handtrap encima, el deck queda muerto.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔄 El Proceso de Optimización</h3>
+        <ul class="form-nb-list">
+            <li><strong>Paso 1 — Identifica el problema específico:</strong> no optimices "en general". ¿Pierdo por inconsistencia, endboard débil, o falta de respuesta a X del meta?</li>
+            <li><strong>Paso 2 — Un cambio a la vez:</strong> si cambias 3 cosas a la vez, no sabes cuál causó qué. Un cambio = una variable.</li>
+            <li><strong>Paso 3 — Prueba con suficientes partidas:</strong> un cambio necesita al menos 10-15 partidas para evaluarse correctamente.</li>
+            <li><strong>Paso 4 — Documenta:</strong> anota qué cambiaste y qué efecto tuvo. La memoria no es confiable con varios ajustes a lo largo de semanas.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">✅ Señales de un Deck Bien Optimizado</h3>
+        <ul class="form-nb-list">
+            <li>Rara vez tienes cartas "muertas" en mano.</li>
+            <li>El non-engine se siente exactamente calibrado para el meta local.</li>
+            <li>Las líneas de combo son fluidas porque las conoces.</li>
+            <li>Puedes responder a la mayoría de las amenazas comunes del meta.</li>
+            <li>El deck se siente "tuyo" — ajustado a tu estilo y a tu entorno de juego.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">La optimización nunca termina mientras el meta cambie. Un deck optimizado para el meta de hace 3 meses puede ser mediocre hoy. Trata tu deck como un proyecto en evolución, no como algo terminado.</p>
+    `; },
+
+    _topicRulingsInvocaciones: function () { return `
+        <h2 class="form-nb-title">Rulings de Invocaciones</h2>
+        <p class="form-nb-text">Las invocaciones son el corazón de cada jugada. Saber exactamente qué tipo de invocación estás realizando, cuándo puede ser negada, y qué consecuencias tiene la negación, es lo que determina si puedes o no continuar el combo.</p>
+
+        <h3 class="form-nb-subtitle">⚔️ Invocación Inherente vs Invocación por Efecto</h3>
+        <ul class="form-nb-list">
+            <li><strong>Invocación Inherente:</strong> la que realizas directamente por las reglas del juego, sin necesitar que un efecto de carta la active. Se coloca en el Eslabón 1 de una cadena o directamente sin cadena. Ej: Invocación Normal, Invocación Especial de un XYZ con 2 monstruos del mismo nivel, Invocación Sincro con Tuner + no-Tuner, Invocación Link.</li>
+            <li><strong>Invocación por Efecto:</strong> la que realiza un efecto de carta. La cadena ya está en marcha cuando la invocación ocurre — no puedes responder a la invocación misma, solo al efecto. Ej: "Invoca especialmente esta carta desde el cementerio" como parte de un efecto.</li>
+            <li><strong>¿Por qué importa?</strong> Porque "negar una invocación" solo aplica a invocaciones inherentes. No puedes negar una invocación que sea el resultado de resolver un efecto — ya fue demasiado tarde, el efecto ya resolvió.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🚫 Negar la Invocación y sus Consecuencias</h3>
+        <p class="form-nb-text">Cuando niegas una invocación (con Solemn Warning, por ejemplo):</p>
+        <ul class="form-nb-list">
+            <li>El monstruo va al cementerio (o fuera del juego según la regla específica).</li>
+            <li>La invocación cuenta como "negada" — el monstruo nunca llegó al campo.</li>
+            <li>Efectos que dicen "si fue invocado exitosamente" NO se activarán.</li>
+            <li>Efectos que dicen "si fue enviado al cementerio" SÍ pueden activarse.</li>
+            <li>Si el monstruo iba a ser usado como material y la invocación es negada, los materiales que ya fueron enviados NO regresan — se van al cementerio normalmente. La negación aplica al monstruo invocado, no a los materiales.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔍 Diferencias Clave por Tipo de Invocación</h3>
+        <ul class="form-nb-list">
+            <li><strong>Tributo vs Invocación Especial por Tributo:</strong> la Invocación Normal por tributo (monstruo de nivel 5+) es una invocación normal que puede ser negada igual que cualquier otra. La Invocación Especial por tributo (Kaijus, Nibiru, Esfera de Ra) es una invocación especial que ocurre como parte del efecto — el tributo es el costo, no la invocación en sí.</li>
+            <li><strong>Ritual vs Fusión:</strong> el Ritual requiere la Magia de Ritual como efecto que realiza la invocación — no es inherente; si niegas el efecto de la magia, el Ritual no sale. La Fusión es similar: la magia de fusión realiza la fusión como efecto. La "Fusión de Contacto" en cambio es inherente — no usa magia de fusión.</li>
+            <li><strong>XYZ y Materiales Debajo:</strong> los materiales de un XYZ no están en el cementerio — están "adjuntos". Los efectos del cementerio no los afectan. Cuando un XYZ es destruido, sus materiales van al cementerio solo entonces.</li>
+            <li><strong>Péndulo y la Negación de Escala:</strong> si te niegan 1 de las 2 cartas Péndulo que estás colocando como escala, la otra queda colocada. Pero si no tienes la segunda escala ya puesta, la Invocación Péndulo no puede realizarse sin ambas escalas activas.</li>
+            <li><strong>Link y Zonas:</strong> si no hay zonas del Extra Deck habilitadas para invocar un monstruo del Extra, la invocación no puede realizarse aunque tengas los materiales. Los Links habilitan zonas — sin ellas, solo tienes la zona central del Extra.</li>
+            <li><strong>Fichas (Tokens):</strong> son monstruos, tienen tipo, atributo y nivel. Pueden ser materiales de Sincro, XYZ, Link y Fusión. Pero no pueden ir al Extra Deck ni al deck — cuando dejan el campo, desaparecen, no van al cementerio.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Antes de intentar una invocación de Extra Deck, confirma: 1) ¿Los materiales son válidos? (niveles, tipos, atributos según la carta). 2) ¿Hay zona disponible? 3) ¿Mi combo tiene restricciones que bloqueen esta invocación? Muchos combos se rompen porque el jugador no leyó la restricción de una carta anterior que ya resolvió ese mismo turno.</p>
+    `; },
+
+    _topicRulingsBatalla: function () { return `
+        <h2 class="form-nb-title">Rulings en Fase de Batalla</h2>
+        <p class="form-nb-text">La Fase de Batalla tiene más reglas específicas que cualquier otra fase. La mayoría de los jugadores la tratan como "declaro ataque y listo", pero los rulings de esta fase determinan partidas enteras en torneo.</p>
+
+        <h3 class="form-nb-subtitle">🪜 Las Subfases de la Batalla</h3>
+        <ul class="form-nb-list">
+            <li><strong>Start of Battle Phase:</strong> el momento en que la Fase de Batalla comienza. Algunos efectos se activan aquí específicamente. Ambos jugadores pueden activar efectos de velocidad 2.</li>
+            <li><strong>Battle Step (Declaración de Ataque):</strong> declaras qué monstruo ataca y a quién (o ataque directo). El oponente puede responder con Quick Effects o trampas aquí. Si el objetivo del ataque desaparece, ocurre un "Replay".</li>
+            <li><strong>Damage Step:</strong> tiene 5 subfases propias (ver abajo) — son las más importantes y las que más confusión generan.</li>
+            <li><strong>End of Battle Phase:</strong> todos los efectos temporales de la Battle Phase expiran. El juego pasa obligatoriamente a Main Phase 2.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💥 Las 5 Subfases del Damage Step</h3>
+        <ul class="form-nb-list">
+            <li><strong>A. Start of Damage Step:</strong> se pueden activar efectos que modifican ATK/DEF o cambian posición de los monstruos. También es cuando se voltean los monstruos boca abajo.</li>
+            <li><strong>B. Before Damage Calculation:</strong> el último momento para cambiar ATK/DEF antes de que se calcule el daño. Aquí se activan cartas como "Rush Recklessly" o similares. SOLO pueden activarse efectos de velocidad 2 que modifiquen ATK/DEF o que se activen específicamente "en el Damage Step".</li>
+            <li><strong>C. Damage Calculation:</strong> los puntos de vida cambian. Se compara ATK vs ATK (o ATK vs DEF). Aquí ocurre el daño de batalla.</li>
+            <li><strong>D. After Damage Calculation:</strong> efectos que se activan "después del cálculo de daño" van aquí, así como los efectos Flip de monstruos volteados.</li>
+            <li><strong>E. End of Damage Step:</strong> los monstruos destruidos por combate son enviados al cementerio aquí. Efectos de "cuando sea destruido por combate" se activan en este punto.</li>
+        </ul>
+        <p class="form-nb-text">Durante el Damage Step hay restricciones muy específicas sobre qué puedes activar. En general, SOLO puedes activar efectos de velocidad 2+ que modifiquen ATK/DEF, efectos que se activan explícitamente "durante el Damage Step", Counter Traps (velocidad 3), y efectos mandatorios. Casi todas las Handtraps y las Trampas Normales NO pueden activarse durante el Damage Step.</p>
+
+        <h3 class="form-nb-subtitle">⚡ Daño de Batalla vs Daño de Efecto</h3>
+        <ul class="form-nb-list">
+            <li><strong>Daño de Batalla:</strong> ocurre cuando un monstruo ataca y los LP cambian por esa razón. Puede ser negado o modificado por cartas específicas que aplican durante la Battle Phase o el Damage Step.</li>
+            <li><strong>Daño de Efecto:</strong> ocurre cuando un efecto de carta dice "inflige X de daño". No puede ser negado por cartas que solo aplican a daño de batalla. Funciona fuera del Damage Step, en cualquier fase.</li>
+            <li><strong>Conversión de Daño:</strong> algunas cartas convierten el daño de batalla en daño de efecto, o hacen que el oponente tome el daño en vez de tú. Cuando dos efectos del mismo orden de prioridad se aplican, el daño ocurre 1 sola vez y tiene prioridad el jugador cuyo turno es.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔄 Replay Attacks</h3>
+        <p class="form-nb-text">Un Replay ocurre cuando el objetivo de un ataque desaparece del campo durante el Battle Step (antes de entrar al Damage Step).</p>
+        <ul class="form-nb-list">
+            <li>El monstruo atacante puede elegir un nuevo objetivo, o puede elegir no atacar en absoluto.</li>
+            <li>Si aparecieron nuevos monstruos en campo (por una invocación en respuesta), pueden ser seleccionados como nuevo objetivo.</li>
+            <li>El Replay solo ocurre en el Battle Step, no durante el Damage Step. Si el objetivo desaparece ya dentro del Damage Step, el ataque continúa pero no inflige daño de batalla (el objetivo ya no está).</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">En torneo, declarar el ataque y entrar al Damage Step sin dar ventana al oponente es un error que puede costarte la partida. Siempre anuncia "declaro ataque con X contra Y" y espera antes de pasar a calcular el daño. Esa pausa es la ventana de tu oponente para responder.</p>
+    `; },
+
+    _topicIfWhenTiming: function () { return `
+        <h2 class="form-nb-title">IF vs WHEN y Timing Avanzado</h2>
+        <p class="form-nb-text">"Miss the timing" es uno de los conceptos más mal entendidos en Yu-Gi-Oh!. Un jugador que no entiende la diferencia entre IF y WHEN perderá efectos clave en momentos críticos — o los usará fuera de tiempo sin saberlo.</p>
+
+        <h3 class="form-nb-subtitle">🔀 La Diferencia Fundamental</h3>
+        <ul class="form-nb-list">
+            <li><strong>WHEN (cuando) — opcional:</strong> el efecto tiene una ventana muy específica para activarse. Si el evento que lo activa NO fue "lo último que ocurrió" antes de que se abra la nueva ventana de activación, el efecto "miss the timing" y NO puede activarse. "When X: you can do Y" = tiene posibilidad de miss the timing.</li>
+            <li><strong>IF (si) — opcional:</strong> más flexible que WHEN. Solo necesita que la condición se haya cumplido en algún momento del proceso, no necesariamente ser lo "último". Menos propenso a miss the timing. "If X: you can do Y" = generalmente no pierde el timing.</li>
+            <li><strong>WHEN / IF — mandatorio:</strong> si dice "must" o es claramente mandatorio (sin "you can"), NUNCA pierde el timing. Siempre se activa si la condición ocurre.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">❓ Qué Significa "Miss the Timing"</h3>
+        <p class="form-nb-text">Ocurre cuando el efecto usa WHEN (opcional) y la condición de activación ocurrió, pero NO fue el último evento antes de que se abra la nueva ventana de activación.</p>
+        <ul class="form-nb-list">
+            <li><strong>Ejemplo:</strong> la carta X dice "When this card is sent to the GY: you can add 1 card...".</li>
+            <li><strong>Escenario A:</strong> la carta X fue enviada al cementerio como el último paso de un efecto que resolvió → el efecto PUEDE activarse, no miss the timing.</li>
+            <li><strong>Escenario B:</strong> la carta X fue enviada al cementerio como parte de un efecto que también hizo otras cosas después (ej: "envía X al cementerio, luego invoca especialmente Y") — el envío al cementerio NO fue lo último que pasó → el efecto PIERDE el timing y no puede activarse.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">📋 El Timing de Activación General</h3>
+        <p class="form-nb-text">Al final de una cadena que resuelve, se abre una nueva ventana. En esa ventana, los efectos se activan en este orden de prioridad:</p>
+        <ul class="form-nb-list">
+            <li>1. Efectos mandatorios (SIEMPRE primero).</li>
+            <li>2. Efectos Trigger opcionales del jugador activo.</li>
+            <li>3. Efectos Trigger opcionales del jugador no activo.</li>
+            <li>4. Efectos rápidos (Quick Effects) de ambos jugadores.</li>
+        </ul>
+        <p class="form-nb-text">Si en ese momento hay múltiples triggers opcionales del mismo jugador, ese jugador elige el orden en que se activan.</p>
+
+        <h3 class="form-nb-subtitle">🔁 "Each Time" — Sin Límite de Activaciones</h3>
+        <p class="form-nb-text">Cuando un efecto dice "each time X happens: do Y", puede activarse múltiples veces en el mismo turno si la condición se repite. No está limitado a "once per turn" implícitamente. Ej: "Each time a Spell Card is activated: gain 500 LP" — si tu oponente activa 3 hechizos en un turno, ganas 1500 LP en total.</p>
+
+        <h3 class="form-nb-subtitle">🤫 Efectos en Zona de Conocimiento Privado</h3>
+        <p class="form-nb-text">Las cartas en la mano y el deck son "conocimiento privado" — el oponente no sabe qué hay ahí. Los efectos que se activan desde esas zonas tienen una prioridad menor en ciertas reglas del OCG, aunque en TCG aplica igual (ver Tema: Formatos y sus Diferencias). Ej: Ash Blossom activa su efecto desde la mano; después de que la cadena se construye, se revela.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Cuando no estés seguro de si tu efecto "miss the timing": 1) ¿Dice "when" y "you can"? → Potencial miss. 2) ¿El evento que activa el efecto fue lo último que ocurrió? → No miss. 3) ¿El efecto es mandatorio? → Nunca miss. En torneo, ante la duda, declara el efecto y deja que el juez decida.</p>
     `; },
 
     // ===============================
