@@ -1,0 +1,94 @@
+================================================================
+  TEMA 13: RULINGS DE INVOCACIONES
+  Nivel: Competitivo
+================================================================
+
+Las invocaciones son el corazón de cada jugada. Saber exactamente qué tipo
+de invocación estás realizando, cuándo puede ser negada, y qué consecuencias
+tiene la negación, es lo que determina si puedes o no continuar el combo.
+
+----------------------------------------------------------------
+  INVOCACIÓN INHERENTE vs INVOCACIÓN POR EFECTO
+----------------------------------------------------------------
+
+INVOCACIÓN INHERENTE
+  Es la que realizas directamente por las reglas del juego, sin necesitar
+  que un efecto de carta la active. Se coloca en el Eslabón 1 de una cadena
+  o directamente sin cadena.
+  Ej: Invocación Normal, Invocación Especial de un XYZ con 2 monstruos del mismo nivel,
+  Invocación Sincro con Tuner + no-Tuner, Invocación Link.
+
+INVOCACIÓN POR EFECTO
+  Es la que realiza un efecto de carta. La cadena ya está en marcha cuando
+  la invocación ocurre — no puedes responder a la invocación misma, solo al efecto.
+  Ej: "Invoca especialmente esta carta desde el cementerio" como parte de un efecto.
+
+¿Por qué importa?
+  Porque "negar una invocación" solo aplica a invocaciones inherentes.
+  No puedes "negar una invocación" que sea el resultado de resolver un efecto
+  (ya fue demasiado tarde — el efecto ya resolvió).
+
+----------------------------------------------------------------
+  NEGAR LA INVOCACIÓN Y SUS CONSECUENCIAS
+----------------------------------------------------------------
+
+Cuando niegas una invocación (con Solemn Warning, por ejemplo):
+  • El monstruo va al cementerio (o fuera del juego según la regla específica).
+  • La invocación cuenta como "negada" — el monstruo nunca llegó al campo.
+  • Efectos que dicen "si fue invocado exitosamente" NO se activarán.
+  • Efectos que dicen "si fue enviado al cementerio" SÍ pueden activarse.
+
+Si el monstruo iba a ser usado como material, y la invocación es negada:
+  Los materiales que ya fueron enviados NO regresan. Se van al cementerio
+  normalmente. La negación aplica al monstruo invocado, no a los materiales.
+
+----------------------------------------------------------------
+  DIFERENCIAS CLAVE POR TIPO DE INVOCACIÓN
+----------------------------------------------------------------
+
+TRIBUTO vs INVOCACIÓN ESPECIAL POR TRIBUTO
+  La Invocación Normal por tributo (monstruo de nivel 5+) es una invocación
+  normal que puede ser negada igual que cualquier otra.
+  
+  La Invocación Especial por tributo (Kaijus, Nibiru, Esfera de Ra) es una
+  invocación especial que ocurre como parte del efecto — el tributo es el costo,
+  no la invocación en sí.
+
+RITUAL vs FUSIÓN
+  El Ritual requiere la Magia de Ritual como efecto que realiza la invocación.
+  La invocación no es inherente — si niegas el efecto de la magia, el Ritual no sale.
+  
+  La Fusión es similar: la magia de fusión realiza la fusión como efecto.
+  La "Fusión de Contacto" en cambio es inherente — no usa magia de fusión.
+
+XYZ Y MATERIALES DEBAJO
+  Los materiales de un XYZ no están en el cementerio — están "adjuntos".
+  Los efectos del cementerio no los afectan.
+  Cuando un XYZ es destruido, sus materiales van al cementerio solo entonces.
+
+PÉNDULO Y LA NEGACIÓN DE ESCALA
+  Si te niegan 1 de las 2 cartas Péndulo que estás colocando como escala,
+  la otra queda colocada. Pero si no tienes la segunda escala ya puesta,
+  la Invocación Péndulo no puede realizarse sin ambas escalas activas.
+
+LINK Y ZONAS
+  Si no hay zonas del Extra Deck habilitadas para invocar un monstruo del Extra,
+  la invocación no puede realizarse aunque tengas los materiales.
+  Los Links habilitan zonas — sin ellas, solo tienes la zona central del Extra.
+
+FICHAS (TOKENS)
+  Son monstruos. Tienen tipo, atributo, nivel. Pueden ser materiales de
+  Sincro, XYZ, Link, Fusión. Pero no pueden ir al Extra Deck ni al deck.
+  Cuando dejan el campo, desaparecen — no van al cementerio.
+
+----------------------------------------------------------------
+  CONSEJO CLAVE
+----------------------------------------------------------------
+
+Antes de intentar una invocación de Extra Deck, confirma:
+  1. ¿Los materiales son válidos? (niveles, tipos, atributos según la carta)
+  2. ¿Hay zona disponible?
+  3. ¿Mi combo tiene restricciones que bloqueen esta invocación?
+  
+Muchos combos se rompen porque el jugador no leyó la restricción
+de una carta anterior que ya resolvió ese mismo turno.

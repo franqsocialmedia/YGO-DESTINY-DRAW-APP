@@ -1,0 +1,124 @@
+================================================================
+  TEMA 17: EL SIDE DECK
+  Nivel: Casual → Competitivo
+================================================================
+
+El Side Deck es la diferencia entre un jugador que "juega el deck" y uno
+que "juega el match". Un deck sin Side Deck pensado es un deck que renuncia
+a la mitad de la estrategia competitiva antes de empezar.
+
+----------------------------------------------------------------
+  QUÉ ES EL SIDE DECK
+----------------------------------------------------------------
+
+Es una zona de hasta 15 cartas que puedes intercambiar libremente con tu Main Deck
+y Extra Deck entre partidas del mismo match.
+
+Reglas básicas:
+  • La cantidad de cartas en tu Main Deck y Extra Deck no puede cambiar
+    entre partidas (si empezaste con 40 en Main, terminas con 40).
+  • Puedes hacer todos los intercambios que quieras, pero siempre 1 a 1.
+  • El oponente ve qué cambias visualmente (sabe que cambiaste X cartas),
+    pero no sabe exactamente qué metiste o sacaste.
+  • Solo puedes sidear entre partidas 2 y 3, no antes de la 1.
+
+----------------------------------------------------------------
+  PARA QUÉ SIRVE
+----------------------------------------------------------------
+
+El Side Deck te permite:
+
+1. AGREGAR COUNTERS ESPECÍFICOS
+   Si en la partida 1 descubres o confirmas que el oponente juega un deck
+   específico, puedes meter las cartas que más lo afectan.
+   Ej: Si juega Labrynth, metes Anti-Spell Fragrance o Spell Canceller.
+
+2. QUITAR CARTAS QUE NO SIRVEN
+   Algunas cartas de tu main deck no tienen uso en ciertos matchups.
+   Ej: Anti-Handtraps contra un deck sin Handtraps — sabes que no necesitas
+   "Crossout Designator" porque el oponente no las usa.
+
+3. CAMBIAR EL PLAN DE JUEGO COMPLETAMENTE
+   Algunos decks tienen un "plan B" de Side Deck tan poderoso que
+   la partida 2 es casi un deck diferente.
+   Ej: Meter un engine de "Going Second" cards si el oponente ganó el coin
+   flip y elige ir primero.
+
+----------------------------------------------------------------
+  CÓMO CONSTRUIR EL SIDE DECK
+----------------------------------------------------------------
+
+PASO 1 — Identifica los 3-4 decks más comunes del meta local
+  No el meta global de internet — el meta de tu torneo específico.
+  Las cartas que funcionan en tu meta local > las que funcionan en el meta mundial.
+
+PASO 2 — Para cada deck, identifica su punto débil
+  ¿Qué carta o efecto lo apaga completamente?
+  ¿Qué lo hace más lento o más inconsistente?
+
+PASO 3 — Busca cartas que cubran múltiples matchups
+  Una carta que sirve contra 3 decks es mejor que una que solo sirve contra 1.
+  Maximiza la cobertura por carta de Side Deck.
+
+PASO 4 — Define cuántas copias incluir
+  • 3 copias: si el matchup es crítico y necesitas verla casi siempre.
+  • 2 copias: si es útil pero no urgente.
+  • 1 copia: si es muy situacional o ya la tienes en el Main.
+
+PASO 5 — Decide qué sacas del Main para cada situación
+  Cada carta que metes del Side implica una que sale del Main.
+  Tener esto definido de antemano (sin improvisar) es la clave del siding efectivo.
+
+----------------------------------------------------------------
+  CUÁNDO SIDEAR Y CUÁNDO NO
+----------------------------------------------------------------
+
+SIDEAR MUCHO
+  Si el oponente tiene un mecanismo central que debes apagar.
+  Si tu plan A claramente no funcionó en la partida 1.
+  Si el oponente sideó también — asume que tiene counters para tu plan A.
+
+SIDEAR POCO O NADA
+  Si ganaste la partida 1 cómodamente — tu plan A funcionó.
+  Si tus Side Cards no son relevantes para este matchup específico.
+  Si cambiar mucho rompe la consistencia de tu deck.
+
+¿SIDEAR CONTRA TU PROPIO ESTILO?
+  A veces, si ganaste la partida 1 y el oponente sideó agresivamente contra ti,
+  meter algunas cartas "inesperadas" puede sorprenderlo.
+  Ej: Si eres un deck combo y el oponente mete Anti-Combo cards, podrías
+  sidear un engine de Control alternativo que no esperan.
+
+----------------------------------------------------------------
+  ANTI-METAS COMUNES POR TIPO DE DECK
+----------------------------------------------------------------
+
+Contra Combo Decks:
+  • Nibiru (si invocan 5+ en turno 1)
+  • Dimensional Barrier (declara el tipo de invocación especial del combo)
+  • Summon Limit (limita las invocaciones especiales por turno)
+  • Skill Drain (niega efectos de monstruos en campo)
+
+Contra Control Decks:
+  • Monstruos con efectos que no pueden ser negados
+  • Cartas de robo masivo para superar las interrupciones
+  • Twin Twisters / Cosmic Cyclone (destruye backrow)
+
+Contra Decks de Cementerio:
+  • Dimensional Shifter (todo va desterrado ese turno)
+  • Macro Cosmos / Dimensional Fissure (desterrar en vez de al cementerio)
+  • D.D. Crow / Ghost Belle (responde efectos de cementerio)
+
+Contra Graveyard Recursion:
+  • Necrovalley (el campo que bloquea el uso del cementerio)
+  • Imperial Iron Wall (nada puede ser desterrado — frena Outs al cementerio)
+
+----------------------------------------------------------------
+  CONSEJO CLAVE
+----------------------------------------------------------------
+
+El mejor Side Deck no es el que tiene las cartas más poderosas —
+es el que tiene las cartas más específicas para lo que vas a enfrentar.
+
+Un jugador con 15 cartas bien pensadas para su meta local gana más
+que uno con 15 Staples genéricos que sirven para "todo pero no para nada específico".

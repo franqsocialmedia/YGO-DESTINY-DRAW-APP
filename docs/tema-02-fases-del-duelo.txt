@@ -1,0 +1,84 @@
+================================================================
+  TEMA 2: LAS FASES DEL DUELO
+  Nivel: Novato
+================================================================
+
+Un duelo de Yu-Gi-Oh! no es caótico — tiene una estructura fija de fases
+que se repite cada turno. Entender cuándo puedes hacer qué cosa es la base
+de todo lo demás.
+
+----------------------------------------------------------------
+  LAS 6 FASES EN ORDEN
+----------------------------------------------------------------
+
+1. DRAW PHASE (Fase de Robo / DP)
+   • Robas 1 carta de tu deck.
+   • El jugador que va primero en el primer turno NO roba carta.
+   • Algunos efectos se activan obligatoriamente aquí (triggers de "inicio de turno").
+   • El oponente puede activar efectos de velocidad 2 en respuesta a tu robo.
+
+2. STANDBY PHASE (Fase de Espera / SP)
+   • Parece vacía, pero es donde muchos efectos de mantenimiento se activan.
+   • Ej: costos de mantener ciertos monstruos en campo, efectos periódicos.
+   • Ambos jugadores pueden activar efectos aquí.
+
+3. MAIN PHASE 1 (Fase Principal 1 / MP1)
+   • La fase más activa del turno.
+   • Puedes: invocar monstruos (1 invocación normal por turno), activar hechizos,
+     colocar trampas boca abajo, activar efectos de monstruos, cambiar posición.
+   • Aquí construyes tu campo antes de atacar.
+
+4. BATTLE PHASE (Fase de Batalla / BP)
+   • Declaras ataques con tus monstruos.
+   • El jugador que va primero en el primer turno NO puede atacar.
+   • Tiene subfases propias (Start, Battle Step, Damage Step, End).
+   • Los ataques se resuelven uno a uno.
+
+5. MAIN PHASE 2 (Fase Principal 2 / MP2)
+   • Igual que MP1, pero después de atacar.
+   • Útil para colocar trampas o invocar monstruos que no necesitan atacar.
+   • No puedes cambiar la posición de un monstruo que ya atacó ese turno.
+
+6. END PHASE (Fase Final / EP)
+   • Ambos jugadores descartan hasta tener 6 cartas en mano si tienen más.
+   • Efectos de "al final del turno" se resuelven aquí.
+   • Algunos efectos temporales expiran aquí.
+
+----------------------------------------------------------------
+  LAS 2 REGLAS DE ORO EN UN DUELO
+----------------------------------------------------------------
+
+REGLA 1 — Es un duelo de caballeros
+  Siempre pide permiso antes de pasar de fase ("¿Pasamos a batalla?").
+  Confirma con tu oponente cada acción importante.
+  Mantener el estado del juego claro evita disputas y malentendidos.
+  En torneo, una jugada no comunicada puede generar problemas serios.
+
+REGLA 2 — Se juega por partes
+  Cada vez que hagas algo, anuncia qué estás haciendo y espera respuesta.
+  No resuelvas varios pasos de golpe sin dar ventana al oponente.
+  El tiempo y la práctica te enseñarán qué omitir sin perder el estado.
+  Un oponente puede interrumpirte en casi cualquier momento si tiene
+  la carta correcta — darle esa ventana es parte del juego limpio.
+
+----------------------------------------------------------------
+  LO QUE CAMBIA ENTRE EL TURNO 1 Y LOS SIGUIENTES
+----------------------------------------------------------------
+
+• Turno 1 (jugador que va primero): sin robo en Draw Phase, sin ataque en Battle Phase.
+  Por eso ir primero significa protegerte con un buen campo, no ganar rápido.
+
+• Turno 2 en adelante: el juego está completamente abierto.
+  El jugador que va segundo tiene la ventaja de atacar primero y ver el campo rival.
+
+----------------------------------------------------------------
+  CONSEJO CLAVE
+----------------------------------------------------------------
+
+El error más común del novato es actuar sin pensar en las fases.
+Poner una trampa en MP1 la deja vulnerable ese turno porque el oponente
+puede destruirla antes de que "madure". Ponerla en MP2 (después de atacar)
+la protege hasta el turno del oponente.
+
+Aprender a usar MP2 correctamente es lo que separa a un jugador intuitivo
+de uno que realmente entiende la estructura del juego.

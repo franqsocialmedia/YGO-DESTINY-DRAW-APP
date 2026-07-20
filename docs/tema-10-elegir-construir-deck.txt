@@ -1,0 +1,119 @@
+================================================================
+  TEMA 10: CÓMO ELEGIR Y CONSTRUIR TU DECK
+  Nivel: Casual → Competitivo
+================================================================
+
+Elegir mal un deck es el error más costoso en tiempo, dinero y motivación.
+Construirlo mal es el segundo. Este tema te da el proceso completo, desde
+cero hasta tener algo funcional que puedas mejorar.
+
+----------------------------------------------------------------
+  PARTE 1: ELEGIR TU DECK
+----------------------------------------------------------------
+
+PASO 1 — Define qué quieres del deck
+  Antes de buscar cartas, responde:
+  • ¿Quiero un deck para torneos o para jugar casual?
+  • ¿Prefiero combos largos, control lento o agresión rápida?
+  • ¿Tengo presupuesto limitado?
+  • ¿Quiero un deck fácil de aprender o difícil pero poderoso?
+
+PASO 2 — Investiga antes de comprar
+  • Busca un simulador (EDOPro, Master Duel, Dueling Nexus) y prueba el deck
+    con un decklist de alguien más. Al menos 10 duelos antes de decidir.
+  • Revisa tutoriales del deck y lee los comentarios: los jugadores experimentados
+    suelen señalar las debilidades reales.
+  • Analiza si el deck fue o es meta, y cuánto tiempo le queda antes de la
+    próxima banlist o caja de expansión importante.
+
+PASO 3 — Evalúa la curva de aprendizaje
+  Decks fáciles: línea de combo fija, pocas decisiones, fácil de ejecutar.
+  Decks difíciles: múltiples líneas, muchas decisiones en cada paso,
+    la diferencia entre un buen y mal piloto es enorme.
+  
+  Un deck difícil en manos inexpertas pierde donde uno fácil ganaría.
+  Empieza con algo que puedas ejecutar correctamente antes de subir dificultad.
+
+PASO 4 — Considera la rareza y el precio
+  Un deck meta de alto nivel puede costar cientos de dólares.
+  Existen opciones budget que juegan al 70-80% del nivel original.
+  La versión budget sacrifica algo (consistencia, un endboard pieza, velocidad).
+  Evalúa si ese sacrificio es aceptable para tu objetivo.
+
+----------------------------------------------------------------
+  PARTE 2: ENTENDER LAS PIEZAS
+----------------------------------------------------------------
+
+CORE
+  Las cartas que definen al arquetipo. Sin ellas, el deck no es el deck.
+  Son fijas e irremplazables. Siempre en 3 copias si es posible.
+
+ENGINE
+  El conjunto funcional que arma el combo. Puede incluir cartas de otros
+  arquetipos que sirven de complemento.
+
+NON-ENGINE
+  Todo lo que no forma parte del combo pero protege, interrumpe o cierra.
+  Handtraps, Boardbreakers, tech cards. El non-engine define tu adaptación al meta.
+
+TECH CARD
+  Una carta no-Staple específica para combatir una amenaza del meta local.
+  Puede ser 1 copia. No siempre aparece en los decklists genéricos.
+
+----------------------------------------------------------------
+  PARTE 3: CONSTRUIR DESDE CERO
+----------------------------------------------------------------
+
+PASO 1 — Define el plan de juego o endboard
+  ¿Qué quieres tener en campo al final de tu primer turno?
+  Trabaja hacia atrás: para ese endboard, ¿qué necesitas invocar?
+  Para eso, ¿qué piezas necesitas en mano?
+
+PASO 2 — Arma el engine mínimo
+  Empieza con las cartas que más directamente llevan al endboard.
+  Sin preocuparte por el tamaño del deck todavía.
+
+PASO 3 — Agrega consistencia
+  Buscadores, searchers, extenders. Todo lo que hace más probable
+  que llegues al starter en la mano inicial.
+
+PASO 4 — Mira el espacio libre
+  ¿Cuántas cartas te quedan de 40? ¿Puedes recortar el engine sin
+  sacrificar consistencia? El objetivo es maximizar el non-engine.
+
+PASO 5 — Elige el non-engine según el meta
+  ¿Contra qué decks juegas? ¿Qué Handtraps los afectan más?
+  ¿Cuántos Boardbreakers necesito? ¿El deck necesita anti-handtraps?
+
+PASO 6 — Prueba y ajusta
+  Juega 10 partidas contra lo que esperas encontrar.
+  Anota qué cartas nunca usaste y cuáles te hicieron falta.
+  Cada ajuste debe tener una razón clara.
+
+----------------------------------------------------------------
+  HIPERGEOMETRÍA BÁSICA
+----------------------------------------------------------------
+
+La probabilidad de robar al menos 1 copia de una carta en la mano inicial
+(5 cartas de un deck de 40) según cuántas copias tienes:
+
+  1 copia  → ~11% de probabilidad
+  2 copias → ~21%
+  3 copias → ~30%
+
+Si necesitas tener la carta en mano al menos 50% de las veces,
+necesitas al menos 8-9 copias (contando searchers que buscan esa carta).
+
+Esto explica por qué los Starters siempre van en 3, más todos sus buscadores:
+para maximizar la probabilidad de abrir con la pieza que activa todo.
+
+----------------------------------------------------------------
+  CONSEJO CLAVE
+----------------------------------------------------------------
+
+El deck no termina en la construcción — termina en el conocimiento.
+El mejor deck del mundo en manos de alguien que no lo conoce profundamente
+pierde contra un deck mediocre en manos de quien lo domina completamente.
+
+Elige un deck que puedas comprometerte a practicar durante meses,
+no el que está de moda esta semana.
