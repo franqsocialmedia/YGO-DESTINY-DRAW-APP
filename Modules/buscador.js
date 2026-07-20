@@ -328,29 +328,109 @@ await new Promise(resolve => setTimeout(resolve, 0));
         });
     },
 
-    displayResults: function (cards) {
-        this.currentCards = cards;
-        const MAX = 200;
-        const shown  = cards.slice(0, MAX);
-        const excess = cards.length - shown.length;
+    resultsPageSize: 100,
+currentResultsPage: 0,
 
-        let html = '<div class="results-grid">';
-        shown.forEach((card, index) => {
-            const img = card.card_images?.[0]?.image_url_small || '';
-            html += `
-                <div class="card-item" onclick="Buscador.showCardActions(${index}, this)">
-                    <img src="${img}" class="card-image">
-                    <div class="card-name">${card.name}</div>
-                    <div class="card-type">${card.type}</div>
-                </div>`;
-        });
-        html += '</div>';
+displayResults: function (cards) {
+    this.currentCards = cards;
+    this.currentResultsPage = 0;
+    this._renderResultsPage();
+},
 
-        if (excess > 0) {
-            html += `<p class="results-cap-notice">Mostrando 100 de ${cards.length} resultados. Refina tu búsqueda para ver más.</p>`;
+_renderResultsPage: function () {
+    const cards = this.currentCards;
+    const PAGE_SIZE = this.resultsPageSize;
+    const totalPages = Math.max(1, Math.ceil(cards.length / PAGE_SIZE));
+
+    if (this.currentResultsPage >= totalPages) this.currentResultsPage = totalPages - 1;
+    if (this.currentResultsPage < 0) this.currentResultsPage = 0;
+
+    const start = this.currentResultsPage * PAGE_SIZE;
+    const pageCards = cards.slice(start, start + PAGE_SIZE);
+
+    let html = this._buildResultsSummary(cards);
+
+    if (totalPages > 1) {
+        html += '<div class="results-pagination">';
+        for (let p = 0; p < totalPages; p++) {
+            const from = p * PAGE_SIZE + 1;
+            const to = Math.min((p + 1) * PAGE_SIZE, cards.length);
+            html += `<button class="results-page-btn ${p === this.currentResultsPage ? 'results-page-active' : ''}"
+                        onclick="Buscador.goToResultsPage(${p})">${from}-${to}</button>`;
         }
-        this.resultsContainer.innerHTML = html;
-    },
+        html += '</div>';
+    }
+
+    html += '<div class="results-grid">';
+    pageCards.forEach((card, i) => {
+        const index = start + i;
+        const img = card.card_images?.[0]?.image_url_small || '';
+        html += `
+            <div class="card-item" onclick="Buscador.showCardActions(${index}, this)">
+                <img src="${img}" class="card-image">
+                <div class="card-name">${card.name}</div>
+                <div class="card-type">${card.type}</div>
+            </div>`;
+    });
+    html += '</div>';
+
+    this.resultsContainer.innerHTML = html;
+},
+
+goToResultsPage: function (page) {
+    this.currentResultsPage = page;
+    this._renderResultsPage();
+    this.resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+},
+
+_buildResultsSummary: function (cards) {
+    const monsterCounts = {}, spellCounts = {}, trapCounts = {};
+
+    cards.forEach(card => {
+        const type = card.type || '';
+        if (type.includes('Monster')) {
+            const cat = this._classifyMonster(type);
+            monsterCounts[cat] = (monsterCounts[cat] || 0) + 1;
+        } else if (type.includes('Spell')) {
+            const label = this._raceLabel('spell', card.race);
+            spellCounts[label] = (spellCounts[label] || 0) + 1;
+        } else if (type.includes('Trap')) {
+            const label = this._raceLabel('trap', card.race);
+            trapCounts[label] = (trapCounts[label] || 0) + 1;
+        }
+    });
+
+    const fmt = (counts, order) => order.filter(k => counts[k]).map(k => `${k} ${counts[k]}`).join(', ');
+
+    const parts = [];
+    const monsterStr = fmt(monsterCounts, ['Normales','Efecto','Péndulo','Ritual','Fusión','Sincro','XYZ','Link']);
+    if (monsterStr) parts.push(`Monstruos: ${monsterStr}`);
+    const spellStr = fmt(spellCounts, ['Normal','Juego Rápido','Continua','Ritual','Equipo','Campo']);
+    if (spellStr) parts.push(`Mágicas: ${spellStr}`);
+    const trapStr = fmt(trapCounts, ['Normal','Continua','Contraefecto']);
+    if (trapStr) parts.push(`Trampas: ${trapStr}`);
+
+    const breakdown = parts.length ? ` (${parts.join(' · ')})` : '';
+    return `<p class="results-count-summary"><b>Cartas encontradas:</b> ${cards.length}${breakdown}</p>`;
+},
+
+_classifyMonster: function (type) {
+    if (type.includes('Link')) return 'Link';
+    if (type.includes('XYZ')) return 'XYZ';
+    if (type.includes('Synchro')) return 'Sincro';
+    if (type.includes('Fusion')) return 'Fusión';
+    if (type.includes('Ritual')) return 'Ritual';
+    if (type.includes('Pendulum')) return 'Péndulo';
+    if (type.includes('Normal')) return 'Normales';
+    return 'Efecto';
+},
+
+_raceLabel: function (kind, race) {
+    const en = kind === 'spell' ? this.FILTER_DATA.spellSubtypesEn : this.FILTER_DATA.trapSubtypesEn;
+    const es = kind === 'spell' ? this.FILTER_DATA.spellSubtypes   : this.FILTER_DATA.trapSubtypes;
+    const idx = en.indexOf(race);
+    return idx >= 0 ? es[idx] : (race || 'Otro');
+},
 
     clear: function () {
 

@@ -751,7 +751,44 @@
     outline: none;
     border-color: rgba(255,215,0,.55);
 }
+.results-count-summary {
+    text-align: center;
+    font-size: .82rem;
+    color: rgba(241, 241, 241, 0.75);
+    padding: 8px 10px 4px;
+    margin: 0;
+    line-height: 1.4;
+}
 
+.results-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    padding: 4px 10px 8px;
+}
+
+.results-page-btn {
+    background: #1e0836;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(241, 241, 241, 0.75);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: .78rem;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+}
+
+.results-page-btn:hover {
+    border-color: rgba(255,215,0,.4);
+}
+
+.results-page-active {
+    background: rgba(255,215,0,.15);
+    border-color: var(--gold-color, #FFD700);
+    color: var(--gold-color, #FFD700);
+    font-weight: 600;
+}
 .results-cap-notice {
     text-align: center;
     font-size: .78rem;
