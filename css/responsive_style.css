@@ -394,6 +394,13 @@
 }
 
 @media (max-width: 600px) {
+    /* Formulario de Registro de Ronda: 1 columna y botón lateral más compacto */
+    .opt-slide .opt-form-grid { grid-template-columns: 1fr; }
+    .opt-slide-nav-btn { width: 32px; height: 32px; font-size: .9rem; }
+    .opt-slide-dot { padding: 3px 9px; font-size: .68rem; }
+}
+
+@media (max-width: 600px) {
     /* Duelo en Vivo */
     .duelo-std-display   { font-size: 3.2rem; }
     .duelo-timer-player  { font-size: 1.5rem; }

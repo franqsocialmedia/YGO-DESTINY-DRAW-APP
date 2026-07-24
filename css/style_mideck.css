@@ -2263,6 +2263,59 @@
     background: #0f0119;
     color: var(--text-light);
 }
+
+/* ── Slides del Formulario de Registro de Ronda ── */
+.opt-slide-dots {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.opt-slide-dot {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,215,0,.2);
+    color: rgba(241,241,241,.65);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: .72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+}
+.opt-slide-dot-active {
+    background: rgba(255,215,0,.14);
+    border-color: var(--gold-color);
+    color: var(--gold-color);
+}
+.opt-round-fields-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+.opt-slides-wrap { flex: 1; min-width: 0; }
+.opt-slide { display: none; }
+.opt-slide-active { display: block; }
+.opt-slide-nav-col {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+.opt-slide-nav-btn {
+    position: sticky;
+    top: 50%;
+    background: var(--gold-color);
+    color: #000;
+    border: none;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,.4);
+    transition: opacity .15s, transform .15s;
+}
+.opt-slide-nav-btn:hover { opacity: .85; transform: scale(1.05); }
 .opt-filter-banner {
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
     background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.35);

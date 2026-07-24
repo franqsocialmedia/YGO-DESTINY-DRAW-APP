@@ -1647,8 +1647,10 @@ notas:            v('opt-r-notas').trim()
             .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
         const oppStatusEl = document.getElementById('opt-oppdeck-status');
         if (oppStatusEl) oppStatusEl.textContent = '';
-        ['opt-r-starter','opt-r-extenders','opt-r-handtraps','opt-r-boardbreaker','opt-r-bricks','opt-r-board','opt-r-negate','opt-r-combo','opt-r-rival']
-            .forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
+        ['opt-r-starter','opt-r-extenders','opt-r-handtraps','opt-r-boardbreaker','opt-r-bricks']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
+['opt-r-board','opt-r-negate','opt-r-combo','opt-r-rival']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
         const tvEl = document.getElementById('opt-r-turnovic');
         if (tvEl) tvEl.value = '';
         const tdEl = document.getElementById('opt-r-turnoder');
@@ -1767,6 +1769,42 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
     if (tvic) tvic.style.display = res === 'victoria' ? '' : 'none';
     if (tder) tder.style.display = res === 'derrota'  ? '' : 'none';
 },
+
+    // Navegación manual entre los 3 slides del formulario de Registro de Ronda
+    _goToRoundSlide: function(n) {
+        const box = document.querySelector('.opt-round-modal-box') || document;
+        box.querySelectorAll('.opt-slide').forEach(s => {
+            s.classList.toggle('opt-slide-active', parseInt(s.dataset.slide, 10) === n);
+        });
+        box.querySelectorAll('.opt-slide-dot').forEach(d => {
+            d.classList.toggle('opt-slide-dot-active', parseInt(d.dataset.slide, 10) === n);
+        });
+        const firstField = box.querySelector(`.opt-slide[data-slide="${n}"] .opt-input`);
+        if (firstField) firstField.focus();
+    },
+
+    // Botón lateral fijo: avanza el foco campo por campo y cambia de slide al llegar al final
+    _advanceRoundField: function() {
+        const box = document.querySelector('.opt-round-modal-box');
+        if (!box) return;
+        const activeSlide = box.querySelector('.opt-slide.opt-slide-active');
+        if (!activeSlide) return;
+        const slideNum = parseInt(activeSlide.dataset.slide, 10);
+        // Solo campos visibles (respeta filas ocultas por _optToggleTipo, ej. tipo-vic/tipo-der)
+        const fields = Array.from(activeSlide.querySelectorAll('.opt-input'))
+            .filter(el => el.offsetParent !== null);
+        const idx = fields.indexOf(document.activeElement);
+        const nextIdx = idx === -1 ? 0 : idx + 1;
+        if (nextIdx < fields.length) {
+            fields[nextIdx].focus();
+            if (fields[nextIdx].tagName === 'INPUT') fields[nextIdx].select();
+        } else if (slideNum < 3) {
+            this._goToRoundSlide(slideNum + 1);
+        } else {
+            const submitBtn = box.querySelector('.opt-submit-btn');
+            if (submitBtn) submitBtn.focus();
+        }
+    },
     // ═══════════════════════════════════════════════════════════════════
     // COMPLEJIDAD DEL DECK — clasificador de dificultad de uso/aprendizaje
     // ═══════════════════════════════════════════════════════════════════
@@ -1921,9 +1959,67 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 ${(window.Matchups ? Matchups.getAll() : []).map(m =>
                     `<option value="${(m.opponentName || '').replace(/"/g,'&quot;')}">`).join('')}
             </datalist>
+            <div class="opt-slide-dots">
+                <button type="button" class="opt-slide-dot opt-slide-dot-active" data-slide="1" onclick="Deck._goToRoundSlide(1)">1. Robo</button>
+                <button type="button" class="opt-slide-dot" data-slide="2" onclick="Deck._goToRoundSlide(2)">2. Oponente</button>
+                <button type="button" class="opt-slide-dot" data-slide="3" onclick="Deck._goToRoundSlide(3)">3. Enfrentamiento</button>
+            </div>
+
+            <div class="opt-round-fields-row">
+            <div class="opt-slides-wrap">
+
+            <div class="opt-slide opt-slide-active" data-slide="1">
             <div class="opt-form-grid">
 
-                <div class="opt-group-hdr opt-full">🎯 Rival</div>
+                <div class="opt-group-hdr opt-full">🃏 Registrar Robo (Mano Inicial)</div>
+
+                <div class="opt-form-row">
+                    <label class="opt-lbl">Starters en mano</label>
+                    <select id="opt-r-starter" class="opt-input">
+                        <option value="0">0</option><option value="1">1</option>
+                        <option value="2">2</option><option value="3">3+</option>
+                    </select>
+                </div>
+
+                <div class="opt-form-row">
+                    <label class="opt-lbl">Extenders en mano</label>
+                    <select id="opt-r-extenders" class="opt-input">
+                        <option value="0">0</option><option value="1">1</option>
+                        <option value="2">2</option><option value="3">3+</option>
+                    </select>
+                </div>
+
+                <div class="opt-form-row">
+                    <label class="opt-lbl">Handtraps en mano</label>
+                    <select id="opt-r-handtraps" class="opt-input">
+                        <option value="0">0</option><option value="1">1</option>
+                        <option value="2">2</option><option value="3">3+</option>
+                    </select>
+                </div>
+
+                <div class="opt-form-row">
+                    <label class="opt-lbl">Boardbreaker en mano</label>
+                    <select id="opt-r-boardbreaker" class="opt-input">
+                        <option value="0">0</option><option value="1">1</option>
+                        <option value="2">2</option><option value="3">3+</option>
+                    </select>
+                </div>
+
+                <div class="opt-form-row">
+                    <label class="opt-lbl">Bricks/Tech en mano</label>
+                    <select id="opt-r-bricks" class="opt-input">
+                        <option value="0">0</option><option value="1">1</option>
+                        <option value="2">2</option><option value="3">3+</option>
+                    </select>
+                </div>
+
+            </div>
+            </div>
+
+            <div class="opt-slide" data-slide="2">
+            <div class="opt-form-grid">
+
+                <div class="opt-group-hdr opt-full">🎯 Registrar Oponente</div>
 
                 <div class="opt-form-row opt-full">
                     <label class="opt-lbl">Deck del oponente</label>
@@ -1942,7 +2038,32 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     <input type="text" id="opt-r-oppnotes" class="opt-input" placeholder="Ej: control endboard, cuidado con Droll..." maxlength="200">
                 </div>
 
-                <div class="opt-group-hdr opt-full">⚔ Resultado</div>
+            </div>
+            </div>
+
+            <div class="opt-slide" data-slide="3">
+            <div class="opt-form-grid">
+
+                <div class="opt-group-hdr opt-full">⚔ Registrar Enfrentamiento</div>
+
+                <div class="opt-form-row">
+                    <label class="opt-lbl">🛡️ Interrupciones exitosas (tuyas)</label>
+                    <input type="number" id="opt-r-negate" class="opt-input" min="0" max="20" placeholder="0">
+                </div>
+                <div class="opt-form-row">
+                    <label class="opt-lbl">⚔️ Limpieza de campo exitosa (tuya)</label>
+                    <input type="number" id="opt-r-board" class="opt-input" min="0" max="15" placeholder="0">
+                </div>
+                <div class="opt-form-row">
+                    <label class="opt-lbl">🛑 Interrupción exitosa del rival</label>
+                    <input type="number" id="opt-r-combo" class="opt-input" min="0" max="20" placeholder="0">
+                </div>
+                <div class="opt-form-row">
+                    <label class="opt-lbl">💢 Limpieza de campo exitosa (rival)</label>
+                    <input type="number" id="opt-r-rival" class="opt-input" min="0" max="15" placeholder="0">
+                </div>
+
+                <div class="opt-group-hdr opt-full">Resultado</div>
 
                 <div class="opt-form-row">
                     <label class="opt-lbl">¿Resultado?</label>
@@ -1991,7 +2112,6 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
 
                 <div class="opt-form-row opt-full">
                     <label class="opt-lbl">Presión de tiempo</label>
-                    
                     <select id="opt-r-tiempo" class="opt-input">
                         <option value="holgado">🟢 Holgado</option>
                         <option value="ajustado">🟡 Ajustado (&lt;60s por turno)</option>
@@ -1999,73 +2119,20 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     </select>
                 </div>
 
-                <div class="opt-group-hdr opt-full">🃏 Mano Inicial</div>
-
-                <div class="opt-form-row">
-                    <label class="opt-lbl">Starters en mano</label>
-                    <select id="opt-r-starter" class="opt-input">
-                        <option value="0">0</option><option value="1">1</option>
-                        <option value="2">2</option><option value="3">3+</option>
-                    </select>
-                </div>
-
-                <div class="opt-form-row">
-                    <label class="opt-lbl">Extenders en mano</label>
-                    <select id="opt-r-extenders" class="opt-input">
-                        <option value="0">0</option><option value="1">1</option>
-                        <option value="2">2</option><option value="3">3+</option>
-                    </select>
-                </div>
-
-                <div class="opt-form-row">
-                    <label class="opt-lbl">Handtraps en mano</label>
-                    <select id="opt-r-handtraps" class="opt-input">
-                        <option value="0">0</option><option value="1">1</option>
-                        <option value="2">2</option><option value="3">3+</option>
-                    </select>
-                </div>
-
-                <div class="opt-form-row">
-                    <label class="opt-lbl">Boardbreaker en mano</label>
-                    <select id="opt-r-boardbreaker" class="opt-input">
-                        <option value="0">0</option><option value="1">1</option>
-                        <option value="2">2</option><option value="3">3+</option>
-                    </select>
-                </div>
-
-                <div class="opt-form-row">
-                    <label class="opt-lbl">Bricks/Tech en mano</label>
-                    <select id="opt-r-bricks" class="opt-input">
-                        <option value="0">0</option><option value="1">1</option>
-                        <option value="2">2</option><option value="3">3+</option>
-                    </select>
-                </div>
-
-                <div class="opt-group-hdr opt-full">⚙ Desarrollo</div>
-
-                <div class="opt-form-row">
-                    <label class="opt-lbl">🛑 Interrupciones importantes de parte del rival</label>
-                    <input type="number" id="opt-r-combo" class="opt-input" min="0" max="20" value="0">
-                </div>
-                <div class="opt-form-row">
-                    <label class="opt-lbl">⚔️ Veces que rompí campo</label>
-                    <input type="number" id="opt-r-board" class="opt-input" min="0" max="15" value="0">
-                </div>
-                <div class="opt-form-row">
-                    <label class="opt-lbl">🛡️ Interrupciones exitosas</label>
-                    <input type="number" id="opt-r-negate" class="opt-input" min="0" max="20" value="0">
-                </div>
-                <div class="opt-form-row">
-                    <label class="opt-lbl">💢 Veces que mi oponente rompió el campo</label>
-                    <input type="number" id="opt-r-rival" class="opt-input" min="0" max="15" value="0">
-                </div>
-
                 <div class="opt-form-row opt-full">
-                    <label class="opt-lbl">Notas rápidas (opcional)</label>
+                    <label class="opt-lbl">Notas adicionales (opcional)</label>
                     <input type="text" id="opt-r-notas" class="opt-input" placeholder="Ej: brick en extender, rival jugó Ash..." maxlength="120">
                 </div>
 
             </div>
+            </div>
+
+            </div>
+            <div class="opt-slide-nav-col">
+                <button type="button" class="opt-slide-nav-btn" onmousedown="event.preventDefault()" onclick="Deck._advanceRoundField()" title="Siguiente campo / slide">➜</button>
+            </div>
+            </div>
+
             <button class="opt-submit-btn" onclick="Deck.addOptimizacionRound()">➕ Registrar Ronda de Duelo</button>
         `;
     },
