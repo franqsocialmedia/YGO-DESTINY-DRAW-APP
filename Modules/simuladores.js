@@ -357,6 +357,8 @@ const Torneo = {
                     onclick="Torneo.showSimTab('torneo')">🏆 Torneo</button>
             <button class="sim-tab-btn" data-simtab="duelo"
                     onclick="Torneo.showSimTab('duelo')">⚔️ Duelo en Vivo</button>
+            <button class="sim-tab-btn" data-simtab="counters" data-section-id="sim-counters"
+                    onclick="Torneo.showSimTab('counters')">🛡️ Counters</button>
             <button class="sim-tab-btn" data-simtab="experimentacion" data-section-id="sim-experimentacion"
                     onclick="Torneo.showSimTab('experimentacion')">🧪 Experimentación</button>
             <button class="sim-tab-btn" data-simtab="practica"
@@ -365,6 +367,7 @@ const Torneo = {
         <div id="sim-mulligan-content"        style="display:none;"></div>
         <div id="sim-torneo-content"></div>
         <div id="sim-duelo-content"           style="display:none;"></div>
+        <div id="sim-counters-content"        style="display:none;"></div>
         <div id="sim-experimentacion-content" style="display:none;"></div>
         <div id="sim-practica-content"        style="display:none;"></div>
         <div id="sim-winrate-content"         style="display:none;"></div>`;
@@ -508,6 +511,11 @@ const Torneo = {
     if (dueloEl) {
         dueloEl.style.display = tab === 'duelo' ? '' : 'none';
         if (tab === 'duelo' && window.DueloEnVivo) DueloEnVivo.renderInto(dueloEl);
+    }
+    const ctrSimEl = document.getElementById('sim-counters-content');
+    if (ctrSimEl) {
+        ctrSimEl.style.display = tab === 'counters' ? '' : 'none';
+        if (tab === 'counters' && window.CounterSim) CounterSim.renderInto(ctrSimEl);
     }
     const expEl = document.getElementById('sim-experimentacion-content');
     if (expEl) {
@@ -3147,5 +3155,353 @@ _mulRenderAll: function () {
 };
 
 window.Hipergeometria = Hipergeometria;
+
+// ── COUNTER SIM — Simulador de Counters (Decks/Engines → Pool → Objetivo → Counters del Meta) ──
+const CounterSim = {
+    pool: {},        // Container B: {id:{data, qty, location}}
+    selection: {},   // Container C: {id:{data}}
+    counters: {},    // Container D: {id:{data, score, isPerfect, manual, estimated}}
+    _pickerTab: 'decks',
+    _targetSpecs: [],
+    _searchTimeout: null,
+    _searchResults: [],
+
+    renderInto: function (container) {
+        this.container = container;
+        container.innerHTML = `
+        <div class="ctrsim-wrap">
+            <h3 class="ctrsim-title">🛡️ Simulador de Counters</h3>
+            <p class="ctrsim-hint">Elige un deck/engine o busca cartas para armar tu pool, toca las cartas objetivo y descubre qué las contraataca desde el Meta.</p>
+
+            <div class="ctrsim-row-top">
+                <div class="ctrsim-box">
+                    <div class="ctrsim-box-title">📁 Decks / Engines</div>
+                    <div class="ctrsim-picker-tabs">
+                        <button class="ctrsim-ptab-btn ${this._pickerTab === 'decks' ? 'active' : ''}" onclick="CounterSim._switchPickerTab('decks')">Decks</button>
+                        <button class="ctrsim-ptab-btn ${this._pickerTab === 'engines' ? 'active' : ''}" onclick="CounterSim._switchPickerTab('engines')">Engines</button>
+                    </div>
+                    <div id="ctrsim-picker-list" class="ctrsim-picker-list">${this._renderPickerList()}</div>
+                </div>
+
+                <div class="ctrsim-box">
+                    <div class="ctrsim-box-title-row">
+                        <span class="ctrsim-box-title">🗂️ Pool de Cartas</span>
+                        <button class="ctrsim-btn-sm" onclick="CounterSim.openPoolSearch()">🔍 Buscar Cartas</button>
+                    </div>
+                    <div id="ctrsim-pool-grid" class="ctrsim-pool-grid">${this._renderPool()}</div>
+                    <button class="ctrsim-btn-sm ctrsim-btn-danger" onclick="CounterSim.clearPool()">🗑 Vaciar Pool</button>
+                </div>
+            </div>
+
+            <div class="ctrsim-box ctrsim-box-selection">
+                <div class="ctrsim-box-title">🎯 Cartas Objetivo (toca una carta del Pool para añadirla/quitarla)</div>
+                <div id="ctrsim-selection-strip" class="ctrsim-selection-strip">${this._renderSelection()}</div>
+                <button class="ctrsim-btn-sm ctrsim-btn-accent" onclick="CounterSim.calculateCounters()">🎯 Buscar Counters</button>
+            </div>
+
+            <div class="ctrsim-box ctrsim-box-counters">
+                <div class="ctrsim-box-title-row">
+                    <span class="ctrsim-box-title">🛡️ Cartas Counter</span>
+                    <button class="ctrsim-btn-sm" onclick="CounterSim.openCounterSearch()">🔍 Buscar Cartas</button>
+                </div>
+                <div id="ctrsim-counters-list" class="ctrsim-counters-list">${this._renderCounters()}</div>
+                <button class="ctrsim-btn-sm ctrsim-btn-primary" style="margin-top:10px;" onclick="CounterSim.convertToEngine()">✅ Convertir en Engine</button>
+            </div>
+        </div>`;
+    },
+
+    _imgFor: function (data, id) {
+        if (data?.card_images?.[0]?.image_url_small) return data.card_images[0].image_url_small;
+        const cid = id || data?.id;
+        return cid ? `https://images.ygoprodeck.com/images/cards_small/${cid}.jpg` : 'https://images.ygoprodeck.com/images/cards/back.jpg';
+    },
+
+    // ── Picker de Decks/Engines ─────────────────────────
+    _switchPickerTab: function (tab) {
+        this._pickerTab = tab;
+        if (this.container) this.renderInto(this.container);
+    },
+
+    _renderPickerList: function () {
+        if (this._pickerTab === 'decks') {
+            const items = [];
+            if (window.Deck && Object.keys(Deck.cards || {}).length) {
+                items.push({ label: `⭐ ${Deck.name} (activo)`, onclick: `CounterSim.addFromSource('active', 0)` });
+            }
+            (window.Deck ? Deck.getSavedDecks() : []).forEach((d, i) => {
+                items.push({ label: d.name, onclick: `CounterSim.addFromSource('saved', ${i})` });
+            });
+            if (!items.length) return '<div class="ctrsim-empty">Sin decks guardados.</div>';
+            return items.map(it => `<button class="ctrsim-picker-item" onclick="${it.onclick}">${it.label}</button>`).join('');
+        }
+        const engines = window.Engines ? Engines.getAll() : [];
+        if (!engines.length) return '<div class="ctrsim-empty">Sin engines guardados.</div>';
+        return engines.map((e, i) => `
+            <button class="ctrsim-picker-item" onclick="CounterSim.addFromSource('engine', ${i})">${e.name}</button>`).join('');
+    },
+
+    addFromSource: function (type, idx) {
+        let cards = {};
+        if (type === 'active' && window.Deck) cards = Deck.cards;
+        else if (type === 'saved'  && window.Deck)    cards = (Deck.getSavedDecks()[idx] || {}).cards || {};
+        else if (type === 'engine' && window.Engines) cards = (Engines.getAll()[idx] || {}).cards || {};
+
+        Object.entries(cards).forEach(([id, item]) => {
+            if (this.pool[id]) this.pool[id].qty += (item.qty || 1);
+            else this.pool[id] = { data: item.data, qty: item.qty || 1, location: item.location || 'main' };
+        });
+        this._refreshPool();
+    },
+
+    // ── Pool (Container B) ──────────────────────────────
+    _renderPool: function () {
+        const entries = Object.entries(this.pool);
+        if (!entries.length) return '<div class="ctrsim-empty">Pool vacío. Elige un deck/engine o busca cartas.</div>';
+        return entries.map(([id, item]) => {
+            const selected = !!this.selection[id];
+            return `
+<div class="ctrsim-pool-thumb ${selected ? 'ctrsim-thumb-selected' : ''}" onclick="CounterSim.toggleSelection('${id}')" title="${item.data?.name || ''}">
+    <img src="${this._imgFor(item.data, id)}" class="ctrsim-thumb-img" loading="lazy">
+    <div class="ctrsim-thumb-qty">x${item.qty}</div>
+</div>`;
+        }).join('');
+    },
+
+    _refreshPool: function () {
+        const el = document.getElementById('ctrsim-pool-grid');
+        if (el) el.innerHTML = this._renderPool();
+    },
+
+    clearPool: function () {
+        this.pool = {};
+        this.selection = {};
+        this._refreshPool();
+        this._refreshSelection();
+    },
+
+    // ── Selección objetivo (Container C) ────────────────
+    toggleSelection: function (id) {
+        if (this.selection[id]) delete this.selection[id];
+        else {
+            const item = this.pool[id];
+            if (!item) return;
+            this.selection[id] = { data: item.data };
+        }
+        this._refreshPool();
+        this._refreshSelection();
+    },
+
+    _renderSelection: function () {
+        const entries = Object.entries(this.selection);
+        if (!entries.length) return '<div class="ctrsim-empty">Sin cartas objetivo seleccionadas.</div>';
+        return entries.map(([id, item]) => `
+<div class="ctrsim-sel-thumb" title="${item.data?.name || ''}">
+    <img src="${this._imgFor(item.data, id)}" class="ctrsim-thumb-img" loading="lazy">
+    <button class="ctrsim-thumb-remove" onclick="CounterSim.toggleSelection('${id}')">✕</button>
+</div>`).join('');
+    },
+
+    _refreshSelection: function () {
+        const el = document.getElementById('ctrsim-selection-strip');
+        if (el) el.innerHTML = this._renderSelection();
+    },
+
+    // ── Búsqueda de cartas (compartida por Pool y Counters) ──
+    openPoolSearch:    function () { this._showSearchModal('pool'); },
+    openCounterSearch: function () { this._showSearchModal('counter'); },
+
+    _showSearchModal: function (target) {
+        document.getElementById('ctrsim-search-modal')?.remove();
+        const overlay = document.createElement('div');
+        overlay.id = 'ctrsim-search-modal';
+        overlay.className = 'ctrsim-search-modal';
+        overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+<div class="ctrsim-search-box eng-modal-box">
+    <div class="eng-modal-header">
+        <span>Buscar Cartas</span>
+        <button class="eng-modal-close" onclick="document.getElementById('ctrsim-search-modal').remove()">✕</button>
+    </div>
+    <input type="text" id="ctrsim-search-input" class="eng-input" placeholder="Nombre de la carta..."
+           oninput="CounterSim._onSearchInput('${target}')">
+    <div id="ctrsim-search-results" class="eng-search-results">
+        <div class="eng-search-hint">Escribe al menos 2 caracteres</div>
+    </div>
+</div>`;
+        document.body.appendChild(overlay);
+    },
+
+    _onSearchInput: function (target) {
+        clearTimeout(this._searchTimeout);
+        this._searchTimeout = setTimeout(() => this._doSearch(target), 380);
+    },
+
+    _doSearch: async function (target) {
+        const q   = document.getElementById('ctrsim-search-input')?.value?.trim();
+        const box = document.getElementById('ctrsim-search-results');
+        if (!box) return;
+        if (!q || q.length < 2) { box.innerHTML = '<div class="eng-search-hint">Escribe al menos 2 caracteres</div>'; return; }
+        box.innerHTML = '<div class="eng-search-hint">Buscando...</div>';
+        try {
+            const res  = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(q)}&num=30&offset=0`);
+            const data = await res.json();
+            if (!data.data?.length) { box.innerHTML = '<div class="eng-search-hint">Sin resultados</div>'; return; }
+            this._searchResults = data.data;
+            box.innerHTML = data.data.map((card, i) => `
+<div class="eng-sitem">
+    <img src="${this._imgFor(card, card.id)}" class="eng-sitem-img" loading="lazy">
+    <div class="eng-sitem-name">${card.name}</div>
+    <button class="eng-qty-btn eng-qty-active" onclick="CounterSim._addSearchResult('${target}', ${i})">＋ Añadir</button>
+</div>`).join('');
+        } catch (_) { box.innerHTML = '<div class="eng-search-hint">Error de conexión</div>'; }
+    },
+
+    _addSearchResult: function (target, idx) {
+        const card = this._searchResults[idx];
+        if (!card) return;
+        const id = String(card.id);
+        if (target === 'pool') {
+            if (this.pool[id]) this.pool[id].qty++;
+            else this.pool[id] = { data: card, qty: 1, location: window.Deck?.isExtraDeckCard(card) ? 'extra' : 'main' };
+            this._refreshPool();
+        } else {
+            if (!this.counters[id]) this.counters[id] = { data: card, score: null, isPerfect: false, manual: true };
+            this._refreshCounters();
+        }
+    },
+
+    // ── Cálculo de Counters (Container D) ───────────────
+    calculateCounters: function () {
+        const targets = Object.values(this.selection).map(s => s.data);
+        if (!targets.length) { alert('Selecciona al menos una carta objetivo (toca una carta del Pool).'); return; }
+
+        const specs = new Set();
+        targets.forEach(card => {
+            const roles    = window.Deck?.autoAssignRoles?.(card) ?? [];
+            const analysis = window.SpecialtyAnalyzer ? SpecialtyAnalyzer.analyzeCard({ ...card, roles }) : { specializations: [] };
+            (analysis.specializations || []).forEach(s => specs.add(s.name));
+        });
+
+        if (!specs.size) {
+            alert('Ninguna carta objetivo coincide con una mecánica registrada en Config → Pilares/Especialidades.');
+            return;
+        }
+
+        const found = {};
+        const cache = window.Estadisticas?.powerScoreCache?.cards;
+        if (cache && cache.length) {
+            cache.forEach(card => {
+                const matched = (card.counterDetails || []).filter(cd => specs.has(cd.mechanic));
+                if (!matched.length) return;
+                const score = matched.reduce((s, m) => s + m.bonus, 0);
+                found[String(card.cardId)] = { data: card.cardData || { id: card.cardId, name: `Carta #${card.cardId}` }, score, isPerfect: false, manual: false };
+            });
+        } else if (window.Estadisticas?.metaCardLibrary) {
+            Object.values(Estadisticas.metaCardLibrary).forEach(entry => {
+                const matched = (entry.counters || []).filter(c => specs.has(c.countersSpec));
+                if (!matched.length) return;
+                found[entry.id] = { data: { id: entry.id, name: entry.name, type: entry.type }, score: matched.length, isPerfect: false, manual: false, estimated: true };
+            });
+        }
+
+        // Conserva counters manuales / marcados como perfectos ya agregados a mano
+        Object.entries(this.counters).forEach(([id, c]) => {
+            if (c.manual || c.isPerfect) found[id] = { ...c, ...(found[id] ? { score: found[id].score } : {}) };
+        });
+
+        this.counters      = found;
+        this._targetSpecs   = [...specs];
+        this._refreshCounters();
+
+        if (!Object.keys(found).length) {
+            alert('No se encontraron counters en el Meta para esa(s) mecánica(s). Ejecuta "⚡ Poder de Cartas" en Estadísticas o añade counters a mano.');
+        }
+    },
+
+    _renderCounters: function () {
+        const entries = Object.entries(this.counters);
+        if (!entries.length) return '<div class="ctrsim-empty">Sin counters. Pulsa "🎯 Buscar Counters" o añade cartas a mano.</div>';
+        entries.sort((a, b) => {
+            if (a[1].isPerfect !== b[1].isPerfect) return a[1].isPerfect ? -1 : 1;
+            return (b[1].score || 0) - (a[1].score || 0);
+        });
+        return entries.map(([id, c]) => {
+            const scoreTxt = (c.score === null || c.score === undefined)
+                ? (c.manual ? 'Manual' : '—')
+                : `${c.score} pts${c.estimated ? ' (estimado)' : ''}`;
+            return `
+<div class="ctrsim-counter-row ${c.isPerfect ? 'ctrsim-counter-perfect' : ''}">
+    <img src="${this._imgFor(c.data, id)}" class="ctrsim-counter-img" loading="lazy">
+    <div class="ctrsim-counter-info">
+        <div class="ctrsim-counter-name">${c.data?.name || id}${c.isPerfect ? ' 🌟' : ''}</div>
+        <div class="ctrsim-counter-score">${scoreTxt}</div>
+    </div>
+    <div class="ctrsim-counter-btns">
+        <button class="ctrsim-btn-icon ${c.isPerfect ? 'ctrsim-btn-icon-active' : ''}" onclick="CounterSim.togglePerfect('${id}')" title="Marcar como Counter Perfecta">🌟</button>
+        <button class="ctrsim-btn-icon ctrsim-btn-icon-danger" onclick="CounterSim.removeCounter('${id}')" title="Quitar">✕</button>
+    </div>
+</div>`;
+        }).join('');
+    },
+
+    _refreshCounters: function () {
+        const el = document.getElementById('ctrsim-counters-list');
+        if (el) el.innerHTML = this._renderCounters();
+    },
+
+    togglePerfect: function (id) {
+        if (this.counters[id]) this.counters[id].isPerfect = !this.counters[id].isPerfect;
+        this._refreshCounters();
+    },
+
+    removeCounter: function (id) {
+        delete this.counters[id];
+        this._refreshCounters();
+    },
+
+    // ── Convertir en Engine ─────────────────────────────
+    convertToEngine: function () {
+        const entries = Object.entries(this.counters);
+        if (!entries.length) { alert('No hay cartas counter para convertir en Engine.'); return; }
+        const name = prompt('Nombre para el nuevo Engine:', 'Counters — ' + (this._targetSpecs.join(', ') || 'Meta'));
+        if (!name) return;
+
+        const cards = {};
+        entries.forEach(([id, c]) => {
+            cards[id] = { data: c.data, qty: 1, location: window.Deck?.isExtraDeckCard(c.data) ? 'extra' : 'main' };
+        });
+
+        let stats = { consistency: 0, power: 0, resilience: 0 };
+        if (window.Stats) {
+            const cardsForStats = {};
+            Object.entries(cards).forEach(([id, item]) => {
+                const roles = window.Deck ? Deck.autoAssignRoles(item.data) : [];
+                cardsForStats[id] = { ...item, roles };
+            });
+            const result = Stats.calculateInternalScore(cardsForStats);
+            stats = { consistency: result.consistency, power: result.power, resilience: result.resilience };
+        }
+
+        const engines = window.Engines ? Engines.getAll() : [];
+        engines.push({
+            name: name.trim(),
+            coverCardId:  entries[0][0],
+            coverCardImg: this._imgFor(entries[0][1].data, entries[0][0]),
+            cards,
+            roles: [],
+            notes: `Generado con el Simulador de Counters contra: ${this._targetSpecs.join(', ') || 'objetivo manual'}.`,
+            stats,
+            createdAt: Date.now()
+        });
+        if (window.Engines) {
+            Engines.saveAll(engines);
+            if (Engines._activeTab === 'engines') Engines._renderSidebar();
+        }
+        alert(`Engine "${name.trim()}" creado con ${entries.length} carta(s).`);
+    }
+};
+
+window.CounterSim = CounterSim;
+
 document.addEventListener('DOMContentLoaded', () => {
 });

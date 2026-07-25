@@ -662,3 +662,8 @@
         scroll-snap-type: x proximity;
     }
 }
+
+@media (max-width: 700px) {
+    .ctrsim-row-top { flex-direction: column; }
+    .ctrsim-thumb-img { width: 56px; height: 82px; }
+}

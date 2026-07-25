@@ -6127,3 +6127,87 @@
     padding: 2px 8px;
     border-radius: 10px;
 }
+
+/* ── SIMULADOR DE COUNTERS ── */
+.ctrsim-wrap { display: flex; flex-direction: column; gap: 16px; padding: 16px 0; }
+.ctrsim-title { margin: 0; color: var(--gold-color); }
+.ctrsim-hint { margin: 0; font-size: 0.85rem; color: rgba(255,255,255,0.6); }
+
+.ctrsim-row-top { display: flex; gap: 16px; flex-wrap: wrap; }
+.ctrsim-box {
+    flex: 1 1 320px;
+    background: var(--bg-card);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 14px;
+}
+.ctrsim-box-title { font-weight: 700; color: var(--text-light); }
+.ctrsim-box-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.ctrsim-box-selection, .ctrsim-box-counters { width: 100%; }
+
+.ctrsim-picker-tabs { display: flex; gap: 6px; margin: 8px 0; }
+.ctrsim-ptab-btn {
+    flex: 1; padding: 6px; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px;
+    background: transparent; color: var(--text-light); cursor: pointer; font-size: 0.8rem;
+}
+.ctrsim-ptab-btn.active { background: var(--accent-color); color: #111; border-color: var(--accent-color); }
+
+.ctrsim-picker-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+.ctrsim-picker-item {
+    text-align: left; padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.03); color: var(--text-light); cursor: pointer;
+}
+.ctrsim-picker-item:hover { background: rgba(255,255,255,0.08); }
+
+.ctrsim-pool-grid, .ctrsim-selection-strip {
+    display: flex; flex-wrap: wrap; gap: 8px; min-height: 90px; padding: 8px 0;
+}
+.ctrsim-selection-strip { flex-wrap: nowrap; overflow-x: auto; }
+
+.ctrsim-pool-thumb, .ctrsim-sel-thumb {
+    position: relative; width: 64px; cursor: pointer; flex: 0 0 auto;
+}
+.ctrsim-thumb-img { width: 64px; height: 93px; object-fit: cover; border-radius: 6px; border: 2px solid transparent; }
+.ctrsim-thumb-selected .ctrsim-thumb-img { border-color: var(--gold-color); }
+.ctrsim-thumb-qty {
+    position: absolute; bottom: 2px; right: 2px; background: rgba(0,0,0,0.75); color: #fff;
+    font-size: 0.65rem; padding: 1px 4px; border-radius: 4px;
+}
+.ctrsim-thumb-remove {
+    position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%;
+    border: none; background: var(--danger-color); color: #fff; font-size: 0.7rem; cursor: pointer; line-height: 1;
+}
+
+.ctrsim-btn-sm {
+    padding: 7px 12px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05); color: var(--text-light); font-size: 0.8rem; cursor: pointer; margin-top: 8px;
+}
+.ctrsim-btn-danger  { border-color: var(--danger-color);  color: var(--danger-color); }
+.ctrsim-btn-accent  { border-color: var(--gold-color);    color: var(--gold-color); width: 100%; }
+.ctrsim-btn-primary { background: var(--accent-color); color: #111; border-color: var(--accent-color); width: 100%; font-weight: 700; }
+
+.ctrsim-counters-list { display: flex; flex-direction: column; gap: 8px; }
+.ctrsim-counter-row {
+    display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+}
+.ctrsim-counter-perfect { border-color: var(--gold-color); background: rgba(255,215,0,0.06); }
+.ctrsim-counter-img { width: 48px; height: 70px; object-fit: cover; border-radius: 5px; }
+.ctrsim-counter-info { flex: 1; }
+.ctrsim-counter-name { font-weight: 600; color: var(--text-light); font-size: 0.88rem; }
+.ctrsim-counter-score { font-size: 0.78rem; color: rgba(255,255,255,0.6); }
+.ctrsim-counter-btns { display: flex; gap: 6px; }
+.ctrsim-btn-icon {
+    width: 30px; height: 30px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15);
+    background: transparent; cursor: pointer; font-size: 0.9rem;
+}
+.ctrsim-btn-icon-active { background: var(--gold-color); border-color: var(--gold-color); }
+.ctrsim-btn-icon-danger { color: var(--danger-color); border-color: var(--danger-color); }
+
+.ctrsim-empty { color: rgba(255,255,255,0.4); font-size: 0.85rem; padding: 10px 0; }
+
+.ctrsim-search-modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9200;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.ctrsim-search-box { max-width: 420px; width: 100%; }
