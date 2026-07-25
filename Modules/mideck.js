@@ -1663,11 +1663,11 @@ if (isEmpty) {
 html += `
     <h3 onclick="Deck.toggleSection('actions-sec')"></h3>
     <div id="actions-sec" class="deck-actions">
-        <button class="deck-move" onclick="Deck.saveDeck()" ${isEmpty ? 'disabled' : ''}>Guardar Deck</button>
-        <button class="deck-move" onclick="Deck.clearDeck()" ${isEmpty ? 'disabled' : ''}>Limpiar Deck</button>
-        <button class="deck-move" onclick="Deck.exportYDK()" ${isEmpty ? 'disabled' : ''}>Exportar Deck (.ydk)</button>
-        <button class="deck-move" onclick="Deck.importYDK()">Importar Deck (.ydk)</button>
-        <button class="deck-move" onclick="Deck.exportTXT()" ${isEmpty ? 'disabled' : ''}>Descargar Lista (.txt)</button>
+        <button class="deck-move" onclick="Deck.saveDeck()" ${isEmpty ? 'disabled' : ''}>💾 Guardar Deck</button>
+        <button class="deck-move" onclick="Deck.clearDeck()" ${isEmpty ? 'disabled' : ''}>🗑️ Limpiar Deck</button>
+        <button class="deck-move" onclick="Deck.exportYDK()" ${isEmpty ? 'disabled' : ''}>📤 Exportar Deck (.ydk)</button>
+        <button class="deck-move" onclick="Deck.importYDK()">📬​ Importar Deck (.ydk)</button>
+        <button class="deck-move" onclick="Deck.exportTXT()" ${isEmpty ? 'disabled' : ''}>📝​ Descargar Lista (.txt)</button>
         <button class="deck-move" onclick="Deck.downloadDecklist()" ${isEmpty ? 'disabled' : ''}>📸 Descargar Decklist</button>
     </div>`;
 
