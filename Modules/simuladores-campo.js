@@ -11,6 +11,7 @@ const ZonaPractica = {
     MAX_RESULTS:    100,
 
     _container:     null,
+    _hasOpened:     false,
     _searchTimeout: null,
     _activeMove:    null,
     _lastSearchResults: [],
@@ -2445,6 +2446,7 @@ _clearLog: function () {
     _updateFloatingBtns: function () {
         const inSim      = window.Navigation?.currentTab === 'simuladores';
 const inPractica = inSim && (window.Torneo?.simTab === 'practica')
+                   && this._hasOpened
                    && this._container && this._container.style.display !== 'none';
 
         // Ocultar por completo Atajos (y Helper, si existe) mientras se esta en Zona de Practica
@@ -2934,6 +2936,7 @@ const Experimentacion = {
     renderInto: function (container) {
         if (!container) return;
         this._container = container;
+        this._hasOpened = true;
         if (this._rendered) return;
         this._rendered = true;
         container.innerHTML = this._buildShell();
