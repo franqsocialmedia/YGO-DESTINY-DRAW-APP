@@ -2942,3 +2942,41 @@
     border-radius: 5px; color: var(--text-light); font-size: .68rem; padding: 4px 6px; cursor: pointer;
 }
 .combo-picker-actions button:hover { border-color: var(--gold-color); }
+
+/* ── Línea de Combos (Etapa 3) — Endboard ── */
+.combo-eb-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+.combo-eb-zone {
+    background: rgba(255,255,255,.03); border: 1px solid var(--border-color);
+    border-radius: 8px; padding: 8px 10px;
+}
+.combo-eb-cards { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.combo-eb-card {
+    display: flex; gap: 8px; width: 220px;
+    background: rgba(0,0,0,.2); border: 1px solid var(--border-color);
+    border-radius: 8px; padding: 8px; opacity: .6; transition: opacity .15s, border-color .15s;
+}
+.combo-eb-card.combo-eb-active { opacity: 1; border-color: rgba(0,184,148,.4); }
+.combo-eb-thumb { width: 52px; height: 76px; object-fit: cover; border-radius: 4px; cursor: pointer; flex-shrink: 0; }
+.combo-eb-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.combo-eb-name { font-size: .78rem; color: var(--text-light); font-weight: bold; }
+.combo-eb-switch { display: flex; align-items: center; gap: 5px; font-size: .68rem; opacity: .85; cursor: pointer; }
+.combo-eb-func-sel {
+    background: rgba(255,255,255,.06); border: 1px solid var(--border-color); border-radius: 5px;
+    color: var(--text-light); font-size: .7rem; padding: 3px 4px;
+}
+.combo-eb-deps { font-size: .66rem; opacity: .8; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.combo-eb-deps-label { opacity: .7; }
+.combo-eb-deps-edit-btn {
+    background: none; border: none; cursor: pointer; font-size: .7rem; padding: 0 2px; color: var(--text-light);
+}
+.combo-dep-chip {
+    background: rgba(255,215,0,.12); border: 1px solid rgba(255,215,0,.3);
+    border-radius: 8px; padding: 1px 6px; color: var(--gold-color);
+}
+.combo-dep-empty { opacity: .4; font-style: italic; }
+
+.combo-deps-modal { max-width: 420px; }
+.combo-deps-list { max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+.combo-deps-row { display: flex; align-items: center; gap: 8px; font-size: .82rem; cursor: pointer; }
+.combo-deps-row small { opacity: .55; }

@@ -3779,10 +3779,28 @@ const Combos = {
     finishCombo: function (deckName, comboId) {
         this._withCombo(deckName, comboId, combo => {
             if (!combo.zones) return;
-            combo.status     = 'finished';
-            combo.endboard   = combo.zones.field.map(c => ({ uid: c.uid, id: c.id, active: false, mainFunction: null }));
+            combo.status = 'finished';
+            const board  = [];
+            ['field', 'hand', 'gy', 'banish'].forEach(zone => {
+                (combo.zones[zone] || []).forEach(entry => {
+                    board.push({
+                        uid:          entry.uid,
+                        id:           entry.id,
+                        zone:         zone,
+                        active:       zone === 'field', // el campo se cuenta activo por defecto; HAND/GY/Banish se marcan a mano
+                        mainFunction: null,
+                        dependsOn:    []
+                    });
+                });
+            });
+            combo.endboard   = board;
             combo.finishedAt = Date.now();
         });
+        this._refresh();
+    },
+
+    reopenCombo: function (deckName, comboId) {
+        this._withCombo(deckName, comboId, combo => { combo.status = 'started'; });
         this._refresh();
     },
 
@@ -3905,6 +3923,124 @@ const Combos = {
         }).join('');
     },
 
+    // ── Endboard: cartas activas para follow up, función principal y dependencias ──
+    // Field arranca activa por defecto (está en juego); HAND/GY/Banish se marcan
+    // a mano — no todo lo que quedó ahí aporta valor real de follow up.
+    _roleOptionsForCard: function (id) {
+        const item  = Deck.cards[id];
+        const roles = (item && item.roles && item.roles.length) ? item.roles : [
+            'Starter', 'Extender', 'Handtrap', 'Boardbreaker', 'Disruptor', 'Removal',
+            'Negate-activation', 'Negate-effect', 'Boss Monster', 'Tower',
+            'Searcher', 'Recycler', 'Protector', 'Otro'
+        ];
+        return roles;
+    },
+
+    toggleEndboardActive: function (deckName, comboId, uid) {
+        this._withCombo(deckName, comboId, combo => {
+            const entry = combo.endboard?.find(e => e.uid === uid);
+            if (entry) entry.active = !entry.active;
+        });
+        this._refresh();
+    },
+
+    setEndboardFunction: function (deckName, comboId, uid, role) {
+        this._withCombo(deckName, comboId, combo => {
+            const entry = combo.endboard?.find(e => e.uid === uid);
+            if (entry) entry.mainFunction = role || null;
+        });
+        this._refresh();
+    },
+
+    openDependencyPicker: function (deckName, comboId, uid) {
+        document.getElementById('combo-deps-overlay')?.remove();
+        const combo = this._findCombo(deckName, comboId);
+        const entry = combo?.endboard?.find(e => e.uid === uid);
+        if (!combo || !entry) return;
+
+        const others = combo.endboard.filter(e => e.uid !== uid);
+        const rows = others.map(o => {
+            const name    = Deck.cards[o.id]?.data?.name || o.id;
+            const checked = (entry.dependsOn || []).includes(o.uid);
+            return `<label class="combo-deps-row">
+                <input type="checkbox" value="${o.uid}" ${checked ? 'checked' : ''}>
+                <span>${this._escape(name)} <small>(${this._zoneLabel(o.zone)})</small></span>
+            </label>`;
+        }).join('') || '<p class="deck-empty">No hay otras cartas en el endboard.</p>';
+
+        const overlay = document.createElement('div');
+        overlay.id = 'combo-deps-overlay';
+        overlay.className = 'deck-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div class="deck-modal combo-deps-modal">
+                <h3>🔗 Dependencias</h3>
+                <p class="deck-modal-note">Marca de qué cartas depende esta pieza para conservar su valor. Si pierdes esas cartas, esta ya no vale nada.</p>
+                <div class="combo-deps-list" id="combo-deps-list">${rows}</div>
+                <div class="deck-modal-buttons">
+                    <button onclick="Combos.saveDependencies('${deckName}','${comboId}','${uid}')">💾 Guardar</button>
+                    <button onclick="document.getElementById('combo-deps-overlay').remove()">Cancelar</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    },
+
+    saveDependencies: function (deckName, comboId, uid) {
+        const checked = Array.from(document.querySelectorAll('#combo-deps-list input[type=checkbox]:checked')).map(cb => cb.value);
+        this._withCombo(deckName, comboId, combo => {
+            const entry = combo.endboard?.find(e => e.uid === uid);
+            if (entry) entry.dependsOn = checked;
+        });
+        document.getElementById('combo-deps-overlay')?.remove();
+        this._refresh();
+    },
+
+    _renderEndboard: function (combo) {
+        const zones = [['field', '🏟️ Field'], ['hand', '✋ HAND'], ['gy', '⚰️ GY'], ['banish', '🌀 Banish']];
+        const groups = zones.map(([key, label]) => {
+            const entries = (combo.endboard || []).filter(e => e.zone === key);
+            if (!entries.length) return '';
+            return `<div class="combo-eb-zone">
+                <h5 class="combo-zone-title">${label}</h5>
+                <div class="combo-eb-cards">${entries.map(e => this._renderEndboardCard(combo, e)).join('')}</div>
+            </div>`;
+        }).join('');
+        return `<h4 class="combo-steps-title">🎯 Endboard</h4><div class="combo-eb-grid">${groups}</div>`;
+    },
+
+    _renderEndboardCard: function (combo, entry) {
+        const cardData = Deck.cards[entry.id]?.data;
+        const img   = cardData?.card_images?.[0]?.image_url_small || '';
+        const name  = cardData?.name || entry.id;
+        const roles = this._roleOptionsForCard(entry.id);
+        const deps  = (entry.dependsOn || []).map(depUid => {
+            const depEntry = combo.endboard.find(e => e.uid === depUid);
+            const depName  = depEntry ? (Deck.cards[depEntry.id]?.data?.name || depEntry.id) : '?';
+            return `<span class="combo-dep-chip">${this._escape(depName)}</span>`;
+        }).join('') || '<span class="combo-dep-empty">Sin dependencias</span>';
+
+        return `
+        <div class="combo-eb-card ${entry.active ? 'combo-eb-active' : ''}">
+            <img src="${img}" class="combo-eb-thumb" title="${name}" onclick="Combos.viewCard('${entry.id}')">
+            <div class="combo-eb-info">
+                <div class="combo-eb-name">${this._escape(name)}</div>
+                <label class="combo-eb-switch">
+                    <input type="checkbox" ${entry.active ? 'checked' : ''}
+                        onchange="Combos.toggleEndboardActive('${combo.deckName}','${combo.id}','${entry.uid}')">
+                    Activa para follow up
+                </label>
+                <select class="combo-eb-func-sel" onchange="Combos.setEndboardFunction('${combo.deckName}','${combo.id}','${entry.uid}', this.value)">
+                    <option value="">— Función principal —</option>
+                    ${roles.map(r => `<option value="${r}" ${entry.mainFunction === r ? 'selected' : ''}>${r}</option>`).join('')}
+                </select>
+                <div class="combo-eb-deps">
+                    <span class="combo-eb-deps-label">🔗 Depende de:</span> ${deps}
+                    <button class="combo-eb-deps-edit-btn" onclick="Combos.openDependencyPicker('${combo.deckName}','${combo.id}','${entry.uid}')">✏️</button>
+                </div>
+            </div>
+        </div>`;
+    },
+
     // ── Objetivo: editar / limpiar / guardar ──────────────────────
     editObjetivo: function (comboId) {
         document.getElementById(`combo-objetivo-view-${comboId}`).style.display = 'none';
@@ -3948,12 +4084,20 @@ const Combos = {
     _renderComboEditor: function (combo) {
         const objetivoText = combo.objetivo ? this._escape(combo.objetivo) : this.DEFAULT_OBJETIVO;
         const isDraft    = combo.status === 'draft';
-        const isStarted  = combo.status === 'started';
         const isFinished = combo.status === 'finished';
 
         let body = '';
         if (isDraft) {
             body = `<button class="opt-submit-btn" onclick="Combos.startCombo('${combo.deckName}','${combo.id}')">🎬 Empezar Combo</button>`;
+        } else if (isFinished) {
+            body = `
+            <div class="combo-controls-row">
+                <button class="deck-move" onclick="Combos.reopenCombo('${combo.deckName}','${combo.id}')">↩️ Reabrir Combo</button>
+            </div>
+            ${this._renderEndboard(combo)}
+            <h4 class="combo-steps-title">📜 Pasos del Combo (${(combo.steps || []).length})</h4>
+            <div class="combo-steps-log">${this._renderSteps(combo)}</div>
+            `;
         } else {
             const poolCount = combo.zones?.deckPool?.length || 0;
             body = `
@@ -3961,12 +4105,11 @@ const Combos = {
                 <button class="deck-move" onclick="Combos.drawCard('${combo.deckName}','${combo.id}')" ${poolCount ? '' : 'disabled'}>🃏 Robar 1 (${poolCount} restantes)</button>
                 <button class="deck-move" onclick="Combos.openDeckPicker('${combo.deckName}','${combo.id}')">📖 Ver Deck</button>
                 <button class="deck-move" onclick="Combos.resetZones('${combo.deckName}','${combo.id}')">🔄 Reiniciar Zonas</button>
-                ${isStarted ? `<button class="opt-submit-btn" onclick="Combos.finishCombo('${combo.deckName}','${combo.id}')">🏁 Finalizar Combo</button>` : ''}
+                <button class="opt-submit-btn" onclick="Combos.finishCombo('${combo.deckName}','${combo.id}')">🏁 Finalizar Combo</button>
             </div>
             ${this._renderZones(combo)}
             <h4 class="combo-steps-title">📜 Pasos del Combo (${(combo.steps || []).length})</h4>
             <div class="combo-steps-log">${this._renderSteps(combo)}</div>
-            ${isFinished ? `<p class="combo-editor-hint">✅ Combo finalizado. Endboard, Poder y nombre automático llegan en la próxima etapa.</p>` : ''}
             `;
         }
 
