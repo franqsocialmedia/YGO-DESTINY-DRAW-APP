@@ -117,6 +117,20 @@
 
     <!-- Columna principal: búsqueda + resultados -->
     <div class="buscador-main">
+    <div id="buscador-compact-bar" class="buscador-compact-bar">
+            <div class="compact-search-row">
+                <input type="text" id="compact-search-input" class="compact-search-input"
+                       placeholder="Buscar carta por nombre..." autocomplete="off">
+            </div>
+            <div class="compact-actions-row">
+                <button id="compact-clear-btn" class="compact-action-btn" title="Limpiar">✖</button>
+                <button id="compact-random-btn" class="compact-action-btn" title="Carta Random">🎲</button>
+                <button id="compact-search-btn" class="compact-action-btn" title="Buscar">🔍</button>
+            </div>
+            <div id="compact-chips-row" class="compact-chips-row"></div>
+            <button id="compact-expand-btn" class="compact-expand-strip" title="Expandir búsqueda">▾</button>
+        </div>
+
         <div class="search-container">
             <div class="search-bar">
                 <input 
@@ -178,6 +192,8 @@
                 </select>
             </div>
             <div id="advanced-filters-panel" class="advanced-filters-panel" style="display:none"></div>
+
+            <button id="buscador-collapse-btn" class="buscador-collapse-strip" title="Contraer búsqueda">▴</button>
         </div>
 
         <div id="search-results" class="results-container">
@@ -248,7 +264,7 @@
          Siempre visible en la parte inferior
          ==================================== -->
     <footer class="main-footer">
-        <p><b>VERSION 7.3 —— </b>Herramienta de apoyo para el juego de Yugioh!. Destiny Draw! 2026. By El Panda —— Mar 2026.</p>
+        <p><b>VERSION 7.4 —— </b>Herramienta de apoyo para el juego de Yugioh!. Destiny Draw! 2026. By El Panda —— Mar 2026.</p>
     </footer>
 
     <!-- ====================================

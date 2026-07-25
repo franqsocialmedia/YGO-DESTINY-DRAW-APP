@@ -132,6 +132,7 @@ SUBTYPE_API_MAP: {
         }
 
         this.setupEvents();
+        this._setupCompactBar();
     },
 
     setupEvents: function () {
@@ -158,7 +159,66 @@ SUBTYPE_API_MAP: {
             });
         }
     },
+// ── Barra de búsqueda compacta (colapsada por defecto) ──
+    _setupCompactBar: function () {
+        const compactInput  = document.getElementById('compact-search-input');
+        const compactSearch = document.getElementById('compact-search-btn');
+        const compactClear  = document.getElementById('compact-clear-btn');
+        const compactRandom = document.getElementById('compact-random-btn');
+        const expandBtn     = document.getElementById('compact-expand-btn');
+        const collapseBtn   = document.getElementById('buscador-collapse-btn');
 
+        if (compactInput) {
+            compactInput.addEventListener('input', () => {
+                this.searchInput.value = compactInput.value;
+            });
+            compactInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') this.search();
+            });
+        }
+        if (compactSearch) compactSearch.addEventListener('click', () => this.search());
+        if (compactClear)  compactClear.addEventListener('click',  () => this.clear());
+        if (compactRandom) compactRandom.addEventListener('click', () => this.randomCard());
+        if (expandBtn)   expandBtn.addEventListener('click',   () => this.toggleSearchExpanded(true));
+        if (collapseBtn) collapseBtn.addEventListener('click', () => this.toggleSearchExpanded(false));
+
+        window.addEventListener('resize', () => this._positionCompactBar());
+        this._syncCompactInput();
+        this._syncCompactChips();
+        this._positionCompactBar();
+    },
+
+    toggleSearchExpanded: function (expand) {
+        const main = document.querySelector('.buscador-main');
+        if (!main) return;
+        const willExpand = (expand !== undefined) ? expand : !main.classList.contains('search-expanded');
+        main.classList.toggle('search-expanded', willExpand);
+        if (!willExpand) {
+            this._syncCompactInput();
+            this._syncCompactChips();
+        }
+        this._positionCompactBar();
+    },
+
+    _syncCompactInput: function () {
+        const compactInput = document.getElementById('compact-search-input');
+        if (compactInput && this.searchInput) compactInput.value = this.searchInput.value;
+    },
+
+    _syncCompactChips: function () {
+        const chipsWrap = document.getElementById('compact-chips-row');
+        if (!chipsWrap) return;
+        chipsWrap.innerHTML = this.filterWords
+            .map(w => `<span class="compact-chip">${w}</span>`)
+            .join('');
+    },
+
+    _positionCompactBar: function () {
+        const bar = document.getElementById('buscador-compact-bar');
+        const nav = document.querySelector('.main-navigation');
+        if (!bar || !nav) return;
+        bar.style.top = nav.offsetHeight + 'px';
+    },
     // NUEVO: Agregar chip desde el input
     addChipFromInput: function () {
         if (!this.filterInput) return;
@@ -193,6 +253,8 @@ SUBTYPE_API_MAP: {
 
             this.chipsContainer.appendChild(chip);
         });
+
+        this._syncCompactChips();
     },
 
     // NUEVO: Eliminar un chip específico
@@ -350,17 +412,6 @@ _renderResultsPage: function () {
 
     let html = this._buildResultsSummary(cards);
 
-    if (totalPages > 1) {
-        html += '<div class="results-pagination">';
-        for (let p = 0; p < totalPages; p++) {
-            const from = p * PAGE_SIZE + 1;
-            const to = Math.min((p + 1) * PAGE_SIZE, cards.length);
-            html += `<button class="results-page-btn ${p === this.currentResultsPage ? 'results-page-active' : ''}"
-                        onclick="Buscador.goToResultsPage(${p})">${from}-${to}</button>`;
-        }
-        html += '</div>';
-    }
-
     html += '<div class="results-grid">';
     pageCards.forEach((card, i) => {
         const index = start + i;
@@ -373,6 +424,17 @@ _renderResultsPage: function () {
             </div>`;
     });
     html += '</div>';
+
+    if (totalPages > 1) {
+        html += '<div class="results-pagination">';
+        for (let p = 0; p < totalPages; p++) {
+            const from = p * PAGE_SIZE + 1;
+            const to = Math.min((p + 1) * PAGE_SIZE, cards.length);
+            html += `<button class="results-page-btn ${p === this.currentResultsPage ? 'results-page-active' : ''}"
+                        onclick="Buscador.goToResultsPage(${p})">${from}-${to}</button>`;
+        }
+        html += '</div>';
+    }
 
     this.resultsContainer.innerHTML = html;
 },
@@ -445,6 +507,7 @@ _raceLabel: function (kind, race) {
             '<p class="results-placeholder">Utiliza el buscador para encontrar cartas de Yu-Gi-Oh!</p>';
 
         this.searchInput.focus();
+        this._syncCompactInput();
     },
 randomCard: async function () {
         this.showLoading();
