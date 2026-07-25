@@ -8,7 +8,10 @@
 if (!window.Winrate) {
     window.Winrate = { refreshSection: function() {} };
 }
-
+// pdf.js — worker para el lector de Listas Oficiales (Importar Deck)
+if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'Modules/pdf.worker.min.js';
+}
 
 
 // ── Deck — deck activo: render sub-tabs Decklist/Construcción, guardado, importación/exportación .ydk, carta as, notas ──
@@ -672,7 +675,288 @@ tryDeckExperimentacion: function (deckName) {
             alert('Error al importar el deck. Verifica que el archivo sea válido.');
         }
     },
+// ===============================
+    // IMPORTAR DESDE LISTA OFICIAL (.pdf) — Konami Deck List
+    // ===============================
+    importPDF: function () {
+        if (typeof pdfjsLib === 'undefined') {
+            alert('No se pudo cargar el lector de PDF. Verifica que Modules/pdf.min.js esté presente.');
+            return;
+        }
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.pdf,application/pdf';
 
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            await this.parsePDFDeckList(file);
+        };
+
+        input.click();
+    },
+
+    _pdfHeaderPhrases: ['monster cards', 'spell cards', 'trap cards', 'extra deck', 'side deck'],
+
+    _pdfNormalizeExact: function (s) { return String(s).trim().toLowerCase(); },
+    _pdfNormalizeLoose: function (s) { return String(s).trim().toLowerCase().replace(/\s+/g, ' '); },
+
+    _pdfIsColumnHeaderText: function (text) {
+        return this._pdfHeaderPhrases.indexOf(text.trim().toLowerCase()) !== -1;
+    },
+
+    _pdfMapHeaderToZone: function (phrase) {
+        switch (phrase) {
+            case 'monster cards':
+            case 'spell cards':
+            case 'trap cards':  return 'main';
+            case 'extra deck':  return 'extra';
+            case 'side deck':   return 'side';
+            default:            return null;
+        }
+    },
+
+    _pdfIsIgnorableClusterText: function (text) {
+        const t = text.toLowerCase();
+        const patterns = [
+            'judge use only', 'please write', 'please include', 'full name', 'card game id',
+            'last initial', 'date:', 'event:', 'for judge use', 'deck list checked',
+            'judge initial', 'infraction', 'description:', 'deck checked rd', 'total in', '<<<'
+        ];
+        for (const p of patterns) { if (t.indexOf(p) !== -1) return true; }
+        if (/^\d+\s*\/\s*\d+$/.test(text.trim())) return true;
+        if (/^([A-Z])(\s[A-Z])+$/.test(text.trim())) return true;
+        return false;
+    },
+
+    _pdfIsBarcodeLikeLine: function (text) {
+        const tokens = text.trim().split(/\s+/);
+        if (tokens.length < 5) return false;
+        return tokens.every(tok => /^\d+$/.test(tok));
+    },
+
+    _pdfGenerateCandidates: function (rawText) {
+        const t = rawText.trim();
+        const candidates = [];
+        if (t.length === 0) return candidates;
+        const leadMatch = t.match(/^(\d{1,2})\s+(.+)$/);
+        if (leadMatch && leadMatch[2].trim().length > 0) {
+            candidates.push({ quantity: parseInt(leadMatch[1], 10), name: leadMatch[2].trim() });
+        }
+        const trailMatch = t.match(/^(.+?)\s+(\d{1,2})$/);
+        if (trailMatch && trailMatch[1].trim().length > 0) {
+            candidates.push({ quantity: parseInt(trailMatch[2], 10), name: trailMatch[1].trim() });
+        }
+        candidates.push({ quantity: 1, name: t });
+        return candidates;
+    },
+
+    _pdfDetectHeadersInLine: function (validClusters) {
+        let matches = [];
+        for (const c of validClusters) {
+            if (this._pdfIsColumnHeaderText(c.text)) matches.push({ text: c.text.trim().toLowerCase(), x: c.x });
+        }
+        if (matches.length > 0) return matches;
+        const found = [];
+        for (const c of validClusters) {
+            const lower = c.text.toLowerCase();
+            for (const phrase of this._pdfHeaderPhrases) {
+                const idx = lower.indexOf(phrase);
+                if (idx !== -1) {
+                    const span = Math.max(c.xEnd - c.x, 1);
+                    const charWidth = span / Math.max(lower.length, 1);
+                    found.push({ text: phrase, x: c.x + idx * charWidth });
+                }
+            }
+        }
+        return found;
+    },
+
+    // Extrae {zone, candidates[]} por cada línea de carta detectada en el PDF
+    _pdfExtractEntries: async function (file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({
+            data: arrayBuffer,
+            cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+            cMapPacked: true,
+            standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/standard_fonts/'
+        }).promise;
+
+        const extracted = [];
+        let columnDefs = [];
+        let anyHeaderFound = false;
+
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            const items = textContent.items
+                .map(it => ({ str: it.str, x: it.transform[4], y: it.transform[5], width: it.width || 0 }))
+                .filter(it => it.str && it.str.trim().length > 0);
+            if (items.length === 0) continue;
+
+            const yTolerance = 3;
+            const lines = [];
+            for (const it of items) {
+                let line = lines.find(l => Math.abs(l.y - it.y) <= yTolerance);
+                if (!line) { line = { y: it.y, items: [] }; lines.push(line); }
+                line.items.push(it);
+            }
+            lines.sort((a, b) => b.y - a.y);
+
+            const gapThreshold = 22;
+
+            for (const line of lines) {
+                line.items.sort((a, b) => a.x - b.x);
+                const clusters = [];
+                for (const it of line.items) {
+                    const last = clusters[clusters.length - 1];
+                    if (last && (it.x - last.xEnd) <= gapThreshold) {
+                        last.text += ' ' + it.str;
+                        last.xEnd = Math.max(last.xEnd, it.x + it.width);
+                    } else {
+                        clusters.push({ x: it.x, xEnd: it.x + it.width, text: it.str });
+                    }
+                }
+                clusters.forEach(c => c.text = c.text.replace(/\s+/g, ' ').trim());
+                const validClusters = clusters.filter(c => c.text.length > 0);
+                if (validClusters.length === 0) continue;
+
+                const headerHits = this._pdfDetectHeadersInLine(validClusters);
+                if (headerHits.length > 0) {
+                    headerHits.sort((a, b) => a.x - b.x);
+                    const newDefs = [];
+                    for (let i = 0; i < headerHits.length; i++) {
+                        const xMin = (i === 0) ? -Infinity : (headerHits[i - 1].x + headerHits[i].x) / 2;
+                        const xMax = (i === headerHits.length - 1) ? Infinity : (headerHits[i].x + headerHits[i + 1].x) / 2;
+                        newDefs.push({ zone: this._pdfMapHeaderToZone(headerHits[i].text), xMin, xMax });
+                    }
+                    columnDefs = newDefs;
+                    anyHeaderFound = true;
+                    continue;
+                }
+
+                if (validClusters.length === 1 && /^main deck$/i.test(validClusters[0].text)) continue;
+
+                const combinedRowText = validClusters.map(c => c.text).join(' ');
+                if (this._pdfIsBarcodeLikeLine(combinedRowText)) continue;
+                if (/^\d+\s*\/\s*\d+$/.test(combinedRowText.trim())) continue;
+                if (/^[A-Z](\s[A-Z])+$/.test(combinedRowText.trim())) continue;
+                if (validClusters.some(c => this._pdfIsIgnorableClusterText(c.text))) continue;
+                if (columnDefs.length === 0) continue;
+
+                for (const c of validClusters) {
+                    if (this._pdfIsIgnorableClusterText(c.text)) continue;
+                    const colDef = columnDefs.find(cd => c.x >= cd.xMin && c.x < cd.xMax);
+                    if (!colDef || !colDef.zone) continue;
+                    const candidates = this._pdfGenerateCandidates(c.text);
+                    if (candidates.length === 0) continue;
+                    extracted.push({ zone: colDef.zone, candidates });
+                }
+            }
+        }
+
+        if (!anyHeaderFound) {
+            throw new Error('PDF no reconocido: no se detectaron los encabezados de la Lista Oficial de Konami (Monster Cards / Spell Cards / Trap Cards / Extra Deck / Side Deck).');
+        }
+        return extracted;
+    },
+
+    // Descarga la base completa de YGOProDeck (sin caché) para el matching de nombres
+    _pdfFetchFullCardDB: async function () {
+        const response = await fetch('https://db.ygoprodeck.com/api/v7/cardinfo.php');
+        if (!response.ok) throw new Error('No se pudo descargar la base de cartas para el matching.');
+        const json = await response.json();
+        if (!json || !Array.isArray(json.data)) throw new Error('Respuesta inesperada de la API.');
+        return json.data;
+    },
+
+    _pdfMatchEntries: function (extracted, dbArray) {
+        const exactMap = new Map();
+        const looseMap = new Map();
+        for (const card of dbArray) {
+            const ek = this._pdfNormalizeExact(card.name);
+            if (!exactMap.has(ek)) exactMap.set(ek, card);
+            const lk = this._pdfNormalizeLoose(card.name);
+            if (!looseMap.has(lk)) looseMap.set(lk, card);
+        }
+
+        const matched = {};
+        const unknown = [];
+
+        for (const entry of extracted) {
+            let card = null, usedCand = null;
+            for (const cand of entry.candidates) {
+                card = exactMap.get(this._pdfNormalizeExact(cand.name)) ||
+                       looseMap.get(this._pdfNormalizeLoose(cand.name));
+                if (card) { usedCand = cand; break; }
+            }
+            if (card) {
+                const key = entry.zone + '_' + card.id;
+                if (matched[key]) matched[key].qty += usedCand.quantity;
+                else matched[key] = { zone: entry.zone, id: card.id, qty: usedCand.quantity, card };
+            } else {
+                unknown.push({ zone: entry.zone, name: entry.candidates[0].name, quantity: entry.candidates[0].quantity });
+            }
+        }
+        return { matched: Object.values(matched), unknown };
+    },
+
+    parsePDFDeckList: async function (file) {
+        const loadingEl = document.createElement('div');
+        loadingEl.id = 'pdf-import-overlay';
+        loadingEl.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.82);
+            display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;gap:16px;`;
+        loadingEl.innerHTML = `
+            <div class="power-loading-spinner"></div>
+            <p style="color:#f0d060;font-size:1rem;margin:0;">⏳ Leyendo Lista Oficial (.pdf)...</p>`;
+        document.body.appendChild(loadingEl);
+
+        try {
+            const extracted = await this._pdfExtractEntries(file);
+            loadingEl.querySelector('p').textContent = '⏳ Buscando cartas en la base de datos...';
+            const dbArray = await this._pdfFetchFullCardDB();
+            const { matched, unknown } = this._pdfMatchEntries(extracted, dbArray);
+
+            if (matched.length === 0) {
+                document.getElementById('pdf-import-overlay')?.remove();
+                alert('No se pudo identificar ninguna carta en el PDF. Verifica que sea una Lista Oficial de Konami válida.');
+                return;
+            }
+
+            const newCards = {};
+            matched.forEach(m => {
+                const id = m.card.id.toString();
+                newCards[id] = {
+                    data: m.card,
+                    qty: m.qty,
+                    location: m.zone,
+                    roles: this.autoAssignRoles(m.card)
+                };
+            });
+
+            const defaultName = file.name.replace(/\.pdf$/i, '');
+            const chosenName = prompt('Nombre para el deck importado:', defaultName) || defaultName;
+
+            this.cards = newCards;
+            this.name = chosenName;
+            this.render();
+            this.onDeckLoaded();
+            document.getElementById('pdf-import-overlay')?.remove();
+
+            let msg = `Deck importado desde PDF: ${this.name}\n${matched.length} carta(s) reconocida(s).`;
+            if (unknown.length > 0) {
+                msg += `\n\n⚠ ${unknown.length} línea(s) no reconocida(s):\n` +
+                    unknown.map(u => `- ${u.quantity}x ${u.name} (${u.zone})`).join('\n') +
+                    '\n\nAgrégalas manualmente desde el Buscador.';
+            }
+            alert(msg);
+
+        } catch (error) {
+            document.getElementById('pdf-import-overlay')?.remove();
+            console.error('Error al importar deck desde PDF:', error);
+            alert('Error al procesar el PDF: ' + error.message);
+        }
+    },
     // ===============================
     toggleSection: function (id) {
         const el = document.getElementById(id);
@@ -1271,7 +1555,7 @@ switchDeckStatsTab: function (tab) {
     });
 },
 switchMiDeckTab: function (tab) {
-    const panes = ['mideck-decklist-pane', 'mideck-construccion-pane', 'mideck-optimizacion-pane'];
+    const panes = ['mideck-importar-pane', 'mideck-decklist-pane', 'mideck-construccion-pane', 'mideck-optimizacion-pane'];
     panes.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -1333,9 +1617,19 @@ onDeckLoaded: function () {
 
 html += `
 <div class="mideck-subtabs-nav">
+    <button class="mideck-subtab-btn mideck-subtab-btn-import sim-tab-btn" data-tab="importar" onclick="Deck.switchMiDeckTab('importar')">📥 Importar Deck</button>
     <button class="mideck-subtab-btn active sim-tab-btn" data-tab="decklist" onclick="Deck.switchMiDeckTab('decklist')">📋 Decklist</button>
     <button class="mideck-subtab-btn sim-tab-btn" data-tab="construccion" onclick="Deck.switchMiDeckTab('construccion')">🔨 Construcción</button>
     <button class="mideck-subtab-btn sim-tab-btn" data-tab="optimizacion" onclick="Deck.switchMiDeckTab('optimizacion')">🎯 Optimización</button>
+</div>`;
+
+html += `
+<div id="mideck-importar-pane" style="display:none;">
+    <p class="mideck-import-label">Importar desde:</p>
+    <div class="mideck-import-actions">
+        <button class="deck-move" onclick="Deck.importYDK()">Archivo .ydk</button>
+        <button class="deck-move" onclick="Deck.importPDF()">Lista Oficial (.pdf)</button>
+    </div>
 </div>`;
 
 html += `

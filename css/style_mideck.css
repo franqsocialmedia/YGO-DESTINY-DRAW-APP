@@ -2185,7 +2185,29 @@
     color: #ffd700;
     border-color: #ffd700;
 }
-
+.mideck-subtab-btn-import {
+    background: #fff200;
+    color: #1a1a1a;
+    border-color: #fff200;
+    font-weight: 700;
+}
+.mideck-subtab-btn-import.active,
+.mideck-subtab-btn-import:hover {
+    background: #ffe600;
+    color: #1a1a1a;
+    border-color: #ffe600;
+    box-shadow: 0 0 8px rgba(255,242,0,0.6);
+}
+.mideck-import-label {
+    font-size: .9rem;
+    opacity: .8;
+    margin: 4px 0 10px;
+}
+.mideck-import-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
 /* ── 4 tabs en sidebar ── */
 .eng-tabs-4 {
     display: grid;
