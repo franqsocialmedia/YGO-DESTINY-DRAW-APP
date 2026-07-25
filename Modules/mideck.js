@@ -1696,7 +1696,7 @@ switchDeckStatsTab: function (tab) {
     });
 },
 switchMiDeckTab: function (tab) {
-    const panes = ['mideck-importar-pane', 'mideck-decklist-pane', 'mideck-construccion-pane', 'mideck-optimizacion-pane'];
+    const panes = ['mideck-importar-pane', 'mideck-decklist-pane', 'mideck-construccion-pane', 'mideck-optimizacion-pane', 'mideck-combos-pane'];
     panes.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -1713,6 +1713,10 @@ switchMiDeckTab: function (tab) {
         if (cStats) cStats.innerHTML = Estadisticas.renderDeckStats();
         const cAnalysis = document.getElementById('construccion-deck-analysis-sec');
         if (cAnalysis) cAnalysis.innerHTML = Estadisticas.renderDeckAnalysis();
+    }
+    if (tab === 'combos' && window.Combos) {
+        const pane = document.getElementById('mideck-combos-pane');
+        if (pane) pane.innerHTML = Combos.renderPane();
     }
 },
 // ===============================
@@ -1773,6 +1777,7 @@ html += `
     <button class="mideck-subtab-btn active sim-tab-btn" data-tab="decklist" onclick="Deck.switchMiDeckTab('decklist')">📋 Decklist</button>
     <button class="mideck-subtab-btn sim-tab-btn" data-tab="construccion" onclick="Deck.switchMiDeckTab('construccion')">🔨 Construcción</button>
     <button class="mideck-subtab-btn sim-tab-btn" data-tab="optimizacion" onclick="Deck.switchMiDeckTab('optimizacion')">🎯 Optimización</button>
+    <button class="mideck-subtab-btn sim-tab-btn" data-tab="combos" onclick="Deck.switchMiDeckTab('combos')">🧬 Línea de Combos</button>
 </div>`;
 
 html += `
@@ -1870,6 +1875,7 @@ if (!isEmpty) {
 
 html += `</div>`;
 html += `<div id="mideck-optimizacion-pane" style="display:none;">${!isEmpty ? this.renderOptimizacionPane() : this._renderEmptyDeckNotice('Carga un deck para usar Optimización.')}</div>`;
+html += `<div id="mideck-combos-pane" style="display:none;">${window.Combos ? Combos.renderPane() : ''}</div>`;
 this.container.innerHTML = html;
     },
 
@@ -3563,6 +3569,220 @@ _buildDeckViewPane: function (location) {
 window.Deck = Deck;
 document.addEventListener('DOMContentLoaded', () => Deck.init());
 
+
+// ── Combos — "Línea de Combos": registro de combos por deck guardado, vistos todos juntos en Mi Deck ──
+// Etapa 1: infraestructura, Objetivo editable y lista global. El registro de
+// pasos (HAND/GY/Banish/Field), Endboard, Poder, Choke Points, ramas y
+// restricciones se agregan en etapas siguientes — ver plan acordado.
+
+const Combos = {
+    STORAGE_PREFIX:  'combos_',
+    DEFAULT_OBJETIVO: 'Escribe aquí el objetivo del deck respondiendo a ¿Cuál estrategia emplea el deck con este combo? y ¿Cuál es el recurso que utiliza para realizarlo?',
+
+    _activeComboId: null,
+
+    // ── Persistencia (1 clave por deck: combos_${deckName}) ──────────
+    getAll: function (deckName) {
+        try {
+            const raw = localStorage.getItem(`${this.STORAGE_PREFIX}${deckName}`);
+            return raw ? (JSON.parse(raw) || []) : [];
+        } catch (e) { return []; }
+    },
+
+    saveAll: function (deckName, combos) {
+        localStorage.setItem(`${this.STORAGE_PREFIX}${deckName}`, JSON.stringify(combos));
+    },
+
+    getAllAcrossDecks: function () {
+        const result = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(this.STORAGE_PREFIX)) {
+                try {
+                    const combos = JSON.parse(localStorage.getItem(key)) || [];
+                    combos.forEach(c => result.push(c));
+                } catch (e) {}
+            }
+        }
+        return result;
+    },
+
+    _findCombo: function (deckName, comboId) {
+        return this.getAll(deckName).find(c => c.id === comboId) || null;
+    },
+
+    _updateCombo: function (deckName, comboId, patch) {
+        const combos = this.getAll(deckName);
+        const combo  = combos.find(c => c.id === comboId);
+        if (!combo) return null;
+        Object.assign(combo, patch);
+        this.saveAll(deckName, combos);
+        return combo;
+    },
+
+    // ── Crear / borrar combo ──────────────────────────────────────
+    startNewCombo: function () {
+        if (!Object.keys(Deck.cards || {}).length) {
+            alert('Carga o construye un deck antes de registrar un combo.');
+            return;
+        }
+        const deckName = Deck.name;
+        const combos = this.getAll(deckName);
+        const combo = {
+            id:            'combo_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+            deckName:      deckName,
+            objetivo:      '',
+            status:        'draft',   // draft | started | finished — etapa 2 usa started/finished
+            steps:         [],
+            startCards:    [],
+            endboard:      [],
+            chokePoints:   [],
+            restricciones: [],
+            parentComboId: null,
+            power:         0,
+            bossCardId:    null,
+            starterCardId: null,
+            name:          '',
+            comment:       '',
+            createdAt:     Date.now()
+        };
+        combos.push(combo);
+        this.saveAll(deckName, combos);
+        this._activeComboId = combo.id;
+        this._refresh();
+    },
+
+    confirmDeleteCombo: function (deckName, comboId) {
+        const overlay = document.createElement('div');
+        overlay.className = 'deck-overlay';
+        overlay.innerHTML = `
+            <div class="deck-modal deck-modal-warning">
+                <h3>Borrar Combo</h3>
+                <p class="deck-modal-note">¿Seguro que quieres borrar este combo? Se perderá todo su registro.</p>
+                <div class="deck-modal-buttons">
+                    <button class="btn-danger" onclick="Combos.deleteCombo('${deckName}','${comboId}');Deck.closeModal()">Sí, Borrar</button>
+                    <button onclick="Deck.closeModal()">Cancelar</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    },
+
+    deleteCombo: function (deckName, comboId) {
+        const combos = this.getAll(deckName).filter(c => c.id !== comboId);
+        this.saveAll(deckName, combos);
+        if (this._activeComboId === comboId) this._activeComboId = null;
+        this._refresh();
+    },
+
+    openCombo: function (deckName, comboId) {
+        if (deckName !== Deck.name) {
+            alert(`Este combo pertenece a "${deckName}". Cárgalo desde el panel de decks para poder editarlo.`);
+            return;
+        }
+        this._activeComboId = comboId;
+        this._refresh();
+    },
+
+    // ── Objetivo: editar / limpiar / guardar ──────────────────────
+    editObjetivo: function (comboId) {
+        document.getElementById(`combo-objetivo-view-${comboId}`).style.display = 'none';
+        document.getElementById(`combo-objetivo-edit-${comboId}`).style.display = 'block';
+    },
+
+    clearObjetivo: function (comboId) {
+        const input = document.getElementById(`combo-objetivo-input-${comboId}`);
+        if (input) input.value = '';
+    },
+
+    saveObjetivo: function (deckName, comboId) {
+        const input = document.getElementById(`combo-objetivo-input-${comboId}`);
+        const value = input ? input.value.trim() : '';
+        this._updateCombo(deckName, comboId, { objetivo: value });
+        this._refresh();
+    },
+
+    // ── Render ──────────────────────────────────────────────────
+    _refresh: function () {
+        const pane = document.getElementById('mideck-combos-pane');
+        if (pane) pane.innerHTML = this.renderPane();
+    },
+
+    renderPane: function () {
+        const activeDeckName = Deck.name;
+        const activeDraft = this._activeComboId ? this._findCombo(activeDeckName, this._activeComboId) : null;
+
+        let html = `<div class="combos-toolbar">
+            <button class="opt-submit-btn" onclick="Combos.startNewCombo()">➕ Nuevo Combo</button>
+        </div>`;
+
+        if (activeDraft) html += this._renderComboEditor(activeDraft);
+
+        html += `<h3 class="deck-section-title">📚 Lista de Combos</h3>`;
+        html += this._renderComboList();
+
+        return html;
+    },
+
+    _renderComboEditor: function (combo) {
+        const objetivoText = combo.objetivo ? this._escape(combo.objetivo) : this.DEFAULT_OBJETIVO;
+        return `
+        <div class="combo-editor" data-combo-id="${combo.id}">
+            <div class="combo-editor-header">
+                <span class="combo-editor-deck">🃏 ${this._escape(combo.deckName)}</span>
+                <button class="combo-discard-btn" onclick="Combos.confirmDeleteCombo('${combo.deckName}','${combo.id}')">🗑️ Borrar Combo</button>
+            </div>
+
+            <div class="combo-objetivo-box">
+                <div class="combo-objetivo-label">🎯 Objetivo</div>
+                <div id="combo-objetivo-view-${combo.id}" class="combo-objetivo-view">
+                    <p class="combo-objetivo-text ${combo.objetivo ? '' : 'combo-objetivo-placeholder'}">${objetivoText}</p>
+                    <button class="combo-objetivo-edit-btn" onclick="Combos.editObjetivo('${combo.id}')">✏️ Editar</button>
+                </div>
+                <div id="combo-objetivo-edit-${combo.id}" class="combo-objetivo-edit" style="display:none;">
+                    <textarea id="combo-objetivo-input-${combo.id}" class="combo-objetivo-textarea"
+                        placeholder="${this.DEFAULT_OBJETIVO}">${combo.objetivo ? this._escape(combo.objetivo) : ''}</textarea>
+                    <div class="combo-objetivo-edit-actions">
+                        <button class="combo-objetivo-clear-btn" onclick="Combos.clearObjetivo('${combo.id}')">🗑️ Limpiar</button>
+                        <button class="combo-objetivo-save-btn" onclick="Combos.saveObjetivo('${combo.deckName}','${combo.id}')">💾 Guardar</button>
+                    </div>
+                </div>
+            </div>
+
+            <p class="combo-editor-hint">🚧 HAND / GY / Banish / Field, Endboard y Poder llegan en la próxima etapa.</p>
+        </div>`;
+    },
+
+    _renderComboList: function () {
+        const all = this.getAllAcrossDecks();
+        if (!all.length) return `<p class="deck-empty">Aún no hay combos registrados.</p>`;
+
+        // Orden acordado: Deck (alfabético) → Poder (desc) → Boss.
+        // El Poder real y el Boss llegan en etapas 4/3; por ahora ordena con los
+        // valores que existan (0 y null hasta entonces).
+        const sorted = all.slice().sort((a, b) => {
+            const d = a.deckName.localeCompare(b.deckName);
+            if (d !== 0) return d;
+            const p = (b.power || 0) - (a.power || 0);
+            if (p !== 0) return p;
+            return (a.bossCardId || '').localeCompare(b.bossCardId || '');
+        });
+
+        return sorted.map(c => `
+        <div class="combo-list-row" onclick="Combos.openCombo('${c.deckName}','${c.id}')">
+            <span class="combo-list-deck">${this._escape(c.deckName)}</span>
+            <span class="combo-list-name">${c.name ? this._escape(c.name) : '(Sin nombre — ' + c.status + ')'}</span>
+            <span class="combo-list-power">⚡ ${c.power || 0}</span>
+        </div>`).join('');
+    },
+
+    _escape: function (str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    },
+};
+
+window.Combos = Combos;
 
 
 // ── Banlist — estado de banlist por formato; decora filas del deck y advierte cartas limitadas/prohibidas ──
