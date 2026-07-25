@@ -2043,6 +2043,7 @@ const Hipergeometria = {
 
     // ── ESTADO ───────────────────────────────────────────────────
     _searchResults:   [],
+    _searchPage: 0,
     _searchTimeout:   null,
     _allDecks:        [],
     _deckCardsCopy:   {},
@@ -3343,17 +3344,49 @@ const CounterSim = {
         if (!q || q.length < 2) { box.innerHTML = '<div class="eng-search-hint">Escribe al menos 2 caracteres</div>'; return; }
         box.innerHTML = '<div class="eng-search-hint">Buscando...</div>';
         try {
-            const res  = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(q)}&num=30&offset=0`);
+            const res  = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(q)}`);
             const data = await res.json();
             if (!data.data?.length) { box.innerHTML = '<div class="eng-search-hint">Sin resultados</div>'; return; }
             this._searchResults = data.data;
-            box.innerHTML = data.data.map((card, i) => `
+            this._searchPage    = 0;
+            this._renderSearchPage(target);
+        } catch (_) { box.innerHTML = '<div class="eng-search-hint">Error de conexión</div>'; }
+    },
+
+    _renderSearchPage: function (target) {
+        const box = document.getElementById('ctrsim-search-results');
+        if (!box) return;
+        const PAGE_SIZE   = 100;
+        const cards       = this._searchResults;
+        const totalPages  = Math.max(1, Math.ceil(cards.length / PAGE_SIZE));
+        if (this._searchPage >= totalPages) this._searchPage = totalPages - 1;
+        if (this._searchPage < 0) this._searchPage = 0;
+        const start     = this._searchPage * PAGE_SIZE;
+        const pageCards = cards.slice(start, start + PAGE_SIZE);
+
+        let html = pageCards.map((card, i) => `
 <div class="eng-sitem">
     <img src="${this._imgFor(card, card.id)}" class="eng-sitem-img" loading="lazy">
     <div class="eng-sitem-name">${card.name}</div>
-    <button class="eng-qty-btn eng-qty-active" onclick="CounterSim._addSearchResult('${target}', ${i})">＋ Añadir</button>
+    <button class="eng-qty-btn eng-qty-active" onclick="CounterSim._addSearchResult('${target}', ${start + i})">＋ Añadir</button>
 </div>`).join('');
-        } catch (_) { box.innerHTML = '<div class="eng-search-hint">Error de conexión</div>'; }
+
+        if (totalPages > 1) {
+            html += '<div class="ctrsim-search-pagination">';
+            for (let p = 0; p < totalPages; p++) {
+                const from = p * PAGE_SIZE + 1;
+                const to   = Math.min((p + 1) * PAGE_SIZE, cards.length);
+                html += `<button class="results-page-btn ${p === this._searchPage ? 'results-page-active' : ''}"
+                            onclick="CounterSim._goToSearchPage('${target}', ${p})">${from}-${to}</button>`;
+            }
+            html += '</div>';
+        }
+        box.innerHTML = html;
+    },
+
+    _goToSearchPage: function (target, page) {
+        this._searchPage = page;
+        this._renderSearchPage(target);
     },
 
     _addSearchResult: function (target, idx) {
@@ -3372,49 +3405,73 @@ const CounterSim = {
 
     // ── Cálculo de Counters (Container D) ───────────────
     calculateCounters: function () {
-        const targets = Object.values(this.selection).map(s => s.data);
-        if (!targets.length) { alert('Selecciona al menos una carta objetivo (toca una carta del Pool).'); return; }
+        const targetEntries = Object.entries(this.selection); // [id, {data}]
+        if (!targetEntries.length) { alert('Selecciona al menos una carta objetivo (toca una carta del Pool).'); return; }
 
-        const specs = new Set();
-        targets.forEach(card => {
-            const roles    = window.Deck?.autoAssignRoles?.(card) ?? [];
-            const analysis = window.SpecialtyAnalyzer ? SpecialtyAnalyzer.analyzeCard({ ...card, roles }) : { specializations: [] };
-            (analysis.specializations || []).forEach(s => specs.add(s.name));
+        // Especializaciones por carta objetivo (para saber a CUÁLES contraataca cada counter)
+        const targetSpecs = targetEntries.map(([id, item]) => {
+            const roles    = window.Deck?.autoAssignRoles?.(item.data) ?? [];
+            const analysis = window.SpecialtyAnalyzer ? SpecialtyAnalyzer.analyzeCard({ ...item.data, roles }) : { specializations: [] };
+            return { id, name: item.data?.name || id, specs: new Set((analysis.specializations || []).map(s => s.name)) };
         });
 
-        if (!specs.size) {
+        const allSpecs = new Set();
+        targetSpecs.forEach(t => t.specs.forEach(s => allSpecs.add(s)));
+
+        if (!allSpecs.size) {
             alert('Ninguna carta objetivo coincide con una mecánica registrada en Config → Pilares/Especialidades.');
             return;
         }
 
-        const found = {};
+        // Candidatos: solo cartas del meta cuyo "counters" toca alguna mecánica presente en el objetivo
+        let candidates = [];
         const cache = window.Estadisticas?.powerScoreCache?.cards;
         if (cache && cache.length) {
-            cache.forEach(card => {
-                const matched = (card.counterDetails || []).filter(cd => specs.has(cd.mechanic));
-                if (!matched.length) return;
-                const score = matched.reduce((s, m) => s + m.bonus, 0);
-                found[String(card.cardId)] = { data: card.cardData || { id: card.cardId, name: `Carta #${card.cardId}` }, score, isPerfect: false, manual: false };
-            });
+            candidates = cache
+                .filter(card => (card.specAnalysis?.counters || []).some(c => allSpecs.has(c.countersSpec)))
+                .map(card => ({
+                    id: String(card.cardId),
+                    data: card.cardData || { id: card.cardId, name: `Carta #${card.cardId}` },
+                    counterSpecs: (card.specAnalysis?.counters || []).map(c => c.countersSpec)
+                }));
         } else if (window.Estadisticas?.metaCardLibrary) {
-            Object.values(Estadisticas.metaCardLibrary).forEach(entry => {
-                const matched = (entry.counters || []).filter(c => specs.has(c.countersSpec));
-                if (!matched.length) return;
-                found[entry.id] = { data: { id: entry.id, name: entry.name, type: entry.type }, score: matched.length, isPerfect: false, manual: false, estimated: true };
-            });
+            candidates = Object.values(Estadisticas.metaCardLibrary)
+                .filter(entry => (entry.counters || []).some(c => allSpecs.has(c.countersSpec)))
+                .map(entry => ({
+                    id: entry.id,
+                    data: { id: entry.id, name: entry.name, type: entry.type },
+                    counterSpecs: (entry.counters || []).map(c => c.countersSpec),
+                    estimated: true
+                }));
         }
+
+        // Score = cuántas de tus cartas objetivo contraataca realmente cada candidata
+        const found = {};
+        candidates.forEach(cand => {
+            const countered = targetSpecs.filter(t => [...t.specs].some(s => cand.counterSpecs.includes(s)));
+            if (!countered.length) return;
+            found[cand.id] = {
+                data: cand.data,
+                score: countered.length,
+                counteredNames: countered.map(t => t.name),
+                isPerfect: false,
+                manual: false,
+                estimated: !!cand.estimated
+            };
+        });
 
         // Conserva counters manuales / marcados como perfectos ya agregados a mano
         Object.entries(this.counters).forEach(([id, c]) => {
-            if (c.manual || c.isPerfect) found[id] = { ...c, ...(found[id] ? { score: found[id].score } : {}) };
+            if (c.manual || c.isPerfect) found[id] = { ...c, ...(found[id] || {}) };
         });
 
         this.counters      = found;
-        this._targetSpecs   = [...specs];
+        this._targetSpecs  = [...allSpecs];
+        this._targetTotal  = targetEntries.length;
         this._refreshCounters();
 
         if (!Object.keys(found).length) {
-            alert('No se encontraron counters en el Meta para esa(s) mecánica(s). Ejecuta "⚡ Poder de Cartas" en Estadísticas o añade counters a mano.');
+            alert('No se encontraron counters en el Meta contra esas cartas objetivo. Ejecuta "⚡ Poder de Cartas" en Estadísticas o añade counters a mano.');
         }
     },
 
@@ -3428,13 +3485,14 @@ const CounterSim = {
         return entries.map(([id, c]) => {
             const scoreTxt = (c.score === null || c.score === undefined)
                 ? (c.manual ? 'Manual' : '—')
-                : `${c.score} pts${c.estimated ? ' (estimado)' : ''}`;
+                : `${c.score}/${this._targetTotal || c.score} objetivo${c.estimated ? ' (estimado)' : ''}`;
             return `
 <div class="ctrsim-counter-row ${c.isPerfect ? 'ctrsim-counter-perfect' : ''}">
     <img src="${this._imgFor(c.data, id)}" class="ctrsim-counter-img" loading="lazy">
     <div class="ctrsim-counter-info">
         <div class="ctrsim-counter-name">${c.data?.name || id}${c.isPerfect ? ' 🌟' : ''}</div>
         <div class="ctrsim-counter-score">${scoreTxt}</div>
+        ${c.counteredNames?.length ? `<div class="ctrsim-counter-targets">vs: ${c.counteredNames.join(', ')}</div>` : ''}
     </div>
     <div class="ctrsim-counter-btns">
         <button class="ctrsim-btn-icon ${c.isPerfect ? 'ctrsim-btn-icon-active' : ''}" onclick="CounterSim.togglePerfect('${id}')" title="Marcar como Counter Perfecta">🌟</button>
@@ -3461,8 +3519,8 @@ const CounterSim = {
 
     // ── Convertir en Engine ─────────────────────────────
     convertToEngine: function () {
-        const entries = Object.entries(this.counters);
-        if (!entries.length) { alert('No hay cartas counter para convertir en Engine.'); return; }
+        const entries = Object.entries(this.counters).filter(([, c]) => c.isPerfect);
+        if (!entries.length) { alert('Marca al menos una carta como Counter Perfecta (🌟) antes de convertir en Engine.'); return; }
         const name = prompt('Nombre para el nuevo Engine:', 'Counters — ' + (this._targetSpecs.join(', ') || 'Meta'));
         if (!name) return;
 

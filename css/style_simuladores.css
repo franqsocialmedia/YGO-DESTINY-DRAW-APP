@@ -6211,3 +6211,6 @@
     display: flex; align-items: center; justify-content: center; padding: 20px;
 }
 .ctrsim-search-box { max-width: 420px; width: 100%; }
+
+.ctrsim-search-pagination { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.ctrsim-counter-targets { font-size: 0.72rem; color: rgba(255,255,255,0.45); margin-top: 2px; }
