@@ -205,18 +205,21 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                 <!-- ── ZONAS INFERIORES ── -->
 
                 <!-- Mano -->
-                <div class="pz-zone-row pz-hand-row" >
-                    <span class="pz-row-label" id="pz-label-hand">Hand</span>
-                    <div class="pz-multi-zone pz-hand-zone" id="pz-zone-hand"
-                         onclick="ZonaPractica._onMultiZoneClick(event,'hand')"></div>
-                    <button class="pz-mini-btn pz-zone-eye-btn"
-                            id="pz-hide-btn-hand" title="Ocultar/Mostrar Hand"
-                            onclick="ZonaPractica.toggleHideZone('hand')">🙈</button>
-                    <button class="pz-mini-btn" title="Barajar mano"
-                            onclick="ZonaPractica.shuffleHand()">🔀</button>
-                    <button class="pz-mini-btn" title="Robar carta"
-                            onclick="ZonaPractica.drawCard()">⬆</button>
-
+                <div class="pz-zone-row pz-hand-row" style="flex-direction:column;align-items:stretch;">
+                    <div style="display:flex;align-items:center;gap:6px;width:100%;">
+                        <span class="pz-row-label" id="pz-label-hand">Hand</span>
+                        <div class="pz-multi-zone pz-hand-zone" id="pz-zone-hand" style="flex:1;"
+                             onclick="ZonaPractica._onMultiZoneClick(event,'hand')"></div>
+                    </div>
+                    <div class="pz-hand-actions-row" style="display:flex;justify-content:center;gap:10px;margin-top:6px;">
+                        <button class="pz-mini-btn pz-zone-eye-btn"
+                                id="pz-hide-btn-hand" title="Ocultar/Mostrar Hand"
+                                onclick="ZonaPractica.toggleHideZone('hand')">🙈</button>
+                        <button class="pz-mini-btn" title="Barajar mano"
+                                onclick="ZonaPractica.shuffleHand()">🔀</button>
+                        <button class="pz-mini-btn" title="Robar carta"
+                                onclick="ZonaPractica.drawCard()">⬆</button>
+                    </div>
                 </div>
 
                 <!-- Main Deck -->
@@ -1091,7 +1094,24 @@ _startLongPressMulti: function (zone, idx, e) {
                     onclick="ZonaPractica._showDetachMenu('${zone}',event)">⛓ Desacoplar</button>` : ''}
             <button class="pz-zmenu-btn pz-zmenu-move"
                     onclick="ZonaPractica._zmStartMove('${zone}',${slotIndex},'${zoneType}',event)">Mover</button>`;
-        anchor.appendChild(sub);
+
+        // Flotante fuera del contenedor (fixed, calculado desde el anchor real):
+        // GY/Banish/Others son contenedores angostos y el submenu quedaba
+        // recortado/oculto entre las cartas al anclarlo dentro de ellos.
+        document.body.appendChild(sub);
+        const rect = anchor.getBoundingClientRect();
+        sub.style.position  = 'fixed';
+        sub.style.zIndex    = '99999';
+        sub.style.left      = (rect.left + rect.width / 2) + 'px';
+        sub.style.top       = (rect.bottom + 6) + 'px';
+        sub.style.transform = 'translateX(-50%)';
+        requestAnimationFrame(() => {
+            const sr = sub.getBoundingClientRect();
+            if (sr.bottom > window.innerHeight) sub.style.top = (rect.top - sr.height - 6) + 'px';
+            if (sr.left < 4)                    sub.style.left = (sr.width / 2 + 4) + 'px';
+            if (sr.right > window.innerWidth)   sub.style.left = (window.innerWidth - sr.width / 2 - 4) + 'px';
+        });
+
         const close = (e2) => { if (!sub.contains(e2.target)) { sub.remove(); document.removeEventListener('click', close); } };
         setTimeout(() => document.addEventListener('click', close), 0);
     },
@@ -1654,7 +1674,10 @@ _showDetachMenu: function (zone, e) {
                     onclick="ZonaPractica._startPlacement('${zoneName}',${idx},false)"
                     title="Setear boca abajo en el campo">Set</button>
             <button class="pz-dvc-act pz-dvc-del"
-                        onclick="ZonaPractica._dvRemoveCard('${zoneName}',${idx})">✕</button>`;
+                        onclick="ZonaPractica._dvRemoveCard('${zoneName}',${idx})">✕</button>
+            <button class="pz-dvc-act pz-dvc-activate"
+                        onclick="ZonaPractica._zmActivate('${zoneName}',${idx},'multi',event)"
+                        title="Activar efecto">🚨​</button>`;
         };
 
         grid.innerHTML = filtered.map(({ e, i }) => {
@@ -2390,9 +2413,11 @@ _clearLog: function () {
         const inSim      = window.Navigation?.currentTab === 'simuladores';
 const inPractica = inSim && (window.Torneo?.simTab === 'practica');
 
-        // Ajustar posición del shortcuts-float-btn para hacer hueco
+        // Ocultar por completo Atajos (y Helper, si existe) mientras se esta en Zona de Practica
         const scBtn = document.getElementById('shortcuts-float-btn');
-        if (scBtn) scBtn.style.bottom = inPractica ? '260px' : '';
+        if (scBtn) scBtn.style.display = inPractica ? 'none' : '';
+        const helpBtn = document.getElementById('help-float-btn');
+        if (helpBtn) helpBtn.style.display = inPractica ? 'none' : '';
 
         if (!inPractica) { this._cleanupFloatBtns(); return; }
 
@@ -2446,7 +2471,9 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica');
         ['pz-float-log-btn', 'pz-float-markstate-btn','pz-float-chgpos-btn',
          'pz-chain-resolve-btn'].forEach(id => document.getElementById(id)?.remove());
         const scBtn = document.getElementById('shortcuts-float-btn');
-        if (scBtn) scBtn.style.bottom = '';
+        if (scBtn) { scBtn.style.bottom = ''; scBtn.style.display = ''; }
+        const helpBtn = document.getElementById('help-float-btn');
+        if (helpBtn) helpBtn.style.display = '';
     },
     // ═══════════════════════════════════════════════════════
     _showToast: function (msg, duration = 2000) {

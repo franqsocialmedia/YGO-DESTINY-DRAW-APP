@@ -117,10 +117,62 @@ _totals: function (m) {
                                 onclick="event.stopPropagation();Matchups.deleteRecord(${i})">✕</button>
                     </div>
                 </div>
-                ${m.notes ? `<div class="matchup-notes-preview">${m.notes}</div>` : ''}
+                ${m.notes ? `<div class="matchup-notes-preview">${m.notes}
+                    <button type="button" class="matchup-notes-expand-btn" title="Ver notas completas"
+                            style="background:none;border:none;cursor:pointer;font-size:13px;margin-left:6px;vertical-align:middle;"
+                            onclick="event.stopPropagation();Matchups.showNotesPopover(event, ${i})">🔍</button>
+                </div>` : ''}
             </div>`;
         });
         return rows;
+    },
+
+    // ── Popover flotante de notas — click/tap ademas del hover ya existente ──
+    // Necesario en movil, donde no existe :hover para leer notas largas.
+    showNotesPopover: function (event, index) {
+        const list = this.getAll();
+        const rec  = list[index];
+        if (!rec || !rec.notes) return;
+        this._closeNotesPopover();
+
+        const pop = document.createElement('div');
+        pop.id = 'matchup-notes-popover';
+        pop.innerHTML = `
+            <div class="matchup-notes-popover-hdr" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;font-weight:600;color:var(--gold-color,#FFD700);">
+                <span>📝 ${(rec.opponentName || 'Notas').replace(/</g,'&lt;')}</span>
+                <button type="button" onclick="Matchups._closeNotesPopover()"
+                        style="background:none;border:none;color:var(--text-light,#eee);cursor:pointer;font-size:14px;line-height:1;">✕</button>
+            </div>
+            <div class="matchup-notes-popover-body" style="white-space:pre-wrap;word-break:break-word;max-height:200px;overflow-y:auto;">${rec.notes.replace(/</g,'&lt;')}</div>`;
+        pop.style.cssText = `
+            position:fixed; z-index:99999; max-width:280px; min-width:200px;
+            background:var(--bg-card,#1a1a2e); color:var(--text-light,#eee);
+            border:1px solid var(--gold-color,#FFD700); border-radius:8px;
+            box-shadow:0 6px 20px rgba(0,0,0,.5); padding:10px 12px; font-size:13px;
+        `;
+        document.body.appendChild(pop);
+
+        const btn  = event.currentTarget;
+        const rect = btn.getBoundingClientRect();
+        let left = rect.left;
+        if (left + 280 > window.innerWidth) left = window.innerWidth - 290;
+        if (left < 8) left = 8;
+        let top = rect.bottom + 6;
+        if (top + 150 > window.innerHeight) top = rect.top - 6 - 150;
+        pop.style.left = left + 'px';
+        pop.style.top  = top + 'px';
+
+        setTimeout(() => document.addEventListener('click', Matchups._onOutsideNotesClick), 0);
+    },
+
+    _onOutsideNotesClick: function (e) {
+        const pop = document.getElementById('matchup-notes-popover');
+        if (pop && !pop.contains(e.target)) Matchups._closeNotesPopover();
+    },
+
+    _closeNotesPopover: function () {
+        document.getElementById('matchup-notes-popover')?.remove();
+        document.removeEventListener('click', Matchups._onOutsideNotesClick);
     },
 
     setSortBy: function (key) {
