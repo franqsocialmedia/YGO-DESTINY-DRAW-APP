@@ -76,6 +76,7 @@ const Navigation = {
         if (typeof updateButtons === 'function') updateButtons();
         window.dispatchEvent(new Event('scroll'));
         if (window.ContentManager) ContentManager.applyAll();
+        if (window.TabIntro) TabIntro.maybeShow(tabName);
 
         return true;
     },
@@ -107,6 +108,102 @@ if (document.readyState === 'loading') {
 
 window.Navigation = Navigation;
 window.switchTab  = switchTab;
+
+// ── TAB INTRO ────────────────────────────────────────────────────────
+// Panel flotante informativo por pestaña, 1 vez por sesión (sessionStorage).
+// Z-index queda por debajo de #welcome-overlay para que el flujo sea:
+// Nivel de jugador (Welcome) → se cierra → aparece esta intro de la pestaña.
+const TabIntro = {
+    CONTENT: {
+        buscador: {
+            title: '🔍 Buscador de Cartas',
+            items: [
+                'Busca cualquier carta oficial del TCG/OCG por nombre.',
+                'Filtra por arquetipo, set, tipo de monstruo, atributo y más.',
+                'Añade cartas directo a tu Deck activo con un clic.',
+                'Marca cartas como Favoritas para acceso rápido.',
+                'Usa "Carta Random" para descubrir cartas nuevas.'
+            ]
+        },
+        mideck: {
+            title: '🗂️ Mi Deck',
+            items: [
+                'Importa tu deck desde archivo .ydk o desde la Lista Oficial en .pdf.',
+                'Arma y edita tu Main, Extra y Side Deck.',
+                'Consulta tu Internal Score, Consistencia, Potencia y Resiliencia en tiempo real.',
+                'Registra rondas en Optimización para medir tu nivel real como piloto del deck.',
+                'Lleva el historial de enfrentamientos por rival en Matchups.'
+            ]
+        },
+        estadisticas: {
+            title: '📊 Estadísticas',
+            items: [
+                'Analiza tu deck activo: fortalezas, debilidades y matchups del meta.',
+                'Consulta tu Nivel como Piloto del Deck (Duelista).',
+                'Compara tu Internal Score contra los decks del meta actualizados.'
+            ]
+        },
+        simuladores: {
+            title: '🎲 Simuladores',
+            items: [
+                'Calcula probabilidades de mano inicial con Hipergeometría.',
+                'Simula torneos Swiss completos con tu deck.',
+                'Practica manos en la Zona de Práctica y Duelo en Vivo.',
+                'Registra winrates y experimenta variantes de tu lista.'
+            ]
+        },
+        formacion: {
+            title: '🎓 Formación',
+            items: [
+                'Aprende mecánicas y conceptos del juego competitivo.',
+                'Consulta Fuentes recomendadas y Maestros del Duelo del meta actual.',
+                'Guarda tus propios apuntes de estrategia.',
+                'Descubre juegos alternativos de Yu-Gi-Oh! para practicar.'
+            ]
+        },
+        config: {
+            title: '⚙️ Configuración',
+            items: [
+                'Personaliza roles, nomenclatura de efectos y pesos del Internal Score.',
+                'Ajusta el Scoring Avanzado G1/G2 a tu criterio competitivo.',
+                'Gestiona la Banlist del formato que juegas.',
+                'Exporta/Importa toda tu configuración y datos.'
+            ]
+        }
+    },
+
+    _key: function(tab) { return `dd_tabintro_shown_${tab}`; },
+
+    maybeShow: function(tabName) {
+        const data = this.CONTENT[tabName];
+        if (!data) return;
+        if (sessionStorage.getItem(this._key(tabName)) === 'true') return;
+        sessionStorage.setItem(this._key(tabName), 'true');
+        this._render(tabName, data);
+    },
+
+    _render: function(tabName, data) {
+        const overlay = document.createElement('div');
+        overlay.className = 'tabintro-overlay';
+        overlay.id = `tabintro-overlay-${tabName}`;
+        overlay.innerHTML = `
+            <div class="tabintro-panel">
+                <h3 class="tabintro-title">${data.title}</h3>
+                <ul class="tabintro-list">
+                    ${data.items.map(i => `<li>${i}</li>`).join('')}
+                </ul>
+                <button class="tabintro-close-btn" onclick="TabIntro.close('${tabName}')">Entendido</button>
+            </div>`;
+        document.body.appendChild(overlay);
+    },
+
+    close: function(tabName) {
+        document.getElementById(`tabintro-overlay-${tabName}`)?.remove();
+    }
+};
+
+window.TabIntro = TabIntro;
+
 
 // ── SHORTCUTS ────────────────────────────────────────────────────────
 // Botón flotante ⚡ con menú de accesos rápidos configurables
@@ -142,7 +239,7 @@ const Shortcuts = {
         btn.onclick = (e) => { e.stopPropagation(); this.toggleMenu(); };
         (document.getElementById('bottom-toolbar') || document.body).appendChild(btn);
     },
-    
+
     toggleMenu: function() {
         document.getElementById('shortcuts-overlay') ? this.closeMenu() : this.openMenu();
     },
