@@ -2874,3 +2874,71 @@
 .combo-list-deck { font-size: .78rem; color: var(--gold-color); font-weight: bold; flex-shrink: 0; }
 .combo-list-name { font-size: .82rem; flex: 1; }
 .combo-list-power { font-size: .78rem; opacity: .8; flex-shrink: 0; }
+
+/* ── Línea de Combos (Etapa 2) ── */
+.combo-status-badge {
+    font-size: .65rem; text-transform: uppercase; letter-spacing: .04em;
+    padding: 2px 7px; border-radius: 10px; margin-left: 8px; font-weight: 700;
+    background: rgba(255,255,255,.08); color: rgba(241,241,241,.7);
+}
+.combo-status-started  { background: rgba(26,122,46,.25); color: #80e898; }
+.combo-status-finished { background: rgba(255,215,0,.18); color: var(--gold-color); }
+
+.combo-controls-row {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;
+}
+.combo-controls-row .deck-move:disabled { opacity: .4; cursor: not-allowed; }
+
+.combo-zones-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px; margin-bottom: 14px;
+}
+.combo-zone-box {
+    background: rgba(255,255,255,.03); border: 1px solid var(--border-color);
+    border-radius: 8px; padding: 8px 10px;
+}
+.combo-zone-title { font-size: .78rem; color: var(--gold-color); margin: 0 0 6px; }
+.combo-zone-cards { display: flex; flex-wrap: wrap; gap: 6px; min-height: 40px; }
+.combo-zone-empty { font-size: .72rem; opacity: .45; font-style: italic; margin: 0; }
+
+.combo-card-chip { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.combo-card-thumb {
+    width: 48px; height: 70px; object-fit: cover; border-radius: 4px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,.15); transition: border-color .15s;
+}
+.combo-card-thumb:hover { border-color: var(--gold-color); }
+.combo-card-actions { display: flex; gap: 2px; }
+.combo-card-move-btn {
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 4px; font-size: .68rem; padding: 1px 4px; cursor: pointer; color: var(--text-light);
+}
+.combo-card-move-btn:hover { border-color: var(--gold-color); }
+
+.combo-steps-title { color: var(--gold-color); font-size: .85rem; margin: 10px 0 6px; }
+.combo-steps-log {
+    max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 3px;
+    background: rgba(0,0,0,.2); border-radius: 6px; padding: 6px 8px;
+}
+.combo-step-row { display: flex; gap: 8px; align-items: baseline; font-size: .78rem; }
+.combo-step-idx  { color: rgba(255,255,255,.25); min-width: 16px; text-align: right; }
+.combo-step-time { color: rgba(255,255,255,.35); flex-shrink: 0; }
+.combo-step-msg  { color: rgba(241,241,241,.85); }
+.combo-step-cardname { color: #fff; font-weight: 600; cursor: pointer; text-decoration: underline dotted rgba(255,255,255,.4); }
+.combo-step-cardname:hover { text-decoration: underline; }
+
+.combo-picker-modal { max-width: 480px; }
+.combo-picker-list { max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+.combo-picker-row {
+    display: flex; align-items: center; gap: 8px; padding: 6px;
+    background: rgba(255,255,255,.03); border-radius: 6px;
+}
+.combo-picker-thumb { width: 40px; height: 58px; object-fit: cover; border-radius: 4px; cursor: pointer; flex-shrink: 0; }
+.combo-picker-info { flex: 1; min-width: 0; }
+.combo-picker-name { font-size: .82rem; color: var(--text-light); }
+.combo-picker-qty  { font-size: .7rem; opacity: .55; }
+.combo-picker-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+.combo-picker-actions button {
+    background: rgba(255,255,255,.06); border: 1px solid var(--border-color);
+    border-radius: 5px; color: var(--text-light); font-size: .68rem; padding: 4px 6px; cursor: pointer;
+}
+.combo-picker-actions button:hover { border-color: var(--gold-color); }

@@ -3683,6 +3683,228 @@ const Combos = {
         this._refresh();
     },
 
+    // ── Grabación: mazo restante, zonas y pasos ────────────────────
+    _withCombo: function (deckName, comboId, mutator) {
+        const combos = this.getAll(deckName);
+        const combo  = combos.find(c => c.id === comboId);
+        if (!combo) return null;
+        mutator(combo);
+        this.saveAll(deckName, combos);
+        return combo;
+    },
+
+    _buildDeckPool: function () {
+        const pool = [];
+        Object.entries(Deck.cards).forEach(([id, item]) => {
+            if (item.location !== 'main') return;
+            for (let i = 0; i < item.qty; i++) pool.push({ uid: `${id}_${i}`, id });
+        });
+        return pool;
+    },
+
+    _logStep: function (combo, msg, cardId) {
+        if (!combo.steps) combo.steps = [];
+        combo.steps.push({
+            id:     'step_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+            msg:    msg,
+            cardId: cardId || null,
+            time:   new Date().toLocaleTimeString('es-ES', { hour12: false })
+        });
+    },
+
+    _zoneLabel: function (zone) {
+        return { deckPool: 'Mazo', hand: 'HAND', gy: 'GY', banish: 'Banish', field: 'Field' }[zone] || zone;
+    },
+
+    startCombo: function (deckName, comboId) {
+        this._withCombo(deckName, comboId, combo => {
+            combo.status      = 'started';
+            combo.zones        = { deckPool: this._buildDeckPool(), hand: [], gy: [], banish: [], field: [] };
+            combo.steps         = [];
+            combo.startCards    = [];
+            combo.endboard      = [];
+        });
+        this._refresh();
+    },
+
+    // "Borrar" las zonas/campo del combo que se está registrando — vacía todo
+    // y reinicia el mazo restante, pero NO elimina el registro del combo.
+    resetZones: function (deckName, comboId) {
+        this._withCombo(deckName, comboId, combo => {
+            combo.zones      = { deckPool: this._buildDeckPool(), hand: [], gy: [], banish: [], field: [] };
+            combo.steps      = [];
+            combo.startCards = [];
+            combo.endboard   = [];
+            combo.status     = 'started';
+        });
+        this._refresh();
+    },
+
+    drawCard: function (deckName, comboId) {
+        this._withCombo(deckName, comboId, combo => {
+            if (!combo.zones || !combo.zones.deckPool.length) return;
+            const idx = Math.floor(Math.random() * combo.zones.deckPool.length);
+            const [entry] = combo.zones.deckPool.splice(idx, 1);
+            combo.zones.hand.push(entry);
+            const cardData = Deck.cards[entry.id]?.data;
+            this._logStep(combo, `🃏 Robaste: ${cardData?.name || entry.id}`, entry.id);
+        });
+        this._refresh();
+    },
+
+    // Mueve una carta entre zonas (HAND/Field/GY/Banish) — cada movimiento es 1 paso.
+    moveCard: function (deckName, comboId, uid, fromZone, toZone) {
+        this._withCombo(deckName, comboId, combo => {
+            if (!combo.zones) return;
+            const fromArr = combo.zones[fromZone];
+            const idx = fromArr.findIndex(c => c.uid === uid);
+            if (idx === -1) return;
+
+            // La mano "inicial" del combo se congela justo antes de jugar la
+            // primera carta que sale de HAND (no al robar/armar la mano).
+            if (fromZone === 'hand' && (!combo.startCards || !combo.startCards.length)) {
+                combo.startCards = fromArr.map(c => c.id);
+            }
+
+            const [entry] = fromArr.splice(idx, 1);
+            combo.zones[toZone].push(entry);
+
+            const cardData = Deck.cards[entry.id]?.data;
+            const name = cardData?.name || entry.id;
+            this._logStep(combo, `${name}: ${this._zoneLabel(fromZone)} → ${this._zoneLabel(toZone)}`, entry.id);
+        });
+        this._refresh();
+    },
+
+    finishCombo: function (deckName, comboId) {
+        this._withCombo(deckName, comboId, combo => {
+            if (!combo.zones) return;
+            combo.status     = 'finished';
+            combo.endboard   = combo.zones.field.map(c => ({ uid: c.uid, id: c.id, active: false, mainFunction: null }));
+            combo.finishedAt = Date.now();
+        });
+        this._refresh();
+    },
+
+    viewCard: function (cardId) {
+        const cardData = Deck.cards[cardId]?.data;
+        if (!cardData) { alert('No se encontró la información de esta carta en el deck activo.'); return; }
+        if (window.CardViewer && typeof CardViewer.open === 'function') CardViewer.open(cardData);
+    },
+
+    // ── Elegir carta del mazo restante → HAND/Field/GY/Banish ──────
+    openDeckPicker: function (deckName, comboId) {
+        document.getElementById('combo-deckpicker-overlay')?.remove();
+        const combo = this._findCombo(deckName, comboId);
+        if (!combo || !combo.zones) return;
+
+        const grouped = {};
+        combo.zones.deckPool.forEach(entry => { grouped[entry.id] = (grouped[entry.id] || 0) + 1; });
+
+        const rows = Object.keys(grouped).map(id => {
+            const cardData = Deck.cards[id]?.data;
+            const img  = cardData?.card_images?.[0]?.image_url_small || '';
+            const name = cardData?.name || id;
+            return `
+            <div class="combo-picker-row">
+                <img src="${img}" class="combo-picker-thumb" onclick="Combos.viewCard('${id}')">
+                <div class="combo-picker-info">
+                    <div class="combo-picker-name">${this._escape(name)}</div>
+                    <div class="combo-picker-qty">x${grouped[id]} en el mazo restante</div>
+                </div>
+                <div class="combo-picker-actions">
+                    <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','hand')">✋ Hand</button>
+                    <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','field')">🏟️ Field</button>
+                    <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','gy')">⚰️ GY</button>
+                    <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','banish')">🌀 Banish</button>
+                </div>
+            </div>`;
+        }).join('') || '<p class="deck-empty">No quedan cartas en el mazo.</p>';
+
+        const overlay = document.createElement('div');
+        overlay.id = 'combo-deckpicker-overlay';
+        overlay.className = 'deck-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div class="deck-modal combo-picker-modal">
+                <h3>📖 Elegir carta del Mazo</h3>
+                <div class="combo-picker-list">${rows}</div>
+                <div class="deck-modal-buttons">
+                    <button onclick="document.getElementById('combo-deckpicker-overlay').remove()">Cerrar</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    },
+
+    sendFromPool: function (deckName, comboId, cardId, toZone) {
+        this._withCombo(deckName, comboId, combo => {
+            if (!combo.zones) return;
+            const idx = combo.zones.deckPool.findIndex(c => c.id === cardId);
+            if (idx === -1) return;
+            const [entry] = combo.zones.deckPool.splice(idx, 1);
+            combo.zones[toZone].push(entry);
+            const cardData = Deck.cards[entry.id]?.data;
+            this._logStep(combo, `${cardData?.name || entry.id}: Mazo → ${this._zoneLabel(toZone)}`, entry.id);
+        });
+        this._refresh();
+        // Refresca el picker si sigue abierto (para ver el conteo actualizado)
+        if (document.getElementById('combo-deckpicker-overlay')) this.openDeckPicker(deckName, comboId);
+    },
+
+    // ── Render de zonas y del log de pasos ─────────────────────────
+    _renderZones: function (combo) {
+        const zones = [['hand', '✋ HAND'], ['field', '🏟️ Field'], ['gy', '⚰️ GY'], ['banish', '🌀 Banish']];
+        return `<div class="combo-zones-grid">
+            ${zones.map(([key, label]) => `
+            <div class="combo-zone-box">
+                <h5 class="combo-zone-title">${label} (${(combo.zones[key] || []).length})</h5>
+                <div class="combo-zone-cards">
+                    ${(combo.zones[key] || []).length
+                        ? combo.zones[key].map(entry => this._renderZoneCard(combo, key, entry)).join('')
+                        : '<p class="combo-zone-empty">Vacío</p>'}
+                </div>
+            </div>`).join('')}
+        </div>`;
+    },
+
+    _renderZoneCard: function (combo, zoneKey, entry) {
+        const cardData = Deck.cards[entry.id]?.data;
+        const img   = cardData?.card_images?.[0]?.image_url_small || '';
+        const name  = cardData?.name || entry.id;
+        const icons = { hand: '✋', field: '🏟️', gy: '⚰️', banish: '🌀' };
+        const targets = ['hand', 'field', 'gy', 'banish'].filter(z => z !== zoneKey);
+        return `
+        <div class="combo-card-chip">
+            <img src="${img}" class="combo-card-thumb" alt="${name}" title="${name}" onclick="Combos.viewCard('${entry.id}')">
+            <div class="combo-card-actions">
+                ${targets.map(t => `<button class="combo-card-move-btn" title="→ ${this._zoneLabel(t)}"
+                    onclick="Combos.moveCard('${combo.deckName}','${combo.id}','${entry.uid}','${zoneKey}','${t}')">${icons[t]}</button>`).join('')}
+            </div>
+        </div>`;
+    },
+
+    _renderSteps: function (combo) {
+        const steps = combo.steps || [];
+        if (!steps.length) return '<p class="deck-empty">Aún no hay pasos registrados.</p>';
+        return steps.map((s, i) => {
+            const cardName = s.cardId ? (Deck.cards[s.cardId]?.data?.name || null) : null;
+            let msg = s.msg;
+            if (cardName) {
+                const idx = msg.indexOf(cardName);
+                if (idx !== -1) {
+                    const before = msg.slice(0, idx);
+                    const after  = msg.slice(idx + cardName.length);
+                    msg = `${before}<span class="combo-step-cardname" onclick="Combos.viewCard('${s.cardId}')">${cardName}</span>${after}`;
+                }
+            }
+            return `<div class="combo-step-row">
+                <span class="combo-step-idx">${i + 1}</span>
+                <span class="combo-step-time">${s.time}</span>
+                <span class="combo-step-msg">${msg}</span>
+            </div>`;
+        }).join('');
+    },
+
     // ── Objetivo: editar / limpiar / guardar ──────────────────────
     editObjetivo: function (comboId) {
         document.getElementById(`combo-objetivo-view-${comboId}`).style.display = 'none';
@@ -3725,10 +3947,33 @@ const Combos = {
 
     _renderComboEditor: function (combo) {
         const objetivoText = combo.objetivo ? this._escape(combo.objetivo) : this.DEFAULT_OBJETIVO;
+        const isDraft    = combo.status === 'draft';
+        const isStarted  = combo.status === 'started';
+        const isFinished = combo.status === 'finished';
+
+        let body = '';
+        if (isDraft) {
+            body = `<button class="opt-submit-btn" onclick="Combos.startCombo('${combo.deckName}','${combo.id}')">🎬 Empezar Combo</button>`;
+        } else {
+            const poolCount = combo.zones?.deckPool?.length || 0;
+            body = `
+            <div class="combo-controls-row">
+                <button class="deck-move" onclick="Combos.drawCard('${combo.deckName}','${combo.id}')" ${poolCount ? '' : 'disabled'}>🃏 Robar 1 (${poolCount} restantes)</button>
+                <button class="deck-move" onclick="Combos.openDeckPicker('${combo.deckName}','${combo.id}')">📖 Ver Deck</button>
+                <button class="deck-move" onclick="Combos.resetZones('${combo.deckName}','${combo.id}')">🔄 Reiniciar Zonas</button>
+                ${isStarted ? `<button class="opt-submit-btn" onclick="Combos.finishCombo('${combo.deckName}','${combo.id}')">🏁 Finalizar Combo</button>` : ''}
+            </div>
+            ${this._renderZones(combo)}
+            <h4 class="combo-steps-title">📜 Pasos del Combo (${(combo.steps || []).length})</h4>
+            <div class="combo-steps-log">${this._renderSteps(combo)}</div>
+            ${isFinished ? `<p class="combo-editor-hint">✅ Combo finalizado. Endboard, Poder y nombre automático llegan en la próxima etapa.</p>` : ''}
+            `;
+        }
+
         return `
         <div class="combo-editor" data-combo-id="${combo.id}">
             <div class="combo-editor-header">
-                <span class="combo-editor-deck">🃏 ${this._escape(combo.deckName)}</span>
+                <span class="combo-editor-deck">🃏 ${this._escape(combo.deckName)} <span class="combo-status-badge combo-status-${combo.status}">${combo.status}</span></span>
                 <button class="combo-discard-btn" onclick="Combos.confirmDeleteCombo('${combo.deckName}','${combo.id}')">🗑️ Borrar Combo</button>
             </div>
 
@@ -3748,7 +3993,7 @@ const Combos = {
                 </div>
             </div>
 
-            <p class="combo-editor-hint">🚧 HAND / GY / Banish / Field, Endboard y Poder llegan en la próxima etapa.</p>
+            ${body}
         </div>`;
     },
 
