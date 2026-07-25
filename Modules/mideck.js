@@ -1603,6 +1603,17 @@ onDeckLoaded: function () {
     }
     if (window.Winrate) Winrate.refreshSection();
 },
+
+    // ===============================
+    _renderEmptyDeckNotice: function (msgDesktop, msgMobile) {
+        const sidebarImgName = window.Buscador?.getSidebarImage?.() || 'Protagonistas';
+        return `
+    <p class="deck-empty-msg-desktop" style="margin-top:10px;font-size:.85rem;opacity:.6">${msgDesktop}</p>
+    <div class="deck-empty-mobile">
+        <img src="img/${sidebarImgName}.webp" alt="Yu-Gi-Oh! ${sidebarImgName}" class="deck-empty-mobile-img" loading="lazy">
+        <p class="deck-empty-msg-mobile" style="font-size:.85rem;opacity:.6">${msgMobile || msgDesktop}</p>
+    </div>`;
+    },
     // ===============================
     render: function () {
         if (!this.container) return;
@@ -1630,6 +1641,10 @@ html += `
         <button class="deck-move" onclick="Deck.importYDK()">Archivo .ydk</button>
         <button class="deck-move" onclick="Deck.importPDF()">Lista Oficial (.pdf)</button>
     </div>
+    ${isEmpty ? this._renderEmptyDeckNotice(
+        'Elige un deck desde el panel lateral o agrega cartas desde el Buscador.',
+        'Elige un deck desde el panel inferior o agrega cartas desde el Buscador.'
+    ) : ''}
 </div>`;
 
 html += `
@@ -1640,7 +1655,10 @@ html += `
 <div id="mideck-decklist-pane">`;
 
 if (isEmpty) {
-    html += `<p style="margin-top:10px;font-size:.85rem;opacity:.6">Elige un deck desde el panel lateral o agrega cartas desde el Buscador.</p>`;
+    html += this._renderEmptyDeckNotice(
+        'Elige un deck desde el panel lateral o agrega cartas desde el Buscador.',
+        'Elige un deck desde el panel inferior o agrega cartas desde el Buscador.'
+    );
 } else {
     html += `
     <h2 onclick="Deck.openRenamePanel()" class="deck-title">${this.name}</h2>
@@ -1694,11 +1712,11 @@ if (!isEmpty) {
             ${window.Estadisticas ? Estadisticas.renderDeckAnalysis() : ''}
         </div>`;
 } else {
-    html += `<p style="opacity:.6;margin-top:10px;">Carga un deck para ver la sección de Construcción.</p>`;
+    html += this._renderEmptyDeckNotice('Carga un deck para ver la sección de Construcción.');
 }
 
 html += `</div>`;
-html += `<div id="mideck-optimizacion-pane" style="display:none;">${!isEmpty ? this.renderOptimizacionPane() : '<p style="opacity:.6;margin-top:10px;">Carga un deck para usar Optimización.</p>'}</div>`;
+html += `<div id="mideck-optimizacion-pane" style="display:none;">${!isEmpty ? this.renderOptimizacionPane() : this._renderEmptyDeckNotice('Carga un deck para usar Optimización.')}</div>`;
 this.container.innerHTML = html;
     },
 
