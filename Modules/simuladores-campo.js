@@ -1010,12 +1010,15 @@ _startLongPressMulti: function (zone, idx, e) {
         if (navigator.vibrate) navigator.vibrate(20);
 
         const hasMats = this.OVERLAY_ZONES.includes(String(zone)) && (this.field[zone]?._materials?.length > 0);
-        
+        const canAttack = this._canAttack(zone, 'field');
+
         const sub = document.createElement('div');
         sub.className = 'pz-action-submenu pz-quick-action';
         sub.innerHTML = `
             <button class="pz-zmenu-btn pz-zmenu-activate"
                     onclick="ZonaPractica._zmActivate('${zone}',null,'field',event)">Activar</button>
+            ${canAttack ? `<button class="pz-zmenu-btn pz-zmenu-attack"
+                    onclick="ZonaPractica._zmAttack('${zone}',event)">Atacar</button>` : ''}
             ${hasMats ? `<button class="pz-zmenu-btn"
                     onclick="ZonaPractica._showDetachMenu('${zone}',event)" onmouseup="ZonaPractica._showDetachMenu('${zone}',event)">⛓ Desacoplar</button>` : ''}
             <button class="pz-zmenu-btn pz-zmenu-move"
@@ -1085,11 +1088,14 @@ _startLongPressMulti: function (zone, idx, e) {
             if (slots[slotIndex]) anchor = slots[slotIndex];
         }
         const hasMats = zoneType === 'field' && this.OVERLAY_ZONES.includes(String(zone)) && (this.field[zone]?._materials?.length > 0);
+        const canAttack = this._canAttack(zone, zoneType);
         const sub = document.createElement('div');
         sub.className = 'pz-action-submenu';
         sub.innerHTML = `
             <button class="pz-zmenu-btn pz-zmenu-activate"
                     onclick="ZonaPractica._zmActivate('${zone}',${slotIndex},'${zoneType}',event)">Activar</button>
+            ${canAttack ? `<button class="pz-zmenu-btn pz-zmenu-attack"
+                    onclick="ZonaPractica._zmAttack('${zone}',event)">Atacar</button>` : ''}
             ${hasMats ? `<button class="pz-zmenu-btn"
                     onclick="ZonaPractica._showDetachMenu('${zone}',event)">⛓ Desacoplar</button>` : ''}
             <button class="pz-zmenu-btn pz-zmenu-move"
@@ -1145,6 +1151,24 @@ _startLongPressMulti: function (zone, idx, e) {
         this._renderAllZones();
         this._showChainResolveBtn();
         this._addLog(`${card.name} activa efecto [en la zona: ${zone}].`, card);
+    },
+
+    // Monstruo en zona de monstruos (A/B/1-5), boca arriba y en ATK, solo en Fase de Batalla
+    _canAttack: function (zone, zoneType) {
+        if (zoneType !== 'field') return false;
+        if (this.phase !== 'battle') return false;
+        if (!['A','B','1','2','3','4','5'].includes(String(zone))) return false;
+        const entry = this.field[zone];
+        return !!(entry?.card && entry.faceUp && !entry.rotation);
+    },
+
+    _zmAttack: function (zone, e) {
+        e?.stopPropagation();
+        this._closeZoneMenus();
+        const entry = this.field[zone];
+        const card = entry?.card;
+        if (!card) return;
+        this._addLog(`${card.name} → <span style="color:#d63031;font-weight:700">Ataca</span>`, card);
     },
     // ═══════════════════════════════════════════════════════
     _showChainResolveBtn: function () {
@@ -1677,7 +1701,7 @@ _showDetachMenu: function (zone, e) {
                         onclick="ZonaPractica._dvRemoveCard('${zoneName}',${idx})">✕</button>
             <button class="pz-dvc-act pz-dvc-activate"
                         onclick="ZonaPractica._zmActivate('${zoneName}',${idx},'multi',event)"
-                        title="Activar efecto">🚨​</button>`;
+                        title="Activar efecto">Activar</button>`;
         };
 
         grid.innerHTML = filtered.map(({ e, i }) => {
