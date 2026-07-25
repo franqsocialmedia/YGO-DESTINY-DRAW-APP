@@ -866,7 +866,10 @@ const CardViewer = {
         console.log('📊 [CardViewer] Cantidad actual en quantities:', quantity);
 
         const images = card.card_images || [];
-        const mainImg = images[0]?.image_url || '';
+        const quality = CardViewer._imgQuality || 'hd';
+        const mainImg = quality === 'hd'
+            ? (images[0]?.image_url || '')
+            : (images[0]?.image_url_small || images[0]?.image_url || '');
 
         const thumbsHtml = images.map(img =>
             `<img src="${img.image_url_small}" class="cv-thumb">`
@@ -901,6 +904,16 @@ const html = `
             <div class="cv-name">${card.name}</div>
 
             <img id="cv-main-img" src="${mainImg}" class="cv-main-img">
+
+            <div id="cv-quality-switch" class="cv-quality-switch">
+                <span class="cv-quality-label">HD</span>
+                <label class="cv-quality-toggle" title="Cambiar calidad de imagen">
+                    <input type="checkbox" id="cv-quality-check" ${quality === 'low' ? 'checked' : ''}>
+                    <span class="cv-quality-slider"></span>
+                </label>
+                <span class="cv-quality-label">Low</span>
+            </div>
+
             <div id="cv-thumbs" class="cv-thumbs">${thumbsHtml}</div>
             <div id="cv-ban-btns" class="cv-ban-area"></div>
 
@@ -1013,12 +1026,30 @@ const html = `
 
         const thumbs = document.querySelectorAll('.cv-thumb');
         const mainImage = document.getElementById('cv-main-img');
+        let cvCurrentImageIndex = 0;
+
+        const cvRenderMainImage = () => {
+            const img = images[cvCurrentImageIndex] || images[0];
+            if (!img) return;
+            mainImage.src = (CardViewer._imgQuality || 'hd') === 'hd'
+                ? (img.image_url || '')
+                : (img.image_url_small || img.image_url || '');
+        };
 
         thumbs.forEach((t, index) => {
             t.onclick = () => {
-                mainImage.src = images[index].image_url;
+                cvCurrentImageIndex = index;
+                cvRenderMainImage();
             };
         });
+
+        const qualityCheck = document.getElementById('cv-quality-check');
+        if (qualityCheck) {
+            qualityCheck.onchange = () => {
+                CardViewer._imgQuality = qualityCheck.checked ? 'low' : 'hd';
+                cvRenderMainImage();
+            };
+        }
 
         const plus = document.getElementById('cv-plus');
         const minus = document.getElementById('cv-minus');

@@ -935,8 +935,65 @@
 .cv-thumb:hover {
     opacity: 1;
     border-color: var(--gold-color);
+}.cv-quality-switch {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-bottom: 8px;
 }
 
+.cv-quality-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.cv-quality-toggle {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.cv-quality-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.cv-quality-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 18px;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.cv-quality-slider::before {
+    content: "";
+    position: absolute;
+    height: 12px;
+    width: 12px;
+    left: 2px;
+    top: 2px;
+    background: var(--gold-color);
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+
+.cv-quality-toggle input:checked + .cv-quality-slider {
+    background: rgba(255, 215, 0, 0.25);
+    border-color: var(--gold-color);
+}
+
+.cv-quality-toggle input:checked + .cv-quality-slider::before {
+    transform: translateX(16px);
+}
 .cv-ban-area {
     display: flex;
     gap: 6px;
