@@ -3640,6 +3640,7 @@ const Combos = {
             restricciones: [],
             parentComboId: null,
             power:         0,
+            powerBeforeMeta: null,
             powerBreakdown: [],
             bossCardId:    null,
             starterCardId: null,
@@ -3728,6 +3729,7 @@ const Combos = {
             combo.steps         = [];
             combo.startCards    = [];
             combo.endboard      = [];
+            combo.chokePoints   = [];
         });
         this._refresh();
     },
@@ -3740,6 +3742,7 @@ const Combos = {
             combo.steps      = [];
             combo.startCards = [];
             combo.endboard   = [];
+            combo.chokePoints = [];
             combo.status     = 'started';
         });
         this._refresh();
@@ -3921,10 +3924,22 @@ const Combos = {
                     msg = `${before}<span class="combo-step-cardname" onclick="Combos.viewCard('${s.cardId}')">${cardName}</span>${after}`;
                 }
             }
+            const chokes = (combo.chokePoints || []).filter(cp => cp.stepId === s.id);
+            const chokeChips = chokes.map(cp => `
+                <span class="combo-choke-chip">
+                    🚧 <img src="${cp.metaCardImg}" class="combo-choke-chip-img" alt="">
+                    ${this._escape(cp.metaCardName)}
+                    <select class="combo-choke-freq-sel" onchange="Combos.setChokeFrequency('${combo.deckName}','${combo.id}','${cp.id}', this.value)">
+                        ${Object.keys(this.CHOKE_FREQ).map(k => `<option value="${k}" ${cp.frequency === k ? 'selected' : ''}>${this.CHOKE_FREQ[k].label}</option>`).join('')}
+                    </select>
+                    <button class="combo-choke-remove-btn" onclick="Combos.removeChokePoint('${combo.deckName}','${combo.id}','${cp.id}')">✖</button>
+                </span>`).join('');
             return `<div class="combo-step-row">
                 <span class="combo-step-idx">${i + 1}</span>
                 <span class="combo-step-time">${s.time}</span>
                 <span class="combo-step-msg">${msg}</span>
+                <button class="combo-choke-add-btn" onclick="Combos.openChokePicker('${combo.deckName}','${combo.id}','${s.id}')" title="Marcar Choke Point">🚧</button>
+                ${chokeChips}
             </div>`;
         }).join('');
     },
@@ -3939,10 +3954,20 @@ const Combos = {
         stepPenaltyFloor:           0.5,
         starterDistPenaltyPerStep:  0.05,
         starterDistFloor:           0.3,
-        starterHandPenaltyPerExtra: 0.08,
+      starterHandPenaltyPerExtra: 0.08, // el Starter pierde 8% por cada carta extra en la mano inicial
         starterHandFloor:           0.3,
-        noFunctionValue:            1
+        noFunctionValue:            1,    // valor de una carta activa sin función principal asignada
+        chokeFloor:                 0.15  // el impacto acumulado de Choke Points nunca baja el poder de este piso
     },
+
+    CHOKE_FREQ: {
+        baja:  { label: 'Baja (nicho)',             impact: 0.05 },
+        media: { label: 'Media (rotativa/side)',    impact: 0.12 },
+        alta:  { label: 'Alta (staple del formato)', impact: 0.22 },
+        tier1: { label: 'Tier 1 (omnipresente)',     impact: 0.35 }
+    },
+
+    _chokeSearchResults: [],
 
     _bossRoles: ['Boss Monster', 'Tower'],
 
@@ -4011,20 +4036,118 @@ const Combos = {
         const bossName    = bossEntry ? (bossData?.name || bossEntry.id) : null;
         const starterName = starterId ? (starterData?.name || starterId) : null;
 
-        combo.power          = total;
-        combo.powerBreakdown = breakdown;
-        combo.bossCardId     = bossEntry ? bossEntry.id : null;
-        combo.starterCardId  = starterId;
-        combo.bossName       = bossName;
-        combo.starterName    = starterName;
-        combo.imageUrl       = bossData?.card_images?.[0]?.image_url || null;
-        combo.imageUrlSmall  = bossData?.card_images?.[0]?.image_url_small || null;
+        const chokeMult = this._computeChokeMultiplier(combo);
+
+        combo.powerBeforeMeta = total;
+        combo.power           = Math.round(total * chokeMult * 100) / 100;
+        combo.powerBreakdown  = breakdown;
+        combo.bossCardId      = bossEntry ? bossEntry.id : null;
+        combo.starterCardId   = starterId;
+        combo.bossName        = bossName;
+        combo.starterName     = starterName;
+        combo.imageUrl        = bossData?.card_images?.[0]?.image_url || null;
+        combo.imageUrlSmall   = bossData?.card_images?.[0]?.image_url_small || null;
 
         if (bossName && starterName) {
             const deckCombos = this.getAll(combo.deckName).slice().sort((a, b) => a.createdAt - b.createdAt);
             const seq = Math.max(1, deckCombos.findIndex(c => c.id === combo.id) + 1);
             combo.name = `${bossName} + ${starterName} + ${combo.deckName} + #${seq}`;
         }
+    },
+
+    // Cada Choke Point marcado descuenta % del poder según su frecuencia; se
+    // acumulan multiplicativamente (varios chokes = combo más frágil), con piso.
+    _computeChokeMultiplier: function (combo) {
+        const points = combo.chokePoints || [];
+        if (!points.length) return 1;
+        let mult = 1;
+        points.forEach(cp => {
+            const impact = (this.CHOKE_FREQ[cp.frequency] || this.CHOKE_FREQ.media).impact;
+            mult *= (1 - impact);
+        });
+        return Math.max(this.POWER_CFG.chokeFloor, mult);
+    },
+
+    // ── Meta y Choke Points (Etapa 5) ────────────────────────────────
+    openChokePicker: function (deckName, comboId, stepId) {
+        document.getElementById('combo-choke-overlay')?.remove();
+        const overlay = document.createElement('div');
+        overlay.id = 'combo-choke-overlay';
+        overlay.className = 'deck-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div class="deck-modal combo-choke-modal">
+                <h3>🚧 Marcar Choke Point</h3>
+                <p class="deck-modal-note">Busca la carta del meta que interrumpe este paso del combo.</p>
+                <div class="combo-choke-search-row">
+                    <input type="text" id="combo-choke-search-input" placeholder="Nombre de la carta..." autocomplete="off"
+                        onkeydown="if(event.key==='Enter'){Combos._chokeSearch('${deckName}','${comboId}','${stepId}');}">
+                    <button onclick="Combos._chokeSearch('${deckName}','${comboId}','${stepId}')">🔍 Buscar</button>
+                </div>
+                <div id="combo-choke-results" class="combo-choke-results"></div>
+                <div class="deck-modal-buttons">
+                    <button onclick="document.getElementById('combo-choke-overlay').remove()">Cerrar</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    },
+
+    _chokeSearch: async function (deckName, comboId, stepId) {
+        const input = document.getElementById('combo-choke-search-input');
+        const q = input ? input.value.trim() : '';
+        const results = document.getElementById('combo-choke-results');
+        if (!q || !results) return;
+        results.innerHTML = '<p class="deck-empty">Buscando...</p>';
+        try {
+            const resp = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(q)}`);
+            const json = await resp.json();
+            this._chokeSearchResults = (json.data || []).slice(0, 15);
+            results.innerHTML = this._chokeSearchResults.map((card, i) => `
+                <div class="combo-choke-result-row">
+                    <img src="${card.card_images?.[0]?.image_url_small || ''}" class="combo-picker-thumb">
+                    <span class="combo-picker-name">${this._escape(card.name)}</span>
+                    <button onclick="Combos.addChokePoint('${deckName}','${comboId}','${stepId}', ${i})">＋ Elegir</button>
+                </div>`).join('') || '<p class="deck-empty">Sin resultados.</p>';
+        } catch (e) {
+            results.innerHTML = '<p class="deck-empty">Error buscando cartas.</p>';
+        }
+    },
+
+    addChokePoint: function (deckName, comboId, stepId, resultIdx) {
+        const card = this._chokeSearchResults[resultIdx];
+        if (!card) return;
+        this._withCombo(deckName, comboId, combo => {
+            if (!combo.chokePoints) combo.chokePoints = [];
+            combo.chokePoints.push({
+                id:           'choke_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+                stepId:       stepId,
+                metaCardId:   card.id,
+                metaCardName: card.name,
+                metaCardImg:  card.card_images?.[0]?.image_url_small || '',
+                frequency:    'media',
+                createdAt:    Date.now()
+            });
+            this._recalcPower(combo);
+        });
+        document.getElementById('combo-choke-overlay')?.remove();
+        this._refresh();
+    },
+
+    setChokeFrequency: function (deckName, comboId, chokeId, freq) {
+        this._withCombo(deckName, comboId, combo => {
+            const cp = (combo.chokePoints || []).find(c => c.id === chokeId);
+            if (cp) cp.frequency = freq;
+            this._recalcPower(combo);
+        });
+        this._refresh();
+    },
+
+    removeChokePoint: function (deckName, comboId, chokeId) {
+        this._withCombo(deckName, comboId, combo => {
+            combo.chokePoints = (combo.chokePoints || []).filter(c => c.id !== chokeId);
+            this._recalcPower(combo);
+        });
+        this._refresh();
     },
 
     // ── Endboard: cartas activas para follow up, función principal y dependencias ──
@@ -4159,7 +4282,9 @@ _renderPowerSummary: function (combo) {
                 ${combo.imageUrl ? `<img src="${combo.imageUrl}" class="combo-power-thumb" alt="${this._escape(combo.name || '')}">` : ''}
                 <div class="combo-power-info">
                     <div class="combo-power-name">${combo.name ? this._escape(combo.name) : '— agrega función principal a una carta activa —'}</div>
-                    <div class="combo-power-value">⚡ Poder del Combo: <strong>${combo.power}</strong></div>
+                    <div class="combo-power-value">⚡ Poder del Combo: <strong>${combo.power}</strong>
+                        ${combo.powerBeforeMeta != null && combo.powerBeforeMeta !== combo.power ? `<span class="combo-power-premeta"> (antes del Meta: ${combo.powerBeforeMeta})</span>` : ''}
+                    </div>
                 </div>
             </div>
             <div class="combo-power-top">
