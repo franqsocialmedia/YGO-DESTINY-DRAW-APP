@@ -89,8 +89,18 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
         this._renderAllZones();
     },
 
+    closeFloating: function () {
+        if (this._container) this._container.style.display = 'none';
+        this._updateFloatingBtns();
+    },
+
     _buildShell: function () {
         return `<div class="pz-wrap">
+
+            <div class="pz-float-header">
+                <span class="pz-float-title">🎴 Zona de Práctica</span>
+                <button class="pz-float-close-btn" title="Ocultar" onclick="ZonaPractica.closeFloating()">✕</button>
+            </div>
 
             <div class="pz-controls-bar">
                     <button class="pz-ctrl-btn pz-ctrl-search"
@@ -2435,7 +2445,8 @@ _clearLog: function () {
     // ═══════════════════════════════════════════════════════
     _updateFloatingBtns: function () {
         const inSim      = window.Navigation?.currentTab === 'simuladores';
-const inPractica = inSim && (window.Torneo?.simTab === 'practica');
+const inPractica = inSim && (window.Torneo?.simTab === 'practica')
+                   && this._container && this._container.style.display !== 'none';
 
         // Ocultar por completo Atajos (y Helper, si existe) mientras se esta en Zona de Practica
         const scBtn = document.getElementById('shortcuts-float-btn');
