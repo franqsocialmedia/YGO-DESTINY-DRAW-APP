@@ -83,7 +83,6 @@
     /* Mi Deck vacío en móvil: usa la cover art del Buscador */
     .deck-empty-msg-desktop { display: none; }
     .deck-empty-mobile {
-        display: flex;
         flex-direction: column;
         align-items: center;
         gap: 10px;

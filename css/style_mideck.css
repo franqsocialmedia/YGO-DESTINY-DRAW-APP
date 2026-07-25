@@ -77,7 +77,78 @@
     font-style: italic;
 }
 
+/* Fix: la imagen de fondo de "Mi Deck" vacío solo debe verse en responsive (móvil).
+   El display:flex real se activa en responsive_style.css (@media max-width:700px) */
+.deck-empty-mobile {
+    display: none;
+}
 
+/* ── Historial de Versiones del Deck ── */
+.deck-version-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: rgba(26, 0, 8, 0.35);
+}
+.deck-version-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    cursor: pointer;
+    flex: 1 1 200px;
+}
+.deck-version-main:hover .deck-version-date {
+    color: var(--gold-color);
+}
+.deck-version-date {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    font-weight: bold;
+}
+.deck-version-diff {
+    font-size: 0.78rem;
+    color: rgba(241, 241, 241, 0.65);
+}
+.deck-version-detail-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+}
+.deck-version-detail-btn:hover {
+    border-color: var(--gold-color);
+}
+.deck-version-detail {
+    flex-basis: 100%;
+    font-size: 0.78rem;
+    padding: 6px 4px 0 4px;
+    line-height: 1.5;
+}
+.dv-add { color: #6fcf6f; }
+.dv-rem { color: #e06666; }
+.dv-chg { color: #ffd966; }
+.deck-version-comment {
+    flex-basis: 100%;
+    background: rgba(26, 0, 8, 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-light);
+    font-size: 0.8rem;
+    padding: 6px 8px;
+    font-family: inherit;
+}
+.deck-version-comment:focus {
+    outline: none;
+    border-color: var(--gold-color);
+}
 .deck-row {
     display: flex;
     align-items: center;

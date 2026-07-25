@@ -22,6 +22,7 @@ const Deck = {
     name: "Mi Deck",
     notes: "",
     _pendingKeyCards: [],
+    MAX_VERSIONS: 25,
     _pendingThreatCards: [],
 
     init: function () {
@@ -315,10 +316,31 @@ const Deck = {
 
     // ===============================
     saveDeck: function () {
+        let prevRaw = null;
+        try { prevRaw = JSON.parse(localStorage.getItem(`deck_${this.name}`)); } catch (e) { prevRaw = null; }
+
+        const versions = (prevRaw && Array.isArray(prevRaw.versions)) ? prevRaw.versions : [];
+        const diff = this._diffCards(prevRaw ? prevRaw.cards : null, this.cards);
+        const hasChanges = diff.added.length || diff.removed.length || diff.changed.length;
+
+        // Solo se crea una versión nueva si es el primer guardado o si hubo
+        // cambios reales en la lista de cartas (no en notas, que van por saveNotes()).
+        if (!prevRaw || hasChanges) {
+            versions.push({
+                id:      Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                savedAt: new Date().getTime(),
+                comment: '',
+                cards:   JSON.parse(JSON.stringify(this.cards)),
+                diff:    diff
+            });
+            while (versions.length > this.MAX_VERSIONS) versions.shift();
+        }
+
         const deckData = {
-            cards:   this.cards,
-            notes:   this.notes || '',
-            savedAt: new Date().getTime()
+            cards:    this.cards,
+            notes:    this.notes || '',
+            savedAt:  new Date().getTime(),
+            versions: versions
         };
         localStorage.setItem(`deck_${this.name}`, JSON.stringify(deckData));
         alert('Deck guardado');
@@ -328,6 +350,123 @@ const Deck = {
             const panel = document.getElementById('deck-selector-panel');
             if (panel) panel.innerHTML = Estadisticas.renderDeckSelectorPanel();
         }
+    },
+
+    // ── Historial de Versiones ──────────────────────────────────────
+    _diffCards: function (oldCards, newCards) {
+        oldCards = oldCards || {};
+        newCards = newCards || {};
+        const added = [], removed = [], changed = [];
+        const allIds = new Set([...Object.keys(oldCards), ...Object.keys(newCards)]);
+        allIds.forEach(id => {
+            const o = oldCards[id], n = newCards[id];
+            const name = (n && n.data && n.data.name) || (o && o.data && o.data.name) || id;
+            if (!o && n) added.push({ id, name, qty: n.qty });
+            else if (o && !n) removed.push({ id, name, qty: o.qty });
+            else if (o && n && o.qty !== n.qty) changed.push({ id, name, from: o.qty, to: n.qty });
+        });
+        return { added, removed, changed };
+    },
+
+    _formatVersionDiff: function (diff) {
+        if (!diff) return 'Versión inicial';
+        const parts = [];
+        if (diff.added.length)   parts.push(`+${diff.added.reduce((s, c) => s + c.qty, 0)} nueva${diff.added.length > 1 ? 's' : ''}`);
+        if (diff.removed.length) parts.push(`-${diff.removed.reduce((s, c) => s + c.qty, 0)} quitada${diff.removed.length > 1 ? 's' : ''}`);
+        if (diff.changed.length) parts.push(`~${diff.changed.length} cantidad${diff.changed.length > 1 ? 'es' : ''}`);
+        return parts.length ? parts.join(' · ') : 'Versión inicial';
+    },
+
+    _renderVersionDiffDetail: function (diff) {
+        if (!diff) return '<div class="deck-empty">Versión inicial del deck.</div>';
+        const lines = [];
+        diff.added.forEach(c   => lines.push(`<div class="dv-add">➕ ${c.name} x${c.qty}</div>`));
+        diff.removed.forEach(c => lines.push(`<div class="dv-rem">➖ ${c.name} x${c.qty}</div>`));
+        diff.changed.forEach(c => lines.push(`<div class="dv-chg">🔁 ${c.name}: ${c.from} → ${c.to}</div>`));
+        return lines.length ? lines.join('') : '<div class="deck-empty">Sin cambios de cartas.</div>';
+    },
+
+    getVersions: function (deckName) {
+        try {
+            const raw = JSON.parse(localStorage.getItem(`deck_${deckName || this.name}`));
+            return (raw && raw.versions) || [];
+        } catch (e) { return []; }
+    },
+
+    renderVersionesList: function (deckName) {
+        const name = deckName || this.name;
+        const versions = this.getVersions(name).slice().reverse();
+        if (!versions.length) return `<p class="deck-empty">Aún no hay versiones guardadas de este deck.</p>`;
+
+        return versions.map(v => {
+            const date = new Date(v.savedAt).toLocaleString('es-ES', {
+                day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+            const summary  = this._formatVersionDiff(v.diff);
+            const detailId = `vdet-${v.id}`;
+            return `
+            <div class="deck-version-row">
+                <div class="deck-version-main" onclick="Deck.confirmOpenVersion('${name}','${v.id}')">
+                    <span class="deck-version-date">🕒 ${date}</span>
+                    <span class="deck-version-diff">${summary}</span>
+                </div>
+                <button class="deck-version-detail-btn" onclick="event.stopPropagation();Deck.toggleVersionDetail('${v.id}')" title="Ver detalle">🔍</button>
+                <div id="${detailId}" class="deck-version-detail" style="display:none;">
+                    ${this._renderVersionDiffDetail(v.diff)}
+                </div>
+                <input type="text" class="deck-version-comment" placeholder="Comentario de esta versión..."
+                       value="${(v.comment || '').replace(/"/g, '&quot;')}"
+                       onclick="event.stopPropagation();"
+                       onchange="Deck.saveVersionComment('${name}','${v.id}', this.value)">
+            </div>`;
+        }).join('');
+    },
+
+    toggleVersionDetail: function (versionId) {
+        const el = document.getElementById(`vdet-${versionId}`);
+        if (el) el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+    },
+
+    saveVersionComment: function (deckName, versionId, comment) {
+        let raw;
+        try { raw = JSON.parse(localStorage.getItem(`deck_${deckName}`)); } catch (e) { return; }
+        if (!raw || !Array.isArray(raw.versions)) return;
+        const v = raw.versions.find(x => x.id === versionId);
+        if (!v) return;
+        v.comment = comment;
+        localStorage.setItem(`deck_${deckName}`, JSON.stringify(raw));
+    },
+
+    confirmOpenVersion: function (deckName, versionId) {
+        const overlay = document.createElement('div');
+        overlay.className = 'deck-overlay';
+        overlay.innerHTML = `
+            <div class="deck-modal">
+                <h3>Abrir Versión</h3>
+                <p class="deck-modal-note">Se reemplazarán las cartas actuales del deck por las de esta versión. Los cambios sin guardar se perderán.</p>
+                <div class="deck-modal-buttons">
+                    <button onclick="Deck.openVersion('${deckName}','${versionId}')">Sí, Abrir</button>
+                    <button onclick="Deck.closeModal()">Cancelar</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    },
+
+    openVersion: function (deckName, versionId) {
+        this.closeModal();
+        const versions = this.getVersions(deckName);
+        const v = versions.find(x => x.id === versionId);
+        if (!v) { alert('Versión no encontrada.'); return; }
+
+        this.cards = JSON.parse(JSON.stringify(v.cards));
+        this.name  = deckName;
+
+        Object.entries(this.cards).forEach(([id, item]) => {
+            if (item.data) item.roles = this.autoAssignRoles(item.data);
+        });
+
+        this.render();
+        this.onDeckLoaded();
     },
 // ===============================
     // Botón flotante "Guardar Deck" — acceso rápido en Mi Deck.
@@ -1690,6 +1829,18 @@ html += `
         <button class="deck-move" onclick="Deck.exportTXT()" ${isEmpty ? 'disabled' : ''}>📝​ Descargar Lista (.txt)</button>
         <button class="deck-move" onclick="Deck.downloadDecklist()" ${isEmpty ? 'disabled' : ''}>📸 Descargar Decklist</button>
     </div>`;
+
+html += `</div>`;
+
+if (!isEmpty) {
+    html += `
+    <div data-section-id="deck-versiones">
+    <h3 class="deck-section-title" onclick="Deck.toggleSection('versiones-sec')">🕒 Historial de Versiones</h3>
+    <div id="versiones-sec" class="deck-section-content" style="display:none;">
+        <div id="deck-versiones-list">${this.renderVersionesList()}</div>
+    </div>
+    </div>`;
+}
 
 html += `</div>`;
 
