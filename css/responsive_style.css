@@ -388,9 +388,19 @@
     /* Zona de Práctica: tablero reducido proporcionalmente */
     .pz-field-grid-wrap { --pz-cw: 58px; --pz-ch: 80px; }
     .pz-field-other-side { flex: 0 0 84px; }
-    /* Banish (BN) + GY: +20% de ancho respecto al valor base responsive (84px) */
-    .pz-field-side        { flex: 0 0 101px; }
+    /* Banish (BN) + GY: ensanchado en responsive para ver las cartas en fila */
+    .pz-field-side        { flex: 0 0 150px; }
     .pz-field-area-wrap  { gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* Solo en responsive: la pila crece hacia la derecha, no hacia abajo */
+    .pz-field-side-zone .pz-side-zone {
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+    .pz-field-side-zone .pz-side-zone .pz-pile-stacked {
+        margin-top: 0;
+        margin-left: -12px;
+    }
 }
 
 @media (max-width: 600px) {
@@ -418,11 +428,12 @@
     .pz-field-grid   { gap: 2px; }
     .pz-field-grid-wrap  { --pz-cw: 32px; --pz-ch: 46px; }
     .pz-field-other-side { flex: 0 0 46px; }
-    /* Banish (BN) + GY: +20% de ancho respecto al valor base responsive (46px) */
-    .pz-field-side        { flex: 0 0 55px; }
+    /* Banish (BN) + GY: ensanchado en responsive para ver las cartas en fila */
+    .pz-field-side        { flex: 0 0 90px; }
     .pz-field-area-wrap   { gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .pz-field-side-btns .pz-row-label { flex-shrink: 1; font-size: .5rem; }
     .pz-field-side-btns .pz-mini-btn  { padding: 2px 5px; font-size: .62rem; }
+    .pz-field-side-zone .pz-side-zone .pz-pile-stacked { margin-left: -9px; }
 
     /* Cartas de Hand/Main/Extra/GY/Banish/Other: reducidas junto al tablero */
     :root {
@@ -500,8 +511,9 @@
     .pz-ctrl-btn  { font-size: 0.68rem; padding: 3px 6px; }
 .pz-field-grid-wrap  { --pz-cw: 26px; --pz-ch: 37px; }
     .pz-field-other-side { flex: 0 0 38px; }
-    /* Banish (BN) + GY: +20% de ancho respecto al valor base responsive (38px) */
-    .pz-field-side        { flex: 0 0 46px; }
+    /* Banish (BN) + GY: ensanchado en responsive para ver las cartas en fila */
+    .pz-field-side        { flex: 0 0 76px; }
+    .pz-field-side-zone .pz-side-zone .pz-pile-stacked { margin-left: -7px; }
     :root {
         --pz-cw: 42px; --pz-ch: 62px;
         --pz-cw-sm: 26px; --pz-ch-sm: 38px;

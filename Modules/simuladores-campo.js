@@ -1711,7 +1711,7 @@ _showDetachMenu: function (zone, e) {
                         onclick="ZonaPractica._dvRemoveCard('${zoneName}',${idx})">✕</button>
             <button class="pz-dvc-act pz-dvc-activate"
                         onclick="ZonaPractica._zmActivate('${zoneName}',${idx},'multi',event)"
-                        title="Activar efecto">Activar</button>`;
+                        title="Activar efecto">🚨</button>`;
         };
 
         grid.innerHTML = filtered.map(({ e, i }) => {
@@ -2626,6 +2626,7 @@ _updateZoneCount: function (zoneName, count) {
 
         const isBanish  = zoneName === 'banish';
         const isHand    = zoneName === 'hand';
+        const isPile    = zoneName === 'gy' || zoneName === 'banish';
         // Ocultar si el switch global o el per-zona está activo
         const isPrivate = (zoneName === 'hand'  && (this.cardsHidden || this.hiddenHand))  ||
                           (zoneName === 'main'  && (this.cardsHidden || this.hiddenMain))  ||
@@ -2641,7 +2642,14 @@ const minGap = isHand ? -52 : -18;
             if (!entry?.card) return;
             const slot = document.createElement('div');
             slot.className = 'pz-card-slot';
-            if (i > 0) slot.style.marginLeft = `${gap}px`;
+            // GY/Banish: apiladas — la última en llegar (pintada al final) queda
+            // visualmente al frente. El offset real (vertical en desktop,
+            // horizontal en responsive) lo define el CSS vía esta clase.
+            if (isPile) {
+                if (i > 0) slot.classList.add('pz-pile-stacked');
+            } else if (i > 0) {
+                slot.style.marginLeft = `${gap}px`;
+            }
 
             const img = document.createElement('img');
             if (isPrivate) {
