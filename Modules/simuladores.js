@@ -2049,6 +2049,9 @@ _mul: {
     outside:   [],
     deckMeta:  null
 },
+// Estado Montecarlo Multivariado
+_monte:     { inited: false, categories: [] },
+_monteIdSeq: 2,
 
     // ═══════════════════════════════════════════════════
 
@@ -2111,6 +2114,7 @@ renderInto: function (container) {
     <div class="hiper-tabs">
         <button class="hiper-tab-btn active" id="hiper-tb-quick" onclick="Hipergeometria.switchTab('quick')">⚡ Cálculo Estandar</button>
         <button class="hiper-tab-btn" id="hiper-tb-deck" onclick="Hipergeometria.switchTab('deck')">🗂️ Calculo con Mis Decks</button>
+        <button class="hiper-tab-btn" id="hiper-tb-monte" onclick="Hipergeometria.switchTab('monte')">🎯 Montecarlo Multivariado</button>
         <button class="hiper-tab-btn" id="hiper-tb-mul" onclick="Hipergeometria.switchTab('mul')">🃏 Prueba Mulligan</button>
     </div>
 
@@ -2223,6 +2227,48 @@ renderInto: function (container) {
         </div>
     </div>
 </div>
+<!-- ══════════ TAB MONTECARLO MULTIVARIADO ══════════ -->
+<div id="hiper-pane-monte" class="hiper-pane" style="display:none">
+
+    <p class="hiper-intro" style="margin-top:0">
+        Simulación <strong>Montecarlo</strong> de la <strong>distribución hipergeométrica multivariada</strong>:
+        define varias categorías de cartas (Starters, Handtraps, Extenders, Bricks...) y calcula la
+        probabilidad de cumplir varios mínimos <em>a la vez</em> en la mano inicial — algo que la
+        hipergeométrica simple (una sola carta objetivo) no puede responder.
+    </p>
+
+    <div class="hiper-monte-config">
+        <label class="hiper-label">
+            📦 Tamaño del Main Deck (N)
+            <input type="number" id="mc-N" class="hiper-input" value="40" min="1" max="60"
+                   oninput="Hipergeometria._monteSync()">
+        </label>
+        <label class="hiper-label hiper-label-hl">
+            ✋ Cartas en mano inicial (M)
+            <input type="number" id="mc-M" class="hiper-input" value="5" min="1" max="20"
+                   oninput="Hipergeometria._monteSync()">
+        </label>
+        <label class="hiper-label">
+            🎲 Repeticiones
+            <select id="mc-trials" class="hiper-input" onchange="Hipergeometria._monteSync()">
+                <option value="5000">5,000 (rápido)</option>
+                <option value="20000" selected>20,000</option>
+                <option value="50000">50,000 (más preciso)</option>
+            </select>
+        </label>
+    </div>
+
+    <div id="mc-cat-list" class="hiper-monte-cat-list"></div>
+
+    <div class="hiper-monte-actions">
+        <button class="hiper-monte-add-btn" onclick="Hipergeometria._monteAddCategory()">＋ Agregar categoría</button>
+        <span id="mc-remaining" class="hiper-monte-remaining"></span>
+    </div>
+
+    <button class="hiper-monte-run-btn" onclick="Hipergeometria._monteRun()">🎲 Simular Montecarlo</button>
+
+    <div id="mc-results" class="hiper-results"></div>
+</div>
 <!-- ══════════ TAB PRUEBA MULLIGAN ══════════ -->
     <div id="hiper-pane-mul" class="hiper-pane" style="display:none">
         <div class="hiper-deck-layout">
@@ -2306,15 +2352,16 @@ renderInto: function (container) {
     },
 
     switchTab: function (tab) {
-    const tabs = ['quick', 'deck', 'mul'];
+    const tabs = ['quick', 'deck', 'monte', 'mul'];
     tabs.forEach(t => {
         const pane = document.getElementById(`hiper-pane-${t}`);
         const btn  = document.getElementById(`hiper-tb-${t}`);
         if (pane) pane.style.display = (t === tab) ? '' : 'none';
         if (btn)  btn.classList.toggle('active', t === tab);
     });
-    if (tab === 'deck') this._loadDeckList();
-    if (tab === 'mul')  this._loadMulDeckList();
+    if (tab === 'deck')  this._loadDeckList();
+    if (tab === 'mul')   this._loadMulDeckList();
+    if (tab === 'monte') this._monteEnsureInit();
 },
 
     // ═══════════════════════════════════════════════════
@@ -2400,6 +2447,172 @@ renderInto: function (container) {
 <div class="hiper-chart-legend">
     Eje X = total de cartas robadas del deck · El recuadro blanco marca tu M actual
 </div>`;
+    },
+
+    // ═══════════════════════════════════════════════════
+    // MONTECARLO MULTIVARIADO
+    // ═══════════════════════════════════════════════════
+
+    _monteEnsureInit: function () {
+        if (this._monte.inited) return;
+        this._monte.inited = true;
+        this._monte.categories = [
+            { id: 'mc1', name: 'Starters',  n: 8, min: 1 },
+            { id: 'mc2', name: 'Handtraps', n: 6, min: 1 }
+        ];
+        this._monteRenderCategories();
+    },
+
+    _monteNextId: function () {
+        this._monteIdSeq += 1;
+        return 'mc' + this._monteIdSeq;
+    },
+
+    _monteAddCategory: function () {
+        if (this._monte.categories.length >= 6) return;
+        this._monte.categories.push({
+            id: this._monteNextId(),
+            name: `Categoría ${this._monte.categories.length + 1}`,
+            n: 3, min: 1
+        });
+        this._monteRenderCategories();
+    },
+
+    _monteRemoveCategory: function (id) {
+        if (this._monte.categories.length <= 1) return;
+        this._monte.categories = this._monte.categories.filter(c => c.id !== id);
+        this._monteRenderCategories();
+    },
+
+    _monteUpdateCategory: function (id, field, value) {
+        const cat = this._monte.categories.find(c => c.id === id);
+        if (!cat) return;
+        cat[field] = field === 'name' ? value : Math.max(0, parseInt(value) || 0);
+        this._monteSync();
+    },
+
+    _monteRenderCategories: function () {
+        const list = document.getElementById('mc-cat-list');
+        if (!list) return;
+        list.innerHTML = this._monte.categories.map(c => `
+            <div class="hiper-monte-row">
+                <input type="text" class="hiper-input hiper-monte-name-input" value="${c.name}"
+                       oninput="Hipergeometria._monteUpdateCategory('${c.id}','name',this.value)">
+                <label class="hiper-monte-mini-label">Copias (n)
+                    <input type="number" class="hiper-input hiper-monte-num-input" value="${c.n}" min="0"
+                           oninput="Hipergeometria._monteUpdateCategory('${c.id}','n',this.value)">
+                </label>
+                <label class="hiper-monte-mini-label">Mínimo deseado
+                    <input type="number" class="hiper-input hiper-monte-num-input" value="${c.min}" min="0"
+                           oninput="Hipergeometria._monteUpdateCategory('${c.id}','min',this.value)">
+                </label>
+                <button class="hiper-monte-del-btn" title="Quitar categoría"
+                        onclick="Hipergeometria._monteRemoveCategory('${c.id}')">✕</button>
+            </div>`).join('');
+        this._monteSync();
+    },
+
+    _monteSync: function () {
+        const N = parseInt(document.getElementById('mc-N')?.value) || 40;
+        const totalTagged = this._monte.categories.reduce((s, c) => s + (c.n || 0), 0);
+        const remaining = N - totalTagged;
+        const remEl = document.getElementById('mc-remaining');
+        if (remEl) {
+            remEl.textContent = remaining >= 0
+                ? `${remaining} cartas "resto" completan el deck (N=${N})`
+                : `⚠️ Las categorías suman ${totalTagged}, más que N=${N}`;
+            remEl.style.color = remaining >= 0 ? 'rgba(241,241,241,0.5)' : '#ff7675';
+        }
+    },
+
+    _monteRun: function () {
+        const N      = parseInt(document.getElementById('mc-N')?.value) || 40;
+        const M      = parseInt(document.getElementById('mc-M')?.value) || 5;
+        const trials = parseInt(document.getElementById('mc-trials')?.value) || 20000;
+        const cats   = this._monte.categories;
+        const resEl  = document.getElementById('mc-results');
+        if (!resEl) return;
+
+        const totalTagged = cats.reduce((s, c) => s + (c.n || 0), 0);
+        if (!cats.length || totalTagged > N || M > N || M < 1 || N < 1) {
+            resEl.innerHTML = '<div class="hiper-warn">⚠️ Revisa los valores: la suma de copias por categoría no puede superar N, y M debe ser ≤ N.</div>';
+            return;
+        }
+
+        const result = this._monteSimulate(N, M, cats, trials);
+        this._monteRenderResults(result, cats, M);
+    },
+
+    // Montecarlo: shuffle parcial (solo M swaps por trial) sobre un mazo
+    // simbólico [categoría0, categoría1, ..., -1 = resto].
+    _monteSimulate: function (N, M, categories, trials) {
+        const baseDeck = [];
+        categories.forEach((c, idx) => { for (let i = 0; i < c.n; i++) baseDeck.push(idx); });
+        for (let i = baseDeck.length; i < N; i++) baseDeck.push(-1);
+
+        const avgCounts = new Array(categories.length).fill(0);
+        const catHits   = new Array(categories.length).fill(0);
+        let jointHits   = 0;
+
+        for (let t = 0; t < trials; t++) {
+            const deck = baseDeck.slice();
+            const handCounts = new Array(categories.length).fill(0);
+            const drawn = Math.min(M, deck.length);
+            for (let i = 0; i < drawn; i++) {
+                const j = i + Math.floor(Math.random() * (deck.length - i));
+                const tmp = deck[i]; deck[i] = deck[j]; deck[j] = tmp;
+                if (deck[i] >= 0) handCounts[deck[i]]++;
+            }
+            let allMet = true;
+            categories.forEach((c, idx) => {
+                avgCounts[idx] += handCounts[idx];
+                if (handCounts[idx] >= c.min) catHits[idx]++;
+                else allMet = false;
+            });
+            if (allMet) jointHits++;
+        }
+
+        return {
+            trials,
+            avgCounts:       avgCounts.map(s => s / trials),
+            probPerCategory: catHits.map(h => h / trials),
+            jointProb:       jointHits / trials
+        };
+    },
+
+    _monteRenderResults: function (result, categories, M) {
+        const resEl = document.getElementById('mc-results');
+        if (!resEl) return;
+        const col = p => p >= 0.70 ? '#00b894' : p >= 0.45 ? '#fdcb6e' : '#d63031';
+        const jointPct = (result.jointProb * 100).toFixed(1);
+
+        const rows = categories.map((c, i) => {
+            const p   = result.probPerCategory[i];
+            const pct = (p * 100).toFixed(1);
+            const avg = result.avgCounts[i].toFixed(2);
+            return `
+            <div class="hiper-monte-bar-row">
+                <div class="hiper-monte-bar-label">${c.name} <span class="hiper-monte-bar-sub">(≥${c.min}, n=${c.n})</span></div>
+                <div class="hiper-monte-bar-track">
+                    <div class="hiper-monte-bar-fill" style="width:${pct}%;background:${col(p)}"></div>
+                </div>
+                <div class="hiper-monte-bar-pct" style="color:${col(p)}">${pct}%</div>
+                <div class="hiper-monte-bar-avg">øcopias: ${avg}</div>
+            </div>`;
+        }).join('');
+
+        resEl.innerHTML = `
+        <div class="hiper-res-grid">
+            <div class="hiper-res-card" style="border-color:${col(result.jointProb)}">
+                <div class="hiper-res-val" style="color:${col(result.jointProb)}">${jointPct}%</div>
+                <div class="hiper-res-label">Probabilidad de cumplir TODOS los mínimos a la vez (M=${M})</div>
+            </div>
+            <div class="hiper-res-card">
+                <div class="hiper-res-val">${result.trials.toLocaleString()}</div>
+                <div class="hiper-res-label">Manos simuladas</div>
+            </div>
+        </div>
+        <div class="hiper-monte-bars">${rows}</div>`;
     },
 
     // ═══════════════════════════════════════════════════

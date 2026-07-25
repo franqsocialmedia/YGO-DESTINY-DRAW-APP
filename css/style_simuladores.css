@@ -1699,6 +1699,71 @@
     color: #fff;
 }
 
+/* ── MONTECARLO MULTIVARIADO ─────────────────────────────── */
+.hiper-monte-config {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+.hiper-monte-config .hiper-label { flex: 1; min-width: 140px; }
+
+.hiper-monte-cat-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.hiper-monte-row {
+    display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; padding: 10px;
+}
+.hiper-monte-name-input { flex: 2; min-width: 120px; font-weight: 600; }
+.hiper-monte-mini-label {
+    display: flex; flex-direction: column; gap: 4px; font-size: 0.7rem;
+    color: rgba(241,241,241,0.55); flex: 1; min-width: 90px;
+}
+.hiper-monte-num-input { width: 100%; }
+.hiper-monte-del-btn {
+    background: rgba(214,48,49,0.15); border: 1px solid rgba(214,48,49,0.4);
+    color: #ff7675; border-radius: 6px; width: 30px; height: 34px;
+    cursor: pointer; font-size: 0.85rem; flex-shrink: 0;
+}
+.hiper-monte-del-btn:hover { background: rgba(214,48,49,0.35); }
+
+.hiper-monte-actions {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+.hiper-monte-add-btn {
+    background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.3);
+    color: var(--gold-color, #FFD700); padding: 7px 14px; border-radius: 7px;
+    cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s;
+}
+.hiper-monte-add-btn:hover { background: rgba(255,215,0,0.18); }
+.hiper-monte-remaining { font-size: 0.75rem; color: rgba(241,241,241,0.5); }
+
+.hiper-monte-run-btn {
+    width: 100%; padding: 11px; margin-bottom: 6px;
+    background: var(--accent-color, #2d0a4e); border: 1px solid var(--gold-color, #FFD700);
+    color: var(--gold-color, #FFD700); border-radius: 8px; cursor: pointer;
+    font-size: 0.9rem; font-weight: 700; transition: all 0.2s;
+}
+.hiper-monte-run-btn:hover { background: rgba(255,215,0,0.15); }
+
+.hiper-monte-bars { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.hiper-monte-bar-row {
+    display: grid; grid-template-columns: 1fr 2fr auto auto;
+    align-items: center; gap: 10px;
+}
+.hiper-monte-bar-label { font-size: 0.8rem; font-weight: 600; color: rgba(241,241,241,0.85); }
+.hiper-monte-bar-sub   { font-size: 0.68rem; font-weight: 400; color: rgba(241,241,241,0.45); }
+.hiper-monte-bar-track {
+    height: 14px; background: rgba(0,0,0,0.4); border-radius: 7px; overflow: hidden;
+}
+.hiper-monte-bar-fill  { height: 100%; transition: width 0.3s; }
+.hiper-monte-bar-pct   { font-size: 0.85rem; font-weight: 700; width: 46px; text-align: right; }
+.hiper-monte-bar-avg   { font-size: 0.68rem; color: rgba(241,241,241,0.5); white-space: nowrap; }
+
+@media (max-width: 600px) {
+    .hiper-monte-bar-row { grid-template-columns: 1fr; gap: 4px; }
+    .hiper-monte-bar-pct, .hiper-monte-bar-avg { text-align: left; width: auto; }
+}
+
 /* ── PARTE INFERIOR CON MIS DECKS ─────────────────────────── */
 .hiper-deck-bottom {
     border-top: 1px solid rgba(255,255,255,0.08);
