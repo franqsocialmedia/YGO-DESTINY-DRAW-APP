@@ -84,6 +84,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
     renderInto: function (container) {
         if (!container) return;
         this._container = container;
+        this._hasOpened = true; 
         if (!container.querySelector('.pz-wrap')) {
             container.innerHTML = this._buildShell();
         }
@@ -2501,6 +2502,15 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica')
             btn.onclick   = () => ZonaPractica.saveGameState();
             document.body.appendChild(btn);
         }
+          if (!document.getElementById('pz-float-close-btn')) {
+            const closeBtn = document.createElement('button');
+            closeBtn.id        = 'pz-float-close-btn';
+            closeBtn.className = 'pz-float-btn pz-float-btn-close';
+            closeBtn.innerHTML = '✕';
+            closeBtn.title     = 'Ocultar Zona de Práctica';
+            closeBtn.onclick   = () => ZonaPractica.closeFloating();
+            document.body.appendChild(closeBtn);
+        }
     },
 
     _cleanupFloatBtns: function () {
@@ -2511,15 +2521,7 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica')
         const helpBtn = document.getElementById('help-float-btn');
         if (helpBtn) helpBtn.style.display = '';
 
-        if (!document.getElementById('pz-float-close-btn')) {
-            const closeBtn = document.createElement('button');
-            closeBtn.id        = 'pz-float-close-btn';
-            closeBtn.className = 'pz-float-btn pz-float-btn-close';
-            closeBtn.innerHTML = '✕';
-            closeBtn.title     = 'Ocultar Zona de Práctica';
-            closeBtn.onclick   = () => ZonaPractica.closeFloating();
-            document.body.appendChild(closeBtn);
-        }
+        
     },
     // ═══════════════════════════════════════════════════════
     _showToast: function (msg, duration = 2000) {

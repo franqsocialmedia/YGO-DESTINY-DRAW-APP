@@ -37,8 +37,8 @@
     }
 
     /* Scroll buttons: alejar del footer en móvil */
-    #scrollTopBtn    { bottom: 80px;  right: 12px; width: 36px; height: 36px; font-size: 15px; }
-    #scrollBottomBtn { bottom: 122px; right: 12px; width: 36px; height: 36px; font-size: 15px; }
+    #scrollTopBtn    { bottom: 122px; right: 12px; width: 36px; height: 36px; font-size: 15px; }
+#scrollBottomBtn { bottom: 80px;  right: 12px; width: 36px; height: 36px; font-size: 15px; }
 }
 
 @media (max-width: 480px) {
