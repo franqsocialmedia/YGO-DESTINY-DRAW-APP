@@ -2700,7 +2700,7 @@ const minGap = isHand ? -52 : -18;
     level: card.level, rank: card.rank, linkval: card.linkval,
     banlist_info: card.banlist_info,
     card_images: card.card_images || [] } : null;
-    this.logEntries.push({ msg, time, turn: this.turnNumber, imgUrl, isManual: !!isManual, isLike: !!isLike, cardName: card?.name || null });
+    this.logEntries.push({ msg, time, turn: this.turnNumber, imgUrl, isManual: !!isManual, isLike: !!isLike, cardName: card?.name || null, card: cardSlim });
         console.info(`[PZ] T${this.turnNumber} ${time} — ${isManual ? '[Manual] ' : ''}${msg}`);
         // Actualizar Log en tiempo real si está abierto
         const el = document.getElementById('pz-log-entries');

@@ -306,7 +306,6 @@ body[data-bg-theme="navy"] {
     width: 100%;
     
     /* Estilos visuales */
-    background: rgba(26, 0, 8, 0.95);
     border-top: 1px solid var(--border-color);
     padding: var(--spacing-sm) 0;
     margin-top: 20px;
