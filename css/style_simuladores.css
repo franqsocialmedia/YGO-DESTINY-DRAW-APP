@@ -6183,7 +6183,15 @@
     background: rgba(255,255,255,0.05); color: var(--text-light); font-size: 0.8rem; cursor: pointer; margin-top: 8px;
 }
 .ctrsim-btn-danger  { border-color: var(--danger-color);  color: var(--danger-color); }
-.ctrsim-btn-accent  { border-color: var(--gold-color);    color: var(--gold-color); width: 100%; }
+.ctrsim-counterof-list { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow-y: auto; }
+.ctrsim-counterof-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); cursor: pointer; text-align: left;
+}
+.ctrsim-counterof-item.ctrsim-counterof-active { border-color: var(--gold-color); background: rgba(255,215,0,0.08); }
+.ctrsim-counterof-img { width: 40px; height: 58px; object-fit: cover; border-radius: 5px; }
+.ctrsim-counterof-name { flex: 1; color: var(--text-light); font-size: 0.85rem; }
+.ctrsim-counterof-check { font-size: 1rem; }
 .ctrsim-btn-primary { background: var(--accent-color); color: #111; border-color: var(--accent-color); width: 100%; font-weight: 700; }
 
 .ctrsim-counters-list { display: flex; flex-direction: column; gap: 8px; }

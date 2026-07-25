@@ -3163,7 +3163,6 @@ const CounterSim = {
     selection: {},   // Container C: {id:{data}}
     counters: {},    // Container D: {id:{data, score, isPerfect, manual, estimated}}
     _pickerTab: 'decks',
-    _targetSpecs: [],
     _searchTimeout: null,
     _searchResults: [],
 
@@ -3197,7 +3196,6 @@ const CounterSim = {
             <div class="ctrsim-box ctrsim-box-selection">
                 <div class="ctrsim-box-title">🎯 Cartas Objetivo (toca una carta del Pool para añadirla/quitarla)</div>
                 <div id="ctrsim-selection-strip" class="ctrsim-selection-strip">${this._renderSelection()}</div>
-                <button class="ctrsim-btn-sm ctrsim-btn-accent" onclick="CounterSim.calculateCounters()">🎯 Buscar Counters</button>
             </div>
 
             <div class="ctrsim-box ctrsim-box-counters">
@@ -3398,110 +3396,84 @@ const CounterSim = {
             else this.pool[id] = { data: card, qty: 1, location: window.Deck?.isExtraDeckCard(card) ? 'extra' : 'main' };
             this._refreshPool();
         } else {
-            if (!this.counters[id]) this.counters[id] = { data: card, score: null, isPerfect: false, manual: true };
+            if (!this.counters[id]) this.counters[id] = { data: card, isPerfect: false, manual: true, counterOf: {} };
             this._refreshCounters();
         }
     },
 
-    // ── Cálculo de Counters (Container D) ───────────────
-    calculateCounters: function () {
-        const targetEntries = Object.entries(this.selection); // [id, {data}]
-        if (!targetEntries.length) { alert('Selecciona al menos una carta objetivo (toca una carta del Pool).'); return; }
 
-        // Especializaciones por carta objetivo (para saber a CUÁLES contraataca cada counter)
-        const targetSpecs = targetEntries.map(([id, item]) => {
-            const roles    = window.Deck?.autoAssignRoles?.(item.data) ?? [];
-            const analysis = window.SpecialtyAnalyzer ? SpecialtyAnalyzer.analyzeCard({ ...item.data, roles }) : { specializations: [] };
-            return { id, name: item.data?.name || id, specs: new Set((analysis.specializations || []).map(s => s.name)) };
-        });
-
-        const allSpecs = new Set();
-        targetSpecs.forEach(t => t.specs.forEach(s => allSpecs.add(s)));
-
-        if (!allSpecs.size) {
-            alert('Ninguna carta objetivo coincide con una mecánica registrada en Config → Pilares/Especialidades.');
-            return;
-        }
-
-        // Candidatos: solo cartas del meta cuyo "counters" toca alguna mecánica presente en el objetivo
-        let candidates = [];
-        const cache = window.Estadisticas?.powerScoreCache?.cards;
-        if (cache && cache.length) {
-            candidates = cache
-                .filter(card => (card.specAnalysis?.counters || []).some(c => allSpecs.has(c.countersSpec)))
-                .map(card => ({
-                    id: String(card.cardId),
-                    data: card.cardData || { id: card.cardId, name: `Carta #${card.cardId}` },
-                    counterSpecs: (card.specAnalysis?.counters || []).map(c => c.countersSpec)
-                }));
-        } else if (window.Estadisticas?.metaCardLibrary) {
-            candidates = Object.values(Estadisticas.metaCardLibrary)
-                .filter(entry => (entry.counters || []).some(c => allSpecs.has(c.countersSpec)))
-                .map(entry => ({
-                    id: entry.id,
-                    data: { id: entry.id, name: entry.name, type: entry.type },
-                    counterSpecs: (entry.counters || []).map(c => c.countersSpec),
-                    estimated: true
-                }));
-        }
-
-        // Score = cuántas de tus cartas objetivo contraataca realmente cada candidata
-        const found = {};
-        candidates.forEach(cand => {
-            const countered = targetSpecs.filter(t => [...t.specs].some(s => cand.counterSpecs.includes(s)));
-            if (!countered.length) return;
-            found[cand.id] = {
-                data: cand.data,
-                score: countered.length,
-                counteredNames: countered.map(t => t.name),
-                isPerfect: false,
-                manual: false,
-                estimated: !!cand.estimated
-            };
-        });
-
-        // Conserva counters manuales / marcados como perfectos ya agregados a mano
-        Object.entries(this.counters).forEach(([id, c]) => {
-            if (c.manual || c.isPerfect) found[id] = { ...c, ...(found[id] || {}) };
-        });
-
-        this.counters      = found;
-        this._targetSpecs  = [...allSpecs];
-        this._targetTotal  = targetEntries.length;
-        this._refreshCounters();
-
-        if (!Object.keys(found).length) {
-            alert('No se encontraron counters en el Meta contra esas cartas objetivo. Ejecuta "⚡ Poder de Cartas" en Estadísticas o añade counters a mano.');
-        }
-    },
-
-    _renderCounters: function () {
+   _renderCounters: function () {
         const entries = Object.entries(this.counters);
-        if (!entries.length) return '<div class="ctrsim-empty">Sin counters. Pulsa "🎯 Buscar Counters" o añade cartas a mano.</div>';
-        entries.sort((a, b) => {
-            if (a[1].isPerfect !== b[1].isPerfect) return a[1].isPerfect ? -1 : 1;
-            return (b[1].score || 0) - (a[1].score || 0);
+        if (!entries.length) return '<div class="ctrsim-empty">Sin counters. Usa "🔍 Buscar Cartas" para añadir.</div>';
+
+        const totalTargets = Object.keys(this.selection).length;
+        const scored = entries.map(([id, c]) => {
+            const activeCount = Object.keys(c.counterOf || {}).filter(tid => this.selection[tid]).length;
+            return [id, c, activeCount];
         });
-        return entries.map(([id, c]) => {
-            const scoreTxt = (c.score === null || c.score === undefined)
-                ? (c.manual ? 'Manual' : '—')
-                : `${c.score}/${this._targetTotal || c.score} objetivo${c.estimated ? ' (estimado)' : ''}`;
-            return `
+        scored.sort((a, b) => {
+            if (a[1].isPerfect !== b[1].isPerfect) return a[1].isPerfect ? -1 : 1;
+            return b[2] - a[2];
+        });
+
+        return scored.map(([id, c, activeCount]) => `
 <div class="ctrsim-counter-row ${c.isPerfect ? 'ctrsim-counter-perfect' : ''}">
     <img src="${this._imgFor(c.data, id)}" class="ctrsim-counter-img" loading="lazy">
     <div class="ctrsim-counter-info">
         <div class="ctrsim-counter-name">${c.data?.name || id}${c.isPerfect ? ' 🌟' : ''}</div>
-        <div class="ctrsim-counter-score">${scoreTxt}</div>
-        ${c.counteredNames?.length ? `<div class="ctrsim-counter-targets">vs: ${c.counteredNames.join(', ')}</div>` : ''}
+        <div class="ctrsim-counter-score">Counter de ${activeCount}/${totalTargets}</div>
     </div>
     <div class="ctrsim-counter-btns">
         <button class="ctrsim-btn-icon ${c.isPerfect ? 'ctrsim-btn-icon-active' : ''}" onclick="CounterSim.togglePerfect('${id}')" title="Marcar como Counter Perfecta">🌟</button>
+        <button class="ctrsim-btn-icon" onclick="CounterSim.openCounterOfPicker('${id}')" title="Establecer de cuáles cartas objetivo es counter">🎯</button>
         <button class="ctrsim-btn-icon ctrsim-btn-icon-danger" onclick="CounterSim.removeCounter('${id}')" title="Quitar">✕</button>
     </div>
+</div>`).join('');
+    },
+openCounterOfPicker: function (counterId) {
+        const counter = this.counters[counterId];
+        if (!counter) return;
+        document.getElementById('ctrsim-counterof-modal')?.remove();
+
+        const targets = Object.entries(this.selection);
+        const overlay = document.createElement('div');
+        overlay.id = 'ctrsim-counterof-modal';
+        overlay.className = 'ctrsim-search-modal';
+        overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+
+        const rows = targets.length
+            ? targets.map(([tid, t]) => {
+                const active = !!counter.counterOf?.[tid];
+                return `
+<button class="ctrsim-counterof-item ${active ? 'ctrsim-counterof-active' : ''}"
+        onclick="CounterSim.toggleCounterOf('${counterId}', '${tid}')">
+    <img src="${this._imgFor(t.data, tid)}" class="ctrsim-counterof-img" loading="lazy">
+    <span class="ctrsim-counterof-name">${t.data?.name || tid}</span>
+    <span class="ctrsim-counterof-check">${active ? '✅' : '➕'}</span>
+</button>`;
+            }).join('')
+            : '<div class="ctrsim-empty">Sin cartas objetivo. Añade cartas al contenedor "Cartas Objetivo" primero.</div>';
+
+        overlay.innerHTML = `
+<div class="ctrsim-search-box eng-modal-box">
+    <div class="eng-modal-header">
+        <span>Counter de… ${counter.data?.name ? `(${counter.data.name})` : ''}</span>
+        <button class="eng-modal-close" onclick="document.getElementById('ctrsim-counterof-modal').remove()">✕</button>
+    </div>
+    <div class="ctrsim-counterof-list">${rows}</div>
 </div>`;
-        }).join('');
+        document.body.appendChild(overlay);
     },
 
+    toggleCounterOf: function (counterId, targetId) {
+        const counter = this.counters[counterId];
+        if (!counter) return;
+        if (!counter.counterOf) counter.counterOf = {};
+        if (counter.counterOf[targetId]) delete counter.counterOf[targetId];
+        else counter.counterOf[targetId] = true;
+        this.openCounterOfPicker(counterId); // refresca el modal
+        this._refreshCounters();             // refresca "Counter de X/Y" en la lista
+    },
     _refreshCounters: function () {
         const el = document.getElementById('ctrsim-counters-list');
         if (el) el.innerHTML = this._renderCounters();
@@ -3521,7 +3493,8 @@ const CounterSim = {
     convertToEngine: function () {
         const entries = Object.entries(this.counters).filter(([, c]) => c.isPerfect);
         if (!entries.length) { alert('Marca al menos una carta como Counter Perfecta (🌟) antes de convertir en Engine.'); return; }
-        const name = prompt('Nombre para el nuevo Engine:', 'Counters — ' + (this._targetSpecs.join(', ') || 'Meta'));
+        const targetNames = Object.values(this.selection).map(t => t.data?.name).filter(Boolean);
+        const name = prompt('Nombre para el nuevo Engine:', 'Counters — ' + (targetNames.slice(0, 2).join(', ') || 'Meta'));
         if (!name) return;
 
         const cards = {};
@@ -3547,7 +3520,7 @@ const CounterSim = {
             coverCardImg: this._imgFor(entries[0][1].data, entries[0][0]),
             cards,
             roles: [],
-            notes: `Generado con el Simulador de Counters contra: ${this._targetSpecs.join(', ') || 'objetivo manual'}.`,
+            notes: `Generado con el Simulador de Counters. Objetivo: ${targetNames.join(', ') || 'manual'}.`,
             stats,
             createdAt: Date.now()
         });
