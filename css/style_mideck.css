@@ -2695,3 +2695,49 @@
     border-top: 1px solid rgba(255,215,0,.12);
     padding-top: 10px;
 }
+
+/* ── Cartas Clave / Amenazas del Oponente (slide 4, Registro de Ronda) ── */
+.opt-key-hint { font-size: .78rem; opacity: .65; margin: 2px 0 8px; }
+.opt-key-counter { font-size: .75rem; opacity: .6; font-weight: normal; }
+.opt-key-empty { font-size: .8rem; opacity: .55; margin: 4px 0; }
+
+.opt-key-card-grid {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    max-height: 220px; overflow-y: auto; padding: 4px 0;
+}
+.opt-key-card-thumb {
+    width: 44px; height: 64px; object-fit: cover; border-radius: 4px;
+    cursor: pointer; border: 2px solid transparent; opacity: .75;
+    transition: opacity .15s, border-color .15s;
+}
+.opt-key-card-thumb:hover { opacity: 1; }
+.opt-key-card-thumb-selected { opacity: 1; border-color: var(--gold-color); }
+
+.opt-key-selected-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.opt-key-chip {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,215,0,.2);
+    border-radius: 14px; padding: 3px 6px 3px 3px; font-size: .75rem;
+}
+.opt-key-chip img { width: 22px; height: 32px; object-fit: cover; border-radius: 3px; }
+.opt-key-chip-threat { border-color: rgba(214,48,49,.4); }
+.opt-key-chip-remove {
+    background: none; border: none; color: rgba(241,241,241,.65); cursor: pointer;
+    font-size: .85rem; line-height: 1; padding: 0 2px;
+}
+.opt-key-chip-remove:hover { color: var(--danger-color); }
+
+.opt-key-search-btn { margin: 4px 0 6px; }
+
+.opt-key-summary {
+    display: flex; flex-wrap: wrap; gap: 14px; margin: 8px 0;
+    padding: 8px 10px; background: rgba(255,255,255,.04); border-radius: 8px;
+}
+.opt-key-summary-col { display: flex; flex-direction: column; gap: 4px; }
+.opt-key-summary-title { font-size: .75rem; font-weight: 700; color: var(--gold-color); opacity: .9; }
+.opt-key-summary-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: .72rem; opacity: .85;
+}
+.opt-key-summary-chip img { width: 18px; height: 26px; object-fit: cover; border-radius: 2px; }
+.opt-key-summary-chip-threat { color: #ff6b6b; }

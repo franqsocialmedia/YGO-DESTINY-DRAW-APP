@@ -21,6 +21,8 @@ const Deck = {
     cards: {},
     name: "Mi Deck",
     notes: "",
+    _pendingKeyCards: [],
+    _pendingThreatCards: [],
 
     init: function () {
         this.container = document.getElementById('deck-container');
@@ -1821,6 +1823,8 @@ this.container.innerHTML = html;
         if (!round) return;
         this._activeSessionId = sessionId;
         this._editingRoundId  = roundId;
+        this._pendingKeyCards    = round.keyCards    ? [...round.keyCards]    : [];
+        this._pendingThreatCards = round.threatCards ? [...round.threatCards] : [];
         this.openRoundModal();
         this._fillRoundForm(round);
     },
@@ -1876,6 +1880,21 @@ this.container.innerHTML = html;
         const avgRivalBreaks  = rounds.reduce((a, r) => a + (r.vecesRivalRompioBoard  || 0), 0) / p;
         const htExceso    = rounds.filter(r => (r.handtraps || 0) >= 3).length;
 
+        // ── Frecuencia de Cartas Clave / Amenazas del Oponente ────────
+        const keyCardFreq = {}, threatCardFreq = {};
+        rounds.forEach(r => {
+            (r.keyCards || []).forEach(c => {
+                if (!keyCardFreq[c.id]) keyCardFreq[c.id] = { ...c, count: 0 };
+                keyCardFreq[c.id].count++;
+            });
+            (r.threatCards || []).forEach(c => {
+                if (!threatCardFreq[c.id]) threatCardFreq[c.id] = { ...c, count: 0 };
+                threatCardFreq[c.id].count++;
+            });
+        });
+        const keyCardStats    = Object.values(keyCardFreq).sort((a, b) => b.count - a.count);
+        const threatCardStats = Object.values(threatCardFreq).sort((a, b) => b.count - a.count);
+
         // ── Distribución de duelos por turno (ganados/perdidos) ──────
         const turnMap = {};
         rounds.forEach(r => {
@@ -1905,7 +1924,7 @@ this.container.innerHTML = html;
             p, wins, losses, wr, br, str, extr, ri, rib, bb, ctrl, htRate, score,
             ftks, rendiciones, tiempoGan, tiempoPer, criticos, ajustados,
             rFirst, rSecond, avgStarter, avgExtender, avgHandtrap, avgBoardbreaker, avgRivalInterr, avgRivalBreaks,
-            turnDist, turnTotal
+            turnDist, turnTotal, keyCardStats, threatCardStats
         };
     },
 
@@ -1926,6 +1945,14 @@ this.container.innerHTML = html;
         if (m.tiempoPer > 0) w.push(`⚠ ${m.tiempoPer} derrota${m.tiempoPer > 1 ? 's' : ''} por tiempo. Trabaja la velocidad de tus secuencias.`);
         if (m.criticos > 0) w.push(`⚠ ${m.criticos} ronda${m.criticos > 1 ? 's' : ''} con tiempo crítico. El deck puede ser lento para torneo.`);
         if (m.rSecond.length > 0 && m.bb < 30) w.push('⚠ Juegas de segundo frecuentemente pero el Board Break es bajo. Añade más rompedores.');
+        if (m.keyCardStats?.length) {
+            const top = m.keyCardStats[0];
+            if (top.count / m.p >= 0.5) w.push(`ℹ "${top.name}" fue marcada como Carta Clave en ${top.count}/${m.p} rondas. Es un pilar de tu plan de juego — prioriza protegerla y considera copias adicionales de su soporte.`);
+        }
+        if (m.threatCardStats?.length) {
+            const top = m.threatCardStats[0];
+            if (top.count / m.p >= 0.3) w.push(`⚠ "${top.name}" apareció como Amenaza del Oponente en ${top.count}/${m.p} rondas. Evalúa tech en Side Deck específico contra esa carta.`);
+        }
         return w;
     },
 
@@ -1966,7 +1993,9 @@ turnoVictoria:    resultado === 'victoria' ? (n('opt-r-turnovic') || null) : nul
 turnoDerrota:     resultado === 'derrota'  ? (n('opt-r-turnoder') || null) : null,
 rivalRompioBoard:      n('opt-r-rival') > 0,
 vecesRivalRompioBoard: n('opt-r-rival'),
-notas:            v('opt-r-notas').trim()
+notas:            v('opt-r-notas').trim(),
+keyCards:         [...this._pendingKeyCards],
+threatCards:      [...this._pendingThreatCards]
         };
 
         const data  = this.getOptimizacion();
@@ -2007,6 +2036,8 @@ notas:            v('opt-r-notas').trim()
         this._syncRoundToMatchup(oppName, round, oppNotes);
 
         // Reset campos de ronda (conserva label y sesión activa)
+        this._pendingKeyCards = [];
+        this._pendingThreatCards = [];
         ['opt-r-resultado','opt-r-orden','opt-r-tipo-vic','opt-r-tipo-der','opt-r-notas','opt-r-oppname','opt-r-oppnotes']
             .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
         const oppStatusEl = document.getElementById('opt-oppdeck-status');
@@ -2162,7 +2193,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         if (nextIdx < fields.length) {
             fields[nextIdx].focus();
             if (fields[nextIdx].tagName === 'INPUT') fields[nextIdx].select();
-        } else if (slideNum < 3) {
+        } else if (slideNum < 4) {
             this._goToRoundSlide(slideNum + 1);
         } else {
             const submitBtn = box.querySelector('.opt-submit-btn');
@@ -2327,6 +2358,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 <button type="button" class="opt-slide-dot opt-slide-dot-active" data-slide="1" onclick="Deck._goToRoundSlide(1)">1. Robo</button>
                 <button type="button" class="opt-slide-dot" data-slide="2" onclick="Deck._goToRoundSlide(2)">2. Oponente</button>
                 <button type="button" class="opt-slide-dot" data-slide="3" onclick="Deck._goToRoundSlide(3)">3. Enfrentamiento</button>
+                <button type="button" class="opt-slide-dot" data-slide="4" onclick="Deck._goToRoundSlide(4)">4. Cartas Clave</button>
             </div>
 
             <div class="opt-round-fields-row">
@@ -2491,6 +2523,10 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             </div>
             </div>
 
+            <div class="opt-slide" data-slide="4">
+                <div id="opt-keycards-slide-content">${this._renderKeyCardsSlideContent()}</div>
+            </div>
+
             </div>
             <div class="opt-slide-nav-col">
                 <button type="button" class="opt-slide-nav-btn" onmousedown="event.preventDefault()" onclick="Deck._advanceRoundField()" title="Siguiente campo / slide">➜</button>
@@ -2501,9 +2537,150 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         `;
     },
 
+// ═══════════════════════════════════════════════════════════════════
+    // CARTAS CLAVE — mis cartas clave (del deck activo) y amenazas del rival
+    // ═══════════════════════════════════════════════════════════════════
+    _renderKeyCardsSlideContent: function() {
+        const deckCards = Object.entries(this.cards).map(([id, item]) => ({
+            id, name: item.data.name,
+            img: item.data.card_images?.[0]?.image_url_small || ''
+        }));
+        const selectedIds = this._pendingKeyCards.map(c => c.id);
+        const esc = s => (s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+        const keyGrid = deckCards.length ? `
+            <div class="opt-key-card-grid">
+                ${deckCards.map(c => `
+                    <img src="${c.img}" alt="${esc(c.name)}" title="${esc(c.name)}"
+                         class="opt-key-card-thumb ${selectedIds.includes(c.id) ? 'opt-key-card-thumb-selected' : ''}"
+                         onclick="Deck.toggleKeyCard('${c.id}','${esc(c.name)}','${c.img}')">
+                `).join('')}
+            </div>` : `<p class="opt-key-empty">Este deck no tiene cartas cargadas.</p>`;
+
+        const keySelected = this._pendingKeyCards.length ? `
+            <div class="opt-key-selected-row">
+                ${this._pendingKeyCards.map(c => `
+                    <div class="opt-key-chip">
+                        <img src="${c.img}" alt="${c.name}">
+                        <span>${c.name}</span>
+                        <button type="button" class="opt-key-chip-remove" onclick="Deck.toggleKeyCard('${c.id}','${esc(c.name)}','${c.img}')" title="Quitar">✕</button>
+                    </div>
+                `).join('')}
+            </div>` : `<p class="opt-key-empty">Sin cartas clave seleccionadas.</p>`;
+
+        const threatSelected = this._pendingThreatCards.length ? `
+            <div class="opt-key-selected-row">
+                ${this._pendingThreatCards.map(c => `
+                    <div class="opt-key-chip opt-key-chip-threat">
+                        <img src="${c.img}" alt="${c.name}">
+                        <span>${c.name}</span>
+                        <button type="button" class="opt-key-chip-remove" onclick="Deck.removeThreatCard('${c.id}')" title="Quitar">✕</button>
+                    </div>
+                `).join('')}
+            </div>` : `<p class="opt-key-empty">Sin amenazas registradas.</p>`;
+
+        return `
+            <div class="opt-group-hdr opt-full">🗝️ Mis Cartas Clave <span class="opt-key-counter">(${this._pendingKeyCards.length}/3)</span></div>
+            <p class="opt-key-hint">Elige hasta 3 cartas de tu deck que dieron o pudieron dar el duelo (sin importar copias).</p>
+            ${keyGrid}
+            ${keySelected}
+
+            <div class="opt-group-hdr opt-full" style="margin-top:14px;">🎯 Amenazas del Oponente <span class="opt-key-counter">(${this._pendingThreatCards.length}/3)</span></div>
+            <p class="opt-key-hint">Hasta 3 cartas rivales que amenazaron o rompieron tu plan en este duelo.</p>
+            <button type="button" class="deck-move opt-key-search-btn" onclick="Deck.openThreatCardSearch()" ${this._pendingThreatCards.length >= 3 ? 'disabled' : ''}>🔍 Buscar Carta</button>
+            ${threatSelected}
+        `;
+    },
+
+    toggleKeyCard: function(id, name, img) {
+        const idx = this._pendingKeyCards.findIndex(c => c.id === id);
+        if (idx !== -1) {
+            this._pendingKeyCards.splice(idx, 1);
+        } else {
+            if (this._pendingKeyCards.length >= 3) { alert('Máximo 3 Cartas Clave.'); return; }
+            this._pendingKeyCards.push({ id, name, img });
+        }
+        this._refreshKeyCardsSlide();
+    },
+
+    removeThreatCard: function(id) {
+        this._pendingThreatCards = this._pendingThreatCards.filter(c => c.id !== id);
+        this._refreshKeyCardsSlide();
+    },
+
+    _refreshKeyCardsSlide: function() {
+        const el = document.getElementById('opt-keycards-slide-content');
+        if (el) el.innerHTML = this._renderKeyCardsSlideContent();
+    },
+
+    openThreatCardSearch: function() {
+        if (this._pendingThreatCards.length >= 3) { alert('Máximo 3 Amenazas del Oponente.'); return; }
+        if (document.getElementById('opt-threat-search-overlay')) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'opt-threat-search-overlay';
+        overlay.className = 'opt-round-modal-overlay';
+        overlay.innerHTML = `
+            <div class="opt-round-modal-box" style="width:340px;max-width:92vw;">
+                <div class="opt-round-modal-hdr">
+                    <span>🔍 Buscar Carta Amenaza</span>
+                    <button class="opt-round-modal-close" onclick="document.getElementById('opt-threat-search-overlay').remove()">✕</button>
+                </div>
+                <div class="opt-round-modal-body">
+                    <div class="opt-oppdeck-row" style="margin-bottom:10px;">
+                        <input type="text" id="opt-threat-search-input" class="opt-input" placeholder="Nombre de carta..." autocomplete="off">
+                        <button type="button" class="deck-move" id="opt-threat-search-btn">🔍</button>
+                    </div>
+                    <div id="opt-threat-search-results" class="opt-key-card-grid opt-key-card-grid-search"></div>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+        const inp = document.getElementById('opt-threat-search-input');
+        const btn = document.getElementById('opt-threat-search-btn');
+        const res = document.getElementById('opt-threat-search-results');
+
+        const doSearch = async () => {
+            const term = inp.value.trim();
+            if (!term) return;
+            res.innerHTML = `<p class="opt-key-empty">⏳ Buscando...</p>`;
+            try {
+                const r = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(term)}`);
+                const j = await r.json();
+                const cards = (j.data || []).slice(0, 20);
+                if (!cards.length) { res.innerHTML = `<p class="opt-key-empty">Sin resultados.</p>`; return; }
+                res.innerHTML = cards.map(c => `
+                    <img src="${c.card_images?.[0]?.image_url_small || ''}" alt="${(c.name||'').replace(/"/g,'&quot;')}"
+                         title="${(c.name||'').replace(/"/g,'&quot;')}" class="opt-key-card-thumb"
+                         data-id="${c.id}" data-name="${(c.name||'').replace(/"/g,'&quot;')}"
+                         data-img="${c.card_images?.[0]?.image_url_small || ''}">
+                `).join('');
+            } catch (_) { res.innerHTML = `<p class="opt-key-empty">Error de red.</p>`; }
+        };
+
+        res.addEventListener('click', e => {
+            const el = e.target.closest('[data-id]');
+            if (!el) return;
+            if (this._pendingThreatCards.length >= 3) { alert('Máximo 3 Amenazas del Oponente.'); return; }
+            if (this._pendingThreatCards.some(c => c.id === el.dataset.id)) { alert('Esa carta ya está agregada.'); return; }
+            this._pendingThreatCards.push({ id: el.dataset.id, name: el.dataset.name, img: el.dataset.img });
+            overlay.remove();
+            this._refreshKeyCardsSlide();
+        });
+
+        btn.addEventListener('click', doSearch);
+        inp.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+        inp.focus();
+    },
+
     openRoundModal: function() {
         if (!Object.keys(this.cards).length) { alert('Carga un deck primero.'); return; }
         if (document.getElementById('opt-round-modal-overlay')) return;
+        if (!this._editingRoundId) {
+            this._pendingKeyCards = [];
+            this._pendingThreatCards = [];
+        }
         const overlay = document.createElement('div');
         overlay.id = 'opt-round-modal-overlay';
         overlay.className = 'opt-round-modal-overlay';
@@ -2515,6 +2692,8 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
     closeRoundModal: function() {
         document.getElementById('opt-round-modal-overlay')?.remove();
         this._editingRoundId = null;
+        this._pendingKeyCards = [];
+        this._pendingThreatCards = [];
     },
 
     _refreshRoundModalIfOpen: function() {
@@ -2740,8 +2919,21 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                         ${m.ajustados  ? `<span>🟡 ${m.ajustados} ajustado${m.ajustados>1?'s':''}</span>` : ''}
                     </div>
 
-                    ${diag.length ? `<div class="opt-diagnostics">${diag.map(d=>`<div class="opt-diag-item">${d}</div>`).join('')}</div>` : ''}
+                    ${(m.keyCardStats.length || m.threatCardStats.length) ? `
+                    <div class="opt-key-summary">
+                        ${m.keyCardStats.length ? `
+                        <div class="opt-key-summary-col">
+                            <span class="opt-key-summary-title">🗝️ Cartas Clave</span>
+                            ${m.keyCardStats.map(c => `<span class="opt-key-summary-chip"><img src="${c.img}" alt="${c.name}">${c.name} ×${c.count}</span>`).join('')}
+                        </div>` : ''}
+                        ${m.threatCardStats.length ? `
+                        <div class="opt-key-summary-col">
+                            <span class="opt-key-summary-title">🎯 Amenazas del Oponente</span>
+                            ${m.threatCardStats.map(c => `<span class="opt-key-summary-chip opt-key-summary-chip-threat"><img src="${c.img}" alt="${c.name}">${c.name} ×${c.count}</span>`).join('')}
+                        </div>` : ''}
+                    </div>` : ''}
 
+                    ${diag.length ? `<div class="opt-diagnostics">${diag.map(d=>`<div class="opt-diag-item">${d}</div>`).join('')}</div>` : ''}
                     <details class="opt-rounds-detail">
                         <summary class="opt-rounds-summary">Ver rondas individuales (${sess.rounds.length})</summary>
                         <div class="opt-rounds-table">
@@ -2760,6 +2952,8 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                                     <span title="Extenders">🔗${r.extenders||0}</span>
                                     <span title="Handtraps">🖐${r.handtraps||0}</span>
                                     <span title="Boardbreakers en mano">🧨${r.boardbreakers||0}</span>
+                                    ${r.keyCards?.length ? `<span title="Cartas Clave: ${r.keyCards.map(c=>c.name).join(', ').replace(/"/g,'&quot;')}">🗝️${r.keyCards.length}</span>` : ''}
+                                    ${r.threatCards?.length ? `<span title="Amenazas: ${r.threatCards.map(c=>c.name).join(', ').replace(/"/g,'&quot;')}">🎯${r.threatCards.length}</span>` : ''}
                                     ${r.brick        ? '<span class="opt-tag-brick" title="Brick">🧱</span>' : ''}
                                     ${(r.rivalInterrupciones || r.comboCompleto) ? `<span class="opt-tag-combo" title="Interrupciones del rival">🛑${r.rivalInterrupciones || 1}</span>` : ''}
                                     ${r.rompioBoard  ? `<span title="Campos rotos">⚔️${r.vecesRompioBoard ?? 1}</span>` : ''}
