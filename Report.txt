@@ -1,10 +1,37 @@
 # DESTINY DRAW — REPORTE TÉCNICO
-**Versión:** v2.9 | **Fecha:** Jul 2026 (auditado línea por línea contra el código fuente)
+**Versión:** v3.0 | **Fecha:** Jul 2026 (auditado línea por línea contra el código fuente)
 **Stack:** Vanilla JS (ES6 objects) · CSS modular · HTML5 SPA · YGOProDeck API · localStorage
 
-> **Nota de auditoría:** este reporte fue verificado contra los 19 archivos fuente actuales.
-> El footer de `index.html` marca **VERSION 6.4** — el número de versión de este documento
-> (v2.9) es independiente y solo referencia la revisión del propio reporte.
+> **Nota de auditoría:** este reporte fue verificado contra los 11 módulos JS actuales
+> (los 6 archivos CSS no se incluyeron en esta pasada por no estar disponibles — las
+> referencias a clases CSS de versiones anteriores del reporte siguen siendo válidas,
+> las nuevas de esta v3.0 se marcan como no verificadas).
+> El footer de `index.html` marca **VERSION 7.8** — el número de versión de este documento
+> (v3.0) es independiente y solo referencia la revisión del propio reporte.
+> Cambio relevante desde la v2.9 (`mideck.js` / `buscador.js` / `historial.js` — ver 5.9,
+> 5.10, 5.11, 5.12 y correcciones en 1.2/3/6, nuevo, léelos antes de asumir el estado anterior):
+> 1. **Importar Deck desde Lista Oficial (.pdf)** — nuevo sub-tab "📥 Importar Deck" en
+>    Mi Deck (antes de Decklist). `Deck.importPDF()` parsea la Lista Oficial de Konami
+>    con `pdf.min.js` + `pdf.worker.min.js` (nuevas dependencias, ya cargadas en
+>    `index.html`), detecta encabezados de columna (Monster/Spell/Trap Cards, Extra
+>    Deck, Side Deck), resuelve cada nombre contra la base completa de YGOProDeck y
+>    arma el deck. Cartas no reconocidas quedan listadas para agregar a mano. Ver 5.10.
+> 2. **CardViewer — "Posibles Roles" y "Aporte al deck activo"** — al ver cualquier
+>    carta el visor simula agregarla al deck activo y muestra el delta de
+>    Consistencia/Potencia/Resiliencia/Internal Score, además de los roles que
+>    detectaría `autoAssignRoles` si se agregara. Ver 5.9.
+> 3. **Alta rápida de cartas a Banlist/Genesys** — el botón "＋ Agregar carta" de cada
+>    formato (Mi Deck → sidebar → Banlist) abre un mini-buscador
+>    (`CardViewer.openCardSearch`) que permite marcar Ban/Limitada/Semi-Limit o,
+>    en formatos Genesys, asignar puntos (`CardViewer.openPointsEditor`) sin salir
+>    del panel. Ver 5.11.
+> 4. **Matchups — Exportar/Importar Historial de Enfrentamientos (.txt)** —
+>    `Matchups.exportTXT()` / `importTXT()`: exporta enfrentamientos + sesiones
+>    completas de Optimización del deck activo a un único .txt; al importar, fusiona
+>    enfrentamientos por nombre de rival (suma W/L) y copia las sesiones completas a
+>    Historial de Sesiones. Cada enfrentamiento puede llevar el decklist del rival
+>    (importado por .ydk) para verlo luego con "Ver Deck". Ver 5.12 y corrección de
+>    estructura en sección 3.
 > Cambio relevante desde la v2.8 (`mideck.js` — Optimización, ver 6.3, nuevo):
 > 1. **Nuevo campo "Boardbreaker en mano"** en el formulario de Rondas de Duelo, ubicado
 >    entre Handtraps y Bricks. Cuenta cartas que rompen campo jugando de segundo (Raigeki,
@@ -79,13 +106,13 @@ default_data.js → logger.js  (SIEMPRE AL FINAL)
 | `logger.js` | `DDLogger` | 365 | Logger no-invasivo. Envuelve todos los objetos globales post-`window.load`. API: `DDLogger.exportReport()`, `getLogs()`, `getStats()`, `enable/disable/clear()`. Intercepta localStorage y errores globales. |
 | `core.js` | `Navigation`, `Shortcuts`, `ContentManager`, `switchTab` | 549 | navigation + utils + contentmanager |
 | `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 2311 | Config global (incl. estructuras y motor de Scoring G1/G2 — ver 7.2), cálculo de scores, analizadores de carta. Incluye `duplicateNomenclatureCategory`. `exportConfig()` cubre también las claves dinámicas `optimization_`/`complejidad_` (ver 6.1/6.2). |
-| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 2064 | buscador + cardviewer + favoritas + botón Carta Random. `CardViewer.open()` ahora también resuelve Lanzamiento TCG/OCG, disponibilidad MD/DL y el link de Arquetipo — ver 5.9 |
-| `mideck.js` | `Deck`, `Banlist`, `Engines` | 4216 | deck + banlist + engines + Optimización (deck testing) + **Complejidad del Deck — clasificador, ver 6.1** + **campo Boardbreaker en mano — nuevo, ver 6.3** |
-| `historial.js` | `Matchups`, `Duelista` | 877 | matchups + duelista. **`Duelista` reescrito — ya no agrega todos los decks, ver 6.2.** Matchups ahora filtra Optimización por rival (`selectDeckFilter`). |
+| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 2238 | buscador + cardviewer + favoritas + botón Carta Random. `CardViewer.open()` resuelve Lanzamiento TCG/OCG, disponibilidad MD/DL, link de Arquetipo, **simulación "Aporte al deck activo" y alta rápida a Banlist/Genesys — nuevo, ver 5.9/5.11** |
+| `mideck.js` | `Deck`, `Banlist`, `Engines` | 4632 | deck + banlist + engines + Optimización (deck testing) + Complejidad del Deck (ver 6.1) + campo Boardbreaker en mano (ver 6.3) + **Importar Deck desde Lista Oficial (.pdf) — nuevo, ver 5.10** |
+| `historial.js` | `Matchups`, `Duelista` | 929 | matchups + duelista. `Duelista` reescrito — ya no agrega todos los decks, ver 6.2. Matchups filtra Optimización por rival (`selectDeckFilter`) y **exporta/importa Historial + Sesiones como .txt — nuevo, ver 5.12** |
 | `estadisticas.js` | `Estadisticas` | 2586 | scores, meta, cross-score, análisis de deck. `recalculateAllMetaDeckScores` es async con enriquecimiento automático. `renderDeckAnalysis()` ahora también pinta el bloque G1/G2 (ver 7.2) y aloja `#duelista-content` (ver 6.2). |
-| `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria` | 2937 | winrate + torneo + duelo en vivo + hipergeometría |
-| `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3269 | zonapractica + experimentacion |
-| `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | 3735 | formacion + meta + config completo (Scoring G1/G2 UI, Nomenclatura con pencil/clone/delete, RPS Ninguno, etiqueta y borrado de Optimización) + welcome + help. Zona de Borrado "Optimización" ahora limpia también `complejidad_` (ver 3). |
+| `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria` | 3150 | winrate + torneo + duelo en vivo + hipergeometría (crecimiento interno, sin cambios de arquitectura detectados en esta pasada) |
+| `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3339 | zonapractica + experimentacion (crecimiento interno, sin cambios de arquitectura detectados en esta pasada) |
+| `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | 4341 | formacion (contenido educativo, crecimiento por más temas) + meta + config completo (Scoring G1/G2 UI, Nomenclatura con pencil/clone/delete, RPS Ninguno, etiqueta y borrado de Optimización) + welcome + help. Zona de Borrado "Optimización" ahora limpia también `complejidad_` (ver 3). |
 | `default_data.js` | `DefaultData` | 1228 | Inyección única de datos por defecto. Parchea `Config.resetToDefault`. |
 
 **Nota:** `Stats` vive dentro de `data.js`. `Winrate` y `DueloEnVivo` son los objetos correctos en `simuladores.js`; el antiguo `Duelo` ya no existe.
@@ -145,7 +172,7 @@ style_simuladores.css → style_config.css → responsive_style.css
 | `deck_${nombre}` (prefijo, 1 clave por deck) | `Deck` | Object | Decks guardados: `{cards, notes, savedAt}`. `getSavedDecks()` escanea `localStorage` por el prefijo `deck_`. **No existe un único objeto `yugioh_decks`** — esa clave es una referencia legacy que solo se usa como limpieza de seguridad en Borrar Data / Exportar Reporte, nunca se escribe en el flujo normal. |
 | `optimization_${nombre}` | `Deck` | Object | Datos de la pestaña 🎯 Optimización (testing de matchups): `{sessions:[{id,date,label,rounds:[{id,orden,resultado,tipoVictoria,tipoDerrota,presionTiempo,comboCompleto,brick,starter,extenders,handtraps,rompioBoard,negoJugada,rivalRompio,notas}]}]}`. Incluye migración automática desde un formato viejo `records[]`. `Duelista.getDeckStats()` lee estas rondas para calcular el Nivel como Piloto (ver 6.2). |
 | `complejidad_${nombre}` | `Deck` | Object | **Nuevo.** Resultado del clasificador "Complejidad del Deck" (Mi Deck → Optimización): `{answers:[8 valores 1-3], aprender, dominar, total, evaluatedAt}`. Ver 6.1. |
-| `matchup_${deckName}` | `Matchups` | Array | `[{opponent,wins1st,losses1st,wins2nd,losses2nd,notes}]` |
+| `matchup_${deckName}` | `Matchups` | Array | `[{id,opponentName,wins1st,losses1st,wins2nd,losses2nd,notes,cardData,createdAt}]`. `cardData` es opcional (decklist del rival importado por `.ydk`, `{[cardId]:{name,type,qty,location,img}}`), visible con "Ver Deck" (`Matchups.openDeckPanel`). Todo el registro es exportable/importable en bloque — ver 5.12. |
 | `yugioh_music_config` | `ConfigManager` | Object | `{enabled, volume, tracks:{novato,casual,competitivo}}` |
 | `yugioh_meta_fallbacks` | `ConfigManager` | Object | Imágenes fallback para Maestros |
 | `yugioh_formacion_fallbacks` | `ConfigManager` | Object | Imágenes fallback para Juegos |
@@ -356,9 +383,101 @@ CardViewer.open(card)
       → cierra overlay → Navigation.showTab('buscador') → Buscador.clear()
       → Buscador._loadArchetypes() → advancedFilters.archetype = name → autoSearch()
       (mismo patrón que CardViewer.openSetInBuscador para sets)
+  → si el deck activo tiene cartas: `renderCardContribution(card)` (**nuevo, no
+    documentado en versiones previas**)
+      → `detectPossibleRoles(card)` — como `autoAssignRoles`, pero sin persistir,
+        solo para listar "🎯 Posibles Roles" en el visor
+      → `calculateCardContribution(card, roles)` — clona `Deck.cards`, simula +1
+        copia (o la inserta si no está en el deck) y compara
+        `Stats.calculateInternalScore()` antes/después
+      → pinta "📊 Aporte al deck activo": barras de Consistencia/Potencia/
+        Resiliencia + delta de Internal Score. Se oculta si el deck está vacío o si
+        `ContentManager.isVisible('cv-roles'|'cv-contribution')` lo desactiva
 ```
 **Importante:** `tcg_date`, `ocg_date` y `formats` SOLO existen dentro de `misc_info[0]`
 cuando se pasa `misc=yes` — nunca en la raíz del objeto de la carta. Ver bug #19.
+
+**Nota — funciones sin usar:** `CardViewer.generateCardDecklistHTML2Canvas()`,
+`generateCardDecklistCanvas()` y `generateCardDecklistFallback()` existen en el código
+(exportar la carta como imagen tipo decklist) pero no están enganchadas a ningún botón
+del visor actual — el botón "🖼 Ver HD" solo abre la imagen a tamaño completo. No tocar
+salvo que se pida reactivar esa función.
+
+### 5.10 Importar Deck desde Lista Oficial (.pdf) — NUEVO
+```
+Deck.importPDF()
+  → input[file] .pdf → Deck.parsePDFDeckList(file)
+  → overlay "⏳ Leyendo Lista Oficial (.pdf)..."
+  → _pdfExtractEntries(file) — usa pdfjsLib (pdf.min.js) para leer texto por página:
+      → agrupa items por línea (tolerancia Y) y por clusters (gap X) → detecta
+        encabezados de columna (Monster/Spell/Trap Cards, Extra Deck, Side Deck) y
+        arma rangos de X (columnDefs) para asignar cada línea a main/extra/side
+      → descarta líneas de ruido (encabezados de juez, paginación, códigos de barra)
+      → por cada línea de carta genera candidatos {qty, name} (cantidad al inicio o
+        al final del texto)
+      → si no se detectó NINGÚN encabezado → Error "PDF no reconocido"
+  → overlay "⏳ Buscando cartas en la base de datos..."
+  → _pdfFetchFullCardDB() — fetch sin filtros a cardinfo.php (base completa, sin
+    caché) para poder matchear cualquier nombre
+  → _pdfMatchEntries() — matchea cada candidato contra la base por nombre exacto y,
+    si falla, por nombre normalizado (espacios colapsados); acumula cantidades por
+    id+zona; lo que no matchea queda en `unknown[]`
+  → arma `newCards`, pide nombre de deck (prompt, default = nombre del archivo),
+    reemplaza `Deck.cards`/`Deck.name`, `render()` + `onDeckLoaded()`
+  → alert final con total de cartas reconocidas y detalle de líneas no reconocidas
+    (si las hay) para agregarlas a mano desde el Buscador
+```
+Botón: sub-tab "📥 Importar Deck" (nuevo, primero en la barra de Mi Deck, antes de
+Decklist) → "Lista Oficial (.pdf)", junto a "Archivo .ydk" (`importYDK()`, ya existía).
+Requiere `Modules/pdf.min.js` + `Modules/pdf.worker.min.js` (cargados en `index.html`);
+usa además CDN externo (`cdn.jsdelivr.net`) para cmaps y fuentes estándar del PDF —
+única dependencia de red fuera de YGOProDeck en toda la app. No crea claves nuevas de
+localStorage: el deck resultante se guarda igual que cualquier otro vía `saveDeck()`.
+
+### 5.11 Alta rápida de cartas a Banlist/Genesys — NUEVO
+```
+Banlist.renderFormatList(formatName) → botón "＋ Agregar carta"
+  → CardViewer.openCardSearch(formatName, prefillName?, mode?)
+      → detecta modo puntos si Banlist.getData().formats[formatName].isGenesys
+      → mini-buscador propio (fetch cardinfo.php?fname=) con overlay #cv-search-overlay
+      → modo normal: chips Ban / Limitada / Semi-Limit → clic en resultado →
+        Banlist.setCardStatus(formatName, cardId, {name,img}, status)
+      → modo Genesys: stepper de puntos → clic en resultado →
+        Banlist.setCardPoints(formatName, cardId, {name,img}, puntos)
+      → repinta banlist-cards-${formatName} y el contador de cartas del formato
+  → cada carta ya agregada a un formato Genesys puede reabrir sus puntos con
+    CardViewer.openPointsEditor(formatName, cardId, cardName, currentPoints)
+    (overlay #cv-pts-overlay, stepper + Guardar)
+```
+No agrega claves nuevas de localStorage — ambos escriben sobre la misma estructura de
+`Banlist` ya existente (formats[...].cards).
+
+### 5.12 Exportar/Importar Historial de Enfrentamientos (.txt) — NUEVO
+```
+Matchups.exportTXT()
+  → junta this.getAll() (enfrentamientos) + Deck.getOptimizacion().sessions
+    (sesiones completas de Optimización del deck activo, con sus rondas reales)
+  → descarga un .txt: cabecera de comentarios (#) + JSON {matchups, sessions}
+
+Matchups.importTXT()
+  → input[file] .txt → _mergeImported(text)
+      → ignora líneas que empiezan con # antes de hacer JSON.parse
+      → por cada enfrentamiento: si el nombre de rival ya existe (case-insensitive),
+        SUMA wins1st/losses1st/wins2nd/losses2nd y concatena notas; si no existe, lo
+        crea. Compatible con exports viejos (array plano sin `sessions`)
+      → _importRealSessions(sessions) — copia las sesiones TAL CUAL (mismas rondas:
+        turnos, starters, extenders, bricks, boardbreakers...) al
+        `optimization_${deckName}` del deck activo, con IDs regenerados para no
+        chocar con las existentes; si todas las rondas de una sesión son contra el
+        mismo rival, la sesión queda etiquetada para Historial de Sesiones
+      → limpia el filtro activo de Matchups (por si ocultaba las sesiones recién
+        importadas) y repinta `#mideck-optimizacion-pane`
+```
+No afecta el cálculo de `Duelista` (que sigue leyendo TODAS las rondas del deck activo,
+importadas o no). Cada registro de Matchups puede llevar además `cardData` (decklist
+del rival), importable por separado con `Matchups._importYDK()` al crear/editar el
+enfrentamiento, y visible luego con `Matchups.openDeckPanel(index)` (overlay con grid
+de imágenes por Main/Extra/Side). Ver corrección de estructura en sección 3.
 
 ---
 
@@ -366,7 +485,11 @@ cuando se pasa `misc=yes` — nunca en la raíz del objeto de la carta. Ver bug 
 
 ### Mi Deck
 ```
-Sub-tabs: Decklist | Construcción | Optimización
+Sub-tabs: Importar Deck | Decklist | Construcción | Optimización
+          (📥 Importar Deck es nuevo, primer sub-tab — ver 5.10; ofrece
+          Archivo .ydk y Lista Oficial .pdf. El botón viejo "Importar Deck (.ydk)"
+          dentro de Decklist → Acciones se mantiene intacto, es redundante pero no
+          se tocó)
 Sidebar:  Engines | Decks | Staples | Favoritas
 
 Optimización (🎯) — sub-tab de deck testing por matchup:
@@ -494,7 +617,7 @@ Scoring Avanzado (G1/G2)
 
 Rendimientos Decrecientes
 Atajos Rápidos
-Banlist del Formato
+Banlist del Formato        ("＋ Agregar carta" abre mini-buscador CardViewer — ver 5.11)
 Música
 Exportar / Importar Data   (importar pide confirmación; exportar muestra detalle del contenido)
 Restaurar Configuración
@@ -683,11 +806,18 @@ cardinfo.php?id=&misc=yes   usado en CardViewer.open() (ver 5.9) para sets, fech
 archetypes.php        lista de arquetipos
 cardsets.php          lista de packs/sets
 cardinfo.php          fetch completo sin filtros, usado por DefaultData._initGenesys()
+                       y por Deck._pdfFetchFullCardDB() (matching de nombres al
+                       importar Lista Oficial .pdf — ver 5.10)
 
 Imágenes:
 https://images.ygoprodeck.com/images/cards/{id}.jpg        → full
 https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 ```
+
+**Dependencia externa nueva (no YGOProDeck):** `_pdfExtractEntries()` (Importar PDF,
+ver 5.10) usa `pdf.min.js`, que a su vez pide a `cdn.jsdelivr.net` los cmaps y fuentes
+estándar del PDF en tiempo de ejecución. Es la única llamada de red de la app que no
+apunta a `db.ygoprodeck.com` ni a `images.ygoprodeck.com`.
 
 ---
 
@@ -715,6 +845,11 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 | `.duelista-*` (card, level-block, progress-track, wr-grid…) | style_simuladores | Bloque "Nivel como Piloto del Deck" (ver 6.2), en Estadísticas y Mi Deck → Optimización |
 | `.matchup-row-selected` / `.opt-filter-banner` | style_mideck | Estado visual del filtro Matchups → Historial de Sesiones (ver 6.2) |
 | `#meta-update-overlay` | inline en estadisticas.js | Overlay de carga del Actualizar Scores |
+| `.cv-contribution-block` / `.cv-contrib-row` / `.cv-contrib-bar-track` / `.cv-contrib-bar` / `.cv-contrib-val` / `.cv-contrib-delta` / `.cv-contrib-total` / `.cv-contrib-empty` / `.cv-contrib-section-title` / `.cv-deck-name` | **Nuevo, sin verificar.** No están en `style.css` inline — se usan como clases desde `renderCardContribution()` (ver 5.9), probablemente en `style_buscador.css` junto al resto de `.cv-*`, pero no se confirmó por no tener los CSS en esta pasada |
+| `.cv-role-chip` / `.cv-role-none` / `.cv-roles-row` | **Nuevo, sin verificar.** Chips de "🎯 Posibles Roles" en CardViewer (ver 5.9), misma salvedad que la fila anterior |
+| `.tdp-overlay` / `.tdp-panel` / `.tdp-close` / `.tdp-title` / `.tdp-counts` / `.tdp-loc-label` / `.tdp-cards-grid` / `.tdp-card` / `.tdp-qty` | **Nuevo, sin verificar.** Panel "Ver Deck" del rival en Matchups (`Matchups.openDeckPanel`, ver 5.12); por convención de nombres (`opt-*`/`cxd-*` viven en `style_mideck`) lo más probable es que estén ahí también, pero no se confirmó |
+
+**Nota:** las filas marcadas "sin verificar" están confirmadas por uso en JS (clases realmente aplicadas por el código), pero no se auditó el CSS de esta versión — los 6 archivos CSS no fueron subidos en esta pasada. Confirmar ubicación real antes de asumirla en un cambio futuro.
 
 ---
 
@@ -726,6 +861,8 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 
 **Archivos que NO necesitas subir salvo cambios:**
 - `html2canvas_min.js` — librería externa
+- `pdf_min.js` / `pdf_worker_min.js` — librería externa (pdf.js, usada por
+  `Deck.importPDF()` — ver 5.10)
 - `logger.js` — solo si cambia `TARGETS` o formato del reporte
 
 **Variables CSS globales** (en `style_core.css`):
