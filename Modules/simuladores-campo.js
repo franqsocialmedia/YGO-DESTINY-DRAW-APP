@@ -99,7 +99,6 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
 
             <div class="pz-float-header">
                 <span class="pz-float-title">🎴 Zona de Práctica</span>
-                <button class="pz-float-close-btn" title="Ocultar" onclick="ZonaPractica.closeFloating()">✕</button>
             </div>
 
             <div class="pz-controls-bar">
@@ -2503,12 +2502,22 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica')
     },
 
     _cleanupFloatBtns: function () {
-        ['pz-float-log-btn', 'pz-float-markstate-btn','pz-float-chgpos-btn',
+        ['pz-float-log-btn', 'pz-float-markstate-btn','pz-float-chgpos-btn', 'pz-float-close-btn',
          'pz-chain-resolve-btn'].forEach(id => document.getElementById(id)?.remove());
         const scBtn = document.getElementById('shortcuts-float-btn');
         if (scBtn) { scBtn.style.bottom = ''; scBtn.style.display = ''; }
         const helpBtn = document.getElementById('help-float-btn');
         if (helpBtn) helpBtn.style.display = '';
+
+        if (!document.getElementById('pz-float-close-btn')) {
+            const closeBtn = document.createElement('button');
+            closeBtn.id        = 'pz-float-close-btn';
+            closeBtn.className = 'pz-float-btn pz-float-btn-close';
+            closeBtn.innerHTML = '✕';
+            closeBtn.title     = 'Ocultar Zona de Práctica';
+            closeBtn.onclick   = () => ZonaPractica.closeFloating();
+            document.body.appendChild(closeBtn);
+        }
     },
     // ═══════════════════════════════════════════════════════
     _showToast: function (msg, duration = 2000) {

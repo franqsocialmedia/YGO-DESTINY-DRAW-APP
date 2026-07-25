@@ -74,7 +74,7 @@ const Navigation = {
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
         if (typeof updateButtons === 'function') updateButtons();
-        document.dispatchEvent(new Event('scroll'));
+        window.dispatchEvent(new Event('scroll'));
         if (window.ContentManager) ContentManager.applyAll();
 
         return true;

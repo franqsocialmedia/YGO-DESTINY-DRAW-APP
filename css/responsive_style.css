@@ -167,6 +167,16 @@
         padding-bottom: 4px;
     }
     .dstab-btn { flex-shrink: 0; padding: 5px 12px; font-size: 0.74rem; }
+    /* Sub-tabs Mi Deck (Importar/Decklist/Construcción/Optimización) */
+    .mideck-subtabs-nav {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .mideck-subtabs-nav::-webkit-scrollbar { display: none; }
+    .mideck-subtab-btn,
+    .mideck-subtab-btn-import { flex-shrink: 0; white-space: nowrap; }
 }
 
 @media (max-width: 600px) {
