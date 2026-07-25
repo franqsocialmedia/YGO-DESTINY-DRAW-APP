@@ -478,6 +478,8 @@
     .puntos-decks  { display: none; }
 
  /* Hipergeometría */
+    .hiper-tabs           { flex-wrap: wrap; }
+    .hiper-tab-btn        { flex: 1 1 calc(50% - 4px); min-width: 0; font-size: 0.76rem; padding: 8px 4px; }
     .hiper-quick-layout  { flex-direction: column; align-items: center; }
     .hiper-inputs-col    { width: 100%; }
     .hiper-deck-layout   { flex-direction: column; }
