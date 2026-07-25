@@ -6143,7 +6143,7 @@
 }
 .ctrsim-box-title { font-weight: 700; color: var(--text-light); }
 .ctrsim-box-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.ctrsim-box-selection, .ctrsim-box-counters { width: 100%; }
+.ctrsim-box-selection, .ctrsim-box-counters { width: 100%;}
 
 .ctrsim-picker-tabs { display: flex; gap: 6px; margin: 8px 0; }
 .ctrsim-ptab-btn {
@@ -6160,7 +6160,7 @@
 .ctrsim-picker-item:hover { background: rgba(255,255,255,0.08); }
 
 .ctrsim-pool-grid, .ctrsim-selection-strip {
-    display: flex; flex-wrap: wrap; gap: 8px; min-height: 90px; padding: 8px 0;
+    display: flex; flex-wrap: wrap; gap: 8px; min-height: 40px; padding: 8px 0;
 }
 .ctrsim-selection-strip { flex-wrap: nowrap; overflow-x: auto; }
 

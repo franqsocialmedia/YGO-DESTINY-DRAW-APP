@@ -2875,6 +2875,8 @@
 .combo-list-name { font-size: .82rem; flex: 1; }
 .combo-list-power { font-size: .78rem; opacity: .8; flex-shrink: 0; }
 
+.combo-list-thumb { width: 28px; height: 40px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
+
 /* ── Línea de Combos (Etapa 2) ── */
 .combo-status-badge {
     font-size: .65rem; text-transform: uppercase; letter-spacing: .04em;
@@ -2980,3 +2982,20 @@
 .combo-deps-list { max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
 .combo-deps-row { display: flex; align-items: center; gap: 8px; font-size: .82rem; cursor: pointer; }
 .combo-deps-row small { opacity: .55; }
+
+/* ── Línea de Combos (Etapa 4) — Cálculo de Poder ── */
+.combo-power-block {
+    background: rgba(255,255,255,.03); border: 1px solid rgba(255,215,0,.2);
+    border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;
+}
+.combo-power-header { display: flex; gap: 10px; align-items: center; }
+.combo-power-thumb { width: 56px; height: 82px; object-fit: cover; border-radius: 5px; flex-shrink: 0; }
+.combo-power-info { flex: 1; min-width: 0; }
+.combo-power-name { font-size: .85rem; font-weight: bold; color: var(--gold-color); }
+.combo-power-value { font-size: .8rem; margin-top: 3px; }
+.combo-power-top { margin-top: 10px; }
+.combo-power-top-list { display: flex; flex-direction: column; gap: 3px; }
+.combo-power-top-row { display: flex; gap: 8px; font-size: .76rem; align-items: baseline; }
+.combo-power-top-name { flex: 1; }
+.combo-power-top-role { opacity: .6; font-size: .68rem; }
+.combo-power-top-val { color: var(--gold-color); font-weight: bold; min-width: 30px; text-align: right; }

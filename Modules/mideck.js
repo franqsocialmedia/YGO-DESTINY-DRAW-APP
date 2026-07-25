@@ -3640,8 +3640,13 @@ const Combos = {
             restricciones: [],
             parentComboId: null,
             power:         0,
+            powerBreakdown: [],
             bossCardId:    null,
             starterCardId: null,
+            bossName:      null,
+            starterName:   null,
+            imageUrl:      null,
+            imageUrlSmall: null,
             name:          '',
             comment:       '',
             createdAt:     Date.now()
@@ -3795,6 +3800,7 @@ const Combos = {
             });
             combo.endboard   = board;
             combo.finishedAt = Date.now();
+            this._recalcPower(combo);
         });
         this._refresh();
     },
@@ -3923,6 +3929,104 @@ const Combos = {
         }).join('');
     },
 
+// ── Cálculo de Poder (Etapa 4) ──────────────────────────────────
+    POWER_CFG: {
+        depPenaltyPerDep:           0.15,
+        depPenaltyFloor:            0.35,
+        depBonusPerDependent:       0.10,
+        depBonusCap:                0.40,
+        stepPenaltyPerStep:         0.015,
+        stepPenaltyFloor:           0.5,
+        starterDistPenaltyPerStep:  0.05,
+        starterDistFloor:           0.3,
+        starterHandPenaltyPerExtra: 0.08,
+        starterHandFloor:           0.3,
+        noFunctionValue:            1
+    },
+
+    _bossRoles: ['Boss Monster', 'Tower'],
+
+    _getRoleBasePower: function (role) {
+        if (!role) return this.POWER_CFG.noFunctionValue;
+        if (window.ConfigManager && typeof ConfigManager.getRoleBasePower === 'function') {
+            const v = ConfigManager.getRoleBasePower(role);
+            if (typeof v === 'number' && !isNaN(v)) return v;
+        }
+        return 3;
+    },
+
+    _stepIndexForCardId: function (combo, cardId) {
+        const steps = combo.steps || [];
+        for (let i = 0; i < steps.length; i++) if (steps[i].cardId === cardId) return i;
+        return -1;
+    },
+
+    _recalcPower: function (combo) {
+        const endboard = combo.endboard || [];
+        const activeEntries = endboard.filter(e => e.active);
+
+        const dependentsCount = {};
+        endboard.forEach(e => (e.dependsOn || []).forEach(depUid => {
+            dependentsCount[depUid] = (dependentsCount[depUid] || 0) + 1;
+        }));
+
+        const totalSteps    = (combo.steps || []).length;
+        const startHandSize = (combo.startCards || []).length;
+
+        const breakdown = activeEntries.map(entry => {
+            const cardData = Deck.cards[entry.id]?.data;
+            const name = cardData?.name || entry.id;
+            const role = entry.mainFunction || null;
+            let value  = this._getRoleBasePower(role);
+
+            const depCount   = (entry.dependsOn || []).length;
+            const depPenalty = Math.max(this.POWER_CFG.depPenaltyFloor, 1 - this.POWER_CFG.depPenaltyPerDep * depCount);
+            const depBonus   = 1 + Math.min(this.POWER_CFG.depBonusCap, this.POWER_CFG.depBonusPerDependent * (dependentsCount[entry.uid] || 0));
+            value *= depPenalty * depBonus;
+
+            if (role === 'Starter') {
+                const stepIdx   = this._stepIndexForCardId(combo, entry.id);
+                const distSteps = stepIdx === -1 ? totalSteps : Math.max(0, totalSteps - stepIdx - 1);
+                const distMult  = Math.max(this.POWER_CFG.starterDistFloor, 1 - this.POWER_CFG.starterDistPenaltyPerStep * distSteps);
+                const extraHand = Math.max(0, startHandSize - 1);
+                const handMult  = Math.max(this.POWER_CFG.starterHandFloor, 1 - this.POWER_CFG.starterHandPenaltyPerExtra * extraHand);
+                value *= distMult * handMult;
+            }
+
+            return { uid: entry.uid, id: entry.id, name, role, zone: entry.zone, value: Math.round(value * 100) / 100 };
+        });
+
+        const totalBeforeSteps = breakdown.reduce((sum, b) => sum + b.value, 0);
+        const stepsMult = Math.max(this.POWER_CFG.stepPenaltyFloor, 1 - this.POWER_CFG.stepPenaltyPerStep * totalSteps);
+        const total = Math.round(totalBeforeSteps * stepsMult * 100) / 100;
+
+        breakdown.sort((a, b) => b.value - a.value);
+
+        const bossEntry  = breakdown.find(b => this._bossRoles.includes(b.role)) || breakdown[0] || null;
+        const startCards = combo.startCards || [];
+        const starterId  = startCards.find(id => (Deck.cards[id]?.roles || []).includes('Starter')) || startCards[0] || null;
+
+        const bossData    = bossEntry ? Deck.cards[bossEntry.id]?.data : null;
+        const starterData = starterId ? Deck.cards[starterId]?.data : null;
+        const bossName    = bossEntry ? (bossData?.name || bossEntry.id) : null;
+        const starterName = starterId ? (starterData?.name || starterId) : null;
+
+        combo.power          = total;
+        combo.powerBreakdown = breakdown;
+        combo.bossCardId     = bossEntry ? bossEntry.id : null;
+        combo.starterCardId  = starterId;
+        combo.bossName       = bossName;
+        combo.starterName    = starterName;
+        combo.imageUrl       = bossData?.card_images?.[0]?.image_url || null;
+        combo.imageUrlSmall  = bossData?.card_images?.[0]?.image_url_small || null;
+
+        if (bossName && starterName) {
+            const deckCombos = this.getAll(combo.deckName).slice().sort((a, b) => a.createdAt - b.createdAt);
+            const seq = Math.max(1, deckCombos.findIndex(c => c.id === combo.id) + 1);
+            combo.name = `${bossName} + ${starterName} + ${combo.deckName} + #${seq}`;
+        }
+    },
+
     // ── Endboard: cartas activas para follow up, función principal y dependencias ──
     // Field arranca activa por defecto (está en juego); HAND/GY/Banish se marcan
     // a mano — no todo lo que quedó ahí aporta valor real de follow up.
@@ -3940,6 +4044,7 @@ const Combos = {
         this._withCombo(deckName, comboId, combo => {
             const entry = combo.endboard?.find(e => e.uid === uid);
             if (entry) entry.active = !entry.active;
+            this._recalcPower(combo);
         });
         this._refresh();
     },
@@ -3948,6 +4053,7 @@ const Combos = {
         this._withCombo(deckName, comboId, combo => {
             const entry = combo.endboard?.find(e => e.uid === uid);
             if (entry) entry.mainFunction = role || null;
+            this._recalcPower(combo);
         });
         this._refresh();
     },
@@ -3990,6 +4096,7 @@ const Combos = {
         this._withCombo(deckName, comboId, combo => {
             const entry = combo.endboard?.find(e => e.uid === uid);
             if (entry) entry.dependsOn = checked;
+            this._recalcPower(combo);
         });
         document.getElementById('combo-deps-overlay')?.remove();
         this._refresh();
@@ -4041,7 +4148,36 @@ const Combos = {
         </div>`;
     },
 
+_renderPowerSummary: function (combo) {
+        if (!combo.powerBreakdown || !combo.powerBreakdown.length) {
+            return `<div class="combo-power-block"><p class="deck-empty">Marca cartas activas y su función principal en el Endboard para calcular el poder del combo.</p></div>`;
+        }
+        const top = combo.powerBreakdown.slice(0, 5);
+        return `
+        <div class="combo-power-block">
+            <div class="combo-power-header">
+                ${combo.imageUrl ? `<img src="${combo.imageUrl}" class="combo-power-thumb" alt="${this._escape(combo.name || '')}">` : ''}
+                <div class="combo-power-info">
+                    <div class="combo-power-name">${combo.name ? this._escape(combo.name) : '— agrega función principal a una carta activa —'}</div>
+                    <div class="combo-power-value">⚡ Poder del Combo: <strong>${combo.power}</strong></div>
+                </div>
+            </div>
+            <div class="combo-power-top">
+                <h5 class="combo-zone-title">🏆 Cartas de mayor poder</h5>
+                <div class="combo-power-top-list">
+                    ${top.map(b => `
+                    <div class="combo-power-top-row">
+                        <span class="combo-power-top-name">${this._escape(b.name)}</span>
+                        <span class="combo-power-top-role">${b.role ? this._escape(b.role) : 'sin función'}</span>
+                        <span class="combo-power-top-val">${b.value}</span>
+                    </div>`).join('')}
+                </div>
+            </div>
+        </div>`;
+    },
+
     // ── Objetivo: editar / limpiar / guardar ──────────────────────
+
     editObjetivo: function (comboId) {
         document.getElementById(`combo-objetivo-view-${comboId}`).style.display = 'none';
         document.getElementById(`combo-objetivo-edit-${comboId}`).style.display = 'block';
@@ -4094,6 +4230,7 @@ const Combos = {
             <div class="combo-controls-row">
                 <button class="deck-move" onclick="Combos.reopenCombo('${combo.deckName}','${combo.id}')">↩️ Reabrir Combo</button>
             </div>
+            ${this._renderPowerSummary(combo)}
             ${this._renderEndboard(combo)}
             <h4 class="combo-steps-title">📜 Pasos del Combo (${(combo.steps || []).length})</h4>
             <div class="combo-steps-log">${this._renderSteps(combo)}</div>
@@ -4157,6 +4294,7 @@ const Combos = {
 
         return sorted.map(c => `
         <div class="combo-list-row" onclick="Combos.openCombo('${c.deckName}','${c.id}')">
+            ${c.imageUrlSmall ? `<img src="${c.imageUrlSmall}" class="combo-list-thumb" alt="">` : ''}
             <span class="combo-list-deck">${this._escape(c.deckName)}</span>
             <span class="combo-list-name">${c.name ? this._escape(c.name) : '(Sin nombre — ' + c.status + ')'}</span>
             <span class="combo-list-power">⚡ ${c.power || 0}</span>
