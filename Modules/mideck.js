@@ -1500,6 +1500,42 @@ this.container.innerHTML = html;
         if (pane) pane.innerHTML = this.renderOptimizacionPane();
     },
 
+    editOptimizacionRound: function(sessionId, roundId) {
+        // Reabrir el formulario con los valores exactos de una ronda ya registrada
+        const data = this.getOptimizacion();
+        const sess = (data.sessions || []).find(s => s.id === sessionId);
+        if (!sess) return;
+        const round = (sess.rounds || []).find(r => r.id === roundId);
+        if (!round) return;
+        this._activeSessionId = sessionId;
+        this._editingRoundId  = roundId;
+        this.openRoundModal();
+        this._fillRoundForm(round);
+    },
+
+    _fillRoundForm: function(round) {
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = (val ?? ''); };
+        setVal('opt-r-starter',      round.starter ?? 0);
+        setVal('opt-r-extenders',    round.extenders ?? 0);
+        setVal('opt-r-handtraps',    round.handtraps ?? 0);
+        setVal('opt-r-boardbreaker', round.boardbreakers ?? 0);
+        setVal('opt-r-bricks',       round.bricks ?? 0);
+        setVal('opt-r-oppname',      round.oppDeck || '');
+        setVal('opt-r-negate',       round.interrupciones ?? 0);
+        setVal('opt-r-board',        round.vecesRompioBoard ?? 0);
+        setVal('opt-r-combo',        round.rivalInterrupciones ?? 0);
+        setVal('opt-r-rival',        round.vecesRivalRompioBoard ?? 0);
+        setVal('opt-r-resultado',    round.resultado || '');
+        setVal('opt-r-orden',        round.orden || '');
+        setVal('opt-r-tipo-vic',     round.tipoVictoria || 'normal');
+        setVal('opt-r-turnovic',     round.turnoVictoria || '');
+        setVal('opt-r-tipo-der',     round.tipoDerrota || 'normal');
+        setVal('opt-r-turnoder',     round.turnoDerrota || '');
+        setVal('opt-r-tiempo',       round.presionTiempo || 'holgado');
+        setVal('opt-r-notas',        round.notas || '');
+        this._optToggleTipo();
+    },
+
     calcOptMetrics: function(session) {
         const rounds = session.rounds || [];
         const p = Math.max(rounds.length, 1);
@@ -1628,6 +1664,22 @@ notas:            v('opt-r-notas').trim()
         let sess = this._activeSessionId
             ? data.sessions.find(s => s.id === this._activeSessionId)
             : null;
+
+        // ── Modo edición: reemplaza la ronda existente en vez de crear una nueva ──
+        // (no se llama _syncRoundToMatchup aquí para no duplicar el conteo de
+        // victorias/derrotas ya aplicado en Matchups cuando se registró la ronda)
+        if (this._editingRoundId && sess) {
+            round.id = this._editingRoundId;
+            const idx = sess.rounds.findIndex(r => r.id === this._editingRoundId);
+            if (idx !== -1) sess.rounds[idx] = round;
+            if (label) sess.label = label;
+            localStorage.setItem(`optimization_${this.name}`, JSON.stringify(data));
+            this._editingRoundId = null;
+            this.closeRoundModal();
+            const pane = document.getElementById('mideck-optimizacion-pane');
+            if (pane) pane.innerHTML = this.renderOptimizacionPane();
+            return;
+        }
 
         if (!sess) {
             sess = { id: Date.now() + 1, date: new Date().toLocaleDateString('es-ES'), label, rounds: [] };
@@ -2133,7 +2185,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             </div>
             </div>
 
-            <button class="opt-submit-btn" onclick="Deck.addOptimizacionRound()">➕ Registrar Ronda de Duelo</button>
+            <button class="opt-submit-btn" onclick="Deck.addOptimizacionRound()">${this._editingRoundId ? '💾 Guardar Cambios' : '➕ Registrar Ronda de Duelo'}</button>
         `;
     },
 
@@ -2150,6 +2202,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
 
     closeRoundModal: function() {
         document.getElementById('opt-round-modal-overlay')?.remove();
+        this._editingRoundId = null;
     },
 
     _refreshRoundModalIfOpen: function() {
@@ -2162,10 +2215,11 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         const activeSess = this._activeSessionId
             ? (data.sessions || []).find(s => s.id === this._activeSessionId) : null;
         const activeRounds = activeSess ? activeSess.rounds.length : 0;
+        const isEditing = !!this._editingRoundId;
         return `
         <div class="opt-round-modal-box">
             <div class="opt-round-modal-hdr">
-                <span>➕ Nueva Ronda de Duelo${activeSess ? ` <span class="opt-round-count">#${activeRounds + 1}</span>` : ''}</span>
+                <span>${isEditing ? '✏️ Editar Ronda' : `➕ Nueva Ronda de Duelo${activeSess ? ` <span class="opt-round-count">#${activeRounds + 1}</span>` : ''}`}</span>
                 <button class="opt-round-modal-close" onclick="Deck.closeRoundModal()">✕</button>
             </div>
             <div class="opt-round-modal-body">
@@ -2402,6 +2456,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                                     ${r.turnoVictoria? `<span title="Ganó en turno ${r.turnoVictoria}">🏁T${r.turnoVictoria}</span>` : ''}
                                     ${r.turnoDerrota ? `<span title="Perdió en turno ${r.turnoDerrota}">💀T${r.turnoDerrota}</span>` : ''}
                                     ${r.notas        ? `<span class="opt-round-nota" title="${r.notas.replace(/"/g,'&quot;')}">📝</span>` : ''}
+                                    <button class="opt-edit-btn opt-round-edit" onclick="Deck.editOptimizacionRound(${sess.id},${r.id})" title="Editar ronda">✏️</button>
                                     <button class="opt-round-del" onclick="Deck.deleteOptimizacionRound(${sess.id},${r.id})" title="Eliminar ronda">×</button>
                                 </div>`;
                             }).join('')}
