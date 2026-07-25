@@ -3299,13 +3299,20 @@ renderMusicSection: function () {
     const volume = cfg.volume ?? 0.40;
     const enabled = cfg.enabled !== false;
 
+    // 10 pistas fijas en ots/, nombradas Climax_Theme_1.mp3 ... Climax_Theme_10.mp3
+    const MUSIC_TRACKS = Array.from({ length: 10 }, (_, i) => {
+        const n = i + 1;
+        return { path: `ots/Climax_Theme_${n}.mp3`, label: `Tema ${n}` };
+    });
+
     const row = (key, label) => `
         <div class="music-track-row">
             <label class="music-track-label">${label}</label>
-            <input type="text" class="config-input music-track-input"
-                   id="music-track-${key}"
-                   value="${tracks[key] || ''}"
-                   placeholder="ots/nombre.mp3">
+            <select class="config-input music-track-input" id="music-track-${key}">
+                ${MUSIC_TRACKS.map(t => `
+                    <option value="${t.path}" ${tracks[key] === t.path ? 'selected' : ''}>${t.label}</option>
+                `).join('')}
+            </select>
         </div>`;
 
     return `
@@ -3343,10 +3350,10 @@ saveMusicConfig: function () {
     const enabled = document.getElementById('music-enabled-cb')?.checked !== false;
     const volume  = parseFloat(document.getElementById('music-volume-slider')?.value ?? 0.40);
     const tracks  = {
-        default:     (document.getElementById('music-track-default')?.value     || 'ots/Climax Theme 2.mp3').trim(),
-        novato:      (document.getElementById('music-track-novato')?.value      || 'ots/Climax Theme 5.mp3').trim(),
-        casual:      (document.getElementById('music-track-casual')?.value      || 'ots/Climax Theme 5.mp3').trim(),
-        competitivo: (document.getElementById('music-track-competitivo')?.value || 'ots/Climax Theme 5.mp3').trim()
+        default:     (document.getElementById('music-track-default')?.value     || 'ots/Climax_Theme_2.mp3').trim(),
+        novato:      (document.getElementById('music-track-novato')?.value      || 'ots/Climax_Theme_5.mp3').trim(),
+        casual:      (document.getElementById('music-track-casual')?.value      || 'ots/Climax_Theme_5.mp3').trim(),
+        competitivo: (document.getElementById('music-track-competitivo')?.value || 'ots/Climax_Theme_5.mp3').trim()
     };
     const cfg = { enabled, volume, tracks };
     if (window.ConfigManager) ConfigManager.saveMusicConfig(cfg);
@@ -3401,7 +3408,7 @@ selectPlayerLevel: function (levelKey) {
     if (window.ContentManager) ContentManager.applyProfile(levelKey);
     if (window.MusicPlayer) {
         const cfg  = window.ConfigManager ? ConfigManager.getMusicConfig() : {};
-        const path = cfg.tracks?.[levelKey] || 'ots/Climax Theme 2.mp3';
+        const path = cfg.tracks?.[levelKey] || 'ots/Climax_Theme_2.mp3';
         MusicPlayer.setTrack(path);
     }
     this.render();
@@ -3933,7 +3940,7 @@ enter: function (tabName, levelKey) {
     if (window.ConfigManager  && levelKey) ConfigManager.savePlayerLevel(levelKey);
     if (window.MusicPlayer) {
         const cfg   = window.ConfigManager ? ConfigManager.getMusicConfig() : {};
-        const path  = cfg.tracks?.[levelKey] || 'ots/Climax Theme 2.mp3';
+        const path  = cfg.tracks?.[levelKey] || 'ots/Climax_Theme_2.mp3';
         MusicPlayer.setTrack(path);
     }
     this.dismiss();
@@ -3988,7 +3995,7 @@ const MusicPlayer = {
     init: function () {
         const cfg = window.ConfigManager ? ConfigManager.getMusicConfig() : { enabled: true, volume: 0.40, tracks: {} };
         const level = window.ConfigManager ? ConfigManager.getPlayerLevel() : 'default';
-        this.currentPath = cfg.tracks?.[level] || cfg.tracks?.default || 'ots/Climax Theme 2.mp3';
+        this.currentPath = cfg.tracks?.[level] || cfg.tracks?.default || 'ots/Climax_Theme_2.mp3';
         this._buildAudio(this.currentPath, cfg.volume ?? 0.40);
         if (cfg.enabled !== false) this._createButton();
     },
@@ -4017,7 +4024,7 @@ const MusicPlayer = {
         if (cfg.enabled === false) return;
 
         const level = window.ConfigManager ? ConfigManager.getPlayerLevel() : 'default';
-        const path  = cfg.tracks?.[level] || cfg.tracks?.default || 'ots/Climax Theme 2.mp3';
+        const path  = cfg.tracks?.[level] || cfg.tracks?.default || 'ots/Climax_Theme_2.mp3';
 
         if (this.audio && !this.audio.paused) {
             // STOP — detiene y resincroniza pista con el perfil activo

@@ -260,7 +260,7 @@ body[data-bg-theme="navy"] {
 
 #scrollTopBtn {
     position: fixed;
-    bottom: 90px;
+    bottom: 135px;
     right: 20px;
     background: #FFD700;
     color: #2d0a4e;
@@ -281,7 +281,7 @@ body[data-bg-theme="navy"] {
 }
 #scrollBottomBtn {
     position: fixed;
-    bottom: 135px;
+    bottom: 90px;
     right: 20px;
     background: #FFD700;
     color: #2d0a4e;
