@@ -493,12 +493,12 @@ body[data-bg-theme="navy"] {
     position: fixed;
     top: 80px;
     left: 16px;
-    width: 40px;
-    height: 40px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     background: var(--gold-color, #FFD700);
     color: #000;
-    font-size: 1.1rem;
+    font-size: 0.7rem;
     font-weight: bold;
     border: none;
     cursor: pointer;
@@ -601,7 +601,7 @@ body[data-bg-theme="navy"] {
 /* ── BOTÓN FLOTANTE DE MÚSICA ── */
 #music-float-btn {
     position: fixed;
-    bottom: 183px;   /* encima de scrollBottomBtn (135px + 40px + 8px) */
+    bottom: 483px;   /* 183px + 300px, subido a pedido */
     right: 20px;
     width: 24px;
     height: 24px;
