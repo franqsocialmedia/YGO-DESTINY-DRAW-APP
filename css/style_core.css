@@ -302,22 +302,36 @@ body[data-bg-theme="navy"] {
 }
 
 .main-footer {
-    /* Posicionamiento fijo al fondo */
-    position: fixed;
-    bottom: 0;
-    left: 0;
+    /* Ya no fijo: fluye al final del documento, después del contenido */
     width: 100%;
     
     /* Estilos visuales */
     background: rgba(26, 0, 8, 0.95);
     border-top: 1px solid var(--border-color);
     padding: var(--spacing-sm) 0;
+    margin-top: 20px;
     
     /* Texto centrado */
     text-align: center;
-    
-    /* Z-index para que aparezca sobre el contenido pero bajo el botón scroll */
-    z-index: 50;
+}
+
+/* ══════════════════════════════════════════
+   BARRA DE HERRAMIENTAS FIJA (abajo)
+   Aloja: Shortcuts, Lista de Decks, Play/Stop
+══════════════════════════════════════════ */
+.bottom-toolbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    background: rgba(26, 0, 8, 0.95);
+    border-top: 1px solid var(--border-color);
+    padding: 10px 0;
+    z-index: 900;
 }
 
 /* Párrafo del footer */
@@ -490,15 +504,12 @@ body[data-bg-theme="navy"] {
    SHORTCUTS FLOAT BUTTON
 ══════════════════════════════════════════ */
 .shortcuts-float-btn {
-    position: fixed;
-    top: 80px;
-    left: 16px;
-    width: 24px;
-    height: 24px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     background: var(--gold-color, #FFD700);
     color: #000;
-    font-size: 0.7rem;
+    font-size: 0.95rem;
     font-weight: bold;
     border: none;
     -webkit-appearance: none;
@@ -509,10 +520,9 @@ body[data-bg-theme="navy"] {
     justify-content: center;
     line-height: 1;
     cursor: pointer;
-    z-index: 1000;
     box-shadow: 0 2px 10px rgba(0,0,0,0.4);
     transition: transform 0.15s, box-shadow 0.15s;
-    opacity:0.4;
+    opacity: 0.85;
 }
 .shortcuts-float-btn:hover {
     transform: scale(1.1);
@@ -607,11 +617,8 @@ body[data-bg-theme="navy"] {
 
 /* ── BOTÓN FLOTANTE DE MÚSICA ── */
 #music-float-btn {
-    position: fixed;
-    top: 180px;      /* 100px debajo del Helper (top:80px) */
-    right: 16px;
-    width: 24px;
-    height: 24px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     background: #c0c0c0;
     color: #222;
@@ -619,10 +626,9 @@ body[data-bg-theme="navy"] {
     -webkit-appearance: none;
     appearance: none;
     cursor: pointer;
-    font-size: 0.6rem;
+    font-size: 0.85rem;
     line-height: 1;
-    z-index: 9999;
-    opacity: 0.4;
+    opacity: 0.85;
     transition: opacity 0.2s, transform 0.15s;
     display: flex;
     align-items: center;

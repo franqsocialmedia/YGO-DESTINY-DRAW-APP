@@ -4056,7 +4056,7 @@ const MusicPlayer = {
         btn.id        = 'music-float-btn';
         btn.className = 'music-float-btn';
         btn.onclick = function () { MusicPlayer.toggle(); };
-        document.body.appendChild(btn);
+        (document.getElementById('bottom-toolbar') || document.body).appendChild(btn);
         this._updateButton();
     },
 

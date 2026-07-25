@@ -140,9 +140,9 @@ const Shortcuts = {
         btn.innerHTML = '⚡';
         btn.title = 'Accesos rápidos';
         btn.onclick = (e) => { e.stopPropagation(); this.toggleMenu(); };
-        document.body.appendChild(btn);
+        (document.getElementById('bottom-toolbar') || document.body).appendChild(btn);
     },
-
+    
     toggleMenu: function() {
         document.getElementById('shortcuts-overlay') ? this.closeMenu() : this.openMenu();
     },
