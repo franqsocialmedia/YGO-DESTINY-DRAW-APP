@@ -1631,7 +1631,7 @@ renderDeckStatsBlock: function () {
     return `
     <div class="deck-stats-block">
         <div class="dstab-tabs">
-            <button class="dstab-btn" id="dstab-main"  onclick="Deck.switchDeckStatsTab('main')">
+            <button class="dstab-btn active" id="dstab-main"  onclick="Deck.switchDeckStatsTab('main')">
                 🃏 Main
             </button>
             <button class="dstab-btn" id="dstab-extra" onclick="Deck.switchDeckStatsTab('extra')">
@@ -1643,12 +1643,12 @@ renderDeckStatsBlock: function () {
             <button class="dstab-btn" id="dstab-chips" onclick="Deck.switchDeckStatsTab('chips')">
                 📋 Composición
             </button>
-            <button class="dstab-btn active" id="dstab-chart" onclick="Deck.switchDeckStatsTab('chart')">
+            <button class="dstab-btn" id="dstab-chart" onclick="Deck.switchDeckStatsTab('chart')">
                 📊 Gráfica
             </button>
         </div>
         <!-- VISTAS DE CARTAS POR ZONA -->
-        <div id="dstab-pane-main"  style="display:none;">${this._buildDeckViewPane('main')}</div>
+        <div id="dstab-pane-main">${this._buildDeckViewPane('main')}</div>
         <div id="dstab-pane-extra" style="display:none;">${this._buildDeckViewPane('extra')}</div>
         <div id="dstab-pane-side"  style="display:none;">${this._buildDeckViewPane('side')}</div>
 
@@ -1678,7 +1678,7 @@ renderDeckStatsBlock: function () {
         </div>
 
         <!-- VISTA GRÁFICA -->
-        <div id="dstab-pane-chart">
+        <div id="dstab-pane-chart" style="display:none;">
             ${chartGroup1}
             ${chartGroup2}
         </div>
@@ -1768,12 +1768,22 @@ onDeckLoaded: function () {
         const sideC = this.count('side');
         const totalCards = Object.keys(this.cards).length;
         const isEmpty = totalCards === 0;
+        const sidebarImgName = window.Buscador?.getSidebarImage?.() || 'Protagonistas';
 
         let html = ``;
 
+if (isEmpty) {
+    html += `
+<div class="mideck-layout">
+<div class="buscador-cover-sidebar">
+    <img src="img/${sidebarImgName}.webp" alt="Yu-Gi-Oh! ${sidebarImgName}" class="buscador-cover-img" loading="lazy">
+</div>
+<div class="mideck-main">`;
+}
+
 html += `
 <div class="mideck-subtabs-nav">
-    <button class="mideck-subtab-btn mideck-subtab-btn-import sim-tab-btn" data-tab="importar" onclick="Deck.switchMiDeckTab('importar')">📥 Importar Deck</button>
+    <button class="mideck-subtab-btn mideck-subtab-btn-import sim-tab-btn" data-tab="importar" onclick="Deck.switchMiDeckTab('importar')">📥 Import/Export Deck</button>
     <button class="mideck-subtab-btn active sim-tab-btn" data-tab="decklist" onclick="Deck.switchMiDeckTab('decklist')">📋 Decklist</button>
     <button class="mideck-subtab-btn sim-tab-btn" data-tab="construccion" onclick="Deck.switchMiDeckTab('construccion')">🔨 Construcción</button>
     <button class="mideck-subtab-btn sim-tab-btn" data-tab="optimizacion" onclick="Deck.switchMiDeckTab('optimizacion')">🎯 Optimización</button>
@@ -1787,6 +1797,13 @@ html += `
         <button class="deck-move" onclick="Deck.importYDK()">Archivo .ydk</button>
         <button class="deck-move" onclick="Deck.importPDF()">Lista Oficial (.pdf)</button>
     </div>
+    <p class="mideck-import-label">Exportar / Guardar:</p>
+    <div class="mideck-import-actions">
+        <button class="deck-move" onclick="Deck.saveDeck()" ${isEmpty ? 'disabled' : ''}>💾 Guardar Deck</button>
+        <button class="deck-move" onclick="Deck.exportYDK()" ${isEmpty ? 'disabled' : ''}>📤 Exportar Deck (.ydk)</button>
+        <button class="deck-move" onclick="Deck.exportTXT()" ${isEmpty ? 'disabled' : ''}>📝​ Descargar Lista (.txt)</button>
+        <button class="deck-move" onclick="Deck.downloadDecklist()" ${isEmpty ? 'disabled' : ''}>📸 Descargar Decklist (.png)</button>
+    </div>
     ${isEmpty ? this._renderEmptyDeckNotice(
         'Elige un deck desde el panel lateral o agrega cartas desde el Buscador.',
         'Elige un deck desde el panel inferior o agrega cartas desde el Buscador.'
@@ -1794,10 +1811,9 @@ html += `
 </div>`;
 
 html += `
-<br>
-<br>
-<br>
-<br>
+<div class="mideck-mobile-banner">
+    <img src="img/${sidebarImgName}.webp" alt="Yu-Gi-Oh! ${sidebarImgName}" class="mideck-mobile-banner-img" loading="lazy">
+</div>
 <div id="mideck-decklist-pane">`;
 
 if (isEmpty) {
@@ -1814,6 +1830,7 @@ if (isEmpty) {
         <span class="dzc-chip dzc-side">🔄 Side <strong>${sideC}</strong></span>
         <button class="dzc-exp-btn" data-section-id="deck-experimentacion" onclick="Deck.tryDeckExperimentacion(Deck.name)" title="Abrir en Experimentación">🧪 Exp.</button>
         <button class="dzc-probar-btn" onclick="Deck.tryDeck()">⚔️ Probar Deck</button>
+        <button class="deck-move" onclick="Deck.clearDeck()" ${isEmpty ? 'disabled' : ''}>🗑️ Limpiar Deck</button>
     </div>
     ${window.Banlist?.isGenesysActive?.() ? Banlist.renderDeckPointsIndicator(this.cards) : ''}
     <h3 onclick="Deck.toggleSection('main-sec')">🃏 Main Deck (${mainC})</h3>
@@ -1823,19 +1840,6 @@ if (isEmpty) {
     <h3 onclick="Deck.toggleSection('side-sec')">🃏 Side Deck (${sideC})</h3>
     <div id="side-sec">${this.renderRows('side')}</div>`;
 }
-
-html += `
-    <h3 onclick="Deck.toggleSection('actions-sec')"></h3>
-    <div id="actions-sec" class="deck-actions">
-        <button class="deck-move" onclick="Deck.saveDeck()" ${isEmpty ? 'disabled' : ''}>💾 Guardar Deck</button>
-        <button class="deck-move" onclick="Deck.clearDeck()" ${isEmpty ? 'disabled' : ''}>🗑️ Limpiar Deck</button>
-        <button class="deck-move" onclick="Deck.exportYDK()" ${isEmpty ? 'disabled' : ''}>📤 Exportar Deck (.ydk)</button>
-        <button class="deck-move" onclick="Deck.importYDK()">📬​ Importar Deck (.ydk)</button>
-        <button class="deck-move" onclick="Deck.exportTXT()" ${isEmpty ? 'disabled' : ''}>📝​ Descargar Lista (.txt)</button>
-        <button class="deck-move" onclick="Deck.downloadDecklist()" ${isEmpty ? 'disabled' : ''}>📸 Descargar Decklist</button>
-    </div>`;
-
-html += `</div>`;
 
 if (!isEmpty) {
     html += `
@@ -1876,6 +1880,11 @@ if (!isEmpty) {
 html += `</div>`;
 html += `<div id="mideck-optimizacion-pane" style="display:none;">${!isEmpty ? this.renderOptimizacionPane() : this._renderEmptyDeckNotice('Carga un deck para usar Optimización.')}</div>`;
 html += `<div id="mideck-combos-pane" style="display:none;">${window.Combos ? Combos.renderPane() : ''}</div>`;
+
+if (isEmpty) {
+    html += `</div></div>`;
+}
+
 this.container.innerHTML = html;
     },
 
@@ -5669,6 +5678,7 @@ const Engines = {
     CARD_BACK:   'https://images.ygoprodeck.com/images/cards/back.jpg',
     _activeTab: 'saved',
     _activeTabBefore: null,
+    _sidebarExpanded: false,
 
     // Estado del panel de creación
     _creating: {
@@ -5736,6 +5746,8 @@ const Engines = {
     const sidebar = document.getElementById('engines-sidebar');
     if (!sidebar) return;
 
+    sidebar.classList.toggle('eng-sidebar-expanded', this._sidebarExpanded !== false);
+
     const tab      = this._activeTab;
     const engines  = this.getAll();
     const tabs = [
@@ -5793,7 +5805,12 @@ const Engines = {
 },
 
     _switchTab: function (tab) {
-        this._activeTab = tab;
+        if (this._activeTab === tab) {
+            this._sidebarExpanded = !this._sidebarExpanded;
+        } else {
+            this._activeTab = tab;
+            this._sidebarExpanded = true;
+        }
         this._renderSidebar();
     },
 

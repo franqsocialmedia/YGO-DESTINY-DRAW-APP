@@ -285,6 +285,20 @@
 @media (max-width: 700px) {
     .engines-sidebar { flex: none; width: 100%; max-width: none; position: static; }
     .mideck-flex-wrap #deck-container { min-width: 0; flex-basis: 100%; }
+
+    /* Listas de Engines/Decks/Staples/Favoritas ocultas hasta tocar su tab */
+    .engines-sidebar .eng-panel-content { display: none; }
+    .engines-sidebar.eng-sidebar-expanded .eng-panel-content { display: block; }
+
+    /* Banner fino con la imagen elegida, reemplaza el spacer de <br> */
+    .mideck-mobile-banner {
+        display: block;
+        width: 100%;
+        aspect-ratio: 9 / 2;
+        margin: 10px 0;
+        overflow: hidden;
+        border-radius: 8px;
+    }
 }
 
 

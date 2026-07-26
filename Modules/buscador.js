@@ -91,12 +91,7 @@ SUBTYPE_API_MAP: {
 
     _applySidebarImage: function () {
         const name = this.getSidebarImage();
-        const img = document.getElementById('buscador-cover-img');
-        if (img) {
-            img.src = `img/${name}.webp`;
-            img.alt = `Yu-Gi-Oh! ${name}`;
-        }
-        document.querySelectorAll('.deck-empty-mobile-img').forEach(el => {
+        document.querySelectorAll('.buscador-cover-img, .deck-empty-mobile-img').forEach(el => {
             el.src = `img/${name}.webp`;
             el.alt = `Yu-Gi-Oh! ${name}`;
         });

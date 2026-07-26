@@ -347,7 +347,6 @@
     flex-wrap: wrap;
     gap: var(--spacing-sm);
     padding: var(--spacing-md);
-    background: var(--bg-card);
     border-radius: 8px;
     margin-bottom: var(--spacing-md);
 }
@@ -2179,8 +2178,29 @@
 .buscador-cover-img:hover {
     opacity: 1;
 }
-
-
+/* ── Mi Deck vacío: mismo layout de cover art que Buscador (desktop) ── */
+.mideck-layout {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+.mideck-main {
+    flex: 1;
+    min-width: 0;
+}
+/* Banner mobile con la imagen elegida — reemplaza el spacer de <br> */
+.mideck-mobile-banner {
+    display: none; /* oculto en desktop: ahí ya está el sidebar lateral */
+}
+.mideck-mobile-banner-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+    border-radius: 8px;
+    opacity: 0.85;
+}
 /* Los panels ext están ocultos por defecto */
 .eng-ext-panel {
     display: none;
