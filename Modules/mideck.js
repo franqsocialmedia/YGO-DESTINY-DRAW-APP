@@ -3639,6 +3639,9 @@ const Combos = {
             chokePoints:   [],
             restricciones: [],
             parentComboId: null,
+            branchType:    null,   // 'choke' | 'variant' — solo en combos hijos (rama)
+            branchStepId:  null,
+            branchChokeId: null,
             power:         0,
             powerBeforeMeta: null,
             powerBreakdown: [],
@@ -3711,10 +3714,14 @@ const Combos = {
     _logStep: function (combo, msg, cardId) {
         if (!combo.steps) combo.steps = [];
         combo.steps.push({
-            id:     'step_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
-            msg:    msg,
-            cardId: cardId || null,
-            time:   new Date().toLocaleTimeString('es-ES', { hour12: false })
+            id:            'step_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+            msg:           msg,
+            cardId:        cardId || null,
+            time:          new Date().toLocaleTimeString('es-ES', { hour12: false }),
+            // Foto de las zonas justo después de este paso — permite ramificar
+            // (Etapa 6) reconstruyendo el estado exacto en ese punto. Pasos
+            // grabados antes de esta actualización no tendrán este campo.
+            zonesSnapshot: combo.zones ? JSON.parse(JSON.stringify(combo.zones)) : null
         });
     },
 
@@ -3812,7 +3819,60 @@ const Combos = {
         this._withCombo(deckName, comboId, combo => { combo.status = 'started'; });
         this._refresh();
     },
+// ── Ramas / Variantes (Etapa 6) ─────────────────────────────────
+    // Bifurca un combo existente desde un paso concreto: crea un combo hijo
+    // (mismo deck) que arranca con el estado de zonas/pasos/chokes hasta ese
+    // punto, y sigue grabándose de forma independiente desde ahí.
+    branchCombo: function (deckName, parentComboId, stepId, branchType, chokePointId) {
+        const parent = this._findCombo(deckName, parentComboId);
+        if (!parent) return;
+        const stepIdx = (parent.steps || []).findIndex(s => s.id === stepId);
+        if (stepIdx === -1) return;
+        const step = parent.steps[stepIdx];
+        if (!step.zonesSnapshot) {
+            alert('Este paso no tiene datos suficientes para ramificar (fue grabado antes de esta actualización).');
+            return;
+        }
 
+        const combos = this.getAll(deckName);
+        const child = {
+            id:             'combo_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+            deckName:       deckName,
+            objetivo:       parent.objetivo || '',
+            status:         'started',
+            steps:          JSON.parse(JSON.stringify(parent.steps.slice(0, stepIdx + 1))),
+            zones:          JSON.parse(JSON.stringify(step.zonesSnapshot)),
+            startCards:     [...(parent.startCards || [])],
+            endboard:       [],
+            chokePoints:    (parent.chokePoints || [])
+                                .filter(cp => {
+                                    const cpIdx = parent.steps.findIndex(s => s.id === cp.stepId);
+                                    return cpIdx !== -1 && cpIdx <= stepIdx;
+                                })
+                                .map(cp => ({ ...cp })),
+            restricciones:  [...(parent.restricciones || [])],
+            parentComboId:  parent.id,
+            branchType:     branchType,
+            branchStepId:   stepId,
+            branchChokeId:  branchType === 'choke' ? chokePointId : null,
+            power:          0,
+            powerBeforeMeta: null,
+            powerBreakdown: [],
+            bossCardId:     null,
+            starterCardId:  null,
+            bossName:       null,
+            starterName:    null,
+            imageUrl:       null,
+            imageUrlSmall:  null,
+            name:           '',
+            comment:        '',
+            createdAt:      Date.now()
+        };
+        combos.push(child);
+        this.saveAll(deckName, combos);
+        this._activeComboId = child.id;
+        this._refresh();
+    },
     viewCard: function (cardId) {
         const cardData = Deck.cards[cardId]?.data;
         if (!cardData) { alert('No se encontró la información de esta carta en el deck activo.'); return; }
@@ -3932,6 +3992,7 @@ const Combos = {
                     <select class="combo-choke-freq-sel" onchange="Combos.setChokeFrequency('${combo.deckName}','${combo.id}','${cp.id}', this.value)">
                         ${Object.keys(this.CHOKE_FREQ).map(k => `<option value="${k}" ${cp.frequency === k ? 'selected' : ''}>${this.CHOKE_FREQ[k].label}</option>`).join('')}
                     </select>
+                    <button class="combo-branch-choke-btn" onclick="Combos.branchCombo('${combo.deckName}','${combo.id}','${cp.stepId}','choke','${cp.id}')" title="Ramificar: combo interrumpido aquí">🔀</button>
                     <button class="combo-choke-remove-btn" onclick="Combos.removeChokePoint('${combo.deckName}','${combo.id}','${cp.id}')">✖</button>
                 </span>`).join('');
             return `<div class="combo-step-row">
@@ -3939,6 +4000,7 @@ const Combos = {
                 <span class="combo-step-time">${s.time}</span>
                 <span class="combo-step-msg">${msg}</span>
                 <button class="combo-choke-add-btn" onclick="Combos.openChokePicker('${combo.deckName}','${combo.id}','${s.id}')" title="Marcar Choke Point">🚧</button>
+                <button class="combo-branch-step-btn" onclick="Combos.branchCombo('${combo.deckName}','${combo.id}','${s.id}','variant', null)" title="Crear variante desde este paso">🔀</button>
                 ${chokeChips}
             </div>`;
         }).join('');
@@ -4300,7 +4362,22 @@ _renderPowerSummary: function (combo) {
             </div>
         </div>`;
     },
-
+_renderBranchBanner: function (combo) {
+        const parent = this._findCombo(combo.deckName, combo.parentComboId);
+        const parentLabel = parent ? (parent.name || '(combo sin nombre)') : '(combo original no encontrado)';
+        const typeLabel = combo.branchType === 'choke' ? '🚧 Rama por interrupción' : '🔀 Variante';
+        let chokeInfo = '';
+        if (combo.branchType === 'choke' && parent) {
+            const cp = (parent.chokePoints || []).find(c => c.id === combo.branchChokeId);
+            if (cp) chokeInfo = ` — interrumpido por <strong>${this._escape(cp.metaCardName)}</strong>`;
+        }
+        return `
+        <div class="combo-branch-banner">
+            <span class="combo-branch-badge">${typeLabel}</span>
+            <span class="combo-branch-text">de: ${this._escape(parentLabel)}${chokeInfo}</span>
+            ${parent ? `<button class="combo-branch-goto-btn" onclick="Combos.openCombo('${combo.deckName}','${parent.id}')">Ver combo original</button>` : ''}
+        </div>`;
+    },
     // ── Objetivo: editar / limpiar / guardar ──────────────────────
 
     editObjetivo: function (comboId) {
@@ -4382,6 +4459,8 @@ _renderPowerSummary: function (combo) {
                 <button class="combo-discard-btn" onclick="Combos.confirmDeleteCombo('${combo.deckName}','${combo.id}')">🗑️ Borrar Combo</button>
             </div>
 
+            ${combo.parentComboId ? this._renderBranchBanner(combo) : ''}
+
             <div class="combo-objetivo-box">
                 <div class="combo-objetivo-label">🎯 Objetivo</div>
                 <div id="combo-objetivo-view-${combo.id}" class="combo-objetivo-view">
@@ -4420,6 +4499,7 @@ _renderPowerSummary: function (combo) {
         return sorted.map(c => `
         <div class="combo-list-row" onclick="Combos.openCombo('${c.deckName}','${c.id}')">
             ${c.imageUrlSmall ? `<img src="${c.imageUrlSmall}" class="combo-list-thumb" alt="">` : ''}
+            ${c.parentComboId ? `<span class="combo-list-branch-badge" title="${c.branchType === 'choke' ? 'Rama por interrupción' : 'Variante'}">${c.branchType === 'choke' ? '🚧' : '🔀'}</span>` : ''}
             <span class="combo-list-deck">${this._escape(c.deckName)}</span>
             <span class="combo-list-name">${c.name ? this._escape(c.name) : '(Sin nombre — ' + c.status + ')'}</span>
             <span class="combo-list-power">⚡ ${c.power || 0}</span>

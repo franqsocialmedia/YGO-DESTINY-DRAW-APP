@@ -3026,3 +3026,27 @@
 }
 .combo-choke-results { max-height: 45vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
 .combo-choke-result-row { display: flex; align-items: center; gap: 8px; padding: 4px; background: rgba(255,255,255,.03); border-radius: 6px; }
+
+/* ── Línea de Combos (Etapa 6) — Ramas / Variantes ── */
+.combo-branch-banner {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    background: rgba(255,215,0,.08); border: 1px solid rgba(255,215,0,.25);
+    border-radius: 6px; padding: 6px 10px; margin-bottom: 10px; font-size: .78rem;
+}
+.combo-branch-badge {
+    font-size: .66rem; font-weight: bold; text-transform: uppercase; letter-spacing: .03em;
+    background: rgba(255,215,0,.18); color: var(--gold-color); border-radius: 8px; padding: 2px 7px;
+}
+.combo-branch-text { opacity: .85; }
+.combo-branch-goto-btn {
+    margin-left: auto; background: rgba(255,255,255,.06); border: 1px solid var(--border-color);
+    border-radius: 5px; color: var(--text-light); font-size: .7rem; padding: 3px 8px; cursor: pointer;
+}
+.combo-branch-goto-btn:hover { border-color: var(--gold-color); }
+
+.combo-branch-step-btn, .combo-branch-choke-btn {
+    background: none; border: none; cursor: pointer; font-size: .7rem; padding: 0 2px; opacity: .5;
+}
+.combo-branch-step-btn:hover, .combo-branch-choke-btn:hover { opacity: 1; }
+
+.combo-list-branch-badge { font-size: .8rem; flex-shrink: 0; }
