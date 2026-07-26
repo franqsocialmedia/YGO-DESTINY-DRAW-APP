@@ -29,6 +29,7 @@ const ZonaPractica = {
     gameStates:          [],
     _chainCounter: 0,
     _chainedCards: [],
+    _chainResolving: false, // true entre "Resolver Cadena" (muestra SEGOC) y "Cerrar Cadena"
     _tokenCounter: 0,
     lp: 8000,
     _activeDeckName: null,
@@ -818,6 +819,7 @@ overlay.innerHTML = `
     this.gameStates    = [];
     this._chainCounter = 0;
     this._chainedCards = [];
+    this._chainResolving = false;
     this._tokenCounter = 0;
     this.lp = 8000;
     const lpEl = document.getElementById('pz-lp-val');
@@ -1221,14 +1223,49 @@ _startLongPressMulti: function (zone, idx, e) {
         console.info(`[PZ] Cadena resuelta: ${count} efectos SEGOC: ${[...this._chainedCards].reverse().map(c=>c.cardName).join(' → ')}`);
         this._chainCounter = 0;
         this._chainedCards = [];
-        document.getElementById('pz-chain-resolve-btn')?.remove();
+
+        // Entra en modo "resolviendo": los botones pasan a Cerrar Cadena y todo
+        // lo que se registre a partir de aquí queda anidado en el Log hasta cerrarla.
+        this._chainResolving = true;
+
+        const floatBtn = document.getElementById('pz-chain-resolve-btn');
+        if (floatBtn) {
+            floatBtn.innerHTML = '🔒 Cerrar Cadena';
+            floatBtn.title     = 'Cerrar Cadena';
+            floatBtn.classList.add('pz-chain-resolve-btn-closing');
+            floatBtn.onclick   = () => ZonaPractica.closeChainResolution();
+        }
         const logoCell = document.querySelector('.pz-logo-cell');
         if (logoCell) {
             logoCell.classList.remove('pz-logo-chain-active');
+            logoCell.classList.add('pz-logo-chain-resolving');
+            logoCell.onclick = () => ZonaPractica.closeChainResolution();
+        }
+
+        this._renderAllZones();
+        this._showToast(`⛓ SEGOC registrado — resolviendo cadena`, 2000);
+    },
+
+    // Cierra el modo "resolviendo": deja de anidar el Log y vuelve todo a su estado normal.
+    closeChainResolution: function () {
+        if (!this._chainResolving) return;
+        this._chainResolving = false;
+        this._addLog('🔒 Cadena cerrada.');
+
+        document.getElementById('pz-chain-resolve-btn')?.remove();
+        const logoCell = document.querySelector('.pz-logo-cell');
+        if (logoCell) {
+            logoCell.classList.remove('pz-logo-chain-active', 'pz-logo-chain-resolving');
             logoCell.onclick = null;
         }
-        this._renderAllZones();
-        this._showToast(`⛓ Cadena resuelta (${count} efectos)`, 2000);
+        const chainBtn = document.getElementById('pz-log-chain-btn');
+        if (chainBtn) {
+            chainBtn.className = 'pz-log-sc-btn pz-log-sc-chain-btn';
+            chainBtn.title     = 'Resolver Cadena';
+            chainBtn.onclick   = () => ZonaPractica.resolveChain();
+            chainBtn.innerHTML = `<span class="pz-log-sc-icon">⛓️</span><span class="pz-log-sc-label">Resolver Cadena</span>`;
+        }
+        this._showToast('🔒 Cadena cerrada', 1500);
     },
 
         // ═══════════════════════════════════════════════════════
@@ -2008,16 +2045,16 @@ _showDetachMenu: function (zone, e) {
         panel.className = 'pz-log-panel';
 
         const shortcuts = [
-    { icon:'👆', label:'Normal',        msg:'Invocación normal.'        },
-    { icon:'🙏', label:'Tributar',       msg:'Carta tributada.'         },
-    { icon:'✨', label:'Especial',       msg:'Invocación especial.'      },
-    { icon:'🔮', label:'Péndulo S.',     msg:'Invocación por péndulo.'   },
-    { icon:'⚔️', label:'Ataque',         msg:'Declara ataque.'          },
-    { icon:'💥', label:'Destruir',       msg:'Carta destruida.'         },
-    { icon:'🚫', label:'Negar',          msg:'Efecto negado.'           },
-    { icon:'👀', label:'Revelar Carta',  msg:'Carta revelada.'          },
-    { icon:'🔍', label:'Mirar Carta',    msg:'Carta mirada.'            },
-    { icon:'⛏️', label:'Excavate',        msg:'Excavates.'             },
+    { icon:'👆', label:'Normal',        msg:'Invocar Normal:'        },
+    { icon:'🙏', label:'Tributar',       msg:'Tributar Carta:'        },
+    { icon:'✨', label:'Especial',       msg:'Invocar Especial:'      },
+    { icon:'🔮', label:'Péndulo S.',     msg:'Invocar por Péndulo:'   },
+    { icon:'⚔️', label:'Daño de Batalla',         msg:'Damage Step'       },
+    { icon:'💥', label:'Destruir',       msg:'Destruir Carta:'        },
+    { icon:'🚫', label:'Negar',          msg:'Efecto Negado'          },
+    { icon:'👀', label:'Revelar Carta',  msg:'Revelar Carta:'         },
+    { icon:'🔍', label:'Mirar Carta',    msg:'Mirar Cartas'           },
+    { icon:'⛏️', label:'Excavate',        msg:'Excavar Carta:'        },
     { icon:'⛓️', label:'Resolver Cadena', msg:'__RESOLVE_CHAIN__'      },
 ];
 // Pre-calcular chips de estados con onclick de scroll
@@ -2054,13 +2091,21 @@ _showDetachMenu: function (zone, e) {
             </div>
 
             <div class="pz-log-shortcuts">
-                ${shortcuts.map(s =>
-                    `<button class="pz-log-sc-btn" ${s.msg === '__RESOLVE_CHAIN__' ? 'style="background:rgba(0,184,148,.25);"' : ''}"
-                        onclick="${s.msg === '__RESOLVE_CHAIN__' ? 'ZonaPractica.resolveChain()' : `ZonaPractica._logShortcut('${s.msg}')`}"
-                        title="${s.label}">
+                ${shortcuts.map(s => {
+                    if (s.msg === '__RESOLVE_CHAIN__') {
+                        const closing = this._chainResolving;
+                        return `<button id="pz-log-chain-btn" class="pz-log-sc-btn pz-log-sc-chain-btn${closing ? ' pz-log-sc-chain-btn-closing' : ''}"
+                            onclick="ZonaPractica.${closing ? 'closeChainResolution' : 'resolveChain'}()"
+                            title="${closing ? 'Cerrar Cadena' : s.label}">
+                            <span class="pz-log-sc-icon">${closing ? '🔒' : s.icon}</span>
+                            <span class="pz-log-sc-label">${closing ? 'Cerrar Cadena' : s.label}</span>
+                        </button>`;
+                    }
+                    return `<button class="pz-log-sc-btn" onclick="ZonaPractica._logShortcut('${s.msg}')" title="${s.label}">
                         <span class="pz-log-sc-icon">${s.icon}</span>
                         <span class="pz-log-sc-label">${s.label}</span>
-                    </button>`).join('')}
+                    </button>`;
+                }).join('')}
             </div>
 
             <div class="pz-log-input-row">
@@ -2700,7 +2745,7 @@ const minGap = isHand ? -52 : -18;
     level: card.level, rank: card.rank, linkval: card.linkval,
     banlist_info: card.banlist_info,
     card_images: card.card_images || [] } : null;
-    this.logEntries.push({ msg, time, turn: this.turnNumber, imgUrl, isManual: !!isManual, isLike: !!isLike, cardName: card?.name || null, card: cardSlim });
+    this.logEntries.push({ msg, time, turn: this.turnNumber, imgUrl, isManual: !!isManual, isLike: !!isLike, cardName: card?.name || null, card: cardSlim, isChainStep: !!this._chainResolving });
         console.info(`[PZ] T${this.turnNumber} ${time} — ${isManual ? '[Manual] ' : ''}${msg}`);
         // Actualizar Log en tiempo real si está abierto
         const el = document.getElementById('pz-log-entries');
@@ -2737,6 +2782,7 @@ _openLogCard: function (idx) {
             else if (e.isLike)             extraClass = 'pz-log-prosigue';
             else if (isChainRes)           extraClass = 'pz-log-chain-resolve';
             else if (isActivate)           extraClass = 'pz-log-activate';
+            if (e.isChainStep) extraClass += ' pz-log-chain-step';
             return `
             <div class="pz-log-entry ${extraClass}" id="pz-log-entry-${i}">
                 <span class="pz-log-entry-idx">${i + 1}</span>
