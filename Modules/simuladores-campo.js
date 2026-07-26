@@ -224,6 +224,8 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                              onclick="ZonaPractica._onMultiZoneClick(event,'hand')"></div>
                     </div>
                     <div class="pz-hand-actions-row" style="display:flex;justify-content:center;gap:10px;margin-top:6px;">
+                        <button class="pz-mini-btn" title="Ver lista de Mano"
+                                onclick="ZonaPractica.openDeckViewer('hand')">👁</button>
                         <button class="pz-mini-btn pz-zone-eye-btn"
                                 id="pz-hide-btn-hand" title="Ocultar/Mostrar Hand"
                                 onclick="ZonaPractica.toggleHideZone('hand')">🙈</button>
