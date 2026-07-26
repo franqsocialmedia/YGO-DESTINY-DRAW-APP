@@ -3083,3 +3083,16 @@
 .combo-consistency-line { font-size: .76rem; margin: 3px 0; opacity: .9; }
 .combo-consistency-ok   { color: #55efc4; font-weight: bold; }
 .combo-consistency-low  { color: #ff9a9a; font-weight: bold; }
+
+/* ── Línea de Combos (Etapa 9) — Borrado de línea y Exportar .txt ── */
+.combo-header-actions { display: flex; gap: 8px; }
+.combo-export-btn {
+    background: rgba(255,255,255,.06); border: 1px solid var(--border-color);
+    color: var(--text-light); border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: .78rem;
+}
+.combo-export-btn:hover { border-color: var(--gold-color); }
+
+.combo-step-delete-btn {
+    background: none; border: none; cursor: pointer; font-size: .7rem; padding: 0 2px; opacity: .5; color: #ff9a9a;
+}
+.combo-step-delete-btn:hover { opacity: 1; }

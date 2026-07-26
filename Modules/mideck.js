@@ -4016,6 +4016,7 @@ const Combos = {
                 <button class="combo-choke-add-btn" onclick="Combos.openChokePicker('${combo.deckName}','${combo.id}','${s.id}')" title="Marcar Choke Point">🚧</button>
                 <button class="combo-restriction-add-btn" onclick="Combos.openRestrictionModal('${combo.deckName}','${combo.id}','${s.id}')" title="Marcar Restricción desde aquí">🔒</button>
                 <button class="combo-branch-step-btn" onclick="Combos.branchCombo('${combo.deckName}','${combo.id}','${s.id}','variant', null)" title="Crear variante desde este paso">🔀</button>
+                <button class="combo-step-delete-btn" onclick="Combos.confirmDeleteStepsFrom('${combo.deckName}','${combo.id}','${s.id}', ${i + 1})" title="Borrar desde este paso en adelante">🗑️</button>
                 ${chokeChips}
                 ${restrictionChips}
             </div>`;
@@ -4649,7 +4650,10 @@ _renderBranchBanner: function (combo) {
         <div class="combo-editor" data-combo-id="${combo.id}">
             <div class="combo-editor-header">
                 <span class="combo-editor-deck">🃏 ${this._escape(combo.deckName)} <span class="combo-status-badge combo-status-${combo.status}">${combo.status}</span></span>
-                <button class="combo-discard-btn" onclick="Combos.confirmDeleteCombo('${combo.deckName}','${combo.id}')">🗑️ Borrar Combo</button>
+                <div class="combo-header-actions">
+                    <button class="combo-export-btn" onclick="Combos.exportComboTXT('${combo.deckName}','${combo.id}')">⬇️ Exportar .txt</button>
+                    <button class="combo-discard-btn" onclick="Combos.confirmDeleteCombo('${combo.deckName}','${combo.id}')">🗑️ Borrar Combo</button>
+                </div>
             </div>
 
             ${combo.parentComboId ? this._renderBranchBanner(combo) : ''}
@@ -4697,6 +4701,127 @@ _renderBranchBanner: function (combo) {
             <span class="combo-list-name">${c.name ? this._escape(c.name) : '(Sin nombre — ' + c.status + ')'}</span>
             <span class="combo-list-power">⚡ ${c.power || 0}</span>
         </div>`).join('');
+    },
+
+    // ── Borrar línea desde un paso (Etapa 9) ─────────────────────────
+    // Trunca el combo desde el paso indicado en adelante: restaura las zonas
+    // al estado justo ANTES de ese paso (snapshot del paso previo) y descarta
+    // Choke Points/Restricciones posteriores. El Endboard/Poder quedan
+    // invalidados (la línea cambió) y el combo vuelve a 'started' para
+    // seguir grabándose desde ese punto corregido.
+    confirmDeleteStepsFrom: function (deckName, comboId, stepId, stepNumber) {
+        const overlay = document.createElement('div');
+        overlay.className = 'deck-overlay';
+        overlay.innerHTML = `
+            <div class="deck-modal deck-modal-warning">
+                <h3>Borrar línea desde el paso ${stepNumber}</h3>
+                <p class="deck-modal-note">Se borrará el paso ${stepNumber} y todos los siguientes, junto con sus Choke Points, Restricciones y el Endboard/Poder ya calculado. El combo vuelve a "en grabación" desde ese punto. No se puede deshacer.</p>
+                <div class="deck-modal-buttons">
+                    <button class="btn-danger" onclick="Combos.deleteStepsFrom('${deckName}','${comboId}','${stepId}');Deck.closeModal()">Sí, Borrar</button>
+                    <button onclick="Deck.closeModal()">Cancelar</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    },
+
+    deleteStepsFrom: function (deckName, comboId, stepId) {
+        this._withCombo(deckName, comboId, combo => {
+            const steps = combo.steps || [];
+            const idx = steps.findIndex(s => s.id === stepId);
+            if (idx === -1) return;
+
+            if (idx === 0) {
+                combo.zones      = { deckPool: this._buildDeckPool(), hand: [], gy: [], banish: [], field: [] };
+                combo.startCards = [];
+            } else if (steps[idx - 1].zonesSnapshot) {
+                combo.zones = JSON.parse(JSON.stringify(steps[idx - 1].zonesSnapshot));
+            }
+
+            combo.steps          = steps.slice(0, idx);
+            combo.chokePoints    = (combo.chokePoints   || []).filter(cp => combo.steps.some(s => s.id === cp.stepId));
+            combo.restricciones  = (combo.restricciones || []).filter(r  => combo.steps.some(s => s.id === r.stepId));
+            combo.endboard        = [];
+            combo.power            = 0;
+            combo.powerBeforeMeta   = null;
+            combo.powerBreakdown    = [];
+            combo.bossCardId        = null;
+            combo.starterCardId     = null;
+            combo.bossName          = null;
+            combo.starterName       = null;
+            combo.imageUrl          = null;
+            combo.imageUrlSmall     = null;
+            combo.name              = '';
+            combo.finishedAt        = null;
+            combo.status            = 'started';
+        });
+        this._refresh();
+    },
+
+    // ── Exportar combo a .txt (Etapa 9) ──────────────────────────────
+    exportComboTXT: function (deckName, comboId) {
+        const combo = this._findCombo(deckName, comboId);
+        if (!combo) return;
+
+        const lines = [];
+        lines.push(`Destiny Draw — Línea de Combos`);
+        lines.push(`Deck: ${combo.deckName}`);
+        lines.push(`Combo: ${combo.name || '(sin nombre — ' + combo.status + ')'}`);
+        lines.push(`Estado: ${combo.status}`);
+        if (combo.parentComboId) {
+            const parent = this._findCombo(combo.deckName, combo.parentComboId);
+            lines.push(`Rama de: ${parent ? (parent.name || parent.id) : combo.parentComboId} (${combo.branchType === 'choke' ? 'interrupción' : 'variante'})`);
+        }
+        lines.push('');
+        lines.push(`Objetivo: ${combo.objetivo || '(sin definir)'}`);
+        lines.push('');
+
+        if (combo.power) {
+            lines.push(`Poder del Combo: ${combo.power}${combo.powerBeforeMeta != null && combo.powerBeforeMeta !== combo.power ? ` (antes del Meta: ${combo.powerBeforeMeta})` : ''}`);
+            if (combo.bossName)    lines.push(`Boss: ${combo.bossName}`);
+            if (combo.starterName) lines.push(`Starter: ${combo.starterName}`);
+            lines.push('');
+        }
+
+        const info = this._starterConsistency(combo);
+        if (info) {
+            lines.push(`Consistencia del Starter (${info.starterName}): ${info.probCurrent}% con ${info.currentQty} copia(s) en un mazo de ${info.deckSize} (mano de ${info.handSize}).`);
+            lines.push(info.copiesNeeded
+                ? `  -> ${info.copiesNeeded} copia(s) necesarias para superar 85% (${info.probWithNeeded}%).`
+                : `  -> Ni con 3 copias se supera el 85% con este tamaño de mazo.`);
+            lines.push('');
+        }
+
+        lines.push(`---- PASOS (${(combo.steps || []).length}) ----`);
+        (combo.steps || []).forEach((s, i) => {
+            let line = `${i + 1}. [${s.time}] ${s.msg.replace(/<[^>]+>/g, '')}`;
+            (combo.chokePoints || []).filter(cp => cp.stepId === s.id).forEach(cp => {
+                line += `  [Choke: ${cp.metaCardName} - ${(this.CHOKE_FREQ[cp.frequency] || {}).label || cp.frequency}]`;
+            });
+            (combo.restricciones || []).filter(r => r.stepId === s.id).forEach(r => {
+                line += `  [Restricción ${(this.RESTRICTION_SEV[r.severity] || {}).label || r.severity}: ${r.text}]`;
+            });
+            lines.push(line);
+        });
+        lines.push('');
+
+        if ((combo.endboard || []).length) {
+            lines.push(`---- ENDBOARD ----`);
+            combo.endboard.forEach(e => {
+                const name = Deck.cards[e.id]?.data?.name || e.id;
+                const deps = (e.dependsOn || []).map(depUid => {
+                    const d = combo.endboard.find(x => x.uid === depUid);
+                    return d ? (Deck.cards[d.id]?.data?.name || d.id) : '?';
+                });
+                lines.push(`- [${this._zoneLabel(e.zone)}] ${name}${e.active ? ' (activa)' : ' (inactiva)'}${e.mainFunction ? ` - función: ${e.mainFunction}` : ''}${deps.length ? ` - depende de: ${deps.join(', ')}` : ''}`);
+            });
+            lines.push('');
+        }
+
+        const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${(combo.name || combo.deckName + '_' + combo.id).replace(/[^a-z0-9]+/gi, '_')}.txt`;
+        a.click();
     },
 
     _escape: function (str) {
