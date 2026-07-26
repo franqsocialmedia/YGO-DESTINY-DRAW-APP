@@ -3850,7 +3850,12 @@ const Combos = {
                                     return cpIdx !== -1 && cpIdx <= stepIdx;
                                 })
                                 .map(cp => ({ ...cp })),
-            restricciones:  [...(parent.restricciones || [])],
+            restricciones:  (parent.restricciones || [])
+                                .filter(r => {
+                                    const rIdx = parent.steps.findIndex(s => s.id === r.stepId);
+                                    return rIdx !== -1 && rIdx <= stepIdx;
+                                })
+                                .map(r => ({ ...r })),
             parentComboId:  parent.id,
             branchType:     branchType,
             branchStepId:   stepId,
@@ -3995,13 +4000,24 @@ const Combos = {
                     <button class="combo-branch-choke-btn" onclick="Combos.branchCombo('${combo.deckName}','${combo.id}','${cp.stepId}','choke','${cp.id}')" title="Ramificar: combo interrumpido aquí">🔀</button>
                     <button class="combo-choke-remove-btn" onclick="Combos.removeChokePoint('${combo.deckName}','${combo.id}','${cp.id}')">✖</button>
                 </span>`).join('');
+            const restrictions = (combo.restricciones || []).filter(r => r.stepId === s.id);
+            const restrictionChips = restrictions.map(r => `
+                <span class="combo-restriction-chip">
+                    🔒 ${this._escape(r.text)}
+                    <select class="combo-restriction-sev-sel" onchange="Combos.setRestrictionSeverity('${combo.deckName}','${combo.id}','${r.id}', this.value)">
+                        ${Object.keys(this.RESTRICTION_SEV).map(k => `<option value="${k}" ${r.severity === k ? 'selected' : ''}>${this.RESTRICTION_SEV[k].label}</option>`).join('')}
+                    </select>
+                    <button class="combo-restriction-remove-btn" onclick="Combos.removeRestriction('${combo.deckName}','${combo.id}','${r.id}')">✖</button>
+                </span>`).join('');
             return `<div class="combo-step-row">
                 <span class="combo-step-idx">${i + 1}</span>
                 <span class="combo-step-time">${s.time}</span>
                 <span class="combo-step-msg">${msg}</span>
                 <button class="combo-choke-add-btn" onclick="Combos.openChokePicker('${combo.deckName}','${combo.id}','${s.id}')" title="Marcar Choke Point">🚧</button>
+                <button class="combo-restriction-add-btn" onclick="Combos.openRestrictionModal('${combo.deckName}','${combo.id}','${s.id}')" title="Marcar Restricción desde aquí">🔒</button>
                 <button class="combo-branch-step-btn" onclick="Combos.branchCombo('${combo.deckName}','${combo.id}','${s.id}','variant', null)" title="Crear variante desde este paso">🔀</button>
                 ${chokeChips}
+                ${restrictionChips}
             </div>`;
         }).join('');
     },
@@ -4019,7 +4035,8 @@ const Combos = {
       starterHandPenaltyPerExtra: 0.08, // el Starter pierde 8% por cada carta extra en la mano inicial
         starterHandFloor:           0.3,
         noFunctionValue:            1,    // valor de una carta activa sin función principal asignada
-        chokeFloor:                 0.15  // el impacto acumulado de Choke Points nunca baja el poder de este piso
+        chokeFloor:                 0.15, // el impacto acumulado de Choke Points nunca baja el poder de este piso
+        restrictionFloor:           0.55  // piso del multiplicador acumulado de Restricciones, por carta afectada
     },
 
     CHOKE_FREQ: {
@@ -4028,7 +4045,15 @@ const Combos = {
         alta:  { label: 'Alta (staple del formato)', impact: 0.22 },
         tier1: { label: 'Tier 1 (omnipresente)',     impact: 0.35 }
     },
+// Restricciones de turno/efecto (Etapa 7) — impacto menor que un Choke Point:
+    // no interrumpen el combo, solo limitan lo que se puede hacer de ahí en adelante.
+    RESTRICTION_SEV: {
+        leve:   { label: 'Leve (cosmético)',        impact: 0.04 },
+        media:  { label: 'Media (limita opciones)', impact: 0.09 },
+        severa: { label: 'Severa (cierra líneas)',   impact: 0.16 }
+    },
 
+    
     _chokeSearchResults: [],
 
     _bossRoles: ['Boss Monster', 'Tower'],
@@ -4047,7 +4072,28 @@ const Combos = {
         for (let i = 0; i < steps.length; i++) if (steps[i].cardId === cardId) return i;
         return -1;
     },
+_stepIndex: function (combo, stepId) {
+        return (combo.steps || []).findIndex(s => s.id === stepId);
+    },
 
+    // Restricciones vigentes en o antes del paso donde entró esta carta al
+    // endboard — ya estaban activas cuando se llegó a esa pieza, así que su
+    // valor de follow up baja un poco.
+    _restrictionMultiplierForEntry: function (combo, entry) {
+        const restrictions = combo.restricciones || [];
+        if (!restrictions.length) return 1;
+        const entryStepIdx = this._stepIndexForCardId(combo, entry.id);
+        if (entryStepIdx === -1) return 1;
+        let mult = 1;
+        restrictions.forEach(r => {
+            const rIdx = this._stepIndex(combo, r.stepId);
+            if (rIdx !== -1 && rIdx <= entryStepIdx) {
+                const impact = (this.RESTRICTION_SEV[r.severity] || this.RESTRICTION_SEV.media).impact;
+                mult *= (1 - impact);
+            }
+        });
+        return Math.max(this.POWER_CFG.restrictionFloor, mult);
+    },
     _recalcPower: function (combo) {
         const endboard = combo.endboard || [];
         const activeEntries = endboard.filter(e => e.active);
@@ -4079,6 +4125,8 @@ const Combos = {
                 const handMult  = Math.max(this.POWER_CFG.starterHandFloor, 1 - this.POWER_CFG.starterHandPenaltyPerExtra * extraHand);
                 value *= distMult * handMult;
             }
+
+            value *= this._restrictionMultiplierForEntry(combo, entry);
 
             return { uid: entry.uid, id: entry.id, name, role, zone: entry.zone, value: Math.round(value * 100) / 100 };
         });
@@ -4207,6 +4255,73 @@ const Combos = {
     removeChokePoint: function (deckName, comboId, chokeId) {
         this._withCombo(deckName, comboId, combo => {
             combo.chokePoints = (combo.chokePoints || []).filter(c => c.id !== chokeId);
+            this._recalcPower(combo);
+        });
+        this._refresh();
+    },
+
+    // ── Restricciones por paso (Etapa 7) ────────────────────────────
+    // Limitación real de esta línea del combo (ej. "No Special Summon excepto
+    // Dragón el resto del turno"), vigente desde ese paso en adelante. Solo
+    // penaliza piezas del endboard armadas en o después de ese punto.
+    openRestrictionModal: function (deckName, comboId, stepId) {
+        document.getElementById('combo-restriction-overlay')?.remove();
+        const overlay = document.createElement('div');
+        overlay.id = 'combo-restriction-overlay';
+        overlay.className = 'deck-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div class="deck-modal combo-restriction-modal">
+                <h3>🔒 Marcar Restricción</h3>
+                <p class="deck-modal-note">Describe la restricción activada en este paso. Afecta el valor de las piezas armadas de aquí en adelante.</p>
+                <textarea id="combo-restriction-input" class="combo-restriction-textarea"
+                    placeholder="Ej: No puedes Special Summon monstruos excepto de Tipo Dragón por el resto de este turno"></textarea>
+                <div class="combo-restriction-sev-row">
+                    <label>Severidad:</label>
+                    <select id="combo-restriction-sev-sel">
+                        ${Object.keys(this.RESTRICTION_SEV).map(k => `<option value="${k}" ${k === 'media' ? 'selected' : ''}>${this.RESTRICTION_SEV[k].label}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="deck-modal-buttons">
+                    <button class="opt-submit-btn" onclick="Combos.addRestriction('${deckName}','${comboId}','${stepId}')">💾 Guardar</button>
+                    <button onclick="document.getElementById('combo-restriction-overlay').remove()">Cancelar</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    },
+
+    addRestriction: function (deckName, comboId, stepId) {
+        const textEl = document.getElementById('combo-restriction-input');
+        const sevEl  = document.getElementById('combo-restriction-sev-sel');
+        const text = textEl ? textEl.value.trim() : '';
+        if (!text) { alert('Escribe una descripción para la restricción.'); return; }
+        const severity = sevEl ? sevEl.value : 'media';
+        this._withCombo(deckName, comboId, combo => {
+            if (!combo.restricciones) combo.restricciones = [];
+            combo.restricciones.push({
+                id:       'restr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+                stepId:   stepId,
+                text:     text,
+                severity: severity
+            });
+            this._recalcPower(combo);
+        });
+        document.getElementById('combo-restriction-overlay')?.remove();
+        this._refresh();
+    },
+
+    setRestrictionSeverity: function (deckName, comboId, restrId, severity) {
+        this._withCombo(deckName, comboId, combo => {
+            const r = (combo.restricciones || []).find(x => x.id === restrId);
+            if (r) r.severity = severity;
+            this._recalcPower(combo);
+        });
+        this._refresh();
+    },
+
+    removeRestriction: function (deckName, comboId, restrId) {
+        this._withCombo(deckName, comboId, combo => {
+            combo.restricciones = (combo.restricciones || []).filter(r => r.id !== restrId);
             this._recalcPower(combo);
         });
         this._refresh();

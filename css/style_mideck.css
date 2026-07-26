@@ -3050,3 +3050,27 @@
 .combo-branch-step-btn:hover, .combo-branch-choke-btn:hover { opacity: 1; }
 
 .combo-list-branch-badge { font-size: .8rem; flex-shrink: 0; }
+
+/* ── Línea de Combos (Etapa 7) — Restricciones por paso ── */
+.combo-restriction-add-btn {
+    background: none; border: none; cursor: pointer; font-size: .72rem; padding: 0 2px; opacity: .5;
+}
+.combo-restriction-add-btn:hover { opacity: 1; }
+.combo-restriction-chip {
+    display: inline-flex; align-items: center; gap: 4px; font-size: .66rem;
+    background: rgba(253,203,110,.12); border: 1px solid rgba(253,203,110,.35);
+    border-radius: 10px; padding: 2px 6px; color: #ffd479;
+}
+.combo-restriction-sev-sel {
+    background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.15); border-radius: 4px;
+    color: var(--text-light); font-size: .6rem; padding: 1px 2px;
+}
+.combo-restriction-remove-btn { background: none; border: none; cursor: pointer; color: #ffd479; font-size: .68rem; }
+
+.combo-restriction-modal { max-width: 460px; }
+.combo-restriction-textarea {
+    width: 100%; min-height: 70px; background: rgba(255,255,255,.06); border: 1px solid var(--border-color);
+    border-radius: 5px; color: var(--text-light); padding: 6px 8px; font-size: .8rem; resize: vertical;
+    box-sizing: border-box;
+}
+.combo-restriction-sev-row { display: flex; align-items: center; gap: 6px; margin: 8px 0; font-size: .78rem; }
