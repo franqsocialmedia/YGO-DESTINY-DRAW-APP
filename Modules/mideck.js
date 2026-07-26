@@ -4448,6 +4448,83 @@ _stepIndex: function (combo, stepId) {
         </div>`;
     },
 
+    // ── Consistencia del Starter (Etapa 8) — hipergeométrica ────────
+    // Usa el tamaño ACTUAL del mazo principal (no un snapshot de cuando se
+    // grabó el combo) y la mano inicial REAL registrada en este combo.
+    _mainDeckSize: function () {
+        return Object.values(Deck.cards || {})
+            .filter(c => c.location === 'main')
+            .reduce((sum, c) => sum + c.qty, 0);
+    },
+
+    // P(al menos 1 copia) en una mano de `drawn` cartas, mazo de `deckSize`,
+    // `successes` copias del target. Calculado por productos (sin factoriales)
+    // para evitar overflow con mazos grandes.
+    _hyperAtLeastOneFallback: function (deckSize, successes, drawn) {
+        if (successes <= 0 || drawn <= 0 || deckSize <= 0) return 0;
+        if (drawn > deckSize) drawn = deckSize;
+        const nonSuccess = deckSize - successes;
+        if (drawn > nonSuccess) return 1; // no cabe una mano sin al menos 1 copia
+        let probNone = 1;
+        for (let i = 0; i < drawn; i++) probNone *= (nonSuccess - i) / (deckSize - i);
+        return 1 - probNone;
+    },
+// Usa el motor ya existente de Hipergeometria (simuladores.js) — misma
+    // fórmula exacta que la calculadora de Simuladores, para no duplicar la
+    // matemática de probabilidad en dos módulos. Si por algún motivo no
+    // está cargado, cae al cálculo propio de respaldo.
+    _hyperAtLeast: function (deckSize, successes, drawn) {
+        if (window.Hipergeometria && typeof Hipergeometria.hyperAtLeast === 'function') {
+            return Hipergeometria.hyperAtLeast(deckSize, successes, drawn, 1);
+        }
+        return this._hyperAtLeastOneFallback(deckSize, successes, drawn);
+    },
+    _starterConsistency: function (combo) {
+        const starterId = combo.starterCardId;
+        const item = starterId ? Deck.cards[starterId] : null;
+        if (!starterId || !item) return null;
+
+        const deckSize   = this._mainDeckSize();
+        const handSize   = (combo.startCards || []).length || 5;
+        const currentQty = item.qty || 0;
+        const TARGET     = 0.85;
+
+        const probCurrent = this._hyperAtLeast(deckSize, currentQty, handSize);
+
+        let copiesNeeded = null, probWithNeeded = null;
+        for (let k = 1; k <= 3; k++) {
+            const p = this._hyperAtLeast(deckSize, k, handSize);
+            if (p >= TARGET) { copiesNeeded = k; probWithNeeded = p; break; }
+        }
+
+        return {
+            starterName:  Deck.cards[starterId]?.data?.name || starterId,
+            deckSize, handSize, currentQty,
+            probCurrent:    Math.round(probCurrent * 1000) / 10,
+            copiesNeeded,
+            probWithNeeded: probWithNeeded != null ? Math.round(probWithNeeded * 1000) / 10 : null
+        };
+    },
+
+    _renderStarterConsistency: function (combo) {
+        const info = this._starterConsistency(combo);
+        if (!info) return '';
+        const meetsNow = info.probCurrent >= 85;
+        return `
+        <div class="combo-consistency-block">
+            <h5 class="combo-zone-title">🎲 Consistencia del Starter</h5>
+            <p class="combo-consistency-line">
+                <strong>${this._escape(info.starterName)}</strong> — ${info.currentQty} copia${info.currentQty === 1 ? '' : 's'} en un mazo de ${info.deckSize},
+                mano de ${info.handSize}: <span class="${meetsNow ? 'combo-consistency-ok' : 'combo-consistency-low'}">${info.probCurrent}% de abrirlo</span>
+            </p>
+            <p class="combo-consistency-line">
+                ${info.copiesNeeded
+                    ? `Necesitas <strong>${info.copiesNeeded}</strong> copia${info.copiesNeeded === 1 ? '' : 's'} para superar 85% (con ${info.copiesNeeded}: ${info.probWithNeeded}%).`
+                    : `Ni con 3 copias se supera el 85% con este tamaño de mazo (${info.deckSize} cartas) — reduce el mazo o suma buscadores del Starter.`}
+            </p>
+        </div>`;
+    },
+
 _renderPowerSummary: function (combo) {
         if (!combo.powerBreakdown || !combo.powerBreakdown.length) {
             return `<div class="combo-power-block"><p class="deck-empty">Marca cartas activas y su función principal en el Endboard para calcular el poder del combo.</p></div>`;
@@ -4548,6 +4625,7 @@ _renderBranchBanner: function (combo) {
                 <button class="deck-move" onclick="Combos.reopenCombo('${combo.deckName}','${combo.id}')">↩️ Reabrir Combo</button>
             </div>
             ${this._renderPowerSummary(combo)}
+            ${this._renderStarterConsistency(combo)}
             ${this._renderEndboard(combo)}
             <h4 class="combo-steps-title">📜 Pasos del Combo (${(combo.steps || []).length})</h4>
             <div class="combo-steps-log">${this._renderSteps(combo)}</div>
