@@ -3778,7 +3778,7 @@ confirmResetZones: function (deckName, comboId) {
     // y reinicia el mazo restante, pero NO elimina el registro del combo.
     resetZones: function (deckName, comboId) {
         this._withCombo(deckName, comboId, combo => {
-            combo.zones      = { deckPool: this._buildDeckPool(), hand: [], gy: [], banish: [], field: [] };
+            combo.zones      = { deckPool: this._buildDeckPool(), extraPool: this._buildExtraPool(), hand: [], gy: [], banish: [], field: [] };
             combo.steps      = [];
             combo.startCards = [];
             combo.endboard   = [];
@@ -4981,7 +4981,7 @@ _renderBranchBanner: function (combo) {
             if (idx === -1) return;
 
             if (idx === 0) {
-                combo.zones      = { deckPool: this._buildDeckPool(), hand: [], gy: [], banish: [], field: [] };
+                combo.zones      = { deckPool: this._buildDeckPool(), extraPool: this._buildExtraPool(), hand: [], gy: [], banish: [], field: [] };
                 combo.startCards = [];
             } else if (steps[idx - 1].zonesSnapshot) {
                 combo.zones = JSON.parse(JSON.stringify(steps[idx - 1].zonesSnapshot));
