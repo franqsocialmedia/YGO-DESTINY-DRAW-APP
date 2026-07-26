@@ -2874,7 +2874,7 @@
 .combo-list-deck { font-size: .78rem; color: var(--gold-color); font-weight: bold; flex-shrink: 0; }
 .combo-list-name { font-size: .82rem; flex: 1; }
 .combo-list-power { font-size: .78rem; opacity: .8; flex-shrink: 0; }
-
+.combo-list-child { border-left: 2px solid rgba(255,215,0,.25); padding-left: 8px; opacity: .92; }
 .combo-list-thumb { width: 28px; height: 40px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
 
 /* ── Línea de Combos (Etapa 2) ── */
@@ -2915,7 +2915,11 @@
     border-radius: 4px; font-size: .68rem; padding: 1px 4px; cursor: pointer; color: var(--text-light);
 }
 .combo-card-move-btn:hover { border-color: var(--gold-color); }
-
+.combo-card-facedown { opacity: .55; filter: grayscale(.3); border-style: dashed; cursor: default; }
+.combo-card-effect-btn { border-color: rgba(162,89,255,.35); color: #c9a8ff; }
+.combo-card-effect-btn:hover { border-color: #c9a8ff; }
+.combo-card-todeck-btn { border-color: rgba(255,215,0,.3); }
+.combo-card-todeck-btn:hover { border-color: var(--gold-color); }
 .combo-steps-title { color: var(--gold-color); font-size: .85rem; margin: 10px 0 6px; }
 .combo-steps-log {
     max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 3px;
@@ -2927,7 +2931,7 @@
 .combo-step-msg  { color: rgba(241,241,241,.85); }
 .combo-step-cardname { color: #fff; font-weight: 600; cursor: pointer; text-decoration: underline dotted rgba(255,255,255,.4); }
 .combo-step-cardname:hover { text-decoration: underline; }
-
+.combo-step-thumb { width: 22px; height: 32px; object-fit: cover; border-radius: 2px; vertical-align: middle; margin: 0 3px; }
 .combo-picker-modal { max-width: 480px; }
 .combo-picker-list { max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
 .combo-picker-row {
@@ -2972,6 +2976,15 @@
 .combo-eb-deps-edit-btn {
     background: none; border: none; cursor: pointer; font-size: .7rem; padding: 0 2px; color: var(--text-light);
 }
+.combo-eb-starter-btn {
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.15);
+    border-radius: 5px; font-size: .68rem; padding: 2px 6px; cursor: pointer;
+    color: var(--text-light); align-self: flex-start;
+}
+.combo-eb-starter-btn:hover { border-color: var(--gold-color); }
+.combo-eb-starter-btn.combo-eb-starter-active {
+    border-color: var(--gold-color); color: var(--gold-color); background: rgba(255,215,0,.12);
+}
 .combo-dep-chip {
     background: rgba(255,215,0,.12); border: 1px solid rgba(255,215,0,.3);
     border-radius: 8px; padding: 1px 6px; color: var(--gold-color);
@@ -3010,7 +3023,11 @@
     background: rgba(214,48,49,.12); border: 1px solid rgba(214,48,49,.35);
     border-radius: 10px; padding: 2px 6px; color: #ff9a9a;
 }
-.combo-choke-chip-img { width: 18px; height: 26px; object-fit: cover; border-radius: 2px; }
+.combo-choke-chip-img { width: 18px; height: 26px; object-fit: cover; border-radius: 2px; cursor: pointer; }
+
+.combo-reset-row { display: flex; justify-content: flex-end; margin: 10px 0 14px; }
+.combo-reset-btn { opacity: .75; }
+.combo-reset-btn:hover { opacity: 1; }
 .combo-choke-freq-sel {
     background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.15); border-radius: 4px;
     color: var(--text-light); font-size: .6rem; padding: 1px 2px;
@@ -3083,7 +3100,10 @@
 .combo-consistency-line { font-size: .76rem; margin: 3px 0; opacity: .9; }
 .combo-consistency-ok   { color: #55efc4; font-weight: bold; }
 .combo-consistency-low  { color: #ff9a9a; font-weight: bold; }
-
+.combo-hint-box {
+    background: rgba(255,215,0,.08); border: 1px solid rgba(255,215,0,.25);
+    border-radius: 6px; padding: 6px 10px; font-size: .74rem; color: var(--gold-color); margin: 6px 0 10px;
+}
 /* ── Línea de Combos (Etapa 9) — Borrado de línea y Exportar .txt ── */
 .combo-header-actions { display: flex; gap: 8px; }
 .combo-export-btn {

@@ -3578,7 +3578,8 @@ document.addEventListener('DOMContentLoaded', () => Deck.init());
 const Combos = {
     STORAGE_PREFIX:  'combos_',
     DEFAULT_OBJETIVO: 'Escribe aquí el objetivo del deck respondiendo a ¿Cuál estrategia emplea el deck con este combo? y ¿Cuál es el recurso que utiliza para realizarlo?',
-
+    CARD_BACK: 'https://images.ygoprodeck.com/images/cards/back.jpg',
+    
     _activeComboId: null,
 
     // ── Persistencia (1 clave por deck: combos_${deckName}) ──────────
@@ -3647,6 +3648,7 @@ const Combos = {
             powerBreakdown: [],
             bossCardId:    null,
             starterCardId: null,
+            manualStarterId: null, // override manual del Starter (ver setManualStarter)
             bossName:      null,
             starterName:   null,
             imageUrl:      null,
@@ -3710,7 +3712,14 @@ const Combos = {
         });
         return pool;
     },
-
+_buildExtraPool: function () {
+    const pool = [];
+    Object.entries(Deck.cards).forEach(([id, item]) => {
+        if (item.location !== 'extra') return;
+        for (let i = 0; i < item.qty; i++) pool.push({ uid: `${id}_${i}`, id });
+    });
+    return pool;
+},
     _logStep: function (combo, msg, cardId) {
         if (!combo.steps) combo.steps = [];
         combo.steps.push({
@@ -3732,7 +3741,7 @@ const Combos = {
     startCombo: function (deckName, comboId) {
         this._withCombo(deckName, comboId, combo => {
             combo.status      = 'started';
-            combo.zones        = { deckPool: this._buildDeckPool(), hand: [], gy: [], banish: [], field: [] };
+            combo.zones = { deckPool: this._buildDeckPool(), extraPool: this._buildExtraPool(), hand: [], gy: [], banish: [], field: [] };
             combo.steps         = [];
             combo.startCards    = [];
             combo.endboard      = [];
@@ -3740,7 +3749,22 @@ const Combos = {
         });
         this._refresh();
     },
+confirmResetZones: function (deckName, comboId) {
+        const overlay = document.createElement('div');
+        overlay.className = 'deck-overlay';
+        overlay.innerHTML = `
+            <div class="deck-modal deck-modal-warning">
+                <h3>Reiniciar Zonas</h3>
+                <p class="deck-modal-note">Esto borra HAND, Field, GY, Banish y todos los pasos registrados en este combo (el registro del combo en sí no se elimina). ¿Continuar?</p>
+                <div class="deck-modal-buttons">
+                    <button class="btn-danger" onclick="Combos.resetZones('${deckName}','${comboId}');Deck.closeModal()">Sí, Reiniciar</button>
+                    <button onclick="Deck.closeModal()">Cancelar</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    },
 
+    // "Borrar" las zonas/campo del combo que se está registrando — vacía todo
     // "Borrar" las zonas/campo del combo que se está registrando — vacía todo
     // y reinicia el mazo restante, pero NO elimina el registro del combo.
     resetZones: function (deckName, comboId) {
@@ -3756,16 +3780,16 @@ const Combos = {
     },
 
     drawCard: function (deckName, comboId) {
-        this._withCombo(deckName, comboId, combo => {
-            if (!combo.zones || !combo.zones.deckPool.length) return;
-            const idx = Math.floor(Math.random() * combo.zones.deckPool.length);
-            const [entry] = combo.zones.deckPool.splice(idx, 1);
-            combo.zones.hand.push(entry);
-            const cardData = Deck.cards[entry.id]?.data;
-            this._logStep(combo, `🃏 Robaste: ${cardData?.name || entry.id}`, entry.id);
-        });
-        this._refresh();
-    },
+    this._withCombo(deckName, comboId, combo => {
+        if (!combo.zones || !combo.zones.deckPool.length) return;
+        const idx = Math.floor(Math.random() * combo.zones.deckPool.length);
+        const [entry] = combo.zones.deckPool.splice(idx, 1);
+        entry.faceDown = true; // robo aleatorio simulado: se revela al moverla/activarla
+        combo.zones.hand.push(entry);
+        this._logStep(combo, `🃏 Robas 1 carta`, null);
+    });
+    this._refresh();
+},
 
     // Mueve una carta entre zonas (HAND/Field/GY/Banish) — cada movimiento es 1 paso.
     moveCard: function (deckName, comboId, uid, fromZone, toZone) {
@@ -3782,6 +3806,7 @@ const Combos = {
             }
 
             const [entry] = fromArr.splice(idx, 1);
+            if (entry.faceDown) delete entry.faceDown; // se revela al moverla
             combo.zones[toZone].push(entry);
 
             const cardData = Deck.cards[entry.id]?.data;
@@ -3790,7 +3815,49 @@ const Combos = {
         });
         this._refresh();
     },
+// Devuelve una carta de cualquier zona a su mazo de origen (Principal o
+// Extra según location). Los Pendulum, sean del Main o del Extra Deck,
+// regresan boca arriba al Extra Deck (regla real del juego).
+sendToDeck: function (deckName, comboId, uid, fromZone) {
+    this._withCombo(deckName, comboId, combo => {
+        if (!combo.zones) return;
+        const fromArr = combo.zones[fromZone];
+        const idx = fromArr.findIndex(c => c.uid === uid);
+        if (idx === -1) return;
+        const [entry] = fromArr.splice(idx, 1);
+        delete entry.faceDown;
 
+        const cardData   = Deck.cards[entry.id]?.data;
+        const item       = Deck.cards[entry.id];
+        const isPendulum = !!(cardData?.type && cardData.type.includes('Pendulum'));
+        const toExtra    = isPendulum || (item && item.location === 'extra');
+        const poolKey    = toExtra ? 'extraPool' : 'deckPool';
+        if (!combo.zones[poolKey]) combo.zones[poolKey] = [];
+        combo.zones[poolKey].push(entry);
+
+        const name      = cardData?.name || entry.id;
+        const destLabel = isPendulum ? 'boca arriba en el Extra Deck' : (toExtra ? 'Extra Deck' : 'Mazo');
+        this._logStep(combo, `${name}: ${this._zoneLabel(fromZone)} → ${destLabel}`, entry.id);
+    });
+    this._refresh();
+},
+
+// Registra la activación de efecto de una carta sin moverla de zona —
+// solo deja constancia en el log de pasos para aclarar el combo.
+activateEffect: function (deckName, comboId, uid, zoneKey) {
+    this._withCombo(deckName, comboId, combo => {
+        if (!combo.zones) return;
+        const arr = combo.zones[zoneKey];
+        const entry = arr && arr.find(c => c.uid === uid);
+        if (!entry) return;
+        if (entry.faceDown) delete entry.faceDown; // activar revela la carta
+
+        const cardData = Deck.cards[entry.id]?.data;
+        const name = cardData?.name || entry.id;
+        this._logStep(combo, `✨ ${name}: Activación de Efecto (${this._zoneLabel(zoneKey)})`, entry.id);
+    });
+    this._refresh();
+},
     finishCombo: function (deckName, comboId) {
         this._withCombo(deckName, comboId, combo => {
             if (!combo.zones) return;
@@ -3865,6 +3932,7 @@ const Combos = {
             powerBreakdown: [],
             bossCardId:     null,
             starterCardId:  null,
+            manualStarterId: null, // override manual del Starter (ver setManualStarter)
             bossName:       null,
             starterName:    null,
             imageUrl:       null,
@@ -3884,64 +3952,114 @@ const Combos = {
         if (window.CardViewer && typeof CardViewer.open === 'function') CardViewer.open(cardData);
     },
 
-    // ── Elegir carta del mazo restante → HAND/Field/GY/Banish ──────
-    openDeckPicker: function (deckName, comboId) {
-        document.getElementById('combo-deckpicker-overlay')?.remove();
-        const combo = this._findCombo(deckName, comboId);
-        if (!combo || !combo.zones) return;
-
-        const grouped = {};
-        combo.zones.deckPool.forEach(entry => { grouped[entry.id] = (grouped[entry.id] || 0) + 1; });
-
-        const rows = Object.keys(grouped).map(id => {
-            const cardData = Deck.cards[id]?.data;
-            const img  = cardData?.card_images?.[0]?.image_url_small || '';
-            const name = cardData?.name || id;
-            return `
-            <div class="combo-picker-row">
-                <img src="${img}" class="combo-picker-thumb" onclick="Combos.viewCard('${id}')">
-                <div class="combo-picker-info">
-                    <div class="combo-picker-name">${this._escape(name)}</div>
-                    <div class="combo-picker-qty">x${grouped[id]} en el mazo restante</div>
-                </div>
-                <div class="combo-picker-actions">
-                    <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','hand')">✋ Hand</button>
-                    <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','field')">🏟️ Field</button>
-                    <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','gy')">⚰️ GY</button>
-                    <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','banish')">🌀 Banish</button>
-                </div>
-            </div>`;
-        }).join('') || '<p class="deck-empty">No quedan cartas en el mazo.</p>';
-
-        const overlay = document.createElement('div');
-        overlay.id = 'combo-deckpicker-overlay';
-        overlay.className = 'deck-overlay';
-        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
-        overlay.innerHTML = `
-            <div class="deck-modal combo-picker-modal">
-                <h3>📖 Elegir carta del Mazo</h3>
-                <div class="combo-picker-list">${rows}</div>
-                <div class="deck-modal-buttons">
-                    <button onclick="document.getElementById('combo-deckpicker-overlay').remove()">Cerrar</button>
-                </div>
-            </div>`;
-        document.body.appendChild(overlay);
+    // Choke Points: la carta suele ser del meta, no del deck activo — se busca por ID.
+    viewMetaCard: function (cardId) {
+        fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${cardId}`)
+            .then(r => r.json())
+            .then(d => { if (d.data?.[0] && window.CardViewer) CardViewer.open(d.data[0]); })
+            .catch(() => {});
     },
+openDeckPicker: function (deckName, comboId) {
+    document.getElementById('combo-deckpicker-overlay')?.remove();
+    const combo = this._findCombo(deckName, comboId);
+    if (!combo || !combo.zones) return;
 
-    sendFromPool: function (deckName, comboId, cardId, toZone) {
-        this._withCombo(deckName, comboId, combo => {
-            if (!combo.zones) return;
-            const idx = combo.zones.deckPool.findIndex(c => c.id === cardId);
-            if (idx === -1) return;
-            const [entry] = combo.zones.deckPool.splice(idx, 1);
-            combo.zones[toZone].push(entry);
-            const cardData = Deck.cards[entry.id]?.data;
-            this._logStep(combo, `${cardData?.name || entry.id}: Mazo → ${this._zoneLabel(toZone)}`, entry.id);
-        });
-        this._refresh();
-        // Refresca el picker si sigue abierto (para ver el conteo actualizado)
-        if (document.getElementById('combo-deckpicker-overlay')) this.openDeckPicker(deckName, comboId);
-    },
+    const grouped = {};
+    (combo.zones.deckPool || []).forEach(entry => { grouped[entry.id] = (grouped[entry.id] || 0) + 1; });
+
+    const rows = Object.keys(grouped).map(id => {
+        const cardData = Deck.cards[id]?.data;
+        const img  = cardData?.card_images?.[0]?.image_url_small || '';
+        const name = cardData?.name || id;
+        return `
+        <div class="combo-picker-row">
+            <img src="${img}" class="combo-picker-thumb" onclick="Combos.viewCard('${id}')">
+            <div class="combo-picker-info">
+                <div class="combo-picker-name">${this._escape(name)}</div>
+                <div class="combo-picker-qty">x${grouped[id]} en el Mazo</div>
+            </div>
+            <div class="combo-picker-actions">
+                <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','field','deckPool')">🏟️ Field</button>
+                <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','hand','deckPool')">✋ Hand</button>
+                <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','gy','deckPool')">⚰️ GY</button>
+                <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','banish','deckPool')">🌀 Banish</button>
+            </div>
+        </div>`;
+    }).join('') || '<p class="deck-empty">No quedan cartas en el Mazo.</p>';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'combo-deckpicker-overlay';
+    overlay.className = 'deck-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `
+        <div class="deck-modal combo-picker-modal">
+            <h3>📖 Elegir carta del Mazo</h3>
+            <div class="combo-picker-list">${rows}</div>
+            <div class="deck-modal-buttons">
+                <button onclick="document.getElementById('combo-deckpicker-overlay').remove()">Cerrar</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+},
+    // ── Elegir carta del Extra Deck restante → HAND/Field/GY/Banish ─
+openExtraPicker: function (deckName, comboId) {
+    document.getElementById('combo-extrapicker-overlay')?.remove();
+    const combo = this._findCombo(deckName, comboId);
+    if (!combo || !combo.zones) return;
+
+    const grouped = {};
+    (combo.zones.extraPool || []).forEach(entry => { grouped[entry.id] = (grouped[entry.id] || 0) + 1; });
+
+    const rows = Object.keys(grouped).map(id => {
+        const cardData = Deck.cards[id]?.data;
+        const img  = cardData?.card_images?.[0]?.image_url_small || '';
+        const name = cardData?.name || id;
+        return `
+        <div class="combo-picker-row">
+            <img src="${img}" class="combo-picker-thumb" onclick="Combos.viewCard('${id}')">
+            <div class="combo-picker-info">
+                <div class="combo-picker-name">${this._escape(name)}</div>
+                <div class="combo-picker-qty">x${grouped[id]} en el Extra Deck</div>
+            </div>
+            <div class="combo-picker-actions">
+                <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','field','extraPool')">🏟️ Field</button>
+                <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','hand','extraPool')">✋ Hand</button>
+                <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','gy','extraPool')">⚰️ GY</button>
+                <button onclick="Combos.sendFromPool('${deckName}','${comboId}','${id}','banish','extraPool')">🌀 Banish</button>
+            </div>
+        </div>`;
+    }).join('') || '<p class="deck-empty">No quedan cartas en el Extra Deck.</p>';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'combo-extrapicker-overlay';
+    overlay.className = 'deck-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `
+        <div class="deck-modal combo-picker-modal">
+            <h3>🎴 Elegir carta del Extra Deck</h3>
+            <div class="combo-picker-list">${rows}</div>
+            <div class="deck-modal-buttons">
+                <button onclick="document.getElementById('combo-extrapicker-overlay').remove()">Cerrar</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+},
+    sendFromPool: function (deckName, comboId, cardId, toZone, fromPool) {
+    fromPool = fromPool || 'deckPool';
+    this._withCombo(deckName, comboId, combo => {
+        if (!combo.zones || !combo.zones[fromPool]) return;
+        const idx = combo.zones[fromPool].findIndex(c => c.id === cardId);
+        if (idx === -1) return;
+        const [entry] = combo.zones[fromPool].splice(idx, 1);
+        combo.zones[toZone].push(entry);
+        const cardData = Deck.cards[entry.id]?.data;
+        const fromLabel = fromPool === 'extraPool' ? 'Extra Deck' : 'Mazo';
+        this._logStep(combo, `${cardData?.name || entry.id}: ${fromLabel} → ${this._zoneLabel(toZone)}`, entry.id);
+    });
+    this._refresh();
+    if (document.getElementById('combo-deckpicker-overlay')) this.openDeckPicker(deckName, comboId);
+    if (document.getElementById('combo-extrapicker-overlay')) this.openExtraPicker(deckName, comboId);
+},
 
     // ── Render de zonas y del log de pasos ─────────────────────────
     _renderZones: function (combo) {
@@ -3959,41 +4077,54 @@ const Combos = {
         </div>`;
     },
 
-    _renderZoneCard: function (combo, zoneKey, entry) {
-        const cardData = Deck.cards[entry.id]?.data;
-        const img   = cardData?.card_images?.[0]?.image_url_small || '';
-        const name  = cardData?.name || entry.id;
-        const icons = { hand: '✋', field: '🏟️', gy: '⚰️', banish: '🌀' };
-        const targets = ['hand', 'field', 'gy', 'banish'].filter(z => z !== zoneKey);
-        return `
-        <div class="combo-card-chip">
-            <img src="${img}" class="combo-card-thumb" alt="${name}" title="${name}" onclick="Combos.viewCard('${entry.id}')">
-            <div class="combo-card-actions">
-                ${targets.map(t => `<button class="combo-card-move-btn" title="→ ${this._zoneLabel(t)}"
-                    onclick="Combos.moveCard('${combo.deckName}','${combo.id}','${entry.uid}','${zoneKey}','${t}')">${icons[t]}</button>`).join('')}
-            </div>
-        </div>`;
-    },
+   _renderZoneCard: function (combo, zoneKey, entry) {
+    const cardData    = Deck.cards[entry.id]?.data;
+    const faceDown    = !!entry.faceDown;
+    const img         = faceDown ? this.CARD_BACK : (cardData?.card_images?.[0]?.image_url_small || '');
+    const name        = faceDown ? 'Carta boca abajo' : (cardData?.name || entry.id);
+    const icons       = { hand: '✋', field: '🏟️', gy: '⚰️', banish: '🌀' };
+    const targets     = ['hand', 'field', 'gy', 'banish'].filter(z => z !== zoneKey);
+    const item        = Deck.cards[entry.id];
+    const isPendulum  = !faceDown && !!(cardData?.type && cardData.type.includes('Pendulum'));
+    const toExtra     = isPendulum || (item && item.location === 'extra');
+    const toDeckTitle = isPendulum ? '→ boca arriba en el Extra Deck' : (toExtra ? '→ Extra Deck' : '→ Mazo');
+
+    return `
+    <div class="combo-card-chip">
+        <img src="${img}" class="combo-card-thumb ${faceDown ? 'combo-card-facedown' : ''}" alt="${name}" title="${name}"
+            ${faceDown ? '' : `onclick="Combos.viewCard('${entry.id}')"`}>
+        <div class="combo-card-actions">
+            ${targets.map(t => `<button class="combo-card-move-btn" title="→ ${this._zoneLabel(t)}"
+                onclick="Combos.moveCard('${combo.deckName}','${combo.id}','${entry.uid}','${zoneKey}','${t}')">${icons[t]}</button>`).join('')}
+            <button class="combo-card-move-btn combo-card-effect-btn" title="Activación de Efecto"
+                onclick="Combos.activateEffect('${combo.deckName}','${combo.id}','${entry.uid}','${zoneKey}')">✨</button>
+            <button class="combo-card-move-btn combo-card-todeck-btn" title="${toDeckTitle}"
+                onclick="Combos.sendToDeck('${combo.deckName}','${combo.id}','${entry.uid}','${zoneKey}')">↩️</button>
+        </div>
+    </div>`;
+},
 
     _renderSteps: function (combo) {
         const steps = combo.steps || [];
         if (!steps.length) return '<p class="deck-empty">Aún no hay pasos registrados.</p>';
         return steps.map((s, i) => {
             const cardName = s.cardId ? (Deck.cards[s.cardId]?.data?.name || null) : null;
-            let msg = s.msg;
-            if (cardName) {
-                const idx = msg.indexOf(cardName);
-                if (idx !== -1) {
-                    const before = msg.slice(0, idx);
-                    const after  = msg.slice(idx + cardName.length);
-                    msg = `${before}<span class="combo-step-cardname" onclick="Combos.viewCard('${s.cardId}')">${cardName}</span>${after}`;
-                }
+        const cardImg  = s.cardId ? (Deck.cards[s.cardId]?.data?.card_images?.[0]?.image_url_small || null) : null;
+        let msg = s.msg;
+        if (cardName) {
+            const idx = msg.indexOf(cardName);
+            if (idx !== -1) {
+                const before = msg.slice(0, idx);
+                const after  = msg.slice(idx + cardName.length);
+                const thumb  = cardImg ? `<img src="${cardImg}" class="combo-step-thumb" alt="">` : '';
+                msg = `${before}${thumb}<span class="combo-step-cardname" onclick="Combos.viewCard('${s.cardId}')">${cardName}</span>${after}`;
             }
+        }
             const chokes = (combo.chokePoints || []).filter(cp => cp.stepId === s.id);
             const chokeChips = chokes.map(cp => `
                 <span class="combo-choke-chip">
-                    🚧 <img src="${cp.metaCardImg}" class="combo-choke-chip-img" alt="">
-                    ${this._escape(cp.metaCardName)}
+                    🚧 <img src="${cp.metaCardImg}" class="combo-choke-chip-img" alt="${this._escape(cp.metaCardName)}"
+                        title="${this._escape(cp.metaCardName)}" onclick="Combos.viewMetaCard('${cp.metaCardId}')">
                     <select class="combo-choke-freq-sel" onchange="Combos.setChokeFrequency('${combo.deckName}','${combo.id}','${cp.id}', this.value)">
                         ${Object.keys(this.CHOKE_FREQ).map(k => `<option value="${k}" ${cp.frequency === k ? 'selected' : ''}>${this.CHOKE_FREQ[k].label}</option>`).join('')}
                     </select>
@@ -4138,14 +4269,26 @@ _stepIndex: function (combo, stepId) {
 
         breakdown.sort((a, b) => b.value - a.value);
 
-        const bossEntry  = breakdown.find(b => this._bossRoles.includes(b.role)) || breakdown[0] || null;
+        // "Boss" = la carta activa de mayor puntaje (breakdown ya viene ordenado
+        // desc) — ya no se prioriza el rol Boss Monster/Tower sobre el puntaje
+        // real, así el nombre del combo refleja la pieza más fuerte de verdad.
+        const bossEntry  = breakdown[0] || null;
         const startCards = combo.startCards || [];
-        const starterId  = startCards.find(id => (Deck.cards[id]?.roles || []).includes('Starter')) || startCards[0] || null;
+        const autoStarterId = startCards.find(id => {
+            const item = Deck.cards[id];
+            if (!item) return false;
+            if ((item.roles || []).includes('Starter')) return true;
+            // Cuenta también si esta carta es "copia de" un Starter (ver #4).
+            const target = item.copyOf ? Deck.cards[item.copyOf] : null;
+            return !!(target && (target.roles || []).includes('Starter'));
+        }) || startCards[0] || null;
+        const starterId = combo.manualStarterId || autoStarterId;
 
         const bossData    = bossEntry ? Deck.cards[bossEntry.id]?.data : null;
         const starterData = starterId ? Deck.cards[starterId]?.data : null;
         const bossName    = bossEntry ? (bossData?.name || bossEntry.id) : null;
         const starterName = starterId ? (starterData?.name || starterId) : null;
+        const repData     = bossData || starterData || null; // carta representativa para thumbnail
 
         const chokeMult = this._computeChokeMultiplier(combo);
 
@@ -4156,13 +4299,16 @@ _stepIndex: function (combo, stepId) {
         combo.starterCardId   = starterId;
         combo.bossName        = bossName;
         combo.starterName     = starterName;
-        combo.imageUrl        = bossData?.card_images?.[0]?.image_url || null;
-        combo.imageUrlSmall   = bossData?.card_images?.[0]?.image_url_small || null;
+        combo.imageUrl        = repData?.card_images?.[0]?.image_url || null;
+        combo.imageUrlSmall   = repData?.card_images?.[0]?.image_url_small || null;
 
-        if (bossName && starterName) {
+        // Nombre = carta de mayor puntaje, o el Starter si no hay ninguna carta
+        // activa puntuando, + el # de combo registrado para este deck.
+        const topName = bossName || starterName || null;
+        if (topName) {
             const deckCombos = this.getAll(combo.deckName).slice().sort((a, b) => a.createdAt - b.createdAt);
             const seq = Math.max(1, deckCombos.findIndex(c => c.id === combo.id) + 1);
-            combo.name = `${bossName} + ${starterName} + ${combo.deckName} + #${seq}`;
+            combo.name = `${topName} #${seq}`;
         }
     },
 
@@ -4358,7 +4504,15 @@ _stepIndex: function (combo, stepId) {
         });
         this._refresh();
     },
-
+// Fija manualmente cuál carta del Endboard es el Starter de este combo,
+    // por encima de la detección automática. Click de nuevo la desmarca.
+    setManualStarter: function (deckName, comboId, cardId) {
+        this._withCombo(deckName, comboId, combo => {
+            combo.manualStarterId = (combo.manualStarterId === cardId) ? null : cardId;
+            this._recalcPower(combo);
+        });
+        this._refresh();
+    },
     openDependencyPicker: function (deckName, comboId, uid) {
         document.getElementById('combo-deps-overlay')?.remove();
         const combo = this._findCombo(deckName, comboId);
@@ -4402,7 +4556,54 @@ _stepIndex: function (combo, stepId) {
         document.getElementById('combo-deps-overlay')?.remove();
         this._refresh();
     },
+// Marca una carta del deck como "copia de" otra: sus copias sumarán al
+    // calcular Consistencia del Starter y la detección de Starter (#4).
+    openCopyOfPicker: function (deckName, comboId, cardId) {
+        document.getElementById('combo-copyof-overlay')?.remove();
+        const item = Deck.cards[cardId];
+        if (!item) return;
 
+        const others = Object.entries(Deck.cards).filter(([id, c]) => id !== cardId && c.location === 'main');
+        const rows = others.map(([id, c]) => {
+            const name = c.data?.name || id;
+            return `<label class="combo-deps-row">
+                <input type="radio" name="combo-copyof-radio" value="${id}" ${item.copyOf === id ? 'checked' : ''}>
+                <span>${this._escape(name)}</span>
+            </label>`;
+        }).join('') || '<p class="deck-empty">No hay otras cartas en el Main Deck.</p>';
+
+        const overlay = document.createElement('div');
+        overlay.id = 'combo-copyof-overlay';
+        overlay.className = 'deck-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div class="deck-modal combo-deps-modal">
+                <h3>🧩 Marcar como copia de...</h3>
+                <p class="deck-modal-note">Si esta carta funciona como copia extra de otra (buscador dedicado, sustituto funcional), sus copias sumarán en la Consistencia del Starter y en su detección automática.</p>
+                <div class="combo-deps-list" id="combo-copyof-list">
+                    <label class="combo-deps-row">
+                        <input type="radio" name="combo-copyof-radio" value="" ${!item.copyOf ? 'checked' : ''}>
+                        <span><em>Ninguna (carta independiente)</em></span>
+                    </label>
+                    ${rows}
+                </div>
+                <div class="deck-modal-buttons">
+                    <button onclick="Combos.saveCopyOf('${deckName}','${comboId}','${cardId}')">💾 Guardar</button>
+                    <button onclick="document.getElementById('combo-copyof-overlay').remove()">Cancelar</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    },
+
+    saveCopyOf: function (deckName, comboId, cardId) {
+        const selected = document.querySelector('#combo-copyof-list input[name="combo-copyof-radio"]:checked');
+        const item = Deck.cards[cardId];
+        if (item) item.copyOf = selected && selected.value ? selected.value : null;
+        document.getElementById('combo-copyof-overlay')?.remove();
+        this._recalcPower(this._findCombo(deckName, comboId));
+        this.saveAll(deckName, this.getAll(deckName)); // persiste starterCardId/power recalculado
+        this._refresh();
+    },
     _renderEndboard: function (combo) {
         const zones = [['field', '🏟️ Field'], ['hand', '✋ HAND'], ['gy', '⚰️ GY'], ['banish', '🌀 Banish']];
         const groups = zones.map(([key, label]) => {
@@ -4418,6 +4619,7 @@ _stepIndex: function (combo, stepId) {
 
     _renderEndboardCard: function (combo, entry) {
         const cardData = Deck.cards[entry.id]?.data;
+        const item     = Deck.cards[entry.id];
         const img   = cardData?.card_images?.[0]?.image_url_small || '';
         const name  = cardData?.name || entry.id;
         const roles = this._roleOptionsForCard(entry.id);
@@ -4427,6 +4629,9 @@ _stepIndex: function (combo, stepId) {
             return `<span class="combo-dep-chip">${this._escape(depName)}</span>`;
         }).join('') || '<span class="combo-dep-empty">Sin dependencias</span>';
 
+        const copyOfName = item && item.copyOf ? (Deck.cards[item.copyOf]?.data?.name || item.copyOf) : null;
+        const isStarter  = combo.starterCardId === entry.id;
+
         return `
         <div class="combo-eb-card ${entry.active ? 'combo-eb-active' : ''}">
             <img src="${img}" class="combo-eb-thumb" title="${name}" onclick="Combos.viewCard('${entry.id}')">
@@ -4435,8 +4640,13 @@ _stepIndex: function (combo, stepId) {
                 <label class="combo-eb-switch">
                     <input type="checkbox" ${entry.active ? 'checked' : ''}
                         onchange="Combos.toggleEndboardActive('${combo.deckName}','${combo.id}','${entry.uid}')">
-                    Activa para follow up
+                    Carta Activa
                 </label>
+                <button class="combo-eb-starter-btn ${isStarter ? 'combo-eb-starter-active' : ''}"
+                    onclick="Combos.setManualStarter('${combo.deckName}','${combo.id}','${entry.id}')"
+                    title="Marcar/quitar esta carta como Starter de este combo">
+                    ${isStarter ? '⭐' : '☆'} Starter
+                </button>
                 <select class="combo-eb-func-sel" onchange="Combos.setEndboardFunction('${combo.deckName}','${combo.id}','${entry.uid}', this.value)">
                     <option value="">— Función principal —</option>
                     ${roles.map(r => `<option value="${r}" ${entry.mainFunction === r ? 'selected' : ''}>${r}</option>`).join('')}
@@ -4444,6 +4654,10 @@ _stepIndex: function (combo, stepId) {
                 <div class="combo-eb-deps">
                     <span class="combo-eb-deps-label">🔗 Depende de:</span> ${deps}
                     <button class="combo-eb-deps-edit-btn" onclick="Combos.openDependencyPicker('${combo.deckName}','${combo.id}','${entry.uid}')">✏️</button>
+                </div>
+                <div class="combo-eb-deps">
+                    <span class="combo-eb-deps-label">🧩 Copia de:</span> ${copyOfName ? `<span class="combo-dep-chip">${this._escape(copyOfName)}</span>` : '<span class="combo-dep-empty">Ninguna</span>'}
+                    <button class="combo-eb-deps-edit-btn" onclick="Combos.openCopyOfPicker('${combo.deckName}','${combo.id}','${entry.id}')">✏️</button>
                 </div>
             </div>
         </div>`;
@@ -4457,7 +4671,21 @@ _stepIndex: function (combo, stepId) {
             .filter(c => c.location === 'main')
             .reduce((sum, c) => sum + c.qty, 0);
     },
-
+// Copias "reales" de una carta para consistencia = sus propias copias en
+    // el Main + las copias de toda carta marcada como "copia de" ella
+    // (recursivo, por si A es copia de B y B es copia de C).
+    _effectiveCopies: function (cardId, seen) {
+        seen = seen || new Set();
+        if (seen.has(cardId)) return 0;
+        seen.add(cardId);
+        const item = Deck.cards[cardId];
+        if (!item) return 0;
+        let total = item.qty || 0;
+        Object.entries(Deck.cards).forEach(([id, c]) => {
+            if (c.copyOf === cardId) total += this._effectiveCopies(id, seen);
+        });
+        return total;
+    },
     // P(al menos 1 copia) en una mano de `drawn` cartas, mazo de `deckSize`,
     // `successes` copias del target. Calculado por productos (sin factoriales)
     // para evitar overflow con mazos grandes.
@@ -4487,7 +4715,7 @@ _stepIndex: function (combo, stepId) {
 
         const deckSize   = this._mainDeckSize();
         const handSize   = (combo.startCards || []).length || 5;
-        const currentQty = item.qty || 0;
+        const currentQty = this._effectiveCopies(starterId);
         const TARGET     = 0.85;
 
         const probCurrent = this._hyperAtLeast(deckSize, currentQty, handSize);
@@ -4628,7 +4856,10 @@ _renderBranchBanner: function (combo) {
             ${this._renderPowerSummary(combo)}
             ${this._renderStarterConsistency(combo)}
             ${this._renderEndboard(combo)}
-            <h4 class="combo-steps-title">📜 Pasos del Combo (${(combo.steps || []).length})</h4>
+    <div class="combo-hint-box">
+        💡 <strong>Carta Activa</strong>: sigue aportando algo después de terminado el combo (presión, protección, recursos), por eso suma al Poder. <strong>Depende de</strong>: de qué otra(s) pieza(s) necesita para conservar ese valor — si pierdes esas cartas, esta deja de aportar.
+    </div>
+    <h4 class="combo-steps-title">📜 Pasos del Combo (${(combo.steps || []).length})</h4>
             <div class="combo-steps-log">${this._renderSteps(combo)}</div>
             `;
         } else {
@@ -4636,11 +4867,14 @@ _renderBranchBanner: function (combo) {
             body = `
             <div class="combo-controls-row">
                 <button class="deck-move" onclick="Combos.drawCard('${combo.deckName}','${combo.id}')" ${poolCount ? '' : 'disabled'}>🃏 Robar 1 (${poolCount} restantes)</button>
-                <button class="deck-move" onclick="Combos.openDeckPicker('${combo.deckName}','${combo.id}')">📖 Ver Deck</button>
-                <button class="deck-move" onclick="Combos.resetZones('${combo.deckName}','${combo.id}')">🔄 Reiniciar Zonas</button>
+                <button class="deck-move" onclick="Combos.openDeckPicker('${combo.deckName}','${combo.id}')">📖 Ver Main Deck</button>
+                <button class="deck-move" onclick="Combos.openExtraPicker('${combo.deckName}','${combo.id}')">🎴 Ver Extra Deck</button>
                 <button class="opt-submit-btn" onclick="Combos.finishCombo('${combo.deckName}','${combo.id}')">🏁 Finalizar Combo</button>
             </div>
             ${this._renderZones(combo)}
+            <div class="combo-reset-row">
+                <button class="deck-move combo-reset-btn" onclick="Combos.confirmResetZones('${combo.deckName}','${combo.id}')">🔄 Reiniciar Zonas</button>
+            </div>
             <h4 class="combo-steps-title">📜 Pasos del Combo (${(combo.steps || []).length})</h4>
             <div class="combo-steps-log">${this._renderSteps(combo)}</div>
             `;
@@ -4678,29 +4912,36 @@ _renderBranchBanner: function (combo) {
         </div>`;
     },
 
-    _renderComboList: function () {
-        const all = this.getAllAcrossDecks();
-        if (!all.length) return `<p class="deck-empty">Aún no hay combos registrados.</p>`;
+   _renderComboList: function () {
+        const activeDeckName = Deck.name;
+        const all = this.getAll(activeDeckName);
+        if (!all.length) return `<p class="deck-empty">Aún no hay combos registrados para este deck.</p>`;
 
-        // Orden acordado: Deck (alfabético) → Poder (desc) → Boss.
-        // El Poder real y el Boss llegan en etapas 4/3; por ahora ordena con los
-        // valores que existan (0 y null hasta entonces).
-        const sorted = all.slice().sort((a, b) => {
-            const d = a.deckName.localeCompare(b.deckName);
-            if (d !== 0) return d;
+        const byId = {};
+        all.forEach(c => { byId[c.id] = c; });
+        // Raíces: combos sin padre, o cuyo padre ya no existe (huérfanos de rama borrada).
+        const roots = all.filter(c => !c.parentComboId || !byId[c.parentComboId]);
+
+        const sortSiblings = (arr) => arr.slice().sort((a, b) => {
             const p = (b.power || 0) - (a.power || 0);
             if (p !== 0) return p;
             return (a.bossCardId || '').localeCompare(b.bossCardId || '');
         });
 
-        return sorted.map(c => `
-        <div class="combo-list-row" onclick="Combos.openCombo('${c.deckName}','${c.id}')">
-            ${c.imageUrlSmall ? `<img src="${c.imageUrlSmall}" class="combo-list-thumb" alt="">` : ''}
-            ${c.parentComboId ? `<span class="combo-list-branch-badge" title="${c.branchType === 'choke' ? 'Rama por interrupción' : 'Variante'}">${c.branchType === 'choke' ? '🚧' : '🔀'}</span>` : ''}
-            <span class="combo-list-deck">${this._escape(c.deckName)}</span>
-            <span class="combo-list-name">${c.name ? this._escape(c.name) : '(Sin nombre — ' + c.status + ')'}</span>
-            <span class="combo-list-power">⚡ ${c.power || 0}</span>
-        </div>`).join('');
+        const renderNode = (combo, depth) => {
+            const row = `
+            <div class="combo-list-row ${depth > 0 ? 'combo-list-child' : ''}" ${depth > 0 ? `style="margin-left:${depth * 20}px"` : ''}
+                 onclick="Combos.openCombo('${combo.deckName}','${combo.id}')">
+                ${combo.imageUrlSmall ? `<img src="${combo.imageUrlSmall}" class="combo-list-thumb" alt="">` : ''}
+                ${combo.parentComboId ? `<span class="combo-list-branch-badge" title="${combo.branchType === 'choke' ? 'Rama por interrupción' : 'Variante'}">${combo.branchType === 'choke' ? '🚧' : '🔀'}</span>` : ''}
+                <span class="combo-list-name">${combo.name ? this._escape(combo.name) : '(Sin nombre — ' + combo.status + ')'}</span>
+                <span class="combo-list-power">⚡ ${combo.power || 0}</span>
+            </div>`;
+            const children = sortSiblings(all.filter(c => c.parentComboId === combo.id));
+            return row + children.map(c => renderNode(c, depth + 1)).join('');
+        };
+
+        return sortSiblings(roots).map(c => renderNode(c, 0)).join('');
     },
 
     // ── Borrar línea desde un paso (Etapa 9) ─────────────────────────
