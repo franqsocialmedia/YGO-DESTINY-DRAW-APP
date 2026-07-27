@@ -23,6 +23,7 @@ const Formacion = {
         { id: 'estructura-efecto-carta', label: 'Estructura de un Efecto de Carta', level: 'Intermedio' },
         { id: 'funciones-de-las-cartas', label: 'Funciones de las Cartas (Roles)',  level: 'Intermedio' },
         { id: 'palabras-tecnicas-juego', label: 'Palabras Clave y Técnicas del Juego', level: 'Intermedio' },
+        { id: 'estructura-arquetipos', label: 'Estructura de un Arquetipo (Diseño TCG)', level: 'Intermedio' },
         { id: 'mentalidad-del-jugador',  label: 'Mentalidad del Jugador',           level: 'Intermedio' },
         // ── MÓDULO 3 — Construcción y Optimización de Mazo ──
         { id: 'elegir-construir-deck',      label: 'Elegir y Construir tu Deck',        level: 'Competitivo' },
@@ -447,6 +448,23 @@ const Formacion = {
               options: ['El que tiene las cartas más poderosas en general', 'El que tiene cartas específicas y pensadas para lo que vas a enfrentar', 'El que nunca cambia entre partidas', 'El que copia el de un pro sin adaptarlo'], correct: 1,
               explain: '15 cartas específicas para tu meta local superan a 15 Staples genéricos.' },
         ],
+        'estructura-arquetipos': [
+            { q: '¿Cuál es la diferencia oficial entre "Arquetipo" y "Serie" en Yu-Gi-Oh!?',
+              options: ['No hay diferencia, son sinónimos', 'Un Arquetipo comparte el mismo nombre/término tratado como tal en el texto; una Serie comparte solo un tema sin ese requisito', 'Una Serie siempre tiene más cartas que un Arquetipo', 'Un Arquetipo solo puede tener monstruos'], correct: 1,
+              explain: 'El Arquetipo exige nombre compartido o texto que las declare "tratadas como" tal; una Serie es solo una relación temática, sin ese requisito.' },
+            { q: '¿Cuál es la función típica del Hechizo de Campo de un arquetipo nuevo?',
+              options: ['Solo sube el ATK de los monstruos', 'Resumir la mecánica del arquetipo y buscar la pieza que falta', 'Prohibir invocaciones especiales del rival', 'Sustituir al As del arquetipo'], correct: 1,
+              explain: 'El Field Spell suele ser la carta más clara para entender de un vistazo qué hace el arquetipo y qué busca.' },
+            { q: '¿Para qué sirve un "Hard Once Per Turn" en el diseño de un arquetipo?',
+              options: ['Para hacer la carta más fuerte', 'Para limitar cuántas veces se repite un mismo efecto en el turno, sin importar la fuente, evitando loops infinitos', 'Para que la carta no pueda destruirse', 'Para permitir usar el efecto en el turno rival'], correct: 1,
+              explain: 'El Hard OPT es una válvula de balance: limita la repetición del mismo efecto sin importar cuántas copias distintas lo generen.' },
+            { q: 'Al leer un arquetipo nuevo, ¿qué carta conviene identificar primero según el checklist de esta lección?',
+              options: ['La carta más cara del mercado', 'El Hechizo de Campo o la primera carta de soporte revelada', 'Cualquier carta al azar de la lista', 'Solo el As, ignorando el resto'], correct: 1,
+              explain: 'El Field Spell (o la primera carta de soporte) suele resumir la mecánica y el objetivo de búsqueda antes que ninguna otra carta.' },
+            { q: '¿Qué identifica normalmente al "As" (Boss Monster) de un arquetipo?',
+              options: ['Es el monstruo más barato de invocar', 'Suele dar nombre al arquetipo y requiere la Invocación más compleja o de mayor Nivel/Rango', 'Siempre es una Magia Continua', 'Nunca aparece en el arte de portada del producto'], correct: 1,
+              explain: 'El As casi siempre da nombre al arquetipo y representa el punto más alto de la curva de invocación del mazo.' },
+        ],
     },
 
     _renderQuiz: function (topicId) {
@@ -823,6 +841,7 @@ const Formacion = {
             'tipos-cartas-especiales': this._topicTiposCartasEspeciales(),
             'funciones-de-las-cartas': this._topicFuncionesCartas(),
             'palabras-tecnicas-juego': this._topicPalabrasTecnicas(),
+            'estructura-arquetipos':   this._topicEstructuraArquetipos(),
             'mentalidad-del-jugador':  this._topicMentalidadJugador(),
             'elegir-construir-deck':     this._topicElegirConstruirDeck(),
             'staples-formato':           this._topicStaples(),
@@ -1274,6 +1293,67 @@ _topicPalabrasTecnicas: function () { return `
             segundo (la base de saber cuándo esquivar en vez de proteger), revisa "Going First / Going Second" en
             <strong>Estadísticas → Análisis de Deck</strong>. Y cada ronda real donde rompiste el campo rival o el rival te negó
             la jugada, regístrala en <strong>Mi Deck → 🎯 Optimización</strong> — esos datos alimentan tu Nivel como Piloto del Deck.
+        </p>
+    `; },
+    _topicEstructuraArquetipos: function () { return `
+        <h2 class="form-nb-title">Estructura de un Arquetipo (Diseño TCG)</h2>
+        <p class="form-nb-text">Cada arquetipo nuevo parece un rompecabezas distinto, pero casi todos se arman con las mismas piezas de diseño. Aprender ese patrón te permite abrir una carta que viste por primera vez hace 5 minutos y ya saber qué función cumple, sin esperar a que exista una guía.</p>
+
+        <h3 class="form-nb-subtitle">🎮 Fundamentos de Diseño de un TCG</h3>
+        <ul class="form-nb-list">
+            <li><strong>Costo vs Efecto:</strong> toda carta fuerte paga un precio — una carta, LP, un tributo, una restricción de invocación. Un TCG balanceado casi nunca da algo poderoso completamente gratis.</li>
+            <li><strong>Ventaja de Recursos como moneda:</strong> cartas en mano, monstruos en campo y LP son la "moneda" del juego. El diseño de cada carta decide cuánta moneda pide y cuánta devuelve.</li>
+            <li><strong>Redundancia vs Versatilidad:</strong> un deck necesita piezas redundantes (varias copias que hacen lo mismo, para consistencia) y piezas versátiles (que sirven en distintos escenarios). Los arquetipos bien diseñados combinan ambas.</li>
+            <li><strong>Restricciones como balance:</strong> cuando un efecto es muy fuerte, el diseño lo limita con un costo, una condición o un "una vez por turno" — no le quita poder, controla cuántas veces se puede repetir.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🏷️ Arquetipo vs Serie</h3>
+        <p class="form-nb-text">Son términos oficiales distintos, no sinónimos:</p>
+        <ul class="form-nb-list">
+            <li><strong>Arquetipo:</strong> cartas que comparten un nombre específico (ej. "Blue-Eyes", "Sky Striker") o cuyo propio texto las declara "siempre tratadas como" cartas de ese nombre. Cualquier efecto que diga "1 monstruo '[Arquetipo]'" las reconoce a todas por igual.</li>
+            <li><strong>Serie:</strong> cartas relacionadas por tema, arte o mecánica compartida, pero sin ese requisito de nombre. Ej: "Number" es oficialmente una Serie, no un Arquetipo — comparten "Number" en el nombre, pero un efecto que pide "1 monstruo Number" no las trata igual que un efecto de Arquetipo real.</li>
+        </ul>
+        <p class="form-nb-text">Por qué importa: si una carta de "apoyo" pide "1 monstruo '[X]'" y la tuya solo pertenece a la Serie pero no al Arquetipo, ese efecto no la reconoce. Confirmarlo evita errores caros al comprar cartas de soporte que en realidad no aplican.</p>
+
+        <h3 class="form-nb-subtitle">🧬 Las Piezas Estándar de un Arquetipo</h3>
+        <ul class="form-nb-list">
+            <li><strong>Mecánica Unificadora:</strong> la acción que casi todas las cartas del arquetipo comparten o habilitan (desterrar para avanzar, enviar al cementerio para buscar, voltear una moneda, etc.). Es el "gimmick" que lo hace único.</li>
+            <li><strong>Starter de bajo costo:</strong> el monstruo más barato de invocar (Nivel/Rango bajo, usualmente buscable) que activa la mecánica desde la mano. Es la primera carta que debes identificar.</li>
+            <li><strong>Buscador / Puente:</strong> casi siempre el Hechizo de Campo — busca la pieza que falta y suele dar un segundo beneficio (robar, ganar LP, invocar). Es la carta más clara para entender el arquetipo de un vistazo.</li>
+            <li><strong>As / Boss Monster:</strong> el monstruo que da nombre al arquetipo, normalmente el de mayor Nivel/Rango o el de invocación de Extra Deck más compleja. Es el objetivo final del combo.</li>
+            <li><strong>Apoyo Continuo:</strong> Magia o Trampa Continua que sostiene el motor de recursos turno tras turno, casi siempre con restricción "una vez por turno" para evitar loops infinitos.</li>
+            <li><strong>Apoyo Genérico:</strong> cartas que NO llevan el nombre del arquetipo pero dicen "mientras controles una carta '[X]'..." — funcionan como Staples reciclables entre arquetipos que comparten la misma mecánica base.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🔒 Restricciones como Herramienta de Diseño</h3>
+        <p class="form-nb-text">Cuando ves "una vez por turno (incluso si este efecto está en el Cementerio o Desterrado)" — el <strong>Hard Once Per Turn (Hard OPT)</strong> — significa que ese efecto está limitado sin importar cuántas copias distintas lo generen. Es la forma en que se permite un efecto muy fuerte sin que se vuelva un loop infinito. Otras restricciones comunes: "no puede ser Invocado Especial excepto por el efecto de una carta '[Arquetipo]'" (obliga a construir el combo específico) o "solo puedes activar esto si controlas una carta '[Arquetipo]'" (protege la identidad del arquetipo de ser abusada por otros decks).</p>
+
+        <h3 class="form-nb-subtitle">🔍 Checklist para Leer un Arquetipo Nuevo</h3>
+        <ul class="form-nb-list">
+            <li><strong>Paso 1:</strong> busca el Hechizo de Campo o la primera carta de soporte revelada — resume la mecánica y el objetivo de búsqueda.</li>
+            <li><strong>Paso 2:</strong> identifica al Starter — el monstruo de menor costo que activa la cadena desde la mano.</li>
+            <li><strong>Paso 3:</strong> identifica al As — el que da nombre al arquetipo, usualmente el de mayor Nivel/Rango o del Extra Deck.</li>
+            <li><strong>Paso 4:</strong> revisa las restricciones (Hard OPT, condiciones de invocación) — te dicen el límite real de extensión por turno.</li>
+            <li><strong>Paso 5:</strong> confirma qué tipo de Invocación de Extra Deck necesita (ver <a href="#" class="form-link" onclick="Formacion.switchTab('tipos-cartas-especiales'); return false;">Tipos de Cartas Especiales</a>) para saber qué debes dominar antes de jugarlo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">📚 Ejemplo Real: Blue-Eyes</h3>
+        <p class="form-nb-text"><a href="#" class="form-link" onclick="Formacion.openCard('Blue-Eyes White Dragon'); return false;">Blue-Eyes White Dragon</a> es el As que da nombre al arquetipo — prácticamente todo el soporte "Blue-Eyes" gira en torno a invocarlo más rápido, protegerlo en campo o convertirlo en algo superior, como <a href="#" class="form-link" onclick="Formacion.openCard('Blue-Eyes Ultimate Dragon'); return false;">Blue-Eyes Ultimate Dragon</a>, que fusiona 3 copias del original en un solo monstruo. Es el patrón completo: un As icónico + soporte que existe únicamente para llevarte a él más rápido y con más protección.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">No memorices arquetipos uno por uno — memoriza el patrón. Cuando salga el próximo arquetipo, ya sabrás dónde mirar primero (Field Spell), qué buscar (el Starter) y qué esperar al final (el As). Esa habilidad de lectura vale más a largo plazo que memorizar cualquier decklist específica.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('estructura-arquetipos')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            En <strong>Buscador → ⚙ Filtros avanzados</strong>, el selector de Arquetipo trae de un jalón todas las cartas de
+            un arquetipo nuevo — aplica el checklist de esta lección directamente sobre esa lista. Al abrir cualquier carta
+            en el CardViewer, el campo "Arquetipo:" es un link directo a esa misma búsqueda. El sistema de roles de la app
+            (<a href="#" class="form-link" onclick="Formacion.goToConfigSection('roles-section'); return false;">Config → 🎭 Mecánicas y Roles</a>)
+            no depende del nombre del arquetipo — detecta Starter/Searcher/Boss Monster por palabras clave en el texto, así
+            que un arquetipo recién salido ya se clasifica automáticamente en cuanto agregas sus cartas al deck.
         </p>
     `; },
     _topicMentalidadJugador: function () { return `
