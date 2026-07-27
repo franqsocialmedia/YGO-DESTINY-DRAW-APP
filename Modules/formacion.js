@@ -9,6 +9,8 @@ const Formacion = {
     container:     null,
     activeTab:     'apuntes',
     activeLevel:   null,
+    activeTestCat: null,
+    activeTestId:  null,
     NOTES_KEY:     'yugioh_formacion_notes',
     MASTERED_KEY:  'yugioh_formacion_mastered',
 
@@ -44,6 +46,18 @@ const Formacion = {
     ],
 
     PLATFORMS: ['PC', 'GBC', 'GBA', 'PS1', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'Físico'],
+    TEST_CATEGORIES: [
+        { id: 'teoricos',  label: 'Teóricos',  icon: '📖' },
+        { id: 'practicos', label: 'Prácticos', icon: '🎯' },
+    ],
+
+    TESTS: {
+        teoricos: [
+            { id: 'test-rulings-torneo', label: 'Rulings y Toma de Decisiones en Torneo', level: 'Avanzado',
+              desc: '15 situaciones reales de torneo sobre timing, cadenas, costos e Invocaciones Especiales. Pensado para nivel Avanzado/Competitivo.' },
+        ],
+        practicos: [],
+    },
 
     // ===============================
 // ── Enlaces interactivos de las lecciones (cartas, decks, pestañas) ──
@@ -485,6 +499,72 @@ const Formacion = {
         ],
     },
 
+    // ── Test Teórico Avanzado — situaciones de torneo ──
+    TEST_QUESTIONS: {
+        'test-rulings-torneo': [
+            { q: '¿Puedes activar una Trampa durante tu propia Battle Phase, si la seteaste en tu Main Phase 1 de ese mismo turno?',
+              scenario: 'Seteas una Trampa Normal en Main Phase 1. Nada la remueve. Avanzas a tu Battle Phase, mismo turno.',
+              options: ['Sí, porque ya es una fase distinta', 'No, no puede activarse durante el turno en que fue seteada', 'Sí, pero solo si es Trampa Continua', 'Solo si el rival declara un ataque'], correct: 1,
+              explain: 'La restricción "no se puede activar el turno en que fue seteada" es por turno completo, no por fase — Main Phase o Battle Phase da igual.' },
+            { q: '¿Qué ocurre con tu ataque?',
+              scenario: 'Declaras ataque contra el único monstruo boca arriba del rival. Antes de la Damage Step, el rival devuelve ese monstruo a la mano con un efecto.',
+              options: ['Se cancela sin más', 'Ocurre un Battle Replay: puedes elegir un nuevo objetivo, atacar directo o no atacar', 'El ataque golpea directo a LP automáticamente', 'Pierdes la Battle Phase completa'], correct: 1,
+              explain: 'Al desaparecer el objetivo original antes de la Damage Step se dispara un Battle Replay: el atacante decide si redirige el ataque, ataca directo (si no quedan monstruos) o cancela.' },
+            { q: '¿Qué pasa con la carta que descartaste como costo?',
+              scenario: 'Activas una carta cuyo costo es descartar 1 carta de tu mano. El rival responde con una Trampa de Contraataque que niega la activación y la destruye.',
+              options: ['Vuelve a tu mano porque la activación fue negada', 'Se queda en el Cementerio; los costos nunca se recuperan por una negación', 'Se destierra en vez de ir al Cementerio', 'Puedes elegir si se recupera o no'], correct: 1,
+              explain: 'Los costos se pagan en el momento de la activación, antes de cualquier ventana de negación. Ninguna negación revierte un costo ya pagado.' },
+            { q: '¿Qué sucede con los 2 monstruos usados como material?',
+              scenario: 'Intentas una Invocación de Sincronía usando 2 monstruos como material. El rival activa una Trampa de Contraataque que niega esa Invocación.',
+              options: ['Vuelven al campo en Posición de Ataque', 'Se quedan en el Cementerio; los materiales no vuelven aunque se niegue la Invocación', 'Vuelven a la mano de su dueño', 'Permanecen desterrados hasta el End Phase'], correct: 1,
+              explain: 'Los materiales se envían al Cementerio como parte del procedimiento de invocación, antes de que la Invocación en sí resuelva. Negar la Invocación evita que el monstruo salga, pero no revierte el uso de los materiales.' },
+            { q: '¿Puede la segunda copia en campo usar el mismo efecto este mismo turno?',
+              scenario: 'Controlas 2 copias de un monstruo cuyo efecto dice: "Solo puedes usar este efecto de \'Carta X\' una vez por turno." Ya usaste ese efecto con la primera copia este turno.',
+              options: ["Sí, cada copia tiene su propio 'una vez por turno'", 'No, la restricción menciona el nombre de la carta y aplica a todas las copias por igual (Hard OPT)', 'Sí, pero solo si la primera fue negada', 'Depende de si están en la misma columna'], correct: 1,
+              explain: 'Cuando el texto dice "una vez por turno" + nombre de carta específico, la restricción es por NOMBRE (Hard OPT) y cubre todas las copias. Sin el nombre, sería una restricción por copia individual (Soft OPT).' },
+            { q: '¿En qué orden se resuelven ambos efectos Trigger?',
+              scenario: 'Activas una Trampa que destruye simultáneamente 1 monstruo tuyo y 1 del rival. Ambos tienen un Trigger opcional "Cuando esta carta es destruida y enviada al Cementerio: [efecto]".',
+              options: ['En el orden en que fueron destruidos físicamente', 'El jugador en turno decide el orden de ambos', 'Tu efecto entra primero a la cadena y el del rival se añade después, así que el del rival resuelve primero (LIFO)', 'Ambos resuelven simultáneamente sin cadena'], correct: 2,
+              explain: 'Por SEGOC (Simultaneous Effects Go On Chain): el jugador en turno coloca primero sus triggers simultáneos, luego el rival añade los suyos por encima. Como la cadena resuelve en orden inverso, el efecto del NO-turno resuelve primero.' },
+            { q: '¿Puede el rival responder con un efecto de Velocidad de Conjuro 2 inmediatamente después de tu Invocación Normal?',
+              scenario: 'Haces tu Invocación Normal en Main Phase 1 y quieres pasar directo a Battle Phase.',
+              options: ['No, solo puede responder en su propio turno', 'Sí, ambos jugadores reciben una ventana de prioridad después de cada acción antes de continuar', 'Solo si tú activas otra carta primero', 'No, las Invocaciones Normales no dan prioridad al rival'], correct: 1,
+              explain: 'Después de cualquier acción del juego, incluida una Invocación Normal, ambos jugadores reciben prioridad antes de que el turno continúe.' },
+            { q: '¿Cuándo puedes activar ese Hechizo Rápido?',
+              scenario: 'Tienes un Hechizo Rápido en la mano; nunca fue seteado.',
+              options: ['Solo en tu propia Main Phase, como cualquier Hechizo', 'En cualquier momento en que tengas prioridad, en cualquier turno — igual que una Trampa', 'Solo si primero lo seteas un turno', 'Nunca puede activarse desde la mano'], correct: 1,
+              explain: 'La restricción de "turno en que fue seteado" solo aplica a cartas que estuvieron Set. Activado directo desde la mano, un Hechizo Rápido se comporta como Velocidad de Conjuro 2 en cualquier ventana de prioridad.' },
+            { q: '¿Puede el rival activar esa Trampa Normal genérica en ese momento?',
+              scenario: 'Declaras ataque y entras a la Damage Step. Antes del cálculo de daño, el rival intenta activar una Trampa Normal genérica (sin texto que mencione la Damage Step) para destruir tu atacante.',
+              options: ['Sí, cualquier Trampa puede activarse en cualquier momento de la batalla', 'No, durante la Damage Step solo se permiten cartas cuyo texto indique explícitamente que pueden usarse ahí', 'Solo si la Trampa es de Contraataque', 'Solo si el atacante tiene menos ATK que el defensor'], correct: 1,
+              explain: 'La Damage Step restringe activaciones: solo se permite lo que el texto de la carta habilite explícitamente para ese momento. Una Trampa genérica sin esa cláusula debía activarse antes, durante el Battle Step.' },
+            { q: '¿Se activa el efecto Trigger de tu monstruo?',
+              scenario: 'Controlas un monstruo con "Cuando esta carta es enviada al Cementerio: [efecto]". El rival lo destierra DIRECTAMENTE desde el campo, sin mencionar enviarlo antes al Cementerio.',
+              options: ['Sí, desterrar siempre cuenta como ser enviado al Cementerio', 'No — si nunca fue enviado al Cementerio, un trigger que exige exactamente eso no se activa', 'Solo si el monstruo es Effect Monster', 'Depende del ATK del monstruo'], correct: 1,
+              explain: 'Desterrar y enviar al Cementerio son destinos distintos. Sí se activaría si el efecto dijera "en vez de enviarla al Cementerio, destiérrala", porque ahí se trata como si hubiese sido enviada.' },
+            { q: '¿Qué pasa con esa Trampa Continua del rival?',
+              scenario: 'El rival controla una Trampa Continua ya resuelta en el campo. Activas una carta que "niega los efectos de 1 carta boca arriba en el campo" (no dice "niega la activación").',
+              options: ['Se destruye y va al Cementerio de inmediato', 'Se queda en el campo boca arriba, pero sin efecto mientras dure la negación', 'Vuelve a la mano del rival', 'Se destierra automáticamente'], correct: 1,
+              explain: 'Negar el EFECTO deja la carta físicamente en el campo, ya resuelta, solo inactiva mientras la negación esté vigente. Negar la ACTIVACIÓN es distinto: ahí la carta ni siquiera llega a resolver y va al Cementerio.' },
+            { q: '¿Puedes activarlo?',
+              scenario: 'Tu monstruo tiene un Trigger opcional "Cuando esta carta sea destruida por batalla y enviada al Cementerio: puedes Invocar de Especial...". Es destruido en batalla. En vez de resolverlo de inmediato, activas y resuelves primero otra carta tuya sin relación. Después intentas activar el trigger.',
+              options: ['Sí, mientras sigas en la misma Battle Phase puedes activarlo cuando quieras', "No — al dejar pasar la primera oportunidad para resolver algo no relacionado, el trigger 'perdió el timing' y ya no puede activarse ese turno", 'Sí, pero solo en tu próxima Main Phase', 'No, nunca más en el resto de la partida'], correct: 1,
+              explain: 'Un Trigger opcional debe activarse en la primera oportunidad disponible. Elegir resolver otra acción no relacionada en su lugar causa Missing the Timing: el efecto queda inutilizable el resto del turno.' },
+            { q: '¿Sobrevive tu monstruo?',
+              scenario: 'Tu monstruo tiene "Esta carta no puede ser destruida por batalla". El rival activa Raigeki (destruye todos tus monstruos por efecto, sin batalla).',
+              options: ['Sí, porque tiene inmunidad a destrucción', "No — la inmunidad dice 'por batalla'; Raigeki destruye por efecto, así que no aplica", 'Sí, porque Raigeki no hace target', 'Depende de si está en Posición de Defensa'], correct: 1,
+              explain: 'El texto de protección importa literal: "no destruida por batalla" no cubre destrucción por efecto de carta. Solo un "no destruida por efectos de cartas" protegería contra Raigeki.' },
+            { q: '¿En qué orden resuelven los 3 eslabones de la cadena?',
+              scenario: 'Chain Link 1: activas la carta A. Chain Link 2 (respuesta): el rival activa B. Chain Link 3 (respuesta a B): activas C.',
+              options: ['A, luego B, luego C', 'C, luego B, luego A (orden inverso — LIFO)', 'B, luego A, luego C', 'Resuelven todas a la vez'], correct: 1,
+              explain: 'Las cadenas resuelven en orden inverso al de activación (LIFO): el último eslabón activado resuelve primero.' },
+            { q: '¿Tu monstruo se salva por su protección anti-target?',
+              scenario: 'Tu monstruo tiene "no puede ser elegido como objetivo por efectos de cartas del rival". El rival activa Dark Hole (destruye todos los monstruos en el campo, sin hacer target a ninguno).',
+              options: ['Sí, la protección anti-target lo salva de cualquier carta del rival', 'No — Dark Hole no hace target a nadie en específico, así que esa protección no aplica y el monstruo es destruido igual', 'Solo se salva si es el único monstruo en el campo', 'Se salva solo si está boca abajo'], correct: 1,
+              explain: '"No puede ser elegido como objetivo" solo protege de efectos que targetean esa carta específicamente. Efectos masivos como Dark Hole o Raigeki afectan "todos los monstruos" como categoría, sin target — la protección no aplica.' },
+        ],
+    },
+
     _renderQuiz: function (topicId) {
         const qs = this.QUIZZES[topicId];
         if (!qs || !qs.length) return '';
@@ -545,8 +625,10 @@ const Formacion = {
             <div class="form-subnav" id="form-subnav">
                 <button class="form-subnav-btn${this.activeTab === 'apuntes' ? ' active' : ''}"
                         data-tab="apuntes" onclick="Formacion.switchTab('apuntes')">📓 Apuntes</button>
-                <button class="form-subnav-btn${(this.activeTab === 'temas' || this.TOPICS.some(t => t.id === this.activeTab)) ? ' active' : ''}"
+                <button class="form-subnav-btn form-subnav-btn--green${(this.activeTab === 'temas' || this.TOPICS.some(t => t.id === this.activeTab)) ? ' active' : ''}"
                         data-tab="temas" onclick="Formacion.switchTab('temas')">📚 Temas</button>
+                <button class="form-subnav-btn form-subnav-btn--green${this.activeTab === 'test' ? ' active' : ''}"
+                        data-tab="test" onclick="Formacion.switchTab('test')">🧪 Test</button>
                 <button class="form-subnav-btn${this.activeTab === 'juegos' ? ' active' : ''}"
                         data-tab="juegos" onclick="Formacion.switchTab('juegos')">🎮 Juegos</button>
                 <button class="form-subnav-btn${this.activeTab === 'fuentes' ? ' active' : ''}"
@@ -585,6 +667,7 @@ const Formacion = {
 
     _renderCurrentTab: function () {
         if (this.activeTab === 'apuntes')  return this._renderApuntesTab();
+        if (this.activeTab === 'test')     return this._renderTestTab();
         if (this.activeTab === 'juegos')   return this._renderJuegosTab();
         if (this.activeTab === 'fuentes')  return this._renderFuentesTab();
         if (this.activeTab === 'maestros') return this._renderMaestrosTab();
@@ -620,6 +703,102 @@ const Formacion = {
                 ? this._renderTopicTab(currentTopic)
                 : '<p class="form-empty">Selecciona una lección arriba para comenzar.</p>'}
         `;
+    },
+
+    // ── Test (sub-tab: Teóricos / Prácticos) ──
+
+    _renderTestTab: function () {
+        if (this.activeTestCat == null) this.activeTestCat = 'teoricos';
+        const testsOfCat  = this.TESTS[this.activeTestCat] || [];
+        const currentTest = testsOfCat.find(t => t.id === this.activeTestId);
+
+        return `
+            <div class="form-level-nav">
+                ${this.TEST_CATEGORIES.map(c => `
+                    <button class="form-level-btn form-level-btn--green${this.activeTestCat === c.id ? ' active' : ''}"
+                            onclick="Formacion.switchTestCat('${c.id}')">${c.icon} ${c.label}</button>
+                `).join('')}
+            </div>
+            <div class="form-topics-nav">
+                ${testsOfCat.length ? testsOfCat.map(t => `
+                    <button class="form-topic-btn form-topic-btn--green${this.activeTestId === t.id ? ' active' : ''}"
+                            onclick="Formacion.switchTestItem('${t.id}')">🧪 ${t.label}</button>
+                `).join('') : '<p class="form-empty">Próximamente — sin tests disponibles en esta categoría.</p>'}
+            </div>
+            ${currentTest ? this._renderTestContent(currentTest)
+                : (testsOfCat.length ? '<p class="form-empty">Selecciona un test arriba para comenzar.</p>' : '')}
+        `;
+    },
+
+    switchTestCat: function (catId) {
+        this.activeTestCat = catId;
+        this.activeTestId  = null;
+        const content = document.getElementById('form-tab-content');
+        if (content) content.innerHTML = this._renderCurrentTab();
+    },
+
+    switchTestItem: function (testId) {
+        this.activeTestId = testId;
+        const content = document.getElementById('form-tab-content');
+        if (content) content.innerHTML = this._renderCurrentTab();
+    },
+
+    _renderTestContent: function (test) {
+        return `
+            <div class="form-topic-container">
+                <div class="form-notebook form-notebook--test">
+                    <span class="form-nb-level-badge form-nb-level-badge--green">Nivel: ${test.level || 'Avanzado'}</span>
+                    <h2 class="form-nb-title">${test.label}</h2>
+                    ${test.desc ? `<p class="form-nb-text">${test.desc}</p>` : ''}
+                    ${this._renderTestQuiz(test.id)}
+                </div>
+            </div>
+        `;
+    },
+
+    _renderTestQuiz: function (testId) {
+        const qs = this.TEST_QUESTIONS[testId];
+        if (!qs || !qs.length) return '<p class="form-empty">Preguntas próximamente.</p>';
+        return `
+            <div class="form-quiz form-quiz--test" id="test-${testId}">
+                ${qs.map((item, qi) => `
+                    <div class="form-quiz-q">
+                        <p class="form-quiz-question">${qi + 1}. ${item.q}</p>
+                        ${item.scenario ? `<p class="form-quiz-scenario">${item.scenario}</p>` : ''}
+                        <div class="form-quiz-opts">
+                            ${item.options.map((op, oi) => `
+                                <label class="form-quiz-opt">
+                                    <input type="radio" name="test-${testId}-${qi}" value="${oi}">
+                                    <span>${op}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                        <div class="form-quiz-feedback" id="test-${testId}-${qi}-fb"></div>
+                    </div>
+                `).join('')}
+                <button class="form-quiz-check-btn form-quiz-check-btn--green" onclick="Formacion.checkTest('${testId}')">✅ Corregir Test</button>
+                <div class="form-quiz-score" id="test-${testId}-score"></div>
+            </div>
+        `;
+    },
+
+    checkTest: function (testId) {
+        const qs = this.TEST_QUESTIONS[testId];
+        if (!qs) return;
+        let correct = 0;
+        qs.forEach((item, qi) => {
+            const sel = document.querySelector(`input[name="test-${testId}-${qi}"]:checked`);
+            const fb  = document.getElementById(`test-${testId}-${qi}-fb`);
+            if (!fb) return;
+            if (!sel) { fb.innerHTML = '<span class="form-quiz-fb-empty">⚠ Sin responder</span>'; return; }
+            const ok = parseInt(sel.value) === item.correct;
+            if (ok) correct++;
+            fb.innerHTML = ok
+                ? `<span class="form-quiz-fb-ok">✔ Correcto — ${item.explain}</span>`
+                : `<span class="form-quiz-fb-bad">✘ Incorrecto — ${item.explain}</span>`;
+        });
+        const scoreEl = document.getElementById(`test-${testId}-score`);
+        if (scoreEl) scoreEl.textContent = `Puntaje: ${correct}/${qs.length}`;
     },
 
     // ===============================
