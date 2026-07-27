@@ -921,7 +921,30 @@ window.Buscador = Buscador;
 
 const CardViewer = {
     quantities: {}, 
-
+// Abre el visor a partir de un NOMBRE de carta (no requiere que esté ya
+    // en resultados del Buscador). Usado por los links interactivos dentro
+    // de las lecciones de Formación para mostrar cartas de ejemplo al vuelo.
+    openByName(name) {
+        let toast = document.getElementById('cv-loading-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'cv-loading-toast';
+            toast.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);'
+                + 'background:rgba(0,0,0,0.85);color:var(--gold-color,#FFD700);padding:8px 16px;'
+                + 'border-radius:8px;font-size:0.85rem;z-index:10000;pointer-events:none;';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = `⏳ Buscando "${name}"...`;
+        fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?name=${encodeURIComponent(name)}&misc=yes`)
+            .then(r => r.json())
+            .then(json => {
+                toast.remove();
+                const card = json.data?.[0];
+                if (!card) { alert(`No se encontró la carta "${name}".`); return; }
+                this.open(card);
+            })
+            .catch(() => { toast.remove(); alert('Error de red al buscar la carta.'); });
+    },
     open(card) {
         console.log('🔍 [CardViewer] Abriendo carta:', card.name, 'ID:', card.id);
         

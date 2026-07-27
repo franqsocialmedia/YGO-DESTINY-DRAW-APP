@@ -42,7 +42,437 @@ const Formacion = {
     PLATFORMS: ['PC', 'GBC', 'GBA', 'PS1', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'Físico'],
 
     // ===============================
+// ── Enlaces interactivos de las lecciones (cartas, decks, pestañas) ──
 
+    openCard: function (name) {
+        if (window.CardViewer?.openByName) CardViewer.openByName(name);
+    },
+
+    // subTab se resuelve según destino: 'mideck' → Deck.switchMiDeckTab · 'simuladores' → Torneo.showSimTab
+    goToTab: function (tab, subTab) {
+        if (!window.Navigation) return;
+        Navigation.showTab(tab);
+        if (!subTab) return;
+        setTimeout(() => {
+            if (tab === 'mideck' && window.Deck?.switchMiDeckTab) Deck.switchMiDeckTab(subTab);
+            else if (tab === 'simuladores' && window.Torneo?.showSimTab) Torneo.showSimTab(subTab);
+        }, 60);
+    },
+// Abre Config, despliega la sección (si estaba cerrada) y hace scroll hasta ella.
+    goToConfigSection: function (sectionId) {
+        if (!window.Navigation) return;
+        Navigation.showTab('config');
+        setTimeout(() => {
+            const sec = document.getElementById(sectionId);
+            if (sec && sec.style.display === 'none' && window.Config?.toggleSection) {
+                Config.toggleSection(sectionId);
+                if (sectionId === 'banlist-section' && window.Banlist) Banlist.renderSection();
+            }
+            document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 80);
+    },
+
+    // Carga un deck pre-cargado por DefaultData ('Yugi - Nivel 1/2/3') en Mi Deck y navega ahí.
+    tryExampleDeck: function (deckName) {
+        if (!window.Deck || !window.Navigation) return;
+        if (!localStorage.getItem(`deck_${deckName}`)) {
+            alert(`El deck de ejemplo "${deckName}" no está disponible ahora mismo (¿fue borrado o restaurado?). Puedes armar el tuyo en Mi Deck → 📥 Importar Deck.`);
+            return;
+        }
+        Navigation.showTab('mideck');
+        setTimeout(() => {
+            Deck.confirmLoadDeck(deckName);
+            Deck.switchMiDeckTab?.('decklist');
+        }, 60);
+    },
+
+    // ── Mini-test avanzado por lección ──
+    QUIZZES: {
+        'que-es-yugioh': [
+            { q: '¿Con cuántos LP empieza cada jugador en un duelo estándar?',
+              options: ['4000', '2000', '8000', '1000'], correct: 2,
+              explain: 'Ambos jugadores inician con 8000 LP en TCG/OCG/Master Duel.' },
+            { q: '¿Cuál de estas NO es una de las 3 categorías principales de carta?',
+              options: ['Monstruo', 'Hechizo', 'Trampa', 'Ritual'], correct: 3,
+              explain: '"Ritual" es un sub-tipo (existen Monstruos Ritual y Hechizos Rituales), no una categoría principal.' },
+            { q: 'Además de reducir LP a 0, ¿qué otra condición de victoria clásica existe?',
+              options: ['Ganar 3 rondas de batalla', 'Completar Exodia', 'Invocar un Ritual', 'Llenar el Extra Deck'], correct: 1,
+              explain: 'Cumplir una condición especial de carta (como reunir las 5 piezas de Exodia) también gana el duelo.' },
+            { q: '¿Cuál formato es 100% digital, desarrollado por Konami?',
+              options: ['TCG', 'OCG', 'Master Duel', 'Genesys'], correct: 2,
+              explain: 'Master Duel es el cliente digital oficial; TCG/OCG son físicos y Genesys es un formato alternativo con puntos.' },
+            { q: '¿Mínimo de cartas en el Deck Principal?',
+              options: ['20', '30', '40', '60'], correct: 2,
+              explain: 'El Main Deck va de 40 a 60 cartas; el mínimo competitivo estándar es 40.' },
+        ],
+        'vocabulario-legal': [
+            { q: 'Si una carta "envía" (send/mill) otra al cementerio, ¿cuenta como "destruida"?',
+              options: ['Sí, siempre', 'No, son acciones distintas', 'Solo si es monstruo', 'Solo en Master Duel'], correct: 1,
+              explain: 'Enviar y destruir son acciones legales distintas — un efecto que reacciona a "destrucción" no se activa si solo fue enviada.' },
+            { q: 'Un efecto con "Selecciona 1 carta... y destrúyela". ¿Qué puede hacer el rival antes de que resuelva?',
+              options: ['Nada, es automático', 'Remover o proteger el objetivo', 'Ganar LP extra', 'Robar una carta'], correct: 1,
+              explain: 'Al tener "target", el rival tiene ventana para reaccionar sobre esa carta antes de la resolución.' },
+            { q: '¿Qué pasa con el costo ya pagado si tu efecto es negado?',
+              options: ['Se devuelve siempre', 'Se pierde en ambos casos (activación o efecto)', 'Solo se pierde si negaron la activación', 'Solo si negaron el efecto'], correct: 1,
+              explain: 'Un costo ya pagado nunca se recupera, sin importar qué fue negado.' },
+            { q: '"Tributar" es...',
+              options: ['Sinónimo de destruir', 'Un costo que manda una carta al cementerio como parte de una invocación', 'Lo mismo que desterrar', 'Un tipo de Invocación Especial'], correct: 1,
+              explain: 'Tributar es un costo de invocación — no es destrucción ni cuenta como "enviada por efecto".' },
+            { q: '¿Qué acción saca una carta del juego SIN pasar por el cementerio?',
+              options: ['Destruir', 'Enviar', 'Tributar', 'Desterrar'], correct: 3,
+              explain: 'Desterrar (Banish) remueve la carta del juego directamente.' },
+        ],
+        'fases-del-duelo': [
+            { q: '¿En qué fase robas tu carta del turno?',
+              options: ['Standby Phase', 'Draw Phase', 'Main Phase 1', 'End Phase'], correct: 1,
+              explain: 'La Draw Phase es la primera fase, donde robas 1 carta (salvo quien va primero en el turno 1).' },
+            { q: 'El jugador que va primero en el turno 1, ¿puede atacar ese turno?',
+              options: ['Sí, sin restricciones', 'No, su Battle Phase se omite', 'Solo con 1 monstruo', 'Solo con un Ritual'], correct: 1,
+              explain: 'Quien va primero no roba en su primer Draw Phase ni ataca en su primera Battle Phase.' },
+            { q: '¿Qué fase conviene para poner una trampa ya protegida ese mismo turno?',
+              options: ['Main Phase 1', 'Battle Phase', 'Main Phase 2', 'End Phase'], correct: 2,
+              explain: 'Una trampa puesta en MP2 no puede ser destruida ese turno, a diferencia de una puesta en MP1.' },
+            { q: '¿Invocaciones Normales por turno según la regla base?',
+              options: ['0', '1', '2', 'Ilimitadas'], correct: 1,
+              explain: 'La regla base permite 1 Invocación Normal (o Set) por turno.' },
+            { q: '¿En qué fase descartas si tienes más de 6 cartas en mano?',
+              options: ['Main Phase 2', 'Battle Phase', 'End Phase', 'Standby Phase'], correct: 2,
+              explain: 'En la End Phase ambos jugadores descartan hasta quedar con 6 cartas máximo.' },
+        ],
+        'tipos-cartas-basicas': [
+            { q: '¿Qué diferencia a un Monstruo Normal (Vainilla) de uno de Efecto?',
+              options: ['Tiene mayor Nivel', 'No tiene texto de efecto, solo ATK/DEF', 'Siempre tiene mayor ATK', 'Puede invocarse 2 veces por turno'], correct: 1,
+              explain: 'Los Monstruos Normales solo tienen ATK/DEF y texto de lore — ningún efecto activable.' },
+            { q: '¿Qué tipo de Hechizo puede activarse en el turno del rival si fue colocado boca abajo el turno anterior?',
+              options: ['Normal', 'Continuo', 'Ritual', 'Juego Rápido (Quick-Play)'], correct: 3,
+              explain: 'El Quick-Play es el único Hechizo que puede activarse en el turno del rival, y solo si se colocó boca abajo antes.' },
+            { q: '¿Qué tipo de Trampa es la única que puede responder a otra Counter Trap?',
+              options: ['Normal', 'Continua', 'Otra Counter Trap', 'Ninguna puede'], correct: 2,
+              explain: 'Las Counter Traps son Velocidad 3 — solo otra Counter Trap puede responderles en cadena.' },
+            { q: 'Colocas una trampa boca abajo en tu Main Phase 1. ¿Cuándo puede activarse (regla general)?',
+              options: ['Ese mismo turno', 'Desde el turno del rival en adelante', 'Nunca', 'Solo en Battle Phase'], correct: 1,
+              explain: 'Una trampa no puede activarse el mismo turno en que fue colocada — "madura" a partir del turno siguiente.' },
+            { q: '¿Cuántas cartas de Campo (Field Spell) puede tener activas cada jugador al mismo tiempo?',
+              options: ['0', '1', '2', 'Ilimitadas'], correct: 1,
+              explain: 'Solo puede haber 1 Field Spell activa por lado del campo; activar una nueva manda la anterior al cementerio.' },
+        ],
+        'tipos-cartas-especiales': [
+            { q: '¿Qué invocación requiere 1 Tuner + 1 o más no-Tuner cuya suma de niveles sea exacta?',
+              options: ['Fusión', 'Sincronía', 'XYZ', 'Link'], correct: 1,
+              explain: 'La Invocación Sincro exige que la suma de niveles de los materiales (con al menos 1 Tuner) sea exactamente igual al Nivel del Sincro.' },
+            { q: '¿Qué mecánica especial se coloca en el Deck Principal en vez del Extra Deck?',
+              options: ['Fusión', 'Ritual', 'XYZ', 'Péndulo'], correct: 1,
+              explain: 'Los Monstruos Ritual son la única excepción — viven en el Deck Principal, no en el Extra Deck.' },
+            { q: '¿Dónde quedan los materiales usados para invocar un XYZ mientras el XYZ sigue en campo?',
+              options: ['Van al cementerio', 'Quedan debajo del monstruo XYZ', 'Vuelven a la mano', 'Se desx1jan del juego'], correct: 1,
+              explain: 'Los materiales XYZ quedan debajo del monstruo como recurso — no van al cementerio hasta que el XYZ se destruye.' },
+            { q: '¿Qué mecánica usa "Flechas" en vez de Nivel o Rango?',
+              options: ['Sincronía', 'XYZ', 'Link', 'Ritual'], correct: 2,
+              explain: 'Los monstruos Link no tienen Nivel ni DEF — tienen Flechas de Link que habilitan zonas del Extra Deck.' },
+            { q: '¿Qué representa "Odd-Eyes Pendulum Dragon"?',
+              options: ['Fusión', 'Sincronía', 'Péndulo', 'XYZ'], correct: 2,
+              explain: 'Es un monstruo Péndulo icónico — su marco mitad verde/naranja lo identifica de inmediato.' },
+        ],
+        'estructura-efecto-carta': [
+            { q: 'En "Descarta 1 carta: roba 2 cartas", ¿qué parte es el Costo?',
+              options: ['"roba 2 cartas"', '"Descarta 1 carta"', 'Ambas por igual', 'Ninguna, es solo Efecto'], correct: 1,
+              explain: 'Todo lo que va ANTES de los dos puntos y se paga de inmediato es el Costo — aquí, descartar 1 carta.' },
+            { q: 'Si tu efecto es negado después de pagar el costo, ¿recuperas lo que pagaste?',
+              options: ['Sí, siempre', 'No, nunca', 'Solo si niegan la activación', 'Solo si niegan el efecto'], correct: 1,
+              explain: 'Un costo ya pagado nunca se devuelve, sin importar qué parte del efecto haya sido negada.' },
+            { q: '¿Qué palabra clave indica que un efecto es opcional?',
+              options: ['Must (debes)', 'You can (puedes)', 'Always (siempre)', 'Never (nunca)'], correct: 1,
+              explain: '"You can" / "Puedes" marca que no estás obligado a activar ni resolver esa parte del efecto.' },
+            { q: 'Si un efecto dice "hasta el final de este turno", ¿qué parte estás identificando?',
+              options: ['Costo', 'Requisito', 'Duración', 'Restricción'], correct: 2,
+              explain: 'La Duración indica por cuánto tiempo se mantiene un efecto aplicado antes de expirar.' },
+            { q: 'Un efecto dice "Selecciona 1 carta...". ¿Qué le permite hacer esto al rival antes de que resuelva?',
+              options: ['Nada', 'Reaccionar o remover el objetivo', 'Ganar LP', 'Robar una carta extra'], correct: 1,
+              explain: 'Tener "target" abre una ventana de reacción — el rival puede proteger o mover esa carta específica.' },
+        ],
+        'funciones-de-las-cartas': [
+            { q: '¿Qué puede hacer un Extender que un Starter no puede?',
+              options: ['Iniciar el combo sin ayuda', 'Continuar el combo después de que ya está en marcha', 'Buscar cartas del deck', 'Ser indestructible'], correct: 1,
+              explain: 'El Extender no inicia la línea por sí solo, pero permite seguir el combo si el starter fue negado.' },
+            { q: '¿Cuál es el problema de tener demasiados Garnets en un deck?',
+              options: ['Suben el costo del deck', 'Son cartas muertas en mano si no se buscan', 'Solo funcionan en Extra Deck', 'Niegan tus propios efectos'], correct: 1,
+              explain: 'Un Garnet no aporta nada por sí mismo en mano — depende 100% de ser buscado por otro efecto.' },
+            { q: '¿Qué caracteriza a una Handtrap frente a otras interrupciones?',
+              options: ['Necesita estar en el campo para activarse', 'Se activa desde la mano en respuesta al rival', 'Solo funciona en tu propio turno', 'Es siempre una carta Trampa'], correct: 1,
+              explain: 'Las Handtraps son monstruos que activan su efecto directamente desde la mano — no requieren estar en campo.' },
+            { q: '¿Cuándo se usa principalmente un Boardbreaker?',
+              options: ['Jugando de primero para armar el endboard', 'Jugando de segundo para destruir el campo ya construido del rival', 'Solo en el Side Deck', 'Nunca, es un rol obsoleto'], correct: 1,
+              explain: 'Los Boardbreakers brillan yendo de segundo: su función es destruir o neutralizar lo que el rival ya armó.' },
+            { q: 'Según las 4 funciones universales, ¿cuál corresponde a un Handtrap que niega la activación de una carta rival?',
+              options: ['Motor', 'Interacción', 'Ventaja de Recursos', 'Ninguna'], correct: 1,
+              explain: 'Negar o responder a la jugada del rival es la función de Interacción — la categoría de Handtraps y Boardbreakers.' },
+        ],
+        'mentalidad-del-jugador': [
+            { q: '¿Qué significa la mentalidad "las cartas no se evalúan solas"?',
+              options: ['Se evalúan por su rareza', 'Se evalúan en conjunto con el resto del deck y su plan de juego', 'Solo importan en el Side Deck', 'Se evalúan por su ATK'], correct: 1,
+              explain: 'Una carta poderosa puede arruinar un deck si contradice su estrategia — el contexto siempre importa.' },
+            { q: '¿Qué significa "gusto vs conveniencia" en un deck competitivo?',
+              options: ['Nunca puedes tener un deck de gusto', 'Si buscas competir, la conveniencia (lo funcional) debe pesar más que el gusto', 'Son lo mismo siempre', 'Solo aplica al Extra Deck'], correct: 1,
+              explain: 'Puedes tener decks de gusto y competitivos, pero en el de torneo las decisiones deben ser funcionales.' },
+            { q: '¿Qué NO puedes maximizar al mismo tiempo según esta lección?',
+              options: ['Consistencia y Potencia', 'ATK y DEF', 'Nivel y Rango', 'Main Deck y Extra Deck'], correct: 0,
+              explain: 'Consistencia vs Potencia siempre implica una elección estratégica según lo que tu deck necesita.' },
+            { q: '¿Puede un deck no-meta ganarle a un deck meta?',
+              options: ['Nunca', 'Sí en una partida puntual, pero le falta consistencia a 7+ rondas', 'Solo con más copias de una carta', 'Solo en Master Duel'], correct: 1,
+              explain: 'Un deck no-meta puede vencer en una partida, pero sostener eso en un torneo largo requiere mucho más conocimiento.' },
+            { q: 'Si vas ganando el duelo, ¿qué recomienda la mentalidad correcta?',
+              options: ['Arriesgar todo para terminar rápido', 'Jugar seguro y no exponerte a riesgos innecesarios', 'Activar todos tus efectos sin pensar', 'Rendirte'], correct: 1,
+              explain: 'Si vas ganando, jugar seguro protege tu ventaja; el riesgo se asume cuando vas perdiendo.' },
+        ],
+        'elegir-construir-deck': [
+            { q: '¿Qué es el "Core" de un deck?',
+              options: ['Cartas genéricas de cualquier formato', 'Las cartas que definen al arquetipo, irremplazables', 'Solo las Handtraps', 'El Extra Deck completo'], correct: 1,
+              explain: 'Sin las cartas Core, el deck deja de ser el arquetipo — por eso van en 3 copias siempre que se pueda.' },
+            { q: '¿Qué diferencia a una Tech Card de una carta Non-Engine estándar?',
+              options: ['La Tech Card es siempre Staple', 'Ataca una amenaza específica del meta local, a veces en 1 copia', 'No hay diferencia', 'Va obligatoriamente en el Extra Deck'], correct: 1,
+              explain: 'La Tech Card es una respuesta puntual a algo que ves en tu meta local, no una inclusión genérica.' },
+            { q: 'Al construir desde cero, ¿por dónde se empieza según el proceso de esta lección?',
+              options: ['Por el non-engine', 'Por el endboard/plan de juego, trabajando hacia atrás', 'Por el Side Deck', 'Por el precio de las cartas'], correct: 1,
+              explain: 'Defines primero qué quieres tener en campo al final del combo, y desde ahí armas el engine necesario.' },
+            { q: 'Con 3 copias de una carta en un deck de 40, ¿qué probabilidad aproximada hay de abrirla en la mano inicial de 5?',
+              options: ['~11%', '~21%', '~30%', '~50%'], correct: 2,
+              explain: '3 copias en 40 cartas dan aproximadamente 30% de probabilidad de abrir al menos 1 copia en la mano inicial.' },
+            { q: '¿Cuántos duelos mínimo sugiere esta lección probar un deck en simulador antes de invertir en él?',
+              options: ['1 duelo', 'Al menos 10 duelos', '100 duelos', 'No hace falta probarlo'], correct: 1,
+              explain: 'Probarlo al menos 10 duelos te da una muestra real de cómo se siente jugarlo antes de gastar dinero.' },
+        ],
+        'staples-formato': [
+            { q: '¿Qué hace que una carta sea Staple?',
+              options: ['Ser la carta más fuerte del juego', 'Ser útil de forma generalizada, sin depender de un arquetipo', 'Solo servir en un arquetipo específico', 'Estar prohibida en TCG'], correct: 1,
+              explain: 'Un Staple es versátil y funciona en la mayoría de los decks — no es exclusivo de un arquetipo.' },
+            { q: '¿Cuál Handtrap niega efectos que buscan, roban o invocan especialmente desde el deck?',
+              options: ['Effect Veiler', 'Ash Blossom & Joyous Spring', 'D.D. Crow', 'Maxx "C"'], correct: 1,
+              explain: 'Ash Blossom & Joyous Spring es de las Handtraps más versátiles por cubrir 3 tipos de efecto distintos.' },
+            { q: '¿Qué hace Crossout Designator?',
+              options: ['Destruye todos los monstruos rivales', 'Declara un nombre de carta en tu deck y niega efectos de cartas con ese nombre ese turno', 'Roba 2 cartas', 'Niega solo Trampas Counter'], correct: 1,
+              explain: 'Es una respuesta genérica a casi cualquier Handtrap, siempre que tengas una copia de ese nombre en tu deck.' },
+            { q: '¿Cuándo conviene usar un Boardbreaker como Raigeki o Lightning Storm?',
+              options: ['Siempre en tu primer turno', 'Cuando vas segundo y el rival ya construyó su campo', 'Solo en el Side Deck', 'Nunca, están prohibidos'], correct: 1,
+              explain: 'Los Boardbreakers están pensados para destruir un campo ya armado — brillan yendo de segundo.' },
+            { q: 'Antes de meter un Staple "porque es bueno", ¿qué deberías preguntarte según esta lección?',
+              options: ['Nada, siempre se incluye', 'Si su efecto sirve en el meta actual y no rompe tu propio combo', 'Si es la carta más cara del set', 'Si tiene buena ilustración'], correct: 1,
+              explain: 'Un Staple mal incluido, que rompe tu propio combo, es peor que no incluirlo.' },
+        ],
+        'anatomia-deck-competitivo': [
+            { q: '¿Qué mide el eje "Engine — Consistencia"?',
+              options: ['Qué tan poderoso es el endboard', 'Qué tan probable es armar la estrategia desde la mano inicial', 'Cuántas Handtraps tiene el rival', 'El precio del deck'], correct: 1,
+              explain: 'Consistencia mide la probabilidad de abrir con al menos 1 Starter y ejecutar tu plan de juego.' },
+            { q: '¿Qué significa que un deck sea "Glass Cannon"?',
+              options: ['Que tiene mucho Floor', 'Que tiene alto Techo de Poder pero baja Resiliencia — interrumpido, queda muerto', 'Que es muy barato', 'Que no tiene engine'], correct: 1,
+              explain: 'Sin Floor, una sola interrupción del rival deja al deck sin ningún plan B.' },
+            { q: '¿Qué son las "cartas multifuncionales" según esta lección?',
+              options: ['Cartas prohibidas', 'Cartas que cumplen más de un rol (ej. Starter y Extender) según el contexto', 'Cartas que solo sirven en el Extra Deck', 'Cartas sin efecto'], correct: 1,
+              explain: 'Reducen el tamaño efectivo del engine sin perder funciones — son muy valiosas para el espacio del deck.' },
+            { q: '¿Qué pregunta corresponde al eje "Fragilidad / Choke Point"?',
+              options: ['¿Cuánto cuesta el deck?', '¿Qué carta del meta me destruye completamente?', '¿Cuántas copias tengo de mi Starter?', '¿Cuál es mi Boss Monster?'], correct: 1,
+              explain: 'Fragilidad mide qué tan vulnerable es el deck a una sola carta o combo específico del rival.' },
+            { q: 'Según el Consejo Clave, ¿qué determina realmente si un deck es competitivo?',
+              options: ['Solo el techo de poder', 'El balance entre los 6 ejes, no solo el poder bruto', 'La cantidad de Staples', 'El nombre del arquetipo'], correct: 1,
+              explain: 'Un deck con techo altísimo pero Floor bajo pierde igual contra un rival que estudió sus debilidades.' },
+        ],
+        'optimizar-deck': [
+            { q: '¿Cuál es la señal de que te falta Consistencia?',
+              options: ['El endboard es débil', 'Brickeas frecuentemente o hay turnos sin nada que hacer', 'Pierdes contra la misma jugada repetida', 'Tienes demasiados Handtraps'], correct: 1,
+              explain: 'Brickear seguido es la señal clásica de un problema de Consistencia, no de Potencia ni Defensa.' },
+            { q: '¿Qué tipo de optimización corresponde a "agregar protecciones al Boss Monster"?',
+              options: ['Consistencia', 'Techo de Poder (Endboard)', 'Defensa', 'Versatilidad'], correct: 1,
+              explain: 'Reforzar el endboard para que sea más difícil de romper es optimización de Techo de Poder.' },
+            { q: 'Según el proceso de optimización, ¿cuántos cambios deberías probar a la vez?',
+              options: ['Todos los que se te ocurran', 'Uno a la vez, para saber qué causó qué', 'Ninguno, se prueba el deck completo', 'Solo cambios de Extra Deck'], correct: 1,
+              explain: 'Un cambio = una variable. Cambiar varias cosas a la vez impide saber qué funcionó.' },
+            { q: '¿Cuántas partidas mínimo sugiere esta lección para evaluar un cambio correctamente?',
+              options: ['1-2', '10-15', '50', 'No hace falta jugarlas'], correct: 1,
+              explain: 'Menos de 10-15 partidas no es una muestra confiable para juzgar si un cambio funcionó.' },
+            { q: '¿Por qué la optimización "nunca termina" según el Consejo Clave?',
+              options: ['Porque siempre hay más dinero que gastar', 'Porque el meta cambia constantemente', 'Porque las cartas se dañan', 'Porque el Extra Deck es ilimitado'], correct: 1,
+              explain: 'Un deck optimizado para el meta de hace 3 meses puede ser mediocre hoy — el meta nunca es estático.' },
+        ],
+        'cadenas-prioridad': [
+            { q: '¿Puede un efecto de Velocidad 2 responder a uno de Velocidad 3?',
+              options: ['Sí, siempre', 'No, una cadena solo puede subir de velocidad, nunca bajar', 'Solo si es una Handtrap', 'Solo en el turno propio'], correct: 1,
+              explain: 'Solo una Counter Trap (Velocidad 3) puede responder a otra Velocidad 3.' },
+            { q: '¿Qué tipo de efecto NO puede activarse como respuesta directa a otro efecto?',
+              options: ['Quick Effect', 'Ignition Effect', 'Trigger Effect obligatorio', 'Trampa Normal'], correct: 1,
+              explain: 'El Ignition Effect es Velocidad 1 — solo se activa voluntariamente en una ventana abierta de tu turno.' },
+            { q: 'En una cadena, ¿en qué orden se resuelven los efectos?',
+              options: ['En el orden en que se activaron (FIFO)', 'Al revés — el último activado resuelve primero (LIFO)', 'Todos a la vez', 'Lo decide un dado'], correct: 1,
+              explain: 'LIFO: Last In, First Out. El último eslabón agregado resuelve primero.' },
+            { q: 'Si el eslabón 1 (el efecto original) de una cadena es negado, ¿qué pasa con el resto?',
+              options: ['Se cancela toda la cadena', 'Resuelve igual desde el eslabón más alto hacia abajo', 'Se repite desde el inicio', 'Ambos jugadores pierden el turno'], correct: 1,
+              explain: 'Negar el eslabón 1 no cancela la cadena completa — el resto resuelve normalmente.' },
+            { q: '¿Cuándo se abre una ventana de interacción?',
+              options: ['Solo en la End Phase', 'Cuando el jugador activo activa un efecto, invoca, o hace una acción visible', 'Nunca, siempre puedes activar lo que quieras', 'Solo si tienes una Trampa boca abajo'], correct: 1,
+              explain: 'La ventana se abre con cualquier acción del jugador activo — activación, invocación o acción visible.' },
+        ],
+        'rulings-invocaciones': [
+            { q: '¿Qué diferencia a una Invocación Inherente de una Invocación por Efecto?',
+              options: ['No hay diferencia', 'La Inherente ocurre por las reglas del juego; la de Efecto la realiza un efecto de carta y no puede negarse la invocación misma', 'La de Efecto siempre es más fuerte', 'La Inherente solo aplica a Fusión'], correct: 1,
+              explain: 'Solo puedes "negar la invocación" cuando es Inherente — una invocación por efecto ya resolvió cuando ocurre.' },
+            { q: 'Si niegan una invocación con Solemn Warning, ¿se activan los efectos "si fue invocado exitosamente"?',
+              options: ['Sí, siempre', 'No — la invocación negada nunca llegó al campo', 'Solo si es un Sincro', 'Solo en el turno del rival'], correct: 1,
+              explain: 'Una invocación negada nunca ocurrió legalmente — los triggers de invocación exitosa no se activan.' },
+            { q: '¿Qué pasa con los materiales ya enviados si la invocación resultante es negada?',
+              options: ['Regresan a la mano', 'No regresan — se van al cementerio normalmente', 'Vuelven al Extra Deck', 'Se destierran automáticamente'], correct: 1,
+              explain: 'La negación aplica al monstruo invocado, no a los materiales ya gastados como costo.' },
+            { q: '¿Dónde están los materiales de un monstruo XYZ mientras este sigue en campo?',
+              options: ['En el cementerio', 'Adjuntos debajo del monstruo, no en el cementerio', 'En el Extra Deck', 'Desterrados'], correct: 1,
+              explain: 'Los materiales XYZ quedan "adjuntos" — los efectos de cementerio no los pueden tocar mientras estén ahí.' },
+            { q: '¿Qué ocurre con un Token cuando sale del campo?',
+              options: ['Va al cementerio', 'Va al Extra Deck', 'Desaparece — no va al cementerio ni al deck', 'Vuelve a la mano'], correct: 2,
+              explain: 'Los Tokens dejan de existir al salir del campo; nunca ocupan cementerio, deck ni Extra Deck.' },
+        ],
+        'rulings-batalla': [
+            { q: '¿Cuándo ocurre un "Replay"?',
+              options: ['Cuando el Damage Step termina', 'Cuando el objetivo de un ataque desaparece durante el Battle Step, antes del Damage Step', 'Cuando ambos monstruos tienen el mismo ATK', 'Cuando activas una Trampa Counter'], correct: 1,
+              explain: 'El Replay solo ocurre en el Battle Step; si el objetivo ya desapareció dentro del Damage Step, no hay Replay.' },
+            { q: '¿Qué tipo de cartas pueden activarse normalmente durante el Damage Step?',
+              options: ['Cualquier Trampa Normal', 'Casi ninguna Handtrap ni Trampa Normal — solo efectos Vel.2+ que modifiquen ATK/DEF, los que digan "durante el Damage Step", y Counter Traps', 'Solo Hechizos Rápidos', 'Solo Ignition Effects'], correct: 1,
+              explain: 'El Damage Step tiene restricciones muy específicas sobre qué puede activarse.' },
+            { q: '¿Qué diferencia hay entre Daño de Batalla y Daño de Efecto?',
+              options: ['Son lo mismo siempre', 'El de batalla ocurre por combate y puede negarse con cartas de batalla; el de efecto lo inflige una carta directamente', 'El de efecto solo ocurre en la Battle Phase', 'El de batalla nunca puede negarse'], correct: 1,
+              explain: 'Una carta que protege de "daño de batalla" no detiene el "daño de efecto" y viceversa.' },
+            { q: 'Si el objetivo de tu ataque desaparece DENTRO del Damage Step, ¿qué pasa?',
+              options: ['Se activa un Replay', 'El ataque continúa pero no inflige daño de batalla', 'El atacante vuelve a la mano', 'El duelo termina'], correct: 1,
+              explain: 'El Replay solo aplica en el Battle Step, no dentro del Damage Step.' },
+            { q: '¿Qué recomienda el Consejo Clave sobre declarar un ataque?',
+              options: ['Pasar directo al cálculo de daño sin avisar', 'Anunciar el ataque y esperar antes de pasar al Damage Step', 'Nunca anunciar nada', 'Solo anunciar si el rival lo pide'], correct: 1,
+              explain: 'Esa pausa es la ventana legal del rival para responder antes del cálculo de daño.' },
+        ],
+        'if-when-timing': [
+            { q: '¿Qué diferencia principal hay entre WHEN e IF?',
+              options: ['Son exactamente lo mismo', 'WHEN exige que el evento sea "lo último que pasó" o se pierde el timing; IF es más flexible', 'IF siempre es mandatorio', 'WHEN nunca puede perder el timing'], correct: 1,
+              explain: 'WHEN es mucho más estricto en su ventana de activación que IF.' },
+            { q: '¿Un efecto mandatorio (sin "you can") puede perder el timing?',
+              options: ['Sí, siempre', 'No, nunca — se activa si la condición ocurre', 'Solo si es WHEN', 'Solo si es IF'], correct: 1,
+              explain: 'Los efectos mandatorios no dependen de la ventana de la misma forma que los opcionales.' },
+            { q: 'Si "WHEN X: you can do Y" y X no fue lo último que pasó, ¿qué ocurre?',
+              options: ['Se activa igual', 'El efecto "miss the timing" y no puede activarse', 'Se activa automáticamente sin elegir', 'Se convierte en IF'], correct: 1,
+              explain: 'Perder el timing significa que la ventana específica de WHEN ya se cerró.' },
+            { q: '¿Qué permite un efecto que dice "Each Time"?',
+              options: ['Activarse solo 1 vez por turno', 'Activarse múltiples veces en el mismo turno si la condición se repite', 'Nunca activarse en el turno del rival', 'Negar cualquier efecto'], correct: 1,
+              explain: '"Each Time" no tiene límite implícito de una vez por turno.' },
+            { q: 'En la ventana tras resolver una cadena, ¿qué se activa primero?',
+              options: ['Los Quick Effects', 'Los efectos mandatorios', 'Los triggers opcionales del rival', 'Se decide al azar'], correct: 1,
+              explain: 'El orden de prioridad siempre pone primero los efectos mandatorios.' },
+        ],
+        'leer-campo-oponente': [
+            { q: '¿Qué indica que el oponente tenga 5+ cartas en mano al inicio de su turno?',
+              options: ['Mano débil, sin opciones', 'Mano llena, posibles múltiples Handtraps o combo completo', 'Que ya perdió el duelo', 'Que no tiene backrow'], correct: 1,
+              explain: 'Una mano llena es señal de más recursos y más amenazas potenciales.' },
+            { q: 'Si el oponente pasó su turno sin activar nada en el tuyo, ¿qué sugiere la lección?',
+              options: ['Que definitivamente no tiene nada', 'Que probablemente no tiene Handtraps, o guarda algo específico', 'Que ganó el duelo', 'Que debes rendirte'], correct: 1,
+              explain: 'No es garantía absoluta, pero es información deducida útil para tu siguiente jugada.' },
+            { q: '¿Qué es un "cebo" al leer el campo?',
+              options: ['La carta más poderosa de tu combo', 'Activar primero la carta menos crítica para hacer gastar la Handtrap rival antes de tu pieza clave', 'Un tipo de Trampa Counter', 'Un monstruo Token'], correct: 1,
+              explain: 'El cebo protege tu pieza clave forzando al rival a gastar su interrupción antes de tiempo.' },
+            { q: '¿Cuál es la pregunta más poderosa según el Consejo Clave de esta lección?',
+              options: ['¿Cuánto ATK tiene su monstruo?', '¿Qué necesita hacer el oponente en este turno para ganar?', '¿Cuántas cartas tiene en el Extra Deck?', '¿De qué color es su mazo?'], correct: 1,
+              explain: 'Saber qué necesita el rival te permite enfocar tus recursos exactamente en negarlo.' },
+            { q: '¿Qué error común señala esta lección sobre leer el campo?',
+              options: ['Observar demasiado al rival', 'Asumir que tiene la misma carta que te ganó una vez antes, sin evidencia en este duelo', 'Analizar rápido y actuar', 'Ignorar el backrow'], correct: 1,
+              explain: 'Cada duelo es nuevo — la experiencia informa pero no determina lo que el rival tiene ahora.' },
+        ],
+        'gestion-lp-recursos': [
+            { q: '¿Qué son realmente los LP según esta lección?',
+              options: ['El objetivo final del duelo', 'Un recurso que se invierte para ganar ventaja, no algo a proteger a toda costa', 'Algo que nunca debes gastar', 'Solo importan en Master Duel'], correct: 1,
+              explain: 'Pagar LP por la jugada correcta suele ser mejor inversión que evitarlo por miedo.' },
+            { q: '¿Cuándo NO vale la pena pagar LP según la lección?',
+              options: ['Cuando niegas algo irrecuperable', 'Cuando estás en 2000 LP o menos y el gasto no da ventaja concreta', 'Cuando vas ganando cómodo', 'Nunca vale la pena pagar LP'], correct: 1,
+              explain: 'En rango de LP bajo, cada pago sin ventaja concreta te acerca más a perder.' },
+            { q: '¿Qué es "Hand Advantage" según esta lección?',
+              options: ['Tener más cartas en mano siempre es mejor sin importar cuáles', 'Tener más cartas que el rival, aunque calidad importa más que cantidad', 'Solo aplica al Extra Deck', 'Nunca es relevante'], correct: 1,
+              explain: '5 cartas malas valen menos que 2 cartas buenas — calidad sobre cantidad.' },
+            { q: '¿Qué error señala la lección sobre "sobreconstruir el campo"?',
+              options: ['Invocar monstruos de más gasta recursos que podrías necesitar después', 'Nunca hay que invocar más de 1 monstruo', 'Es obligatorio llenar todo el campo', 'El campo no consume recursos'], correct: 0,
+              explain: 'Cada monstruo adicional invocado sin necesidad es un recurso gastado de más.' },
+            { q: 'Según el Consejo Clave, ¿qué deberías preguntarte al final de cada turno?',
+              options: ['¿Gané ya?', '¿Tengo más, menos o igual cantidad de recursos que al inicio de mi turno?', '¿Cuánto ATK tiene mi monstruo?', '¿Debo rendirme?'], correct: 1,
+              explain: 'Ser consistentemente "outresourced" turno a turno es la señal de que algo debe cambiar.' },
+        ],
+        'formatos-diferencias': [
+            { q: '¿Qué regla base rige el Formato Avanzado (TCG/OCG) actual?',
+              options: ['Master Rule 3', 'Master Rule 5 (vigente desde 2020)', 'GOAT Rules', 'No tiene reglas fijas'], correct: 1,
+              explain: 'La Master Rule 5 introdujo las Extra Monster Zones y sigue vigente en el formato moderno.' },
+            { q: '¿La banlist de TCG y OCG es la misma?',
+              options: ['Sí, siempre idéntica', 'No, son diferentes — una carta prohibida en TCG puede estar libre en OCG', 'Solo cambia el idioma', 'OCG no tiene banlist'], correct: 1,
+              explain: 'Konami gestiona banlists separadas para cada región.' },
+            { q: '¿Cómo construyes un deck en Genesys Format?',
+              options: ['Con banlist normal de TCG', 'Sin banlist — cada carta tiene un valor en puntos y hay un presupuesto máximo', 'Solo con cartas GOAT', 'Con Extra Deck ilimitado'], correct: 1,
+              explain: 'Genesys reemplaza la banlist por un sistema de puntos con presupuesto máximo.' },
+            { q: '¿Qué caracteriza al GOAT Format?',
+              options: ['Usa Master Rule 5 completa', 'Simula el meta de 2005: sin Extra Monster Zones, sin Links/Sincro/XYZ/Péndulo', 'Es el formato más nuevo', 'Solo existe en Master Duel'], correct: 1,
+              explain: 'GOAT usa reglas y cardpool de una época específica, previa a las mecánicas modernas.' },
+            { q: '¿Qué prevalece si una carta antigua tiene texto distinto al actual (errata)?',
+              options: ['El texto de la impresión más antigua', 'El texto oficial más reciente según Konami', 'Lo que diga el juez local sin revisar nada', 'Ambos textos aplican a la vez'], correct: 1,
+              explain: 'Siempre aplica el ruling oficial más reciente, sin importar qué diga la impresión física.' },
+        ],
+        'side-deck': [
+            { q: '¿Cuántas cartas puede tener el Side Deck como máximo?',
+              options: ['5', '10', '15', '20'], correct: 2,
+              explain: 'El Side Deck tiene un máximo de 15 cartas, igual que el límite del Extra Deck.' },
+            { q: '¿En qué punto del match puedes usar el Side Deck?',
+              options: ['Antes de la partida 1', 'Entre partidas 2 y 3, no antes de la 1', 'En cualquier momento incluso a mitad de partida', 'Solo si pierdes la partida 1'], correct: 1,
+              explain: 'El siding ocurre exclusivamente entre partidas del mismo match, nunca antes de la primera.' },
+            { q: '¿Qué debe mantenerse constante entre partidas al sidear?',
+              options: ['El orden de las cartas', 'La cantidad total de cartas en Main Deck y Extra Deck', 'El nombre del deck', 'El color de las cartas'], correct: 1,
+              explain: 'Puedes cambiar qué cartas están, pero el conteo total de Main y Extra debe ser el mismo.' },
+            { q: 'Según el proceso de esta lección, ¿qué deberías identificar primero al construir tu Side Deck?',
+              options: ['Las cartas más caras del mercado', 'Los 3-4 decks más comunes de tu meta local', 'Solo cartas Prohibidas', 'El Extra Deck del rival'], correct: 1,
+              explain: 'El Side Deck se construye pensando en el meta local real, no en el meta genérico de internet.' },
+            { q: '¿Qué recomienda el Consejo Clave sobre el mejor Side Deck?',
+              options: ['El que tiene las cartas más poderosas en general', 'El que tiene cartas específicas y pensadas para lo que vas a enfrentar', 'El que nunca cambia entre partidas', 'El que copia el de un pro sin adaptarlo'], correct: 1,
+              explain: '15 cartas específicas para tu meta local superan a 15 Staples genéricos.' },
+        ],
+    },
+
+    _renderQuiz: function (topicId) {
+        const qs = this.QUIZZES[topicId];
+        if (!qs || !qs.length) return '';
+        return `
+            <div class="form-quiz" id="quiz-${topicId}">
+                ${qs.map((item, qi) => `
+                    <div class="form-quiz-q">
+                        <p class="form-quiz-question">${qi + 1}. ${item.q}</p>
+                        <div class="form-quiz-opts">
+                            ${item.options.map((op, oi) => `
+                                <label class="form-quiz-opt">
+                                    <input type="radio" name="quiz-${topicId}-${qi}" value="${oi}">
+                                    <span>${op}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                        <div class="form-quiz-feedback" id="quiz-${topicId}-${qi}-fb"></div>
+                    </div>
+                `).join('')}
+                <button class="form-quiz-check-btn" onclick="Formacion.checkQuiz('${topicId}')">✅ Corregir Respuestas</button>
+                <div class="form-quiz-score" id="quiz-${topicId}-score"></div>
+            </div>
+        `;
+    },
+
+    checkQuiz: function (topicId) {
+        const qs = this.QUIZZES[topicId];
+        if (!qs) return;
+        let correct = 0;
+        qs.forEach((item, qi) => {
+            const sel = document.querySelector(`input[name="quiz-${topicId}-${qi}"]:checked`);
+            const fb  = document.getElementById(`quiz-${topicId}-${qi}-fb`);
+            if (!fb) return;
+            if (!sel) { fb.innerHTML = '<span class="form-quiz-fb-empty">⚠ Sin responder</span>'; return; }
+            const ok = parseInt(sel.value) === item.correct;
+            if (ok) correct++;
+            fb.innerHTML = ok
+                ? `<span class="form-quiz-fb-ok">✔ Correcto — ${item.explain}</span>`
+                : `<span class="form-quiz-fb-bad">✘ Incorrecto — ${item.explain}</span>`;
+        });
+        const scoreEl = document.getElementById(`quiz-${topicId}-score`);
+        if (scoreEl) scoreEl.textContent = `Puntaje: ${correct}/${qs.length}`;
+    },
     init: function () {
         this.container = document.getElementById('formacion-content');
         if (!this.container) return;
@@ -408,12 +838,23 @@ const Formacion = {
                 <li><strong>Genesys:</strong> Formato alternativo con sus propias reglas.</li>
             </ul>
 
-            <h3 class="form-nb-subtitle">📊 ¿Por qué es tan complejo?</h3>
+            <h3 class="form-nb-subtitle">🎴 Ejemplos Reales de Cada Tipo</h3>
+            <p class="form-nb-text">Haz clic en cada nombre para abrir su carta real dentro de la app:</p>
+            <ul class="form-nb-list">
+                <li><strong>Monstruo:</strong> <a href="#" class="form-link" onclick="Formacion.openCard('Dark Magician'); return false;">Dark Magician</a> — Monstruo Normal: solo ATK/DEF, sin efecto.</li>
+                <li><strong>Hechizo:</strong> <a href="#" class="form-link" onclick="Formacion.openCard('Monster Reborn'); return false;">Monster Reborn</a> — revive cualquier monstruo del cementerio, tuyo o del rival.</li>
+                <li><strong>Trampa:</strong> <a href="#" class="form-link" onclick="Formacion.openCard('Mirror Force'); return false;">Mirror Force</a> — boca abajo, destruye todos los monstruos en ataque del rival al declarar batalla.</li>
+            </ul>
+
+            <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+            ${this._renderQuiz('que-es-yugioh')}
+
+            <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
             <p class="form-nb-text">
-                Con más de <strong>12,000 cartas</strong> publicadas y reglas que evolucionan constantemente 
-                vía la <em>banlist</em>, Yu-Gi-Oh! es considerado uno de los juegos de cartas más 
-                complejos. La diferencia entre un jugador casual y uno competitivo radica en el 
-                conocimiento del meta, las interacciones de cartas y la gestión del recurso.
+                Ve a <strong>Buscador</strong> y busca tú mismo "Dark Magician", "Monster Reborn" y "Mirror Force" para comparar sus fichas.
+                Luego entra a <strong>Mi Deck → 📥 Importar Deck</strong> y prueba
+                <a href="#" class="form-link" onclick="Formacion.tryExampleDeck('Yugi - Nivel 1'); return false;">cargar el deck de ejemplo "Yugi - Nivel 1"</a>
+                para ver un mazo real con estos tres tipos de carta funcionando juntos.
             </p>
         `;
     },
@@ -424,24 +865,33 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">⚔️ Las 4 Acciones que Nunca Son lo Mismo</h3>
         <ul class="form-nb-list">
-            <li><strong>Destruir:</strong> Manda la carta al cementerio como resultado de un efecto o batalla. Se puede negar con cartas que "protegen de destrucción".</li>
-            <li><strong>Enviar al Cementerio (Send/Mill):</strong> Mover una carta ahí sin que sea "destrucción". No activa efectos que dicen "si es destruido".</li>
-            <li><strong>Tributar:</strong> Costo de Invocación (o efecto) que manda una carta al cementerio como parte de invocar otro monstruo. No es destrucción ni cuenta como "enviado por efecto" para la mayoría de propósitos.</li>
-            <li><strong>Desterrar (Banish):</strong> Saca la carta del juego (Removed from Play). No pasa por el cementerio — cartas que reviven desde cementerio no pueden tocarla.</li>
+            <li><strong>Destruir:</strong> Manda la carta al cementerio como resultado de un efecto o batalla. Se puede negar con cartas que "protegen de destrucción". <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Raigeki'); return false;">Raigeki</a> destruye todos los monstruos del rival.</li>
+            <li><strong>Enviar al Cementerio (Send/Mill):</strong> Mover una carta ahí sin que sea "destrucción". No activa efectos que dicen "si es destruido". <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Foolish Burial'); return false;">Foolish Burial</a> envía 1 monstruo de tu deck sin destruirlo.</li>
+            <li><strong>Tributar:</strong> Costo de Invocación (o efecto) que manda una carta al cementerio como parte de invocar otro monstruo. No es destrucción ni cuenta como "enviado por efecto" para la mayoría de propósitos. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Blue-Eyes White Dragon'); return false;">Blue-Eyes White Dragon</a> es Nivel 8 — necesita 2 tributos.</li>
+            <li><strong>Desterrar (Banish):</strong> Saca la carta del juego (Removed from Play). No pasa por el cementerio — cartas que reviven desde cementerio no pueden tocarla. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('D.D. Crow'); return false;">D.D. Crow</a> destierra 1 carta del cementerio de cualquier jugador.</li>
         </ul>
 
         <h3 class="form-nb-subtitle">🎯 Objetivo (Target) vs Sin Objetivo</h3>
         <p class="form-nb-text">Si el efecto dice "selecciona" o "target", el oponente puede reaccionar sobre esa carta antes de que resuelva (ej: cambiándola de posición o protegiéndola). Si dice "todos los monstruos" o no menciona selección, no hay ventana de reacción por objetivo.</p>
-
+<p class="form-nb-text"><em>Compara:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Mystical Space Typhoon'); return false;">Mystical Space Typhoon</a> selecciona 1 carta (tiene target) — el rival puede reaccionar. En cambio, <a href="#" class="form-link" onclick="Formacion.openCard('Raigeki'); return false;">Raigeki</a> destruye "todos" sin seleccionar ninguno — no hay objetivo que defender.</p>
         <h3 class="form-nb-subtitle">🚫 Negar (Negate)</h3>
         <ul class="form-nb-list">
-            <li><strong>Negar la activación:</strong> El efecto nunca resuelve. Si tenía costo, el costo ya se pagó y se pierde igual.</li>
-            <li><strong>Negar el efecto:</strong> La activación cuenta como "usada" (once per turn se consume) pero no pasa nada al resolver.</li>
+            <li><strong>Negar la activación:</strong> El efecto nunca resuelve. Si tenía costo, el costo ya se pagó y se pierde igual. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Solemn Judgment'); return false;">Solemn Judgment</a> niega la activación de cualquier hechizo, trampa o invocación.</li>
+            <li><strong>Negar el efecto:</strong> La activación cuenta como "usada" (once per turn se consume) pero no pasa nada al resolver. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Effect Veiler'); return false;">Effect Veiler</a> niega el efecto de un monstruo rival sin negar su Invocación.</li>
         </ul>
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">Cuando leas cualquier carta nueva, pregúntate primero: ¿destruye, envía, tributa o destierra? ¿Tiene objetivo? ¿Niega activación o efecto? Estas 4 preguntas resuelven la mayoría de las confusiones de reglas.</p>
-    `; },
+    <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('vocabulario-legal')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Ve a <strong>Buscador</strong> y abre cualquier carta de tu <strong>Mi Deck → Staples</strong>: lee su texto resaltado
+            (nomenclatura) en el visor y aplícale las 4 preguntas de esta lección. Puedes revisar cómo la app clasifica ese
+            texto en <strong>Config → Nomenclatura de Efectos</strong>.
+        </p>
+        `; },
 
     _topicFasesDelDuelo: function () { return `
         <h2 class="form-nb-title">Las Fases del Duelo</h2>
@@ -471,7 +921,26 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">El error más común del novato es actuar sin pensar en las fases. Poner una trampa en MP1 la deja vulnerable ese turno porque el oponente puede destruirla antes de que "madure". Ponerla en MP2 (después de atacar) la protege hasta el turno del oponente. Aprender a usar MP2 correctamente es lo que separa a un jugador intuitivo de uno que realmente entiende la estructura del juego.</p>
-    `; },
+    
+        <h3 class="form-nb-subtitle">🎮 Practica las Fases en Vivo</h3>
+        <p class="form-nb-text">
+            La <strong>Zona de Práctica</strong> (Simuladores) tiene un campo visual real con botones para cada fase
+            (Draw → Standby → Main 1 → Battle → Main 2 → End) y contador de turno.
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','practica'); return false;">Abrir Zona de Práctica</a>
+        </p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('fases-del-duelo')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Entra a <strong>Mi Deck → 📥 Importar Deck</strong> y carga el deck de ejemplo
+            <a href="#" class="form-link" onclick="Formacion.tryExampleDeck('Yugi - Nivel 1'); return false;">"Yugi - Nivel 1"</a>,
+            luego pulsa <strong>"⚔️ Probar Deck"</strong> para enviarlo directo a Zona de Práctica. Ahí recorre manualmente
+            Draw → Standby → Main 1 → Battle → Main 2 → End, usa 🪙 Moneda para decidir quién va primero, y sigue tu LP y turno.
+            Para partidas reales en Master Duel, usa <strong>Simuladores → ⚔️ Duelo en Vivo → 👑 Cronómetro Master Duel</strong>.
+        </p>
+        `; },
 
     _topicTiposCartasBasicas: function () { return `
         <h2 class="form-nb-title">Tipos de Cartas Básicas</h2>
@@ -487,25 +956,25 @@ const Formacion = {
             <li><strong>Monstruos Normales (Vainilla) vs de Efecto:</strong> Los normales no tienen efecto — solo ATK/DEF y texto de lore. Los de efecto tienen uno o más efectos activables o continuos.</li>
             <li><strong>Cambio de Posición:</strong> 1 vez por turno. No puedes cambiarlo si fue invocado ese mismo turno, ni si ya atacó ese turno.</li>
         </ul>
-
+<p class="form-nb-text"><em>Compara:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Summoned Skull'); return false;">Summoned Skull</a> es un Monstruo Normal (Vainilla) — solo ATK/DEF, sin efecto. <a href="#" class="form-link" onclick="Formacion.openCard('Ash Blossom & Joyous Spring'); return false;">Ash Blossom & Joyous Spring</a> es un Monstruo de Efecto — su texto niega jugadas del rival desde la mano.</p>
         <h3 class="form-nb-subtitle">🟢 Hechizos (Magias)</h3>
         <p class="form-nb-text">Cartas verdes. Se activan y su efecto resuelve inmediatamente (salvo los Continuos y de Campo, que permanecen en campo).</p>
-        <ul class="form-nb-list">
-            <li><strong>Normal:</strong> Se activa, resuelve y va al cementerio. Ej: Raigeki.</li>
-            <li><strong>Continuo:</strong> Permanece en campo y su efecto dura mientras esté ahí.</li>
-            <li><strong>Equipo:</strong> Se equipa a un monstruo y modifica sus stats o le da efectos.</li>
-            <li><strong>Campo:</strong> Va a la zona de Campo. Solo puede haber 1 por lado del tablero.</li>
-            <li><strong>Ritual:</strong> Se usa para realizar una Invocación Ritual específica.</li>
-            <li><strong>Juego Rápido (Quick-Play):</strong> Puede activarse en cualquier fase de TU turno, o en el turno del oponente si está boca abajo desde el turno anterior.</li>
+     <ul class="form-nb-list">
+            <li><strong>Normal:</strong> Se activa, resuelve y va al cementerio. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Raigeki'); return false;">Raigeki</a>.</li>
+            <li><strong>Continuo:</strong> Permanece en campo y su efecto dura mientras esté ahí. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Rivalry of Warlords'); return false;">Rivalry of Warlords</a>.</li>
+            <li><strong>Equipo:</strong> Se equipa a un monstruo y modifica sus stats o le da efectos. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('United We Stand'); return false;">United We Stand</a>.</li>
+            <li><strong>Campo:</strong> Va a la zona de Campo. Solo puede haber 1 por lado del tablero. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Necrovalley'); return false;">Necrovalley</a>.</li>
+            <li><strong>Ritual:</strong> Se usa para realizar una Invocación Ritual específica. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Advanced Ritual Art'); return false;">Advanced Ritual Art</a>.</li>
+            <li><strong>Juego Rápido (Quick-Play):</strong> Puede activarse en cualquier fase de TU turno, o en el turno del oponente si está boca abajo desde el turno anterior. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Mystical Space Typhoon'); return false;">Mystical Space Typhoon</a>.</li>
         </ul>
         <p class="form-nb-text">Importante: los hechizos normales NO pueden activarse en respuesta directa a algo — necesitan una ventana abierta para jugarse. Si tu oponente activa un efecto y quieres responder, necesitas un hechizo de juego rápido o una trampa.</p>
 
         <h3 class="form-nb-subtitle">🟣 Trampas</h3>
         <p class="form-nb-text">Cartas rosadas/moradas. La regla más importante: deben colocarse boca abajo primero y no pueden activarse el mismo turno que fueron colocadas (salvo excepciones).</p>
-        <ul class="form-nb-list">
-            <li><strong>Normal:</strong> Activa su efecto una vez y va al cementerio.</li>
-            <li><strong>Continua:</strong> Permanece en campo y sigue activa.</li>
-            <li><strong>Counter (Contraefecto):</strong> Velocidad de hechizo 3. Solo puede ser respondida por otra counter trap. Son las más rápidas del juego.</li>
+       <ul class="form-nb-list">
+            <li><strong>Normal:</strong> Activa su efecto una vez y va al cementerio. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Mirror Force'); return false;">Mirror Force</a>.</li>
+            <li><strong>Continua:</strong> Permanece en campo y sigue activa. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Skill Drain'); return false;">Skill Drain</a>.</li>
+            <li><strong>Counter (Contraefecto):</strong> Velocidad de hechizo 3. Solo puede ser respondida por otra counter trap. Son las más rápidas del juego. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Solemn Judgment'); return false;">Solemn Judgment</a>.</li>
         </ul>
         <p class="form-nb-text"><strong>La regla del turno:</strong> si colocas una trampa en MP1, tu oponente puede destruirla antes de que "madure" — solo puede activarse desde el turno del oponente en adelante. Por eso colocarlas en MP2 es la jugada más segura.</p>
 
@@ -520,30 +989,40 @@ const Formacion = {
             <li>3. ¿Mi oponente puede responder a esto?</li>
         </ul>
         <p class="form-nb-text">Esas 3 preguntas te evitan el 90% de los errores del novato.</p>
-    `; },
+    <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('tipos-cartas-basicas')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Ve a <strong>Buscador → ⚙ Filtros avanzados</strong> y elige la categoría "Mágica" o "Trampa": aparecerán chips
+            con cada subtipo (Normal, Continua, Equipo, Campo, Ritual, Juego Rápido / Contraefecto) para filtrar cartas reales
+            de cada uno. Luego entra a <strong>Mi Deck → Decklist</strong> y observa el color del borde de cada carta
+            (verde = hechizo, morado = trampa) para identificar el tipo sin leer el texto completo.
+        </p>
+        
+        `; },
 
     _topicTiposCartasEspeciales: function () { return `
         <h2 class="form-nb-title">Tipos de Cartas Especiales (Extra Deck)</h2>
         <p class="form-nb-text">El Extra Deck guarda hasta 15 cartas especiales que se invocan con mecánicas únicas. En el juego moderno, el Extra Deck es donde está la mayor parte del poder de un deck.</p>
 
         <h3 class="form-nb-subtitle">🟣 Fusión</h3>
-        <p class="form-nb-text">Marco morado. Requiere una Magia de Fusión que combina los materiales desde mano, campo o cementerio. La <em>Fusión de Contacto</em> es inherente (sin magia), y los materiales regresan al deck, no al cementerio.</p>
+        <p class="form-nb-text">Marco morado. Requiere una Magia de Fusión que combina los materiales desde mano, campo o cementerio. La <em>Fusión de Contacto</em> es inherente (sin magia), y los materiales regresan al deck, no al cementerio. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Blue-Eyes Ultimate Dragon'); return false;">Blue-Eyes Ultimate Dragon</a>.</p>
 
         <h3 class="form-nb-subtitle">🔵 Ritual</h3>
-        <p class="form-nb-text">Marco azul claro. Único tipo que llega del deck principal, no del Extra Deck. Necesita la Magia de Ritual correspondiente y tributar monstruos cuyo nivel total iguale o supere el del Ritual.</p>
+        <p class="form-nb-text">Marco azul claro. Único tipo que llega del deck principal, no del Extra Deck. Necesita la Magia de Ritual correspondiente y tributar monstruos cuyo nivel total iguale o supere el del Ritual. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Black Luster Soldier'); return false;">Black Luster Soldier</a>.</p>
 
         <h3 class="form-nb-subtitle">⚪ Sincronía (Synchro)</h3>
-        <p class="form-nb-text">Marco blanco/gris. Necesitas 1 Tuner + 1 o más no-Tuner. La suma exacta de sus niveles debe igualar el del Sincro. Los materiales van al cementerio.</p>
+        <p class="form-nb-text">Marco blanco/gris. Necesitas 1 Tuner + 1 o más no-Tuner. La suma exacta de sus niveles debe igualar el del Sincro. Los materiales van al cementerio. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Stardust Dragon'); return false;">Stardust Dragon</a>.</p>
 
         <h3 class="form-nb-subtitle">⬛ XYZ ("Exceed")</h3>
-        <p class="form-nb-text">Marco negro. Necesitas 2+ monstruos del mismo nivel. Los materiales quedan <em>debajo</em> del XYZ — no están en el cementerio hasta que el XYZ se destruye. Los XYZ tienen Rango, no Nivel. El <em>Caos XYZ</em> permite usar otro XYZ como material para invocar una versión superior.</p>
+        <p class="form-nb-text">Marco negro. Necesitas 2+ monstruos del mismo nivel. Los materiales quedan <em>debajo</em> del XYZ — no están en el cementerio hasta que el XYZ se destruye. Los XYZ tienen Rango, no Nivel. El <em>Caos XYZ</em> permite usar otro XYZ como material para invocar una versión superior. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Number 39: Utopia'); return false;">Number 39: Utopia</a>.</p>
 
         <h3 class="form-nb-subtitle">🔷 Link</h3>
-        <p class="form-nb-text">Marco azul oscuro hexagonal. No tienen DEF ni Nivel — tienen Flechas de Link que habilitan zonas del Extra Deck para tus demás monstruos. Son el andamio de los decks modernos. Sin un Link en campo, solo puedes usar 1 zona central del Extra Deck.</p>
+        <p class="form-nb-text">Marco azul oscuro hexagonal. No tienen DEF ni Nivel — tienen Flechas de Link que habilitan zonas del Extra Deck para tus demás monstruos. Son el andamio de los decks modernos. Sin un Link en campo, solo puedes usar 1 zona central del Extra Deck. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Decode Talker'); return false;">Decode Talker</a>.</p>
 
         <h3 class="form-nb-subtitle">🟠🟢 Péndulo</h3>
-        <p class="form-nb-text">Marco mitad verde, mitad naranja. Dos cartas Péndulo con escalas distintas se colocan en las Zonas Péndulo. Una vez por turno puedes invocar especialmente todos los monstruos de tu mano cuyo nivel esté dentro del rango de las escalas. Cuando salen del campo, van al tope del Extra Deck boca arriba.</p>
-
+        <p class="form-nb-text">Marco mitad verde, mitad naranja. Dos cartas Péndulo con escalas distintas se colocan en las Zonas Péndulo. Una vez por turno puedes invocar especialmente todos los monstruos de tu mano cuyo nivel esté dentro del rango de las escalas. Cuando salen del campo, van al tope del Extra Deck boca arriba. <em>Ejemplo:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Odd-Eyes Pendulum Dragon'); return false;">Odd-Eyes Pendulum Dragon</a>.</p>
         <h3 class="form-nb-subtitle">📈 Orden de Aprendizaje Recomendado</h3>
         <ul class="form-nb-list">
             <li>1. Fusión — más intuitiva</li>
@@ -556,7 +1035,18 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">Un error común es creer que el Extra Deck es "opcional". En el juego moderno, el Extra Deck es donde está la mayor parte del poder de un deck. Un deck sin Extra Deck bien construido es un deck que no puede responder a amenazas reales. Aprende al menos Fusión, Sincro y XYZ antes de intentar un deck competitivo.</p>
-    `; },
+    <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('tipos-cartas-especiales')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Ve a <strong>Buscador → ⚙ Filtros avanzados → Monstruo</strong> y usa los chips de subtipo
+            (Ritual / Fusion / Synchro / XYZ / Link / Pendulum) para ver ejemplos reales de cada mecánica.
+            Luego abre tu deck en <strong>Mi Deck → Decklist</strong> y pulsa la pestaña <strong>"Extra"</strong>
+            para revisar qué mecánicas del Extra Deck ya estás usando (o si te falta alguna).
+        </p>
+
+        `; },
 
     _topicEstructuraEfecto: function () { return `
         <h2 class="form-nb-title">Estructura de un Efecto de Carta</h2>
@@ -571,7 +1061,8 @@ const Formacion = {
             <li><strong>5. Duración:</strong> Por cuánto tiempo aplica el efecto. Ej: "hasta el final del turno", "durante esta Battle Phase", "mientras esté en campo". Si no dice cuánto dura, es permanente o hasta que se quite la carta.</li>
             <li><strong>6. Restricción:</strong> Limitación que aplica DESPUÉS de resolver el efecto, a menudo en una frase separada al final. Ej: "No puedes atacar directamente el turno que actives este efecto."</li>
         </ul>
-
+<p class="form-nb-text"><em>Ejemplo real de Costo separado del Efecto:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Pot of Desires'); return false;">Pot of Desires</a> — el costo (desterrar 10 cartas boca abajo desde tu deck) se paga primero; si el efecto es negado, esas 10 cartas se pierden igual.</p>
+        <p class="form-nb-text"><em>Ejemplo real de Duración:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Enemy Controller'); return false;">Enemy Controller</a> — su efecto de cambiar posición o tomar control de un monstruo rival dura solo hasta el final de ese turno.</p>
         <h3 class="form-nb-subtitle">🔗 Conectores Lógicos Clave</h3>
         <ul class="form-nb-list">
             <li><strong>IF (si):</strong> El efecto puede "miss the timing" en casos específicos, pero es más flexible que WHEN — solo necesita que la condición se haya cumplido en algún momento del proceso. Ej: "Si esta carta fue enviada al cementerio" tiene una ventana específica.</li>
@@ -588,7 +1079,7 @@ const Formacion = {
             <li><strong>Con objetivo</strong> ("Selecciona 1 carta en el campo de tu oponente y destrúyela"): el oponente puede responder y remover el objetivo antes de que resuelva. Si el objetivo ya no está cuando resuelve, el efecto falla.</li>
             <li><strong>Sin objetivo</strong> ("Destruye todos los monstruos en el campo de tu oponente"): no hay selección previa. El efecto resuelve directamente y el oponente no puede "escapar" moviendo la carta — todo aplica al resolver.</li>
         </ul>
-
+<p class="form-nb-text"><em>Compara en monstruos:</em> <a href="#" class="form-link" onclick="Formacion.openCard('Effect Veiler'); return false;">Effect Veiler</a> selecciona ("target") 1 monstruo específico para negar su efecto. <a href="#" class="form-link" onclick="Formacion.openCard('Ash Blossom & Joyous Spring'); return false;">Ash Blossom & Joyous Spring</a> niega sin seleccionar nada — no tiene objetivo.</p>
         <h3 class="form-nb-subtitle">🧪 Ejemplo Práctico Diseccionado</h3>
         <p class="form-nb-text">Texto: <em>"Si tienes 3 o más cartas en tu mano: descarta 1 carta; roba 2 cartas. Solo puedes activar este efecto una vez por turno."</em></p>
         <ul class="form-nb-list">
@@ -601,7 +1092,19 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">Lee siempre en este orden: 1. ¿Qué necesito para activarlo? (Requisito) 2. ¿Qué pago? (Costo) — ¿vale la pena si me lo niegan? 3. ¿Qué hace? (Efecto) — ¿tiene objetivo? 4. ¿Qué limitación me queda después? (Restricción). El jugador que entiende los costos y las restricciones toma mejores decisiones que el que solo ve el efecto en bruto.</p>
-    `; },
+    
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('estructura-efecto-carta')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Abre cualquier carta desde <strong>Buscador</strong>: el visor ya resalta el texto por colores según su
+            nomenclatura (condición de activación, costo, restricción, efecto genérico) — el mismo motor que usa el
+            Scoring G1/G2 internamente. Antes de mirarlo, intenta identificar tú mismo las 6 partes en 3 cartas de tu
+            <strong>Mi Deck → Staples</strong>, y luego compara tu lectura con el resaltado automático de la app.
+        </p>
+
+        `; },
 
     _topicFuncionesCartas: function () { return `
         <h2 class="form-nb-title">Funciones de las Cartas (Roles)</h2>
@@ -615,19 +1118,30 @@ const Formacion = {
             <li><strong>Bridge (Puente):</strong> Conecta dos piezas que normalmente no interactúan. No inicia ni cierra — transforma el estado del campo para habilitar lo que viene después.</li>
             <li><strong>Garnet / Brick (Ladrillo):</strong> Carta que necesitas en el deck para que otro efecto la busque, pero que en mano no sirve de nada. Regla general: no más de 2 Garnets en un deck, o la consistencia cae drásticamente.</li>
         </ul>
+        <p class="form-nb-text">Ejemplos reales — haz clic para abrir la carta:</p>
+        <ul class="form-nb-list">
+            <li><strong>Starter:</strong> <a href="#" class="form-link" onclick="Formacion.openCard('Emergency Teleport'); return false;">Emergency Teleport</a> — trae un Tuner de bajo Nivel sin depender de nada más en campo.</li>
+            <li><strong>Extender:</strong> <a href="#" class="form-link" onclick="Formacion.openCard('Instant Fusion'); return false;">Instant Fusion</a> — Invoca un monstruo de Fusión del Extra Deck sin materiales, extendiendo aunque el starter original haya sido negado.</li>
+            <li><strong>Searcher:</strong> <a href="#" class="form-link" onclick="Formacion.openCard('Terraforming'); return false;">Terraforming</a> — busca cualquier Hechizo de Campo, sin importar el arquetipo.</li>
+            <li><strong>Bridge:</strong> <a href="#" class="form-link" onclick="Formacion.openCard('Foolish Burial Goods'); return false;">Foolish Burial Goods</a> — envía un monstruo Ritual o de Fusión al cementerio, habilitando recuperación que de otro modo no tendrías.</li>
+        </ul>
 
         <h3 class="form-nb-subtitle">🛡️ Cartas Defensivas (las que interrumpen)</h3>
         <ul class="form-nb-list">
-            <li><strong>Handtrap (Trampa de Mano):</strong> Monstruo que activa su efecto desde la mano en respuesta a algo del oponente. No necesita estar en campo para funcionar — la interrupción estándar del formato moderno. Ej: Ash Blossom, Impermanence, Nibiru.</li>
-            <li><strong>Boardbreaker (Rompe-Campo):</strong> Destruye, regresa o neutraliza el campo ya construido del oponente. Se usan principalmente cuando vas segundo. Ej: Raigeki, Dark Ruler No More, Evenly Matched.</li>
-            <li><strong>Anti-Handtrap (Anti-Trampa de Mano):</strong> Protege tu combo de las Handtraps del oponente. "Crossout Designator" y "Called by the Grave" son los ejemplos más claros — en decks combo, son tan importantes como el combo mismo.</li>
+            <li><strong>Handtrap (Trampa de Mano):</strong> Monstruo que activa su efecto desde la mano en respuesta a algo del oponente. No necesita estar en campo para funcionar — la interrupción estándar del formato moderno. Ej: <a href="#" class="form-link" onclick="Formacion.openCard('Ash Blossom & Joyous Spring'); return false;">Ash Blossom & Joyous Spring</a>, <a href="#" class="form-link" onclick="Formacion.openCard('Infinite Impermanence'); return false;">Infinite Impermanence</a>, <a href="#" class="form-link" onclick="Formacion.openCard('Nibiru, the Primal Being'); return false;">Nibiru, the Primal Being</a>.</li>
+            <li><strong>Boardbreaker (Rompe-Campo):</strong> Destruye, regresa o neutraliza el campo ya construido del oponente. Se usan principalmente cuando vas segundo. Ej: <a href="#" class="form-link" onclick="Formacion.openCard('Raigeki'); return false;">Raigeki</a>, <a href="#" class="form-link" onclick="Formacion.openCard('Dark Ruler No More'); return false;">Dark Ruler No More</a>, <a href="#" class="form-link" onclick="Formacion.openCard('Evenly Matched'); return false;">Evenly Matched</a>.</li>
+            <li><strong>Anti-Handtrap (Anti-Trampa de Mano):</strong> Protege tu combo de las Handtraps del oponente. <a href="#" class="form-link" onclick="Formacion.openCard('Crossout Designator'); return false;">Crossout Designator</a> y <a href="#" class="form-link" onclick="Formacion.openCard('Called by the Grave'); return false;">Called by the Grave</a> son los ejemplos más claros — en decks combo, son tan importantes como el combo mismo.</li>
         </ul>
 
         <h3 class="form-nb-subtitle">🏆 Cartas de Finalización (lo que gana el duelo)</h3>
         <ul class="form-nb-list">
-            <li><strong>Boss Monster (Monstruo Jefe):</strong> La amenaza final del combo. El oponente necesita resolverlo para sobrevivir — y si tiene buenas protecciones, hacerlo es muy difícil. Un buen Boss Monster niega, destruye, es indestructible o tiene alta ATK.</li>
+            <li><strong>Boss Monster (Monstruo Jefe):</strong> La amenaza final del combo. El oponente necesita resolverlo para sobrevivir — y si tiene buenas protecciones, hacerlo es muy difícil. Un buen Boss Monster niega, destruye, es indestructible o tiene alta ATK. Ej: <a href="#" class="form-link" onclick="Formacion.openCard('Baronne de Fleur'); return false;">Baronne de Fleur</a>.</li>
             <li><strong>Endboard (Campo Final):</strong> No es una carta — es el estado completo de tu campo cuando terminas tu turno. Un endboard fuerte = varios Boss Monsters con diferentes tipos de negación.</li>
         </ul>
+        <p class="form-nb-text">
+            Para mapear estos roles en tu propia línea real (Starter → Extenders → Boss Monster/Endboard), usa
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck','combos'); return false;">Mi Deck → 🧬 Línea de Combos</a>.
+        </p>
 
         <h3 class="form-nb-subtitle">🧭 Las 4 Funciones Universales</h3>
         <p class="form-nb-text">Más allá de los nombres específicos, toda carta en el juego hace una de estas:</p>
@@ -641,6 +1155,18 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">El error más frecuente del novato es evaluar una carta por su ATK o porque "se ve poderosa". La pregunta correcta es: ¿qué función cumple en mi deck? Una carta que no cumple ninguna función concreta es una carta que no debería estar en el deck, sin importar qué tan impresionante parezca en papel.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('funciones-de-las-cartas')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Con un deck cargado en <strong>Mi Deck</strong>, abre cualquier carta desde <strong>Buscador</strong>: el visor calcula
+            en vivo su "🎯 Posibles Roles" y su "📊 Aporte al deck activo" (delta de Consistencia/Potencia/Resiliencia si la agregaras).
+            Compara ese resultado con tu propia clasificación de esta lección. Para ver o editar cómo la app detecta cada rol
+            (keywords, condiciones), entra a
+            <a href="#" class="form-link" onclick="Formacion.goToConfigSection('roles-section'); return false;">Config → 🎭 Mecánicas y Roles</a>.
+        </p>
     `; },
 
     _topicMentalidadJugador: function () { return `
@@ -675,8 +1201,36 @@ const Formacion = {
             <li><strong>¿Voy ganando o perdiendo?</strong> Si vas perdiendo, vale asumir más riesgos. Si vas ganando, juega seguro.</li>
         </ul>
 
+        <h3 class="form-nb-subtitle">📈 De la Teoría a los Datos Reales</h3>
+        <p class="form-nb-text">
+            Estas mentalidades dejan de ser frases cuando las mides. Cada ronda que registras en
+            <strong>Mi Deck → 🎯 Optimización</strong> (resultado, presión de tiempo, si rompiste o te negaron la jugada) es la
+            autoevaluación que separa a quien "siente" que jugó bien de quien lo sabe con datos. Con suficientes rondas, tu
+            <strong>Nivel como Piloto del Deck</strong> (ahí mismo y en Estadísticas) sube — "practicar el deck es lo que lo
+            hace bueno" deja de ser una frase y se vuelve un número real.
+        </p>
+        <p class="form-nb-text">
+            El mismo bloque de Optimización tiene el quiz <strong>🧩 Complejidad del Deck</strong>: separa la curva de aprendizaje
+            (qué tan fácil es empezar) del techo de habilidad (qué tan difícil es dominarlo al máximo) — los mismos dos ejes detrás
+            de "gusto vs conveniencia" y "los costos altos no son malos, depende del deck". Evalúa tu deck ahí para ponerle un
+            número a esa intuición.
+        </p>
+
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">La mentalidad es lo que convierte el conocimiento técnico en victoria real. Puedes saber todos los combos del meta y perder constantemente si tu toma de decisiones bajo presión es mala. El mejor entrenamiento no es aprender más combos — es aprender a pensar mejor en los momentos donde la jugada correcta no es obvia.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('mentalidad-del-jugador')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Antes de tu próxima partida real, repasa el checklist de 5 preguntas de esta lección. Después de jugarla, entra a
+            <strong>Mi Deck → 🎯 Optimización</strong> y registra la ronda con sus datos reales (orden, resultado, presión de
+            tiempo, si tuviste que romper el campo rival). Para practicar la toma de decisiones sin que una partida real esté en
+            juego, usa
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','duelo'); return false;">Simuladores → ⚔️ Duelo en Vivo</a>,
+            que incluye el cronómetro de Master Duel para simular presión de tiempo real.
+        </p>
     `; },
 
     _topicCadenasPrioridad: function () { return `
@@ -688,7 +1242,7 @@ const Formacion = {
         <ul class="form-nb-list">
             <li><strong>Velocidad 1:</strong> Efectos que NO pueden activarse como respuesta directa a otro efecto — son la base de la cadena, nunca el eslabón reactivo. Incluye Efectos de Ignición (Ignition Effects) de monstruo, Efectos Continuos (ni siquiera generan cadena, solo aplican mientras la carta esté en campo), y Magias Normales, de Campo, de Equipo y de Ritual.</li>
             <li><strong>Velocidad 2:</strong> Pueden responder a velocidad 1 y a velocidad 2. Incluye Quick Effects de monstruo, Magias de Juego Rápido (Quick-Play), Trampas Normales y Continuas, y las Handtraps (se activan desde la mano como velocidad 2).</li>
-            <li><strong>Velocidad 3:</strong> Solo puede responder a velocidad 3. Son las Trampas Counter (Counter Traps) — Solemn Judgment, Solemn Warning, etc. La única forma de responder a una Counter Trap es con otra Counter Trap.</li>
+            <li><strong>Velocidad 3:</strong> Solo puede responder a velocidad 3. Son las Trampas Counter (Counter Traps) — <a href="#" class="form-link" onclick="Formacion.openCard('Solemn Judgment'); return false;">Solemn Judgment</a>, <a href="#" class="form-link" onclick="Formacion.openCard('Solemn Warning'); return false;">Solemn Warning</a>, etc. La única forma de responder a una Counter Trap es con otra Counter Trap.</li>
         </ul>
 
         <h3 class="form-nb-subtitle">🧩 Tipos de Efectos</h3>
@@ -702,7 +1256,7 @@ const Formacion = {
         <h3 class="form-nb-subtitle">🔗 Cómo Funciona una Cadena</h3>
         <p class="form-nb-text">Una cadena es una secuencia de efectos activados en respuesta mutua. Se resuelve al revés: el último activado resuelve primero (LIFO — Last In, First Out).</p>
         <ul class="form-nb-list">
-            <li><strong>Ejemplo:</strong> Jugador A activa Ash Blossom (Vel. 2) — Eslabón 1. Jugador B responde con Called by the Grave (Vel. 2) — Eslabón 2. Resolución: Called by the Grave resuelve primero (eslabón 2) y destierra a Ash del cementerio, negándola. Ash Blossom intenta resolver (eslabón 1) pero ya no puede porque fue negada.</li>
+            <li><strong>Ejemplo:</strong> Jugador A activa <a href="#" class="form-link" onclick="Formacion.openCard('Ash Blossom & Joyous Spring'); return false;">Ash Blossom</a> (Vel. 2) — Eslabón 1. Jugador B responde con <a href="#" class="form-link" onclick="Formacion.openCard('Called by the Grave'); return false;">Called by the Grave</a> (Vel. 2) — Eslabón 2. Resolución: Called by the Grave resuelve primero (eslabón 2) y destierra a Ash del cementerio, negándola. Ash Blossom intenta resolver (eslabón 1) pero ya no puede porque fue negada.</li>
             <li>Las cadenas siempre se construyen completamente ANTES de resolverse. No puedes activar un nuevo efecto a mitad de la resolución.</li>
             <li>Si el eslabón 1 (el original) es negado, el resto de la cadena resuelve igual desde el eslabón más alto hacia abajo — no se cancela toda la cadena.</li>
         </ul>
@@ -720,6 +1274,19 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">El 80% de las disputas en torneo vienen de no entender cuándo hay ventana. Si tienes dudas sobre si puedes activar algo, pregunta: ¿hubo una acción o efecto de mi oponente que abrió la ventana? Si la respuesta es no, espera.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('cadenas-prioridad')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Abre en <strong>Buscador</strong> las cartas de esta lección y confirma tú mismo su Spell Speed leyendo su tipo
+            (Trampa Normal vs Counter Trap, Quick-Play vs Normal). Luego practica construir y resolver una cadena paso a paso
+            campo real en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','practica'); return false;">Simuladores → 🎴 Zona de Práctica</a>,
+            o aplícalo directamente en una partida cronometrada con
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','duelo'); return false;">Simuladores → ⚔️ Duelo en Vivo</a>.
+        </p>
     `; },
 
     _topicStaples: function () { return `
@@ -736,50 +1303,51 @@ const Formacion = {
         <p class="form-nb-text">Una carta puede ser Staple en un meta y completamente prescindible en otro. Por eso el criterio de "Staple eterno" casi no existe — todo cambia.</p>
 
         <h3 class="form-nb-subtitle">🤚 Handtraps (Interrupciones desde la Mano)</h3>
+        <p class="form-nb-text">Haz clic en cada nombre para abrir su carta real:</p>
         <ul class="form-nb-list">
-            <li><strong>Ash Blossom &amp; Joyous Spring:</strong> Niega cualquier efecto que busque, robe o invoque especialmente desde el deck. Una de las más versátiles del juego.</li>
-            <li><strong>Droll &amp; Lock Bird:</strong> Si el oponente agrega 1+ cartas a su mano desde el deck en un turno, niega que puedan agregar más ese mismo turno.</li>
-            <li><strong>Maxx "C":</strong> Roba 1 carta cada vez que el oponente invoca especialmente ese turno. Prohibida en TCG, pero la más icónica del juego.</li>
-            <li><strong>Mulcharmy Fuwalos / Purulia:</strong> Hacen robar cartas si el oponente invoca monstruos de cierto tipo bajo ciertas condiciones.</li>
-            <li><strong>Ghost Belle &amp; Haunted Mansion:</strong> Niega efectos del cementerio, zonas desterradas o efectos de turno extra.</li>
-            <li><strong>Effect Veiler:</strong> Niega el efecto de un monstruo hasta el final del turno. Velocidad 1 desde la mano — limitada pero específica.</li>
-            <li><strong>Infinite Impermanence:</strong> Niega el efecto de un monstruo en campo. Juego Rápido, puede usarse en el turno del oponente. Si lo seteas en la primera columna sin carta, te da inmunidad a esa columna.</li>
-            <li><strong>Nibiru, the Primal Being:</strong> Si el oponente ha invocado especialmente 5+ monstruos en ese turno, puedes tributarlos todos y dar un Token Nibiru. La respuesta a los combo-decks.</li>
-            <li><strong>D.D. Crow:</strong> Destierra 1 carta del cementerio del oponente desde la mano. Muy específico pero devastador contra decks que usan el cementerio.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Ash Blossom & Joyous Spring'); return false;">Ash Blossom &amp; Joyous Spring</a>:</strong> Niega cualquier efecto que busque, robe o invoque especialmente desde el deck. Una de las más versátiles del juego.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Droll & Lock Bird'); return false;">Droll &amp; Lock Bird</a>:</strong> Si el oponente agrega 1+ cartas a su mano desde el deck en un turno, niega que puedan agregar más ese mismo turno.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Maxx &quot;C&quot;'); return false;">Maxx "C"</a>:</strong> Roba 1 carta cada vez que el oponente invoca especialmente ese turno. Prohibida en TCG, pero la más icónica del juego.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Mulcharmy Fuwalos'); return false;">Mulcharmy Fuwalos</a> / <a href="#" class="form-link" onclick="Formacion.openCard('Mulcharmy Purulia'); return false;">Purulia</a>:</strong> Hacen robar cartas si el oponente invoca monstruos de cierto tipo bajo ciertas condiciones.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Ghost Belle & Haunted Mansion'); return false;">Ghost Belle &amp; Haunted Mansion</a>:</strong> Niega efectos del cementerio, zonas desterradas o efectos de turno extra.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Effect Veiler'); return false;">Effect Veiler</a>:</strong> Niega el efecto de un monstruo hasta el final del turno. Velocidad 1 desde la mano — limitada pero específica.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Infinite Impermanence'); return false;">Infinite Impermanence</a>:</strong> Niega el efecto de un monstruo en campo. Juego Rápido, puede usarse en el turno del oponente. Si lo seteas en la primera columna sin carta, te da inmunidad a esa columna.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Nibiru, the Primal Being'); return false;">Nibiru, the Primal Being</a>:</strong> Si el oponente ha invocado especialmente 5+ monstruos en ese turno, puedes tributarlos todos y dar un Token Nibiru. La respuesta a los combo-decks.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('D.D. Crow'); return false;">D.D. Crow</a>:</strong> Destierra 1 carta del cementerio del oponente desde la mano. Muy específico pero devastador contra decks que usan el cementerio.</li>
         </ul>
 
         <h3 class="form-nb-subtitle">🛡️ Anti-Handtraps (Protegen tu Combo)</h3>
         <ul class="form-nb-list">
-            <li><strong>Called by the Grave:</strong> Destierra 1 carta del cementerio del oponente y niega efectos de cartas con ese nombre ese turno. Contraresta Ash, Ghost Belle.</li>
-            <li><strong>Crossout Designator:</strong> Declara un nombre de carta que tienes en tu deck. Niega todos los efectos de cartas con ese nombre ese turno. Respuesta a casi cualquier Handtrap.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Called by the Grave'); return false;">Called by the Grave</a>:</strong> Destierra 1 carta del cementerio del oponente y niega efectos de cartas con ese nombre ese turno. Contraresta Ash, Ghost Belle.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Crossout Designator'); return false;">Crossout Designator</a>:</strong> Declara un nombre de carta que tienes en tu deck. Niega todos los efectos de cartas con ese nombre ese turno. Respuesta a casi cualquier Handtrap.</li>
         </ul>
 
         <h3 class="form-nb-subtitle">💥 Boardbreakers (Destruyen el Campo del Oponente)</h3>
         <p class="form-nb-text">Para usar cuando vas segundo y el oponente ya tiene campo construido.</p>
         <ul class="form-nb-list">
-            <li><strong>Raigeki / Dark Hole:</strong> Destruye todos los monstruos del oponente. Clásico.</li>
-            <li><strong>Dark Ruler No More:</strong> Niega todos los efectos de los monstruos del oponente hasta el final del turno. No pueden ser respondidos. Limpia el camino.</li>
-            <li><strong>Forbidden Droplet:</strong> Manda cartas al cementerio para negar efectos y bajar ATK a la mitad. La respuesta más versátil al campo rival.</li>
-            <li><strong>Evenly Matched:</strong> El oponente desterrará cartas hasta tener 1. Devastador si el oponente tiene campo lleno y tú tienes pocos recursos.</li>
-            <li><strong>Super Polymerization:</strong> Fusiona usando cartas del campo del oponente. No puede ser respondida. Quita 2+ amenazas en 1 carta.</li>
-            <li><strong>Lightning Storm:</strong> Destruye todos los monstruos de ataque O todos los mágicas/trampas boca abajo del oponente. Solo funciona con mano vacía.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Raigeki'); return false;">Raigeki</a> / <a href="#" class="form-link" onclick="Formacion.openCard('Dark Hole'); return false;">Dark Hole</a>:</strong> Destruye todos los monstruos del oponente. Clásico.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Dark Ruler No More'); return false;">Dark Ruler No More</a>:</strong> Niega todos los efectos de los monstruos del oponente hasta el final del turno. No pueden ser respondidos. Limpia el camino.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Forbidden Droplet'); return false;">Forbidden Droplet</a>:</strong> Manda cartas al cementerio para negar efectos y bajar ATK a la mitad. La respuesta más versátil al campo rival.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Evenly Matched'); return false;">Evenly Matched</a>:</strong> El oponente desterrará cartas hasta tener 1. Devastador si el oponente tiene campo lleno y tú tienes pocos recursos.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Super Polymerization'); return false;">Super Polymerization</a>:</strong> Fusiona usando cartas del campo del oponente. No puede ser respondida. Quita 2+ amenazas en 1 carta.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Lightning Storm'); return false;">Lightning Storm</a>:</strong> Destruye todos los monstruos de ataque O todos los mágicas/trampas boca abajo del oponente. Solo funciona con mano vacía.</li>
         </ul>
 
         <h3 class="form-nb-subtitle">👑 Monstruos Endboard Universales</h3>
         <p class="form-nb-text">Van al campo del oponente o se usan en el campo para cerrar el duelo.</p>
         <ul class="form-nb-list">
-            <li><strong>I:P Masquerena:</strong> Link 2. Permite invocar Links en el turno del oponente. Acceso al Extra Deck como respuesta.</li>
-            <li><strong>S:P Little Knight:</strong> Link 2. Destierra temporalmente cualquier monstruo en campo. Una de las mejores cartas del formato actual.</li>
-            <li><strong>Accesscode Talker:</strong> Link 4. Efecto de destrucción continua al invocar el Link correcto. Cierra duelos por sí solo.</li>
-            <li><strong>Chaos Angel:</strong> Sincro 10. Inafectado por hechizos/trampas y puede desterrar al hacer daño. Endboard de alto impacto.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('I:P Masquerena'); return false;">I:P Masquerena</a>:</strong> Link 2. Permite invocar Links en el turno del oponente. Acceso al Extra Deck como respuesta.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('S:P Little Knight'); return false;">S:P Little Knight</a>:</strong> Link 2. Destierra temporalmente cualquier monstruo en campo. Una de las mejores cartas del formato actual.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Accesscode Talker'); return false;">Accesscode Talker</a>:</strong> Link 4. Efecto de destrucción continua al invocar el Link correcto. Cierra duelos por sí solo.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Chaos Angel'); return false;">Chaos Angel</a>:</strong> Sincro 10. Inafectado por hechizos/trampas y puede desterrar al hacer daño. Endboard de alto impacto.</li>
         </ul>
 
         <h3 class="form-nb-subtitle">📜 Magias y Trampas de Utilidad</h3>
         <ul class="form-nb-list">
-            <li><strong>Monster Reborn:</strong> Invoca especialmente 1 monstruo del cementerio de cualquiera.</li>
-            <li><strong>Solemn Judgment:</strong> Niega 1 invocación, hechizo o trampa pagando la mitad de LP.</li>
-            <li><strong>Solemn Warning / Solemn Strike:</strong> Más específicas pero siguen siendo poderosas.</li>
-            <li><strong>Dimensional Barrier:</strong> Declara 1 tipo de invocación especial (Fusión, Sincro, etc.). El oponente no puede usar ese tipo en ese turno.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Monster Reborn'); return false;">Monster Reborn</a>:</strong> Invoca especialmente 1 monstruo del cementerio de cualquiera.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Solemn Judgment'); return false;">Solemn Judgment</a>:</strong> Niega 1 invocación, hechizo o trampa pagando la mitad de LP.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Solemn Warning'); return false;">Solemn Warning</a> / <a href="#" class="form-link" onclick="Formacion.openCard('Solemn Strike'); return false;">Solemn Strike</a>:</strong> Más específicas pero siguen siendo poderosas.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Dimensional Barrier'); return false;">Dimensional Barrier</a>:</strong> Declara 1 tipo de invocación especial (Fusión, Sincro, etc.). El oponente no puede usar ese tipo en ese turno.</li>
         </ul>
 
         <h3 class="form-nb-subtitle">✅ Cómo Usar Este Conocimiento</h3>
@@ -793,6 +1361,18 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">El criterio más importante para elegir Staples: ¿qué es lo que más me amenaza en el meta actual? Construye tu selección de non-engine en función de eso, no en función de lo que está de moda en los videos.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('staples-formato')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            La sidebar <strong>Mi Deck → Staples</strong> ya trae varios de estos Staples cargados para agregar con un clic.
+            Para revisar si alguno está prohibido o limitado en tu formato, entra a <strong>Mi Deck → sidebar → Banlist</strong>
+            y usa "＋ Agregar carta" para buscarlo directamente. Y para decidir si una carta cuenta como Staple en tu Internal
+            Score, ajústalo en
+            <a href="#" class="form-link" onclick="Formacion.goToConfigSection('staples-section'); return false;">Config → 📌 Lista de Staples</a>.
+        </p>
     `; },
 
     _topicAnatomiaDeckCompetitivo: function () { return `
@@ -820,6 +1400,26 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">Cuando evalúes tu deck, no preguntes solo "¿es poderoso?". Pregunta: ¿es consistente? ¿qué pasa si me niegan? ¿puedo seguir jugando? Un deck con 10/10 de techo de poder pero 2/10 de Floor perderá contra cualquier jugador que haya estudiado sus weaknesses. El balance entre estos 6 ejes es lo que hace a un deck realmente competitivo.</p>
+
+        <h3 class="form-nb-subtitle">🔗 Estos 6 Ejes ya los Mide la App</h3>
+        <p class="form-nb-text">
+            No son solo teoría: <strong>Engine — Consistencia</strong>, <strong>Techo de Poder</strong> y
+            <strong>Floor — Resiliencia</strong> son literalmente los 3 pilares del <strong>Internal Score</strong>
+            (Consistencia/Potencia/Resiliencia) que la app calcula en vivo. La <strong>Fragilidad / Choke Point</strong> es
+            lo que mide el <strong>External Score</strong> junto a la vulnerabilidad G1/G2 contra el meta cargado.
+        </p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('anatomia-deck-competitivo')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Con tu deck activo cargado, entra a
+            <a href="#" class="form-link" onclick="Formacion.goToTab('estadisticas'); return false;">Estadísticas</a>
+            y abre el Análisis de Deck: verás las barras de Consistencia/Potencia/Resiliencia (tus 3 primeros ejes) y, si
+            tienes Power Scores del meta cargados, el External Score con la vulnerabilidad G1/G2 (tu eje de Fragilidad).
+            Compara ese desglose numérico contra tu propia evaluación cualitativa de los 6 ejes.
+        </p>
     `; },
 
     _topicElegirConstruirDeck: function () { return `
@@ -833,14 +1433,25 @@ const Formacion = {
             <li><strong>Paso 3 — Evalúa la curva de aprendizaje:</strong> decks fáciles tienen línea de combo fija y pocas decisiones; decks difíciles tienen múltiples líneas y la diferencia entre buen y mal piloto es enorme. Empieza con algo que puedas ejecutar bien antes de subir dificultad.</li>
             <li><strong>Paso 4 — Considera rareza y precio:</strong> existen opciones budget que juegan al 70-80% del nivel original, sacrificando consistencia, una pieza del endboard o velocidad. Evalúa si ese sacrificio es aceptable para tu objetivo.</li>
         </ul>
+        <p class="form-nb-text">
+            <em>Pruébalo sin gastar nada:</em> importa una decklist (.ydk o Lista Oficial .pdf) desde
+            <strong>Mi Deck → 📥 Importar Deck</strong> y llévala a
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','practica'); return false;">Simuladores → 🎴 Zona de Práctica</a>
+            para sentir cómo juega antes de invertir en cartas reales.
+        </p>
 
         <h3 class="form-nb-subtitle">🧩 Parte 2: Entender las Piezas</h3>
         <ul class="form-nb-list">
             <li><strong>Core:</strong> las cartas que definen al arquetipo. Sin ellas, el deck no es el deck. Fijas e irremplazables — siempre en 3 copias si es posible.</li>
             <li><strong>Engine:</strong> el conjunto funcional que arma el combo. Puede incluir cartas de otros arquetipos que complementan.</li>
             <li><strong>Non-Engine:</strong> todo lo que no forma parte del combo pero protege, interrumpe o cierra (Handtraps, Boardbreakers, tech cards). Define tu adaptación al meta.</li>
-            <li><strong>Tech Card:</strong> carta no-Staple específica para combatir una amenaza del meta local. Puede ser 1 sola copia y no siempre aparece en decklists genéricos.</li>
+            <li><strong>Tech Card:</strong> carta no-Staple específica para combatir una amenaza del meta local. Puede ser 1 sola copia y no siempre aparece en decklists genéricos. Ej: <a href="#" class="form-link" onclick="Formacion.openCard('Droll & Lock Bird'); return false;">Droll & Lock Bird</a>.</li>
         </ul>
+        <p class="form-nb-text">
+            La sidebar <strong>Mi Deck → Staples</strong> ya trae Staples genéricos del formato. Para ajustar cuáles cuentan como
+            Staple en tu Internal Score, entra a
+            <a href="#" class="form-link" onclick="Formacion.goToConfigSection('staples-section'); return false;">Config → 📌 Lista de Staples</a>.
+        </p>
 
         <h3 class="form-nb-subtitle">🔨 Parte 3: Construir desde Cero</h3>
         <ul class="form-nb-list">
@@ -860,9 +1471,27 @@ const Formacion = {
             <li><strong>3 copias</strong> → ~30%</li>
         </ul>
         <p class="form-nb-text">Si necesitas tener la carta en mano al menos 50% de las veces, necesitas al menos 8-9 copias (contando searchers que buscan esa carta). Esto explica por qué los Starters siempre van en 3, más todos sus buscadores: para maximizar la probabilidad de abrir con la pieza que activa todo.</p>
+        <p class="form-nb-text">
+            No lo calcules a mano:
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','mulligan'); return false;">Simuladores → 🎲 Probabilidad de Robo</a>
+            tiene una calculadora hipergeométrica completa, con cálculo directo sobre tus propios decks guardados y un modo
+            Montecarlo Multivariado para combinar varias piezas a la vez.
+        </p>
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">El deck no termina en la construcción — termina en el conocimiento. El mejor deck del mundo en manos de alguien que no lo conoce profundamente pierde contra un deck mediocre en manos de quien lo domina completamente. Elige un deck que puedas comprometerte a practicar durante meses, no el que está de moda esta semana.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('elegir-construir-deck')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            El ciclo completo vive en <strong>Mi Deck</strong>: entra por <strong>📥 Importar Deck</strong> (.ydk o Lista Oficial
+            .pdf) para traer una decklist real, ajústala en <strong>🔨 Construcción</strong> viendo el Internal Score en vivo,
+            pruébala en <strong>🎯 Optimización</strong> o en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','experimentacion'); return false;">Simuladores → 🧪 Experimentación</a>,
+            y valida tus cantidades de copias con la calculadora de Probabilidad de Robo.
+        </p>
     `; },
 
     _topicOptimizarDeck: function () { return `
@@ -898,6 +1527,18 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">La optimización nunca termina mientras el meta cambie. Un deck optimizado para el meta de hace 3 meses puede ser mediocre hoy. Trata tu deck como un proyecto en evolución, no como algo terminado.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('optimizar-deck')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            El proceso completo (identificar problema → un cambio a la vez → probar → documentar) está integrado en
+            <strong>Mi Deck → 🎯 Optimización</strong>: registra cada ronda de prueba (resultado, si brickeaste, si el rival
+            rompió tu jugada) y revisa <strong>getOptDiagnostics()</strong> — la app misma te sugiere si te falta
+            Consistencia, Boardbreakers u otro ajuste según tus propias rondas. Antes y después del cambio, compara el
+            Internal Score en <strong>Estadísticas</strong> para confirmar con números si realmente mejoró.
+        </p>
     `; },
 
     _topicRulingsInvocaciones: function () { return `
@@ -933,6 +1574,18 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">Antes de intentar una invocación de Extra Deck, confirma: 1) ¿Los materiales son válidos? (niveles, tipos, atributos según la carta). 2) ¿Hay zona disponible? 3) ¿Mi combo tiene restricciones que bloqueen esta invocación? Muchos combos se rompen porque el jugador no leyó la restricción de una carta anterior que ya resolvió ese mismo turno.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('rulings-invocaciones')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Practica tu línea de invocaciones campo real en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','practica'); return false;">Simuladores → 🎴 Zona de Práctica</a>,
+            e identifica qué invocación específica es el "choke point" de tu combo (dónde te rompen el turno si niegan algo).
+            Documenta esa restricción como Choke Point real de tu línea en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck','combos'); return false;">Mi Deck → 🧬 Línea de Combos</a>.
+        </p>
     `; },
 
     _topicRulingsBatalla: function () { return `
@@ -950,7 +1603,7 @@ const Formacion = {
         <h3 class="form-nb-subtitle">💥 Las 5 Subfases del Damage Step</h3>
         <ul class="form-nb-list">
             <li><strong>A. Start of Damage Step:</strong> se pueden activar efectos que modifican ATK/DEF o cambian posición de los monstruos. También es cuando se voltean los monstruos boca abajo.</li>
-            <li><strong>B. Before Damage Calculation:</strong> el último momento para cambiar ATK/DEF antes de que se calcule el daño. Aquí se activan cartas como "Rush Recklessly" o similares. SOLO pueden activarse efectos de velocidad 2 que modifiquen ATK/DEF o que se activen específicamente "en el Damage Step".</li>
+            <li><strong>B. Before Damage Calculation:</strong> el último momento para cambiar ATK/DEF antes de que se calcule el daño. Aquí se activan cartas como <a href="#" class="form-link" onclick="Formacion.openCard('Rush Recklessly'); return false;">Rush Recklessly</a> o similares. SOLO pueden activarse efectos de velocidad 2 que modifiquen ATK/DEF o que se activen específicamente "en el Damage Step".</li>
             <li><strong>C. Damage Calculation:</strong> los puntos de vida cambian. Se compara ATK vs ATK (o ATK vs DEF). Aquí ocurre el daño de batalla.</li>
             <li><strong>D. After Damage Calculation:</strong> efectos que se activan "después del cálculo de daño" van aquí, así como los efectos Flip de monstruos volteados.</li>
             <li><strong>E. End of Damage Step:</strong> los monstruos destruidos por combate son enviados al cementerio aquí. Efectos de "cuando sea destruido por combate" se activan en este punto.</li>
@@ -974,6 +1627,18 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">En torneo, declarar el ataque y entrar al Damage Step sin dar ventana al oponente es un error que puede costarte la partida. Siempre anuncia "declaro ataque con X contra Y" y espera antes de pasar a calcular el daño. Esa pausa es la ventana de tu oponente para responder.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('rulings-batalla')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Recorre manualmente las subfases del combate en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','practica'); return false;">Simuladores → 🎴 Zona de Práctica</a>:
+            avanza a Battle Phase y practica declarar el ataque, esperar la ventana y simular un Replay cambiando el campo antes
+            de pasar al daño. Para sentir el ritmo real de una Battle Phase con presión de tiempo, usa
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','duelo'); return false;">Simuladores → ⚔️ Duelo en Vivo</a>.
+        </p>
     `; },
 
     _topicIfWhenTiming: function () { return `
@@ -1009,10 +1674,21 @@ const Formacion = {
         <p class="form-nb-text">Cuando un efecto dice "each time X happens: do Y", puede activarse múltiples veces en el mismo turno si la condición se repite. No está limitado a "once per turn" implícitamente. Ej: "Each time a Spell Card is activated: gain 500 LP" — si tu oponente activa 3 hechizos en un turno, ganas 1500 LP en total.</p>
 
         <h3 class="form-nb-subtitle">🤫 Efectos en Zona de Conocimiento Privado</h3>
-        <p class="form-nb-text">Las cartas en la mano y el deck son "conocimiento privado" — el oponente no sabe qué hay ahí. Los efectos que se activan desde esas zonas tienen una prioridad menor en ciertas reglas del OCG, aunque en TCG aplica igual (ver Tema: Formatos y sus Diferencias). Ej: Ash Blossom activa su efecto desde la mano; después de que la cadena se construye, se revela.</p>
+        <p class="form-nb-text">Las cartas en la mano y el deck son "conocimiento privado" — el oponente no sabe qué hay ahí. Los efectos que se activan desde esas zonas tienen una prioridad menor en ciertas reglas del OCG, aunque en TCG aplica igual (ver Tema: Formatos y sus Diferencias). Ej: <a href="#" class="form-link" onclick="Formacion.openCard('Ash Blossom & Joyous Spring'); return false;">Ash Blossom & Joyous Spring</a> activa su efecto desde la mano; después de que la cadena se construye, se revela.</p>
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">Cuando no estés seguro de si tu efecto "miss the timing": 1) ¿Dice "when" y "you can"? → Potencial miss. 2) ¿El evento que activa el efecto fue lo último que ocurrió? → No miss. 3) ¿El efecto es mandatorio? → Nunca miss. En torneo, ante la duda, declara el efecto y deja que el juez decida.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('if-when-timing')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Abre en <strong>Buscador</strong> una carta con efecto "when"/"cuando": el visor resalta por color el segmento
+            de "condición de activación" del texto, aislando exactamente la cláusula de timing de la que habla esta lección.
+            Para ver o ajustar cómo la app detecta esas categorías de texto, entra a
+            <a href="#" class="form-link" onclick="Formacion.goToConfigSection('nomenclature-section'); return false;">Config → 🏷️ Nomenclatura de Efectos</a>.
+        </p>
     `; },
 
     _topicLeerCampoOponente: function () { return `
@@ -1034,10 +1710,10 @@ const Formacion = {
         <ul class="form-nb-list">
             <li><strong>¿Pasó su turno sin usar Handtraps?</strong> → Probablemente no tiene en mano o está guardando algo específico. Más seguro para ejecutar combo.</li>
             <li><strong>¿Ya activó una Handtrap este turno?</strong> → Los decks que juegan 3+ Handtraps pueden tener otra; los decks más agresivos pueden haberla gastado ya.</li>
-            <li><strong>Ash Blossom:</strong> el oponente que sabe tu deck la usará contra tu buscador. Si no la activó cuando buscaste, probablemente no la tiene.</li>
-            <li><strong>Nibiru:</strong> solo importa si estás en tu quinta invocación especial. Puedes contar tus invocaciones y decidir si vale continuar o cerrar antes.</li>
-            <li><strong>Droll:</strong> si ya agregaste una carta a tu mano desde el deck este turno y no te la activaron, probablemente no la tiene.</li>
-            <li><strong>Impermanence:</strong> si no la activaron cuando invocaste el primer monstruo con efecto, puede que no la tengan (o estén esperando algo más importante).</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Ash Blossom & Joyous Spring'); return false;">Ash Blossom</a>:</strong> el oponente que sabe tu deck la usará contra tu buscador. Si no la activó cuando buscaste, probablemente no la tiene.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Nibiru, the Primal Being'); return false;">Nibiru</a>:</strong> solo importa si estás en tu quinta invocación especial. Puedes contar tus invocaciones y decidir si vale continuar o cerrar antes.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Droll & Lock Bird'); return false;">Droll</a>:</strong> si ya agregaste una carta a tu mano desde el deck este turno y no te la activaron, probablemente no la tiene.</li>
+            <li><strong><a href="#" class="form-link" onclick="Formacion.openCard('Infinite Impermanence'); return false;">Impermanence</a>:</strong> si no la activaron cuando invocaste el primer monstruo con efecto, puede que no la tengan (o estén esperando algo más importante).</li>
         </ul>
 
         <h3 class="form-nb-subtitle">🧭 Cómo Responder a lo que Deduces</h3>
@@ -1060,6 +1736,17 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">Al inicio de cada turno del oponente hazte 3 preguntas: 1) ¿Cuántas cartas tiene en mano y qué dice eso? 2) ¿Qué hizo (o no hizo) en MI último turno? 3) ¿Qué necesita hacer en este turno para ganar? La tercera pregunta es la más poderosa — si sabes qué necesita tu oponente para ganar, puedes centrar todos tus recursos en negarlo exactamente.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('leer-campo-oponente')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Después de cada duelo real, anota tus lecturas y deducciones en el campo <strong>notas</strong> de la ronda en
+            <strong>Mi Deck → 🎯 Optimización</strong>. Si te enfrentas al mismo rival varias veces, registra el enfrentamiento
+            en <strong>⚔️ Historial de Enfrentamientos</strong> (dentro de Optimización) e importa su decklist por .ydk — así
+            puedes repasar con "Ver Deck" exactamente qué juega antes de tu próxima partida contra él.
+        </p>
     `; },
 
     _topicGestionLpRecursos: function () { return `
@@ -1104,6 +1791,18 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">Al final de cada turno, hazte esta pregunta: "¿Tengo más recursos que al inicio de mi turno, menos, o igual?" Si consistentemente tienes menos recursos cada turno sin estar más cerca de ganar, estás siendo outresourced — necesitas cambiar el plan. El jugador que mejor gestiona sus recursos en el largo plazo, no el que hace los combos más espectaculares, gana los duelos ajustados.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('gestion-lp-recursos')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','duelo'); return false;">Simuladores → ⚔️ Duelo en Vivo</a>
+            trae un contador de LP para ambos jugadores —úsalo en tu próxima partida de práctica para acostumbrarte a pensar
+            en LP como recurso, no como marcador de miedo. Después, en <strong>Mi Deck → 🎯 Optimización</strong>, registra si
+            la ronda terminó en victoria/derrota y con qué tipo de cierre, para ver si tus decisiones de gasto de LP
+            correlacionan con ganar más rondas.
+        </p>
     `; },
 
     _topicFormatosDiferencias: function () { return `
@@ -1154,6 +1853,18 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">Cuando veas un decklist de internet, siempre confirma en qué formato fue construido. Un deck de OCG puede tener cartas prohibidas en TCG. Un deck de GOAT no tiene sentido en el formato moderno. El formato cambia todo: las cartas, las estrategias, los rulings y el ritmo del juego.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('formatos-diferencias')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Entra a
+            <a href="#" class="form-link" onclick="Formacion.goToConfigSection('banlist-section'); return false;">Config → 🚫 Banlist del Formato</a>
+            y alterna entre las pestañas <strong>TCG</strong>, <strong>OCG</strong> y <strong>Genesys</strong>: verás en vivo
+            qué cartas cambian de estatus entre formatos, y en Genesys el sistema de puntos con el presupuesto de tu deck
+            activo — la diferencia entre formatos dejada de ser teoría y se vuelve algo que puedes comparar carta por carta.
+        </p>
     `; },
 
     _topicSideDeck: function () { return `
@@ -1171,8 +1882,8 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">🎯 Para Qué Sirve</h3>
         <ul class="form-nb-list">
-            <li><strong>Agregar counters específicos:</strong> si en la partida 1 confirmas qué deck juega el oponente, mete las cartas que más lo afectan. Ej: si juega Labrynth, metes Anti-Spell Fragrance o Spell Canceller.</li>
-            <li><strong>Quitar cartas que no sirven:</strong> algunas cartas de tu main deck no tienen uso en ciertos matchups. Ej: Anti-Handtraps contra un deck sin Handtraps — sabes que no necesitas Crossout Designator.</li>
+            <li><strong>Agregar counters específicos:</strong> si en la partida 1 confirmas qué deck juega el oponente, mete las cartas que más lo afectan. Ej: si juega Labrynth, metes <a href="#" class="form-link" onclick="Formacion.openCard('Anti-Spell Fragrance'); return false;">Anti-Spell Fragrance</a> o <a href="#" class="form-link" onclick="Formacion.openCard('Spell Canceller'); return false;">Spell Canceller</a>.</li>
+            <li><strong>Quitar cartas que no sirven:</strong> algunas cartas de tu main deck no tienen uso en ciertos matchups. Ej: Anti-Handtraps contra un deck sin Handtraps — sabes que no necesitas <a href="#" class="form-link" onclick="Formacion.openCard('Crossout Designator'); return false;">Crossout Designator</a>.</li>
             <li><strong>Cambiar el plan de juego completamente:</strong> algunos decks tienen un "plan B" de Side Deck tan poderoso que la partida 2 es casi un deck diferente. Ej: meter un engine de "going second" si el oponente ganó el coin flip y elige ir primero.</li>
         </ul>
 
@@ -1194,14 +1905,25 @@ const Formacion = {
 
         <h3 class="form-nb-subtitle">🛡️ Anti-Metas Comunes por Tipo de Deck</h3>
         <ul class="form-nb-list">
-            <li><strong>Contra Combo Decks:</strong> Nibiru (si invocan 5+ en turno 1), Dimensional Barrier (declara el tipo de invocación especial del combo), Summon Limit (limita las invocaciones especiales por turno), Skill Drain (niega efectos de monstruos en campo).</li>
-            <li><strong>Contra Control Decks:</strong> monstruos con efectos que no pueden ser negados, cartas de robo masivo para superar las interrupciones, Twin Twisters / Cosmic Cyclone (destruye backrow).</li>
-            <li><strong>Contra Decks de Cementerio:</strong> Dimensional Shifter (todo va desterrado ese turno), Macro Cosmos / Dimensional Fissure (desterrar en vez de al cementerio), D.D. Crow / Ghost Belle (responde efectos de cementerio).</li>
-            <li><strong>Contra Graveyard Recursion:</strong> Necrovalley (el campo que bloquea el uso del cementerio), Imperial Iron Wall (nada puede ser desterrado — frena Outs al cementerio).</li>
+            <li><strong>Contra Combo Decks:</strong> <a href="#" class="form-link" onclick="Formacion.openCard('Nibiru, the Primal Being'); return false;">Nibiru</a> (si invocan 5+ en turno 1), <a href="#" class="form-link" onclick="Formacion.openCard('Dimensional Barrier'); return false;">Dimensional Barrier</a> (declara el tipo de invocación especial del combo), <a href="#" class="form-link" onclick="Formacion.openCard('Summon Limit'); return false;">Summon Limit</a> (limita las invocaciones especiales por turno), <a href="#" class="form-link" onclick="Formacion.openCard('Skill Drain'); return false;">Skill Drain</a> (niega efectos de monstruos en campo).</li>
+            <li><strong>Contra Control Decks:</strong> monstruos con efectos que no pueden ser negados, cartas de robo masivo para superar las interrupciones, <a href="#" class="form-link" onclick="Formacion.openCard('Twin Twisters'); return false;">Twin Twisters</a> / <a href="#" class="form-link" onclick="Formacion.openCard('Cosmic Cyclone'); return false;">Cosmic Cyclone</a> (destruye backrow).</li>
+            <li><strong>Contra Decks de Cementerio:</strong> <a href="#" class="form-link" onclick="Formacion.openCard('Dimensional Shifter'); return false;">Dimensional Shifter</a> (todo va desterrado ese turno), <a href="#" class="form-link" onclick="Formacion.openCard('Macro Cosmos'); return false;">Macro Cosmos</a> / <a href="#" class="form-link" onclick="Formacion.openCard('Dimensional Fissure'); return false;">Dimensional Fissure</a> (desterrar en vez de al cementerio), <a href="#" class="form-link" onclick="Formacion.openCard('D.D. Crow'); return false;">D.D. Crow</a> / <a href="#" class="form-link" onclick="Formacion.openCard('Ghost Belle & Haunted Mansion'); return false;">Ghost Belle</a> (responde efectos de cementerio).</li>
+            <li><strong>Contra Graveyard Recursion:</strong> <a href="#" class="form-link" onclick="Formacion.openCard('Necrovalley'); return false;">Necrovalley</a> (el campo que bloquea el uso del cementerio), <a href="#" class="form-link" onclick="Formacion.openCard('Imperial Iron Wall'); return false;">Imperial Iron Wall</a> (nada puede ser desterrado — frena Outs al cementerio).</li>
         </ul>
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
         <p class="form-nb-text">El mejor Side Deck no es el que tiene las cartas más poderosas — es el que tiene las cartas más específicas para lo que vas a enfrentar. Un jugador con 15 cartas bien pensadas para su meta local gana más que uno con 15 Staples genéricos que sirven para "todo pero no para nada específico".</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('side-deck')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Arma tu zona de Side en <strong>Mi Deck → 🔨 Construcción</strong> (las cartas con ubicación "side" no cuentan
+            para el conteo de Main/Extra). Para decidir qué sidear contra cada rival, registra tus matches en
+            <strong>Mi Deck → 🎯 Optimización → ⚔️ Historial de Enfrentamientos</strong>: el W/L y las notas por rival te dicen
+            exactamente qué matchup necesita más ayuda del Side Deck.
+        </p>
     `; },
 
     // ===============================

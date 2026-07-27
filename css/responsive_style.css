@@ -699,3 +699,8 @@
     .ctrsim-row-top { flex-direction: column; }
     .ctrsim-thumb-img { width: 56px; height: 82px; }
 }
+/* Línea de Combos — en mobile, la imagen ya identifica la carta, se oculta el nombre */
+@media (max-width: 768px) {
+    .combo-step-cardname { display: none; }
+    .combo-step-thumb { margin: 0 4px 0 0; }
+}

@@ -2353,3 +2353,63 @@
 }
 
 .tabintro-close-btn:hover { opacity: 0.9; }
+
+/* ── Links interactivos dentro de lecciones (cartas, decks, pestañas) ── */
+.form-link {
+    color: var(--accent-color, #7b2cbf);
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    cursor: pointer;
+    font-weight: 600;
+}
+.form-link:hover {
+    text-decoration-style: solid;
+    opacity: 0.8;
+}
+
+/* ── Mini-test avanzado al final de cada lección ── */
+.form-quiz {
+    margin-top: 16px;
+    padding: 16px 18px;
+    border: 1px solid rgba(123, 44, 191, 0.25);
+    border-radius: 10px;
+    background: rgba(123, 44, 191, 0.05);
+}
+.form-quiz-q { margin-bottom: 14px; }
+.form-quiz-question {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1a2a4a;
+    margin-bottom: 6px;
+}
+.form-quiz-opts { display: flex; flex-direction: column; gap: 4px; }
+.form-quiz-opt {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #2a2a2a;
+}
+.form-quiz-feedback { margin-top: 6px; font-size: 0.83rem; font-weight: 600; }
+.form-quiz-fb-ok    { color: #1e8449; }
+.form-quiz-fb-bad   { color: #c0392b; }
+.form-quiz-fb-empty { color: #b7950b; }
+.form-quiz-check-btn {
+    margin-top: 8px;
+    padding: 9px 20px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #7b2cbf, #5a1f94);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+}
+.form-quiz-check-btn:hover { opacity: 0.88; transform: scale(1.02); }
+.form-quiz-score {
+    margin-top: 10px;
+    font-weight: 700;
+    color: #1a2a4a;
+}

@@ -3743,10 +3743,18 @@ _buildExtraPool: function () {
         });
     },
 
-    _zoneLabel: function (zone) {
+  _zoneLabel: function (zone) {
         return { deckPool: 'Mazo', hand: 'HAND', gy: 'GY', banish: 'Banish', field: 'Field' }[zone] || zone;
     },
-
+// Colorea HAND/GY/Banish/Field dentro del texto de un paso (solo en render,
+    // el s.msg guardado sigue siendo texto plano — el export a .txt ya limpia HTML).
+    _colorizeZones: function (msg) {
+        const cls = { HAND: 'combo-zone-hand', GY: 'combo-zone-gy', Banish: 'combo-zone-banish', Field: 'combo-zone-field' };
+        msg = msg.replace(/(^|:\s|→\s|\()(HAND|GY|Banish|Field)(?=\s|→|\)|$)/g,
+            (m, pre, zone) => `${pre}<span class="combo-zone-tag ${cls[zone]}">${zone}</span>`);
+        msg = msg.replace(/Activación de Efecto/g, '<span class="combo-effect-tag">Activación de Efecto</span>');
+        return msg;
+    },
     startCombo: function (deckName, comboId) {
         this._withCombo(deckName, comboId, combo => {
             combo.status      = 'started';
@@ -3836,16 +3844,17 @@ sendToDeck: function (deckName, comboId, uid, fromZone) {
         const [entry] = fromArr.splice(idx, 1);
         delete entry.faceDown;
 
-        const cardData   = Deck.cards[entry.id]?.data;
-        const item       = Deck.cards[entry.id];
-        const isPendulum = !!(cardData?.type && cardData.type.includes('Pendulum'));
-        const toExtra    = isPendulum || (item && item.location === 'extra');
-        const poolKey    = toExtra ? 'extraPool' : 'deckPool';
+        const cardData      = Deck.cards[entry.id]?.data;
+        const item          = Deck.cards[entry.id];
+        const isPendulum    = !!(cardData?.type && cardData.type.includes('Pendulum'));
+        const pendulumFaceUp = isPendulum && fromZone === 'field';
+        const toExtra       = pendulumFaceUp || (item && item.location === 'extra');
+        const poolKey       = toExtra ? 'extraPool' : 'deckPool';
         if (!combo.zones[poolKey]) combo.zones[poolKey] = [];
         combo.zones[poolKey].push(entry);
 
         const name      = cardData?.name || entry.id;
-        const destLabel = isPendulum ? 'boca arriba en el Extra Deck' : (toExtra ? 'Extra Deck' : 'Mazo');
+        const destLabel = pendulumFaceUp ? 'boca arriba en el Extra Deck' : (toExtra ? 'Extra Deck' : 'Mazo');
         this._logStep(combo, `${name}: ${this._zoneLabel(fromZone)} → ${destLabel}`, entry.id);
     });
     this._refresh();
@@ -4094,9 +4103,10 @@ openExtraPicker: function (deckName, comboId) {
     const icons       = { hand: '✋', field: '🏟️', gy: '⚰️', banish: '🌀' };
     const targets     = ['hand', 'field', 'gy', 'banish'].filter(z => z !== zoneKey);
     const item        = Deck.cards[entry.id];
-    const isPendulum  = !faceDown && !!(cardData?.type && cardData.type.includes('Pendulum'));
-    const toExtra     = isPendulum || (item && item.location === 'extra');
-    const toDeckTitle = isPendulum ? '→ boca arriba en el Extra Deck' : (toExtra ? '→ Extra Deck' : '→ Mazo');
+    const isPendulum     = !faceDown && !!(cardData?.type && cardData.type.includes('Pendulum'));
+    const pendulumFaceUp = isPendulum && zoneKey === 'field';
+    const toExtra        = pendulumFaceUp || (item && item.location === 'extra');
+    const toDeckTitle    = pendulumFaceUp ? '→ boca arriba en el Extra Deck' : (toExtra ? '→ Extra Deck' : '→ Mazo');
 
     return `
     <div class="combo-card-chip">
@@ -4125,10 +4135,11 @@ openExtraPicker: function (deckName, comboId) {
             if (idx !== -1) {
                 const before = msg.slice(0, idx);
                 const after  = msg.slice(idx + cardName.length);
-                const thumb  = cardImg ? `<img src="${cardImg}" class="combo-step-thumb" alt="">` : '';
+                const thumb  = cardImg ? `<img src="${cardImg}" class="combo-step-thumb" alt="" onclick="Combos.viewCard('${s.cardId}')">` : '';
                 msg = `${before}${thumb}<span class="combo-step-cardname" onclick="Combos.viewCard('${s.cardId}')">${cardName}</span>${after}`;
             }
         }
+        msg = this._colorizeZones(msg);
             const chokes = (combo.chokePoints || []).filter(cp => cp.stepId === s.id);
             const chokeChips = chokes.map(cp => `
                 <span class="combo-choke-chip">
@@ -4531,9 +4542,11 @@ _stepIndex: function (combo, stepId) {
         const others = combo.endboard.filter(e => e.uid !== uid);
         const rows = others.map(o => {
             const name    = Deck.cards[o.id]?.data?.name || o.id;
+            const img     = Deck.cards[o.id]?.data?.card_images?.[0]?.image_url_small || '';
             const checked = (entry.dependsOn || []).includes(o.uid);
             return `<label class="combo-deps-row">
                 <input type="checkbox" value="${o.uid}" ${checked ? 'checked' : ''}>
+                ${img ? `<img src="${img}" class="combo-deps-thumb" alt="">` : ''}
                 <span>${this._escape(name)} <small>(${this._zoneLabel(o.zone)})</small></span>
             </label>`;
         }).join('') || '<p class="deck-empty">No hay otras cartas en el endboard.</p>';
@@ -4575,8 +4588,10 @@ _stepIndex: function (combo, stepId) {
         const others = Object.entries(Deck.cards).filter(([id, c]) => id !== cardId && c.location === 'main');
         const rows = others.map(([id, c]) => {
             const name = c.data?.name || id;
+            const img  = c.data?.card_images?.[0]?.image_url_small || '';
             return `<label class="combo-deps-row">
                 <input type="radio" name="combo-copyof-radio" value="${id}" ${item.copyOf === id ? 'checked' : ''}>
+                ${img ? `<img src="${img}" class="combo-deps-thumb" alt="">` : ''}
                 <span>${this._escape(name)}</span>
             </label>`;
         }).join('') || '<p class="deck-empty">No hay otras cartas en el Main Deck.</p>';
