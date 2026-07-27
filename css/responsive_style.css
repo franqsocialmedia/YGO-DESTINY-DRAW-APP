@@ -613,6 +613,14 @@
         padding-bottom: 4px;
     }
     .form-subnav-btn { flex-shrink: 0; font-size: 0.8rem; padding: 7px 11px; }
+    .form-level-nav, .form-topics-nav {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        gap: 4px;
+        padding-bottom: 4px;
+    }
+    .form-level-btn, .form-topic-btn { flex-shrink: 0; }
 }
 
 @media (max-width: 480px) {

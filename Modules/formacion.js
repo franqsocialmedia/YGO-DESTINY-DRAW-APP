@@ -8,6 +8,7 @@ const Formacion = {
 
     container:     null,
     activeTab:     'apuntes',
+    activeLevel:   null,
     NOTES_KEY:     'yugioh_formacion_notes',
     MASTERED_KEY:  'yugioh_formacion_mastered',
 
@@ -21,6 +22,7 @@ const Formacion = {
         // ── MÓDULO 2 — Lectura de Cartas y Mentalidad ──
         { id: 'estructura-efecto-carta', label: 'Estructura de un Efecto de Carta', level: 'Intermedio' },
         { id: 'funciones-de-las-cartas', label: 'Funciones de las Cartas (Roles)',  level: 'Intermedio' },
+        { id: 'palabras-tecnicas-juego', label: 'Palabras Clave y Técnicas del Juego', level: 'Intermedio' },
         { id: 'mentalidad-del-jugador',  label: 'Mentalidad del Jugador',           level: 'Intermedio' },
         // ── MÓDULO 3 — Construcción y Optimización de Mazo ──
         { id: 'elegir-construir-deck',      label: 'Elegir y Construir tu Deck',        level: 'Competitivo' },
@@ -206,6 +208,23 @@ const Formacion = {
             { q: 'Según las 4 funciones universales, ¿cuál corresponde a un Handtrap que niega la activación de una carta rival?',
               options: ['Motor', 'Interacción', 'Ventaja de Recursos', 'Ninguna'], correct: 1,
               explain: 'Negar o responder a la jugada del rival es la función de Interacción — la categoría de Handtraps y Boardbreakers.' },
+        ],
+        'palabras-tecnicas-juego': [
+            { q: '¿Qué distingue a un efecto "floater" (flotante)?',
+              options: ['Solo funciona si está en el cementerio', 'Se activa incluso cuando la carta sale del campo, generando valor pese a la remoción', 'Nunca puede ser destruido', 'Requiere 2 tributos para activarse'], correct: 1,
+              explain: 'Un floater da valor precisamente cuando deja el campo (destruido, tributado, usado como material) — remover la carta no elimina su aporte.' },
+            { q: 'Además de quitar un monstruo del campo, ¿para qué se usa comúnmente un "bounce" sobre tu propia carta?',
+              options: ['Para reiniciar el LP del duelo', 'Para reutilizar un efecto que se dispara al ser invocada (recursión)', 'Para cambiarla de posición de batalla sin gastar recursos', 'Para evitar pagar su costo de invocación original'], correct: 1,
+              explain: 'Regresar tu propia carta a la mano permite volver a invocarla y disparar de nuevo efectos "al ser invocada".' },
+            { q: 'Un efecto rival selecciona ("target") tu monstruo para destruirlo. ¿Qué es "esquivar" (dodge) esa remoción?',
+              options: ['Sumar LP antes de que resuelva', 'Quitar tu propio monstruo del campo (bounce, tributo, material) antes de que el efecto resuelva, dejándolo sin objetivo válido', 'Declarar Chain Block antes que el rival', 'Robar una carta extra en Draw Phase'], correct: 1,
+              explain: 'Si el objetivo ya no está en el campo cuando el efecto intenta resolver, falla por falta de objetivo válido ("whiff").' },
+            { q: '¿Qué diferencia clave hay entre "bounce" y "destruir" en cuanto a los disparadores que activan?',
+              options: ['Ninguna, son sinónimos', 'Bounce regresa la carta a la mano (recuperable); destruir la manda al cementerio y puede activar efectos "si es destruida"', 'Bounce solo aplica a Hechizos y Trampas', 'Destruir siempre cuesta una carta adicional'], correct: 1,
+              explain: 'Son acciones legales distintas (ver Vocabulario Legal del Juego): cada una activa disparadores diferentes.' },
+            { q: '¿Por qué el "Estado del Juego" importa más que el poder bruto (ATK/DEF) de una carta aislada?',
+              options: ['Porque el ATK nunca influye en el resultado', 'Porque la jugada correcta depende del contexto completo (mano, campo, LP, recursos, fase), no solo de una carta aislada', 'Porque las Trampas siempre superan a los Monstruos', 'Porque el Estado del Juego solo aplica en Master Duel'], correct: 1,
+              explain: 'La misma carta puede ser correcta o un error según el contexto completo del duelo en ese momento.' },
         ],
         'mentalidad-del-jugador': [
             { q: '¿Qué significa la mentalidad "las cartas no se evalúan solas"?',
@@ -489,18 +508,15 @@ const Formacion = {
             <!-- Sub-nav estilo Simuladores -->
             <div class="form-subnav" id="form-subnav">
                 <button class="form-subnav-btn${this.activeTab === 'apuntes' ? ' active' : ''}"
-                        onclick="Formacion.switchTab('apuntes')">📓 Apuntes</button>
-                ${activeTopics.map(t => `
-                    <button class="form-subnav-btn${this.activeTab === t.id ? ' active' : ''}"
-                            title="Nivel: ${t.level || ''}"
-                            onclick="Formacion.switchTab('${t.id}')">📖 ${t.label}</button>
-                `).join('')}
+                        data-tab="apuntes" onclick="Formacion.switchTab('apuntes')">📓 Apuntes</button>
+                <button class="form-subnav-btn${(this.activeTab === 'temas' || this.TOPICS.some(t => t.id === this.activeTab)) ? ' active' : ''}"
+                        data-tab="temas" onclick="Formacion.switchTab('temas')">📚 Temas</button>
                 <button class="form-subnav-btn${this.activeTab === 'juegos' ? ' active' : ''}"
-                        onclick="Formacion.switchTab('juegos')">🎮 Juegos</button>
+                        data-tab="juegos" onclick="Formacion.switchTab('juegos')">🎮 Juegos</button>
                 <button class="form-subnav-btn${this.activeTab === 'fuentes' ? ' active' : ''}"
-                        onclick="Formacion.switchTab('fuentes')">🔗 Fuentes</button>
+                        data-tab="fuentes" onclick="Formacion.switchTab('fuentes')">🔗 Fuentes</button>
                 <button class="form-subnav-btn${this.activeTab === 'maestros' ? ' active' : ''}"
-                        onclick="Formacion.switchTab('maestros')">🎓 Maestros</button>
+                        data-tab="maestros" onclick="Formacion.switchTab('maestros')">🎓 Maestros</button>
             </div>
 
             <!-- Contenido de sub-pestañas -->
@@ -511,30 +527,63 @@ const Formacion = {
     },
 
     switchTab: function (tabId) {
-    this.activeTab = tabId;
-    const content = document.getElementById('form-tab-content');
-    if (!content) return;
-    content.innerHTML = this._renderCurrentTab();
-    document.querySelectorAll('.form-subnav-btn').forEach(btn => {
-        const map = {
-            apuntes:  'Apuntes',
-            juegos:   'Juegos',
-            fuentes:  'Fuentes',
-            maestros: 'Maestros'
-        };
-        const label = map[tabId] || (this.TOPICS.find(t => t.id === tabId)?.label || '');
-        btn.classList.toggle('active', label && btn.textContent.trim().includes(label));
-    });
-},
+        this.activeTab = tabId;
+        const topic = this.TOPICS.find(t => t.id === tabId);
+        if (topic) this.activeLevel = topic.level || this.activeLevel;
+        const content = document.getElementById('form-tab-content');
+        if (!content) return;
+        content.innerHTML = this._renderCurrentTab();
+        const outerKey = topic ? 'temas' : tabId;
+        document.querySelectorAll('.form-subnav-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === outerKey);
+        });
+    },
+
+    switchLevel: function (level) {
+        this.activeLevel = level;
+        const current = this.TOPICS.find(t => t.id === this.activeTab);
+        if (!current || current.level !== level) this.activeTab = 'temas';
+        const content = document.getElementById('form-tab-content');
+        if (content) content.innerHTML = this._renderCurrentTab();
+    },
 
     _renderCurrentTab: function () {
-        if (this.activeTab === 'apuntes') return this._renderApuntesTab();
-        if (this.activeTab === 'juegos')  return this._renderJuegosTab();
-        const topic = this.TOPICS.find(t => t.id === this.activeTab);
-        if (topic) return this._renderTopicTab(topic);
+        if (this.activeTab === 'apuntes')  return this._renderApuntesTab();
+        if (this.activeTab === 'juegos')   return this._renderJuegosTab();
         if (this.activeTab === 'fuentes')  return this._renderFuentesTab();
         if (this.activeTab === 'maestros') return this._renderMaestrosTab();
-        return '';
+        return this._renderTemasTab(); // 'temas' o cualquier id de TOPICS
+    },
+
+    _renderTemasTab: function () {
+        const LEVEL_ORDER = ['Básico', 'Fundamental', 'Intermedio', 'Competitivo', 'Avanzado'];
+        const LEVEL_ICONS = { 'Básico':'🌱', 'Fundamental':'📘', 'Intermedio':'⚔️', 'Competitivo':'🏆', 'Avanzado':'🔬' };
+        const activeTopics  = this._getActiveTopics();
+        const levelsPresent = LEVEL_ORDER.filter(lv => activeTopics.some(t => t.level === lv));
+        const currentTopic  = this.TOPICS.find(t => t.id === this.activeTab);
+
+        if (this.activeLevel == null) {
+            this.activeLevel = (currentTopic && currentTopic.level) || levelsPresent[0] || 'Básico';
+        }
+        const topicsOfLevel = activeTopics.filter(t => t.level === this.activeLevel);
+
+        return `
+            <div class="form-level-nav">
+                ${levelsPresent.map(lv => `
+                    <button class="form-level-btn${this.activeLevel === lv ? ' active' : ''}"
+                            onclick="Formacion.switchLevel('${lv}')">${LEVEL_ICONS[lv] || '📖'} ${lv}</button>
+                `).join('')}
+            </div>
+            <div class="form-topics-nav">
+                ${topicsOfLevel.length ? topicsOfLevel.map(t => `
+                    <button class="form-topic-btn${this.activeTab === t.id ? ' active' : ''}"
+                            onclick="Formacion.switchTab('${t.id}')">📖 ${t.label}</button>
+                `).join('') : '<p class="form-empty">No hay lecciones activas en este nivel.</p>'}
+            </div>
+            ${currentTopic && currentTopic.level === this.activeLevel
+                ? this._renderTopicTab(currentTopic)
+                : '<p class="form-empty">Selecciona una lección arriba para comenzar.</p>'}
+        `;
     },
 
     // ===============================
@@ -773,6 +822,7 @@ const Formacion = {
             'estructura-efecto-carta': this._topicEstructuraEfecto(),
             'tipos-cartas-especiales': this._topicTiposCartasEspeciales(),
             'funciones-de-las-cartas': this._topicFuncionesCartas(),
+            'palabras-tecnicas-juego': this._topicPalabrasTecnicas(),
             'mentalidad-del-jugador':  this._topicMentalidadJugador(),
             'elegir-construir-deck':     this._topicElegirConstruirDeck(),
             'staples-formato':           this._topicStaples(),
@@ -1168,7 +1218,64 @@ const Formacion = {
             <a href="#" class="form-link" onclick="Formacion.goToConfigSection('roles-section'); return false;">Config → 🎭 Mecánicas y Roles</a>.
         </p>
     `; },
+_topicPalabrasTecnicas: function () { return `
+        <h2 class="form-nb-title">Palabras Clave y Técnicas del Juego</h2>
+        <p class="form-nb-text">Más allá del texto oficial de las cartas, los jugadores competitivos usan una jerga propia para describir técnicas y patrones que se repiten partida tras partida. Conocerla no cambia las reglas — cambia qué tan rápido entiendes lo que pasa en la mesa y lo que dice la comunidad (guías, streams, foros).</p>
 
+        <h3 class="form-nb-subtitle">🎲 Estado del Juego (Game State)</h3>
+        <p class="form-nb-text">El "Estado del Juego" es el contexto completo del duelo en un momento dado: qué hay en cada mano, cada campo, cada cementerio, cuántos LP tiene cada jugador, en qué fase están y quién tiene la prioridad. La jugada correcta casi nunca depende de una sola carta — depende de leer todo este estado antes de decidir.</p>
+        <ul class="form-nb-list">
+            <li><strong>Recursos en mano:</strong> tuyos (conocidos) y del rival (deducidos por lo que ya activó o dejó de activar).</li>
+            <li><strong>Campo:</strong> monstruos, Hechizos/Trampas boca arriba y boca abajo de ambos lados — y qué de eso ya se puede considerar "gastado".</li>
+            <li><strong>Cementerio y Desterrados:</strong> qué recursos ya no están disponibles y qué efectos de recuperación podrían reactivarlos.</li>
+            <li><strong>LP y fase del juego:</strong> cuánto margen de error tienes y si conviene jugar agresivo o conservador.</li>
+        </ul>
+        <p class="form-nb-text">Dos jugadores con las mismas cartas en mano pueden tomar decisiones opuestas y ambas ser correctas, si el Estado del Juego frente a ellos es distinto.</p>
+
+        <h3 class="form-nb-subtitle">🔄 Bounce (Regresar a la Mano)</h3>
+        <p class="form-nb-text">"Hacer bounce" es regresar una carta del campo a la mano de su dueño — no la destruye ni la manda al cementerio. Es una acción legal distinta de destruir o desterrar (ver <a href="#" class="form-link" onclick="Formacion.switchTab('vocabulario-legal'); return false;">Vocabulario Legal del Juego</a>).</p>
+        <ul class="form-nb-list">
+            <li><strong>Sobre el rival:</strong> quita tempo — su carta vuelve a la mano y debe gastar otro recurso para reactivarla. No dispara efectos "si es destruida" ni "si es enviada al cementerio", porque ninguna de las dos cosas ocurrió.</li>
+            <li><strong>Sobre tu propia carta:</strong> la técnica más importante — regresarla te permite volver a invocarla y disparar de nuevo cualquier efecto "cuando es invocada" (recursión), multiplicando el valor de una sola carta.</li>
+        </ul>
+        <p class="form-nb-text">Ejemplo real: <a href="#" class="form-link" onclick="Formacion.openCard('Compulsory Evacuation Device'); return false;">Compulsory Evacuation Device</a> es un Hechizo de Juego Rápido genérico que selecciona cualquier monstruo en campo (propio o rival) y lo regresa a la mano — sirve tanto para quitarle tempo a un Boss Monster rival como para reciclar tu propio monstruo con efecto de invocación.</p>
+
+        <h3 class="form-nb-subtitle">🌀 Float (Cartas "Flotantes")</h3>
+        <p class="form-nb-text">Un efecto "flota" (float) cuando se dispara justo cuando la carta sale del campo — sin importar si fue por destrucción, tributo, uso como material de Fusión/Sincro/XYZ/Link, o desterrada. Un floater le da al rival una razón para pensar dos veces antes de removerlo, porque quitarlo del campo no evita el valor — al contrario, es lo que lo activa.</p>
+        <p class="form-nb-text">Ejemplo conocido del meta: <a href="#" class="form-link" onclick="Formacion.openCard('Sky Striker Ace - Kagari'); return false;">Sky Striker Ace - Kagari</a> suma una Magia/Trampa "Sky Striker" del deck a la mano cuando sale del campo, sin importar cómo salió. El rival no gana nada removiéndola — el float ya cumplió su función.</p>
+
+        <h3 class="form-nb-subtitle">🤺 Dodge (Esquivar la Interacción)</h3>
+        <p class="form-nb-text">"Esquivar" (dodge) es evitar que una remoción dirigida ("target") cumpla su función, quitando la carta amenazada del campo antes de que el efecto rival resuelva. Si el objetivo original ya no está donde el efecto lo esperaba, ese efecto falla por falta de objetivo válido ("whiff") — sin importar qué tan poderosa fuera la remoción.</p>
+        <ul class="form-nb-list">
+            <li><strong>Cómo se hace:</strong> con tu propio bounce, tributo, o convirtiendo la carta amenazada en material de una Invocación Especial en respuesta, antes de que la cadena del rival resuelva.</li>
+            <li><strong>Por qué importa:</strong> es la diferencia entre perder una carta a un solo removal o convertir esa amenaza en la base de tu próxima jugada.</li>
+        </ul>
+        <p class="form-nb-text">Este patrón depende directamente de entender <a href="#" class="form-link" onclick="Formacion.switchTab('cadenas-prioridad'); return false;">Cadenas, Prioridad y Spell Speed</a> — sin saber en qué eslabón puedes responder, no hay ventana para esquivar nada.</p>
+
+        <h3 class="form-nb-subtitle">🧮 Jerga de Ventaja de Cartas</h3>
+        <ul class="form-nb-list">
+            <li><strong>+1 / -1 (Ventaja neta):</strong> contar cuántas cartas gastaste contra cuántas del rival neutralizaste o generaste. Gastar 1 para negar 1 es "1-for-1" (neutral); gastar 1 para negar 2 es un "+1" a tu favor.</li>
+            <li><strong>Bait (Carnada):</strong> activar a propósito una carta para que el rival gaste su interrupción ahí, dejando pasar tu jugada real.</li>
+            <li><strong>Blowout:</strong> una jugada que parecía segura pero termina costando mucho más de lo esperado — típicamente caminar directo hacia un Boardbreaker que no se vio venir.</li>
+            <li><strong>In position / Out of position:</strong> "in position" es tener las piezas necesarias en mano o campo para tu plan de juego; "out of position" es lo contrario — te obliga a improvisar.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Esta jerga no son reglas oficiales — son atajos que la comunidad usa para nombrar patrones reales del juego. Cuando alguien dice "esa carta flota" o "voy a esquivar con esto", ya sabes exactamente a qué técnica se refiere y por qué importa en el Estado del Juego actual.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('palabras-tecnicas-juego')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Con un deck cargado, abre cualquier carta desde <strong>Buscador</strong>: el visor calcula en vivo su "🎯 Posibles Roles" y su
+            "📊 Aporte al deck activo" — útil para confirmar si una pieza que valoras por su float o su bounce realmente suma
+            Consistencia/Potencia/Resiliencia a tu deck concreto. Para saber si tu deck está construido para ir primero o ir
+            segundo (la base de saber cuándo esquivar en vez de proteger), revisa "Going First / Going Second" en
+            <strong>Estadísticas → Análisis de Deck</strong>. Y cada ronda real donde rompiste el campo rival o el rival te negó
+            la jugada, regístrala en <strong>Mi Deck → 🎯 Optimización</strong> — esos datos alimentan tu Nivel como Piloto del Deck.
+        </p>
+    `; },
     _topicMentalidadJugador: function () { return `
         <h2 class="form-nb-title">Mentalidad del Jugador</h2>
         <p class="form-nb-text">Las reglas se aprenden en semanas. Los combos se memorizan en días. Pero la mentalidad correcta tarda meses o años en instalarse — y es lo que determina si realmente mejorarás como jugador.</p>

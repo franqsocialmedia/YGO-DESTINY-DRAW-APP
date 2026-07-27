@@ -1010,7 +1010,65 @@
     color: var(--gold-color, #FFD700);
     font-weight: 600;
 }
+/* ── Temas: píldoras de nivel + sub-nav de lecciones ────────────── */
+.form-level-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+.form-level-btn {
+    background: rgba(123, 44, 191, 0.08);
+    border: 1px solid rgba(123, 44, 191, 0.3);
+    color: rgba(241, 241, 241, 0.6);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+.form-level-btn:hover {
+    background: rgba(123, 44, 191, 0.18);
+    color: #f1f1f1;
+}
+.form-level-btn.active {
+    background: rgba(123, 44, 191, 0.28);
+    border-color: var(--accent-color, #7b2cbf);
+    color: #cfa3ff;
+}
 
+.form-topics-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+}
+.form-topic-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 215, 0, 0.12);
+    color: rgba(241, 241, 241, 0.6);
+    border-radius: 6px;
+    padding: 6px 13px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+.form-topic-btn:hover {
+    background: rgba(255, 215, 0, 0.08);
+    border-color: rgba(255, 215, 0, 0.4);
+    color: #f1f1f1;
+}
+.form-topic-btn.active {
+    background: rgba(255, 215, 0, 0.14);
+    border-color: var(--gold-color, #FFD700);
+    color: var(--gold-color, #FFD700);
+    font-weight: 600;
+}
 /* ── Secciones colapsables (Juegos) ────────────────────────────── */
 .form-section {
     background: var(--bg-card, #1e0836);
