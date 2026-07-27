@@ -29,6 +29,7 @@ const Formacion = {
         { id: 'elegir-construir-deck',      label: 'Elegir y Construir tu Deck',        level: 'Competitivo' },
         { id: 'staples-formato',            label: 'Staples del Formato',               level: 'Competitivo' },
         { id: 'anatomia-deck-competitivo',  label: 'Anatomía de un Deck Competitivo',   level: 'Competitivo' },
+        { id: 'debilidades-deck',           label: 'Qué Hace Débil a un Deck o Arquetipo', level: 'Competitivo' },
         { id: 'optimizar-deck',             label: 'Cómo Optimizar tu Deck',            level: 'Competitivo' },
         // ── MÓDULO 4 — Motor Técnico del Juego ──
         { id: 'cadenas-prioridad',       label: 'Cadenas, Prioridad y Spell Speed', level: 'Avanzado' },
@@ -294,6 +295,23 @@ const Formacion = {
             { q: 'Según el Consejo Clave, ¿qué determina realmente si un deck es competitivo?',
               options: ['Solo el techo de poder', 'El balance entre los 6 ejes, no solo el poder bruto', 'La cantidad de Staples', 'El nombre del arquetipo'], correct: 1,
               explain: 'Un deck con techo altísimo pero Floor bajo pierde igual contra un rival que estudió sus debilidades.' },
+        ],
+        'debilidades-deck': [
+            { q: '¿Qué es un "Single Point of Failure" en el diseño de un arquetipo?',
+              options: ['Una carta prohibida', 'Una única pieza de la que depende todo el combo, sin redundancia ni buscador alternativo', 'El monstruo con más ATK del deck', 'Una carta que solo sirve en el Side Deck'], correct: 1,
+              explain: 'Si esa única pieza es negada, desterrada o no aparece en mano, el deck entero se detiene — es la debilidad de diseño más peligrosa.' },
+            { q: '¿Por qué un combo con muchos pasos (5+) suele ser más débil que uno corto, aunque termine en el mismo endboard?',
+              options: ['Porque tarda más en jugarse', 'Porque cada paso es un Choke Point donde una sola Handtrap puede romper toda la línea', 'Porque usa más cartas del Extra Deck', 'Los combos largos siempre son mejores'], correct: 1,
+              explain: 'Cada eslabón adicional del combo es una ventana extra donde el rival puede negar y detener todo lo que viene después.' },
+            { q: '¿Qué señala que un deck tiene "Garnets" en exceso?',
+              options: ['Que tiene muchas Handtraps', 'Que carga cartas situacionales que son inútiles en la mano inicial y solo sirven combadas con otra pieza específica', 'Que tiene un buen Techo de Poder', 'Que el Extra Deck está lleno'], correct: 1,
+              explain: 'Un Garnet en la mano inicial (sin la pieza que lo activa) es una carta muerta — reducirlos al mínimo mejora la Consistencia real.' },
+            { q: 'Un deck sin ningún Extender ni forma de responder tras una Handtrap del rival es...',
+              options: ['Un deck de control', 'Un "Glass Cannon" — techo alto pero Floor nulo, muere a la primera interrupción', 'Un deck con buen Grind Game', 'Un deck imposible de construir'], correct: 1,
+              explain: 'Sin Resiliencia (Floor), basta 1 sola negación bien puesta para dejar al jugador sin plan alguno.' },
+            { q: '¿Qué hace especialmente débil a un arquetipo frente al meta según esta lección?',
+              options: ['Tener pocas cartas de Extra Deck', 'Que exista 1 sola carta común del formato que anule su plan de juego por completo, sin alternativa', 'Que sea un arquetipo nuevo', 'Que tenga Field Spell'], correct: 1,
+              explain: 'Un Choke Point tan amplio como "1 carta me gana el duelo" es la máxima expresión de Fragilidad — el rival ni siquiera necesita tech específica.' },
         ],
         'optimizar-deck': [
             { q: '¿Cuál es la señal de que te falta Consistencia?',
@@ -846,6 +864,7 @@ const Formacion = {
             'elegir-construir-deck':     this._topicElegirConstruirDeck(),
             'staples-formato':           this._topicStaples(),
             'anatomia-deck-competitivo': this._topicAnatomiaDeckCompetitivo(),
+            'debilidades-deck':          this._topicDebilidadesDeck(),
             'optimizar-deck':            this._topicOptimizarDeck(),
             'cadenas-prioridad':       this._topicCadenasPrioridad(),
             'rulings-invocaciones':    this._topicRulingsInvocaciones(),
@@ -1606,6 +1625,59 @@ _topicPalabrasTecnicas: function () { return `
             y abre el Análisis de Deck: verás las barras de Consistencia/Potencia/Resiliencia (tus 3 primeros ejes) y, si
             tienes Power Scores del meta cargados, el External Score con la vulnerabilidad G1/G2 (tu eje de Fragilidad).
             Compara ese desglose numérico contra tu propia evaluación cualitativa de los 6 ejes.
+        </p>
+    `; },
+
+    _topicDebilidadesDeck: function () { return `
+        <h2 class="form-nb-title">Qué Hace Débil a un Deck o Arquetipo</h2>
+        <p class="form-nb-text">Si la Anatomía de un Deck Competitivo te enseña a leer lo que hace fuerte a un deck, esta lección es la contraparte: aprender a diagnosticar por qué un deck pierde, de forma sistemática, antes de sentarte a jugar 50 rondas para descubrirlo por prueba y error. Las debilidades vienen de dos fuentes distintas — el diseño del propio arquetipo (lo que Konami imprimió) y las decisiones de construcción (lo que tú decidiste meter o dejar fuera). Separarlas es clave: no puedes arreglar con Optimización un problema que es de diseño.</p>
+
+        <h3 class="form-nb-subtitle">🧬 Debilidades de Diseño (el Arquetipo en Sí)</h3>
+        <ul class="form-nb-list">
+            <li><strong>Single Point of Failure:</strong> todo el combo depende de 1 sola pieza sin redundancia real (sin buscador, sin sustituto). Si esa carta es negada o no llega a mano, el deck no tiene plan B. Se detecta preguntando: "¿qué pasa si me niegan exactamente esta carta primero?".</li>
+            <li><strong>Combo Lineal de Muchos Pasos:</strong> cuantos más eslabones tiene la línea antes de llegar al endboard, más ventanas de interrupción existen. Un combo de 8 pasos da al rival 8 oportunidades de romperte con 1 sola Handtrap; uno de 3 pasos da solo 3.</li>
+            <li><strong>Sin Protección/Negación Propia:</strong> arquetipos que dependen 100% de non-engine prestado (Handtraps, Boardbreakers genéricos) para sobrevivir, porque su propio kit no incluye ninguna interrupción. Reduce drásticamente el espacio disponible para tech cards.</li>
+            <li><strong>Curva de Invocación Alta sin Payoff Proporcional:</strong> el arquetipo exige mucho esfuerzo (varios materiales, varias invocaciones intermedias) para un resultado que otro deck logra con la mitad de recursos. Es ineficiente incluso si "funciona".</li>
+            <li><strong>Sin Follow-Up (Grind Game Nulo):</strong> el deck todo lo apuesta al primer turno; si el duelo se extiende a los turnos 3-5, no tiene nada más que hacer y pierde por desgaste.</li>
+            <li><strong>Dependencia de un Tipo de Invocación Fácil de Hatear:</strong> arquetipos 100% Special Summon (o 100% Fusión, o 100% Sincro) son vulnerables en bloque a cartas que niegan ese tipo específico de invocación (Dimensional Barrier, Skill Drain, Vanity's Emptiness).</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🎴 Debilidades de Construcción (Decisiones del Jugador)</h3>
+        <ul class="form-nb-list">
+            <li><strong>Exceso de Garnets:</strong> cartas situacionales que solo funcionan combadas con otra pieza específica y son cartas muertas en la mano inicial. Cada Garnet extra resta Consistencia real, aunque en teoría sea "poderoso".</li>
+            <li><strong>Ratios Mal Calculados:</strong> 1-2 copias de la pieza que realmente activa el combo mientras se meten 3 copias de una tech situacional. El Starter real siempre necesita ser el más redundante del deck.</li>
+            <li><strong>Non-Engine Desalineado con el Meta Local:</strong> Handtraps y Boardbreakers elegidos por moda de internet, no por lo que realmente enfrentas en tu meta. Un non-engine "genérico" puede ser ciego a la amenaza real que te está ganando torneos.</li>
+            <li><strong>Splash sin Sinergia Real:</strong> mezclar 2 engines de arquetipos distintos que no se potencian entre sí solo porque "ambos son buenos por separado". Resta espacio de deck y consistencia sin sumar un plan de juego coherente.</li>
+            <li><strong>Cero Extenders:</strong> construir pensando solo en el Techo de Poder e ignorar el Floor. El deck es imparable si nadie interrumpe, y completamente muerto si lo hacen.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">⚠️ Señales Claras de que tu Deck es Débil</h3>
+        <ul class="form-nb-list">
+            <li>Brickeas seguido con manos de 5-6 cartas que "en teoría" deberían tener algo jugable.</li>
+            <li>Pierdes recurrentemente contra la misma carta o el mismo tipo de jugada del rival.</li>
+            <li>Con 1 sola Handtrap encima, tu turno termina sin ningún resultado en campo.</li>
+            <li>Ganas el turno 1 casi siempre, pero pierdes casi siempre que el duelo llega al turno 3+.</li>
+            <li>Tienes cartas en el deck que nunca recuerdas haber usado en ninguna partida reciente.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🥊 Fragilidad Estructural Frente al Meta</h3>
+        <p class="form-nb-text">La debilidad más grave no es interna, es relacional: existe 1 carta o combo específico del formato que, si el rival la tiene, tu deck no tiene ninguna respuesta. Esto no se arregla con más copias de tu propio engine — se arregla identificando esa amenaza puntual y dedicándole espacio de non-engine específico (Tech Cards), o aceptando conscientemente el riesgo si es poco común en tu meta local.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Diagnosticar antes de optimizar. No agregues cartas al azar esperando que "algo mejore" — primero identifica si el problema es de diseño (el arquetipo tiene un techo bajo por naturaleza) o de construcción (tus decisiones de ratio y non-engine). Un arquetipo con debilidad de diseño real tiene un límite competitivo que ninguna optimización de construcción puede superar del todo.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('debilidades-deck')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            La app traduce estos conceptos en números concretos: un <strong>Internal Score</strong> con Resiliencia baja en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('estadisticas'); return false;">Estadísticas</a>
+            es la señal directa de "Glass Cannon"; un <strong>External Score</strong> con vulnerabilidad G1/G2 alta apunta a
+            Fragilidad frente al meta cargado. Revisa también <strong>Mi Deck → 🎯 Optimización → getOptDiagnostics()</strong>,
+            que detecta patrones reales de tus propias rondas (exceso de bricks, pocos Boardbreakers de segundo) en vez de
+            teoría genérica. Y si dudas de cuánto esfuerzo pide el arquetipo antes de rendir, el quiz de
+            <strong>🧩 Complejidad del Deck</strong> te da un número honesto del techo de habilidad que exige.
         </p>
     `; },
 
