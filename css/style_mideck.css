@@ -2372,6 +2372,23 @@
     box-sizing: border-box;
 }
 .opt-input:focus { outline: none; border-color: var(--gold-color); }
+
+/* ── Steppers para campos numéricos (registro de ronda) ── */
+.opt-stepper { display: flex; align-items: center; gap: 4px; max-width: 118px; }
+.opt-stepper-input {
+    width: 44px; flex: 0 0 auto; text-align: center; padding: 5px 2px;
+    -moz-appearance: textfield;
+}
+.opt-stepper-input::-webkit-outer-spin-button,
+.opt-stepper-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.opt-stepper-btn {
+    flex: 0 0 auto; width: 26px; height: 26px; border-radius: 6px;
+    border: 1px solid rgba(255,215,0,.3); background: rgba(255,215,0,.1);
+    color: var(--gold-color); font-size: .95rem; font-weight: 700; line-height: 1;
+    cursor: pointer; transition: background .15s;
+}
+.opt-stepper-btn:hover { background: rgba(255,215,0,.22); }
+.opt-stepper-btn:active { background: rgba(255,215,0,.32); }
 .opt-input option {
     background: #0f0119;
     color: var(--text-light);
@@ -2473,7 +2490,9 @@
     gap: 8px;
 }
 .opt-record-hdr { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.opt-rec-date { font-size: .78rem; opacity: .65; flex: 1; }
+.opt-rec-date { font-size: .78rem; opacity: .65; flex: 1; cursor: pointer; }
+.opt-sess-toggle-arrow { display: inline-block; width: 14px; }
+.opt-sess-body { margin-top: 4px; }
 .opt-rec-deck-id {
     display: flex;
     align-items: center;
@@ -2832,6 +2851,16 @@
 }
 .opt-key-summary-chip img { width: 18px; height: 26px; object-fit: cover; border-radius: 2px; }
 .opt-key-summary-chip-threat { color: #ff6b6b; }
+.opt-collapsible-title {
+    border: none; margin: 0; font: inherit; text-align: left; cursor: pointer;
+    width: 100%; display: block;
+}
+.opt-key-summary-title.opt-collapsible-title { background: none; padding: 0; }
+.opt-diag-toggle-btn {
+    display: block; font-size: .76rem; font-weight: 700; color: #FFD54F;
+    background: rgba(255,193,7,.09); border-left: 3px solid #FFC107;
+    padding: 5px 10px; border-radius: 3px; margin-top: 4px;
+}
 
 /* ── Línea de Combos (Etapa 1) ── */
 .combos-toolbar { margin: 8px 0 14px; }

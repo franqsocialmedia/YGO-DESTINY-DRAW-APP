@@ -2383,6 +2383,36 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             if (submitBtn) submitBtn.focus();
         }
     },
+
+    // Stepper +/- para campos numéricos del formulario de Ronda.
+    // Vacío + "+" → 1. Vacío o en el mínimo (min del input, default 0) + "-" → se queda en el mínimo.
+    _stepNumber: function(id, delta) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const min = el.hasAttribute('min') ? parseInt(el.getAttribute('min'), 10) : 0;
+        const max = el.hasAttribute('max') ? parseInt(el.getAttribute('max'), 10) : null;
+        const raw = el.value;
+        let val = parseInt(raw, 10);
+        if (raw === '' || isNaN(val)) val = min;
+        if (delta > 0) {
+            val = (raw === '' || isNaN(parseInt(raw, 10))) ? Math.max(min, 1) : val + 1;
+            if (max !== null && val > max) val = max;
+        } else {
+            val = Math.max(min, val - 1);
+        }
+        el.value = val;
+    },
+
+    // Colapsa/expande el cuerpo completo de una sesión en Historial de Sesiones
+    _toggleOptRecord: function(id) {
+        const body  = document.getElementById(`opt-sess-body-${id}`);
+        const arrow = document.getElementById(`opt-sess-arrow-${id}`);
+        if (!body) return;
+        const willShow = body.style.display === 'none';
+        body.style.display = willShow ? 'block' : 'none';
+        if (arrow) arrow.textContent = willShow ? '▾' : '▸';
+    },
+
     // ═══════════════════════════════════════════════════════════════════
     // COMPLEJIDAD DEL DECK — clasificador de dificultad de uso/aprendizaje
     // ═══════════════════════════════════════════════════════════════════
@@ -2554,42 +2584,47 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
 
                 <div class="opt-form-row">
                     <label class="opt-lbl">Starters en mano</label>
-                    <select id="opt-r-starter" class="opt-input">
-                        <option value="0">0</option><option value="1">1</option>
-                        <option value="2">2</option><option value="3">3+</option>
-                    </select>
+                    <div class="opt-stepper">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-starter',-1)">−</button>
+                        <input type="number" id="opt-r-starter" class="opt-input opt-stepper-input" min="0" max="6" value="0" inputmode="numeric">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-starter',1)">+</button>
+                    </div>
                 </div>
 
                 <div class="opt-form-row">
                     <label class="opt-lbl">Extenders en mano</label>
-                    <select id="opt-r-extenders" class="opt-input">
-                        <option value="0">0</option><option value="1">1</option>
-                        <option value="2">2</option><option value="3">3+</option>
-                    </select>
+                    <div class="opt-stepper">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-extenders',-1)">−</button>
+                        <input type="number" id="opt-r-extenders" class="opt-input opt-stepper-input" min="0" max="6" value="0" inputmode="numeric">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-extenders',1)">+</button>
+                    </div>
                 </div>
 
                 <div class="opt-form-row">
                     <label class="opt-lbl">Handtraps en mano</label>
-                    <select id="opt-r-handtraps" class="opt-input">
-                        <option value="0">0</option><option value="1">1</option>
-                        <option value="2">2</option><option value="3">3+</option>
-                    </select>
+                    <div class="opt-stepper">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-handtraps',-1)">−</button>
+                        <input type="number" id="opt-r-handtraps" class="opt-input opt-stepper-input" min="0" max="6" value="0" inputmode="numeric">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-handtraps',1)">+</button>
+                    </div>
                 </div>
 
                 <div class="opt-form-row">
                     <label class="opt-lbl">Boardbreaker en mano</label>
-                    <select id="opt-r-boardbreaker" class="opt-input">
-                        <option value="0">0</option><option value="1">1</option>
-                        <option value="2">2</option><option value="3">3+</option>
-                    </select>
+                    <div class="opt-stepper">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-boardbreaker',-1)">−</button>
+                        <input type="number" id="opt-r-boardbreaker" class="opt-input opt-stepper-input" min="0" max="6" value="0" inputmode="numeric">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-boardbreaker',1)">+</button>
+                    </div>
                 </div>
 
                 <div class="opt-form-row">
                     <label class="opt-lbl">Bricks/Tech en mano</label>
-                    <select id="opt-r-bricks" class="opt-input">
-                        <option value="0">0</option><option value="1">1</option>
-                        <option value="2">2</option><option value="3">3+</option>
-                    </select>
+                    <div class="opt-stepper">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-bricks',-1)">−</button>
+                        <input type="number" id="opt-r-bricks" class="opt-input opt-stepper-input" min="0" max="6" value="0" inputmode="numeric">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-bricks',1)">+</button>
+                    </div>
                 </div>
 
             </div>
@@ -2627,19 +2662,35 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
 
                 <div class="opt-form-row">
                     <label class="opt-lbl">🛡️ Interrupciones exitosas (tuyas)</label>
-                    <input type="number" id="opt-r-negate" class="opt-input" min="0" max="20" placeholder="0">
+                    <div class="opt-stepper">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-negate',-1)">−</button>
+                        <input type="number" id="opt-r-negate" class="opt-input opt-stepper-input" min="0" max="20" value="0" inputmode="numeric">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-negate',1)">+</button>
+                    </div>
                 </div>
                 <div class="opt-form-row">
                     <label class="opt-lbl">⚔️ Limpieza de campo exitosa (tuya)</label>
-                    <input type="number" id="opt-r-board" class="opt-input" min="0" max="15" placeholder="0">
+                    <div class="opt-stepper">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-board',-1)">−</button>
+                        <input type="number" id="opt-r-board" class="opt-input opt-stepper-input" min="0" max="15" value="0" inputmode="numeric">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-board',1)">+</button>
+                    </div>
                 </div>
                 <div class="opt-form-row">
                     <label class="opt-lbl">🛑 Interrupción exitosa del rival</label>
-                    <input type="number" id="opt-r-combo" class="opt-input" min="0" max="20" placeholder="0">
+                    <div class="opt-stepper">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-combo',-1)">−</button>
+                        <input type="number" id="opt-r-combo" class="opt-input opt-stepper-input" min="0" max="20" value="0" inputmode="numeric">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-combo',1)">+</button>
+                    </div>
                 </div>
                 <div class="opt-form-row">
                     <label class="opt-lbl">💢 Limpieza de campo exitosa (rival)</label>
-                    <input type="number" id="opt-r-rival" class="opt-input" min="0" max="15" placeholder="0">
+                    <div class="opt-stepper">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-rival',-1)">−</button>
+                        <input type="number" id="opt-r-rival" class="opt-input opt-stepper-input" min="0" max="15" value="0" inputmode="numeric">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-rival',1)">+</button>
+                    </div>
                 </div>
 
                 <div class="opt-group-hdr opt-full">Resultado</div>
@@ -2673,7 +2724,11 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 </div>
                 <div class="opt-form-row" id="opt-row-turnovic" style="display:none;">
                     <label class="opt-lbl">🏁 Turno en que gané</label>
-                    <input type="number" id="opt-r-turnovic" class="opt-input" min="1" max="20" placeholder="Ej: 3">
+                    <div class="opt-stepper">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-turnovic',-1)">−</button>
+                        <input type="number" id="opt-r-turnovic" class="opt-input opt-stepper-input" min="1" max="20" placeholder="Ej: 3">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-turnovic',1)">+</button>
+                    </div>
                 </div>
                 <div class="opt-form-row" id="opt-row-tipo-der" style="display:none;">
                     <label class="opt-lbl">Tipo de derrota</label>
@@ -2686,7 +2741,11 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 </div>
                 <div class="opt-form-row" id="opt-row-turnoder" style="display:none;">
                     <label class="opt-lbl">💀 Turno en que perdí</label>
-                    <input type="number" id="opt-r-turnoder" class="opt-input" min="1" max="20" placeholder="Ej: 4">
+                    <div class="opt-stepper">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-turnoder',-1)">−</button>
+                        <input type="number" id="opt-r-turnoder" class="opt-input opt-stepper-input" min="1" max="20" placeholder="Ej: 4">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-turnoder',1)">+</button>
+                    </div>
                 </div>
 
                 <div class="opt-form-row opt-full">
@@ -3066,10 +3125,12 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     ? Math.round(m.rSecond.filter(r=>r.resultado==='victoria').length / m.rSecond.length * 100) : null;
                 const lrFirst  = wrFirst  !== null ? 100 - wrFirst  : null;
                 const lrSecond = wrSecond !== null ? 100 - wrSecond : null;
+                const sessOpen = si === 0;
                 html += `
                 <div class="opt-record${isThisActive ? ' opt-record-active' : ''}">
                     <div class="opt-record-hdr">
-                        <span class="opt-rec-date">
+                        <span class="opt-rec-date" onclick="Deck._toggleOptRecord(${sess.id})">
+                            <span class="opt-sess-toggle-arrow" id="opt-sess-arrow-${sess.id}">${sessOpen ? '▾' : '▸'}</span>
                             ${sess.date}${sess.label ? ` — ${sess.label}` : ''}
                             <span class="opt-rounds-pill">${m.p} rondas</span>
                             ${isThisActive ? '<span class="opt-active-pill">🟢 activa</span>' : ''}
@@ -3085,6 +3146,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                             <button class="opt-del-btn" onclick="Deck.deleteOptimizacionRecord(${sess.id})" title="Eliminar sesión">🗑</button>
                         </span> </div>
 
+                    <div id="opt-sess-body-${sess.id}" class="opt-sess-body" style="display:${sessOpen ? 'block' : 'none'};">
                     <div class="opt-metrics-grid">
                         <div class="opt-metric"><div class="opt-m-name">Win Rate</div><div class="opt-m-val">${m.wr}% ${tr(m.wr, prev?.wr, true)}</div><div class="opt-m-badge ${wCls}">${wLbl}</div></div>
                         <div class="opt-metric"><div class="opt-m-name">Brick Rate</div><div class="opt-m-val">${m.br}% ${tr(m.br, prev?.br, false)}</div><div class="opt-m-badge ${bCls}">${bLbl}</div></div>
@@ -3143,17 +3205,23 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     <div class="opt-key-summary">
                         ${m.keyCardStats.length ? `
                         <div class="opt-key-summary-col">
-                            <span class="opt-key-summary-title">🗝️ Cartas Clave</span>
-                            ${m.keyCardStats.map(c => `<span class="opt-key-summary-chip"><img src="${c.img}" alt="${c.name}">${c.name} ×${c.count}</span>`).join('')}
+                            <button type="button" class="opt-key-summary-title opt-collapsible-title" onclick="Deck.toggleSection('opt-keycards-${sess.id}')">🗝️ Cartas Clave (${m.keyCardStats.length})</button>
+                            <div id="opt-keycards-${sess.id}" style="display:none;">
+                                ${m.keyCardStats.map(c => `<span class="opt-key-summary-chip"><img src="${c.img}" alt="${c.name}">${c.name} ×${c.count}</span>`).join('')}
+                            </div>
                         </div>` : ''}
                         ${m.threatCardStats.length ? `
                         <div class="opt-key-summary-col">
-                            <span class="opt-key-summary-title">🎯 Amenazas del Oponente</span>
-                            ${m.threatCardStats.map(c => `<span class="opt-key-summary-chip opt-key-summary-chip-threat"><img src="${c.img}" alt="${c.name}">${c.name} ×${c.count}</span>`).join('')}
+                            <button type="button" class="opt-key-summary-title opt-collapsible-title" onclick="Deck.toggleSection('opt-threats-${sess.id}')">🎯 Amenazas del Oponente (${m.threatCardStats.length})</button>
+                            <div id="opt-threats-${sess.id}" style="display:none;">
+                                ${m.threatCardStats.map(c => `<span class="opt-key-summary-chip opt-key-summary-chip-threat"><img src="${c.img}" alt="${c.name}">${c.name} ×${c.count}</span>`).join('')}
+                            </div>
                         </div>` : ''}
                     </div>` : ''}
 
-                    ${diag.length ? `<div class="opt-diagnostics">${diag.map(d=>`<div class="opt-diag-item">${d}</div>`).join('')}</div>` : ''}
+                    ${diag.length ? `
+                    <button type="button" class="opt-diag-toggle-btn opt-collapsible-title" onclick="Deck.toggleSection('opt-diag-${sess.id}')">⚠️ Diagnósticos (${diag.length})</button>
+                    <div id="opt-diag-${sess.id}" class="opt-diagnostics" style="display:none;">${diag.map(d=>`<div class="opt-diag-item">${d}</div>`).join('')}</div>` : ''}
                     <details class="opt-rounds-detail">
                         <summary class="opt-rounds-summary">Ver rondas individuales (${sess.rounds.length})</summary>
                         <div class="opt-rounds-table">
@@ -3188,6 +3256,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                             }).join('')}
                         </div>
                     </details>
+                    </div>
                 </div>`;
             });
             html += `</div>`;
