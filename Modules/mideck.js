@@ -24,6 +24,7 @@ const Deck = {
     _pendingKeyCards: [],
     MAX_VERSIONS: 25,
     _pendingThreatCards: [],
+    _roundDraft: null,
 
     init: function () {
         this.container = document.getElementById('deck-container');
@@ -2204,6 +2205,7 @@ threatCards:      [...this._pendingThreatCards]
         // Reset campos de ronda (conserva label y sesión activa)
         this._pendingKeyCards = [];
         this._pendingThreatCards = [];
+        this._roundDraft = null;
         ['opt-r-resultado','opt-r-orden','opt-r-tipo-vic','opt-r-tipo-der','opt-r-notas','opt-r-oppname','opt-r-oppnotes']
             .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
         const oppStatusEl = document.getElementById('opt-oppdeck-status');
@@ -2290,10 +2292,10 @@ threatCards:      [...this._pendingThreatCards]
 
     cerrarSesionOptimizacion: function() {
         this._activeSessionId = null;
+        this._roundDraft = null;
         const pane = document.getElementById('mideck-optimizacion-pane');
         if (pane) pane.innerHTML = this.renderOptimizacionPane();
     },
-
     // Alias por si algo externo sigue llamando addOptimizacionSession
     addOptimizacionSession: function() { this.addOptimizacionRound(); },
 
@@ -2340,8 +2342,23 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         box.querySelectorAll('.opt-slide-dot').forEach(d => {
             d.classList.toggle('opt-slide-dot-active', parseInt(d.dataset.slide, 10) === n);
         });
+        this._updateRoundSubmitBtn(n);
         const firstField = box.querySelector(`.opt-slide[data-slide="${n}"] .opt-input`);
         if (firstField) firstField.focus();
+    },
+
+    _updateRoundSubmitBtn: function(n) {
+        const btn = document.querySelector('.opt-round-modal-box .opt-submit-btn');
+        if (!btn) return;
+        btn.textContent = n < 4 ? '➡️ Siguiente Aspecto' : (this._editingRoundId ? '💾 Guardar Cambios' : '📋 Registrar Duelo');
+    },
+
+    _onRoundSubmitClick: function() {
+        const box = document.querySelector('.opt-round-modal-box');
+        const activeSlide = box?.querySelector('.opt-slide.opt-slide-active');
+        const slideNum = activeSlide ? parseInt(activeSlide.dataset.slide, 10) : 4;
+        if (slideNum < 4) this._goToRoundSlide(slideNum + 1);
+        else this.addOptimizacionRound();
     },
 
     // Botón lateral fijo: avanza el foco campo por campo y cambia de slide al llegar al final
@@ -2522,8 +2539,8 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             </datalist>
             <div class="opt-slide-dots">
                 <button type="button" class="opt-slide-dot opt-slide-dot-active" data-slide="1" onclick="Deck._goToRoundSlide(1)">1. Robo</button>
-                <button type="button" class="opt-slide-dot" data-slide="2" onclick="Deck._goToRoundSlide(2)">2. Oponente</button>
-                <button type="button" class="opt-slide-dot" data-slide="3" onclick="Deck._goToRoundSlide(3)">3. Enfrentamiento</button>
+                <button type="button" class="opt-slide-dot" data-slide="2" onclick="Deck._goToRoundSlide(2)">2. Enfrentamiento</button>
+                <button type="button" class="opt-slide-dot" data-slide="3" onclick="Deck._goToRoundSlide(3)">3. Oponente</button>
                 <button type="button" class="opt-slide-dot" data-slide="4" onclick="Deck._goToRoundSlide(4)">4. Cartas Clave</button>
             </div>
 
@@ -2578,7 +2595,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             </div>
             </div>
 
-            <div class="opt-slide" data-slide="2">
+            <div class="opt-slide" data-slide="3">
             <div class="opt-form-grid">
 
                 <div class="opt-group-hdr opt-full">🎯 Registrar Oponente</div>
@@ -2603,7 +2620,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             </div>
             </div>
 
-            <div class="opt-slide" data-slide="3">
+            <div class="opt-slide" data-slide="2">
             <div class="opt-form-grid">
 
                 <div class="opt-group-hdr opt-full">⚔ Registrar Enfrentamiento</div>
@@ -2699,7 +2716,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             </div>
             </div>
 
-            <button class="opt-submit-btn" onclick="Deck.addOptimizacionRound()">${this._editingRoundId ? '💾 Guardar Cambios' : '➕ Registrar Ronda de Duelo'}</button>
+            <button class="opt-submit-btn" onclick="Deck._onRoundSubmitClick()">➡️ Siguiente Aspecto</button>
         `;
     },
 
@@ -2844,8 +2861,13 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         if (!Object.keys(this.cards).length) { alert('Carga un deck primero.'); return; }
         if (document.getElementById('opt-round-modal-overlay')) return;
         if (!this._editingRoundId) {
-            this._pendingKeyCards = [];
-            this._pendingThreatCards = [];
+            if (this._roundDraft) {
+                this._pendingKeyCards    = this._roundDraft.keyCards    ? [...this._roundDraft.keyCards]    : [];
+                this._pendingThreatCards = this._roundDraft.threatCards ? [...this._roundDraft.threatCards] : [];
+            } else {
+                this._pendingKeyCards = [];
+                this._pendingThreatCards = [];
+            }
         }
         const overlay = document.createElement('div');
         overlay.id = 'opt-round-modal-overlay';
@@ -2853,13 +2875,45 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         overlay.innerHTML = this._renderRoundModalBox();
         overlay.addEventListener('click', (e) => { if (e.target === overlay) Deck.closeRoundModal(); });
         document.body.appendChild(overlay);
+        if (!this._editingRoundId && this._roundDraft) this._applyRoundDraft();
     },
 
     closeRoundModal: function() {
+        if (this._editingRoundId) {
+            this._editingRoundId = null;
+            this._pendingKeyCards = [];
+            this._pendingThreatCards = [];
+        } else {
+            this._roundDraft = this._captureRoundDraft();
+        }
         document.getElementById('opt-round-modal-overlay')?.remove();
-        this._editingRoundId = null;
-        this._pendingKeyCards = [];
-        this._pendingThreatCards = [];
+    },
+
+    _captureRoundDraft: function() {
+        const ids = ['opt-r-starter','opt-r-extenders','opt-r-handtraps','opt-r-boardbreaker','opt-r-bricks',
+                     'opt-r-oppname','opt-r-oppnotes',
+                     'opt-r-negate','opt-r-board','opt-r-combo','opt-r-rival',
+                     'opt-r-resultado','opt-r-orden','opt-r-tipo-vic','opt-r-turnovic',
+                     'opt-r-tipo-der','opt-r-turnoder','opt-r-tiempo','opt-r-notas'];
+        const values = {};
+        ids.forEach(id => { const el = document.getElementById(id); if (el) values[id] = el.value; });
+        const activeSlideEl = document.querySelector('.opt-round-modal-box .opt-slide.opt-slide-active');
+        return {
+            values,
+            slide: activeSlideEl ? parseInt(activeSlideEl.dataset.slide, 10) : 1,
+            keyCards: [...this._pendingKeyCards],
+            threatCards: [...this._pendingThreatCards]
+        };
+    },
+
+    _applyRoundDraft: function() {
+        if (!this._roundDraft) return;
+        Object.entries(this._roundDraft.values).forEach(([id, val]) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        });
+        this._optToggleTipo();
+        this._goToRoundSlide(this._roundDraft.slide || 1);
     },
 
     _refreshRoundModalIfOpen: function() {
@@ -2969,7 +3023,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         // ── BOTÓN FLOTANTE: NUEVA RONDA DE DUELO ────────────────────────────
         html += `
         <button class="opt-fab-round-btn" onclick="Deck.openRoundModal()">
-            ➕ Nueva Ronda de Duelo${isActive ? ` <span class="opt-round-count">#${activeRounds + 1}</span>` : ''}
+            ${isActive ? `🔄 Continuar Duelo <span class="opt-round-count">#${activeRounds + 1}</span>` : '➕ Nueva Ronda de Duelo'}
         </button>`;
 
         // ── HISTORIAL DE SESIONES ─────────────────────────────────────────
