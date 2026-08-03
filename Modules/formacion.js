@@ -27,6 +27,7 @@ const Formacion = {
         { id: 'palabras-tecnicas-juego', label: 'Palabras Clave y Técnicas del Juego', level: 'Intermedio' },
         { id: 'estructura-arquetipos', label: 'Estructura de un Arquetipo (Diseño TCG)', level: 'Intermedio' },
         { id: 'mentalidad-del-jugador',  label: 'Mentalidad del Jugador',           level: 'Intermedio' },
+        { id: 'secuenciacion',           label: 'Secuenciación: El Orden Importa', level: 'Avanzado' },
         // ── MÓDULO 3 — Construcción y Optimización de Mazo ──
         { id: 'elegir-construir-deck',      label: 'Elegir y Construir tu Deck',        level: 'Competitivo' },
         { id: 'staples-formato',            label: 'Staples del Formato',               level: 'Competitivo' },
@@ -328,6 +329,23 @@ const Formacion = {
               options: ['Tener pocas cartas de Extra Deck', 'Que exista 1 sola carta común del formato que anule su plan de juego por completo, sin alternativa', 'Que sea un arquetipo nuevo', 'Que tenga Field Spell'], correct: 1,
               explain: 'Un Choke Point tan amplio como "1 carta me gana el duelo" es la máxima expresión de Fragilidad — el rival ni siquiera necesita tech específica.' },
         ],
+        'secuenciacion': [
+    { q: '¿Cuál es la pregunta que hace un jugador de nivel Master antes de jugar su mejor carta?',
+      options: ['¿Cómo la juego más rápido?', '¿Qué quiero averiguar antes de comprometerla?', '¿Cuánto ATK tiene?', '¿Puedo jugarla dos veces?'], correct: 1,
+      explain: 'La secuenciación empieza por decidir qué información necesitas antes de exponer tu pieza más valiosa.' },
+    { q: '¿Qué es una "carta de prueba"?',
+      options: ['Una carta prohibida en torneo', 'Una carta de valor medio jugada primero para hacer hablar al rival', 'Una carta que solo funciona en Master Duel', 'Un tipo de Handtrap específico'], correct: 1,
+      explain: 'Si el rival gasta una negación importante sobre ella, obtienes información valiosa antes de arriesgar tu pieza clave.' },
+    { q: 'Según la lección, ¿cuál es el error del 90% de los jugadores con una mano de 2 motores, 1 extensor, 1 handtrap y 1 buscador?',
+      options: ['No jugar ninguna carta', 'Empezar con el motor más fuerte sin evaluar alternativas', 'Guardar todo para el turno 2', 'Usar la Handtrap primero'], correct: 1,
+      explain: 'Muchas veces conviene más empezar con la jugada menos comprometida para observar la respuesta del rival.' },
+    { q: '¿Qué distingue a una "amenaza latente" de una "amenaza inmediata"?',
+      options: ['La latente no existe realmente', 'La latente no hace nada ahora pero será un problema en turnos siguientes', 'Son exactamente lo mismo', 'La latente solo aplica en GOAT Format'], correct: 1,
+      explain: 'Los jugadores promedio ignoran las amenazas latentes; los buenos las identifican antes de que crezcan.' },
+    { q: 'Al leer manos por deducción, ¿qué logras cuando el rival no usa Ash Blossom en tu buscador?',
+      options: ['Saber con certeza que no la tiene', 'Reducir las posibilidades de lo que tiene en mano, sin certeza absoluta', 'Nada, es información inútil', 'Confirmar que ganaste el duelo'], correct: 1,
+      explain: 'No es certeza total, pero reduces el abanico de posibilidades de forma significativa — de 100 opciones a unas pocas.' },
+],
         'optimizar-deck': [
             { q: '¿Cuál es la señal de que te falta Consistencia?',
               options: ['El endboard es débil', 'Brickeas frecuentemente o hay turnos sin nada que hacer', 'Pierdes contra la misma jugada repetida', 'Tienes demasiados Handtraps'], correct: 1,
@@ -1058,6 +1076,7 @@ const Formacion = {
             'palabras-tecnicas-juego': this._topicPalabrasTecnicas(),
             'estructura-arquetipos':   this._topicEstructuraArquetipos(),
             'mentalidad-del-jugador':  this._topicMentalidadJugador(),
+'secuenciacion':           this._topicSecuenciacion(),
             'elegir-construir-deck':     this._topicElegirConstruirDeck(),
             'staples-formato':           this._topicStaples(),
             'anatomia-deck-competitivo': this._topicAnatomiaDeckCompetitivo(),
@@ -1778,7 +1797,61 @@ _topicPalabrasTecnicas: function () { return `
             <a href="#" class="form-link" onclick="Formacion.goToConfigSection('staples-section'); return false;">Config → 📌 Lista de Staples</a>.
         </p>
     `; },
+_topicSecuenciacion: function () { return `
+        <h2 class="form-nb-title">Secuenciación: El Orden Importa</h2>
+        <p class="form-nb-text">En Yu-Gi-Oh! muchas veces no gana quien tiene la mejor mano — gana quien juega sus cartas en el mejor orden. Un jugador novato piensa "empiezo con mi mejor carta". Un jugador de nivel Master piensa "¿qué quiero averiguar antes de comprometer mi mejor carta?".</p>
 
+        <h3 class="form-nb-subtitle">❓ Las 4 Preguntas Antes de Jugar una Carta</h3>
+        <p class="form-nb-text">Antes de activar cualquier efecto, pregúntate:</p>
+        <ul class="form-nb-list">
+            <li><strong>1. ¿Qué información obtengo si esta carta resuelve?</strong></li>
+            <li><strong>2. ¿Qué información obtengo si esta carta es negada?</strong></li>
+            <li><strong>3. ¿Estoy obligando al rival a decidir ahora, o le estoy regalando una decisión fácil?</strong></li>
+            <li><strong>4. ¿Estoy revelando mi plan demasiado pronto?</strong></li>
+        </ul>
+        <p class="form-nb-text">La mayoría de las partidas se ganan o se pierden en estas cuatro preguntas, no en cuántas cartas poderosas tienes en mano.</p>
+
+        <h3 class="form-nb-subtitle">🔍 El Concepto de "Cartas de Prueba"</h3>
+        <p class="form-nb-text">Hay cartas cuyo propósito principal no es resolver — es hacer hablar al rival. Juegas una carta de valor medio primero: si el rival usa una negación importante sobre ella, ya sabes algo (esa carta le preocupaba, o no tiene otra respuesta, o evaluó mal la amenaza). En cualquiera de los tres casos obtuviste información. La información también es un recurso — tan real como una carta en mano.</p>
+
+        <h3 class="form-nb-subtitle">⚠️ El Error del 90% de los Jugadores</h3>
+        <p class="form-nb-text">Mano típica: Motor, Motor, Extensor, Handtrap, Buscador. El error casi universal es empezar con el motor más fuerte porque "quieren hacer el combo". Pero muchas veces es mejor empezar con el buscador o una jugada menos comprometida para ver cómo responde el rival antes de exponer la pieza clave.</p>
+
+        <h3 class="form-nb-subtitle">🕵️ La Analogía del Detective</h3>
+        <p class="form-nb-text">Un detective no llega a un interrogatorio mostrando todas las pruebas de golpe. Empieza con preguntas pequeñas, observa, deja que el rival hable y cometa errores, y solo entonces presenta la prueba importante. Eso es secuenciar: administrar cuándo revelas cada pieza de tu plan.</p>
+
+        <h3 class="form-nb-subtitle">💰 El Costo de "Limpiar el Camino"</h3>
+        <p class="form-nb-text">No siempre conviene forzar que el rival gaste sus cartas colocadas antes de empezar tu combo. Depende del costo: si para hacerlo activar 2 cartas tienes que gastar 3 recursos importantes, el intercambio puede ser malo. La pregunta correcta no es "¿cómo limpio el camino?" — es "¿qué estoy dispuesto a pagar para limpiarlo?".</p>
+
+        <h3 class="form-nb-subtitle">🎯 Los 3 Niveles de Amenaza</h3>
+        <ul class="form-nb-list">
+            <li><strong>Amenaza inmediata:</strong> si no respondes ahora, pierdes. Ej: una carta que inicia un combo imparable.</li>
+            <li><strong>Amenaza latente:</strong> no hace nada ahora, pero en 2 turnos será un problema enorme. Muchos jugadores la ignoran — los buenos la identifican y la neutralizan antes de que crezca.</li>
+            <li><strong>Amenaza psicológica:</strong> ni siquiera necesita activarse. El rival juega alrededor de ella. Ej: dejas 2 cartas en mano sin usar y el rival asume que tienes una Handtrap, aunque no la tengas — eso ya te generó valor.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🧠 Lectura de Manos por Deducción</h3>
+        <p class="form-nb-text">Leer manos no significa adivinar las 5 cartas exactas del rival — significa reducir las posibilidades. Ejemplo: el rival no usó Ash Blossom cuando pudo. Entonces, probablemente: no la tiene, o está esperando un objetivo mejor, o tiene otra interrupción que considera más valiosa. No sabes cuál es la correcta, pero ya pasaste de 100 posibilidades a 3 — y eso es suficiente para decidir mejor.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ejercicio de Razonamiento</h3>
+        <p class="form-nb-text">Vas segundo. El rival tiene: 1 monstruo con negación, 1 carta colocada, 2 cartas en mano. Tú tienes 5 cartas: tu mejor iniciador, un extensor, una carta que destruye un monstruo, una Handtrap inútil en este momento, y una carta que busca. ¿Cuál juegas primero?</p>
+        <p class="form-nb-text">No hay una respuesta única — la respuesta correcta siempre empieza con "depende", seguida de preguntas: ¿qué deck juega el rival? ¿qué representa esa carta colocada? ¿qué tipo de negación tiene el monstruo? ¿mi iniciador pierde contra esa negación? ¿mi buscador fuerza una respuesta? Eso es pensar en probabilidades, no en recetas memorizadas.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">El objetivo final no es memorizar el mejor orden de un combo específico — es dejar de jugar cartas y empezar a jugar contra la mente del oponente. Ese cambio de enfoque, más que cualquier carta nueva, es lo que separa a un jugador de nivel medio de uno de nivel Master.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('secuenciacion')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Antes de tu próxima partida, planea el orden de tu línea de combo en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck','combos'); return false;">Mi Deck → 🧬 Línea de Combos</a>
+            y márcate mentalmente en qué punto exacto usarías una "carta de prueba". Después, en
+            <strong>Mi Deck → 🎯 Optimización</strong>, usa el campo <strong>notas</strong> de cada ronda para anotar qué
+            información obtuviste (o ignoraste) del rival — con el tiempo verás patrones en tus propias decisiones de orden.
+        </p>
+    `; },
     _topicAnatomiaDeckCompetitivo: function () { return `
         <h2 class="form-nb-title">Anatomía de un Deck Competitivo</h2>
         <p class="form-nb-text">Todo deck competitivo puede diseccionarse en los mismos componentes. Aprende a leer estas métricas y podrás evaluar cualquier deck que veas, incluso uno que nunca hayas jugado.</p>
