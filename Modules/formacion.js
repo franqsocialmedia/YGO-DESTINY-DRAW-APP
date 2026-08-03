@@ -43,6 +43,7 @@ const Formacion = {
         { id: 'gestion-lp-recursos',     label: 'Gestión de LP y Recursos',         level: 'Competitivo' },
         { id: 'formatos-diferencias',    label: 'Formatos y sus Diferencias',       level: 'Competitivo' },
         { id: 'side-deck',               label: 'El Side Deck',                    level: 'Competitivo' },
+        { id: 'meta-tiers',              label: 'El Meta y los Tiers de Poder',     level: 'Competitivo' },
     ],
 
     PLATFORMS: ['PC', 'GBC', 'GBA', 'PS1', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'Físico'],
@@ -479,6 +480,23 @@ const Formacion = {
             { q: '¿Qué recomienda el Consejo Clave sobre el mejor Side Deck?',
               options: ['El que tiene las cartas más poderosas en general', 'El que tiene cartas específicas y pensadas para lo que vas a enfrentar', 'El que nunca cambia entre partidas', 'El que copia el de un pro sin adaptarlo'], correct: 1,
               explain: '15 cartas específicas para tu meta local superan a 15 Staples genéricos.' },
+        ],
+        'meta-tiers': [
+            { q: '¿Cuál es la diferencia principal entre "Meta global" y "Meta local"?',
+              options: ['No hay diferencia', 'El Meta local refleja lo que realmente juega tu región/tienda, el global es la referencia mundial', 'El Meta global siempre es más útil para el Side Deck', 'El Meta local nunca cambia'], correct: 1,
+              explain: 'Para preparar un evento específico, el Meta local (lo que tu mesa realmente juega) suele ser más accionable que el Meta global.' },
+            { q: '¿Qué indica "presencia sin conversión" en un arquetipo?',
+              options: ['Que domina el formato', 'Que es popular pero no necesariamente fuerte, pues pocos llegan a Top Cut con él', 'Que está prohibido', 'Que no existe en el meta'], correct: 1,
+              explain: 'Meta Share alto pero baja conversión a Top Cut sugiere un deck jugado por su popularidad, no por su rendimiento real.' },
+            { q: 'Según la "relevancia de atención", ¿qué matchup merece máxima prioridad de preparación?',
+              options: ['Baja presencia y ya eres fuerte contra él', 'Alta presencia y eres débil contra él', 'Cualquier deck Tier 3', 'Ninguno, se prepara todo por igual'], correct: 1,
+              explain: 'Alta probabilidad de encontrarlo + mal matchup es la combinación que más partidas te puede costar si se ignora.' },
+            { q: '¿Qué mide la "conversión" de un arquetipo en el análisis de Tiers?',
+              options: ['Cuántas copias tiene cada carta', 'De los jugadores que lo usan, cuántos llegan a premiar/Top Cut', 'El precio de mercado del deck', 'Su nivel de complejidad de piloto'], correct: 1,
+              explain: 'La conversión conecta presencia con resultados reales: cuántos de los que juegan ese deck efectivamente ganan.' },
+            { q: 'En Destiny Draw!, ¿qué botón recalcula el Top Tier y el Poder de Cartas del meta importado?',
+              options: ['Guardar Deck', 'Actualizar Data', 'Restaurar Configuración', 'Exportar Reporte'], correct: 1,
+              explain: '"Actualizar Data" descarga cartas faltantes y recalcula de una vez los scores de Decks del Meta y el Poder de Cartas del Meta.' },
         ],
         'estructura-arquetipos': [
             { q: '¿Cuál es la diferencia oficial entre "Arquetipo" y "Serie" en Yu-Gi-Oh!?',
@@ -1053,6 +1071,7 @@ const Formacion = {
             'gestion-lp-recursos':     this._topicGestionLpRecursos(),
             'formatos-diferencias':    this._topicFormatosDiferencias(),
             'side-deck':               this._topicSideDeck(),
+            'meta-tiers':              this._topicMetaTiers(),
         };
         return topics[topicId] || '<p>Contenido no disponible.</p>';
     },
@@ -2363,6 +2382,63 @@ _topicPalabrasTecnicas: function () { return `
             exactamente qué matchup necesita más ayuda del Side Deck.
         </p>
     `; },
+
+    _topicMetaTiers: function () { return `
+        <h2 class="form-nb-title">El Meta y los Tiers de Poder</h2>
+        <p class="form-nb-text">Antes de un torneo, la pregunta no es "¿mi deck es bueno?" sino "¿mi deck es bueno <em>contra lo que voy a enfrentar</em>?". El Meta es ese contexto: la fotografía de qué decks se están jugando, en qué proporción, y qué tan fuertes son entre sí.</p>
+
+        <h3 class="form-nb-subtitle">📸 Qué es "El Meta"</h3>
+        <p class="form-nb-text">El metagame (Meta) es el conjunto de decks que realmente se están jugando en un formato/región/momento dado — no lo que es teóricamente posible, sino lo que de verdad te vas a encontrar en las mesas. Se construye leyendo resultados de torneos recientes (Top Cut, Champions, YCS, locales grandes) y agrupando qué arquetipos repiten presencia.</p>
+        <ul class="form-nb-list">
+            <li><strong>Meta global:</strong> lo que domina a nivel mundial/competitivo alto (útil como referencia, no siempre representa tu mesa local).</li>
+            <li><strong>Meta local:</strong> lo que realmente juega tu tienda/región. Para el Side Deck (ver lección anterior) y la preparación real de un evento, este es el que más importa.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🏆 Qué es un "Tier"</h3>
+        <p class="form-nb-text">Un Tier es un rango de poder relativo dentro del Meta. Clasifica arquetipos según qué tan consistentemente rinden en torneos:</p>
+        <ul class="form-nb-list">
+            <li><strong>Tier 0 (raro, señal de formato roto):</strong> un deck tan por encima del resto que domina sin rival real. Suele terminar en Banlist rápido.</li>
+            <li><strong>Tier 1:</strong> los decks más fuertes y consistentes del formato actual — los que más vas a ver, y contra los que más necesitas un plan.</li>
+            <li><strong>Tier 2:</strong> competitivos y viables, ganan torneos pero con menos frecuencia o algo más de dependencia de matchup favorable.</li>
+            <li><strong>Tier 3 / Rogue:</strong> jugables y a veces con techo alto, pero inconsistentes o con debilidades explotables; sorprenden porque son menos conocidos.</li>
+            <li><strong>Off-meta / Casual:</strong> divertidos o nostálgicos, pero sin presencia real en el competitivo actual.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">📊 Cómo se Establece un Tier (en la práctica)</h3>
+        <ul class="form-nb-list">
+            <li><strong>Presencia (Meta Share):</strong> qué porcentaje de los decks en un torneo grande son ese arquetipo.</li>
+            <li><strong>Conversión:</strong> de los que lo juegan, ¿cuántos llegan a Top Cut/premian? Presencia sin conversión indica un deck popular pero no necesariamente fuerte.</li>
+            <li><strong>Consistencia interna:</strong> qué tan seguido el deck ejecuta su plan de juego ideal (starters, extenders, board completo) — el mismo concepto que mide tu <strong>Internal Score</strong> en esta app.</li>
+            <li><strong>Resiliencia frente al campo:</strong> qué tan bien resiste interrupciones (Handtraps, Boardbreakers) del resto del meta — tu eje de <strong>Resiliencia</strong> y <strong>vulnerabilidad G1/G2</strong>.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🎯 Relevancia de Atención — Priorizar tu Preparación</h3>
+        <p class="form-nb-text">No puedes preparar tu Side Deck y tu plan de juego contra los 40 arquetipos que existen — necesitas priorizar. La "relevancia de atención" es simple: dedica preparación proporcional a la probabilidad de encontrarte ese matchup, ponderada por qué tan mal te va contra él.</p>
+        <ul class="form-nb-list">
+            <li><strong>Alta presencia + tú eres débil contra él → máxima prioridad.</strong> Es el matchup que más veces vas a perder si lo ignoras.</li>
+            <li><strong>Alta presencia + tú eres fuerte contra él → prioridad media.</strong> Lo vas a ver seguido, pero ya tienes ventaja natural.</li>
+            <li><strong>Baja presencia + tú eres débil contra él → prioridad baja.</strong> Duele si aparece, pero es poco probable — no vale sacrificar Side Deck por él salvo que sepas que está en tu meta local.</li>
+            <li><strong>Baja presencia + tú eres fuerte contra él → ignóralo.</strong> No gastes recursos de preparación ahí.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Un jugador competitivo no memoriza "qué deck es el mejor" en abstracto — aprende a leer su propio Tier relativo al meta que va a enfrentar. Un deck Tier 2 bien preparado contra el Tier 1 dominante de su región puede rendir mejor en un torneo específico que un Tier 1 jugado sin plan.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('meta-tiers')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Entra a
+            <a href="#" class="form-link" onclick="Formacion.goToTab('estadisticas'); return false;">Estadísticas → Meta</a>
+            e importa los decks de tu meta (local o global, vía .ydk). Presiona <strong>Actualizar Data</strong> para calcular
+            el <strong>Top Tier</strong> — ranking real de todos los decks del meta por score, filtrable por pilar dominante.
+            Luego compara tu deck activo contra ese meta en <strong>Análisis vs Meta</strong>: el <strong>External Score</strong>
+            y la vulnerabilidad G1/G2 te dicen exactamente dónde priorizar tu Side Deck según la lógica de "relevancia de
+            atención" de esta lección — no en teoría, con tus propios números.
+        </p>
+    `; },
+
 
     // ===============================
 
