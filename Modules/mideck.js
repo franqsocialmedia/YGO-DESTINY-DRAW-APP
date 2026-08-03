@@ -3663,7 +3663,7 @@ _buildDeckViewPane: function (location) {
         groups = [
             { label: 'Monstruos Normales', test: t => t.includes('normal monster') && !t.includes('pendulum') },
             { label: 'Monstruos de Efecto',test: t => t.includes('monster') && !t.includes('normal monster') && !t.includes('ritual') && !t.includes('pendulum') && !t.includes('fusion') && !t.includes('synchro') && !t.includes('xyz') && !t.includes('link') },
-            { label: 'Monstruos Rituales', test: t => t.includes('ritual monster') },
+            { label: 'Monstruos Rituales', test: t => t.includes('ritual') && !t.includes('pendulum') },
             { label: 'Monstruos Péndulo',  test: t => t.includes('pendulum') },
             { label: 'Mágicas',            test: t => t.includes('spell') },
             { label: 'Trampas',            test: t => t.includes('trap') }
