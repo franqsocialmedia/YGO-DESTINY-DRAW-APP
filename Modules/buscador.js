@@ -920,7 +920,14 @@ window.Buscador = Buscador;
 // ── CardViewer — panel overlay de detalle de carta: imagen, efecto, roles, aporte al deck, acciones ──
 
 const CardViewer = {
-    quantities: {}, 
+    quantities: {},
+
+    _imgQuality: localStorage.getItem('yugioh_img_quality') || 'low',
+
+    setImgQuality(q) {
+        this._imgQuality = q;
+        localStorage.setItem('yugioh_img_quality', q);
+    },
 // Abre el visor a partir de un NOMBRE de carta (no requiere que esté ya
     // en resultados del Buscador). Usado por los links interactivos dentro
     // de las lecciones de Formación para mostrar cartas de ejemplo al vuelo.
@@ -952,7 +959,7 @@ const CardViewer = {
         console.log('📊 [CardViewer] Cantidad actual en quantities:', quantity);
 
         const images = card.card_images || [];
-        const quality = CardViewer._imgQuality || 'hd';
+        const quality = CardViewer._imgQuality;
         const mainImg = quality === 'hd'
             ? (images[0]?.image_url || '')
             : (images[0]?.image_url_small || images[0]?.image_url || '');
@@ -1117,7 +1124,7 @@ const html = `
         const cvRenderMainImage = () => {
             const img = images[cvCurrentImageIndex] || images[0];
             if (!img) return;
-            mainImage.src = (CardViewer._imgQuality || 'hd') === 'hd'
+            mainImage.src = CardViewer._imgQuality === 'hd'
                 ? (img.image_url || '')
                 : (img.image_url_small || img.image_url || '');
         };
@@ -1132,7 +1139,7 @@ const html = `
         const qualityCheck = document.getElementById('cv-quality-check');
         if (qualityCheck) {
             qualityCheck.onchange = () => {
-                CardViewer._imgQuality = qualityCheck.checked ? 'low' : 'hd';
+                CardViewer.setImgQuality(qualityCheck.checked ? 'low' : 'hd');
                 cvRenderMainImage();
             };
         }
