@@ -2568,7 +2568,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     `<option value="${(m.opponentName || '').replace(/"/g,'&quot;')}">`).join('')}
             </datalist>
             <div class="opt-slide-dots">
-                <button type="button" class="opt-slide-dot opt-slide-dot-active" data-slide="1" onclick="Deck._goToRoundSlide(1)">1. Robo</button>
+                <button type="button" class="opt-slide-dot opt-slide-dot-active" data-slide="1" onclick="Deck._goToRoundSlide(1)">1. Going</button>
                 <button type="button" class="opt-slide-dot" data-slide="2" onclick="Deck._goToRoundSlide(2)">2. Enfrentamiento</button>
                 <button type="button" class="opt-slide-dot" data-slide="3" onclick="Deck._goToRoundSlide(3)">3. Oponente</button>
                 <button type="button" class="opt-slide-dot" data-slide="4" onclick="Deck._goToRoundSlide(4)">4. Cartas Clave</button>
@@ -2580,7 +2580,18 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             <div class="opt-slide opt-slide-active" data-slide="1">
             <div class="opt-form-grid">
 
+                <div class="opt-form-row opt-full">
+                    <label class="opt-lbl">¿Orden?</label>
+                    <select id="opt-r-orden" class="opt-input">
+                        <option value="">— seleccionar —</option>
+                        <option value="primero">🥇 Voy Primero</option>
+                        <option value="segundo">🥈 Voy Segundo</option>
+                    </select>
+                </div>
+
                 <div class="opt-group-hdr opt-full">🃏 Registrar Robo (Mano Inicial)</div>
+
+                <div class="opt-mano-inicial-grid">
 
                 <div class="opt-form-row">
                     <label class="opt-lbl">Starters en mano</label>
@@ -2627,6 +2638,8 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     </div>
                 </div>
 
+                </div>
+
             </div>
             </div>
 
@@ -2658,7 +2671,9 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             <div class="opt-slide" data-slide="2">
             <div class="opt-form-grid">
 
-                <div class="opt-group-hdr opt-full">⚔ Registrar Enfrentamiento</div>
+                <div class="opt-group-hdr opt-full">⚔ Interacciones del Duelo</div>
+
+                <div class="opt-interacciones-grid">
 
                 <div class="opt-form-row">
                     <label class="opt-lbl">🛡️ Interrupciones exitosas (tuyas)</label>
@@ -2666,6 +2681,14 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                         <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-negate',-1)">−</button>
                         <input type="number" id="opt-r-negate" class="opt-input opt-stepper-input" min="0" max="20" value="0" inputmode="numeric">
                         <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-negate',1)">+</button>
+                    </div>
+                </div>
+                <div class="opt-form-row">
+                    <label class="opt-lbl">🛑 Interrupciones exitosas (rival)</label>
+                    <div class="opt-stepper">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-combo',-1)">−</button>
+                        <input type="number" id="opt-r-combo" class="opt-input opt-stepper-input" min="0" max="20" value="0" inputmode="numeric">
+                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-combo',1)">+</button>
                     </div>
                 </div>
                 <div class="opt-form-row">
@@ -2677,20 +2700,14 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     </div>
                 </div>
                 <div class="opt-form-row">
-                    <label class="opt-lbl">🛑 Interrupción exitosa del rival</label>
-                    <div class="opt-stepper">
-                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-combo',-1)">−</button>
-                        <input type="number" id="opt-r-combo" class="opt-input opt-stepper-input" min="0" max="20" value="0" inputmode="numeric">
-                        <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-combo',1)">+</button>
-                    </div>
-                </div>
-                <div class="opt-form-row">
                     <label class="opt-lbl">💢 Limpieza de campo exitosa (rival)</label>
                     <div class="opt-stepper">
                         <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-rival',-1)">−</button>
                         <input type="number" id="opt-r-rival" class="opt-input opt-stepper-input" min="0" max="15" value="0" inputmode="numeric">
                         <button type="button" class="opt-stepper-btn" onmousedown="event.preventDefault()" onclick="Deck._stepNumber('opt-r-rival',1)">+</button>
                     </div>
+                </div>
+
                 </div>
 
                 <div class="opt-group-hdr opt-full">Resultado</div>
@@ -2704,14 +2721,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     </select>
                 </div>
 
-                <div class="opt-form-row">
-                    <label class="opt-lbl">¿Orden?</label>
-                    <select id="opt-r-orden" class="opt-input">
-                        <option value="">— seleccionar —</option>
-                        <option value="primero">🥇 Voy Primero</option>
-                        <option value="segundo">🥈 Voy Segundo</option>
-                    </select>
-                </div>
+                
 
                 <div class="opt-form-row" id="opt-row-tipo-vic" style="display:none;">
                     <label class="opt-lbl">Tipo de victoria</label>

@@ -2347,6 +2347,8 @@
     margin-bottom: 12px;
 }
 .opt-full { grid-column: 1 / -1; }
+.opt-mano-inicial-grid,
+.opt-interacciones-grid { display: contents; }
 .opt-group-hdr {
     background: rgba(255,215,0,.08);
     color: var(--gold-color);
