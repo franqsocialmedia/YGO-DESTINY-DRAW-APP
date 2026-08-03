@@ -2834,6 +2834,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         return `
             <div class="opt-group-hdr opt-full">🗝️ Mis Cartas Clave <span class="opt-key-counter">(${this._pendingKeyCards.length}/3)</span></div>
             <p class="opt-key-hint">Elige hasta 3 cartas de tu deck que dieron o pudieron dar el duelo (sin importar copias).</p>
+            <button type="button" class="deck-move opt-key-search-btn" onclick="Deck.openKeyCardSearch()">🔍 Buscar Carta</button>
             ${keyGrid}
             ${keySelected}
 
@@ -2867,63 +2868,278 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
 
     openThreatCardSearch: function() {
         if (this._pendingThreatCards.length >= 3) { alert('Máximo 3 Amenazas del Oponente.'); return; }
-        if (document.getElementById('opt-threat-search-overlay')) return;
+        this._openCardSearchModal('threat', {
+            title: '🔍 Buscar Carta Amenaza',
+            onPick: (card, closeModal) => {
+                if (this._pendingThreatCards.length >= 3) { alert('Máximo 3 Amenazas del Oponente.'); return; }
+                const id = String(card.id);
+                if (this._pendingThreatCards.some(c => c.id === id)) { alert('Esa carta ya está agregada.'); return; }
+                this._pendingThreatCards.push({ id, name: card.name, img: card.card_images?.[0]?.image_url_small || '' });
+                closeModal();
+                this._refreshKeyCardsSlide();
+            }
+        });
+    },
+
+    openKeyCardSearch: function() {
+        this._openCardSearchModal('keycard', {
+            title: '🔍 Buscar Carta para Mi Deck',
+            onPick: (card, closeModal) => {
+                const id = String(card.id);
+                const currentQty = this.cards[id] ? this.cards[id].qty : 0;
+                this.syncFromViewer(id, card, currentQty + 1);
+                closeModal();
+                this._refreshKeyCardsSlide();
+            }
+        });
+    },
+
+    // ── Motor genérico de mini-buscador (paginado x100 + filtros avanzados) ──
+    // Reutilizado por openThreatCardSearch y openKeyCardSearch. No usa el DOM
+    // ni el estado del Buscador principal; solo llama sus métodos por .call()
+    // para no duplicar la lógica de filtros/API.
+    _openCardSearchModal: function(stateKey, opts) {
+        if (!this._csStates) this._csStates = {};
+        if (document.getElementById(`cs-overlay-${stateKey}`)) return;
+        this._csStates[stateKey] = { filters: this._csDefaultFilters(), page: 0, cards: [], panelOpen: false };
 
         const overlay = document.createElement('div');
-        overlay.id = 'opt-threat-search-overlay';
+        overlay.id = `cs-overlay-${stateKey}`;
         overlay.className = 'opt-round-modal-overlay';
         overlay.innerHTML = `
-            <div class="opt-round-modal-box" style="width:340px;max-width:92vw;">
+            <div class="opt-round-modal-box" style="width:520px;max-width:94vw;">
                 <div class="opt-round-modal-hdr">
-                    <span>🔍 Buscar Carta Amenaza</span>
-                    <button class="opt-round-modal-close" onclick="document.getElementById('opt-threat-search-overlay').remove()">✕</button>
+                    <span>${opts.title}</span>
+                    <button class="opt-round-modal-close" onclick="document.getElementById('cs-overlay-${stateKey}').remove()">✕</button>
                 </div>
                 <div class="opt-round-modal-body">
                     <div class="opt-oppdeck-row" style="margin-bottom:10px;">
-                        <input type="text" id="opt-threat-search-input" class="opt-input" placeholder="Nombre de carta..." autocomplete="off">
-                        <button type="button" class="deck-move" id="opt-threat-search-btn">🔍</button>
+                        <input type="text" id="cs-input-${stateKey}" class="opt-input" placeholder="Nombre de carta..." autocomplete="off">
+                        <button type="button" class="deck-move" id="cs-search-btn-${stateKey}" title="Buscar">🔍</button>
+                        <button type="button" class="deck-move" id="cs-filter-btn-${stateKey}" title="Filtros avanzados">⚙</button>
+                        <button type="button" class="deck-move" id="cs-clear-btn-${stateKey}" title="Limpiar filtros y búsqueda">🗑️</button>
                     </div>
-                    <div id="opt-threat-search-results" class="opt-key-card-grid opt-key-card-grid-search"></div>
+                    <div id="cs-filters-${stateKey}" class="advanced-filters-panel" style="display:none;"></div>
+                    <div id="cs-results-${stateKey}" class="opt-key-card-grid-search"></div>
                 </div>
             </div>`;
         document.body.appendChild(overlay);
         overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
-        const inp = document.getElementById('opt-threat-search-input');
-        const btn = document.getElementById('opt-threat-search-btn');
-        const res = document.getElementById('opt-threat-search-results');
-
-        const doSearch = async () => {
-            const term = inp.value.trim();
-            if (!term) return;
-            res.innerHTML = `<p class="opt-key-empty">⏳ Buscando...</p>`;
-            try {
-                const r = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(term)}`);
-                const j = await r.json();
-                const cards = (j.data || []).slice(0, 20);
-                if (!cards.length) { res.innerHTML = `<p class="opt-key-empty">Sin resultados.</p>`; return; }
-                res.innerHTML = cards.map(c => `
-                    <img src="${c.card_images?.[0]?.image_url_small || ''}" alt="${(c.name||'').replace(/"/g,'&quot;')}"
-                         title="${(c.name||'').replace(/"/g,'&quot;')}" class="opt-key-card-thumb"
-                         data-id="${c.id}" data-name="${(c.name||'').replace(/"/g,'&quot;')}"
-                         data-img="${c.card_images?.[0]?.image_url_small || ''}">
-                `).join('');
-            } catch (_) { res.innerHTML = `<p class="opt-key-empty">Error de red.</p>`; }
-        };
-
-        res.addEventListener('click', e => {
-            const el = e.target.closest('[data-id]');
+        document.getElementById(`cs-search-btn-${stateKey}`).addEventListener('click', () => this._csDoSearch(stateKey));
+        document.getElementById(`cs-filter-btn-${stateKey}`).addEventListener('click', () => this._csToggleFilters(stateKey));
+        document.getElementById(`cs-clear-btn-${stateKey}`).addEventListener('click', () => this._csClear(stateKey));
+        document.getElementById(`cs-results-${stateKey}`).addEventListener('click', e => {
+            const el = e.target.closest('[data-idx]');
             if (!el) return;
-            if (this._pendingThreatCards.length >= 3) { alert('Máximo 3 Amenazas del Oponente.'); return; }
-            if (this._pendingThreatCards.some(c => c.id === el.dataset.id)) { alert('Esa carta ya está agregada.'); return; }
-            this._pendingThreatCards.push({ id: el.dataset.id, name: el.dataset.name, img: el.dataset.img });
-            overlay.remove();
-            this._refreshKeyCardsSlide();
+            const st = this._csStates[stateKey];
+            const card = st.cards[parseInt(el.dataset.idx, 10)];
+            if (card) opts.onPick(card, () => overlay.remove());
         });
 
-        btn.addEventListener('click', doSearch);
-        inp.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+        const inp = document.getElementById(`cs-input-${stateKey}`);
+        inp.addEventListener('keydown', e => { if (e.key === 'Enter') this._csDoSearch(stateKey); });
         inp.focus();
+    },
+
+    _csDefaultFilters: function() {
+        return {
+            cardCategory: '', attribute: '', monsterType: '', monsterSubtype: '',
+            spellSubtype: '', trapSubtype: '', level: '', linkval: '', scale: '',
+            atk: '', def: '', archetype: '', cardset: ''
+        };
+    },
+
+    _csToggleFilters: function(stateKey) {
+        const st = this._csStates[stateKey];
+        if (!st) return;
+        st.panelOpen = !st.panelOpen;
+        const panel = document.getElementById(`cs-filters-${stateKey}`);
+        if (!panel) return;
+        panel.style.display = st.panelOpen ? 'block' : 'none';
+        if (st.panelOpen) this._csRenderFilterPanel(stateKey);
+    },
+
+    _csRenderFilterPanel: function(stateKey) {
+        const st = this._csStates[stateKey];
+        const panel = document.getElementById(`cs-filters-${stateKey}`);
+        if (!panel || !st) return;
+        const f = st.filters, fd = Buscador.FILTER_DATA;
+        const chip = (val, key, current, label) => {
+            const active = current === val ? ' adv-chip-active' : '';
+            return `<span class="adv-chip${active}" onclick="Deck._csSetFilter('${stateKey}','${key}','${val}')">${label || val}</span>`;
+        };
+
+        let html = `<div class="adv-row">
+            <span class="adv-label">Tipo de carta</span>
+            <div class="adv-chips">
+                ${chip('monster','cardCategory',f.cardCategory,'Monstruo')}
+                ${chip('spell','cardCategory',f.cardCategory,'Mágica')}
+                ${chip('trap','cardCategory',f.cardCategory,'Trampa')}
+            </div>
+        </div>`;
+
+        if (f.cardCategory === 'monster') {
+            html += `<div class="adv-row">
+                <span class="adv-label">Atributo</span>
+                <div class="adv-chips">${fd.attributes.map(a => chip(a,'attribute',f.attribute)).join('')}</div>
+            </div>`;
+            html += `<div class="adv-row">
+                <span class="adv-label">Subtipo</span>
+                <div class="adv-chips">${fd.monsterSubtypes.map(s => chip(s,'monsterSubtype',f.monsterSubtype)).join('')}</div>
+            </div>`;
+            html += `<div class="adv-row">
+                <span class="adv-label">Tipo monstruo</span>
+                <div class="adv-chips adv-chips-wrap">${fd.monsterTypes.map(t => chip(t,'monsterType',f.monsterType)).join('')}</div>
+            </div>`;
+
+            const isLink = f.monsterSubtype === 'Link';
+            const isPendulum = f.monsterSubtype === 'Pendulum';
+            const isXYZ = f.monsterSubtype === 'XYZ';
+
+            if (!isLink) {
+                const levelLabel = isXYZ ? 'Rango' : 'Nivel';
+                html += `<div class="adv-row">
+                    <span class="adv-label">${levelLabel}</span>
+                    <div class="adv-chips">${fd.levels.map(l => chip(l,'level',f.level)).join('')}</div>
+                </div>`;
+            }
+            if (isLink) {
+                html += `<div class="adv-row">
+                    <span class="adv-label">Rating Link</span>
+                    <div class="adv-chips">${fd.linkvals.map(l => chip(l,'linkval',f.linkval)).join('')}</div>
+                </div>`;
+            }
+            if (isPendulum) {
+                html += `<div class="adv-row">
+                    <span class="adv-label">Escala</span>
+                    <div class="adv-chips">${fd.scales.map(s => chip(s,'scale',f.scale)).join('')}</div>
+                </div>`;
+            }
+
+            html += `<div class="adv-row adv-row-inputs">
+                <div class="adv-input-group">
+                    <span class="adv-label">ATK</span>
+                    <input type="number" class="adv-input" placeholder="ej: 2500" value="${f.atk}" min="0" max="99999"
+                        onchange="Deck._csSetFilter('${stateKey}','atk',this.value)">
+                </div>
+                <div class="adv-input-group">
+                    <span class="adv-label">DEF</span>
+                    <input type="number" class="adv-input" placeholder="ej: 2000" value="${f.def}" min="0" max="99999"
+                        onchange="Deck._csSetFilter('${stateKey}','def',this.value)">
+                </div>
+            </div>`;
+
+        } else if (f.cardCategory === 'spell') {
+            html += `<div class="adv-row">
+                <span class="adv-label">Tipo mágica</span>
+                <div class="adv-chips">${fd.spellSubtypes.map((s,i) => chip(fd.spellSubtypesEn[i],'spellSubtype',f.spellSubtype,s)).join('')}</div>
+            </div>`;
+        } else if (f.cardCategory === 'trap') {
+            html += `<div class="adv-row">
+                <span class="adv-label">Tipo trampa</span>
+                <div class="adv-chips">${fd.trapSubtypes.map((s,i) => chip(fd.trapSubtypesEn[i],'trapSubtype',f.trapSubtype,s)).join('')}</div>
+            </div>`;
+        }
+
+        panel.innerHTML = html;
+    },
+
+    _csSetFilter: function(stateKey, key, value) {
+        const st = this._csStates[stateKey];
+        if (!st) return;
+        if (st.filters[key] === value) {
+            st.filters[key] = '';
+        } else {
+            st.filters[key] = value;
+            if (key === 'cardCategory') Object.assign(st.filters, {
+                attribute: '', monsterType: '', monsterSubtype: '', spellSubtype: '',
+                trapSubtype: '', level: '', linkval: '', scale: '', atk: '', def: ''
+            });
+            if (key === 'monsterSubtype') Object.assign(st.filters, { level: '', linkval: '', scale: '' });
+        }
+        this._csRenderFilterPanel(stateKey);
+        this._csDoSearch(stateKey);
+    },
+
+    _csDoSearch: async function(stateKey) {
+        const st = this._csStates[stateKey];
+        if (!st) return;
+        const inp = document.getElementById(`cs-input-${stateKey}`);
+        const term = inp ? inp.value.trim() : '';
+        const ctx = { advancedFilters: st.filters };
+        ctx.hasAdvancedFilters = Buscador.hasAdvancedFilters.bind(ctx);
+        if (!term && !ctx.hasAdvancedFilters()) return;
+
+        const resWrap = document.getElementById(`cs-results-${stateKey}`);
+        if (resWrap) resWrap.innerHTML = `<p class="opt-key-empty">⏳ Buscando...</p>`;
+        try {
+            const url = Buscador.buildApiUrl.call(Object.assign({ apiUrl: Buscador.apiUrl }, ctx), term);
+            const r = await fetch(url);
+            const j = await r.json();
+            st.cards = Buscador.applyAdvancedLocalFilter.call(ctx, j.data || []);
+            st.page = 0;
+            this._csRenderResultsPage(stateKey);
+        } catch (_) {
+            if (resWrap) resWrap.innerHTML = `<p class="opt-key-empty">Error de red.</p>`;
+        }
+    },
+
+    _csRenderResultsPage: function(stateKey) {
+        const st = this._csStates[stateKey];
+        const resWrap = document.getElementById(`cs-results-${stateKey}`);
+        if (!st || !resWrap) return;
+        const PAGE_SIZE = 100;
+        const cards = st.cards || [];
+        if (!cards.length) { resWrap.innerHTML = `<p class="opt-key-empty">Sin resultados.</p>`; return; }
+
+        const totalPages = Math.max(1, Math.ceil(cards.length / PAGE_SIZE));
+        if (st.page >= totalPages) st.page = totalPages - 1;
+        if (st.page < 0) st.page = 0;
+        const start = st.page * PAGE_SIZE;
+        const pageCards = cards.slice(start, start + PAGE_SIZE);
+
+        let html = `<div class="opt-key-card-grid opt-key-card-grid-search">`;
+        pageCards.forEach((c, i) => {
+            const img = c.card_images?.[0]?.image_url_small || '';
+            const name = (c.name || '').replace(/"/g,'&quot;');
+            html += `<img src="${img}" alt="${name}" title="${name}" class="opt-key-card-thumb" data-idx="${start + i}">`;
+        });
+        html += `</div>`;
+
+        if (totalPages > 1) {
+            html += `<div class="results-pagination">`;
+            for (let p = 0; p < totalPages; p++) {
+                const from = p * PAGE_SIZE + 1, to = Math.min((p + 1) * PAGE_SIZE, cards.length);
+                html += `<button type="button" class="results-page-btn ${p === st.page ? 'results-page-active' : ''}"
+                            onclick="Deck._csGoToPage('${stateKey}',${p})">${from}-${to}</button>`;
+            }
+            html += `</div>`;
+        }
+        resWrap.innerHTML = html;
+    },
+
+    _csGoToPage: function(stateKey, page) {
+        const st = this._csStates[stateKey];
+        if (!st) return;
+        st.page = page;
+        this._csRenderResultsPage(stateKey);
+        document.getElementById(`cs-results-${stateKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+
+    _csClear: function(stateKey) {
+        const st = this._csStates[stateKey];
+        if (!st) return;
+        st.filters = this._csDefaultFilters();
+        st.page = 0;
+        st.cards = [];
+        st.panelOpen = false;
+        const inp = document.getElementById(`cs-input-${stateKey}`);
+        if (inp) inp.value = '';
+        const panel = document.getElementById(`cs-filters-${stateKey}`);
+        if (panel) { panel.style.display = 'none'; panel.innerHTML = ''; }
+        const resWrap = document.getElementById(`cs-results-${stateKey}`);
+        if (resWrap) resWrap.innerHTML = '';
     },
 
     openRoundModal: function() {
