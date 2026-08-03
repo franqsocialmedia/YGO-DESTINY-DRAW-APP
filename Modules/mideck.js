@@ -49,17 +49,26 @@ const Deck = {
     // Determinar tipo de carta para ordenamiento Main Deck
     getMainDeckCardType: function(card) {
         if (!card || !card.type) return 999;
-        
+
         const type = card.type.toLowerCase();
-        
-        if (type.includes('ritual monster')) return 0;
-        if (type.includes('normal monster')) return 1;
-        if (type.includes('effect monster')) return 2;
-        if (type.includes('pendulum')) return 3;
+
         if (type.includes('spell')) return 4;
-        if (type.includes('trap')) return 5;
-        
-        return 999;
+        if (type.includes('trap'))  return 5;
+
+        // Péndulo (Normal/Efecto/Ritual/Tuner/Flip por debajo, da igual):
+        // van todos juntos en su propio grupo, justo antes de Mágicas.
+        if (type.includes('pendulum')) return 3;
+
+        // Ritual (no péndulo)
+        if (type.includes('ritual')) return 0;
+
+        // Normal (no péndulo): incluye "Normal Monster" y "Normal Tuner Monster"
+        if (type.includes('normal monster')) return 1;
+
+        // Resto de monstruos no-péndulo: Effect, Flip Effect, Flip Tuner Effect,
+        // Gemini, Spirit, Toon, Tuner (puro), Union Effect... todos juntos,
+        // sin subgrupo propio — solo orden alfabético entre ellos.
+        return 2;
     },
     
     // Determinar tipo de carta para ordenamiento Extra Deck
@@ -1887,6 +1896,57 @@ if (isEmpty) {
 }
 
 this.container.innerHTML = html;
+this.renderBuscadorDeckPreview();
+    },
+
+    // ── Vista previa Main/Extra en la pestaña Buscador (arriba del buscador) ──
+    renderBuscadorDeckPreview: function () {
+        const box = document.getElementById('buscador-deck-preview-box');
+        if (!box) return;
+
+        const mainEntries  = Object.entries(this.cards).filter(([, c]) => c.location === 'main')
+            .sort((a, b) => this.compareCards(a, b, 'main'));
+        const extraEntries = Object.entries(this.cards).filter(([, c]) => c.location === 'extra')
+            .sort((a, b) => this.compareCards(a, b, 'extra'));
+
+        if (!mainEntries.length && !extraEntries.length) {
+            box.style.display = 'none';
+            box.innerHTML = '';
+            return;
+        }
+        box.style.display = '';
+
+        const esc = s => (s || '').replace(/"/g, '&quot;');
+        const col = (entries, label) => {
+            const count = entries.reduce((s, [, c]) => s + c.qty, 0);
+            if (!entries.length) {
+                return `<div class="bdp-col"><div class="bdp-col-hdr">${label} (0)</div><p class="opt-key-empty">Vacío.</p></div>`;
+            }
+            const thumbs = entries.map(([id, item]) => {
+                const img  = item.data?.card_images?.[0]?.image_url_small || '';
+                const name = esc(item.data?.name);
+                return `
+                    <div class="bdp-thumb-wrap" onclick="Deck.removeFromBuscadorPreview('${id}')" title="Quitar ${name}">
+                        <img src="${img}" alt="${name}">
+                        <span class="bdp-thumb-qty">x${item.qty}</span>
+                    </div>`;
+            }).join('');
+            return `<div class="bdp-col">
+                <div class="bdp-col-hdr">${label} (${count})</div>
+                <div class="bdp-col-grid">${thumbs}</div>
+            </div>`;
+        };
+
+        box.innerHTML = `
+            <div class="bdp-title">🗂️ ${esc(this.name) || 'Mi Deck'} — Vista Previa <span class="bdp-hint">(clic en una carta para quitarla)</span></div>
+            <div class="bdp-cols">
+                ${col(mainEntries, '🃏 Main')}
+                ${col(extraEntries, '✨ Extra')}
+            </div>`;
+    },
+
+    removeFromBuscadorPreview: function (id) {
+        this.changeQty(id, -1);
     },
 
     getOptimizacion: function(deckName) {
