@@ -2827,6 +2827,16 @@ const Config = {
                 </div>
             </div>
 
+            <!-- Sección: Intro de Pestañas -->
+            <div class="config-section" data-section-id="config-tabintro">
+                <h3 class="config-section-title" onclick="Config.toggleSection('tabintro-section')">
+                    ▶ 💡 Intro de Pestañas
+                </h3>
+                <div id="tabintro-section" class="config-section-content" style="display:none;">
+                    ${this.renderTabIntroSection()}
+                </div>
+            </div>
+
             <!-- Sección: Maestros del Duelo -->
             <div class="config-section" data-section-id="config-meta-masters">
                 <h3 class="config-section-title" onclick="Config.toggleSection('meta-masters-config-section')">
@@ -4169,6 +4179,29 @@ renderPillarsSection: function() {
             <div class="rps-config-grid">${rpsRows}</div>
         </div>`;
 },
+
+renderTabIntroSection: function () {
+    if (!window.TabIntro) return '<p class="stats-empty">TabIntro no disponible.</p>';
+    const disabledMap = TabIntro.getDisabledMap();
+    const rows = Object.keys(TabIntro.CONTENT).map(tab => {
+        const label = TabIntro.CONTENT[tab].title;
+        const checked = !disabledMap[tab]; // checked = activo (se muestra)
+        return `
+            <label class="tabintro-config-row">
+                <input type="checkbox" ${checked ? 'checked' : ''}
+                       onchange="TabIntro.setDisabled('${tab}', !this.checked)">
+                ${label}
+            </label>`;
+    }).join('');
+
+    return `
+        <div class="config-help-text" style="margin-bottom:8px;">
+            Activa o desactiva el panel informativo que aparece al entrar por primera
+            vez a cada pestaña. La decisión se guarda y se respeta en próximas sesiones.
+        </div>
+        <div class="tabintro-config-list">${rows}</div>`;
+},
+
 renderScoringSection: function () {
     const cfg    = window.ConfigManager?.getConfig?.() || {};
     const g1g2   = cfg.g1g2Roles      || window.ConfigManager?.defaultConfig?.g1g2Roles      || {};

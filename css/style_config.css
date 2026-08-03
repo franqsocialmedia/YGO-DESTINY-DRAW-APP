@@ -2515,3 +2515,51 @@
 .form-quiz-check-btn--green {
     background: linear-gradient(135deg, #27ae60, #1e8449);
 }
+
+.tabintro-config-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+.tabintro-config-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--text-light);
+}
+
+.tabintro-disable-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-light);
+    font-size: 0.85rem;
+    opacity: 0.85;
+    margin-bottom: var(--spacing-sm);
+    cursor: pointer;
+}
+
+.tabintro-disable-label input[type="checkbox"] {
+    accent-color: var(--gold-color);
+    cursor: pointer;
+}
+
+.tabintro-config-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.tabintro-config-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--text-light);
+}
+
+.tabintro-config-row input[type="checkbox"] {
+    accent-color: var(--gold-color);
+    cursor: pointer;
+}

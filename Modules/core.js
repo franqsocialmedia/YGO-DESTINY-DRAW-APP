@@ -173,10 +173,25 @@ const TabIntro = {
     },
 
     _key: function(tab) { return `dd_tabintro_shown_${tab}`; },
+    _disabledKey: 'dd_tabintro_disabled',
+
+    getDisabledMap: function() {
+        try { return JSON.parse(localStorage.getItem(this._disabledKey)) || {}; }
+        catch { return {}; }
+    },
+
+    isDisabled: function(tab) { return !!this.getDisabledMap()[tab]; },
+
+    setDisabled: function(tab, disabled) {
+        const map = this.getDisabledMap();
+        if (disabled) map[tab] = true; else delete map[tab];
+        localStorage.setItem(this._disabledKey, JSON.stringify(map));
+    },
 
     maybeShow: function(tabName) {
         const data = this.CONTENT[tabName];
         if (!data) return;
+        if (this.isDisabled(tabName)) return;
         if (sessionStorage.getItem(this._key(tabName)) === 'true') return;
         sessionStorage.setItem(this._key(tabName), 'true');
         this._render(tabName, data);
@@ -192,6 +207,10 @@ const TabIntro = {
                 <ul class="tabintro-list">
                     ${data.items.map(i => `<li>${i}</li>`).join('')}
                 </ul>
+                <label class="tabintro-disable-label">
+                    <input type="checkbox" onchange="TabIntro.setDisabled('${tabName}', this.checked)">
+                    No volver a mostrar esta intro
+                </label>
                 <button class="tabintro-close-btn" onclick="TabIntro.close('${tabName}')">Entendido</button>
             </div>`;
         document.body.appendChild(overlay);
