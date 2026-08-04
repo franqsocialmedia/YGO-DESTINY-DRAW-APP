@@ -2048,6 +2048,70 @@ this.renderBuscadorDeckPreview();
         const current = versions[versions.length - 1];
         return this.getVersionScore(deckName, current.savedAt, Infinity);
     },
+    // ── Cartas Clave / Mayores Amenazas — agregado de TODA la Optimización ──
+    // Cuenta en cuántas rondas (todas las sesiones, sin filtrar por versión)
+    // se marcó cada carta como Clave o Amenaza. Si aparece en 50% o más de
+    // las rondas totales entra al Top, salvo que esté Prohibida en el
+    // formato activo de Banlist.
+    getTopKeyThreatCards: function(deckName) {
+        const data = this.getOptimizacion(deckName);
+        const sessions = data.sessions || [];
+        let totalRounds = 0;
+        const keyFreq = {}, threatFreq = {};
+
+        sessions.forEach(sess => {
+            (sess.rounds || []).forEach(r => {
+                totalRounds++;
+                (r.keyCards || []).forEach(c => {
+                    if (!keyFreq[c.id]) keyFreq[c.id] = { ...c, count: 0 };
+                    keyFreq[c.id].count++;
+                });
+                (r.threatCards || []).forEach(c => {
+                    if (!threatFreq[c.id]) threatFreq[c.id] = { ...c, count: 0 };
+                    threatFreq[c.id].count++;
+                });
+            });
+        });
+
+        if (!totalRounds) return { key: [], threat: [], totalRounds: 0 };
+
+        const notBanned = c => !window.Banlist || Banlist.getEffectiveBanStatus(c.id) !== 'forbidden';
+        const half = totalRounds * 0.3; // 30% threshold for top cards
+        const key    = Object.values(keyFreq).filter(c => c.count >= half && notBanned(c)).sort((a, b) => b.count - a.count);
+        const threat = Object.values(threatFreq).filter(c => c.count >= half && notBanned(c)).sort((a, b) => b.count - a.count);
+        return { key, threat, totalRounds };
+    },
+
+    // Render de la sección — dos filas horizontales con scroll (Cartas Clave
+    // y Mayores Amenazas). Abierta por defecto, click abre el CardViewer.
+    _renderKeyThreatCardsSection: function(deckName) {
+        const { key, threat } = this.getTopKeyThreatCards(deckName);
+        const esc = s => (s || '').replace(/"/g, '&quot;');
+        const row = (cards, emptyMsg) => {
+            if (!cards.length) return `<p class="opt-key-empty">${emptyMsg}</p>`;
+            return `<div class="opt-topcards-row">
+                ${cards.map(c => `
+                    <div class="opt-topcards-item" onclick="Combos.viewMetaCard('${c.id}')" title="${esc(c.name)}">
+                        <img src="${c.img}" alt="${esc(c.name)}">
+                        <span class="opt-topcards-name">${c.name}</span>
+                    </div>`).join('')}
+            </div>`;
+        };
+        return `
+        <div data-section-id="deck-topcards">
+        <h3 class="deck-section-title" onclick="Deck.toggleSection('topcards-sec')">📌 Cartas Clave y Amenazas del Deck</h3>
+        <div id="topcards-sec" class="deck-section-content">
+            <div class="opt-topcards-group">
+                <div class="opt-topcards-group-title">🗝️ Cartas Clave</div>
+                ${row(key, 'Aún no hay cartas clave que superen el 30% de tus duelos.')}
+            </div>
+            <div class="opt-topcards-group">
+                <div class="opt-topcards-group-title">🎯 Mayores Amenazas</div>
+                ${row(threat, 'Aún no hay amenazas que superen el 30% de tus duelos.')}
+            </div>
+        </div>
+        </div>`;
+    },
     saveOptimizacionSession: function(session) {
         const data = this.getOptimizacion();
         if (!data.sessions) data.sessions = [];
@@ -3381,6 +3445,8 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             </div>
         </div>
         </div>`;
+
+        html += this._renderKeyThreatCardsSection(this.name);
 
         if (window.Matchups) {
             html += `<div data-section-id="deck-matchups">${Matchups.renderSection()}</div>`;
