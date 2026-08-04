@@ -1290,7 +1290,7 @@ _startLongPressMulti: function (zone, idx, e) {
 
         this._chainCounter++;
         const chainNum = this._chainCounter;
-        this._chainedCards.push({ zone, slotIndex, zoneType, chainNum, cardName: card.name });
+        this._chainedCards.push({ zone, slotIndex, zoneType, chainNum, cardName: card.name, player: this._activePlayer });
 
         if (entry) entry._chainNum = chainNum;
 
@@ -1333,7 +1333,14 @@ _startLongPressMulti: function (zone, idx, e) {
             logoCell.onclick = () => ZonaPractica.resolveChain();
         }
     },
-
+// Limpia _chainNum en cualquier "tablero" (this, o un snapshot en _players.P1/P2)
+    _clearChainNums: function (board) {
+        if (!board) return;
+        Object.values(board.field || {}).forEach(e => { if (e) delete e._chainNum; });
+        ['hand','main','extra','gy','banish','other'].forEach(z => {
+            (board[z] || []).forEach(e => { if (e) delete e._chainNum; });
+        });
+    },
     resolveChain: function () {
         const count = this._chainCounter;
         if (count === 0) {
@@ -1343,13 +1350,12 @@ _startLongPressMulti: function (zone, idx, e) {
         // Lista SEGOC (LIFO: último efecto al primero)
         const segocLines = [...this._chainedCards]
             .reverse()
-            .map(c => `&nbsp;&nbsp;${c.chainNum}. ${c.cardName}`)
+            .map(c => `&nbsp;&nbsp;${c.chainNum}. [${c.player || 'P1'}] ${c.cardName}`)
             .join('<br>');
 
-        Object.values(this.field).forEach(e => { if (e) delete e._chainNum; });
-        ['hand','main','extra','gy','banish','other'].forEach(z => {
-            this._getMultiArray(z).forEach(e => { if (e) delete e._chainNum; });
-        });
+        this._clearChainNums(this);
+        this._clearChainNums(this._players.P1);
+        this._clearChainNums(this._players.P2);
 
         const msg = `⛓ Cadena resuelta — ${count} efecto${count !== 1 ? 's' : ''}. SEGOC:<br>${segocLines}`;
         this._addLog(msg);
