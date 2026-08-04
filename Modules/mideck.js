@@ -714,6 +714,123 @@ tryDeckExperimentacion: function (deckName) {
         a.download = `${this.name}.txt`;
         a.click();
     },
+exportTXT: function () {
+        let txt = `${this.name}\n\n`;
+
+        ['main','extra','side'].forEach(loc => {
+            txt += `---- ${loc.toUpperCase()} ----\n`;
+            Object.values(this.cards)
+                .filter(c => c.location === loc)
+                .forEach(c => {
+                    txt += `${c.data.name} - ${c.data.type} - x${c.qty}\n`;
+                });
+            txt += '\n';
+        });
+
+        const blob = new Blob([txt], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${this.name}.txt`;
+        a.click();
+    },
+
+    // ── Exportar/Importar TODA la Data del Deck (.txt con JSON) ──────
+    // Bundle completo pensado para trasladar el deck a otro usuario:
+    // cartas + Carta As (va dentro de item.roles), notas, historial de
+    // versiones, Optimización (sesiones/rondas), Complejidad del Deck,
+    // Historial de Enfrentamientos (Matchups) y Líneas de Combo.
+    exportDeckData: function () {
+        if (!Object.keys(this.cards || {}).length) { alert('No hay deck cargado para exportar.'); return; }
+
+        const name = this.name;
+        const get  = (key) => { try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; } };
+
+        const bundle = {
+            formatVersion: 1,
+            exportedAt:    Date.now(),
+            deckName:      name,
+            deck:          get(`deck_${name}`)         || { cards: this.cards, notes: this.notes || '', savedAt: Date.now(), versions: [] },
+            optimization:  get(`optimization_${name}`) || { sessions: [] },
+            complejidad:   get(`complejidad_${name}`)  || null,
+            matchups:      get(`matchup_${name}`)      || [],
+            combos:        get(`combos_${name}`)       || []
+        };
+
+        const header = [
+            `# Destiny Draw — Data completa del Deck`,
+            `# Deck: ${name}`,
+            `# Incluye: cartas, Carta As, notas, historial de versiones, Optimización,`,
+            `# Complejidad del Deck, Historial de Enfrentamientos y Líneas de Combo.`,
+            `# No editar manualmente el bloque JSON de abajo.`,
+            ''
+        ].join('\n');
+
+        const blob = new Blob([header + JSON.stringify(bundle)], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${name.replace(/[^a-z0-9]+/gi, '_')}_data.txt`;
+        a.click();
+    },
+
+    importDeckData: function () {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.txt';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            this._mergeImportedDeckData(await file.text());
+        };
+        input.click();
+    },
+
+    _mergeImportedDeckData: function (text) {
+        const jsonText = text.split('\n').filter(l => !l.trim().startsWith('#')).join('\n').trim();
+        let bundle;
+        try { bundle = JSON.parse(jsonText); } catch (e) {
+            alert('Archivo de Data de Deck inválido o corrupto.');
+            return;
+        }
+        if (!bundle || !bundle.deck || !bundle.deck.cards) {
+            alert('Este archivo no parece ser una exportación de Data de Deck de Destiny Draw.');
+            return;
+        }
+
+        let name = bundle.deckName || 'Deck Importado';
+        const exists = !!localStorage.getItem(`deck_${name}`);
+        const chosen = prompt(
+            exists
+                ? `Ya existe un deck llamado "${name}" en tus decks guardados. Escribe un nombre distinto para no sobreescribirlo, o deja el mismo para reemplazarlo:`
+                : `Nombre para el deck importado:`,
+            name
+        );
+        if (chosen === null) return; // cancelado
+        name = chosen.trim() || name;
+
+        // Escribe cada bloque en su clave correspondiente del deck destino.
+        const deckData = bundle.deck;
+        deckData.cards = deckData.cards || {};
+        localStorage.setItem(`deck_${name}`, JSON.stringify(deckData));
+
+        if (bundle.optimization) localStorage.setItem(`optimization_${name}`, JSON.stringify(bundle.optimization));
+        if (bundle.complejidad) localStorage.setItem(`complejidad_${name}`, JSON.stringify(bundle.complejidad));
+        if (Array.isArray(bundle.matchups)) localStorage.setItem(`matchup_${name}`, JSON.stringify(bundle.matchups));
+        if (Array.isArray(bundle.combos)) {
+            const combos = bundle.combos.map(c => ({ ...c, deckName: name }));
+            localStorage.setItem(`combos_${name}`, JSON.stringify(combos));
+        }
+
+        // Carga el deck importado como el deck activo. No se recalculan roles
+        // (autoAssignRoles) para no perder la marca de "Carta As" ya guardada.
+        this.cards = JSON.parse(JSON.stringify(deckData.cards));
+        this.notes = deckData.notes || '';
+        this.name  = name;
+
+        this.render();
+        this.onDeckLoaded();
+        if (window.Engines) Engines._renderSidebar();
+        alert(`Data del deck importada: ${name}`);
+    },
 
     importYDK: function () {
         const input = document.createElement('input');
@@ -1824,6 +1941,16 @@ html += `
         <button class="deck-move" onclick="Deck.exportYDK()" ${isEmpty ? 'disabled' : ''}>📤 Exportar Deck (.ydk)</button>
         <button class="deck-move" onclick="Deck.exportTXT()" ${isEmpty ? 'disabled' : ''}>📝​ Descargar Lista (.txt)</button>
         <button class="deck-move" onclick="Deck.downloadDecklist()" ${isEmpty ? 'disabled' : ''}>📸 Descargar Decklist (.png)</button>
+        <button class="deck-move" style="background:#00b894;border-color:#00b894;color:#fff;"
+                onclick="Deck.exportDeckData()" ${isEmpty ? 'disabled' : ''}>📦 Exportar Data del Deck</button>
+    </div>
+    <p class="mideck-import-note" style="font-size:.75rem;opacity:.65;margin:4px 0 0;">
+        * Exporta absolutamente toda la información de este deck (cartas, Carta As, notas, historial de versiones,
+        Optimización, Complejidad, Historial de Enfrentamientos y Líneas de Combo) para trasladarla a otro usuario de la App.
+    </p>
+    <p class="mideck-import-label">Importar Data Completa:</p>
+    <div class="mideck-import-actions">
+        <button class="deck-move" onclick="Deck.importDeckData()">📥 Importar Data del Deck</button>
     </div>
     ${isEmpty ? this._renderEmptyDeckNotice(
         'Elige un deck desde el panel lateral o agrega cartas desde el Buscador.',
