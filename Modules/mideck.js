@@ -3084,21 +3084,46 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
     // CARTAS CLAVE — mis cartas clave (del deck activo) y amenazas del rival
     // ═══════════════════════════════════════════════════════════════════
     _renderKeyCardsSlideContent: function() {
-        const deckCards = Object.entries(this.cards).map(([id, item]) => ({
-            id, name: item.data.name,
-            img: item.data.card_images?.[0]?.image_url_small || ''
-        }));
-        const selectedIds = this._pendingKeyCards.map(c => c.id);
         const esc = s => (s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const selectedIds = this._pendingKeyCards.map(c => c.id);
 
-        const keyGrid = deckCards.length ? `
-            <div class="opt-key-card-grid">
-                ${deckCards.map(c => `
+        // Agrupado Main/Extra (sin Side) y orden alfabético ascendente para
+        // que sea más fácil ubicar la carta buscada.
+        const buildGroup = (loc) => Object.entries(this.cards)
+            .filter(([, item]) => item.location === loc)
+            .sort((a, b) => this.compareCards(a, b, loc))
+            .map(([id, item]) => ({
+                id, name: item.data.name,
+                img: item.data.card_images?.[0]?.image_url_small || ''
+            }));
+
+        const mainCards  = buildGroup('main');
+        const extraCards = buildGroup('extra');
+        const sideCards  = buildGroup('side');
+
+        const renderThumbs = (cards) => cards.map(c => `
                     <img src="${c.img}" alt="${esc(c.name)}" title="${esc(c.name)}"
                          class="opt-key-card-thumb ${selectedIds.includes(c.id) ? 'opt-key-card-thumb-selected' : ''}"
                          onclick="Deck.toggleKeyCard('${c.id}','${esc(c.name)}','${c.img}')">
-                `).join('')}
-            </div>` : `<p class="opt-key-empty">Este deck no tiene cartas cargadas.</p>`;
+                `).join('');
+
+        const keyGrid = (mainCards.length || extraCards.length || sideCards.length) ? `
+            ${mainCards.length ? `
+            <div class="opt-key-card-group">
+                <div class="opt-key-card-group-title">🃏 Main Deck</div>
+                <div class="opt-key-card-grid">${renderThumbs(mainCards)}</div>
+            </div>` : ''}
+            ${extraCards.length ? `
+            <div class="opt-key-card-group">
+                <div class="opt-key-card-group-title">✨ Extra Deck</div>
+                <div class="opt-key-card-grid">${renderThumbs(extraCards)}</div>
+            </div>` : ''}
+            ${sideCards.length ? `
+            <div class="opt-key-card-group">
+                <div class="opt-key-card-group-title">🗂️ Side Deck</div>
+                <div class="opt-key-card-grid">${renderThumbs(sideCards)}</div>
+            </div>` : ''}
+        ` : `<p class="opt-key-empty">Este deck no tiene cartas cargadas.</p>`;
 
         const keySelected = this._pendingKeyCards.length ? `
             <div class="opt-key-selected-row">

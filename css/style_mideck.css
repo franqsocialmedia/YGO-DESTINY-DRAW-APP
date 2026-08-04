@@ -3250,3 +3250,13 @@
     max-height: 2.4em;
     overflow: hidden;
 }
+.opt-key-card-group { margin-bottom: 10px; }
+.opt-key-card-group:last-child { margin-bottom: 0; }
+.opt-key-card-group-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--gold-color);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
