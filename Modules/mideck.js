@@ -2203,7 +2203,7 @@ this.renderBuscadorDeckPreview();
         if (!totalRounds) return { key: [], threat: [], totalRounds: 0 };
 
         const notBanned = c => !window.Banlist || Banlist.getEffectiveBanStatus(c.id) !== 'forbidden';
-        const half = totalRounds * 0.3; // 30% threshold for top cards
+        const half = totalRounds * 0.2; // 20% threshold for top cards
         const key    = Object.values(keyFreq).filter(c => c.count >= half && notBanned(c)).sort((a, b) => b.count - a.count);
         const threat = Object.values(threatFreq).filter(c => c.count >= half && notBanned(c)).sort((a, b) => b.count - a.count);
         return { key, threat, totalRounds };
@@ -2230,11 +2230,11 @@ this.renderBuscadorDeckPreview();
         <div id="topcards-sec" class="deck-section-content">
             <div class="opt-topcards-group">
                 <div class="opt-topcards-group-title">🗝️ Cartas Clave</div>
-                ${row(key, 'Aún no hay cartas clave que superen el 30% de tus duelos.')}
+                ${row(key, 'Aún no hay cartas clave que superen el 20% de tus duelos.')}
             </div>
             <div class="opt-topcards-group">
                 <div class="opt-topcards-group-title">🎯 Mayores Amenazas</div>
-                ${row(threat, 'Aún no hay amenazas que superen el 30% de tus duelos.')}
+                ${row(threat, 'Aún no hay amenazas que superen el 20% de tus duelos.')}
             </div>
         </div>
         </div>`;
