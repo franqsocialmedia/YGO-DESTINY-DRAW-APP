@@ -34,6 +34,14 @@ const ZonaPractica = {
     lp: 8000,
     _activeDeckName: null,
     _activePlacement: null,
+    _activePlayer: 'P1',
+    _dualMode: false,
+    _players: { P1: null, P2: null },
+    _STATE_KEYS: [
+        'field','hand','main','extra','gy','banish','other','lp',
+        '_activeDeckName','changePositionMode','cardsHidden',
+        'hiddenHand','hiddenMain','hiddenExtra','_tokenCounter'
+    ],
     _longPressTimer: null,
     _longPressPreventClick: false,
     
@@ -108,7 +116,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                     <button class="pz-ctrl-btn pz-ctrl-search"
                             onclick="ZonaPractica.openCardSearch()">🔍 Buscar Carta</button>
                     <button class="pz-ctrl-btn pz-ctrl-deck"
-                            onclick="ZonaPractica.openDeckSelector()">🃏 Usar Deck</button>
+                            onclick="ZonaPractica.openUseDeckPrompt()">🃏 Usar Deck</button>
                     
                     <button class="pz-ctrl-btn pz-ctrl-historia" data-section-id="sim-practica-history"
                             onclick="ZonaPractica.openStateNavigator()">📜 Historial</button>
@@ -282,6 +290,10 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
    setPhase: function (p) {
         if (this.phase === 'end' && p === 'draw') {
             this.turnNumber++;
+            if (this._dualMode) {
+                const next = this._activePlayer === 'P1' ? 'P2' : 'P1';
+                this.switchPlayer(next, { silent: true });
+            }
             this._addLog(`--- Turno: ${this.turnNumber} ---`);
         } else {
             const prev = this._phaseLabel(this.phase);
@@ -755,7 +767,39 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                 });
         }
     },
+// ═══════════════════════════════════════════════════════
+    // Prompt previo: ¿a qué jugador va el deck? (antes de listar decks)
+    openUseDeckPrompt: function () {
+        document.getElementById('pz-player-prompt-overlay')?.remove();
+        const cur = this._activePlayer;
+        const overlay = document.createElement('div');
+        overlay.id        = 'pz-player-prompt-overlay';
+        overlay.className = 'pz-modal-overlay';
+        overlay.onclick   = (e) => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div class="pz-modal-box pz-pp-box">
+                <div class="pz-modal-title">🃏 ¿Deck para qué jugador?</div>
+                <button class="pz-modal-close"
+                        onclick="document.getElementById('pz-player-prompt-overlay').remove()">✕</button>
+                <div class="pz-pp-body">
+                    <button class="pz-pp-btn pz-pp-p1 ${cur==='P1' ? 'pz-pp-active' : ''}"
+                            onclick="ZonaPractica._confirmDeckTarget('P1')">
+                        Jugador P1${cur==='P1' ? ' <span class="pz-pp-tag">(activo)</span>' : ''}
+                    </button>
+                    <button class="pz-pp-btn pz-pp-p2 ${cur==='P2' ? 'pz-pp-active' : ''}"
+                            onclick="ZonaPractica._confirmDeckTarget('P2')">
+                        Jugador P2${cur==='P2' ? ' <span class="pz-pp-tag">(activo)</span>' : ''}
+                    </button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    },
 
+    _confirmDeckTarget: function (target) {
+        document.getElementById('pz-player-prompt-overlay')?.remove();
+        if (target !== this._activePlayer) this.switchPlayer(target);
+        this.openDeckSelector();
+    },
     // ═══════════════════════════════════════════════════════
     openDeckSelector: function () {
         document.getElementById('pz-deck-overlay')?.remove();
@@ -903,7 +947,94 @@ overlay.innerHTML = `
     Object.keys(this.field).forEach(k => this.field[k]=null);
     this.hand=[]; this.main=[]; this.extra=[]; this.gy=[]; this.banish=[]; this.other=[];
 },
+_defaultPlayerState: function () {
+        return {
+            field: { 'A':null,'B':null,'C':null,'1':null,'2':null,'3':null,'4':null,'5':null,
+                      '6':null,'7':null,'8':null,'9':null,'10':null },
+            hand:[], main:[], extra:[], gy:[], banish:[], other:[],
+            lp: 8000,
+            _activeDeckName: null,
+            changePositionMode: false,
+            cardsHidden: false,
+            hiddenHand: false, hiddenMain: false, hiddenExtra: false,
+            _tokenCounter: 0
+        };
+    },
 
+    _snapshotPlayerState: function () {
+        const s = {};
+        this._STATE_KEYS.forEach(k => {
+            const v = this[k];
+            s[k] = Array.isArray(v) ? v.map(e => ({...e}))
+                 : (v && typeof v === 'object' ? {...v} : v);
+        });
+        return s;
+    },
+
+    _applyPlayerState: function (state) {
+        const src = state || this._defaultPlayerState();
+        this._STATE_KEYS.forEach(k => {
+            const v = src[k];
+            this[k] = Array.isArray(v) ? v.map(e => ({...e}))
+                    : (v && typeof v === 'object' ? {...v} : v);
+        });
+    },
+
+    // Reconcilia botones/clases que dependen de flags del jugador activo
+    // (no dispara logs ni toasts, solo sincroniza UI tras el swap de datos)
+    _syncModeUI: function () {
+        document.getElementById('pz-btn-chgpos')?.classList.toggle('pz-action-active', this.changePositionMode);
+        document.getElementById('pz-board-outer')?.classList.toggle('pz-chgpos-mode', this.changePositionMode);
+        const hideBtn = document.getElementById('pz-btn-hide');
+        if (hideBtn) {
+            hideBtn.innerHTML = this.cardsHidden ? '👁 Mostrar Cartas' : '🙈 Ocultar Cartas';
+            hideBtn.classList.toggle('pz-action-active', this.cardsHidden);
+        }
+        document.getElementById('pz-hide-widget')?.remove();
+        if (this.cardsHidden) this._showHideWidget();
+        this._syncZoneHideBtns();
+    },
+
+    // ═══════════════════════════════════════════════════════
+    switchPlayer: function (target, opts) {
+        if (target !== 'P1' && target !== 'P2') return;
+        if (target === this._activePlayer) return;
+
+        this._dualMode = true;
+        this._cancelMoveMode();
+        this._cancelPlacement();
+        document.getElementById('pz-log-panel')?.remove();
+        document.getElementById('pz-nav-panel')?.remove();
+        document.getElementById('pz-chain-resolve-btn')?.remove();
+        document.getElementById('pz-toast')?.remove();
+        if (this.statusWidgetVisible) {
+            this.statusWidgetVisible = false;
+            document.getElementById('pz-status-widget')?.remove();
+        }
+
+        this._players[this._activePlayer] = this._snapshotPlayerState();
+        this._activePlayer = target;
+        this._applyPlayerState(this._players[target]);
+
+        const lpEl = document.getElementById('pz-lp-val');
+        if (lpEl) lpEl.textContent = (this.lp ?? 8000).toLocaleString();
+
+        this._syncModeUI();
+
+        const wrap = this._container?.querySelector('.pz-wrap');
+        if (wrap) wrap.classList.toggle('pz-wrap-p2', target === 'P2');
+
+        this._renderAllZones();
+        if (!opts || !opts.silent) this._addLog(`--- Jugador activo: ${target} ---`);
+        this._updatePlayerToggleBtn();
+    },
+
+    _updatePlayerToggleBtn: function () {
+        const btn = document.getElementById('pz-float-player-btn');
+        if (!btn) return;
+        btn.textContent = this._activePlayer;
+        btn.classList.toggle('pz-float-btn-p2', this._activePlayer === 'P2');
+    },
     // ═══════════════════════════════════════════════════════
     onZoneClick: function (zone) {
     if (this._longPressPreventClick) { this._longPressPreventClick = false; return; }
@@ -1344,7 +1475,7 @@ _startLongPressMulti: function (zone, idx, e) {
     // ═══════════════════════════════════════════════════════
     downloadLog: function () {
         if (!this.logEntries.length) { this._showToast('El log está vacío.', 1500); return; }
-        const lines = this.logEntries.map(e => `[T${e.turn} ${e.time}] ${e.msg}`);
+        const lines = this.logEntries.map(e => `[T${e.turn} ${e.time}][${e.player || 'P1'}] ${e.msg}`);
         const blob  = new Blob([lines.join('\n')], { type: 'text/plain' });
         const a     = document.createElement('a');
         a.href      = URL.createObjectURL(blob);
@@ -1923,33 +2054,50 @@ _showDetachMenu: function (zone, e) {
     },
 
     // ═══════════════════════════════════════════════════════
+    // Tablero de un jugador para Marcar Estado: si es el activo lee "this";
+    // si es el otro, lee su snapshot en _players (o default si nunca se usó).
+    _captureBoardOf: function (key) {
+        const src = (key === this._activePlayer) ? this : (this._players[key] || this._defaultPlayerState());
+        return {
+            lp:     src.lp ?? 8000,
+            field:  JSON.parse(JSON.stringify(src.field)),
+            hand:   JSON.parse(JSON.stringify(src.hand)),
+            main:   JSON.parse(JSON.stringify(src.main)),
+            extra:  JSON.parse(JSON.stringify(src.extra)),
+            gy:     JSON.parse(JSON.stringify(src.gy)),
+            banish: JSON.parse(JSON.stringify(src.banish)),
+            other:  JSON.parse(JSON.stringify(src.other)),
+        };
+    },
+
+    // Lee el tablero de un estado guardado. Compatible con estados viejos
+    // (pre-Etapa 4, planos = tablero único, siempre equivalente a P1).
+    _stateBoardOf: function (s, key) {
+        if (s.players) return s.players[key] || this._defaultPlayerState();
+        return key === 'P1' ? s : this._defaultPlayerState();
+    },
     saveGameState: function () {
         const snap = {
-            id:        this.gameStates.length + 1,
-            turn:      this.turnNumber,
-            phase:     this.phase,
-            lp:        this.lp ?? 8000,
-            timestamp: new Date().toLocaleTimeString('es-ES', { hour12: false }),
-            field:     JSON.parse(JSON.stringify(this.field)),
-            hand:      JSON.parse(JSON.stringify(this.hand)),
-            main:      JSON.parse(JSON.stringify(this.main)),
-            extra:     JSON.parse(JSON.stringify(this.extra)),
-            gy:        JSON.parse(JSON.stringify(this.gy)),
-            banish:    JSON.parse(JSON.stringify(this.banish)),
-            other:     JSON.parse(JSON.stringify(this.other)),
+            id:           this.gameStates.length + 1,
+            turn:         this.turnNumber,
+            phase:        this.phase,
+            timestamp:    new Date().toLocaleTimeString('es-ES', { hour12: false }),
+            activePlayer: this._activePlayer,
+            players: {
+                P1: this._captureBoardOf('P1'),
+                P2: this._captureBoardOf('P2'),
+            },
         };
         this.gameStates.push(snap);
-        // Mostrar botón Estado la primera vez que se guarda un estado
         const swBtn = document.getElementById('pz-sw-toggle-btn');
         if (swBtn) swBtn.style.display = '';
 
-        this._addLog(`📌 Estado #${snap.id} guardado — T${snap.turn} · ${snap.phase} · Mano:${snap.hand.length} · GY:${snap.gy.length}`);
+        const active = snap.players[snap.activePlayer];
+        this._addLog(`📌 Estado #${snap.id} guardado — T${snap.turn} · ${snap.phase} · [${snap.activePlayer}] Mano:${active.hand.length} · GY:${active.gy.length}`);
         this._showToast(`📌 Estado #${snap.id} guardado`);
         this._saveStatesToDeck();
-        // Actualizar panel de log si está abierto
         const logEntries = document.getElementById('pz-log-entries');
         if (logEntries) logEntries.innerHTML = this._renderLogEntries();
-        // Actualizar navegador si está abierto
         const navList = document.getElementById('pz-nav-list');
         if (navList) navList.innerHTML = this._renderNavList();
         this._updateStatusWidget();
@@ -2067,10 +2215,11 @@ _showDetachMenu: function (zone, e) {
                 const scrollCall = targetIdx >= 0
                     ? `var c=document.getElementById('pz-log-entries');var t=document.getElementById('pz-log-entry-${targetIdx}');if(c&&t){c.scrollTo({top:t.offsetTop-8,behavior:'smooth'});}`
                     : '';
+                const lp = this._stateBoardOf(s, s.activePlayer || 'P1').lp ?? 8000;
                 return `<div class="pz-log-state-chip pz-log-state-chip-link"
-                             title="T${s.turn} · ${s.phase} · LP:${(s.lp ?? 8000).toLocaleString()} · ${s.timestamp} — Ir al registro"
+                             title="T${s.turn} · ${s.phase} · [${s.activePlayer||'P1'}] LP:${lp.toLocaleString()} · ${s.timestamp} — Ir al registro"
                              onclick="${scrollCall}">
-                    #${s.id} <span>T${s.turn}·${(s.lp ?? 8000).toLocaleString()}LP·${s.timestamp}</span>
+                    #${s.id} <span>T${s.turn}·${lp.toLocaleString()}LP·${s.timestamp}</span>
                 </div>`;
             }).join('');
             return `<div class="pz-log-states-bar">
@@ -2202,7 +2351,9 @@ _clearLog: function () {
             return '<p class="pz-log-empty">Sin estados guardados.</p>';
         }
         return [...this.gameStates].reverse().map(s => {
-            const fieldCount = Object.values(s.field).filter(Boolean).length;
+            const activeKey = s.activePlayer || 'P1';
+            const b = this._stateBoardOf(s, activeKey);
+            const fieldCount = Object.values(b.field).filter(Boolean).length;
             const phaseColors = {
                 draw:'#8B6914', standby:'#1a78bd',
                 main1:'#1a7a2e', main2:'#1a7a2e', battle:'#bd3b1a', end:'#7a1a2e'
@@ -2216,6 +2367,7 @@ _clearLog: function () {
                     <div class="pz-nav-card-meta">
                         <span class="pz-nav-id">#${s.id}</span>
                         <span class="pz-nav-turn">T${s.turn}</span>
+                        <span class="pz-log-ptag pz-log-ptag-${activeKey}">${activeKey}</span>
                         <span class="pz-nav-phase"
                               style="background:${phaseColor}33;border-color:${phaseColor};color:${phaseColor}">
                             ${this._phaseLabel(s.phase)}
@@ -2227,12 +2379,12 @@ _clearLog: function () {
 
                 <!-- Resumen rápido siempre visible -->
                 <div class="pz-nav-summary">
-                    ${this._renderNavCounts(s)}
+                    ${this._renderNavCounts(b)}
                 </div>
 
                 <!-- Detalle expandible -->
                 <div class="pz-nav-detail" id="pz-nav-detail-${s.id}" style="display:none">
-                    ${this._renderNavFieldPreview(s)}
+                    ${this._renderNavFieldPreview(b)}
                     <div class="pz-nav-actions">
                         <button class="pz-nav-download-btn"
                                 onclick="ZonaPractica._downloadStatePng(${s.id})">
@@ -2340,25 +2492,51 @@ _clearLog: function () {
         const s = this.gameStates.find(x => x.id === id);
         if (!s) return;
 
-        if (!confirm(`¿Restaurar el Estado #${s.id} (T${s.turn} · ${this._phaseLabel(s.phase)})?`)) return;
+        if (!confirm(`¿Restaurar el Estado #${s.id} (T${s.turn} · ${this._phaseLabel(s.phase)})? Esto restaura el tablero de ambos jugadores.`)) return;
 
         this.phase      = s.phase;
         this.turnNumber = s.turn;
-        this.field      = JSON.parse(JSON.stringify(s.field));
-        this.hand       = JSON.parse(JSON.stringify(s.hand));
-        this.main       = JSON.parse(JSON.stringify(s.main));
-        this.extra      = JSON.parse(JSON.stringify(s.extra));
-        this.gy         = JSON.parse(JSON.stringify(s.gy));
-        this.banish     = JSON.parse(JSON.stringify(s.banish));
-        this.other      = JSON.parse(JSON.stringify(s.other));
+        if (s.players) this._dualMode = true;
+
+        ['P1','P2'].forEach(key => {
+            const b = this._stateBoardOf(s, key);
+            this._players[key] = {
+                field:  JSON.parse(JSON.stringify(b.field)),
+                hand:   JSON.parse(JSON.stringify(b.hand)),
+                main:   JSON.parse(JSON.stringify(b.main)),
+                extra:  JSON.parse(JSON.stringify(b.extra)),
+                gy:     JSON.parse(JSON.stringify(b.gy)),
+                banish: JSON.parse(JSON.stringify(b.banish)),
+                other:  JSON.parse(JSON.stringify(b.other)),
+                lp:     b.lp ?? 8000,
+                _activeDeckName:    this._players[key]?._activeDeckName ?? this._activeDeckName ?? null,
+                changePositionMode: false,
+                cardsHidden:        false,
+                hiddenHand:         false,
+                hiddenMain:         false,
+                hiddenExtra:        false,
+                _tokenCounter:      this._players[key]?._tokenCounter ?? 0,
+            };
+        });
+
+        this._activePlayer = s.activePlayer || 'P1';
+        this._applyPlayerState(this._players[this._activePlayer]);
+
+        const lpEl = document.getElementById('pz-lp-val');
+        if (lpEl) lpEl.textContent = (this.lp ?? 8000).toLocaleString();
+        this._syncModeUI();
+
+        const wrap = this._container?.querySelector('.pz-wrap');
+        if (wrap) wrap.classList.toggle('pz-wrap-p2', this._activePlayer === 'P2');
 
         document.querySelectorAll('.pz-phase-btn').forEach(btn => {
             btn.classList.toggle('pz-phase-active', btn.dataset.phase === s.phase);
         });
 
-        this._addLog(`↩ Estado #${s.id} restaurado — T${s.turn} · ${this._phaseLabel(s.phase)}`);
+        this._addLog(`↩ Estado #${s.id} restaurado (ambos jugadores) — T${s.turn} · ${this._phaseLabel(s.phase)}`);
         this._showToast(`↩ Estado #${s.id} restaurado`);
         this._renderAllZones();
+        this._updatePlayerToggleBtn();
         this.openStateNavigator();
     },
 
@@ -2549,6 +2727,15 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica')
             btn.onclick   = () => ZonaPractica.saveGameState();
             document.body.appendChild(btn);
         }
+        if (!document.getElementById('pz-float-player-btn')) {
+            const playerBtn = document.createElement('button');
+            playerBtn.id        = 'pz-float-player-btn';
+            playerBtn.className = 'pz-float-btn pz-float-btn-player';
+            playerBtn.title     = 'Cambiar jugador activo';
+            playerBtn.onclick   = () => ZonaPractica.switchPlayer(ZonaPractica._activePlayer === 'P1' ? 'P2' : 'P1');
+            document.body.appendChild(playerBtn);
+        }
+        this._updatePlayerToggleBtn();
           if (!document.getElementById('pz-float-close-btn')) {
             const closeBtn = document.createElement('button');
             closeBtn.id        = 'pz-float-close-btn';
@@ -2562,7 +2749,7 @@ const inPractica = inSim && (window.Torneo?.simTab === 'practica')
 
     _cleanupFloatBtns: function () {
         ['pz-float-log-btn', 'pz-float-markstate-btn','pz-float-chgpos-btn', 'pz-float-close-btn',
-         'pz-chain-resolve-btn'].forEach(id => document.getElementById(id)?.remove());
+         'pz-float-player-btn', 'pz-chain-resolve-btn'].forEach(id => document.getElementById(id)?.remove());
         const scBtn = document.getElementById('shortcuts-float-btn');
         if (scBtn) { scBtn.style.bottom = ''; scBtn.style.display = ''; }
         const helpBtn = document.getElementById('help-float-btn');
@@ -2747,8 +2934,8 @@ const minGap = isHand ? -52 : -18;
     level: card.level, rank: card.rank, linkval: card.linkval,
     banlist_info: card.banlist_info,
     card_images: card.card_images || [] } : null;
-    this.logEntries.push({ msg, time, turn: this.turnNumber, imgUrl, isManual: !!isManual, isLike: !!isLike, cardName: card?.name || null, card: cardSlim, isChainStep: !!this._chainResolving });
-        console.info(`[PZ] T${this.turnNumber} ${time} — ${isManual ? '[Manual] ' : ''}${msg}`);
+    this.logEntries.push({ msg, time, turn: this.turnNumber, imgUrl, isManual: !!isManual, isLike: !!isLike, cardName: card?.name || null, card: cardSlim, isChainStep: !!this._chainResolving, player: this._activePlayer });
+        console.info(`[PZ][${this._activePlayer}] T${this.turnNumber} ${time} — ${isManual ? '[Manual] ' : ''}${msg}`);
         // Actualizar Log en tiempo real si está abierto
         const el = document.getElementById('pz-log-entries');
         if (el) { el.innerHTML = this._renderLogEntries(); el.scrollTop = el.scrollHeight; }
@@ -2785,10 +2972,12 @@ _openLogCard: function (idx) {
             else if (isChainRes)           extraClass = 'pz-log-chain-resolve';
             else if (isActivate)           extraClass = 'pz-log-activate';
             if (e.isChainStep) extraClass += ' pz-log-chain-step';
+            const p = e.player || 'P1';
             return `
             <div class="pz-log-entry ${extraClass}" id="pz-log-entry-${i}">
                 <span class="pz-log-entry-idx">${i + 1}</span>
                 <span class="pz-log-entry-meta">T${e.turn}&nbsp;${e.time}</span>
+                <span class="pz-log-ptag pz-log-ptag-${p}">${p}</span>
                 ${e.isManual ? `<span class="pz-log-player-tag">Jugador:</span>` : ''}
                 ${e.imgUrl ? `<img src="${e.imgUrl}" class="pz-log-card-thumb"
                     onerror="this.style.display='none'" title="${e.msg}">` : ''}
@@ -2904,21 +3093,32 @@ _resetPzLP: function () {
 },
 
 // Guarda versión "slim" (sin card_images ni desc) para no saturar localStorage.
+// Guarda versión "slim" (sin card_images ni desc) para no saturar localStorage.
+_slimBoard: function (b) {
+    return {
+        lp:     b.lp ?? 8000,
+        field:  this._slimField(b.field),
+        hand:   b.hand.map(e => this._slimEntry(e)),
+        main:   b.main.map(e => this._slimEntry(e)),
+        extra:  b.extra.map(e => this._slimEntry(e)),
+        gy:     b.gy.map(e => this._slimEntry(e)),
+        banish: b.banish.map(e => this._slimEntry(e)),
+        other:  b.other.map(e => this._slimEntry(e)),
+    };
+},
+
 _saveStatesToDeck: function () {
     if (!this._activeDeckName) return;
     const slim = this.gameStates.map(s => ({
-        id:        s.id,
-        turn:      s.turn,
-        phase:     s.phase,
-        lp:        s.lp ?? 8000,
-        timestamp: s.timestamp,
-        field:     this._slimField(s.field),
-        hand:      s.hand.map(e => this._slimEntry(e)),
-        main:      s.main.map(e => this._slimEntry(e)),
-        extra:     s.extra.map(e => this._slimEntry(e)),
-        gy:        s.gy.map(e => this._slimEntry(e)),
-        banish:    s.banish.map(e => this._slimEntry(e)),
-        other:     s.other.map(e => this._slimEntry(e)),
+        id:           s.id,
+        turn:         s.turn,
+        phase:        s.phase,
+        timestamp:    s.timestamp,
+        activePlayer: s.activePlayer || 'P1',
+        players: {
+            P1: this._slimBoard(this._stateBoardOf(s, 'P1')),
+            P2: this._slimBoard(this._stateBoardOf(s, 'P2')),
+        },
     }));
     try {
         localStorage.setItem(`pz_states_${this._activeDeckName}`, JSON.stringify(slim));

@@ -30,11 +30,13 @@ const Formacion = {
         { id: 'secuenciacion',           label: 'Secuenciación: El Orden Importa', level: 'Avanzado' },
         // ── MÓDULO 3 — Construcción y Optimización de Mazo ──
         { id: 'elegir-construir-deck',      label: 'Elegir y Construir tu Deck',        level: 'Competitivo' },
-        { id: 'staples-formato',            label: 'Staples del Formato',               level: 'Competitivo' },
+{ id: 'valorar-carta',              label: 'Cómo Valorar una Carta',            level: 'Competitivo' },
+{ id: 'staples-formato',            label: 'Staples del Formato',               level: 'Competitivo' },
         { id: 'anatomia-deck-competitivo',  label: 'Anatomía de un Deck Competitivo',   level: 'Competitivo' },
         { id: 'debilidades-deck',           label: 'Qué Hace Débil a un Deck o Arquetipo', level: 'Competitivo' },
         { id: 'optimizar-deck',             label: 'Cómo Optimizar tu Deck',            level: 'Competitivo' },
-        // ── MÓDULO 4 — Motor Técnico del Juego ──
+{ id: 'equilibrio-deck',            label: 'Equilibrio del Deck: Detectando Excesos', level: 'Competitivo' },
+// ── MÓDULO 4 — Motor Técnico del Juego ──
         { id: 'cadenas-prioridad',       label: 'Cadenas, Prioridad y Spell Speed', level: 'Avanzado' },
         { id: 'rulings-invocaciones',    label: 'Rulings de Invocaciones',          level: 'Avanzado' },
         { id: 'rulings-batalla',         label: 'Rulings en Fase de Batalla',       level: 'Avanzado' },
@@ -193,6 +195,23 @@ const Formacion = {
               options: ['Fusión', 'Sincronía', 'Péndulo', 'XYZ'], correct: 2,
               explain: 'Es un monstruo Péndulo icónico — su marco mitad verde/naranja lo identifica de inmediato.' },
         ],
+        'valorar-carta': [
+    { q: 'Según la lección, ¿cuál es la pregunta correcta al evaluar una carta?',
+      options: ['¿Es fuerte?', '¿Qué trabajo hace esta carta en mi deck?', '¿Cuánto cuesta en el mercado?', '¿Es rara?'], correct: 1,
+      explain: 'Una carta nunca se evalúa aislada — siempre dentro del sistema completo del deck.' },
+    { q: '¿Qué función cumple una carta si "el deck casi no funciona" cuando no la robas?',
+      options: ['Finalizador', 'Motor (Engine)', 'Recuperación', 'Flex'], correct: 1,
+      explain: 'El Motor es la función cuya ausencia impide que el deck ejecute su plan de juego.' },
+    { q: 'En el Test de 5 Preguntas, ¿qué pregunta "destruye malos hábitos" según la lección?',
+      options: ['¿Cuánto ATK tiene?', '¿Qué carta sale para hacerle espacio?', '¿Es una carta nueva?', '¿La tengo en Extra Deck?'], correct: 1,
+      explain: 'Decir que una carta es buena no basta — hay que poder señalar cuál de las 40 actuales es peor.' },
+    { q: '¿Qué es el "costo oculto" de una carta?',
+      options: ['El precio de mercado', 'La inconsistencia que genera un efecto poderoso pero muy condicionado', 'El costo de LP que paga', 'Un tipo de Trampa Continua'], correct: 1,
+      explain: 'Un efecto fuerte con muchas condiciones puede valer menos en la práctica que uno modesto pero siempre disponible.' },
+    { q: 'Al elegir entre dos cartas similares (ej. dos Handtraps), ¿qué NO recomienda esta lección?',
+      options: ['Comparar cuál depende de menos condiciones', 'Elegir solo por cuál "se ve más poderosa" en su texto', 'Ver en qué % de manos sería una carta muerta', 'Evaluar cuál te acerca más a tu condición de victoria'], correct: 1,
+      explain: 'El criterio siempre debe ser el trabajo real que cumple en tu deck, no la impresión superficial de poder.' },
+],
         'estructura-efecto-carta': [
             { q: 'En "Descarta 1 carta: roba 2 cartas", ¿qué parte es el Costo?',
               options: ['"roba 2 cartas"', '"Descarta 1 carta"', 'Ambas por igual', 'Ninguna, es solo Efecto'], correct: 1,
@@ -1078,11 +1097,12 @@ const Formacion = {
             'mentalidad-del-jugador':  this._topicMentalidadJugador(),
 'secuenciacion':           this._topicSecuenciacion(),
             'elegir-construir-deck':     this._topicElegirConstruirDeck(),
-            'staples-formato':           this._topicStaples(),
+'valorar-carta':             this._topicValorarCarta(),
+'staples-formato':           this._topicStaples(),
             'anatomia-deck-competitivo': this._topicAnatomiaDeckCompetitivo(),
             'debilidades-deck':          this._topicDebilidadesDeck(),
             'optimizar-deck':            this._topicOptimizarDeck(),
-            'cadenas-prioridad':       this._topicCadenasPrioridad(),
+'equilibrio-deck':           this._topicEquilibrioDeck(),  
             'rulings-invocaciones':    this._topicRulingsInvocaciones(),
             'rulings-batalla':         this._topicRulingsBatalla(),
             'if-when-timing':          this._topicIfWhenTiming(),
@@ -2023,7 +2043,61 @@ _topicSecuenciacion: function () { return `
             y valida tus cantidades de copias con la calculadora de Probabilidad de Robo.
         </p>
     `; },
+_topicValorarCarta: function () { return `
+        <h2 class="form-nb-title">Cómo Valorar una Carta</h2>
+        <p class="form-nb-text">La mayoría de los jugadores evalúan una carta preguntando "¿es fuerte?". Esa pregunta está mal planteada. Nunca evalúes una carta aislada — evalúala dentro del sistema que es tu deck. La pregunta correcta es: "¿qué trabajo hace esta carta en mi deck?".</p>
 
+        <h3 class="form-nb-subtitle">🧩 Las 7 Funciones de una Carta</h3>
+        <p class="form-nb-text">Toda carta cumple una o más de estas 7 funciones. Clasificar cada carta de tu deck en estas categorías es el primer paso para saber si merece un espacio:</p>
+        <ul class="form-nb-list">
+            <li><strong>1. Motor (Engine):</strong> hace que tu deck funcione. Pregunta clave: ¿qué pasa si nunca la robo? Si la respuesta es "mi deck casi no funciona", es Motor.</li>
+            <li><strong>2. Consistencia:</strong> no gana partidas por sí sola, pero hace que el Motor aparezca más veces (buscadores, tutores, robo de cartas).</li>
+            <li><strong>3. Extensor:</strong> te permite seguir jugando después de una interrupción. La función favorita de los jugadores de alto nivel, porque asumen que el rival siempre tendrá respuestas.</li>
+            <li><strong>4. Interrupción:</strong> frena al rival — Handtraps y respuestas rápidas.</li>
+            <li><strong>5. Recuperación:</strong> devuelve recursos desde el cementerio o reconstruye el campo. Suele decidir partidas largas.</li>
+            <li><strong>6. Finalizador:</strong> no sirve para empezar, sirve para convertir una ventaja ya obtenida en victoria.</li>
+            <li><strong>7. Flex:</strong> cumple 2 o 3 funciones según el contexto. Mientras más cartas Flex tenga un deck, más decisiones interesantes ofrece cada partida.</li>
+        </ul>
+        <p class="form-nb-text">Esta clasificación es más fina que las 4 Funciones Universales (Motor/Interacción/Protección/Ventaja de Recursos) que ya viste en Funciones de las Cartas — úsala cuando necesites precisión real al comparar dos cartas parecidas.</p>
+
+        <h3 class="form-nb-subtitle">✅ El Test de 5 Preguntas Antes de Incluir una Carta</h3>
+        <ol class="form-nb-list">
+            <li><strong>1. ¿Qué problema resuelve?</strong> Si no resuelve ninguno, ¿por qué está ahí?</li>
+            <li><strong>2. ¿Qué carta sale para hacerle espacio?</strong> Esta pregunta destruye muchos malos hábitos. Decir "esta carta es buenísima" no basta — hay que poder responder cuál de las 40 actuales es peor. Si no puedes, la nueva carta probablemente no mejora el deck.</li>
+            <li><strong>3. ¿Cuándo es mala?</strong> Toda carta tiene momentos malos. Conócelos antes de incluirla, no después de perder por ellos.</li>
+            <li><strong>4. ¿Cómo interactúa con el resto del deck?</strong> Una carta mediocre puede ser excelente si potencia a otras diez.</li>
+            <li><strong>5. ¿Me acerca a mi condición de victoria?</strong> La pregunta definitiva. Si la respuesta es no, ninguna de las anteriores importa.</li>
+        </ol>
+
+        <h3 class="form-nb-subtitle">🎭 El Costo Oculto</h3>
+        <p class="form-nb-text">Compara dos cartas: la Carta A hace un efecto increíble pero necesita 3 condiciones para activarse; la Carta B hace un efecto un poco peor pero siempre funciona. ¿Cuál es mejor? Depende — porque el costo oculto de la Carta A es la inconsistencia. Y la consistencia gana muchísimas partidas en formatos largos (Bo3, Ranked). Cuando compares dos cartas parecidas, no te preguntes solo qué tan poderoso es el efecto — pregúntate qué tan seguido vas a poder usarlo realmente.</p>
+
+        <h3 class="form-nb-subtitle">⚖️ Aplicación: Elegir Entre Cartas Similares</h3>
+        <p class="form-nb-text">Cuando dos cartas cumplen un rol parecido (dos Handtraps, dos Boardbreakers, dos negadores), aplica el mismo test:</p>
+        <ul class="form-nb-list">
+            <li>¿Cuál depende de menos condiciones para activarse? (menor costo oculto)</li>
+            <li>¿Cuál interactúa mejor con el resto de tus 40 cartas?</li>
+            <li>¿Cuál es peor con más frecuencia — en qué % de tus manos esta carta sería "muerta"?</li>
+            <li>¿Cuál te acerca más rápido a tu condición de victoria específica, no a "ganar en general"?</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🏗️ El Ejercicio del Arquitecto</h3>
+        <p class="form-nb-text">Construir un deck es como construir una casa. No preguntas "¿cuál es el mejor ladrillo?" — preguntas "¿necesito otro ladrillo o una ventana?". Cada carta cumple un papel estructural. Una carta nunca entra al deck porque sea buena en abstracto — entra porque responde una pregunta concreta de tu sistema.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">"Cada carta debe justificar ocupar uno de los 40 (o 60) lugares más valiosos de tu deck." Cuando construyes con esa filosofía, dejas de pensar en "cartas buenas" y empiezas a pensar en sistemas eficientes — y ese cambio de mentalidad es lo que te permite algún día dejar de copiar listas de internet y empezar a construir las tuyas.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('valorar-carta')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Antes de agregar una carta candidata, ábrela en el <strong>Buscador</strong> con un deck activo cargado: el
+            CardViewer calcula en vivo su "🎯 Posibles Roles" y su "📊 Aporte al deck activo" (delta real de
+            Consistencia/Potencia/Resiliencia si la sumaras). Compara ese número contra la carta que pensabas sacar —
+            así respondes la Pregunta 2 del test ("¿qué carta sale?") con datos, no con intuición.
+        </p>
+    `; },
     _topicOptimizarDeck: function () { return `
         <h2 class="form-nb-title">Cómo Optimizar tu Deck</h2>
         <p class="form-nb-text">Un deck construido y un deck optimizado son cosas distintas. La construcción es el primer borrador. La optimización es el proceso continuo de pulirlo hasta que cada carta en el deck tiene una razón clara de estar ahí, y cada carta fuera del deck tiene una razón clara de no estar.</p>
