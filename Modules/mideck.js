@@ -5370,8 +5370,9 @@ _renderBranchBanner: function (combo) {
 
         let html = `<div class="combos-toolbar">
             <button class="opt-submit-btn" onclick="Combos.startNewCombo()">➕ Nuevo Combo</button>
+            <button class="deck-move" onclick="Combos.importCombo()">📥 Importar Combo</button>
         </div>`;
-
+        
         if (activeDraft) html += this._renderComboEditor(activeDraft);
 
         html += `<h3 class="deck-section-title">📚 Lista de Combos</h3>`;
@@ -5425,7 +5426,8 @@ _renderBranchBanner: function (combo) {
             <div class="combo-editor-header">
                 <span class="combo-editor-deck">🃏 ${this._escape(combo.deckName)} <span class="combo-status-badge combo-status-${combo.status}">${combo.status}</span></span>
                 <div class="combo-header-actions">
-                    <button class="combo-export-btn" onclick="Combos.exportComboTXT('${combo.deckName}','${combo.id}')">⬇️ Exportar .txt</button>
+                    <button class="combo-export-btn" onclick="Combos.exportComboTXT('${combo.deckName}','${combo.id}')">⬇️ Exportar .txt (para lectura)</button>
+                    <button class="combo-export-btn" onclick="Combos.exportComboFull('${combo.deckName}','${combo.id}')">📦 Exportar Combo (para importacion)</button>
                     <button class="combo-discard-btn" onclick="Combos.confirmDeleteCombo('${combo.deckName}','${combo.id}')">🗑️ Borrar Combo</button>
                 </div>
             </div>
@@ -5603,6 +5605,77 @@ _renderBranchBanner: function (combo) {
         a.href = URL.createObjectURL(blob);
         a.download = `${(combo.name || combo.deckName + '_' + combo.id).replace(/[^a-z0-9]+/gi, '_')}.txt`;
         a.click();
+    },
+
+    // ── Exportar/Importar Combo COMPLETO (.txt con JSON) ────────────
+    // A diferencia de exportComboTXT (resumen legible y con pérdida), esto
+    // serializa el objeto combo entero — steps, zones, endboard, chokePoints,
+    // restricciones, power, boss/starter, ramas — para poder reconstruirlo
+    // 1:1 como un combo nuevo, en el mismo deck o en otro.
+    exportComboFull: function (deckName, comboId) {
+        const combo = this._findCombo(deckName, comboId);
+        if (!combo) return;
+        const header = [
+            `# Destiny Draw — Combo completo (para reimportar)`,
+            `# Combo: ${combo.name || combo.id}`,
+            `# Deck original: ${combo.deckName}`,
+            `# No editar manualmente el bloque JSON de abajo.`,
+            ''
+        ].join('\n');
+        const blob = new Blob([header + JSON.stringify(combo)], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${(combo.name || combo.deckName + '_' + combo.id).replace(/[^a-z0-9]+/gi, '_')}_full.txt`;
+        a.click();
+    },
+
+    importCombo: function () {
+        if (!Deck.name) { alert('Carga un deck antes de importar un combo.'); return; }
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.txt';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            this._mergeImportedCombo(await file.text());
+        };
+        input.click();
+    },
+
+    _mergeImportedCombo: function (text) {
+        const jsonText = text.split('\n').filter(l => !l.trim().startsWith('#')).join('\n').trim();
+        let imported;
+        try { imported = JSON.parse(jsonText); } catch (e) {
+            alert('Archivo de combo inválido o corrupto.');
+            return;
+        }
+        if (!imported || typeof imported !== 'object' || !Array.isArray(imported.steps)) {
+            alert('Este archivo no parece ser un combo exportado de Destiny Draw.');
+            return;
+        }
+
+        const deckName = Deck.name;
+        const combos   = this.getAll(deckName);
+
+        // Se registra como combo NUEVO e independiente: id propio, dueño el
+        // deck activo, sin vínculo de rama (el padre podría no existir aquí).
+        const newCombo = {
+            ...imported,
+            id:            'combo_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+            deckName:      deckName,
+            parentComboId: null,
+            branchType:    null,
+            branchStepId:  null,
+            branchChokeId: null,
+            createdAt:     Date.now(),
+            name:          imported.name ? `${imported.name} (importado)` : '(importado)'
+        };
+
+        combos.push(newCombo);
+        this.saveAll(deckName, combos);
+        this._activeComboId = newCombo.id;
+        this._refresh();
+        alert(`Combo importado: ${newCombo.name}`);
     },
 
     _escape: function (str) {
