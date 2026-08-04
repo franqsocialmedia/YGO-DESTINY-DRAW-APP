@@ -504,11 +504,51 @@ recalculateAllMetaDeckScores: async function () {
         this.saveMetaData();
         this.render();
     },
+deleteFolder: function (folderName) {
+        if (!confirm('¿Eliminar carpeta "' + folderName + '" y todos sus decks?')) return;
+        delete this.metaDecks[folderName];
+        this.metaFolders = this.metaFolders.filter(f => f !== folderName);
+        this.selectedFolders = this.selectedFolders.filter(f => f !== folderName);
+        this.saveMetaData();
+        this.render();
+    },
+
+    // ── Chip complejo: TODOS los decks de una carpeta en un solo .txt ──
+    // Reutiliza directamente los objetos ya guardados en metaDecks[folder]
+    // (filename, sections{main,extra,side}, cardCount, cardFrequency,
+    // mostFrequentCard) — no requiere recalcular nada para exportar.
+    exportFolderChip: function (folderName) {
+        const decks = this.metaDecks[folderName];
+        if (!decks || !decks.length) { alert('Esta carpeta no tiene decks para exportar.'); return; }
+
+        const bundle = {
+            formatVersion: 1,
+            type:          'dd_meta_folder_chip',
+            exportedAt:    Date.now(),
+            folderName:    folderName,
+            decks:         decks
+        };
+
+        const header = [
+            `# Destiny Draw — Chip de Carpeta del Meta`,
+            `# Carpeta: ${folderName}`,
+            `# Decks incluidos: ${decks.length}`,
+            `# Agrupa todos los decks (chips) de la carpeta en un solo archivo.`,
+            `# No editar manualmente el bloque JSON de abajo.`,
+            ''
+        ].join('\n');
+
+        const blob = new Blob([header + JSON.stringify(bundle)], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${folderName.replace(/[^a-z0-9áéíóúñ]+/gi, '_')}_meta_chip.txt`;
+        a.click();
+    },
 
     importYDK: function (folderName) {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = '.ydk';
+        input.accept = '.ydk,.txt';
         input.multiple = true;
         input.onchange = async (e) => {
             const files = Array.from(e.target.files || []);
@@ -539,19 +579,30 @@ recalculateAllMetaDeckScores: async function () {
             };
 
             try {
+                // Nombres de deck agregados/actualizados en esta importación —
+                // puede haber más nombres que archivos si algún .txt era un
+                // chip complejo con varios decks adentro.
+                const importedFilenames = [];
+
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
+                    const isChip = file.name.toLowerCase().endsWith('.txt');
                     setProgress(
-                        `Importando "${file.name.replace('.ydk', '')}" (${i + 1} / ${files.length})...`,
+                        `Importando "${file.name}" (${i + 1} / ${files.length})...`,
                         Math.round(((i) / files.length) * 50)
                     );
-                    await this.processYDKFile(file, folderName);
+                    if (isChip) {
+                        const names = await this.processFolderChipFile(file, folderName);
+                        importedFilenames.push(...names);
+                    } else {
+                        await this.processYDKFile(file, folderName);
+                        importedFilenames.push(file.name.replace('.ydk', ''));
+                    }
                 }
 
                 // Esto alimenta metaCardLibrary con specializations y counters.
                 const allIds = [];
-                files.forEach(file => {
-                    const deckName = file.name.replace('.ydk', '');
+                importedFilenames.forEach(deckName => {
                     const deck = (this.metaDecks[folderName] || []).find(d => d.filename === deckName);
                     if (!deck) return;
                     const secs = deck.sections || {};
@@ -594,8 +645,7 @@ recalculateAllMetaDeckScores: async function () {
                 this._saveMetaCardLibrary();
 
                 setProgress('Calculando scores...', 96);
-                files.forEach(file => {
-                    const deckName = file.name.replace('.ydk', '');
+                importedFilenames.forEach(deckName => {
                     this._computeAndSaveMetaDeckScore(folderName, deckName);
                 });
 
@@ -614,6 +664,42 @@ recalculateAllMetaDeckScores: async function () {
         };
         input.click();
     },
+
+    // ── Chip complejo: parsea un .txt de exportFolderChip y fusiona sus
+    // decks en la carpeta destino (mismo criterio que processYDKFile: si el
+    // filename ya existe se sobreescribe, si no se agrega). Devuelve los
+    // nombres de deck agregados/actualizados para alimentar el enriquecimiento.
+    processFolderChipFile: function (file, folderName) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const text = e.target.result;
+                const jsonText = text.split('\n').filter(l => !l.trim().startsWith('#')).join('\n').trim();
+                let bundle;
+                try { bundle = JSON.parse(jsonText); } catch (err) {
+                    alert(`"${file.name}" no es un chip válido de Destiny Draw.`);
+                    resolve([]);
+                    return;
+                }
+                if (!bundle || bundle.type !== 'dd_meta_folder_chip' || !Array.isArray(bundle.decks)) {
+                    alert(`"${file.name}" no es un chip de carpeta válido.`);
+                    resolve([]);
+                    return;
+                }
+                if (!this.metaDecks[folderName]) this.metaDecks[folderName] = [];
+                const names = [];
+                bundle.decks.forEach(deckInfo => {
+                    const existingIndex = this.metaDecks[folderName].findIndex(d => d.filename === deckInfo.filename);
+                    if (existingIndex >= 0) this.metaDecks[folderName][existingIndex] = deckInfo;
+                    else this.metaDecks[folderName].push(deckInfo);
+                    names.push(deckInfo.filename);
+                });
+                resolve(names);
+            };
+            reader.readAsText(file);
+        });
+    },
+
 
     processYDKFile: async function (file, folderName) {
         return new Promise((resolve) => {
@@ -2386,7 +2472,8 @@ loadMetaDeckForAnalysis: async function (folderName, deckFilename) {
                         <div class="meta-folder-item">
                             <span class="folder-name">${folder}</span>
                             <span class="folder-count">${this.metaDecks[folder].length} decks</span>
-                            <button onclick="Estadisticas.importYDK('${folder}')" class="btn btn-primary btn-sm">Importar .ydk</button>
+                            <button onclick="Estadisticas.importYDK('${folder}')" class="btn btn-primary btn-sm">Importar</button>
+                            <button onclick="Estadisticas.exportFolderChip('${folder}')" class="btn btn-primary btn-sm" style="background:#00b894;border-color:#00b894;">📦 Exportar Chip</button>
                             <button onclick="Estadisticas.deleteFolder('${folder}')" class="btn btn-danger btn-sm">Eliminar</button>
                         </div>`).join('')}
                 </div>
