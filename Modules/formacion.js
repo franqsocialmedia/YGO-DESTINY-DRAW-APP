@@ -30,6 +30,7 @@ const Formacion = {
         { id: 'secuenciacion',           label: 'Secuenciación: El Orden Importa', level: 'Avanzado' },
         // ── MÓDULO 3 — Construcción y Optimización de Mazo ──
         { id: 'elegir-construir-deck',      label: 'Elegir y Construir tu Deck',        level: 'Competitivo' },
+{ id: 'pet-deck-dominar',           label: 'Pet Deck: De Jugarlo a Dominarlo',  level: 'Competitivo' },
 { id: 'valorar-carta',              label: 'Cómo Valorar una Carta',            level: 'Competitivo' },
 { id: 'staples-formato',            label: 'Staples del Formato',               level: 'Competitivo' },
         { id: 'anatomia-deck-competitivo',  label: 'Anatomía de un Deck Competitivo',   level: 'Competitivo' },
@@ -46,7 +47,9 @@ const Formacion = {
         { id: 'gestion-lp-recursos',     label: 'Gestión de LP y Recursos',         level: 'Competitivo' },
         { id: 'formatos-diferencias',    label: 'Formatos y sus Diferencias',       level: 'Competitivo' },
         { id: 'side-deck',               label: 'El Side Deck',                    level: 'Competitivo' },
-        { id: 'meta-tiers',              label: 'El Meta y los Tiers de Poder',     level: 'Competitivo' },
+{ id: 'bo1-vs-bo3',              label: 'Bo1 vs Bo3: Diferencias Estratégicas', level: 'Competitivo' },
+{ id: 'practicar-evento',        label: 'Practicar Antes de un Evento',     level: 'Competitivo' },
+{ id: 'meta-tiers',              label: 'El Meta y los Tiers de Poder',     level: 'Competitivo' },
     ],
 
     PLATFORMS: ['PC', 'GBC', 'GBA', 'PS1', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'Físico'],
@@ -314,6 +317,23 @@ const Formacion = {
               options: ['Nada, siempre se incluye', 'Si su efecto sirve en el meta actual y no rompe tu propio combo', 'Si es la carta más cara del set', 'Si tiene buena ilustración'], correct: 1,
               explain: 'Un Staple mal incluido, que rompe tu propio combo, es peor que no incluirlo.' },
         ],
+        'pet-deck-dominar': [
+    { q: 'Según la analogía del ajedrez, ¿qué logra fijar un solo deck durante mucho tiempo?',
+      options: ['Aburrir al jugador', 'Aislar los errores como errores de decisión puros, no de falta de experiencia', 'Reducir el número de partidas posibles', 'Nada relevante para el nivel competitivo'], correct: 1,
+      explain: 'Al eliminar la variable "cambiar de deck", los errores que quedan son de razonamiento, que es lo que realmente se puede corregir.' },
+    { q: '¿Cuál es la diferencia clave entre "jugar" un deck y "pilotarlo"?',
+      options: ['No hay ninguna diferencia real', 'Pilotarlo implica conocer líneas alternativas y matchups específicos, no solo el combo principal', 'Pilotar significa tener más copias del deck', 'Jugarlo es más rápido que pilotarlo'], correct: 1,
+      explain: 'Pilotar implica profundidad de decisión: saber qué hacer cuando el plan A falla, no solo ejecutar el combo ideal.' },
+    { q: '¿Contra qué matchups recomienda la lección practicar con más repetición?',
+      options: ['Contra los que ya dominas', 'Contra los 2-3 arquetipos donde peor te va', 'Solo contra bots', 'Contra cualquier deck al azar'], correct: 1,
+      explain: 'El mayor aprendizaje viene de repetir el matchup más difícil, no de reforzar lo que ya sabes hacer bien.' },
+    { q: '¿Cómo se mide el dominio real de un pet deck, según la lección?',
+      options: ['Por cuántas gemas se gastaron en él', 'Con métricas concretas: Winrate, Brick Rate, Nivel como Piloto a lo largo del tiempo', 'Solo por la opinión de otros jugadores', 'No se puede medir, es subjetivo'], correct: 1,
+      explain: 'El progreso real debe reflejarse en números que mejoran con el tiempo, no solo en una sensación de comodidad.' },
+    { q: '¿Qué se recomienda confirmar ANTES de comprometerse a dominar un deck?',
+      options: ['Que sea el deck más caro del meta', 'Que realmente disfrutes jugarlo y que su Complejidad sea la que estás dispuesto a asumir', 'Que tenga el mayor ATK posible', 'Que no tenga ninguna Handtrap'], correct: 1,
+      explain: 'Comprometerse con el deck equivocado hace que la inversión de tiempo en dominarlo se sienta como una carga, no como progreso.' },
+],
         'anatomia-deck-competitivo': [
             { q: '¿Qué mide el eje "Engine — Consistencia"?',
               options: ['Qué tan poderoso es el endboard', 'Qué tan probable es armar la estrategia desde la mano inicial', 'Cuántas Handtraps tiene el rival', 'El precio del deck'], correct: 1,
@@ -399,6 +419,23 @@ const Formacion = {
               options: ['Solo en la End Phase', 'Cuando el jugador activo activa un efecto, invoca, o hace una acción visible', 'Nunca, siempre puedes activar lo que quieras', 'Solo si tienes una Trampa boca abajo'], correct: 1,
               explain: 'La ventana se abre con cualquier acción del jugador activo — activación, invocación o acción visible.' },
         ],
+        'equilibrio-deck': [
+    { q: '¿Cuál es el enfoque correcto para juzgar si tienes "demasiadas" Handtraps?',
+      options: ['Contar el número absoluto de copias', 'Ver el porcentaje del deck que ocupan y qué le restaron al engine', 'Nunca se puede tener demasiadas Handtraps', 'Depende solo del precio de las cartas'], correct: 1,
+      explain: 'Un número absoluto no dice nada por sí solo — importa qué proporción del deck ocupa y qué sacrificaste por ello.' },
+    { q: '¿Qué problema genera un exceso de Boardbreakers en un deck que suele ir primero?',
+      options: ['Ninguno, siempre son útiles', 'Se vuelven cartas muertas en mano la mayoría de las partidas', 'Bajan el Internal Score automáticamente', 'Solo afectan en Master Duel'], correct: 1,
+      explain: 'Los Boardbreakers brillan yendo segundo — un exceso en un deck que va primero resta espacio útil sin retorno frecuente.' },
+    { q: 'Según la lección, ¿qué es tan problemático como un exceso de un rol?',
+      options: ['Tener 40 cartas exactas', 'Tener 0 copias de un rol crítico (ej. 0 Extenders)', 'Jugar solo un arquetipo', 'Usar el Buscador de la app'], correct: 1,
+      explain: 'El desbalance tiene dos direcciones: exceso y ausencia total de un rol necesario son la misma falla, en sentido contrario.' },
+    { q: '¿Cuál es la pregunta recomendada para detectar una copia sobrante de un rol?',
+      options: ['¿Cuánto cuesta la carta?', '¿Qué perdería realmente si sacara 1 copia de este rol?', '¿Es una carta rara?', '¿La usa el meta actual?'], correct: 1,
+      explain: 'Si sacar una copia no cambia casi nada porque ya hay redundancia, ese espacio probablemente rinde más en otro rol.' },
+    { q: '¿Existe una proporción universal correcta de Starters/Extenders/Handtraps para todo deck?',
+      options: ['Sí, siempre 4/4/9', 'No, depende de la identidad del deck y el meta que enfrenta', 'Sí, la que usa el deck top 1 del formato', 'No importa, cualquier proporción funciona igual'], correct: 1,
+      explain: 'Un deck combo largo, uno lineal y uno de control tienen necesidades de balance distintas — no hay fórmula fija.' },
+],
         'rulings-invocaciones': [
             { q: '¿Qué diferencia a una Invocación Inherente de una Invocación por Efecto?',
               options: ['No hay diferencia', 'La Inherente ocurre por las reglas del juego; la de Efecto la realiza un efecto de carta y no puede negarse la invocación misma', 'La de Efecto siempre es más fuerte', 'La Inherente solo aplica a Fusión'], correct: 1,
@@ -518,6 +555,40 @@ const Formacion = {
               options: ['El que tiene las cartas más poderosas en general', 'El que tiene cartas específicas y pensadas para lo que vas a enfrentar', 'El que nunca cambia entre partidas', 'El que copia el de un pro sin adaptarlo'], correct: 1,
               explain: '15 cartas específicas para tu meta local superan a 15 Staples genéricos.' },
         ],
+        'bo1-vs-bo3': [
+    { q: '¿Qué característica tiene Bo1 (Master Duel Ranked) que no tiene Bo3?',
+      options: ['Side Deck disponible', 'Ningún ajuste posible entre partidas — es un ambiente ciego', 'Partidas ilimitadas', 'Elección de quién va primero siempre'], correct: 1,
+      explain: 'En Bo1 no hay Game 2/3 ni Side Deck: la lista con la que empiezas es la única disponible.' },
+    { q: '¿Por qué el tech card muy específico pierde valor relativo en Bo1?',
+      options: ['Porque está prohibido en Ranked', 'Porque puede ser carta muerta en la mayoría de tus duelos, al no haber Side Deck para reservarlo', 'Porque cuesta más gemas', 'Porque no se puede jugar en Extra Deck'], correct: 1,
+      explain: 'Sin Side Deck, cada carta del Main debe defenderse en todos los matchups posibles, no solo en el ideal.' },
+    { q: '¿Qué ventaja da el formato Bo3 que no existe en Bo1?',
+      options: ['Mazos ilimitados', 'Poder observar la lista del rival en Game 1 y ajustar con el Side Deck', 'Jugar siempre de primero', 'Cartas prohibidas habilitadas'], correct: 1,
+      explain: 'El Side Deck permite corregir matchups específicos después de ver qué juega el rival.' },
+    { q: 'Según la lección, ¿qué tipo de cartas conviene priorizar en un Main Deck pensado para Bo1?',
+      options: ['Solo tech extremadamente específico', 'Cartas genéricas y flexibles (rol Flex)', 'Solo cartas caras', 'Cartas prohibidas en Banlist'], correct: 1,
+      explain: 'Sin oportunidad de ajustar, las cartas versátiles rinden mejor contra el pool completo de rivales posibles.' },
+    { q: '¿Qué recomienda la lección antes de copiar una lista de internet?',
+      options: ['Nada, cualquier lista sirve igual en cualquier formato', 'Confirmar para qué formato (Bo1 o Bo3) fue diseñada originalmente', 'Solo copiarla si es del Tier 1', 'Ignorar el Side Deck siempre'], correct: 1,
+      explain: 'Una lista pensada para Ranked suele ser más segura/genérica que una pensada para torneo físico con Side.' },
+],
+'practicar-evento': [
+    { q: '¿Qué caracteriza a una buena rutina de práctica pre-torneo, según la lección?',
+      options: ['Jugar solo contra bots fáciles', 'Practicar contra las listas más probables del meta, bajo presión real', 'Evitar jugar de segundo', 'Cambiar la lista constantemente hasta el día del evento'], correct: 1,
+      explain: 'Practicar contra amenazas realistas y en ambos turnos es lo que realmente prepara para el torneo.' },
+    { q: '¿Qué significa "congelar la lista"?',
+      options: ['Guardarla en el navegador', 'Fijar un punto de corte para dejar de tocar el Main Deck antes del evento', 'Prohibir jugar con ella', 'Eliminarla al terminar el torneo'], correct: 1,
+      explain: 'Cambiar cartas hasta último momento genera un deck que nunca se practicó realmente.' },
+    { q: 'En el Método AAR, ¿cuál de estas NO es una de las 5 preguntas post-duelo?',
+      options: ['¿Cuál era mi plan al empezar?', '¿Qué decisión me dio más dudas?', '¿Cuánto ATK tenía mi monstruo más fuerte?', 'Si jugara otra vez, ¿qué haría diferente?'], correct: 2,
+      explain: 'El AAR se enfoca en el proceso de decisión, no en estadísticas de cartas individuales.' },
+    { q: '¿Cuál es el objetivo real de practicar antes de un evento, según la lección?',
+      options: ['Ganar el 100% de las prácticas', 'Descubrir fallas de decisión antes de que cuesten un torneo real', 'Memorizar el combo más largo posible', 'Evitar jugar contra rivales fuertes'], correct: 1,
+      explain: 'Si nunca pierdes en la práctica, probablemente no estás practicando contra la presión correcta.' },
+    { q: '¿Por qué es importante practicar tanto yendo primero como yendo segundo?',
+      options: ['Es una regla obligatoria del torneo', 'Muchos jugadores solo ensayan ir primero y llegan sin plan real yendo segundo', 'Yendo segundo nunca importa', 'Solo aplica en Master Duel'], correct: 1,
+      explain: 'Un plan de juego incompleto para uno de los dos turnos es una de las causas más comunes de derrotas evitables.' },
+],
         'meta-tiers': [
             { q: '¿Cuál es la diferencia principal entre "Meta global" y "Meta local"?',
               options: ['No hay diferencia', 'El Meta local refleja lo que realmente juega tu región/tienda, el global es la referencia mundial', 'El Meta global siempre es más útil para el Side Deck', 'El Meta local nunca cambia'], correct: 1,
@@ -1097,6 +1168,7 @@ const Formacion = {
             'mentalidad-del-jugador':  this._topicMentalidadJugador(),
 'secuenciacion':           this._topicSecuenciacion(),
             'elegir-construir-deck':     this._topicElegirConstruirDeck(),
+'pet-deck-dominar':          this._topicPetDeckDominar(),
 'valorar-carta':             this._topicValorarCarta(),
 'staples-formato':           this._topicStaples(),
             'anatomia-deck-competitivo': this._topicAnatomiaDeckCompetitivo(),
@@ -1110,6 +1182,8 @@ const Formacion = {
             'gestion-lp-recursos':     this._topicGestionLpRecursos(),
             'formatos-diferencias':    this._topicFormatosDiferencias(),
             'side-deck':               this._topicSideDeck(),
+'bo1-vs-bo3':              this._topicBo1VsBo3(),
+'practicar-evento':        this._topicPracticarEvento(),
             'meta-tiers':              this._topicMetaTiers(),
         };
         return topics[topicId] || '<p>Contenido no disponible.</p>';
@@ -1183,7 +1257,84 @@ const Formacion = {
             </p>
         `;
     },
+_topicBo1VsBo3: function () { return `
+        <h2 class="form-nb-title">Bo1 vs Bo3: Diferencias Estratégicas</h2>
+        <p class="form-nb-text">No es lo mismo construir para Master Duel Ranked (partida única, Bo1) que para un torneo físico TCG/OCG (mejor de 3, Bo3 con Side Deck). Copiar una lista de un formato al otro sin ajustar la filosofía de construcción es un error frecuente.</p>
 
+        <h3 class="form-nb-subtitle">🎮 Bo1 (Master Duel Ranked)</h3>
+        <ul class="form-nb-list">
+            <li>No hay información previa del rival ni oportunidad de ajustar entre partidas — cada duelo es un ambiente completamente ciego.</li>
+            <li>No existe Side Deck: la lista con la que empiezas es la única que tendrás durante todo el duelo.</li>
+            <li>Favorece listas más redondeadas y auto-suficientes: cada carta debe defenderse por sí sola contra cualquier matchup posible, no solo contra los 2-3 decks que esperas enfrentar.</li>
+            <li>El tech card muy específico (que solo brilla contra 1 arquetipo puntual) pierde valor relativo — puede ser una carta muerta la mayoría de tus duelos.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🏆 Bo3 (TCG/OCG Físico)</h3>
+        <ul class="form-nb-list">
+            <li>Puedes perder el Game 1, observar la lista del rival, y ajustar con el Side Deck para el Game 2 y 3.</li>
+            <li>Permite listas más "greedy" o especializadas desde el Game 1, porque sabes que tendrás la oportunidad de corregir después.</li>
+            <li>El tech card específico gana valor: aunque sea flojo en algunos matchups, puede ser la carta que decide un Game 2/3 completo contra el arquetipo correcto.</li>
+            <li>El conocimiento del meta local (qué juegan los rivales de tu región/tienda) pesa más que en Ranked, donde el pool de rivales es global y variado.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">⚖️ Consecuencia Práctica</h3>
+        <p class="form-nb-text">En Bo1, prioriza cartas genéricas y flexibles (rol Flex de la lección "Cómo Valorar una Carta") por encima de tech muy puntual. En Bo3, un Main Deck algo más genérico + un Side Deck agresivo y específico suele superar a un Main ya sobrecargado de tech desde el Game 1 — porque ese tech estorba en el Game 1 contra rivales para los que no sirve.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Antes de copiar una lista, pregúntate para qué formato fue diseñada. Una lista optimizada para Ranked suele ser más "segura" y menos explosiva que una lista de torneo físico pensada para ganar rápido el Game 1 y ajustar después.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('bo1-vs-bo3')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Guarda dos versiones de tu deck si juegas ambos formatos (usa nombres distintos, ej. "MiDeck (Ranked)" y
+            "MiDeck (Físico)") — cada una con su propio <strong>Internal Score</strong> y su propia zona de Side en
+            <strong>Mi Deck → 🔨 Construcción</strong>. Así comparas objetivamente si tu build de Bo1 es más genérica que tu
+            build de Bo3, en vez de asumirlo.
+        </p>
+    `; },
+    _topicPracticarEvento: function () { return `
+        <h2 class="form-nb-title">Practicar Antes de un Evento</h2>
+        <p class="form-nb-text">Llegar a un torneo sin haber estresado tu línea de combo bajo interrupción real es la forma más común de perder rondas que deberías haber ganado. Practicar no es "jugar partidas" — es una rutina con objetivo.</p>
+
+        <h3 class="form-nb-subtitle">📋 Rutina de Práctica Pre-Torneo</h3>
+        <ul class="form-nb-list">
+            <li><strong>Volumen mínimo:</strong> antes de un evento importante, apunta a un número concreto de rondas de Optimización con tu lista final — no partidas casuales sin registro, sino rondas documentadas con resultado real.</li>
+            <li><strong>Contra las listas correctas:</strong> practica contra las 3-4 listas más probables del meta local (o del torneo específico si lo conoces), no contra bots genéricos o el primer oponente random de Ranked.</li>
+            <li><strong>Bajo presión real:</strong> juega asumiendo que el rival tiene la interrupción óptima en el momento óptimo, no la mejor mano posible para ti. Practicar solo contra manos fáciles genera una falsa confianza.</li>
+            <li><strong>Ambos turnos:</strong> practica tanto yendo primero como yendo segundo — muchos jugadores solo ensayan su combo de ir primero y llegan al torneo sin plan real yendo segundo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🧊 Cuándo "Congelar" la Lista</h3>
+        <p class="form-nb-text">Define un punto de corte (ej. 2-3 días antes del evento) después del cual dejas de tocar el Main Deck salvo un cambio crítico confirmado. Cambiar cartas hasta la noche anterior genera un deck que nunca practicaste realmente — vuelves al torneo con una versión no probada.</p>
+
+        <h3 class="form-nb-subtitle">🔁 Método AAR — Revisión Post-Duelo</h3>
+        <p class="form-nb-text">Después de cada duelo de práctica, responde estas 5 preguntas (tómalas como plantilla de tus notas):</p>
+        <ol class="form-nb-list">
+            <li><strong>1. ¿Cuál era mi plan al empezar el duelo?</strong></li>
+            <li><strong>2. ¿En qué momento cambió mi plan?</strong></li>
+            <li><strong>3. ¿Qué información ignoré?</strong></li>
+            <li><strong>4. ¿Qué decisión me dio más dudas?</strong> (aquí es donde más se aprende)</li>
+            <li><strong>5. Si jugara otra vez, ¿qué haría diferente?</strong></li>
+        </ol>
+        <p class="form-nb-text">Este método (usado por pilotos y equipos de alto rendimiento bajo el nombre After Action Review) convierte cada derrota de práctica en información útil, en vez de solo frustración.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">El objetivo de practicar no es ganar todas las partidas de entrenamiento — es descubrir tus fallas de decisión antes de que cuesten un torneo real. Si nunca pierdes en tus prácticas, probablemente no estás practicando contra la presión correcta.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('practicar-evento')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Usa <strong>Mi Deck → 🎯 Optimización</strong> como bitácora de práctica: crea una sesión etiquetada con el
+            nombre del evento próximo, registra cada ronda, y usa el campo <strong>notas</strong> con las 5 preguntas del
+            método AAR. Antes de congelar la lista, revisa el bloque <strong>🎖️ Nivel como Piloto</strong> — si sigues en
+            un nivel bajo con tu deck actual, es señal de que necesitas más rondas antes del evento, no más cambios a la lista.
+        </p>
+        `;
+    },
     _topicVocabularioLegal: function () { return `
         <h2 class="form-nb-title">Vocabulario Legal del Juego</h2>
         <p class="form-nb-text">Antes de aprender cartas, aprende el idioma. En Yu-Gi-Oh! cada palabra de un efecto es una acción legal distinta — confundirlas es la causa número uno de errores de novato.</p>
@@ -2144,7 +2295,90 @@ _topicValorarCarta: function () { return `
             Internal Score en <strong>Estadísticas</strong> para confirmar con números si realmente mejoró.
         </p>
     `; },
+_topicPetDeckDominar: function () { return `
+        <h2 class="form-nb-title">Pet Deck: De Jugarlo a Dominarlo</h2>
+        <p class="form-nb-text">Hay una diferencia enorme entre jugar un deck y pilotarlo al máximo nivel. Muchos jugadores saltan de arquetipo en arquetipo cada meta persiguiendo la lista "top", pero nunca acumulan la profundidad de decisión que da jugar el mismo deck cientos de veces.</p>
 
+        <h3 class="form-nb-subtitle">♟️ La Analogía del Ajedrez</h3>
+        <p class="form-nb-text">Un gran maestro de ajedrez puede analizar una misma apertura durante cientos de partidas y seguir encontrando matices nuevos. ¿Por qué? Porque al eliminar la variable "cambiar de herramienta", empieza a notar patrones reales en sus propias decisiones. Lo mismo aplica a un deck de Yu-Gi-Oh!: cuando fijas el deck, tus errores dejan de ser "no conocía esta carta" y empiezan a ser errores de decisión puros — que es justo lo que se puede corregir y mejorar.</p>
+
+        <h3 class="form-nb-subtitle">🎯 Jugar vs. Pilotar</h3>
+        <ul class="form-nb-list">
+            <li><strong>Jugar el deck:</strong> conoces el combo principal, ganas algunas partidas, pierdes otras sin saber muy bien por qué.</li>
+            <li><strong>Pilotar el deck:</strong> conoces todas las líneas alternativas (qué hacer si te niegan la primera carta, qué hacer con una mano incompleta), sabes exactamente contra qué matchups tu deck es débil y por qué, y tomas decisiones de secuenciación específicas para tu lista, no genéricas.</li>
+        </ul>
+        <p class="form-nb-text">La transición de uno a otro no ocurre jugando partidas casuales sin registro — ocurre revisando decisión por decisión, con el Método AAR (ver "Practicar Antes de un Evento") aplicado de forma consistente sobre el mismo deck.</p>
+
+        <h3 class="form-nb-subtitle">🔁 Repetición Contra tus Peores Matchups</h3>
+        <p class="form-nb-text">No mejoras pilotando tu deck contra los matchups que ya dominas — mejoras jugando repetidamente contra los 2-3 arquetipos donde peor te va. Cada repetición contra tu peor matchup revela una línea de juego que no habías considerado, o confirma que ese matchup realmente necesita ajustes de Side Deck en vez de mejor piloteo.</p>
+
+        <h3 class="form-nb-subtitle">📈 Progreso Medible, no Solo "Sentido"</h3>
+        <p class="form-nb-text">Dominar un pet deck no es una sensación subjetiva de comodidad — se puede medir con el tiempo: más rondas jugadas, mejor Winrate general y por turno (1º/2º), menor Brick Rate, y un nivel más alto en "Nivel como Piloto del Deck". Si esas métricas no mejoran con las partidas, jugar más partidas sin cambiar el método de revisión no va a generar dominio real, solo repetición.</p>
+
+        <h3 class="form-nb-subtitle">⚠️ El Riesgo de Comprometerse con el Deck Equivocado</h3>
+        <p class="form-nb-text">Comprometerse a dominar un deck no significa aferrarse a cualquier deck. Antes de invertir semanas de piloteo, confirma que el deck realmente te gusta jugar y que su Complejidad (ver esa lección en Optimización) es la que estás dispuesto a asumir — dominar un deck de techo de habilidad muy alto toma más tiempo que uno de curva de entrada simple, y eso está bien, siempre que sea una decisión consciente y no una sorpresa a mitad de camino.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">La meta no es celebrar un rango o un resultado de torneo puntual — es llegar al punto en que dejas de pensar en cartas individuales y empiezas a jugar contra la mente del rival, anticipando su plan con la lista que mejor conoces de todo el juego: la tuya.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('pet-deck-dominar')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            El bloque <strong>🎖️ Nivel como Piloto del Deck</strong> (Estadísticas y Mi Deck → Optimización) mide
+            exactamente esto: se calcula EXCLUSIVAMENTE con las rondas del deck activo, escala de Novato a Legendario.
+            Combínalo con <strong>⚔️ Historial de Enfrentamientos</strong> filtrando por rival (clic en la fila) para ver
+            tu progreso real contra ese matchup específico a lo largo del tiempo, y con
+            <strong>🧩 Complejidad del Deck</strong> para confirmar si el deck que elegiste dominar coincide con el nivel
+            de compromiso que estás dispuesto a asumir.
+        </p>
+
+    `; },
+    _topicEquilibrioDeck: function () { return `
+        <h2 class="form-nb-title">Equilibrio del Deck: Detectando Excesos</h2>
+        <p class="form-nb-text">Un deck no se rompe solo por tener cartas malas — se rompe cuando tiene demasiado de algo bueno. Cada rol que agregas (Starter, Extender, Handtrap, Boardbreaker...) compite por el mismo espacio de 40-60 cartas. Esta lección enseña a leer proporciones, no cantidades sueltas.</p>
+
+        <h3 class="form-nb-subtitle">📐 Piensa en Ratios, No en Cantidades Absolutas</h3>
+        <p class="form-nb-text">"Tengo 9 Handtraps" no dice nada por sí solo. La pregunta correcta es: ¿qué porcentaje de mi deck son Handtraps, y qué le quité al engine para meterlas? Un deck de 40 cartas con 9 Handtraps dejó solo 31 espacios para Motor + Consistencia + Extensores + Finalizadores — probablemente muy poco para un combo real.</p>
+
+        <h3 class="form-nb-subtitle">⚠️ Señales de Exceso por Rol</h3>
+        <ul class="form-nb-list">
+            <li><strong>Exceso de Starters:</strong> muchas manos abren con 2-3 formas de empezar el mismo combo — redundante. El espacio de la 3ra o 4ta fuente de arranque casi siempre rinde más como Extensor o Handtrap.</li>
+            <li><strong>Exceso de Extenders sin Starters suficientes:</strong> tienes con qué seguir el combo, pero no suficientes formas de empezarlo — el deck bricka porque nunca llega a usarlos.</li>
+            <li><strong>Exceso de Handtraps:</strong> por encima de ~9-11 copias en un deck combo empieza a robarle espacio crítico al engine. Un deck que interrumpe mucho pero no arma su propio plan de juego pierde el juego largo.</li>
+            <li><strong>Exceso de Boardbreakers:</strong> son cartas que solo brillan yendo segundo — si tu deck es principalmente de ir primero, un exceso de Boardbreakers son cartas muertas en mano la mayoría de las partidas.</li>
+            <li><strong>Exceso de Bricks/Tech situacional:</strong> cartas que solo sirven combadas con otra pieza específica. Cada Garnet extra resta consistencia real aunque en teoría sea poderoso — la regla general es no pasar de 2 en el deck.</li>
+            <li><strong>Cero de un rol crítico:</strong> el exceso no es el único problema — 0 Extenders (glass cannon) o 0 Boardbreakers (indefenso yendo segundo) son la misma falla de balance, en dirección contraria.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🧮 Cómo Detectarlo Sin Adivinar</h3>
+        <p class="form-nb-text">No se trata de "sentir" que algo está desbalanceado — se trata de medirlo con datos de tus propias partidas:</p>
+        <ul class="form-nb-list">
+            <li>Si brickeas seguido con manos de 5-6 cartas "que en teoría deberían tener algo jugable" → señal de exceso de Bricks o falta de Consistencia.</li>
+            <li>Si con 1 sola Handtrap encima tu turno termina sin nada en campo → señal de falta de Extenders (Floor bajo).</li>
+            <li>Si el promedio de Boardbreakers en mano yendo de segundo es consistentemente bajo pero pierdes casi siempre yendo segundo → señal de que necesitas más, no menos.</li>
+            <li>Si tienes 2+ negaciones y el oponente igual te rompe el campo con recursos básicos → no es problema de cantidad de Handtraps, es problema de Techo de Poder (otro eje distinto, no lo confundas).</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🎯 El Balance no es 50/50 — es Contextual</h3>
+        <p class="form-nb-text">No existe una proporción universal correcta. Un deck combo lineal de pocos pasos necesita menos Extenders que uno de combo largo con muchas ventanas de interrupción. Un deck de control necesita más Interrupción que Motor. El equilibrio correcto es el que responde a la identidad de tu deck y al meta que enfrentas, no una fórmula fija copiada de otro arquetipo.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Cuando dudes si tienes exceso de un rol, pregúntate: "si sacara 1 copia de este rol, ¿qué perdería realmente?". Si la respuesta es "casi nada, porque ya tengo redundancia de sobra", esa copia probablemente está de más y ese espacio rinde más en otro rol que hoy tienes en cero o casi cero.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('equilibrio-deck')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            En <strong>Mi Deck → 🎯 Optimización</strong>, cada ronda que registras alimenta promedios reales por rol
+            (Starters, Extenders, Handtraps, Boardbreaker en mano, Bricks/Tech). Revisa <strong>getOptDiagnostics()</strong>:
+            la app te avisa directamente si tu <em>avgBoardbreaker</em> es bajo jugando de segundo, o si tu Brick Rate está
+            alto. Compleméntalo con <strong>Estadísticas → Internal Score</strong>: si Consistencia es sólida pero
+            Resiliencia es baja, es una señal cuantitativa de que te falta balance hacia Extenders, no hacia más Motor.
+        </p>
+    `; },
     _topicRulingsInvocaciones: function () { return `
         <h2 class="form-nb-title">Rulings de Invocaciones</h2>
         <p class="form-nb-text">Las invocaciones son el corazón de cada jugada. Saber exactamente qué tipo de invocación estás realizando, cuándo puede ser negada, y qué consecuencias tiene la negación, es lo que determina si puedes o no continuar el combo.</p>
@@ -2530,6 +2764,47 @@ _topicValorarCarta: function () { return `
         </p>
     `; },
 
+
+    _topicPracticarEvento: function () { return `
+        <h2 class="form-nb-title">Practicar Antes de un Evento</h2>
+        <p class="form-nb-text">Llegar a un torneo sin haber estresado tu línea de combo bajo interrupción real es la forma más común de perder rondas que deberías haber ganado. Practicar no es "jugar partidas" — es una rutina con objetivo.</p>
+
+        <h3 class="form-nb-subtitle">📋 Rutina de Práctica Pre-Torneo</h3>
+        <ul class="form-nb-list">
+            <li><strong>Volumen mínimo:</strong> antes de un evento importante, apunta a un número concreto de rondas de Optimización con tu lista final — no partidas casuales sin registro, sino rondas documentadas con resultado real.</li>
+            <li><strong>Contra las listas correctas:</strong> practica contra las 3-4 listas más probables del meta local (o del torneo específico si lo conoces), no contra bots genéricos o el primer oponente random de Ranked.</li>
+            <li><strong>Bajo presión real:</strong> juega asumiendo que el rival tiene la interrupción óptima en el momento óptimo, no la mejor mano posible para ti. Practicar solo contra manos fáciles genera una falsa confianza.</li>
+            <li><strong>Ambos turnos:</strong> practica tanto yendo primero como yendo segundo — muchos jugadores solo ensayan su combo de ir primero y llegan al torneo sin plan real yendo segundo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🧊 Cuándo "Congelar" la Lista</h3>
+        <p class="form-nb-text">Define un punto de corte (ej. 2-3 días antes del evento) después del cual dejas de tocar el Main Deck salvo un cambio crítico confirmado. Cambiar cartas hasta la noche anterior genera un deck que nunca practicaste realmente — vuelves al torneo con una versión no probada.</p>
+
+        <h3 class="form-nb-subtitle">🔁 Método AAR — Revisión Post-Duelo</h3>
+        <p class="form-nb-text">Después de cada duelo de práctica, responde estas 5 preguntas (tómalas como plantilla de tus notas):</p>
+        <ol class="form-nb-list">
+            <li><strong>1. ¿Cuál era mi plan al empezar el duelo?</strong></li>
+            <li><strong>2. ¿En qué momento cambió mi plan?</strong></li>
+            <li><strong>3. ¿Qué información ignoré?</strong></li>
+            <li><strong>4. ¿Qué decisión me dio más dudas?</strong> (aquí es donde más se aprende)</li>
+            <li><strong>5. Si jugara otra vez, ¿qué haría diferente?</strong></li>
+        </ol>
+        <p class="form-nb-text">Este método (usado por pilotos y equipos de alto rendimiento bajo el nombre After Action Review) convierte cada derrota de práctica en información útil, en vez de solo frustración.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">El objetivo de practicar no es ganar todas las partidas de entrenamiento — es descubrir tus fallas de decisión antes de que cuesten un torneo real. Si nunca pierdes en tus prácticas, probablemente no estás practicando contra la presión correcta.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('practicar-evento')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Usa <strong>Mi Deck → 🎯 Optimización</strong> como bitácora de práctica: crea una sesión etiquetada con el
+            nombre del evento próximo, registra cada ronda, y usa el campo <strong>notas</strong> con las 5 preguntas del
+            método AAR. Antes de congelar la lista, revisa el bloque <strong>🎖️ Nivel como Piloto</strong> — si sigues en
+            un nivel bajo con tu deck actual, es señal de que necesitas más rondas antes del evento, no más cambios a la lista.
+        </p>
+    `; },
     _topicMetaTiers: function () { return `
         <h2 class="form-nb-title">El Meta y los Tiers de Poder</h2>
         <p class="form-nb-text">Antes de un torneo, la pregunta no es "¿mi deck es bueno?" sino "¿mi deck es bueno <em>contra lo que voy a enfrentar</em>?". El Meta es ese contexto: la fotografía de qué decks se están jugando, en qué proporción, y qué tan fuertes son entre sí.</p>
