@@ -405,20 +405,29 @@ const Deck = {
 
     renderVersionesList: function (deckName) {
         const name = deckName || this.name;
-        const versions = this.getVersions(name).slice().reverse();
-        if (!versions.length) return `<p class="deck-empty">Aún no hay versiones guardadas de este deck.</p>`;
+        const versionsAsc = this.getVersions(name);
+        if (!versionsAsc.length) return `<p class="deck-empty">Aún no hay versiones guardadas de este deck.</p>`;
 
-        return versions.map(v => {
+        const rows = versionsAsc.map((v, i) => {
             const date = new Date(v.savedAt).toLocaleString('es-ES', {
                 day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
             });
             const summary  = this._formatVersionDiff(v.diff);
             const detailId = `vdet-${v.id}`;
+
+            const endAt  = versionsAsc[i + 1] ? versionsAsc[i + 1].savedAt : Infinity;
+            const vScore = this.getVersionScore(name, v.savedAt, endAt);
+            let scoreHtml = '';
+            if (vScore) {
+                const [, ptsCls] = this.getSessionScoreBadge(vScore.avg);
+                scoreHtml = ` · <span class="deck-version-score ${ptsCls}">${vScore.avg} pts</span>`;
+            }
+
             return `
             <div class="deck-version-row">
                 <div class="deck-version-main" onclick="Deck.confirmOpenVersion('${name}','${v.id}')">
                     <span class="deck-version-date">🕒 ${date}</span>
-                    <span class="deck-version-diff">${summary}</span>
+                    <span class="deck-version-diff">${summary}${scoreHtml}</span>
                 </div>
                 <button class="deck-version-detail-btn" onclick="event.stopPropagation();Deck.toggleVersionDetail('${v.id}')" title="Ver detalle">🔍</button>
                 <div id="${detailId}" class="deck-version-detail" style="display:none;">
@@ -429,7 +438,9 @@ const Deck = {
                        onclick="event.stopPropagation();"
                        onchange="Deck.saveVersionComment('${name}','${v.id}', this.value)">
             </div>`;
-        }).join('');
+        });
+
+        return rows.reverse().join('');
     },
 
     toggleVersionDetail: function (versionId) {
@@ -2007,7 +2018,36 @@ this.renderBuscadorDeckPreview();
         if (!sessions.length) return null;
         return this.calcOptMetrics(sessions[0]).score;
     },
+// ── Puntaje por Versión del Deck ────────────────────────────────
+    // session.id es epoch ms (Date.now()+offset) en todos los caminos de
+    // creación (manual, migración vieja, import de Matchups) — sirve como
+    // ancla temporal fiable para saber a qué versión pertenece cada sesión.
+    _sessionsInRange: function(deckName, startAt, endAt) {
+        const data = this.getOptimizacion(deckName);
+        return (data.sessions || []).filter(s => {
+            const t = s.id || 0;
+            return t >= startAt && t < endAt;
+        });
+    },
 
+    // Promedio de puntaje de sesión dentro de un rango de tiempo (una versión).
+    // null si no hay sesiones registradas en ese rango.
+    getVersionScore: function(deckName, startAt, endAt) {
+        const sessions = this._sessionsInRange(deckName, startAt, endAt ?? Infinity);
+        if (!sessions.length) return null;
+        const scores = sessions.map(s => this.calcOptMetrics(s).score);
+        const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+        return { avg: Math.round(avg * 10) / 10, count: sessions.length };
+    },
+
+    // Puntaje de la versión ACTUALMENTE guardada (la última de versions[]).
+    // Se resetea solo con guardar una versión nueva — usado en el sidebar.
+    getCurrentVersionScore: function(deckName) {
+        const versions = this.getVersions(deckName);
+        if (!versions.length) return null;
+        const current = versions[versions.length - 1];
+        return this.getVersionScore(deckName, current.savedAt, Infinity);
+    },
     saveOptimizacionSession: function(session) {
         const data = this.getOptimizacion();
         if (!data.sessions) data.sessions = [];
@@ -6256,12 +6296,15 @@ _renderSavedDeckItems: function () {
             const extraCount = Object.values(deck.cards)
                 .filter(c => c.location === 'extra').reduce((s, c) => s + c.qty, 0);
 
-            // Pts: score de la última sesión de Optimización (si existe)
+            // Pts: promedio de sesiones de la versión VIGENTE del deck.
+            // Se resetea automáticamente al guardar una versión nueva.
             let ptsHtml = '';
-            const lastScore = Deck.getLastSessionScore(deck.name);
-            if (lastScore !== null) {
-                const [ptsLbl, ptsCls] = Deck.getSessionScoreBadge(lastScore);
-                ptsHtml = `<div class="eng-item-pts ${ptsCls}">Pts: ${lastScore} · ${ptsLbl}</div>`;
+            const versionScore = Deck.getCurrentVersionScore(deck.name);
+            if (versionScore) {
+                const [ptsLbl, ptsCls] = Deck.getSessionScoreBadge(versionScore.avg);
+                ptsHtml = `<div class="eng-item-pts ${ptsCls}">Pts: ${versionScore.avg} · ${ptsLbl} <span style="opacity:.55">(${versionScore.count})</span></div>`;
+            } else if (Deck.getVersions(deck.name).length) {
+                ptsHtml = `<div class="eng-item-pts" style="opacity:.4">Optimiza esta versión del Deck con Duelos</div>`;
             }
 
             // Winrate si está disponible

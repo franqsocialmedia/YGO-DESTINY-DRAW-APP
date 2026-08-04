@@ -114,6 +114,11 @@
     font-size: 0.78rem;
     color: rgba(241, 241, 241, 0.65);
 }
+.deck-version-score {
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 8px;
+}
 .deck-version-detail-btn {
     background: none;
     border: 1px solid var(--border-color);
