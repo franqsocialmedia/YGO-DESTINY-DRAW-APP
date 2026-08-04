@@ -953,6 +953,7 @@ const CardViewer = {
             .catch(() => { toast.remove(); alert('Error de red al buscar la carta.'); });
     },
     open(card) {
+        this._loreData = null;
         console.log('🔍 [CardViewer] Abriendo carta:', card.name, 'ID:', card.id);
         
         const quantity = this.quantities[card.id] || 0;
@@ -1041,6 +1042,12 @@ const html = `
                 <p id="cv-availability-row" style="display:none"><b>Disponible en:</b> <span id="cv-availability"></span></p>
             </div>
 
+            <div id="cv-lore-btn-wrap" class="cv-lore-btn-wrap">
+            </div>
+
+            <hr class="cv-hr">
+
+            <div class="cv-sets-block">
             <hr class="cv-hr">
 
             <div class="cv-sets-block">
@@ -1109,12 +1116,14 @@ const html = `
                 if (ocgEl) ocgEl.textContent = 'No disponible';
             });
 
+        CardViewer._loadLore(card);
+
         const overlay = document.getElementById('cv-overlay');
         const close = document.getElementById('cv-close');
 
-        close.onclick = () => overlay.remove();
+        close.onclick = () => { overlay.remove(); document.getElementById('cv-lore-overlay')?.remove(); };
         overlay.onclick = (e) => {
-            if (e.target === overlay) overlay.remove();
+            if (e.target === overlay) { overlay.remove(); document.getElementById('cv-lore-overlay')?.remove(); }
         };
 
         const thumbs = document.querySelectorAll('.cv-thumb');
@@ -2149,6 +2158,142 @@ openPointsEditor: function (formatName, cardId, cardName, currentPoints) {
                 Buscador.autoSearch();
             });
         }, 80);
+    },
+
+    // ── Lore de la carta/arquetipo (Yugipedia API) ──
+    _loadLore: function (card) {
+        const wrap = document.getElementById('cv-lore-btn-wrap');
+        if (!wrap) return;
+        const YP_API = 'https://yugipedia.com/api.php';
+
+        const fetchLore = (pageTitle) => {
+            const url = `${YP_API}?action=parse&page=${encodeURIComponent(pageTitle)}&prop=wikitext&format=json&origin=*`;
+            return fetch(url)
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    const wikitext = data?.parse?.wikitext?.['*'];
+                    return wikitext ? CardViewer._extractLoreSections(wikitext) : null;
+                })
+                .catch(() => null);
+        };
+
+        fetchLore(card.name).then(sections => {
+            if (!document.getElementById('cv-overlay')) return; // visor ya cerrado
+            if (sections && sections.length) {
+                CardViewer._loreData = { title: card.name, sections };
+                CardViewer._renderLoreButton(wrap);
+                return;
+            }
+            if (card.archetype) {
+                fetchLore(card.archetype).then(archSections => {
+                    if (!document.getElementById('cv-overlay')) return;
+                    if (archSections && archSections.length) {
+                        CardViewer._loreData = { title: card.archetype, sections: archSections };
+                        CardViewer._renderLoreButton(wrap);
+                    }
+                });
+            }
+        });
+    },
+
+    _renderLoreButton: function (wrap) {
+        wrap.innerHTML = `<button id="cv-lore-btn" class="cv-action-btn cv-lore-btn" onclick="CardViewer.openLorePanel(); return false;">📖 El Lore de esta carta</button>`;
+    },
+
+    _extractLoreSections: function (wikitext) {
+        const headingRe = /^(={2,6})\s*(.+?)\s*\1\s*$/gm;
+        const headings = [];
+        let m;
+        while ((m = headingRe.exec(wikitext)) !== null) {
+            headings.push({ level: m[1].length, title: m[2].trim(), start: m.index, end: headingRe.lastIndex });
+        }
+        const loreIdx = headings.findIndex(h => h.level === 2 && /^lore$/i.test(h.title));
+        if (loreIdx === -1) return null;
+
+        const loreHeading = headings[loreIdx];
+        let nextHeading = null;
+        for (let i = loreIdx + 1; i < headings.length; i++) {
+            if (headings[i].level <= 2) { nextHeading = headings[i]; break; }
+        }
+        const blockStart = loreHeading.end;
+        const blockEnd   = nextHeading ? nextHeading.start : wikitext.length;
+        const block = wikitext.slice(blockStart, blockEnd);
+
+        const subHeadings = headings
+            .filter(h => h.level === 3 && h.start >= blockStart && h.start < blockEnd)
+            .map(h => ({ title: h.title, start: h.start - blockStart, end: h.end - blockStart }));
+
+        if (!subHeadings.length) {
+            const text = CardViewer._wikitextToPlain(block);
+            return text ? [{ title: null, text }] : null;
+        }
+
+        const sections = [];
+        const intro = CardViewer._wikitextToPlain(block.slice(0, subHeadings[0].start));
+        if (intro) sections.push({ title: null, text: intro });
+
+        subHeadings.forEach((sh, i) => {
+            const end = i + 1 < subHeadings.length ? subHeadings[i + 1].start : block.length;
+            const text = CardViewer._wikitextToPlain(block.slice(sh.end, end));
+            if (text) sections.push({ title: sh.title, text });
+        });
+        return sections.length ? sections : null;
+    },
+
+    _wikitextToPlain: function (wt) {
+        if (!wt) return '';
+        let t = wt;
+        t = t.replace(/<ref[^>]*>[\s\S]*?<\/ref>/gi, '');
+        t = t.replace(/<ref[^>]*\/>/gi, '');
+        t = t.replace(/<!--[\s\S]*?-->/g, '');
+        for (let i = 0; i < 3; i++) t = t.replace(/\{\{[^{}]*\}\}/g, '');
+        t = t.replace(/\[\[File:[^\]]*\]\]/gi, '');
+        t = t.replace(/\[\[Image:[^\]]*\]\]/gi, '');
+        t = t.replace(/\[\[([^\]|]*)\|([^\]]*)\]\]/g, '$2');
+        t = t.replace(/\[\[([^\]]*)\]\]/g, '$1');
+        t = t.replace(/\[https?:\/\/[^\s\]]+\s+([^\]]*)\]/g, '$1');
+        t = t.replace(/\[https?:\/\/[^\s\]]+\]/g, '');
+        t = t.replace(/'''''(.*?)'''''/g, '<b><i>$1</i></b>');
+        t = t.replace(/'''(.*?)'''/g, '<b>$1</b>');
+        t = t.replace(/''(.*?)''/g, '<i>$1</i>');
+        t = t.replace(/^\*+\s*/gm, '• ');
+        t = t.replace(/\n{3,}/g, '\n\n');
+        return t.trim();
+    },
+
+    openLorePanel: function () {
+        const data = CardViewer._loreData;
+        if (!data || document.getElementById('cv-lore-overlay')) return;
+
+        const multi = data.sections.length > 1;
+        const tabsHtml = multi ? `<div class="cv-lore-tabs">${
+            data.sections.map((s, i) =>
+                `<button class="cv-lore-tab${i === 0 ? ' active' : ''}" data-idx="${i}" onclick="CardViewer._switchLoreTab(${i})">${s.title || 'General'}</button>`
+            ).join('')
+        }</div>` : '';
+
+        const panesHtml = data.sections.map((s, i) =>
+            `<div class="cv-lore-pane${i === 0 ? ' active' : ''}" data-idx="${i}">${s.text.replace(/\n/g, '<br>')}</div>`
+        ).join('');
+
+        const overlay = document.createElement('div');
+        overlay.id = 'cv-lore-overlay';
+        overlay.className = 'cv-lore-overlay';
+        overlay.innerHTML = `
+            <div class="cv-lore-modal">
+                <button class="cv-lore-close" onclick="document.getElementById('cv-lore-overlay').remove()">✕</button>
+                <div class="cv-lore-title">📖 ${data.title}</div>
+                ${tabsHtml}
+                <div class="cv-lore-body">${panesHtml}</div>
+                <div class="cv-lore-source">Fuente: Yugipedia</div>
+            </div>`;
+        document.body.appendChild(overlay);
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    },
+
+    _switchLoreTab: function (idx) {
+        document.querySelectorAll('.cv-lore-tab').forEach(el => el.classList.toggle('active', +el.dataset.idx === idx));
+        document.querySelectorAll('.cv-lore-pane').forEach(el => el.classList.toggle('active', +el.dataset.idx === idx));
     },
 };
 

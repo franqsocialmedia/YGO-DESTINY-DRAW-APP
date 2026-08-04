@@ -1229,6 +1229,67 @@
     border-color: var(--gold-color);
     color: #fff;
 }
+.cv-lore-btn-wrap { margin: 6px 0; }
+.cv-lore-btn {
+    width: 100%;
+    flex: none;
+    background: rgba(123, 44, 191, 0.18);
+    border-color: rgba(255, 215, 0, 0.3);
+    font-weight: 600;
+}
+.cv-lore-btn:hover { background: rgba(123, 44, 191, 0.4); }
+
+.cv-lore-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.82);
+    z-index: 99999;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+}
+.cv-lore-modal {
+    background: linear-gradient(135deg, rgba(45, 10, 78, 0.98), rgba(26, 0, 8, 0.99));
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    width: 480px;
+    max-width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+    color: var(--text-light);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+}
+.cv-lore-close {
+    position: absolute; right: 12px; top: 12px;
+    background: var(--danger-color, #d63031);
+    color: #fff; border: none; border-radius: 50%;
+    width: 28px; height: 28px; font-size: 0.9rem; font-weight: bold; cursor: pointer;
+}
+.cv-lore-title {
+    font-size: 1.05rem; font-weight: 700; color: var(--gold-color);
+    margin-bottom: 10px; padding-right: 36px;
+}
+.cv-lore-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.cv-lore-tab {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-color);
+    color: var(--text-light);
+    border-radius: 6px; padding: 5px 10px; font-size: 0.78rem; cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+.cv-lore-tab.active {
+    background: rgba(255, 215, 0, 0.18);
+    border-color: var(--gold-color);
+    color: var(--gold-color);
+}
+.cv-lore-body {
+    background: rgba(26, 0, 8, 0.35);
+    border: 1px dashed rgba(123, 44, 191, 0.35);
+    border-radius: 8px; padding: 10px 12px;
+}
+.cv-lore-pane { display: none; font-size: 0.85rem; line-height: 1.7; color: rgba(241, 241, 241, 0.9); }
+.cv-lore-pane.active { display: block; }
+.cv-lore-source { margin-top: 10px; font-size: 0.7rem; color: rgba(255,255,255,0.35); text-align: right; }
 
 /* ── Vista previa Main/Extra del deck activo (arriba del Buscador) ── */
 .buscador-deck-preview-box {

@@ -155,6 +155,7 @@
     .modal-content      { padding: var(--spacing-sm); gap: 10px; }
     .modal-info h3      { font-size: 1.1rem; }
     .cv-modal           { width: calc(100vw - 20px); }
+    .cv-lore-modal       { width: calc(100vw - 20px); }
 
     /* Chips de filtro más pequeños */
     .filter-chips       { gap: 4px; }
