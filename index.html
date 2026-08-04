@@ -46,9 +46,15 @@
          ==================================== -->
     <nav id="main-nav" class="main-navigation">
         <ul class="nav-tabs">
+            <!-- Pestaña: Lobby -->
+            <li class="nav-item">
+                <button class="nav-button active" data-tab="lobby" onclick="switchTab('lobby')">
+                    Lobby
+                </button>
+            </li>
             <!-- Pestaña: Buscador de Cartas -->
             <li class="nav-item">
-                <button class="nav-button active" data-tab="buscador" onclick="switchTab('buscador')">
+                <button class="nav-button" data-tab="buscador" onclick="switchTab('buscador')">
                     Buscador
                 </button>
             </li>
@@ -101,7 +107,9 @@
              MÓDULO: BUSCADOR DE CARTAS
              Permite buscar cartas con filtros
              ==================================== -->
-        <section id="buscador-content" class="tab-content active">
+        <section id="lobby-content" class="tab-content active"></section>
+
+        <section id="buscador-content" class="tab-content">
             <h2>Buscador de Cartas</h2>
 
             <div id="buscador-deck-preview-box" class="buscador-deck-preview-box" style="display:none;"></div>
@@ -275,7 +283,7 @@
          Siempre visible en la parte inferior
          ==================================== -->
     <footer class="main-footer">
-        <p><b>VERSION 9.7.3 —— </b>Herramienta de apoyo para el juego de Yugioh!. Destiny Draw! 2026. By El Panda —— Mar 2026.</p>
+        <p><b>VERSION 9.7.4 —— </b>Herramienta de apoyo para el juego de Yugioh!. Destiny Draw! 2026. By El Panda —— Mar 2026.</p>
     </footer>
 
     <!-- ====================================
@@ -291,6 +299,7 @@
     <script src="Modules/core.js"></script>
     <script src="Modules/data.js"></script>
     <script src="Modules/buscador.js"></script>
+    <script src="Modules/lobby.js"></script>
     <script src="Modules/mideck.js"></script>
     <script src="Modules/historial.js"></script>
     <script src="Modules/estadisticas.js"></script>

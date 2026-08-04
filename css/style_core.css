@@ -1382,3 +1382,165 @@ body[data-bg-theme="navy"] {
     border: 1px solid var(--danger-color, #d63031) !important;
     box-shadow: 0 0 5px rgba(214, 48, 49, 0.5);
 }
+
+/* ── LOBBY (pestaña por defecto) ─────────────────────────────────── */
+.lobby-section {
+    background: var(--bg-card, #1e0836);
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    border-radius: 10px;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.lobby-section-title {
+    color: var(--gold-color);
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lobby-section-sub {
+    font-size: 0.72rem;
+    font-weight: normal;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.lobby-collapsible { cursor: pointer; user-select: none; }
+.lobby-collapsible:hover { color: #fff; }
+
+/* Lo Nuevo — carrusel horizontal */
+.lobby-nuevo-strip {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-color) transparent;
+}
+.lobby-nuevo-strip::-webkit-scrollbar { height: 6px; }
+.lobby-nuevo-strip::-webkit-scrollbar-track { background: transparent; }
+.lobby-nuevo-strip::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 3px;
+}
+
+.lobby-card {
+    position: relative;
+    flex: 0 0 auto;
+    width: 110px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 6px;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+}
+.lobby-card:hover {
+    border-color: var(--gold-color);
+    transform: translateY(-2px);
+}
+
+.lobby-card-img {
+    width: 100%;
+    height: 128px;
+    object-fit: cover;
+    border-radius: 5px;
+    display: block;
+}
+
+.lobby-card-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 0.62rem;
+    font-weight: bold;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #fff;
+    z-index: 1;
+}
+.lobby-card-tag-tcg { background: rgba(123, 44, 191, 0.85); }
+.lobby-card-tag-ocg { background: rgba(214, 48, 49, 0.85); }
+
+.lobby-card-name {
+    font-size: 0.72rem;
+    color: var(--text-light);
+    margin-top: 5px;
+    line-height: 1.15;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.lobby-card-date {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.45);
+    margin-top: 2px;
+}
+
+.lobby-loading, .lobby-empty {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+    padding: 8px 0;
+}
+
+/* Sugerencias — grid de 5 invitaciones */
+.lobby-suggestions-body { display: block; }
+
+.lobby-suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.lobby-suggestion-card {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+}
+.lobby-suggestion-card:hover {
+    border-color: var(--gold-color);
+    transform: translateY(-2px);
+}
+
+.lobby-suggestion-img {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 5px;
+    margin-bottom: 6px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.lobby-suggestion-title {
+    font-size: 0.82rem;
+    font-weight: bold;
+    color: var(--gold-color);
+    margin-bottom: 3px;
+}
+
+.lobby-suggestion-desc {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.25;
+}
+
+.lobby-refresh-btn {
+    background: transparent;
+    border: 1px solid var(--accent-color);
+    color: var(--text-light);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.lobby-refresh-btn:hover { background: var(--accent-color); }

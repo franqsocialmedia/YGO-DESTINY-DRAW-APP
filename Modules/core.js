@@ -11,8 +11,8 @@ const SafeLogger = window.Logger || {
 // ── NAVIGATION ──────────────────────────────────────────────────────
 // Controla el cambio de pestañas principales y notifica a cada módulo al activarse
 const Navigation = {
-    currentTab: 'buscador',
-    tabs: ['buscador', 'mideck', 'estadisticas', 'simuladores', 'formacion', 'config'],
+    currentTab: 'lobby',
+    tabs: ['lobby', 'buscador', 'mideck', 'estadisticas', 'simuladores', 'formacion', 'config'],
 
     // Registra clicks en botones nav y muestra la pestaña inicial
     init: function() {
@@ -69,6 +69,7 @@ const Navigation = {
         }
         if (tabName === 'meta' && window.Meta) Meta.init();
         if (tabName === 'formacion' && window.Formacion) Formacion.init();
+        if (tabName === 'lobby' && window.Lobby) Lobby.init();
 
         SafeLogger.functionEnd('Navigation', 'showTab', { success: true, currentTab: tabName });
 

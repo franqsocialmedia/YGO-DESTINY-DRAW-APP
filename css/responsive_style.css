@@ -718,3 +718,10 @@
     .combo-step-cardname { display: none; }
     .combo-step-thumb { margin: 0 4px 0 0; }
 }
+
+/* ── style_core.css → Lobby ── */
+@media (max-width: 600px) {
+    .lobby-card { width: 92px; }
+    .lobby-card-img { height: 108px; }
+    .lobby-suggestions-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+}
