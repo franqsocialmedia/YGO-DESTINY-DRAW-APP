@@ -2270,28 +2270,37 @@ openPointsEditor: function (formatName, cardId, cardName, currentPoints) {
         t = t.replace(/\[\[([^\]]*)\]\]/g, '$1');
         t = t.replace(/\[https?:\/\/[^\s\]]+\s+([^\]]*)\]/g, '$1');
         t = t.replace(/\[https?:\/\/[^\s\]]+\]/g, '');
-        t = t.replace(/'''''(.*?)'''''/g, '<b><i>$1</i></b>');
-        t = t.replace(/'''(.*?)'''/g, '<b>$1</b>');
-        t = t.replace(/''(.*?)''/g, '<i>$1</i>');
+        t = t.replace(/'''''(.*?)'''''/g, '$1');
+        t = t.replace(/'''(.*?)'''/g, '$1');
+        t = t.replace(/''(.*?)''/g, '$1');
         t = t.replace(/^\*+\s*/gm, '• ');
         t = t.replace(/\n{3,}/g, '\n\n');
         return t.trim();
     },
-
+_translateToSpanish: function (text) {
+        if (!text) return Promise.resolve(text);
+        const chunks = [];
+        let remaining = text;
+        while (remaining.length > 0) {
+            if (remaining.length <= 4000) { chunks.push(remaining); break; }
+            let cut = remaining.lastIndexOf('\n', 4000);
+            if (cut < 1000) cut = remaining.lastIndexOf('. ', 4000);
+            if (cut < 1000) cut = 4000;
+            chunks.push(remaining.slice(0, cut));
+            remaining = remaining.slice(cut);
+        }
+        const translateChunk = (chunk) => {
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=es&dt=t&q=${encodeURIComponent(chunk)}`;
+            return fetch(url)
+                .then(r => r.ok ? r.json() : null)
+                .then(data => (data && Array.isArray(data[0])) ? data[0].map(c => c[0]).join('') : chunk)
+                .catch(() => chunk); // si falla, deja ese trozo en inglés
+        };
+        return chunks.reduce((p, chunk) => p.then(acc => translateChunk(chunk).then(t => acc + t)), Promise.resolve(''));
+    },
     openLorePanel: function () {
         const data = CardViewer._loreData;
         if (!data || document.getElementById('cv-lore-overlay')) return;
-
-        const multi = data.sections.length > 1;
-        const tabsHtml = multi ? `<div class="cv-lore-tabs">${
-            data.sections.map((s, i) =>
-                `<button class="cv-lore-tab${i === 0 ? ' active' : ''}" data-idx="${i}" onclick="CardViewer._switchLoreTab(${i})">${s.title || 'General'}</button>`
-            ).join('')
-        }</div>` : '';
-
-        const panesHtml = data.sections.map((s, i) =>
-            `<div class="cv-lore-pane${i === 0 ? ' active' : ''}" data-idx="${i}">${s.text.replace(/\n/g, '<br>')}</div>`
-        ).join('');
 
         const overlay = document.createElement('div');
         overlay.id = 'cv-lore-overlay';
@@ -2300,12 +2309,44 @@ openPointsEditor: function (formatName, cardId, cardName, currentPoints) {
             <div class="cv-lore-modal">
                 <button class="cv-lore-close" onclick="document.getElementById('cv-lore-overlay').remove()">✕</button>
                 <div class="cv-lore-title">📖 ${data.title}</div>
-                ${tabsHtml}
-                <div class="cv-lore-body">${panesHtml}</div>
-                <div class="cv-lore-source">Fuente: Yugipedia</div>
+                <div id="cv-lore-loading" class="cv-lore-loading">Traduciendo...</div>
+                <div id="cv-lore-content" style="display:none"></div>
+                <div class="cv-lore-source">Fuente: Yugipedia (traducido automáticamente)</div>
             </div>`;
         document.body.appendChild(overlay);
         overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+        const renderContent = (sections) => {
+            const loadingEl = document.getElementById('cv-lore-loading');
+            const contentEl = document.getElementById('cv-lore-content');
+            if (!contentEl) return; // el panel ya se cerró
+            const multi = sections.length > 1;
+            const tabsHtml = multi ? `<div class="cv-lore-tabs">${
+                sections.map((s, i) =>
+                    `<button class="cv-lore-tab${i === 0 ? ' active' : ''}" data-idx="${i}" onclick="CardViewer._switchLoreTab(${i})">${s.title || 'General'}</button>`
+                ).join('')
+            }</div>` : '';
+            const panesHtml = sections.map((s, i) =>
+                `<div class="cv-lore-pane${i === 0 ? ' active' : ''}" data-idx="${i}">${s.text.replace(/\n/g, '<br>')}</div>`
+            ).join('');
+            contentEl.innerHTML = `${tabsHtml}<div class="cv-lore-body">${panesHtml}</div>`;
+            if (loadingEl) loadingEl.style.display = 'none';
+            contentEl.style.display = '';
+        };
+
+        if (data.translatedSections) { renderContent(data.translatedSections); return; }
+
+        Promise.all(data.sections.map(s =>
+            Promise.all([
+                s.title ? CardViewer._translateToSpanish(s.title) : Promise.resolve(null),
+                CardViewer._translateToSpanish(s.text)
+            ]).then(([title, text]) => ({ title, text }))
+        )).then(translated => {
+            data.translatedSections = translated;
+            if (document.getElementById('cv-lore-overlay')) renderContent(translated);
+        }).catch(() => {
+            if (document.getElementById('cv-lore-overlay')) renderContent(data.sections); // fallback: inglés original
+        });
     },
 
     _switchLoreTab: function (idx) {

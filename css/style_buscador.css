@@ -1290,7 +1290,12 @@
 .cv-lore-pane { display: none; font-size: 0.85rem; line-height: 1.7; color: rgba(241, 241, 241, 0.9); }
 .cv-lore-pane.active { display: block; }
 .cv-lore-source { margin-top: 10px; font-size: 0.7rem; color: rgba(255,255,255,0.35); text-align: right; }
-
+.cv-lore-loading {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+    padding: 12px 0;
+}
 /* ── Vista previa Main/Extra del deck activo (arriba del Buscador) ── */
 .buscador-deck-preview-box {
     background: var(--bg-card);
