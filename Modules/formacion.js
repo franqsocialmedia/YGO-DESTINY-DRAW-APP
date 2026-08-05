@@ -11,6 +11,7 @@ const Formacion = {
     activeLevel:   null,
     activeTestCat: null,
     activeTestId:  null,
+    _pt: null,   // estado del Test Práctico activo (tablero aislado, no toca ZonaPractica)
     NOTES_KEY:     'yugioh_formacion_notes',
     MASTERED_KEY:  'yugioh_formacion_mastered',
 
@@ -63,7 +64,23 @@ const Formacion = {
             { id: 'test-rulings-torneo', label: 'Rulings y Toma de Decisiones en Torneo', level: 'Avanzado',
               desc: '15 situaciones reales de torneo sobre timing, cadenas, costos e Invocaciones Especiales. Pensado para nivel Avanzado/Competitivo.' },
         ],
-        practicos: [],
+        practicos: [
+    { id: 'test-endboard-1', label: 'El Endboard Correcto', level: 'Competitivo', type: 'board',
+      desc: 'Terminaste tu combo. No todo se juega igual: hay que decidir qué queda en el campo, qué se guarda y qué ya no sirve.',
+      scenario: 'Es tu Main Phase 1, vas primero, y acabas de terminar tu línea de combo. Estas son las 5 piezas que te quedaron en la mano. Coloca cada una donde corresponda antes de pasar el turno.',
+      board: {
+          hand: [
+    { iid: 'c1', label: 'Baronne de Fleur',            imgId: 84815190, desc: 'Monstruo protector que resultó de tu combo — necesitas que quede en el campo.' },
+    { iid: 'c2', label: 'I:P Masquerena',              imgId: 65741786, desc: 'Segundo cuerpo protector del combo — también debe quedar en el campo.' },
+    { iid: 'c3', label: 'Infinite Impermanence',       imgId: 10045474, desc: 'Una interrupción para el turno del rival — necesitas dejarla activa en el campo.' },
+    { iid: 'c4', label: 'Ash Blossom & Joyous Spring', imgId: 14558127, desc: 'No la necesitaste este turno — consérvala en mano para el turno del rival.' },
+    { iid: 'c5', label: 'Terraforming',                imgId: 73628505, desc: 'Ya cumplió su función esta ronda — no aporta nada más si se queda en mano.' },
+],
+          gy: [],
+      },
+      solution: { c1: 'monster', c2: 'monster', c3: 'st', c4: 'hand', c5: 'gy' },
+      hint: 'Pregúntate con cada carta: ¿la necesito ahora en el campo, la necesito guardada para el turno del rival, o ya no me sirve?' },
+],
     },
 
     // ===============================
@@ -869,18 +886,19 @@ const Formacion = {
         if (content) content.innerHTML = this._renderCurrentTab();
     },
 
-    _renderTestContent: function (test) {
-        return `
-            <div class="form-topic-container">
-                <div class="form-notebook form-notebook--test">
-                    <span class="form-nb-level-badge form-nb-level-badge--green">Nivel: ${test.level || 'Avanzado'}</span>
-                    <h2 class="form-nb-title">${test.label}</h2>
-                    ${test.desc ? `<p class="form-nb-text">${test.desc}</p>` : ''}
-                    ${this._renderTestQuiz(test.id)}
-                </div>
+   _renderTestContent: function (test) {
+    if (test.type === 'board') return this._renderPracticalTest(test);
+    return `
+        <div class="form-topic-container">
+            <div class="form-notebook form-notebook--test">
+                <span class="form-nb-level-badge form-nb-level-badge--green">Nivel: ${test.level || 'Avanzado'}</span>
+                <h2 class="form-nb-title">${test.label}</h2>
+                ${test.desc ? `<p class="form-nb-text">${test.desc}</p>` : ''}
+                ${this._renderTestQuiz(test.id)}
             </div>
-        `;
-    },
+        </div>
+    `;
+},
 
     _renderTestQuiz: function (testId) {
         const qs = this.TEST_QUESTIONS[testId];
@@ -907,7 +925,216 @@ const Formacion = {
             </div>
         `;
     },
+// ═══════════════════════════════════════════════════════════
+    // TEST PRÁCTICO — tablero aislado (no usa ZonaPractica real)
+    // Interacción: tocar carta → seleccionar → tocar zona/carta destino
+    // (mismo patrón tap-menú-mover de Zona de Práctica, simplificado)
+    // ═══════════════════════════════════════════════════════════
 
+    _renderPracticalTest: function (test) {
+        if (!this._pt || this._pt.testId !== test.id) this._ptInit(test);
+        return `
+            <div class="form-topic-container">
+                <div class="form-notebook form-notebook--test">
+                    <span class="form-nb-level-badge form-nb-level-badge--green">Nivel: ${test.level || 'Avanzado'}</span>
+                    <h2 class="form-nb-title">${test.label}</h2>
+                    ${test.desc ? `<p class="form-nb-text">${test.desc}</p>` : ''}
+                    <p class="form-nb-text fpt-scenario">📋 ${test.scenario}</p>
+                    ${this._ptRenderBoard()}
+                    <div class="fpt-actions">
+                        <button class="form-quiz-check-btn fpt-hint-btn" onclick="Formacion._ptShowHint()">💡 Pista</button>
+                        <button class="form-quiz-check-btn fpt-reset-btn" onclick="Formacion._ptReset()">↺ Reiniciar</button>
+                        <button class="form-quiz-check-btn fpt-listo-btn" onclick="Formacion._ptCheck()">✅ Listo</button>
+                    </div>
+                    <div id="form-pt-result"></div>
+                </div>
+            </div>
+        `;
+    },
+
+    _ptInit: function (test) {
+        const zones = {};
+        ['1','2','3','4','5','6','7','8','9','10'].forEach(z => zones[z] = null);
+        this._pt = {
+            testId:   test.id,
+            zones,
+            hand:     test.board.hand.map(c => ({ ...c })),
+            gy:       (test.board.gy || []).map(c => ({ ...c })),
+            selected: null,
+        };
+    },
+
+    _ptRenderBoard: function () {
+    const t = this._pt;
+    if (!t) return '';
+    const imgUrl = (c) => `https://images.ygoprodeck.com/images/cards/${c.imgId}.jpg`;
+    const chipMulti = (c) => `
+        <div class="pz-card-slot fpt-chip${t.selected === c.iid ? ' fpt-chip-selected' : ''}"
+             title="${(c.desc || c.label || '').replace(/"/g, '&quot;')}"
+             onclick="event.stopPropagation(); Formacion._ptCardClick('${c.iid}')">
+            <img src="${imgUrl(c)}" alt="${c.label}" draggable="false">
+        </div>`;
+    const chipField = (c) => `
+        <img class="pz-card-img fpt-chip${t.selected === c.iid ? ' fpt-chip-selected' : ''}"
+             src="${imgUrl(c)}" alt="${c.label}"
+             title="${(c.desc || c.label || '').replace(/"/g, '&quot;')}"
+             onclick="event.stopPropagation(); Formacion._ptCardClick('${c.iid}')" draggable="false">`;
+    const monsterZones = ['1','2','3','4','5'];
+    const stZones      = ['6','7','8','9','10'];
+    return `
+        <div class="pz-board-outer fpt-board" id="form-pt-board">
+            ${t.selected ? `<div class="pz-move-hint">🖐️ Toca la zona (o carta) destino — o vuelve a tocar la carta para cancelar.</div>` : ''}
+            <div class="pz-zone-row">
+                <span class="pz-row-label">Mon.</span>
+                ${monsterZones.map(z => `
+                    <div class="pz-zone pz-zone-monster" onclick="Formacion._ptZoneClick('${z}')">
+                        <span class="pz-zone-lbl">${z}</span>
+                        ${t.zones[z] ? chipField(t.zones[z]) : ''}
+                    </div>
+                `).join('')}
+            </div>
+            <div class="pz-zone-row">
+                <span class="pz-row-label">S/T</span>
+                ${stZones.map(z => `
+                    <div class="pz-zone pz-zone-st" onclick="Formacion._ptZoneClick('${z}')">
+                        <span class="pz-zone-lbl">${z}</span>
+                        ${t.zones[z] ? chipField(t.zones[z]) : ''}
+                    </div>
+                `).join('')}
+            </div>
+            <div class="pz-zone-row">
+                <span class="pz-row-label">GY</span>
+                <div class="pz-multi-zone pz-gy-zone" onclick="Formacion._ptMultiZoneClick('gy')">
+                    ${t.gy.length ? t.gy.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacío</span>'}
+                </div>
+            </div>
+            <div class="pz-zone-row pz-hand-row">
+                <span class="pz-row-label">Mano</span>
+                <div class="pz-multi-zone pz-hand-zone" onclick="Formacion._ptMultiZoneClick('hand')">
+                    ${t.hand.length ? t.hand.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacía</span>'}
+                </div>
+            </div>
+        </div>
+    `;
+},
+
+    _ptCardClick: function (iid) {
+        const t = this._pt;
+        if (!t) return;
+        if (!t.selected)        { t.selected = iid; this._ptRefresh(); return; }
+        if (t.selected === iid) { t.selected = null; this._ptRefresh(); return; }
+        this._ptSwapInto(iid);
+    },
+
+    _ptZoneClick: function (zone) {
+        const t = this._pt;
+        if (!t || !t.selected) return;
+        const occupantIid = t.zones[zone]?.iid;
+        if (occupantIid && occupantIid !== t.selected) { this._ptSwapInto(occupantIid); return; }
+        const moving = this._ptFindAndRemove(t.selected);
+        if (!moving) { t.selected = null; this._ptRefresh(); return; }
+        t.zones[zone] = moving;
+        t.selected = null;
+        this._ptRefresh();
+    },
+
+    _ptMultiZoneClick: function (zoneName) {
+        const t = this._pt;
+        if (!t || !t.selected) return;
+        const moving = this._ptFindAndRemove(t.selected);
+        if (!moving) { t.selected = null; this._ptRefresh(); return; }
+        t[zoneName].push(moving);
+        t.selected = null;
+        this._ptRefresh();
+    },
+
+    _ptSwapInto: function (targetIid) {
+        const t = this._pt;
+        const movingIid = t.selected;
+        const loc = this._ptLocate(targetIid);
+        const movingCard = this._ptFindAndRemove(movingIid);
+        if (!movingCard) { t.selected = null; this._ptRefresh(); return; }
+        if (loc.type === 'zone') {
+            const occupant = t.zones[loc.zone];
+            t.zones[loc.zone] = movingCard;
+            if (occupant) t.hand.push(occupant);
+        } else {
+            t[loc.type].push(movingCard);
+        }
+        t.selected = null;
+        this._ptRefresh();
+    },
+
+    _ptLocate: function (iid) {
+        const t = this._pt;
+        for (const z in t.zones) { if (t.zones[z]?.iid === iid) return { type: 'zone', zone: z }; }
+        if (t.hand.some(c => c.iid === iid)) return { type: 'hand' };
+        if (t.gy.some(c => c.iid === iid))   return { type: 'gy' };
+        return { type: 'hand' };
+    },
+
+    _ptFindAndRemove: function (iid) {
+        const t = this._pt;
+        for (const z in t.zones) {
+            if (t.zones[z]?.iid === iid) { const c = t.zones[z]; t.zones[z] = null; return c; }
+        }
+        let idx = t.hand.findIndex(c => c.iid === iid);
+        if (idx > -1) return t.hand.splice(idx, 1)[0];
+        idx = t.gy.findIndex(c => c.iid === iid);
+        if (idx > -1) return t.gy.splice(idx, 1)[0];
+        return null;
+    },
+
+    _ptRefresh: function () {
+        const el = document.getElementById('form-pt-board');
+        if (el) el.outerHTML = this._ptRenderBoard();
+    },
+
+    _ptCheck: function () {
+        const t = this._pt;
+        if (!t) return;
+        const test = this.TESTS.practicos.find(x => x.id === t.testId);
+        if (!test) return;
+        const groupOf = (z) => ['1','2','3','4','5'].includes(z) ? 'monster'
+                              : ['6','7','8','9','10'].includes(z) ? 'st' : null;
+        const currentGroup = {};
+        for (const z in t.zones) { if (t.zones[z]) currentGroup[t.zones[z].iid] = groupOf(z); }
+        t.hand.forEach(c => currentGroup[c.iid] = 'hand');
+        t.gy.forEach(c => currentGroup[c.iid] = 'gy');
+
+        const allCards = [...test.board.hand, ...(test.board.gy || [])];
+        let allCorrect = true;
+        const wrong = [];
+        Object.keys(test.solution).forEach(iid => {
+            const ok = currentGroup[iid] === test.solution[iid];
+            if (!ok) { allCorrect = false; const c = allCards.find(x => x.iid === iid); wrong.push(c ? c.label : iid); }
+        });
+
+        const resultEl = document.getElementById('form-pt-result');
+        if (!resultEl) return;
+        resultEl.innerHTML = allCorrect
+            ? `<div class="fpt-result fpt-result--ok">✅ <strong>¡Resuelto!</strong> Cada carta quedó en su zona correcta.</div>`
+            : `<div class="fpt-result fpt-result--fail">❌ <strong>Todavía no.</strong> Revisa: ${wrong.join(', ')}</div>`;
+    },
+
+    _ptShowHint: function () {
+        const t = this._pt;
+        if (!t) return;
+        const test = this.TESTS.practicos.find(x => x.id === t.testId);
+        const resultEl = document.getElementById('form-pt-result');
+        if (resultEl && test?.hint) resultEl.innerHTML = `<div class="fpt-result fpt-result--hint">💡 ${test.hint}</div>`;
+    },
+
+    _ptReset: function () {
+        const t = this._pt;
+        if (!t) return;
+        const test = this.TESTS.practicos.find(x => x.id === t.testId);
+        if (!test) return;
+        this._ptInit(test);
+        const resultEl = document.getElementById('form-pt-result');
+        if (resultEl) resultEl.innerHTML = '';
+        this._ptRefresh();
+    },
     checkTest: function (testId) {
         const qs = this.TEST_QUESTIONS[testId];
         if (!qs) return;

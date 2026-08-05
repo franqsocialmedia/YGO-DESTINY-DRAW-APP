@@ -6316,3 +6316,29 @@
     padding-left: 6px;
 }
 .pz-log-chain-step .pz-log-entry-msg { color: #dbe8ff; }
+
+/* ════════════════════════════════════════════════════
+   FORMACIÓN — TEST PRÁCTICO
+   Reutiliza .pz-board-outer / .pz-zone / .pz-multi-zone / .pz-card-slot
+   de Zona de Práctica. Fondo sólido propio (no depende del tema del
+   cuaderno de Formación) para que las etiquetas de zona no pierdan contraste.
+   ════════════════════════════════════════════════════ */
+.pz-board-outer.fpt-board {
+    margin: 14px 0;
+    background: #14100c;
+    border: 1px solid var(--pz-border);
+}
+.fpt-board .pz-zone-lbl   { color: rgba(255,255,255,.55); }
+.fpt-board .pz-row-label  { color: #e8dcc8; }
+.fpt-scenario { font-style: italic; opacity: .9; }
+
+.fpt-chip-selected { outline: 2px solid #FFD700; box-shadow: 0 0 10px rgba(255,215,0,.6); }
+img.fpt-chip-selected { border-radius: 4px; }
+.fpt-empty-lbl { font-size: .7rem; opacity: .5; padding: 0 6px; color: rgba(255,255,255,.5); }
+
+.fpt-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+.fpt-result       { margin-top: 10px; padding: 10px 12px; border-radius: 8px; font-size: .88rem; }
+.fpt-result--ok   { background: rgba(0,180,60,.18);  border: 1px solid rgba(0,220,80,.45);  color: #b6ffce; }
+.fpt-result--fail { background: rgba(214,48,49,.18); border: 1px solid rgba(214,48,49,.45);  color: #ffb3b3; }
+.fpt-result--hint { background: rgba(255,165,0,.16); border: 1px solid rgba(255,165,0,.45); color: #ffe0a3; }
