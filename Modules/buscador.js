@@ -1042,12 +1042,8 @@ const html = `
                 <p id="cv-availability-row" style="display:none"><b>Disponible en:</b> <span id="cv-availability"></span></p>
             </div>
 
-            <div id="cv-lore-btn-wrap" class="cv-lore-btn-wrap">
-            </div>
+            <div id="cv-lore-btn-wrap" class="cv-lore-btn-wrap"></div>
 
-            <hr class="cv-hr">
-
-            <div class="cv-sets-block">
             <hr class="cv-hr">
 
             <div class="cv-sets-block">
@@ -2164,78 +2160,99 @@ openPointsEditor: function (formatName, cardId, cardName, currentPoints) {
     _loadLore: function (card) {
         const wrap = document.getElementById('cv-lore-btn-wrap');
         if (!wrap) return;
-        const YP_API = 'https://yugipedia.com/api.php';
 
-        const fetchLore = (pageTitle) => {
-            const url = `${YP_API}?action=parse&page=${encodeURIComponent(pageTitle)}&prop=wikitext&format=json&origin=*`;
-            return fetch(url)
-                .then(r => r.ok ? r.json() : null)
-                .then(data => {
-                    const wikitext = data?.parse?.wikitext?.['*'];
-                    return wikitext ? CardViewer._extractLoreSections(wikitext) : null;
-                })
-                .catch(() => null);
-        };
+        const tryCharacterPage = () => CardViewer._fetchWikitext(`${card.name} (character)`)
+            .then(wt => wt ? CardViewer._sectionsFromCharacterPage(wt) : null);
 
-        fetchLore(card.name).then(sections => {
+        const tryArchetypePage = () => card.archetype
+            ? CardViewer._fetchWikitext(card.archetype).then(wt => wt ? CardViewer._sectionsFromArchetypePage(wt) : null)
+            : Promise.resolve(null);
+
+        tryCharacterPage().then(sections => {
             if (!document.getElementById('cv-overlay')) return; // visor ya cerrado
             if (sections && sections.length) {
-                CardViewer._loreData = { title: card.name, sections };
+                CardViewer._loreData = { title: `${card.name} (Personaje)`, sections };
                 CardViewer._renderLoreButton(wrap);
                 return;
             }
-            if (card.archetype) {
-                fetchLore(card.archetype).then(archSections => {
-                    if (!document.getElementById('cv-overlay')) return;
-                    if (archSections && archSections.length) {
-                        CardViewer._loreData = { title: card.archetype, sections: archSections };
-                        CardViewer._renderLoreButton(wrap);
-                    }
-                });
-            }
+            tryArchetypePage().then(archSections => {
+                if (!document.getElementById('cv-overlay')) return;
+               tryArchetypePage().then(archSections => {
+                if (!document.getElementById('cv-overlay')) return;
+                if (archSections && archSections.length) {
+                    CardViewer._loreData = { title: card.archetype, sections: archSections };
+                    CardViewer._renderLoreButton(wrap);
+                } else {
+                    console.log(`[CardViewer] Sin lore para "${card.name}"${card.archetype ? ` ni para arquetipo "${card.archetype}"` : ' (sin arquetipo)'}.`);
+                }
+            });
+            });
         });
     },
 
+   _fetchWikitext: function (pageTitle) {
+        const apiUrl = `https://yugipedia.com/api.php?action=parse&page=${encodeURIComponent(pageTitle)}&prop=wikitext&format=json&origin=*`;
+        const extract = (data) => (data && !data.error) ? (data.parse?.wikitext?.['*'] || null) : null;
+
+        return fetch(apiUrl)
+            .then(r => r.ok ? r.json() : null)
+            .then(extract)
+            .catch((err) => {
+                console.warn('[CardViewer] Fetch directo a Yugipedia falló, probando proxy CORS:', err);
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
+                return fetch(proxyUrl)
+                    .then(r => r.ok ? r.json() : null)
+                    .then(extract)
+                    .catch((err2) => {
+                        console.error('[CardViewer] Proxy CORS también falló:', err2);
+                        return null;
+                    });
+            });
+    },
     _renderLoreButton: function (wrap) {
         wrap.innerHTML = `<button id="cv-lore-btn" class="cv-action-btn cv-lore-btn" onclick="CardViewer.openLorePanel(); return false;">📖 El Lore de esta carta</button>`;
     },
 
-    _extractLoreSections: function (wikitext) {
+    _splitLevel2Sections: function (wikitext) {
         const headingRe = /^(={2,6})\s*(.+?)\s*\1\s*$/gm;
         const headings = [];
         let m;
         while ((m = headingRe.exec(wikitext)) !== null) {
             headings.push({ level: m[1].length, title: m[2].trim(), start: m.index, end: headingRe.lastIndex });
         }
-        const loreIdx = headings.findIndex(h => h.level === 2 && /^lore$/i.test(h.title));
-        if (loreIdx === -1) return null;
+        const level2 = headings.filter(h => h.level === 2);
+        const leadEnd = level2.length ? level2[0].start : wikitext.length;
+        return { lead: wikitext.slice(0, leadEnd), level2, wikitext };
+    },
 
-        const loreHeading = headings[loreIdx];
-        let nextHeading = null;
-        for (let i = loreIdx + 1; i < headings.length; i++) {
-            if (headings[i].level <= 2) { nextHeading = headings[i]; break; }
-        }
-        const blockStart = loreHeading.end;
-        const blockEnd   = nextHeading ? nextHeading.start : wikitext.length;
-        const block = wikitext.slice(blockStart, blockEnd);
-
-        const subHeadings = headings
-            .filter(h => h.level === 3 && h.start >= blockStart && h.start < blockEnd)
-            .map(h => ({ title: h.title, start: h.start - blockStart, end: h.end - blockStart }));
-
-        if (!subHeadings.length) {
-            const text = CardViewer._wikitextToPlain(block);
-            return text ? [{ title: null, text }] : null;
-        }
-
+    _sectionsFromCharacterPage: function (wikitext) {
+        const excludeRe = /^(gallery|external links|references|notes|deck|non-canon appearances|navigation)$/i;
+        const { lead, level2 } = CardViewer._splitLevel2Sections(wikitext);
         const sections = [];
-        const intro = CardViewer._wikitextToPlain(block.slice(0, subHeadings[0].start));
-        if (intro) sections.push({ title: null, text: intro });
+        const leadText = CardViewer._wikitextToPlain(lead);
+        if (leadText) sections.push({ title: null, text: leadText });
 
-        subHeadings.forEach((sh, i) => {
-            const end = i + 1 < subHeadings.length ? subHeadings[i + 1].start : block.length;
-            const text = CardViewer._wikitextToPlain(block.slice(sh.end, end));
-            if (text) sections.push({ title: sh.title, text });
+        level2.forEach((h, i) => {
+            if (excludeRe.test(h.title)) return;
+            const end = i + 1 < level2.length ? level2[i + 1].start : wikitext.length;
+            const text = CardViewer._wikitextToPlain(wikitext.slice(h.end, end));
+            if (text) sections.push({ title: h.title, text });
+        });
+        return sections.length ? sections.slice(0, 6) : null;
+    },
+
+    _sectionsFromArchetypePage: function (wikitext) {
+        const themeRe = /^(etymology|lore|background|story|design|concept)$/i;
+        const { lead, level2 } = CardViewer._splitLevel2Sections(wikitext);
+        const sections = [];
+        const leadText = CardViewer._wikitextToPlain(lead);
+        if (leadText) sections.push({ title: null, text: leadText });
+
+        level2.forEach((h, i) => {
+            if (!themeRe.test(h.title)) return;
+            const end = i + 1 < level2.length ? level2[i + 1].start : wikitext.length;
+            const text = CardViewer._wikitextToPlain(wikitext.slice(h.end, end));
+            if (text) sections.push({ title: h.title, text });
         });
         return sections.length ? sections : null;
     },
@@ -2243,8 +2260,8 @@ openPointsEditor: function (formatName, cardId, cardName, currentPoints) {
     _wikitextToPlain: function (wt) {
         if (!wt) return '';
         let t = wt;
+        t = t.replace(/\{\{(?:OCG|TCG|card|cardname|c)\|([^{}|]+)(?:\|[^{}]*)?\}\}/gi, '$1');
         t = t.replace(/<ref[^>]*>[\s\S]*?<\/ref>/gi, '');
-        t = t.replace(/<ref[^>]*\/>/gi, '');
         t = t.replace(/<!--[\s\S]*?-->/g, '');
         for (let i = 0; i < 3; i++) t = t.replace(/\{\{[^{}]*\}\}/g, '');
         t = t.replace(/\[\[File:[^\]]*\]\]/gi, '');
