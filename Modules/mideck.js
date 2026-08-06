@@ -2302,12 +2302,14 @@ this.renderBuscadorDeckPreview();
         setVal('opt-r-resultado',    round.resultado || '');
         setVal('opt-r-orden',        round.orden || '');
         setVal('opt-r-tipo-vic',     round.tipoVictoria || 'normal');
+        setVal('opt-r-cat-vic',      round.categoriaVictoria || 3);
         setVal('opt-r-turnovic',     round.turnoVictoria || '');
         setVal('opt-r-tipo-der',     round.tipoDerrota || 'normal');
         setVal('opt-r-turnoder',     round.turnoDerrota || '');
         setVal('opt-r-tiempo',       round.presionTiempo || 'holgado');
         setVal('opt-r-notas',        round.notas || '');
         this._optToggleTipo();
+        if (round.resultado === 'victoria') this._setCatVictoria(round.categoriaVictoria || 3);
     },
 
     calcOptMetrics: function(session) {
@@ -2366,7 +2368,9 @@ this.renderBuscadorDeckPreview();
             .sort((a, b) => a.turn - b.turn);
         const turnTotal = turnDist.reduce((a, td) => a + td.wins + td.losses, 0);
 
-        const wr   = Math.round((wins        / p) * 100);
+        const winPoints = rounds.reduce((a, r) =>
+            a + (r.resultado === 'victoria' ? this._catVictoriaWeight(r.categoriaVictoria) : 0), 0);
+        const wr   = Math.round((winPoints    / p) * 100);
         const br   = Math.round((bricks      / p) * 100);
         const str  = Math.round((starters    / p) * 100);
         const extr = Math.round((extenders   / p) * 100);
@@ -2434,6 +2438,7 @@ this.renderBuscadorDeckPreview();
             resultado,
             oppDeck:       oppName || null,
             tipoVictoria:  resultado === 'victoria' ? (v('opt-r-tipo-vic') || 'normal') : null,
+            categoriaVictoria: resultado === 'victoria' ? (parseInt(v('opt-r-cat-vic'), 10) || 3) : null,
             tipoDerrota:   resultado === 'derrota'  ? (v('opt-r-tipo-der') || 'normal') : null,
             presionTiempo: v('opt-r-tiempo') || 'holgado',
             rivalInterrumpio:      n('opt-r-combo') > 0,
@@ -2512,9 +2517,10 @@ threatCards:      [...this._pendingThreatCards]
         const tEl = document.getElementById('opt-r-tiempo');
         if (tEl) tEl.value = 'holgado';
         // Ocultar selects de tipo
-        ['opt-row-tipo-vic','opt-row-tipo-der','opt-row-turnovic','opt-row-turnoder'].forEach(id => {
+        ['opt-row-tipo-vic','opt-row-tipo-der','opt-row-turnovic','opt-row-turnoder','opt-row-cat-vic'].forEach(id => {
             const el = document.getElementById(id); if (el) el.style.display = 'none';
         });
+        this._setCatVictoria(3);
 
         const pane = document.getElementById('mideck-optimizacion-pane');
         if (pane) pane.innerHTML = this.renderOptimizacionPane();
@@ -2618,12 +2624,38 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
     const der  = document.getElementById('opt-row-tipo-der');
     const tvic = document.getElementById('opt-row-turnovic');
     const tder = document.getElementById('opt-row-turnoder');
+    const catv = document.getElementById('opt-row-cat-vic');
     if (vic)  vic.style.display  = res === 'victoria' ? '' : 'none';
     if (der)  der.style.display  = res === 'derrota'  ? '' : 'none';
     if (tvic) tvic.style.display = res === 'victoria' ? '' : 'none';
     if (tder) tder.style.display = res === 'derrota'  ? '' : 'none';
+    if (catv) {
+        catv.style.display = res === 'victoria' ? '' : 'none';
+        if (res === 'victoria' && !this._editingRoundId) this._setCatVictoria(3);
+    }
 },
 
+    _catVictoriaLabel: function(cat) {
+        if (cat === 2) return 'Por resignación del rival o Carta Counter'; // Categoría C
+        if (cat === 1) return 'Por missplay o novatada del rival'; // Categoría B
+        return 'Por superar al rival totalmente'; // Categoría A (default / registros previos a esta feature)
+    },
+
+    _catVictoriaWeight: function(cat) {
+        if (cat === 2) return 0.70;
+        if (cat === 1) return 0;
+        return 1.0; // Categoría A (default / registros previos a esta feature)
+    },
+
+    _setCatVictoria: function(n) {
+        const input = document.getElementById('opt-r-cat-vic');
+        if (input) input.value = n;
+        document.querySelectorAll('#opt-star-rating .opt-star').forEach(s => {
+            s.classList.toggle('opt-star-filled', parseInt(s.dataset.val, 10) <= n);
+        });
+        const lbl = document.getElementById('opt-cat-vic-label');
+        if (lbl) lbl.textContent = `Categoría: ${this._catVictoriaLabel(n)}`;
+    },
     // Navegación manual entre los 3 slides del formulario de Registro de Ronda
     _goToRoundSlide: function(n) {
         const box = document.querySelector('.opt-round-modal-box') || document;
@@ -3013,6 +3045,17 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 </div>
 
                 
+
+                <div class="opt-form-row opt-full" id="opt-row-cat-vic" style="display:none;">
+                    <label class="opt-lbl">Categoría de Victoria</label>
+                    <div class="opt-star-rating" id="opt-star-rating">
+                        <span class="opt-star" data-val="1" onclick="Deck._setCatVictoria(1)">★</span>
+                        <span class="opt-star" data-val="2" onclick="Deck._setCatVictoria(2)">★</span>
+                        <span class="opt-star" data-val="3" onclick="Deck._setCatVictoria(3)">★</span>
+                    </div>
+                    <input type="hidden" id="opt-r-cat-vic" value="3">
+                    <span class="opt-cat-vic-label" id="opt-cat-vic-label">Categoría: Por superar al rival</span>
+                </div>
 
                 <div class="opt-form-row" id="opt-row-tipo-vic" style="display:none;">
                     <label class="opt-lbl">Tipo de victoria</label>

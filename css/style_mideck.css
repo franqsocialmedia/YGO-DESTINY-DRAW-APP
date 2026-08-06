@@ -2400,7 +2400,11 @@
     background: #0f0119;
     color: var(--text-light);
 }
-
+.opt-star-rating { display: flex; gap: 4px; font-size: 1.4rem; cursor: pointer; }
+.opt-star { color: rgba(255,255,255,.25); transition: color .15s; }
+.opt-star:hover { color: rgba(255,215,0,.6); }
+.opt-star-filled { color: var(--gold-color); }
+.opt-cat-vic-label { font-size: .75rem; color: var(--text-light); opacity: .85; margin-top: 2px; }
 /* ── Slides del Formulario de Registro de Ronda ── */
 .opt-slide-dots {
     display: flex;
