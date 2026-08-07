@@ -727,3 +727,7 @@
     .lobby-card-img { height: 108px; }
     .lobby-suggestions-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
 }
+/* Test de Duelo (Formación/Config) — campo más compacto solo en PC */
+@media (min-width: 769px) {
+    .fpt-board .pz-field-grid { max-width: 60%; margin: 0 auto 6px; }
+}

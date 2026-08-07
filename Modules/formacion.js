@@ -1395,9 +1395,12 @@ const Formacion = {
             </div>
         `;
     },
-
+_findPracticoTest: function (id) {
+        return this.TESTS.practicos.find(x => x.id === id) || TestDuelo.get(id);
+    },
     _ptInit: function (test) {
-        const ZONE_KEYS = ['0','1','2','3','4','5','6','7','8','9','10','A','B'];
+        const ZONE_KEYS = ['0','1','2','3','4','5','6','7','8','9','10','A','B',
+                            'o0','o1','o2','o3','o4','o5','o6','o7','o8','o9','o10'];
         const zones = {};
         ZONE_KEYS.forEach(z => zones[z] = null);
         if (test.board.zones) {
@@ -1407,13 +1410,14 @@ const Formacion = {
             });
         }
         this._pt = {
-            testId:   test.id,
-            zones,
-            hand:     test.board.hand.map(c => ({ ...c })),
-            gy:       (test.board.gy || []).map(c => ({ ...c })),
+            testId: test.id, zones,
+            hand:   test.board.hand.map(c => ({ ...c })),
+            gy:     (test.board.gy || []).map(c => ({ ...c })),
+            banish: (test.board.banish || []).map(c => ({ ...c })),
+            main:   (test.board.main || []).map(c => ({ ...c })),
+            extra:  (test.board.extra || []).map(c => ({ ...c })),
             selected: null,
             oppEnabled: !!test.board.oppEnabled,
-            oppZones: test.board.oppZones || {},
         };
     },
 
@@ -1421,71 +1425,111 @@ const Formacion = {
         const t = this._pt;
         if (!t) return '';
         const imgUrl = (c) => `https://images.ygoprodeck.com/images/cards/${c.imgId}.jpg`;
+        const lp = (iid) => `onpointerdown="Formacion._ptLongPressStart('${iid}',event)" onpointerup="Formacion._ptCancelLongPress()" onpointerleave="Formacion._ptCancelLongPress()" oncontextmenu="return false;"`;
+        const chipField = (c) => `
+            <img class="pz-card-img fpt-chip${t.selected === c.iid ? ' fpt-chip-selected' : ''}"
+                 src="${imgUrl(c)}" alt="${c.label}" title="${(c.desc || c.label || '').replace(/"/g, '&quot;')}"
+                 onclick="event.stopPropagation(); Formacion._ptCardClick('${c.iid}')" ${lp(c.iid)} draggable="false">`;
         const chipMulti = (c) => `
             <div class="pz-card-slot fpt-chip${t.selected === c.iid ? ' fpt-chip-selected' : ''}"
                  title="${(c.desc || c.label || '').replace(/"/g, '&quot;')}"
-                 onclick="event.stopPropagation(); Formacion._ptCardClick('${c.iid}')">
+                 onclick="event.stopPropagation(); Formacion._ptCardClick('${c.iid}')" ${lp(c.iid)}>
                 <img src="${imgUrl(c)}" alt="${c.label}" draggable="false">
             </div>`;
-        const chipField = (c) => `
+        const chipStack = (cards) => cards.slice(-4).map((c, i) => `
             <img class="pz-card-img fpt-chip${t.selected === c.iid ? ' fpt-chip-selected' : ''}"
-                 src="${imgUrl(c)}" alt="${c.label}"
-                 title="${(c.desc || c.label || '').replace(/"/g, '&quot;')}"
-                 onclick="event.stopPropagation(); Formacion._ptCardClick('${c.iid}')" draggable="false">`;
+                 src="${imgUrl(c)}" alt="${c.label}" style="position:relative;left:${i * 10}px;z-index:${i};width:70%;"
+                 onclick="event.stopPropagation(); Formacion._ptCardClick('${c.iid}')" ${lp(c.iid)} draggable="false">`).join('');
+
         const z = t.zones;
-        const fieldGrid = `
+        const monsterFieldRow = ['0','1','2','3','4','5'].map((n, idx) => {
+            const cls = n === '0' ? 'pz-zone-field' : 'pz-zone-monster';
+            return `<div class="pz-zone ${cls}" style="grid-column:${idx + 1};grid-row:1;" onclick="Formacion._ptZoneClick('${n}')">
+                        <span class="pz-zone-lbl">${n}</span>${z[n] ? chipField(z[n]) : ''}
+                    </div>`;
+        }).join('');
+        const stRow = ['6','7','8','9','10'].map((n, idx) => {
+            const cls = (n === '6' || n === '10') ? 'pz-zone-pendulum' : 'pz-zone-st';
+            return `<div class="pz-zone ${cls}" style="grid-column:${idx + 2};grid-row:2;" onclick="Formacion._ptZoneClick('${n}')">
+                        <span class="pz-zone-lbl">${n}</span>${z[n] ? chipField(z[n]) : ''}
+                    </div>`;
+        }).join('');
+        const ownGrid = `<div class="pz-field-grid" style="margin-bottom:6px;">${monsterFieldRow}${stRow}</div>`;
+
+        const emzGrid = `
             <div class="pz-field-grid" style="margin-bottom:6px;">
-                <div class="pz-zone pz-zone-emz pz-fg-emz-a" onclick="Formacion._ptZoneClick('A')">
+                <div class="pz-zone pz-zone-emz" style="grid-column:3;grid-row:1;" onclick="Formacion._ptZoneClick('A')">
                     <span class="pz-zone-lbl">A</span>${z['A'] ? chipField(z['A']) : ''}
                 </div>
-                <div class="pz-logo-cell pz-fg-logo"></div>
-                <div class="pz-zone pz-zone-emz pz-fg-emz-b" onclick="Formacion._ptZoneClick('B')">
+                <div class="pz-logo-cell pz-fg-logo" style="grid-column:4;grid-row:1;"></div>
+                <div class="pz-zone pz-zone-emz" style="grid-column:5;grid-row:1;" onclick="Formacion._ptZoneClick('B')">
                     <span class="pz-zone-lbl">B</span>${z['B'] ? chipField(z['B']) : ''}
                 </div>
-                <div class="pz-zone pz-zone-field pz-fg-c" onclick="Formacion._ptZoneClick('0')">
-                    <span class="pz-zone-lbl">0</span>${z['0'] ? chipField(z['0']) : ''}
-                </div>
-                ${['1','2','3','4','5'].map(n => `
-                    <div class="pz-zone pz-zone-monster" onclick="Formacion._ptZoneClick('${n}')">
-                        <span class="pz-zone-lbl">${n}</span>${z[n] ? chipField(z[n]) : ''}
-                    </div>`).join('')}
-                <div class="pz-fg-st-spacer"></div>
-                ${['6','7','8','9','10'].map(n => `
-                    <div class="pz-zone ${n=='6'||n=='10'?'pz-zone-pendulum':'pz-zone-st'}" onclick="Formacion._ptZoneClick('${n}')">
-                        <span class="pz-zone-lbl">${n}</span>${z[n] ? chipField(z[n]) : ''}
-                    </div>`).join('')}
             </div>`;
-        const oppGrid = t.oppEnabled ? (() => {
-            const oz = t.oppZones || {};
-            const chip = (c) => `<img class="pz-card-img" src="https://images.ygoprodeck.com/images/cards_small/${c.imgId}.jpg" alt="${c.label}" title="${(c.label||'').replace(/"/g,'&quot;')}" draggable="false">`;
-            return `
-                <p style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin:0 0 4px;">📋 Campo Rival:</p>
-                <div class="pz-field-grid" style="margin-bottom:8px;opacity:0.85;">
-                    <div class="pz-zone pz-zone-emz pz-fg-emz-a"><span class="pz-zone-lbl">A</span>${oz['A']?chip(oz['A']):''}</div>
-                    <div class="pz-logo-cell pz-fg-logo"></div>
-                    <div class="pz-zone pz-zone-emz pz-fg-emz-b"><span class="pz-zone-lbl">B</span>${oz['B']?chip(oz['B']):''}</div>
-                    <div class="pz-zone pz-zone-field pz-fg-c"><span class="pz-zone-lbl">0</span>${oz['0']?chip(oz['0']):''}</div>
-                    ${['1','2','3','4','5'].map(n=>`<div class="pz-zone pz-zone-monster"><span class="pz-zone-lbl">${n}</span>${oz[n]?chip(oz[n]):''}</div>`).join('')}
-                    <div class="pz-fg-st-spacer"></div>
-                    ${['6','7','8','9','10'].map(n=>`<div class="pz-zone ${n=='6'||n=='10'?'pz-zone-pendulum':'pz-zone-st'}"><span class="pz-zone-lbl">${n}</span>${oz[n]?chip(oz[n]):''}</div>`).join('')}
-                </div>`;
-        })() : '';
+
+        const oppStRow = ['6','7','8','9','10'].map((n, idx) => {
+            const cls = (n === '6' || n === '10') ? 'pz-zone-pendulum' : 'pz-zone-st';
+            return `<div class="pz-zone ${cls}" style="grid-column:${idx + 2};grid-row:1;" onclick="Formacion._ptZoneClick('o${n}')">
+                        <span class="pz-zone-lbl">${n}</span>${z['o'+n] ? chipField(z['o'+n]) : ''}
+                    </div>`;
+        }).join('');
+        const oppMonsterFieldRow = ['0','1','2','3','4','5'].map((n, idx) => {
+            const cls = n === '0' ? 'pz-zone-field' : 'pz-zone-monster';
+            return `<div class="pz-zone ${cls}" style="grid-column:${idx + 1};grid-row:2;" onclick="Formacion._ptZoneClick('o${n}')">
+                        <span class="pz-zone-lbl">${n}</span>${z['o'+n] ? chipField(z['o'+n]) : ''}
+                    </div>`;
+        }).join('');
+        const oppGrid = t.oppEnabled ? `
+            <p style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin:0 0 4px;">📋 Campo Rival:</p>
+            <div class="pz-field-grid" style="margin-bottom:6px;opacity:0.9;">${oppStRow}${oppMonsterFieldRow}</div>` : '';
 
         return `
             <div class="pz-board-outer fpt-board" id="form-pt-board">
                 ${oppGrid}
+                ${t.oppEnabled ? '<p style="font-size:0.72rem;color:rgba(255,255,255,0.45);margin:0 0 4px;">Zonas Extra Monstruo (compartidas):</p>' : ''}
+                ${emzGrid}
                 ${t.selected ? `<div class="pz-move-hint">🖐️ Toca la zona (o carta) destino — o vuelve a tocar la carta para cancelar.</div>` : ''}
-                ${fieldGrid}
-                <div class="pz-zone-row">
-                    <span class="pz-row-label">GY</span>
-                    <div class="pz-multi-zone pz-gy-zone" onclick="Formacion._ptMultiZoneClick('gy')">
-                        ${t.gy.length ? t.gy.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacío</span>'}
+                ${ownGrid}
+
+                <div class="pz-zone-row" style="gap:8px;">
+                    <div style="flex:1;display:flex;align-items:center;gap:6px;min-width:0;">
+                        <span class="pz-row-label">GY</span>
+                        <div class="pz-multi-zone pz-gy-zone" style="overflow-x:auto;flex-wrap:nowrap;" onclick="Formacion._ptMultiZoneClick('gy')">
+                            ${t.gy.length ? t.gy.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacío</span>'}
+                        </div>
+                    </div>
+                    <div style="flex:1;display:flex;align-items:center;gap:6px;min-width:0;">
+                        <span class="pz-row-label">Banish</span>
+                        <div class="pz-multi-zone pz-banish-zone" style="overflow-x:auto;flex-wrap:nowrap;" onclick="Formacion._ptMultiZoneClick('banish')">
+                            ${t.banish.length ? t.banish.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacío</span>'}
+                        </div>
                     </div>
                 </div>
-                <div class="pz-zone-row">
-                    <span class="pz-row-label">Mano</span>
-                    <div class="pz-multi-zone pz-hand-zone" onclick="Formacion._ptMultiZoneClick('hand')">
-                        ${t.hand.length ? t.hand.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacía</span>'}
+
+                <div class="pz-zone-row" style="gap:6px;align-items:flex-start;">
+                    <div style="width:100px;flex-shrink:0;">
+                        <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
+                            <span class="pz-row-label" style="font-size:0.68rem;">Extra</span>
+                            <button class="pz-mini-btn" onclick="Formacion._ptOpenPileList('extra')">👁</button>
+                        </div>
+                        <div class="pz-multi-zone" onclick="Formacion._ptMultiZoneClick('extra')">
+                            ${t.extra.length ? chipStack(t.extra) : '<span class="fpt-empty-lbl">Vacío</span>'}
+                        </div>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <span class="pz-row-label">Mano</span>
+                        <div class="pz-multi-zone pz-hand-zone" style="overflow-x:auto;flex-wrap:nowrap;" onclick="Formacion._ptMultiZoneClick('hand')">
+                            ${t.hand.length ? t.hand.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacía</span>'}
+                        </div>
+                    </div>
+                    <div style="width:100px;flex-shrink:0;">
+                        <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
+                            <span class="pz-row-label" style="font-size:0.68rem;">Main</span>
+                            <button class="pz-mini-btn" onclick="Formacion._ptOpenPileList('main')">👁</button>
+                        </div>
+                        <div class="pz-multi-zone" onclick="Formacion._ptMultiZoneClick('main')">
+                            ${t.main.length ? chipStack(t.main) : '<span class="fpt-empty-lbl">Vacío</span>'}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1493,6 +1537,7 @@ const Formacion = {
     },
 
     _ptCardClick: function (iid) {
+        if (this._ptLPFired) { this._ptLPFired = false; return; }
         const t = this._pt;
         if (!t) return;
         if (!t.selected)        { t.selected = iid; this._ptRefresh(); return; }
@@ -1542,23 +1587,86 @@ const Formacion = {
     _ptLocate: function (iid) {
         const t = this._pt;
         for (const z in t.zones) { if (t.zones[z]?.iid === iid) return { type: 'zone', zone: z }; }
-        if (t.hand.some(c => c.iid === iid)) return { type: 'hand' };
-        if (t.gy.some(c => c.iid === iid))   return { type: 'gy' };
+        const POOLS = ['hand','gy','banish','main','extra'];
+        for (const p of POOLS) { if (t[p].some(c => c.iid === iid)) return { type: p }; }
         return { type: 'hand' };
     },
 
     _ptFindAndRemove: function (iid) {
         const t = this._pt;
-        for (const z in t.zones) {
-            if (t.zones[z]?.iid === iid) { const c = t.zones[z]; t.zones[z] = null; return c; }
+        for (const z in t.zones) { if (t.zones[z]?.iid === iid) { const c = t.zones[z]; t.zones[z] = null; return c; } }
+        const POOLS = ['hand','gy','banish','main','extra'];
+        for (const p of POOLS) {
+            const idx = t[p].findIndex(c => c.iid === iid);
+            if (idx > -1) return t[p].splice(idx, 1)[0];
         }
-        let idx = t.hand.findIndex(c => c.iid === iid);
-        if (idx > -1) return t.hand.splice(idx, 1)[0];
-        idx = t.gy.findIndex(c => c.iid === iid);
-        if (idx > -1) return t.gy.splice(idx, 1)[0];
         return null;
     },
-
+_ptLongPressStart: function (iid, ev) {
+        this._ptCancelLongPress();
+        this._ptLPTimer = setTimeout(() => {
+            this._ptLPFired = true;
+            if (navigator.vibrate) navigator.vibrate(30);
+            this._ptShowCardMenu(iid, ev);
+        }, 1000);
+    },
+    _ptCancelLongPress: function () {
+        if (this._ptLPTimer) { clearTimeout(this._ptLPTimer); this._ptLPTimer = null; }
+    },
+    _ptShowCardMenu: function (iid, ev) {
+        document.querySelectorAll('.fpt-card-menu').forEach(m => m.remove());
+        const menu = document.createElement('div');
+        menu.className = 'pz-action-submenu fpt-card-menu';
+        menu.innerHTML = `<button class="pz-zmenu-btn pz-zmenu-ver" onclick="Formacion._ptViewCard('${iid}')">Ver</button>`;
+        document.body.appendChild(menu);
+        const rect = ev.target.getBoundingClientRect();
+        menu.style.position = 'fixed'; menu.style.zIndex = '99999';
+        menu.style.left = (rect.left + rect.width / 2) + 'px';
+        menu.style.top  = (rect.bottom + 6) + 'px';
+        menu.style.transform = 'translateX(-50%)';
+        const close = (e2) => { if (!menu.contains(e2.target)) { menu.remove(); document.removeEventListener('click', close, true); } };
+        setTimeout(() => document.addEventListener('click', close, true), 50);
+    },
+    _ptViewCard: function (iid) {
+        document.querySelectorAll('.fpt-card-menu').forEach(m => m.remove());
+        const t = this._pt;
+        if (!t) return;
+        let entry = null;
+        for (const z in t.zones) { if (t.zones[z]?.iid === iid) entry = t.zones[z]; }
+        if (!entry) ['hand','gy','banish','main','extra'].forEach(p => { const f = t[p].find(c => c.iid === iid); if (f) entry = f; });
+        if (!entry) return;
+        ZonaPractica._openMiniCV({
+            id: entry.imgId, name: entry.label,
+            card_images: [{ image_url_small: `https://images.ygoprodeck.com/images/cards_small/${entry.imgId}.jpg` }],
+        });
+    },
+    _ptOpenPileList: function (poolName) {
+        const t = this._pt;
+        if (!t) return;
+        document.getElementById('fpt-pile-overlay')?.remove();
+        const cards = t[poolName] || [];
+        const labelMap = { main: 'Main Deck', extra: 'Extra Deck' };
+        const overlay = document.createElement('div');
+        overlay.id = 'fpt-pile-overlay';
+        overlay.className = 'pz-modal-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div class="pz-modal-box">
+                <div class="pz-modal-title">${labelMap[poolName] || poolName} (${cards.length})</div>
+                <button class="pz-modal-close" onclick="document.getElementById('fpt-pile-overlay').remove()">✕</button>
+                <div style="max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+                    ${cards.length ? cards.map(c => `
+                        <div class="pz-search-item">
+                            <img src="https://images.ygoprodeck.com/images/cards_small/${c.imgId}.jpg" class="pz-search-thumb">
+                            <div class="pz-search-info"><div class="pz-search-name">${c.label}</div></div>
+                            <div class="pz-search-btns">
+                                <button class="pz-search-view-btn" onclick="Formacion._ptViewCard('${c.iid}')">Ver</button>
+                            </div>
+                        </div>`).join('') : '<p class="pz-search-hint">Vacío.</p>'}
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    },
     _ptRefresh: function () {
         const el = document.getElementById('form-pt-board');
         if (el) el.outerHTML = this._ptRenderBoard();
@@ -1569,19 +1677,36 @@ const Formacion = {
         if (!t) return;
         const test = this._findPracticoTest(t.testId);
         if (!test) return;
-        const groupOf = (z) => z === '0' ? 'field' : (z === 'A' || z === 'B') ? 'emz'
-                              : ['1','2','3','4','5'].includes(z) ? 'monster'
-                              : ['6','7','8','9','10'].includes(z) ? 'st' : null;
-        const currentGroup = {};
-        for (const z in t.zones) { if (t.zones[z]) currentGroup[t.zones[z].iid] = groupOf(z); }
-        t.hand.forEach(c => currentGroup[c.iid] = 'hand');
-        t.gy.forEach(c => currentGroup[c.iid] = 'gy');
 
-        const allCards = [...test.board.hand, ...(test.board.gy || []), ...Object.values(test.board.zones || {}).filter(Boolean)];
+        const zoneGroupsOf = (z) => {
+            const g = [];
+            if (['1','2','3','4','5'].includes(z)) g.push('monster');
+            if (['6','7','8','9','10'].includes(z)) g.push('st');
+            if (z === '6' || z === '10') g.push('pendulum');
+            if (z === 'A' || z === 'B') g.push('emz');
+            return g;
+        };
+        const currentPos = {};
+        for (const z in t.zones) { if (t.zones[z]) currentPos[t.zones[z].iid] = z; }
+        ['hand','gy','banish','main','extra'].forEach(pool => (t[pool] || []).forEach(c => currentPos[c.iid] = pool));
+
+        const allCards = [
+            ...test.board.hand, ...(test.board.gy || []), ...(test.board.banish || []),
+            ...(test.board.main || []), ...(test.board.extra || []),
+            ...Object.values(test.board.zones || {}).filter(Boolean),
+        ];
         let allCorrect = true;
         const wrong = [];
         Object.keys(test.solution).forEach(iid => {
-            const ok = currentGroup[iid] === test.solution[iid];
+            const sol = test.solution[iid];
+            const cur = currentPos[iid];
+            let ok;
+            if (typeof sol === 'string') {
+                const curGroup = ['1','2','3','4','5'].includes(cur) ? 'monster' : ['6','7','8','9','10'].includes(cur) ? 'st' : cur;
+                ok = curGroup === sol;
+            } else {
+                ok = cur === sol.zone || (sol.groups?.length && zoneGroupsOf(cur).some(g => sol.groups.includes(g)));
+            }
             if (!ok) { allCorrect = false; const c = allCards.find(x => x.iid === iid); wrong.push(c ? c.label : iid); }
         });
 
@@ -5333,14 +5458,15 @@ enviarReporte: function (counter, dateStr) {
     // ── Práctico ─────────────────────────────────────────────────
 
  _taReset: function () {
-        const ZONE_KEYS = ['0','1','2','3','4','5','6','7','8','9','10','A','B'];
+        const ZONE_KEYS = ['0','1','2','3','4','5','6','7','8','9','10','A','B',
+                            'o0','o1','o2','o3','o4','o5','o6','o7','o8','o9','o10'];
         this._ta = {
             label: '', level: 'Avanzado', scenario: '', hint: '', okMsg: '', failMsg: '',
             zones: Object.fromEntries(ZONE_KEYS.map(z => [z, null])),
             oppEnabled: false,
-            oppZones: Object.fromEntries(ZONE_KEYS.map(z => [z, null])),
-            hand: [], gy: [], selected: null,
-            initial: null, finalSolution: null, _seq: 0,
+            hand: [], gy: [], banish: [], main: [], extra: [],
+            selected: null,
+            initial: null, finalPlacement: null, finalGroups: {}, _seq: 0,
         };
     },
 
@@ -5370,10 +5496,6 @@ enviarReporte: function (counter, dateStr) {
                 </div>
             </div>
 
-            <div style="margin:10px 0;">
-                <button class="btn btn-secondary" onclick="Config._taPickCard()">🔍 Buscar carta y agregar a la mano</button>
-            </div>
-
             ${this._taRenderBoard()}
 
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
@@ -5383,8 +5505,9 @@ enviarReporte: function (counter, dateStr) {
             </div>
             <div id="ta-status" style="margin-top:8px;font-size:0.8rem;color:rgba(255,255,255,0.6);">
                 ${a.initial ? '✅ Estado inicial capturado. ' : '⏳ Falta capturar el Estado Inicial. '}
-                ${a.finalSolution ? '✅ Estado final capturado.' : '⏳ Falta capturar el Estado Final.'}
+                ${a.finalPlacement ? '✅ Estado final capturado.' : '⏳ Falta capturar el Estado Final.'}
             </div>
+            ${a.finalPlacement ? this._taRenderGroupsPanel() : ''}
 
             <div style="margin-top:10px;">
                 <button class="btn btn-success" onclick="Config._taSaveTest()">💾 Guardar Test Práctico</button>
@@ -5394,40 +5517,123 @@ enviarReporte: function (counter, dateStr) {
         `;
     },
 
-    _taRenderBoard: function () {
+   _taRenderBoard: function () {
         const a = this._ta;
         const imgUrl = (c) => `https://images.ygoprodeck.com/images/cards_small/${c.id}.jpg`;
+        const lp = (iid) => `onpointerdown="Config._taLongPressStart('${iid}',event)" onpointerup="Config._taCancelLongPress()" onpointerleave="Config._taCancelLongPress()" oncontextmenu="return false;"`;
+        const chipField = (c) => `
+            <img class="pz-card-img fpt-chip${a.selected === c.iid ? ' fpt-chip-selected' : ''}"
+                 src="${imgUrl(c)}" alt="${c.name}" title="${(c.name || '').replace(/"/g, '&quot;')}"
+                 onclick="event.stopPropagation();Config._taCardClick('${c.iid}')" ${lp(c.iid)} draggable="false">`;
         const chipMulti = (c) => `
             <div class="pz-card-slot fpt-chip${a.selected === c.iid ? ' fpt-chip-selected' : ''}"
                  title="${(c.name || '').replace(/"/g, '&quot;')}"
-                 onclick="event.stopPropagation();Config._taCardClick('${c.iid}')">
+                 onclick="event.stopPropagation();Config._taCardClick('${c.iid}')" ${lp(c.iid)}>
                 <img src="${imgUrl(c)}" alt="${c.name}" draggable="false">
             </div>`;
+        const chipStack = (cards) => cards.slice(-4).map((c, i) => `
+            <img class="pz-card-img fpt-chip${a.selected === c.iid ? ' fpt-chip-selected' : ''}"
+                 src="${imgUrl(c)}" alt="${c.name}" style="position:relative;left:${i * 10}px;z-index:${i};width:70%;"
+                 onclick="event.stopPropagation();Config._taCardClick('${c.iid}')" ${lp(c.iid)} draggable="false">`).join('');
+
+        const monsterFieldRow = ['0','1','2','3','4','5'].map((n, idx) => {
+            const cls = n === '0' ? 'pz-zone-field' : 'pz-zone-monster';
+            return `<div class="pz-zone ${cls}" style="grid-column:${idx + 1};grid-row:1;" onclick="Config._taZoneClick('${n}')">
+                        <span class="pz-zone-lbl">${n}</span>${a.zones[n] ? chipField(a.zones[n]) : ''}
+                    </div>`;
+        }).join('');
+        const stRow = ['6','7','8','9','10'].map((n, idx) => {
+            const cls = (n === '6' || n === '10') ? 'pz-zone-pendulum' : 'pz-zone-st';
+            return `<div class="pz-zone ${cls}" style="grid-column:${idx + 2};grid-row:2;" onclick="Config._taZoneClick('${n}')">
+                        <span class="pz-zone-lbl">${n}</span>${a.zones[n] ? chipField(a.zones[n]) : ''}
+                    </div>`;
+        }).join('');
+        const ownGrid = `<div class="pz-field-grid" style="margin-bottom:6px;">${monsterFieldRow}${stRow}</div>`;
+
+        const emzGrid = `
+            <div class="pz-field-grid" style="margin-bottom:6px;">
+                <div class="pz-zone pz-zone-emz" style="grid-column:3;grid-row:1;" onclick="Config._taZoneClick('A')">
+                    <span class="pz-zone-lbl">A</span>${a.zones['A'] ? chipField(a.zones['A']) : ''}
+                </div>
+                <div class="pz-logo-cell pz-fg-logo" style="grid-column:4;grid-row:1;"></div>
+                <div class="pz-zone pz-zone-emz" style="grid-column:5;grid-row:1;" onclick="Config._taZoneClick('B')">
+                    <span class="pz-zone-lbl">B</span>${a.zones['B'] ? chipField(a.zones['B']) : ''}
+                </div>
+            </div>`;
+
+        const oppStRow = ['6','7','8','9','10'].map((n, idx) => {
+            const cls = (n === '6' || n === '10') ? 'pz-zone-pendulum' : 'pz-zone-st';
+            return `<div class="pz-zone ${cls}" style="grid-column:${idx + 2};grid-row:1;" onclick="Config._taZoneClick('o${n}')">
+                        <span class="pz-zone-lbl">${n}</span>${a.zones['o'+n] ? chipField(a.zones['o'+n]) : ''}
+                    </div>`;
+        }).join('');
+        const oppMonsterFieldRow = ['0','1','2','3','4','5'].map((n, idx) => {
+            const cls = n === '0' ? 'pz-zone-field' : 'pz-zone-monster';
+            return `<div class="pz-zone ${cls}" style="grid-column:${idx + 1};grid-row:2;" onclick="Config._taZoneClick('o${n}')">
+                        <span class="pz-zone-lbl">${n}</span>${a.zones['o'+n] ? chipField(a.zones['o'+n]) : ''}
+                    </div>`;
+        }).join('');
+        const oppGrid = a.oppEnabled ? `
+            <p style="font-size:0.72rem;color:rgba(255,255,255,0.45);margin:0 0 4px;">Campo Rival:</p>
+            <div class="pz-field-grid" style="margin-bottom:6px;opacity:0.9;">${oppStRow}${oppMonsterFieldRow}</div>` : '';
+
         return `
             <div class="pz-board-outer fpt-board" id="ta-board">
                 <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:0.8rem;color:rgba(255,255,255,0.7);">
                     <input type="checkbox" ${a.oppEnabled ? 'checked' : ''} onchange="Config._taToggleOpp(this.checked)">
-                    🔁 Habilitar Campo Rival (contexto visual arriba del tuyo)
+                    🔁 Habilitar Campo Rival (comparte las Zonas de Monstruo Extra)
                 </label>
-                ${a.oppEnabled ? `
-                    <p style="font-size:0.72rem;color:rgba(255,255,255,0.45);margin:0 0 4px;">Campo Rival:</p>
-                    ${this._taRenderOppGrid()}
-                    <button class="btn btn-secondary" style="margin-bottom:10px;" onclick="Config._taPickOppCard()">🔍 Agregar carta al campo rival</button>
-                ` : ''}
-                ${a.selected ? `<div class="pz-move-hint">🖐️ Toca la zona (o carta) destino — o vuelve a tocar la carta para cancelar.</div>` : ''}
+                ${oppGrid}
+                ${a.oppEnabled ? '<p style="font-size:0.72rem;color:rgba(255,255,255,0.45);margin:0 0 4px;">Zonas Extra Monstruo (compartidas):</p>' : ''}
+                ${emzGrid}
+                ${a.selected ? `<div class="pz-move-hint">🖐️ Toca la zona (o carta) destino — cualquier zona, incluso del rival — o vuelve a tocar la carta para cancelar.</div>` : ''}
                 <p style="font-size:0.72rem;color:rgba(255,255,255,0.45);margin:6px 0 4px;">Tu Campo:</p>
-                ${this._taRenderFieldGrid()}
-                <div class="pz-zone-row">
-                    <span class="pz-row-label">GY</span>
-                    <div class="pz-multi-zone pz-gy-zone" onclick="Config._taMultiZoneClick('gy')">
-                        ${a.gy.length ? a.gy.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacío</span>'}
+                ${ownGrid}
+
+                <div class="pz-zone-row" style="gap:8px;">
+                    <div style="flex:1;display:flex;align-items:center;gap:6px;min-width:0;">
+                        <span class="pz-row-label">GY</span>
+                        <div class="pz-multi-zone pz-gy-zone" style="overflow-x:auto;flex-wrap:nowrap;" onclick="Config._taMultiZoneClick('gy')">
+                            ${a.gy.length ? a.gy.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacío</span>'}
+                        </div>
+                    </div>
+                    <div style="flex:1;display:flex;align-items:center;gap:6px;min-width:0;">
+                        <span class="pz-row-label">Banish</span>
+                        <div class="pz-multi-zone pz-banish-zone" style="overflow-x:auto;flex-wrap:nowrap;" onclick="Config._taMultiZoneClick('banish')">
+                            ${a.banish.length ? a.banish.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacío</span>'}
+                        </div>
                     </div>
                 </div>
-                <div class="pz-zone-row">
-                    <span class="pz-row-label">Mano</span>
-                    <div class="pz-multi-zone pz-hand-zone" onclick="Config._taMultiZoneClick('hand')">
-                        ${a.hand.length ? a.hand.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacía</span>'}
+
+                <div class="pz-zone-row" style="gap:6px;align-items:flex-start;">
+                    <div style="width:100px;flex-shrink:0;">
+                        <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
+                            <span class="pz-row-label" style="font-size:0.68rem;">Extra</span>
+                            <button class="pz-mini-btn" onclick="Config._taOpenPileList('extra')">👁</button>
+                        </div>
+                        <div class="pz-multi-zone" onclick="Config._taMultiZoneClick('extra')">
+                            ${a.extra.length ? chipStack(a.extra) : '<span class="fpt-empty-lbl">Vacío</span>'}
+                        </div>
                     </div>
+                    <div style="flex:1;min-width:0;">
+                        <span class="pz-row-label">Mano</span>
+                        <div class="pz-multi-zone pz-hand-zone" style="overflow-x:auto;flex-wrap:nowrap;" onclick="Config._taMultiZoneClick('hand')">
+                            ${a.hand.length ? a.hand.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacía</span>'}
+                        </div>
+                    </div>
+                    <div style="width:100px;flex-shrink:0;">
+                        <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
+                            <span class="pz-row-label" style="font-size:0.68rem;">Main</span>
+                            <button class="pz-mini-btn" onclick="Config._taOpenPileList('main')">👁</button>
+                        </div>
+                        <div class="pz-multi-zone" onclick="Config._taMultiZoneClick('main')">
+                            ${a.main.length ? chipStack(a.main) : '<span class="fpt-empty-lbl">Vacío</span>'}
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top:8px;">
+                    <button class="btn btn-secondary" onclick="Config._taPickCard()">🔍 Buscar carta y agregar a la mano</button>
                 </div>
             </div>`;
     },
@@ -5504,7 +5710,8 @@ _taRenderFieldGrid: function () {
     },
     _taRefresh: function () { const el = document.getElementById('ta-board'); if (el) el.outerHTML = this._taRenderBoard(); },
 
-    _taCardClick: function (iid) {
+   _taCardClick: function (iid) {
+        if (this._taLPFired) { this._taLPFired = false; return; }
         const a = this._ta;
         if (!a.selected) { a.selected = iid; this._taRefresh(); return; }
         if (a.selected === iid) { a.selected = null; this._taRefresh(); return; }
@@ -5542,17 +5749,18 @@ _taRenderFieldGrid: function () {
     _taLocate: function (iid) {
         const a = this._ta;
         for (const z in a.zones) { if (a.zones[z]?.iid === iid) return { type: 'zone', zone: z }; }
-        if (a.hand.some(c => c.iid === iid)) return { type: 'hand' };
-        if (a.gy.some(c => c.iid === iid))   return { type: 'gy' };
+        const POOLS = ['hand','gy','banish','main','extra'];
+        for (const p of POOLS) { if (a[p].some(c => c.iid === iid)) return { type: p }; }
         return { type: 'hand' };
     },
     _taFindAndRemove: function (iid) {
         const a = this._ta;
         for (const z in a.zones) { if (a.zones[z]?.iid === iid) { const c = a.zones[z]; a.zones[z] = null; return c; } }
-        let idx = a.hand.findIndex(c => c.iid === iid);
-        if (idx > -1) return a.hand.splice(idx, 1)[0];
-        idx = a.gy.findIndex(c => c.iid === iid);
-        if (idx > -1) return a.gy.splice(idx, 1)[0];
+        const POOLS = ['hand','gy','banish','main','extra'];
+        for (const p of POOLS) {
+            const idx = a[p].findIndex(c => c.iid === iid);
+            if (idx > -1) return a[p].splice(idx, 1)[0];
+        }
         return null;
     },
 
@@ -5562,7 +5770,7 @@ _taRenderFieldGrid: function () {
             this._taRefresh();
         });
     },
-  _taClearBoard: function () {
+_taClearBoard: function () {
         if (!confirm('¿Vaciar el tablero? Se perderán las cartas agregadas.')) return;
         this._taSync();
         const keep = { label: this._ta.label, level: this._ta.level, scenario: this._ta.scenario, hint: this._ta.hint, okMsg: this._ta.okMsg, failMsg: this._ta.failMsg };
@@ -5574,65 +5782,193 @@ _taRenderFieldGrid: function () {
     _taSetInitial: function () {
         this._taSync();
         const a = this._ta;
-        if (!a.hand.length && !a.gy.length && !Object.values(a.zones).some(Boolean)) {
-            alert('⚠️ Agrega al menos una carta al tablero antes de capturar el Estado Inicial.'); return;
-        }
+        const hasAny = a.hand.length || a.gy.length || a.banish.length || a.main.length || a.extra.length || Object.values(a.zones).some(Boolean);
+        if (!hasAny) { alert('⚠️ Agrega al menos una carta al tablero antes de capturar el Estado Inicial.'); return; }
         a.initial = {
-            zones: Object.fromEntries(Object.entries(a.zones).map(([k, v]) => [k, v ? { ...v } : null])),
-            hand:  a.hand.map(c => ({ ...c })),
-            gy:    a.gy.map(c => ({ ...c })),
+            zones:  Object.fromEntries(Object.entries(a.zones).map(([k, v]) => [k, v ? { ...v } : null])),
+            hand:   a.hand.map(c => ({ ...c })),
+            gy:     a.gy.map(c => ({ ...c })),
+            banish: a.banish.map(c => ({ ...c })),
+            main:   a.main.map(c => ({ ...c })),
+            extra:  a.extra.map(c => ({ ...c })),
             oppEnabled: a.oppEnabled,
-            oppZones: Object.fromEntries(Object.entries(a.oppZones).map(([k, v]) => [k, v ? { ...v } : null])),
         };
-        a.finalSolution = null;
+        a.finalPlacement = null;
+        a.finalGroups = {};
         this._testRefresh();
         alert('📍 Estado Inicial capturado. Ahora mueve las cartas a su posición final y presiona 🎯 Estado Final.');
     },
 
- _taSetFinal: function () {
+    _taSetFinal: function () {
         this._taSync();
         const a = this._ta;
         if (!a.initial) { alert('⚠️ Primero captura el Estado Inicial.'); return; }
-        const groupOf = (z) => z === '0' ? 'field' : (z === 'A' || z === 'B') ? 'emz'
-                              : ['1','2','3','4','5'].includes(z) ? 'monster'
-                              : ['6','7','8','9','10'].includes(z) ? 'st' : null;
-        const solution = {};
-        for (const z in a.zones) { if (a.zones[z]) solution[a.zones[z].iid] = groupOf(z); }
-        a.hand.forEach(c => solution[c.iid] = 'hand');
-        a.gy.forEach(c => solution[c.iid] = 'gy');
-        a.finalSolution = solution;
+        const placement = {};
+        for (const z in a.zones) { if (a.zones[z]) placement[a.zones[z].iid] = z; }
+        ['hand','gy','banish','main','extra'].forEach(pool => a[pool].forEach(c => placement[c.iid] = pool));
+        a.finalPlacement = placement;
+        const OWN_BOARD = ['0','1','2','3','4','5','6','7','8','9','10','A','B'];
+        Object.keys(a.finalGroups).forEach(iid => { if (!OWN_BOARD.includes(placement[iid])) delete a.finalGroups[iid]; });
         this._testRefresh();
-        alert('🎯 Estado Final capturado. Ya puedes guardar el test.');
+        alert('🎯 Estado Final capturado. Ajusta la flexibilidad de zona si quieres y guarda el test.');
     },
 
- _taSaveTest: function () {
+    _taSaveTest: function () {
         this._taSync();
         const a = this._ta;
         if (!a.label.trim()) { alert('⚠️ Ponle un nombre al test.'); return; }
         if (!a.initial) { alert('⚠️ Captura el Estado Inicial.'); return; }
-        if (!a.finalSolution) { alert('⚠️ Captura el Estado Final.'); return; }
+        if (!a.finalPlacement) { alert('⚠️ Captura el Estado Final.'); return; }
+        const mk = (c) => ({ iid: c.iid, label: c.name, imgId: c.id });
+        const solution = {};
+        Object.entries(a.finalPlacement).forEach(([iid, zone]) => { solution[iid] = { zone, groups: a.finalGroups[iid] || [] }; });
         const test = {
             id: `ct_prac_${Date.now()}`, category: 'practicos', custom: true, type: 'board',
             label: a.label.trim(), level: a.level,
             scenario: a.scenario.trim(), hint: a.hint.trim(),
             okMsg: a.okMsg.trim(), failMsg: a.failMsg.trim(),
             board: {
-                hand: a.initial.hand.map(c => ({ iid: c.iid, label: c.name, imgId: c.id })),
-                gy:   a.initial.gy.map(c => ({ iid: c.iid, label: c.name, imgId: c.id })),
-                zones: Object.fromEntries(Object.entries(a.initial.zones).map(([z, c]) => [z, c ? { iid: c.iid, label: c.name, imgId: c.id } : null])),
+                hand:   a.initial.hand.map(mk),
+                gy:     a.initial.gy.map(mk),
+                banish: a.initial.banish.map(mk),
+                main:   a.initial.main.map(mk),
+                extra:  a.initial.extra.map(mk),
+                zones:  Object.fromEntries(Object.entries(a.initial.zones).map(([z, c]) => [z, c ? mk(c) : null])),
                 oppEnabled: a.initial.oppEnabled,
-                oppZones: Object.fromEntries(Object.entries(a.initial.oppZones).map(([z, c]) => [z, c ? { label: c.name, imgId: c.id } : null])),
             },
-            solution: a.finalSolution,
+            solution,
         };
         TestDuelo.save(test);
         this._taReset();
         this._testRefresh();
         alert(`✅ Test práctico "${test.label}" guardado. Ya está disponible en Formación → Test.`);
     },
-_findPracticoTest: function (id) {
-        return this.TESTS.practicos.find(x => x.id === id) || TestDuelo.get(id);
+
+    _taRenderGroupsPanel: function () {
+        const a = this._ta;
+        const OWN_BOARD = ['0','1','2','3','4','5','6','7','8','9','10','A','B'];
+        const nameOf = (iid) => {
+            const zEntry = Object.values(a.initial.zones).find(c => c && c.iid === iid);
+            if (zEntry) return zEntry.name;
+            for (const pool of ['hand','gy','banish','main','extra']) {
+                const c = (a.initial[pool] || []).find(c => c.iid === iid);
+                if (c) return c.name;
+            }
+            return iid;
+        };
+        const relevant = Object.entries(a.finalPlacement).filter(([iid, z]) => OWN_BOARD.includes(z));
+        if (!relevant.length) return '';
+        const GROUPS = [['pendulum','Péndulo (6 o 10)'], ['monster','Monstruos (1-5)'], ['st','Magia/Trampa (6-10)'], ['emz','Extra Monstruo (A/B)']];
+        return `
+            <div style="margin-top:10px;padding:8px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;">
+                <p style="margin:0 0 6px;color:#FFD700;font-size:0.82rem;">🎯 Flexibilidad de zona (opcional):</p>
+                <p style="margin:0 0 8px;color:rgba(255,255,255,0.5);font-size:0.72rem;">Por defecto exige la zona exacta capturada. Marca un grupo para aceptar cualquier zona de ese grupo.</p>
+                ${relevant.map(([iid, z]) => `
+                    <div style="margin-bottom:6px;">
+                        <span style="font-size:0.8rem;color:#eee;">${nameOf(iid)} <em style="color:rgba(255,255,255,0.4);">(zona ${z})</em>:</span>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:2px;">
+                            ${GROUPS.map(([g, lbl]) => `
+                                <label style="font-size:0.75rem;color:rgba(255,255,255,0.7);">
+                                    <input type="checkbox" ${(a.finalGroups[iid] || []).includes(g) ? 'checked' : ''}
+                                           onchange="Config._taToggleGroup('${iid}','${g}',this.checked)"> ${lbl}
+                                </label>`).join('')}
+                        </div>
+                    </div>`).join('')}
+            </div>`;
     },
+
+    _taToggleGroup: function (iid, group, checked) {
+        if (!this._ta.finalGroups[iid]) this._ta.finalGroups[iid] = [];
+        const arr = this._ta.finalGroups[iid];
+        const idx = arr.indexOf(group);
+        if (checked && idx === -1) arr.push(group);
+        if (!checked && idx > -1) arr.splice(idx, 1);
+    },
+
+    _taToggleOpp: function (checked) {
+        this._taSync();
+        const a = this._ta;
+        if (!checked) {
+            Object.keys(a.zones).filter(z => z.startsWith('o')).forEach(z => {
+                if (a.zones[z]) { a.hand.push(a.zones[z]); a.zones[z] = null; }
+            });
+        }
+        a.oppEnabled = checked;
+        this._testRefresh();
+    },
+
+    _taLongPressStart: function (iid, ev) {
+        this._taCancelLongPress();
+        this._taLPTimer = setTimeout(() => {
+            this._taLPFired = true;
+            if (navigator.vibrate) navigator.vibrate(30);
+            this._taShowCardMenu(iid, ev);
+        }, 1000);
+    },
+    _taCancelLongPress: function () {
+        if (this._taLPTimer) { clearTimeout(this._taLPTimer); this._taLPTimer = null; }
+    },
+    _taShowCardMenu: function (iid, ev) {
+        document.querySelectorAll('.fpt-card-menu').forEach(m => m.remove());
+        const menu = document.createElement('div');
+        menu.className = 'pz-action-submenu fpt-card-menu';
+        menu.innerHTML = `<button class="pz-zmenu-btn pz-zmenu-ver" onclick="Config._taViewCard('${iid}')">Ver</button>`;
+        document.body.appendChild(menu);
+        const rect = ev.target.getBoundingClientRect();
+        menu.style.position = 'fixed'; menu.style.zIndex = '99999';
+        menu.style.left = (rect.left + rect.width / 2) + 'px';
+        menu.style.top  = (rect.bottom + 6) + 'px';
+        menu.style.transform = 'translateX(-50%)';
+        const close = (e2) => { if (!menu.contains(e2.target)) { menu.remove(); document.removeEventListener('click', close, true); } };
+        setTimeout(() => document.addEventListener('click', close, true), 50);
+    },
+    _taViewCard: function (iid) {
+        document.querySelectorAll('.fpt-card-menu').forEach(m => m.remove());
+        const a = this._ta;
+        let entry = null;
+        for (const z in a.zones) { if (a.zones[z]?.iid === iid) entry = a.zones[z]; }
+        if (!entry) ['hand','gy','banish','main','extra'].forEach(p => { const f = a[p].find(c => c.iid === iid); if (f) entry = f; });
+        if (!entry) return;
+        ZonaPractica._openMiniCV({
+            id: entry.id, name: entry.name,
+            card_images: [{ image_url_small: `https://images.ygoprodeck.com/images/cards_small/${entry.id}.jpg` }],
+        });
+    },
+    _taOpenPileList: function (poolName) {
+        const a = this._ta;
+        document.getElementById('fpt-pile-overlay')?.remove();
+        const cards = a[poolName] || [];
+        const labelMap = { main: 'Main Deck', extra: 'Extra Deck' };
+        const overlay = document.createElement('div');
+        overlay.id = 'fpt-pile-overlay';
+        overlay.className = 'pz-modal-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div class="pz-modal-box">
+                <div class="pz-modal-title">${labelMap[poolName] || poolName} (${cards.length})</div>
+                <button class="pz-modal-close" onclick="document.getElementById('fpt-pile-overlay').remove()">✕</button>
+                <div style="max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+                    ${cards.length ? cards.map(c => `
+                        <div class="pz-search-item">
+                            <img src="https://images.ygoprodeck.com/images/cards_small/${c.id}.jpg" class="pz-search-thumb">
+                            <div class="pz-search-info"><div class="pz-search-name">${c.name}</div></div>
+                            <div class="pz-search-btns">
+                                <button class="pz-search-view-btn" onclick="Config._taViewCard('${c.iid}')">Ver</button>
+                                <button class="pz-search-add-btn" onclick="Config._taRemoveFromPool('${poolName}','${c.iid}')">🗑️</button>
+                            </div>
+                        </div>`).join('') : '<p class="pz-search-hint">Vacío.</p>'}
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    },
+    _taRemoveFromPool: function (poolName, iid) {
+        const a = this._ta;
+        const idx = a[poolName].findIndex(c => c.iid === iid);
+        if (idx > -1) a[poolName].splice(idx, 1);
+        this._taOpenPileList(poolName);
+        this._taRefresh();
+    },
+
     exportConfig: function () {
         if (ConfigManager.exportConfig()) {
             alert('✅ Backup exportado correctamente.\n\nEl archivo contiene:\n• Decks guardados y deck activo\n• Engines y Staples\n• Config completa (roles, G1/G2 scoring, mecánicas, pilares, RPS, nomenclatura)\n• Matchups (Historial de Enfrentamientos) e Historial de Sesiones / Optimización (incluye Nivel como Piloto del Deck y Complejidad del Deck)\n• Winrates\n• Meta: decks, librería de cartas, scores y cross-scores\n• Favoritas, Torneo, Formación (apuntes, temas dominados, fallbacks de imágenes) y Banlist\n• Música y Perfil de contenido (novato/casual/competitivo)\n\nGuárdalo en un lugar seguro para restaurar tu progreso en cualquier momento.');

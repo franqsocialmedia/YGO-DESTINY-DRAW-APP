@@ -15,6 +15,7 @@ const ZonaPractica = {
     _searchTimeout: null,
     _activeMove:    null,
     _lastSearchResults: [],
+    _externalPickCallback: null,
     _dsCache:       { saved: [], engines: [], meta: [] },
 
     phase:               'draw',
@@ -346,8 +347,9 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
     },
 
     // ═══════════════════════════════════════════════════════
-    openCardSearch: function () {
+    openCardSearch: function (onPick) {
         document.getElementById('pz-search-overlay')?.remove();
+        this._externalPickCallback = onPick || null;
         const overlay = document.createElement('div');
         overlay.id = 'pz-search-overlay';
         overlay.className = 'pz-modal-overlay';
@@ -426,9 +428,9 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
             }
         });
     },
-
     _closeSearch: function () {
         document.getElementById('pz-search-overlay')?.remove();
+        this._externalPickCallback = null;
         this.pzFilterWords = [];
         this.pzFilters = {
             cardCategory:'', attribute:'', monsterType:'', monsterSubtype:'',
@@ -668,6 +670,14 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
     _addSearchCard: function (index) {
         const card = this._lastSearchResults[index];
         if (!card) return;
+        if (this._externalPickCallback) {
+            const cb = this._externalPickCallback;
+            this._externalPickCallback = null;
+            document.getElementById('pz-minicv-overlay')?.remove();
+            document.getElementById('pz-search-overlay')?.remove();
+            cb(card);
+            return;
+        }
         this.other.push({ card, faceUp: true, rotation: 0 });
         this._renderZone('other');
         this._addLog(`Añadida a Other: ${card.name}`, card);
@@ -739,7 +749,7 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                 </div>
                 ${addIdx >= 0 ? `<button class="pz-mcv-add-btn"
                     onclick="ZonaPractica._addSearchCard(${addIdx});document.getElementById('pz-minicv-overlay')?.remove()">
-                    ➕ Añadir a Other Options</button>` : ''}
+                    ${this._externalPickCallback ? '✅ Elegir esta carta' : '➕ Añadir a Other Options'}</button>` : ''}
             </div>`;
         document.body.appendChild(overlay);
 
