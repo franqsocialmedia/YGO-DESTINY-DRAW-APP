@@ -359,6 +359,8 @@ const Torneo = {
                     onclick="Torneo.showSimTab('duelo')">⚔️ Duelo en Vivo</button>
             <button class="sim-tab-btn" data-simtab="counters" data-section-id="sim-counters"
                     onclick="Torneo.showSimTab('counters')">🛡️ Counters</button>
+                    <button class="sim-tab-btn" data-simtab="gauntlet" data-section-id="sim-gauntlet"
+                    onclick="Torneo.showSimTab('gauntlet')">🥊 Gauntlet</button>
             <button class="sim-tab-btn" data-simtab="experimentacion" data-section-id="sim-experimentacion"
                     onclick="Torneo.showSimTab('experimentacion')">🧪 Experimentación</button>
             <button class="sim-tab-btn" data-simtab="practica"
@@ -368,6 +370,7 @@ const Torneo = {
         <div id="sim-torneo-content"></div>
         <div id="sim-duelo-content"           style="display:none;"></div>
         <div id="sim-counters-content"        style="display:none;"></div>
+        <div id="sim-gauntlet-content"        style="display:none;"></div>
         <div id="sim-experimentacion-content" style="display:none;"></div>
         <div id="sim-practica-content"        style="display:none;"></div>
         <div id="sim-winrate-content"         style="display:none;"></div>`;
@@ -516,6 +519,11 @@ const Torneo = {
     if (ctrSimEl) {
         ctrSimEl.style.display = tab === 'counters' ? '' : 'none';
         if (tab === 'counters' && window.CounterSim) CounterSim.renderInto(ctrSimEl);
+    }
+    const gntEl = document.getElementById('sim-gauntlet-content');
+    if (gntEl) {
+        gntEl.style.display = tab === 'gauntlet' ? '' : 'none';
+        if (tab === 'gauntlet' && window.Gauntlet) Gauntlet.renderInto(gntEl);
     }
     const expEl = document.getElementById('sim-experimentacion-content');
     if (expEl) {
@@ -3545,6 +3553,779 @@ openCounterOfPicker: function (counterId) {
 };
 
 window.CounterSim = CounterSim;
+
+// ============================================================
+// GAUNTLET — Testing de Deck/Engine (Etapa 1: sujeto + Pruebas)
+// Etapa 2 sumará Chips del Meta y cálculo de peligrosidad.
+// ============================================================
+const Gauntlet = {
+    container: null,
+    poolType: null,   // 'deck' | 'engine' | 'manual'
+    poolKey: null,    // nombre del deck/engine, o nombre custom
+    pool: {},         // {id:{data,qty}} — referencial en Etapa 1
+    tests: [],        // [{id,title,cardIds:[],cards:{},successes,failures}]
+    selectedChips: [],       // ['folder|||filename', ...] — chips del Meta activos
+    excludedMetaCards: {},   // {cardId:true} → excluida del cálculo (default: incluida)
+    _pickerTab: 'decks',
+    _view: 'testing',        // 'testing' | 'ranking'
+    RANKING_KEY: 'yugioh_gauntlet_rankings',
+    _chipsCollapsed: true,
+    _metaCardsCollapsed: true,
+    TEMPLATES_KEY: 'yugioh_gauntlet_templates',
+
+    renderInto: function (container) {
+        this.container = container;
+        container.innerHTML = `
+        <div class="gnt-wrap">
+            <h3 class="gnt-title">🥊 Gauntlet — Testing de Deck/Engine</h3>
+            <p class="gnt-hint">Elige el Deck o Engine a testear (o arma un pool manual buscando cartas), define tus Pruebas y registra Éxitos/Fallos jugando manos reales o en Zona de Práctica.</p>
+            <div class="gnt-view-tabs">
+                <button class="gnt-vtab-btn ${this._view === 'testing' ? 'active' : ''}" onclick="Gauntlet.switchView('testing')">🧪 Testing</button>
+                <button class="gnt-vtab-btn ${this._view === 'ranking' ? 'active' : ''}" onclick="Gauntlet.switchView('ranking')">🏆 Ranking</button>
+            </div>
+            <div id="gnt-body">${this._view === 'ranking' ? this._renderRanking() : (this.poolKey ? this._renderTesting() : this._renderPoolSelector())}</div>
+        </div>`;
+    },
+
+    switchView: function (view) {
+        this._view = view;
+        this.renderInto(this.container);
+    },
+
+    // ── Selección del sujeto a testear ──────────────────────
+    _renderPoolSelector: function () {
+        return `
+        <div class="gnt-box">
+            <div class="gnt-box-title">📁 ¿Qué vas a testear?</div>
+            <div class="gnt-picker-tabs">
+                <button class="gnt-ptab-btn ${this._pickerTab === 'decks' ? 'active' : ''}" onclick="Gauntlet._switchPickerTab('decks')">Decks</button>
+                <button class="gnt-ptab-btn ${this._pickerTab === 'engines' ? 'active' : ''}" onclick="Gauntlet._switchPickerTab('engines')">Engines</button>
+                <button class="gnt-ptab-btn ${this._pickerTab === 'manual' ? 'active' : ''}" onclick="Gauntlet._switchPickerTab('manual')">🔍 Manual</button>
+            </div>
+            <div id="gnt-picker-list" class="gnt-picker-list">${this._renderPickerList()}</div>
+        </div>`;
+    },
+
+    _switchPickerTab: function (tab) {
+        this._pickerTab = tab;
+        const el = document.getElementById('gnt-picker-list');
+        if (el) el.innerHTML = this._renderPickerList();
+    },
+
+    _renderPickerList: function () {
+        if (this._pickerTab === 'decks') {
+            const items = [];
+            if (window.Deck && Object.keys(Deck.cards || {}).length) {
+                items.push({ label: `⭐ ${Deck.name} (activo)`, onclick: `Gauntlet.selectPool('deck','active',0)` });
+            }
+            (window.Deck ? Deck.getSavedDecks() : []).forEach((d, i) => {
+                items.push({ label: d.name, onclick: `Gauntlet.selectPool('deck','saved',${i})` });
+            });
+            if (!items.length) return '<div class="gnt-empty">Sin decks guardados.</div>';
+            return items.map(it => `<button class="gnt-picker-item" onclick="${it.onclick}">${it.label}</button>`).join('');
+        }
+        if (this._pickerTab === 'engines') {
+            const engines = window.Engines ? Engines.getAll() : [];
+            if (!engines.length) return '<div class="gnt-empty">Sin engines guardados.</div>';
+            return engines.map((e, i) => `
+                <button class="gnt-picker-item" onclick="Gauntlet.selectPool('engine','saved',${i})">${e.name}</button>`).join('');
+        }
+        return `
+            <p class="gnt-empty">Crea un pool manual buscando cartas una por una.</p>
+            <button class="gnt-btn-sm gnt-btn-primary" onclick="Gauntlet.startManualPool()">＋ Crear Pool Manual</button>`;
+    },
+
+    selectPool: function (kind, source, idx) {
+        let name, cards;
+        if (kind === 'deck') {
+            if (source === 'active') { name = window.Deck?.name; cards = window.Deck?.cards || {}; }
+            else { const d = window.Deck?.getSavedDecks()[idx]; name = d?.name; cards = d?.cards || {}; }
+        } else {
+            const e = window.Engines?.getAll()[idx];
+            name = e?.name; cards = e?.cards || {};
+        }
+        if (!name) return;
+        this.poolType = kind;
+        this.poolKey  = name;
+        this.pool = JSON.parse(JSON.stringify(cards));
+        this._load();
+        this._refreshBody();
+    },
+
+    startManualPool: function () {
+        const name = prompt('Nombre para este pool manual (ej: "Testeo Rápido"):');
+        if (!name || !name.trim()) return;
+        this.poolType = 'manual';
+        this.poolKey  = name.trim();
+        this.pool = {};
+        this._load();
+        this._refreshBody();
+    },
+
+    changePool: function () {
+        if (!confirm('¿Cambiar de Deck/Engine? Las Pruebas de este pool quedan guardadas, podrás volver luego.')) return;
+        this.poolType = null;
+        this.poolKey  = null;
+        this.pool = {};
+        this.tests = [];
+        this.selectedChips = [];
+        this.excludedMetaCards = {};
+        this._refreshBody();
+    },
+
+    // ── Persistencia (gauntlet_${tipo}_${nombre}) ───────────
+    _storageKey: function () { return `gauntlet_${this.poolType}_${this.poolKey}`; },
+
+    _load: function () {
+        try {
+            const raw = localStorage.getItem(this._storageKey());
+            const data = raw ? JSON.parse(raw) : null;
+            this.tests = data?.tests || [];
+            this.selectedChips = data?.selectedChips || [];
+            this.excludedMetaCards = data?.excludedMetaCards || {};
+            if (data?.pool && this.poolType === 'manual') this.pool = data.pool;
+        } catch (_) { this.tests = []; this.selectedChips = []; this.excludedMetaCards = {}; }
+    },
+
+    save: function () {
+        try {
+            localStorage.setItem(this._storageKey(), JSON.stringify({
+                pool: this.poolType === 'manual' ? this.pool : undefined,
+                tests: this.tests,
+                selectedChips: this.selectedChips,
+                excludedMetaCards: this.excludedMetaCards,
+                updatedAt: Date.now()
+            }));
+        } catch (_) {}
+    },
+
+    _refreshBody: function () {
+        const el = document.getElementById('gnt-body');
+        if (el) el.innerHTML = this.poolKey ? this._renderTesting() : this._renderPoolSelector();
+    },
+// ── Chips del Meta (formato) ────────────────────────────
+    _loadMetaSource: function () {
+        let decks = {};
+        try {
+            const raw = localStorage.getItem('yugioh_meta_decks');
+            decks = raw ? (JSON.parse(raw).decks || {}) : {};
+        } catch (_) {}
+        let library = {};
+        try {
+            const raw2 = localStorage.getItem('yugioh_meta_card_library');
+            library = raw2 ? JSON.parse(raw2) : {};
+        } catch (_) {}
+        return { decks, library };
+    },
+
+    _getActiveChipsData: function () {
+        const { decks } = this._loadMetaSource();
+        return this.selectedChips.map(key => {
+            const [folder, filename] = key.split('|||');
+            const chip = (decks[folder] || []).find(d => d.filename === filename);
+            return chip ? { key, folder, filename, deckData: chip } : null;
+        }).filter(Boolean);
+    },
+
+    toggleChip: function (folderIdx, chipIdx) {
+        const { decks } = this._loadMetaSource();
+        const folder = Object.keys(decks)[folderIdx];
+        if (!folder) return;
+        const chip = (decks[folder] || [])[chipIdx];
+        if (!chip) return;
+        const key = `${folder}|||${chip.filename}`;
+        const pos = this.selectedChips.indexOf(key);
+        if (pos >= 0) this.selectedChips.splice(pos, 1); else this.selectedChips.push(key);
+        this.save();
+        this._refreshMetaSection();
+    },
+
+    // Frecuencia = % de chips seleccionados cuyo Main Deck incluye la carta
+    _computeFrequency: function (cardId) {
+        const chips = this._getActiveChipsData();
+        if (!chips.length) return 0;
+        let count = 0;
+        chips.forEach(c => {
+            const main = c.deckData.sections?.main || [];
+            if (main.some(id => String(id) === String(cardId))) count++;
+        });
+        return count / chips.length;
+    },
+
+    _isCardActive: function (cardId) { return !this.excludedMetaCards[String(cardId)]; },
+
+    toggleMetaCard: function (cardId) {
+        const id = String(cardId);
+        if (this.excludedMetaCards[id]) delete this.excludedMetaCards[id];
+        else this.excludedMetaCards[id] = true;
+        this.save();
+        this._refreshMetaSection();
+    },
+
+    _getMetaCardUniverse: function () {
+        const { library } = this._loadMetaSource();
+        const chips = this._getActiveChipsData();
+        const ids = new Set();
+        chips.forEach(c => (c.deckData.sections?.main || []).forEach(id => ids.add(String(id))));
+        return [...ids].map(id => ({
+            id, name: library[id]?.name || `#${id}`, freq: this._computeFrequency(id)
+        })).sort((a, b) => b.freq - a.freq);
+    },
+
+    _renderMetaChipsBox: function () {
+        const { decks } = this._loadMetaSource();
+        const folders = Object.keys(decks);
+        if (!folders.length) return '<div class="gnt-empty">Sin Chips del Meta importados (Estadísticas → Meta).</div>';
+        return folders.map((folder, fi) => {
+            const chips = decks[folder] || [];
+            const rows = chips.map((c, ci) => {
+                const key = `${folder}|||${c.filename}`;
+                const checked = this.selectedChips.includes(key);
+                return `
+                <label class="gnt-chip-row">
+                    <input type="checkbox" ${checked ? 'checked' : ''} onchange="Gauntlet.toggleChip(${fi},${ci})">
+                    <span>${c.filename}</span>
+                </label>`;
+            }).join('');
+            return `
+            <div class="gnt-chip-folder">
+                <div class="gnt-chip-folder-title">📁 ${folder}</div>
+                <div class="gnt-chip-list">${rows}</div>
+            </div>`;
+        }).join('');
+    },
+
+    _renderMetaCardsBox: function () {
+        if (!this.selectedChips.length) return '<div class="gnt-empty">Selecciona al menos un Chip para ver sus cartas.</div>';
+        const cards = this._getMetaCardUniverse();
+        if (!cards.length) return '<div class="gnt-empty">Los chips seleccionados no tienen Main Deck registrado.</div>';
+        return cards.map(c => {
+            const active = this._isCardActive(c.id);
+            return `
+            <label class="gnt-mcard-row ${active ? '' : 'gnt-mcard-off'}">
+                <input type="checkbox" ${active ? 'checked' : ''} onchange="Gauntlet.toggleMetaCard('${c.id}')">
+                <img src="https://images.ygoprodeck.com/images/cards_small/${c.id}.jpg" class="gnt-thumb-img-sm" loading="lazy">
+                <span class="gnt-mcard-name">${c.name}</span>
+                <span class="gnt-mcard-freq">${Math.round(c.freq * 100)}%</span>
+            </label>`;
+        }).join('');
+    },
+
+    _renderMetaSection: function () {
+        const chipsCount = this.selectedChips.length;
+        const cardsCount = this._getMetaCardUniverse().filter(c => this._isCardActive(c.id)).length;
+        return `
+        <div class="gnt-box">
+            <div class="gnt-box-title-row">
+                <span class="gnt-box-title">🌐 Chips del Meta (formato a considerar)</span>
+                <span class="gnt-collapse-summary">${chipsCount} seleccionado${chipsCount === 1 ? '' : 's'}</span>
+                <button class="gnt-btn-icon" onclick="Gauntlet.toggleChipsCollapse()" title="${this._chipsCollapsed ? 'Expandir' : 'Colapsar'}">${this._chipsCollapsed ? '▸' : '▾'}</button>
+            </div>
+            ${this._chipsCollapsed ? '' : `
+            <p class="gnt-hint">Uno, varios o ninguno. Sin chips, el Gauntlet no pondera peligrosidad (solo % éxito crudo).</p>
+            <div class="gnt-select-all-row">
+                <button class="gnt-btn-xs" onclick="Gauntlet.selectAllChips()">✅ Seleccionar todo</button>
+                <button class="gnt-btn-xs" onclick="Gauntlet.deselectAllChips()">◻️ Deseleccionar todo</button>
+            </div>
+            <div class="gnt-chip-folders">${this._renderMetaChipsBox()}</div>`}
+        </div>
+        <div class="gnt-box">
+            <div class="gnt-box-title-row">
+                <span class="gnt-box-title">🎴 Cartas del Meta activas</span>
+                <span class="gnt-collapse-summary">${cardsCount} activa${cardsCount === 1 ? '' : 's'}</span>
+                <button class="gnt-btn-icon" onclick="Gauntlet.toggleMetaCardsCollapse()" title="${this._metaCardsCollapsed ? 'Expandir' : 'Colapsar'}">${this._metaCardsCollapsed ? '▸' : '▾'}</button>
+            </div>
+            ${this._metaCardsCollapsed ? '' : `
+            <p class="gnt-hint">Desmarca las que no quieras que cuenten en el cálculo de peligrosidad.</p>
+            <div class="gnt-select-all-row">
+                <button class="gnt-btn-xs" onclick="Gauntlet.selectAllMetaCards()">✅ Seleccionar todo</button>
+                <button class="gnt-btn-xs" onclick="Gauntlet.deselectAllMetaCards()">◻️ Deseleccionar todo</button>
+            </div>
+            <div id="gnt-mcards-list" class="gnt-mcards-list">${this._renderMetaCardsBox()}</div>`}
+        </div>`;
+    },
+
+    _refreshMetaSection: function () {
+        const el = document.getElementById('gnt-meta-section');
+        if (el) el.innerHTML = this._renderMetaSection();
+        this._refreshTests();
+    },
+
+    // ── Peligrosidad ─────────────────────────────────────────
+    _testDangerScore: function (t) {
+        if (!t.cardIds.length) return null;
+        const total = (t.successes || 0) + (t.failures || 0);
+        if (total === 0) return null;
+        const failRate = t.failures / total;
+        let score = 0;
+        t.cardIds.forEach(id => {
+            if (!this._isCardActive(id)) return;
+            score += this._computeFrequency(id) * failRate * 100;
+        });
+        return score;
+    },
+
+    _totalScore: function () {
+        let total = 0, count = 0;
+        this.tests.forEach(t => {
+            const s = this._testDangerScore(t);
+            if (s !== null) { total += s; count++; }
+        });
+        return { total, count };
+    },
+
+    // ── Ranking (Etapa 3) ────────────────────────────────────
+    getRankings: function () {
+        try { return JSON.parse(localStorage.getItem(this.RANKING_KEY)) || []; }
+        catch (_) { return []; }
+    },
+
+    saveRankings: function (list) {
+        try { localStorage.setItem(this.RANKING_KEY, JSON.stringify(list)); } catch (_) {}
+    },
+
+    closeRun: function () {
+        if (!this.poolKey) return;
+        const { total } = this._totalScore();
+        const totalDuels = this.tests.reduce((a, t) => a + (t.successes || 0) + (t.failures || 0), 0);
+        if (!totalDuels) { alert('Registra al menos un duelo en alguna Prueba antes de cerrar la corrida.'); return; }
+        if (!confirm(`¿Guardar esta corrida de "${this.poolKey}" en el Ranking con ${total.toFixed(2)} pts?`)) return;
+
+        const typeLabel = { deck: '🃏 Deck', engine: '🧩 Engine', manual: '🔍 Manual' }[this.poolType] || '';
+        const chipsUsados = this.selectedChips.map(key => {
+            const [, filename] = key.split('|||');
+            return filename;
+        });
+
+        const list = this.getRankings();
+        list.push({
+            id: 'gr_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+            poolType: this.poolType,
+            poolTypeLabel: typeLabel,
+            poolName: this.poolKey,
+            chipsUsados,
+            pruebas: JSON.parse(JSON.stringify(this.tests)),
+            totalScore: total,
+            totalDuels,
+            evaluatedAt: Date.now()
+        });
+        this.saveRankings(list);
+        this.switchView('ranking');
+    },
+
+    removeRanking: function (id) {
+        if (!confirm('¿Eliminar esta entrada del ranking?')) return;
+        this.saveRankings(this.getRankings().filter(r => r.id !== id));
+        this._refreshRanking();
+    },
+
+    _refreshRanking: function () {
+        const el = document.getElementById('gnt-body');
+        if (el) el.innerHTML = this._renderRanking();
+    },
+
+    _renderRanking: function () {
+        const list = this.getRankings().slice().sort((a, b) => a.totalScore - b.totalScore);
+        const rows = list.length ? list.map(r => {
+            const date = new Date(r.evaluatedAt).toLocaleDateString('es-ES');
+            const chips = r.chipsUsados.length ? r.chipsUsados.join(', ') : 'Sin chips (crudo)';
+            return `
+            <div class="gnt-rank-row">
+                <div class="gnt-rank-score">${r.totalScore.toFixed(2)}<span class="gnt-rank-pts">pts</span></div>
+                <div class="gnt-rank-info">
+                    <div><span class="gnt-pool-type">${r.poolTypeLabel}</span> <span class="gnt-pool-name">${r.poolName}</span></div>
+                    <div class="gnt-rank-meta">${r.pruebas.length} pruebas · ${r.totalDuels} duelos · ${date}</div>
+                    <div class="gnt-rank-chips">🌐 ${chips}</div>
+                </div>
+                <button class="gnt-btn-icon gnt-btn-icon-danger" onclick="Gauntlet.removeRanking('${r.id}')" title="Eliminar">✕</button>
+            </div>`;
+        }).join('') : '<div class="gnt-empty">Sin corridas guardadas. Cierra una corrida desde la pestaña Testing.</div>';
+
+        return `
+        <div class="gnt-box">
+            <div class="gnt-box-title-row">
+                <span class="gnt-box-title">🏆 Ranking (menos afectado → más afectado)</span>
+                <div class="gnt-rank-actions">
+                    <button class="gnt-btn-sm" onclick="Gauntlet.exportRankingTXT()">⬇️ Exportar .txt</button>
+                    <button class="gnt-btn-sm" onclick="Gauntlet.importRankingTXT()">⬆️ Importar .txt</button>
+                </div>
+            </div>
+            <p class="gnt-rank-note">Cada punto mide cuánto "duele" el formato elegido: frecuencia de cada carta entre los Chips seleccionados × tasa de fallos de las Pruebas donde aparece. <b>Menos puntos = deck más resistente</b> a las amenazas comunes del meta; más puntos = más vulnerable. Compara solo corridas hechas con los mismos Chips para que el número sea representativo.</p>
+            <div class="gnt-rank-list">${rows}</div>
+        </div>`;
+    },
+
+    exportRankingTXT: function () {
+        const list = this.getRankings();
+        const header = `# Destiny Draw — Gauntlet Ranking Export\n# Fecha: ${new Date().toISOString()}\n# No editar manualmente debajo de esta línea.\n`;
+        const blob = new Blob([header + JSON.stringify({ rankings: list })], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `gauntlet_ranking_${Date.now()}.txt`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    },
+
+    importRankingTXT: function () {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.txt';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const text = ev.target.result.split('\n').filter(l => !l.startsWith('#')).join('\n');
+                    const parsed = JSON.parse(text);
+                    const incoming = Array.isArray(parsed) ? parsed : (parsed.rankings || []);
+                    if (!Array.isArray(incoming)) throw new Error('formato inválido');
+                    const current = this.getRankings();
+                    const existingIds = new Set(current.map(r => r.id));
+                    incoming.forEach(r => {
+                        if (!r.id || existingIds.has(r.id)) r.id = 'gr_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+                        current.push(r);
+                    });
+                    this.saveRankings(current);
+                    this._refreshRanking();
+                    alert(`Importadas ${incoming.length} corridas al Ranking.`);
+                } catch (_) {
+                    alert('Archivo inválido o corrupto.');
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    },
+
+    // ── Plantillas (chips + pruebas reutilizables) ───────────
+    getTemplates: function () {
+        try { return JSON.parse(localStorage.getItem(this.TEMPLATES_KEY)) || []; }
+        catch (_) { return []; }
+    },
+
+    saveTemplatesList: function (list) {
+        try { localStorage.setItem(this.TEMPLATES_KEY, JSON.stringify(list)); } catch (_) {}
+    },
+
+    saveAsTemplate: function () {
+        if (!this.tests.length && !this.selectedChips.length) {
+            alert('No hay nada que guardar: agrega chips o pruebas primero.');
+            return;
+        }
+        const name = prompt('Nombre para esta plantilla de Gauntlet:');
+        if (!name || !name.trim()) return;
+        const trimmed = name.trim();
+        const list = this.getTemplates();
+        const existing = list.find(t => t.name.toLowerCase() === trimmed.toLowerCase());
+        if (existing && !confirm(`Ya existe una plantilla "${trimmed}". ¿Sobrescribirla?`)) return;
+
+        const snapshot = {
+            id: existing ? existing.id : 'gtpl_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+            name: trimmed,
+            selectedChips: [...this.selectedChips],
+            excludedMetaCards: { ...this.excludedMetaCards },
+            tests: this.tests.map(t => ({
+                id: t.id, title: t.title, cardIds: [...t.cardIds],
+                cards: { ...t.cards }, successes: 0, failures: 0
+            })),
+            updatedAt: Date.now()
+        };
+        const filtered = list.filter(t => t.id !== snapshot.id);
+        filtered.push(snapshot);
+        this.saveTemplatesList(filtered);
+        this._refreshTemplatesBox();
+        alert(`Plantilla "${trimmed}" guardada.`);
+    },
+
+    applyTemplate: function (id) {
+        const t = this.getTemplates().find(x => x.id === id);
+        if (!t) return;
+        if (!confirm(`¿Aplicar plantilla "${t.name}"? Se reemplazan los chips y pruebas actuales de este pool.`)) return;
+        this.selectedChips = [...t.selectedChips];
+        this.excludedMetaCards = { ...t.excludedMetaCards };
+        this.tests = t.tests.map(x => ({
+            id: 'test_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+            title: x.title, cardIds: [...x.cardIds], cards: { ...x.cards },
+            successes: 0, failures: 0
+        }));
+        this.save();
+        this._refreshBody();
+    },
+
+    deleteTemplate: function (id) {
+        if (!confirm('¿Eliminar esta plantilla?')) return;
+        this.saveTemplatesList(this.getTemplates().filter(t => t.id !== id));
+        this._refreshTemplatesBox();
+    },
+
+    _refreshTemplatesBox: function () {
+        const el = document.getElementById('gnt-templates-box');
+        if (el) el.innerHTML = this._renderTemplatesBox();
+    },
+
+    _renderTemplatesBox: function () {
+        const list = this.getTemplates();
+        const options = list.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+        return `
+        <div class="gnt-box-title-row">
+            <span class="gnt-box-title">📋 Plantillas</span>
+            <button class="gnt-btn-sm" onclick="Gauntlet.saveAsTemplate()">💾 Guardar Plantilla Actual</button>
+        </div>
+        ${list.length ? `
+        <div class="gnt-tpl-row">
+            <select id="gnt-tpl-select" class="gnt-tpl-select">${options}</select>
+            <button class="gnt-btn-sm gnt-btn-primary" onclick="Gauntlet.applyTemplate(document.getElementById('gnt-tpl-select').value)">📥 Aplicar</button>
+            <button class="gnt-btn-icon gnt-btn-icon-danger" onclick="Gauntlet.deleteTemplate(document.getElementById('gnt-tpl-select').value)" title="Eliminar plantilla">✕</button>
+        </div>` : '<div class="gnt-empty">Sin plantillas guardadas.</div>'}`;
+    },
+
+    // ── Colapso y selección masiva ────────────────────────────
+    toggleChipsCollapse: function () {
+        this._chipsCollapsed = !this._chipsCollapsed;
+        this._refreshMetaSection();
+    },
+
+    toggleMetaCardsCollapse: function () {
+        this._metaCardsCollapsed = !this._metaCardsCollapsed;
+        this._refreshMetaSection();
+    },
+
+    selectAllChips: function () {
+        const { decks } = this._loadMetaSource();
+        const allKeys = [];
+        Object.keys(decks).forEach(folder => (decks[folder] || []).forEach(c => allKeys.push(`${folder}|||${c.filename}`)));
+        this.selectedChips = allKeys;
+        this.save();
+        this._refreshMetaSection();
+    },
+
+    deselectAllChips: function () {
+        this.selectedChips = [];
+        this.save();
+        this._refreshMetaSection();
+    },
+
+    selectAllMetaCards: function () {
+        this.excludedMetaCards = {};
+        this.save();
+        this._refreshMetaSection();
+    },
+
+    deselectAllMetaCards: function () {
+        const excl = {};
+        this._getMetaCardUniverse().forEach(c => excl[c.id] = true);
+        this.excludedMetaCards = excl;
+        this.save();
+        this._refreshMetaSection();
+    },
+
+    // ── Vista de testing (pool ya elegido) ──────────────────
+    _renderTesting: function () {
+        const typeLabel = { deck: '🃏 Deck', engine: '🧩 Engine', manual: '🔍 Manual' }[this.poolType] || '';
+        return `
+        <div class="gnt-box gnt-pool-bar">
+            <div><span class="gnt-pool-type">${typeLabel}</span> <span class="gnt-pool-name">${this.poolKey}</span></div>
+            <button class="gnt-btn-sm" onclick="Gauntlet.changePool()">🔄 Cambiar</button>
+        </div>
+
+        <div id="gnt-templates-box" class="gnt-box">${this._renderTemplatesBox()}</div>
+
+        ${this.poolType === 'manual' ? `
+        <div class="gnt-box">
+            <div class="gnt-box-title-row">
+                <span class="gnt-box-title">🗂️ Pool de Cartas</span>
+                <button class="gnt-btn-sm" onclick="Gauntlet.openPoolSearch()">🔍 Buscar Cartas</button>
+            </div>
+            <div id="gnt-pool-grid" class="gnt-pool-grid">${this._renderManualPool()}</div>
+        </div>` : ''}
+
+        <div id="gnt-meta-section">${this._renderMetaSection()}</div>
+
+        <div class="gnt-box">
+            <div class="gnt-box-title-row">
+                <span class="gnt-box-title">🧪 Pruebas</span>
+                <span class="gnt-total-score">🏆 ${this._totalScore().total.toFixed(2)} pts${this._totalScore().count ? '' : ' (sin datos)'}</span>
+                <button class="gnt-btn-sm gnt-btn-primary" onclick="Gauntlet.addTest()">＋ Agregar Prueba</button>
+            </div>
+            <div id="gnt-tests-list" class="gnt-tests-list">${this._renderTests()}</div>
+            <button class="gnt-btn-sm gnt-close-run-btn" onclick="Gauntlet.closeRun()">🔒 Cerrar Corrida y Guardar en Ranking</button>
+        </div>`;
+    },
+
+    _renderManualPool: function () {
+        const entries = Object.entries(this.pool);
+        if (!entries.length) return '<div class="gnt-empty">Pool vacío. Busca cartas para armarlo.</div>';
+        return entries.map(([id, item]) => `
+        <div class="gnt-pool-thumb" title="${item.data?.name || ''}">
+            <img src="${this._imgFor(item.data, id)}" class="gnt-thumb-img" loading="lazy">
+            <button class="gnt-thumb-remove" onclick="Gauntlet.removeFromPool('${id}')">✕</button>
+        </div>`).join('');
+    },
+
+    openPoolSearch: function () {
+        this._openSharedSearch('pool');
+    },
+
+    removeFromPool: function (id) {
+        delete this.pool[id];
+        this.save();
+        const el = document.getElementById('gnt-pool-grid');
+        if (el) el.innerHTML = this._renderManualPool();
+    },
+
+    // ── Pruebas ───────────────────────────────────────────────
+    addTest: function () {
+        const title = prompt('Título de la prueba (ej: "Ash Blossom", "Mano excelente"):');
+        if (!title || !title.trim()) return;
+        this.tests.push({
+            id: 'test_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+            title: title.trim(),
+            cardIds: [],
+            cards: {},
+            successes: 0,
+            failures: 0
+        });
+        this.save();
+        this._refreshTests();
+    },
+
+    renameTest: function (id) {
+        const t = this.tests.find(x => x.id === id);
+        if (!t) return;
+        const title = prompt('Nuevo título:', t.title);
+        if (!title || !title.trim()) return;
+        t.title = title.trim();
+        this.save();
+        this._refreshTests();
+    },
+
+    removeTest: function (id) {
+        if (!confirm('¿Eliminar esta prueba?')) return;
+        this.tests = this.tests.filter(t => t.id !== id);
+        this.save();
+        this._refreshTests();
+    },
+
+    addCardToTest: function (testId) {
+        this._pendingTestId = testId;
+        this._openSharedSearch('test');
+    },
+
+    removeCardFromTest: function (testId, cardId) {
+        const t = this.tests.find(x => x.id === testId);
+        if (!t) return;
+        t.cardIds = t.cardIds.filter(id => id !== cardId);
+        delete t.cards[cardId];
+        this.save();
+        this._refreshTests();
+    },
+
+    markResult: function (testId, field, delta) {
+        const t = this.tests.find(x => x.id === testId);
+        if (!t) return;
+        t[field] = Math.max(0, (t[field] || 0) + delta);
+        this.save();
+        this._refreshTests();
+    },
+
+    _refreshTests: function () {
+        const el = document.getElementById('gnt-tests-list');
+        if (el) el.innerHTML = this._renderTests();
+    },
+
+    _renderTests: function () {
+        if (!this.tests.length) return '<div class="gnt-empty">Sin pruebas todavía. Agrega una para empezar a registrar duelos.</div>';
+        return this.tests.map(t => {
+            const total = (t.successes || 0) + (t.failures || 0);
+            const pct = total > 0 ? Math.round((t.successes / total) * 100) : null;
+            const danger = this._testDangerScore(t);
+            const cardsHtml = t.cardIds.map(id => `
+                <div class="gnt-test-card-thumb" title="${t.cards[id]?.name || ''}">
+                    <img src="${t.cards[id]?.img || ''}" class="gnt-thumb-img-sm" loading="lazy">
+                    <button class="gnt-thumb-remove" onclick="Gauntlet.removeCardFromTest('${t.id}','${id}')">✕</button>
+                </div>`).join('');
+            return `
+            <div class="gnt-test-row">
+                <div class="gnt-test-header">
+                    <span class="gnt-test-title">${t.title}</span>
+                    <div class="gnt-test-header-btns">
+                        <button class="gnt-btn-icon" onclick="Gauntlet.renameTest('${t.id}')" title="Renombrar">✏️</button>
+                        <button class="gnt-btn-icon gnt-btn-icon-danger" onclick="Gauntlet.removeTest('${t.id}')" title="Eliminar">✕</button>
+                    </div>
+                </div>
+                <div class="gnt-test-cards">
+                    ${cardsHtml}
+                    <button class="gnt-btn-sm gnt-add-card-btn" onclick="Gauntlet.addCardToTest('${t.id}')">＋ Carta</button>
+                </div>
+                <div class="gnt-test-tally">
+                    <button class="gnt-tally-btn gnt-tally-ok" onclick="Gauntlet.markResult('${t.id}','successes',1)">✅ +Éxito</button>
+                    <span class="gnt-tally-count">${t.successes || 0}</span>
+                    <button class="gnt-tally-btn gnt-tally-bad" onclick="Gauntlet.markResult('${t.id}','failures',1)">❌ +Fallo</button>
+                    <span class="gnt-tally-count">${t.failures || 0}</span>
+                    <span class="gnt-tally-total">${total} duelo${total === 1 ? '' : 's'}${pct !== null ? ` · ${pct}% éxito` : ''}${danger !== null ? ` · ⚠️ ${danger.toFixed(2)} pts` : ''}</span>
+                </div>
+                <div class="gnt-test-adjust">
+                    <button class="gnt-btn-xs" onclick="Gauntlet.markResult('${t.id}','successes',-1)">−1 Éxito</button>
+                    <button class="gnt-btn-xs" onclick="Gauntlet.markResult('${t.id}','failures',-1)">−1 Fallo</button>
+                </div>
+            </div>`;
+        }).join('');
+    },
+
+    
+// ── Búsqueda de cartas (reutiliza el buscador de Zona de Práctica:
+    //    filtros avanzados, chips por keyword, tope de 100 resultados) ──
+    _openSharedSearch: function (target) {
+        if (!window.ZonaPractica) { alert('Buscador no disponible.'); return; }
+        this._prevAddSearch = ZonaPractica._addSearchCard.bind(ZonaPractica);
+        ZonaPractica._addSearchCard = (index) => {
+            const card = ZonaPractica._lastSearchResults[index];
+            if (!card) return;
+            this._addSearchResultCard(target, card);
+            const btns = document.querySelectorAll('#pz-search-results .pz-search-add-btn');
+            const btn  = btns[index];
+            if (btn) {
+                const orig = btn.textContent;
+                btn.textContent = '✓';
+                btn.disabled = true;
+                setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 900);
+            }
+        };
+        ZonaPractica.openCardSearch();
+        const restore = () => { if (this._prevAddSearch) ZonaPractica._addSearchCard = this._prevAddSearch; };
+        const observer = new MutationObserver((muts, obs) => {
+            if (!document.getElementById('pz-search-overlay')) { restore(); obs.disconnect(); }
+        });
+        observer.observe(document.body, { childList: true });
+    },
+
+    _addSearchResultCard: function (target, card) {
+        if (!card) return;
+        const id = String(card.id);
+        if (target === 'pool') {
+            if (this.pool[id]) this.pool[id].qty = (this.pool[id].qty || 1) + 1;
+            else this.pool[id] = { data: card, qty: 1 };
+            this.save();
+            const el = document.getElementById('gnt-pool-grid');
+            if (el) el.innerHTML = this._renderManualPool();
+        } else if (target === 'test') {
+            const t = this.tests.find(x => x.id === this._pendingTestId);
+            if (!t) return;
+            if (!t.cardIds.includes(id)) t.cardIds.push(id);
+            t.cards[id] = { name: card.name, img: card.card_images?.[0]?.image_url_small || '' };
+            this.save();
+            this._refreshTests();
+        }
+    },
+    _imgFor: function (data, id) {
+        if (data?.card_images?.[0]?.image_url_small) return data.card_images[0].image_url_small;
+        const cid = id || data?.id;
+        return cid ? `https://images.ygoprodeck.com/images/cards_small/${cid}.jpg` : 'https://images.ygoprodeck.com/images/cards/back.jpg';
+    }
+};
+
+window.Gauntlet = Gauntlet;
 
 document.addEventListener('DOMContentLoaded', () => {
 });
