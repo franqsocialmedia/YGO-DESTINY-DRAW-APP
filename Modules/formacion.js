@@ -143,6 +143,78 @@ const Formacion = {
         { id: 'runick',         name: 'Runick',         desc: 'Denegación vía hechizos desde el cementerio rival; híbrido de control y combo técnico.', vector: { agresion: -0.4, planificacion: 0.2, riesgo: -0.3, interaccion: 0.7, complejidad: 0.7 } },
         { id: 'vanquishsoul',   name: 'Vanquish Soul',  desc: 'Beatdown midrange equilibrado: sin extremos, gana por presión constante y pareja.', vector: { agresion: 0.5, planificacion: 0.3, riesgo: 0.3, interaccion: 0.3, complejidad: 0.4 } }
     ],
+
+// ── Tu Personaje de Yu-Gi-Oh! — personalidad, motivaciones y objetivos ──
+    PERSONAJE_KEY: 'yugioh_personaje_resultado',
+    PERSONAJE_AXES: ['vinculo', 'ambicion', 'instinto', 'resiliencia', 'moralidad'],
+
+    PERSONAJE_PREGUNTAS: [
+        { q: '¿Qué te motiva a seguir jugando cuando vas perdiendo?', options: [
+            { text: 'Mis amigos confían en mí, no puedo rendirme.', delta: { vinculo: 2, resiliencia: 2 } },
+            { text: 'Demostrar que soy el mejor, sin importar el precio.', delta: { ambicion: 2, moralidad: -1 } },
+            { text: 'La emoción del riesgo, algo va a pasar.', delta: { instinto: 2 } },
+            { text: 'Un plan de respaldo calculado fríamente.', delta: { instinto: -2, ambicion: 1 } }
+        ]},
+        { q: 'Cuando un rival te reta, ¿cómo reaccionas?', options: [
+            { text: 'Acepto con respeto, quiero un buen duelo.', delta: { moralidad: 2, vinculo: 1 } },
+            { text: 'Lo tomo como una oportunidad para probar mi poder.', delta: { ambicion: 2 } },
+            { text: 'Sigo mi instinto, improviso en el momento.', delta: { instinto: 2 } },
+            { text: 'Calculo cada variable antes de aceptar.', delta: { instinto: -2 } }
+        ]},
+        { q: 'Tu objetivo final en el juego es...', options: [
+            { text: 'Proteger a quienes quiero.', delta: { vinculo: 2, moralidad: 1 } },
+            { text: 'Ser el número uno, superar a todos.', delta: { ambicion: 2, vinculo: -1 } },
+            { text: 'Vivir la aventura, cada duelo es una historia.', delta: { instinto: 1, resiliencia: 1 } },
+            { text: 'Dominar el juego a un nivel técnico superior.', delta: { instinto: -2, ambicion: 1 } }
+        ]},
+        { q: 'Si un amigo comete un error crucial en su turno, tú...', options: [
+            { text: 'Lo apoyo, todos nos equivocamos.', delta: { vinculo: 2, moralidad: 1 } },
+            { text: 'Se lo hago notar, el error tiene consecuencias.', delta: { moralidad: -1, ambicion: 1 } },
+            { text: 'Confío en que lo resolverá solo.', delta: { vinculo: -1, resiliencia: 1 } },
+            { text: 'Ya estoy pensando en cómo aprovecharlo.', delta: { moralidad: -2, ambicion: 1 } }
+        ]},
+        { q: '¿Qué tipo de rival disfrutas enfrentar?', options: [
+            { text: 'Uno que también valora la amistad y el juego limpio.', delta: { vinculo: 2, moralidad: 1 } },
+            { text: 'Uno poderoso que me obligue a superarme.', delta: { ambicion: 2 } },
+            { text: 'Uno impredecible, que no siga ningún patrón.', delta: { instinto: 2 } },
+            { text: 'Uno frío y estratégico, un desafío mental.', delta: { instinto: -2 } }
+        ]},
+        { q: 'Cuando pierdes un duelo importante...', options: [
+            { text: 'Me duele, pero vuelvo a intentarlo las veces que sea necesario.', delta: { resiliencia: 2 } },
+            { text: 'Analizo cada error con frialdad para no repetirlo.', delta: { instinto: -2, resiliencia: 1 } },
+            { text: 'Me frustro, pero mis amigos me ayudan a seguir.', delta: { vinculo: 2 } },
+            { text: 'Lo tomo como una afrenta personal, necesito revancha.', delta: { ambicion: 2, moralidad: -1 } }
+        ]},
+        { q: '¿Qué representan para ti tus cartas más poderosas?', options: [
+            { text: 'El vínculo con las cartas que me acompañaron desde el inicio.', delta: { vinculo: 1, moralidad: 1 } },
+            { text: 'Las herramientas de mi ambición, mi camino a la cima.', delta: { ambicion: 2 } },
+            { text: 'Sorpresas que uso cuando el momento se siente correcto.', delta: { instinto: 2 } },
+            { text: 'Piezas de un plan ya definido de antemano.', delta: { instinto: -2 } }
+        ]},
+        { q: 'En un torneo, ¿qué te importa más al final del día?', options: [
+            { text: 'Que mis amigos y yo lo disfrutamos juntos.', delta: { vinculo: 2 } },
+            { text: 'El trofeo, el reconocimiento del logro.', delta: { ambicion: 2 } },
+            { text: 'Los momentos intensos que viví duelo a duelo.', delta: { instinto: 1, resiliencia: 1 } },
+            { text: 'Haber jugado con honor, gane o pierda.', delta: { moralidad: 2 } }
+        ]}
+    ],
+
+    // vector: -1..1 por eje (vinculo, ambicion, instinto, resiliencia, moralidad)
+    PERSONAJE_CATALOGO: [
+        { id: 'yugi-muto',      name: 'Yugi Muto',       img: 'img/personajes/yugi-muto.jpg',      desc: 'Cree en el poder de la amistad y en el corazón de las cartas; nunca se rinde aunque el duelo esté en su contra.', vector: { vinculo: 0.9, ambicion: -0.3, instinto: 0.4, resiliencia: 0.9, moralidad: 0.9 } },
+        { id: 'seto-kaiba',     name: 'Seto Kaiba',      img: 'img/personajes/seto-kaiba.jpg',     desc: 'Obsesionado con ser el mejor duelista del mundo; confía únicamente en su propia habilidad y estrategia.', vector: { vinculo: -0.5, ambicion: 0.9, instinto: 0.2, resiliencia: 0.8, moralidad: 0.1 } },
+        { id: 'joey-wheeler',   name: 'Joey Wheeler',    img: 'img/personajes/joey-wheeler.jpg',   desc: 'Duelista de corazón que juega por instinto y por sus amigos; su determinación compensa lo que le falta en cálculo.', vector: { vinculo: 0.8, ambicion: 0.3, instinto: 0.8, resiliencia: 0.7, moralidad: 0.6 } },
+        { id: 'yusei-fudo',     name: 'Yusei Fudo',      img: 'img/personajes/yusei-fudo.jpg',     desc: 'Ingeniero y estratega que duelea con la cabeza fría, pero siempre en función de proteger a los suyos.', vector: { vinculo: 0.7, ambicion: 0.1, instinto: -0.2, resiliencia: 0.8, moralidad: 0.8 } },
+        { id: 'jaden-yuki',     name: 'Jaden Yuki',      img: 'img/personajes/jaden-yuki.jpg',     desc: 'Duelea por diversión y por sus cartas-espíritu; espontáneo, alegre y leal a sus amigos por encima de todo.', vector: { vinculo: 0.6, ambicion: -0.4, instinto: 0.7, resiliencia: 0.5, moralidad: 0.7 } },
+        { id: 'zane-truesdale', name: 'Zane Truesdale',  img: 'img/personajes/zane-truesdale.jpg', desc: 'Perfeccionista solitario que mide su valor por el resultado; la victoria a cualquier costo lo consume.', vector: { vinculo: -0.2, ambicion: 0.7, instinto: -0.3, resiliencia: 0.6, moralidad: 0.4 } },
+        { id: 'bakura-ryou',    name: 'Bakura (Yami)',   img: 'img/personajes/bakura-ryou.jpg',    desc: 'Manipulador y frío, ve el duelo como un juego de poder donde el fin siempre justifica los medios.', vector: { vinculo: -0.8, ambicion: 0.8, instinto: -0.4, resiliencia: 0.5, moralidad: -0.9 } },
+        { id: 'marik-ishtar',   name: 'Marik Ishtar',    img: 'img/personajes/marik-ishtar.jpg',   desc: 'Impulsivo y ambicioso, busca poder sin ataduras y no le tiembla la mano para conseguirlo.', vector: { vinculo: -0.6, ambicion: 0.6, instinto: 0.6, resiliencia: 0.4, moralidad: -0.6 } },
+        { id: 'mai-valentine',  name: 'Mai Valentine',   img: 'img/personajes/mai-valentine.jpg',  desc: 'Independiente y orgullosa, juega para sí misma pero termina encontrando valor en los lazos que crea.', vector: { vinculo: 0.2, ambicion: 0.5, instinto: 0.3, resiliencia: 0.6, moralidad: 0.3 } },
+        { id: 'aster-phoenix',  name: 'Aster Phoenix',   img: 'img/personajes/aster-phoenix.jpg',  desc: 'Profesional calculador, cada duelo es un paso hacia un objetivo personal que persigue con frialdad.', vector: { vinculo: -0.1, ambicion: 0.6, instinto: -0.5, resiliencia: 0.7, moralidad: 0.5 } },
+        { id: 'yuma-tsukumo',   name: 'Yuma Tsukumo',    img: 'img/personajes/yuma-tsukumo.jpg',   desc: 'Puro corazón y adrenalina; salta al riesgo sin pensarlo dos veces, siempre por sus amigos.', vector: { vinculo: 0.9, ambicion: -0.5, instinto: 0.9, resiliencia: 0.8, moralidad: 0.8 } },
+        { id: 'kaito-tenjo',    name: 'Kaito Tenjo',     img: 'img/personajes/kaito-tenjo.jpg',    desc: 'Reservado y metódico, duelea con un objetivo mayor en mente que rara vez comparte con nadie.', vector: { vinculo: 0.1, ambicion: 0.4, instinto: -0.6, resiliencia: 0.7, moralidad: 0.6 } }
+    ],
+
     TESTS: {
         teoricos: [
             { id: 'test-rulings-torneo', label: 'Rulings y Toma de Decisiones en Torneo', level: 'Avanzado',
@@ -858,6 +930,8 @@ const Formacion = {
                         data-tab="test" onclick="Formacion.switchTab('test')">🧪 Test</button>
                 <button class="form-subnav-btn form-subnav-btn--green${this.activeTab === 'estilo' ? ' active' : ''}"
                         data-tab="estilo" onclick="Formacion.switchTab('estilo')">🧭 Tu Estilo</button>
+                <button class="form-subnav-btn form-subnav-btn--green${this.activeTab === 'personaje' ? ' active' : ''}"
+                        data-tab="personaje" onclick="Formacion.switchTab('personaje')">🎭 Tu Personaje</button>
                 <button class="form-subnav-btn${this.activeTab === 'juegos' ? ' active' : ''}"
                         data-tab="juegos" onclick="Formacion.switchTab('juegos')">🎮 Juegos</button>
                 <button class="form-subnav-btn${this.activeTab === 'fuentes' ? ' active' : ''}"
@@ -897,8 +971,9 @@ const Formacion = {
     _renderCurrentTab: function () {
         if (this.activeTab === 'apuntes')  return this._renderApuntesTab();
         if (this.activeTab === 'test')     return this._renderTestTab();
-        if (this.activeTab === 'estilo')   return this._renderEstiloTab();
-        if (this.activeTab === 'juegos')   return this._renderJuegosTab();
+        if (this.activeTab === 'estilo')     return this._renderEstiloTab();
+        if (this.activeTab === 'personaje')  return this._renderPersonajeTab();
+        if (this.activeTab === 'juegos')     return this._renderJuegosTab();
         if (this.activeTab === 'fuentes')  return this._renderFuentesTab();
         if (this.activeTab === 'maestros') return this._renderMaestrosTab();
         return this._renderTemasTab(); // 'temas' o cualquier id de TOPICS
@@ -1161,6 +1236,137 @@ const Formacion = {
     viewEstiloArchetype: function (name) {
         if (window.CardViewer?.openArchetypeInBuscador) { CardViewer.openArchetypeInBuscador(name); return; }
         this.goToTab('buscador');
+    },
+
+// ── Tu Personaje de Yu-Gi-Oh! ────────────────────────────
+    _renderPersonajeTab: function () {
+        const result = this.getPersonajeResult();
+        return `
+            <div class="form-topic-container">
+                <div class="form-notebook form-notebook--test">
+                    <h2 class="form-nb-title">🎭 Tu Personaje de Yu-Gi-Oh!</h2>
+                    <p class="form-nb-text">Responde según lo que sientas de verdad frente a un duelo — no hay respuesta correcta. El resultado busca al personaje cuya personalidad, motivaciones y objetivos se parezcan más a los tuyos.</p>
+                    ${result ? this._renderPersonajeResult(result) : this._renderPersonajeQuiz()}
+                </div>
+            </div>`;
+    },
+
+    _renderPersonajeQuiz: function () {
+        return `
+            <div class="form-quiz form-quiz--test fperso-quiz" id="fperso-quiz">
+                ${this.PERSONAJE_PREGUNTAS.map((q, qi) => `
+                    <div class="form-quiz-q">
+                        <p class="form-quiz-question">${qi + 1}. ${q.q}</p>
+                        <div class="form-quiz-opts">
+                            ${q.options.map((op, oi) => `
+                                <label class="form-quiz-opt">
+                                    <input type="radio" name="fperso-q-${qi}" value="${oi}">
+                                    <span>${op.text}</span>
+                                </label>`).join('')}
+                        </div>
+                    </div>`).join('')}
+                <button class="form-quiz-check-btn form-quiz-check-btn--green" onclick="Formacion.checkPersonaje()">🎭 Descubrir mi Personaje</button>
+            </div>`;
+    },
+
+    _computePersonajeAxes: function () {
+        const axes = {};
+        this.PERSONAJE_AXES.forEach(a => axes[a] = { raw: 0, max: 0 });
+        this.PERSONAJE_PREGUNTAS.forEach((q, qi) => {
+            const sel = document.querySelector(`input[name="fperso-q-${qi}"]:checked`);
+            const chosenIdx = sel ? Number(sel.value) : null;
+            this.PERSONAJE_AXES.forEach(axis => {
+                const maxAbs = Math.max(...q.options.map(op => Math.abs(op.delta?.[axis] || 0)));
+                axes[axis].max += maxAbs;
+            });
+            if (chosenIdx !== null) {
+                const delta = q.options[chosenIdx].delta || {};
+                Object.entries(delta).forEach(([axis, val]) => { if (axes[axis]) axes[axis].raw += val; });
+            }
+        });
+        return axes;
+    },
+
+    checkPersonaje: function () {
+        const total = this.PERSONAJE_PREGUNTAS.length;
+        let answered = 0;
+        for (let qi = 0; qi < total; qi++) {
+            if (document.querySelector(`input[name="fperso-q-${qi}"]:checked`)) answered++;
+        }
+        if (answered < total) {
+            alert(`Responde las ${total} preguntas antes de descubrir tu personaje (llevas ${answered}).`);
+            return;
+        }
+
+        const axesRaw = this._computePersonajeAxes();
+        const perfil = {};
+        this.PERSONAJE_AXES.forEach(a => { perfil[a] = axesRaw[a].max ? +(axesRaw[a].raw / axesRaw[a].max).toFixed(3) : 0; });
+
+        const scored = this.PERSONAJE_CATALOGO.map(p => {
+            let distSq = 0;
+            this.PERSONAJE_AXES.forEach(a => { const d = (perfil[a] || 0) - (p.vector[a] || 0); distSq += d * d; });
+            return { p, dist: Math.sqrt(distSq) };
+        }).sort((a, b) => a.dist - b.dist);
+
+        this._savePersonajeResult({ perfil, personajeId: scored[0].p.id, evaluatedAt: Date.now() });
+        const content = document.getElementById('form-tab-content');
+        if (content) content.innerHTML = this._renderCurrentTab();
+    },
+
+    getPersonajeResult: function () {
+        try { return JSON.parse(localStorage.getItem(this.PERSONAJE_KEY)) || null; }
+        catch (_) { return null; }
+    },
+
+    _savePersonajeResult: function (data) {
+        try { localStorage.setItem(this.PERSONAJE_KEY, JSON.stringify(data)); } catch (_) {}
+    },
+
+    resetPersonaje: function () {
+        if (!confirm('¿Rehacer el Test de Tu Personaje? Se reemplazará tu resultado actual.')) return;
+        localStorage.removeItem(this.PERSONAJE_KEY);
+        const content = document.getElementById('form-tab-content');
+        if (content) content.innerHTML = this._renderCurrentTab();
+    },
+
+    _renderPersonajeResult: function (result) {
+        const p = this.PERSONAJE_CATALOGO.find(x => x.id === result.personajeId);
+        if (!p) return '<p class="form-empty">No se pudo determinar tu personaje. Rehaz el test.</p>';
+
+        const AXIS_LABELS = {
+            vinculo:      { low: 'Solitario',            high: 'En equipo / Amistad' },
+            ambicion:     { low: 'Humilde',               high: 'Ambicioso / Busca poder' },
+            instinto:     { low: 'Calculador',            high: 'Instintivo / Emocional' },
+            resiliencia:  { low: 'Se rinde fácil',        high: 'Nunca se rinde' },
+            moralidad:    { low: 'El fin justifica los medios', high: 'Código de honor' }
+        };
+        const barsHtml = this.PERSONAJE_AXES.map(a => {
+            const v = result.perfil[a] || 0;
+            const pct = Math.round(((v + 1) / 2) * 100);
+            return `
+            <div class="festilo-axis-row">
+                <div class="festilo-axis-labels">
+                    <span>${AXIS_LABELS[a].low}</span>
+                    <span>${AXIS_LABELS[a].high}</span>
+                </div>
+                <div class="festilo-axis-track">
+                    <div class="festilo-axis-fill" style="width:${pct}%"></div>
+                    <div class="festilo-axis-marker" style="left:${pct}%"></div>
+                </div>
+            </div>`;
+        }).join('');
+
+        return `
+            <div class="festilo-result">
+                <div class="fperso-card">
+                    <img class="fperso-img" src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
+                    <div class="fperso-name">${p.name}</div>
+                    <p class="fperso-desc">${p.desc}</p>
+                </div>
+                <h3 class="festilo-result-title">Tu perfil</h3>
+                <div class="festilo-axes">${barsHtml}</div>
+                <button class="form-quiz-check-btn fpt-reset-btn" onclick="Formacion.resetPersonaje()">↺ Rehacer Test</button>
+            </div>`;
     },
 
 // ═══════════════════════════════════════════════════════════

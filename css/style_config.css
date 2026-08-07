@@ -2543,6 +2543,18 @@
 .festilo-rec-desc { font-size: 0.85rem; color: #2a2a2a; margin: 0 0 8px; }
 .festilo-rec-btn { width: auto; }
 
+.fperso-card {
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 10px; padding: 16px; gap: 8px;
+}
+.fperso-img {
+    width: 140px; height: 140px; object-fit: cover; border-radius: 10px;
+    border: 2px solid var(--gold-color, #d4af37);
+}
+.fperso-name { font-weight: 700; font-size: 1.1rem; color: #1a2a4a; }
+.fperso-desc { font-size: 0.85rem; color: #2a2a2a; margin: 0; max-width: 420px; }
+
 .tabintro-config-list {
     display: flex;
     flex-direction: column;
