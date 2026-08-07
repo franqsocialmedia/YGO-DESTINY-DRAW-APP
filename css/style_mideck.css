@@ -3129,6 +3129,14 @@
 .combo-power-premeta { font-size: .68rem; opacity: .6; font-weight: normal; }
 
 .combo-choke-modal { max-width: 460px; }
+.combo-choke-picker-btns { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+.combo-choke-picker-btn {
+    flex: 1; min-width: 140px; padding: 8px 10px; border-radius: 8px;
+    background: rgba(255,215,0,.1); border: 1px solid rgba(255,215,0,.3);
+    color: var(--text-light); cursor: pointer; font-size: .85rem;
+}
+.combo-choke-picker-btn:hover { background: rgba(255,215,0,.2); }
+.combo-choke-group-title { font-size: .75rem; font-weight: 700; opacity: .75; margin: 10px 0 4px; }
 .combo-choke-search-row { display: flex; gap: 6px; margin: 8px 0; }
 .combo-choke-search-row input {
     flex: 1; background: rgba(255,255,255,.06); border: 1px solid var(--border-color);

@@ -718,6 +718,7 @@
 @media (max-width: 768px) {
     .combo-step-cardname { display: none; }
     .combo-step-thumb { margin: 0 4px 0 0; }
+    .combo-step-time { display: none; }
 }
 
 /* ── style_core.css → Lobby ── */

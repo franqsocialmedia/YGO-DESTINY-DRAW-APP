@@ -4917,7 +4917,7 @@ openExtraPicker: function (deckName, comboId) {
     },
 
     
-    _chokeSearchResults: [],
+//    _chokeSearchResults: [],
 
     _bossRoles: ['Boss Monster', 'Tower'],
 
@@ -5057,8 +5057,11 @@ _stepIndex: function (combo, stepId) {
     },
 
     // ── Meta y Choke Points (Etapa 5) ────────────────────────────────
+    // Buscador compartido con Zona de Práctica (filtros avanzados, chips,
+    // tope de 100 resultados) + acceso rápido a Engines/Favoritas del usuario.
     openChokePicker: function (deckName, comboId, stepId) {
         document.getElementById('combo-choke-overlay')?.remove();
+        this._chokePickerCtx = { deckName, comboId, stepId };
         const overlay = document.createElement('div');
         overlay.id = 'combo-choke-overlay';
         overlay.className = 'deck-overlay';
@@ -5066,13 +5069,11 @@ _stepIndex: function (combo, stepId) {
         overlay.innerHTML = `
             <div class="deck-modal combo-choke-modal">
                 <h3>🚧 Marcar Choke Point</h3>
-                <p class="deck-modal-note">Busca la carta del meta que interrumpe este paso del combo.</p>
-                <div class="combo-choke-search-row">
-                    <input type="text" id="combo-choke-search-input" placeholder="Nombre de la carta..." autocomplete="off"
-                        onkeydown="if(event.key==='Enter'){Combos._chokeSearch('${deckName}','${comboId}','${stepId}');}">
-                    <button onclick="Combos._chokeSearch('${deckName}','${comboId}','${stepId}')">🔍 Buscar</button>
+                <p class="deck-modal-note">Busca la carta del meta que interrumpe este paso del combo, o elígela desde tus Engines/Favoritas.</p>
+                <div class="combo-choke-picker-btns">
+                    <button class="combo-choke-picker-btn" onclick="Combos._openChokeSearch()">🔍 Buscar Carta</button>
+                    <button class="combo-choke-picker-btn" onclick="Combos._openChokeGroupPicker()">📁 Desde Engine / Favoritas</button>
                 </div>
-                <div id="combo-choke-results" class="combo-choke-results"></div>
                 <div class="deck-modal-buttons">
                     <button onclick="document.getElementById('combo-choke-overlay').remove()">Cerrar</button>
                 </div>
@@ -5080,35 +5081,89 @@ _stepIndex: function (combo, stepId) {
         document.body.appendChild(overlay);
     },
 
-    _chokeSearch: async function (deckName, comboId, stepId) {
-        const input = document.getElementById('combo-choke-search-input');
-        const q = input ? input.value.trim() : '';
-        const results = document.getElementById('combo-choke-results');
-        if (!q || !results) return;
-        results.innerHTML = '<p class="deck-empty">Buscando...</p>';
-        try {
-            const resp = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(q)}`);
-            const json = await resp.json();
-            this._chokeSearchResults = (json.data || []).slice(0, 15);
-            results.innerHTML = this._chokeSearchResults.map((card, i) => `
-                <div class="combo-choke-result-row">
-                    <img src="${card.card_images?.[0]?.image_url_small || ''}" class="combo-picker-thumb">
-                    <span class="combo-picker-name">${this._escape(card.name)}</span>
-                    <button onclick="Combos.addChokePoint('${deckName}','${comboId}','${stepId}', ${i})">＋ Elegir</button>
-                </div>`).join('') || '<p class="deck-empty">Sin resultados.</p>';
-        } catch (e) {
-            results.innerHTML = '<p class="deck-empty">Error buscando cartas.</p>';
-        }
+    _openChokeSearch: function () {
+        if (!window.ZonaPractica) { alert('Buscador no disponible.'); return; }
+        this._prevChokeAddSearch = ZonaPractica._addSearchCard.bind(ZonaPractica);
+        ZonaPractica._addSearchCard = (index) => {
+            const card = ZonaPractica._lastSearchResults[index];
+            if (!card) return;
+            this._addChokePointCard(card);
+            const btns = document.querySelectorAll('#pz-search-results .pz-search-add-btn');
+            const btn  = btns[index];
+            if (btn) {
+                const orig = btn.textContent;
+                btn.textContent = '✓';
+                btn.disabled = true;
+                setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 900);
+            }
+        };
+        ZonaPractica.openCardSearch();
+        const restore = () => { if (this._prevChokeAddSearch) ZonaPractica._addSearchCard = this._prevChokeAddSearch; };
+        const observer = new MutationObserver((muts, obs) => {
+            if (!document.getElementById('pz-search-overlay')) { restore(); obs.disconnect(); }
+        });
+        observer.observe(document.body, { childList: true });
     },
 
-    addChokePoint: function (deckName, comboId, stepId, resultIdx) {
-        const card = this._chokeSearchResults[resultIdx];
+    _openChokeGroupPicker: function () {
+        document.getElementById('combo-choke-group-overlay')?.remove();
+        const engines = window.Engines ? Engines.getAll() : [];
+        const favs    = window.Favoritas ? Favoritas.getAll() : {};
+
+        const engineCards = {};
+        engines.forEach(e => Object.entries(e.cards || {}).forEach(([id, item]) => {
+            if (!engineCards[id] && item.data) engineCards[id] = item.data;
+        }));
+        const favCards = {};
+        Object.entries(favs).forEach(([id, f]) => {
+            favCards[id] = f.data || { id: f.id, name: f.name, type: f.type, card_images: [{ image_url_small: f.img }] };
+        });
+        this._chokeGroupCards = { ...engineCards, ...favCards };
+
+        const renderGroup = (title, cardsObj) => {
+            const entries = Object.values(cardsObj);
+            if (!entries.length) return `<p class="deck-empty">Sin cartas en ${title}.</p>`;
+            return `<div class="combo-choke-group-title">${title}</div>` + entries.map(c => `
+                <div class="combo-choke-result-row">
+                    <img src="${c.card_images?.[0]?.image_url_small || ''}" class="combo-picker-thumb">
+                    <span class="combo-picker-name">${this._escape(c.name)}</span>
+                    <button onclick="Combos._pickChokeFromGroup('${c.id}')">＋ Elegir</button>
+                </div>`).join('');
+        };
+
+        const overlay = document.createElement('div');
+        overlay.id = 'combo-choke-group-overlay';
+        overlay.className = 'deck-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div class="deck-modal combo-choke-modal">
+                <h3>📁 Elegir desde Engine / Favoritas</h3>
+                <div class="combo-choke-results">
+                    ${renderGroup('⚙️ Engines', engineCards)}
+                    ${renderGroup('⭐ Favoritas', favCards)}
+                </div>
+                <div class="deck-modal-buttons">
+                    <button onclick="document.getElementById('combo-choke-group-overlay').remove()">Cerrar</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    },
+
+    _pickChokeFromGroup: function (cardId) {
+        const card = this._chokeGroupCards?.[cardId];
         if (!card) return;
-        this._withCombo(deckName, comboId, combo => {
+        this._addChokePointCard(card);
+        document.getElementById('combo-choke-group-overlay')?.remove();
+    },
+
+    _addChokePointCard: function (card) {
+        const ctx = this._chokePickerCtx;
+        if (!ctx || !card) return;
+        this._withCombo(ctx.deckName, ctx.comboId, combo => {
             if (!combo.chokePoints) combo.chokePoints = [];
             combo.chokePoints.push({
                 id:           'choke_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
-                stepId:       stepId,
+                stepId:       ctx.stepId,
                 metaCardId:   card.id,
                 metaCardName: card.name,
                 metaCardImg:  card.card_images?.[0]?.image_url_small || '',
@@ -5208,14 +5263,19 @@ _stepIndex: function (combo, stepId) {
     // ── Endboard: cartas activas para follow up, función principal y dependencias ──
     // Field arranca activa por defecto (está en juego); HAND/GY/Banish se marcan
     // a mano — no todo lo que quedó ahí aporta valor real de follow up.
+    // Todas las funciones/roles definidos por el usuario en Config → Mecánicas y
+    // Roles — no solo los que el sistema detectó automáticamente en esta carta.
     _roleOptionsForCard: function (id) {
-        const item  = Deck.cards[id];
-        const roles = (item && item.roles && item.roles.length) ? item.roles : [
+        if (window.ConfigManager && typeof ConfigManager.getRoleNames === 'function') {
+            const names = ConfigManager.getRoleNames();
+            if (names.length) return names;
+        }
+        // Fallback si no hay roles configurados en el sistema
+        return [
             'Starter', 'Extender', 'Handtrap', 'Boardbreaker', 'Disruptor', 'Removal',
             'Negate-activation', 'Negate-effect', 'Boss Monster', 'Tower',
             'Searcher', 'Recycler', 'Protector', 'Otro'
         ];
-        return roles;
     },
 
     toggleEndboardActive: function (deckName, comboId, uid) {
