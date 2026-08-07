@@ -3163,6 +3163,7 @@ const CounterSim = {
     selection: {},   // Container C: {id:{data}}
     counters: {},    // Container D: {id:{data, score, isPerfect, manual, estimated}}
     _pickerTab: 'decks',
+    _pickerTarget: 'pool',
     _searchTimeout: null,
     _searchResults: [],
 
@@ -3179,6 +3180,13 @@ const CounterSim = {
                     <div class="ctrsim-picker-tabs">
                         <button class="ctrsim-ptab-btn ${this._pickerTab === 'decks' ? 'active' : ''}" onclick="CounterSim._switchPickerTab('decks')">Decks</button>
                         <button class="ctrsim-ptab-btn ${this._pickerTab === 'engines' ? 'active' : ''}" onclick="CounterSim._switchPickerTab('engines')">Engines</button>
+                        <button class="ctrsim-ptab-btn ${this._pickerTab === 'staples' ? 'active' : ''}" onclick="CounterSim._switchPickerTab('staples')">Staples</button>
+                        <button class="ctrsim-ptab-btn ${this._pickerTab === 'favoritas' ? 'active' : ''}" onclick="CounterSim._switchPickerTab('favoritas')">Favoritas</button>
+                    </div>
+                    <div class="ctrsim-picker-target-row">
+                        <span class="ctrsim-picker-target-lbl">Importar a:</span>
+                        <button class="ctrsim-ptarget-btn ${this._pickerTarget === 'pool' ? 'active' : ''}" onclick="CounterSim._setPickerTarget('pool')">🗂️ Pool</button>
+                        <button class="ctrsim-ptarget-btn ${this._pickerTarget === 'counters' ? 'active' : ''}" onclick="CounterSim._setPickerTarget('counters')">🛡️ Counters</button>
                     </div>
                     <div id="ctrsim-picker-list" class="ctrsim-picker-list">${this._renderPickerList()}</div>
                 </div>
@@ -3221,6 +3229,11 @@ const CounterSim = {
         if (this.container) this.renderInto(this.container);
     },
 
+    _setPickerTarget: function (target) {
+        this._pickerTarget = target;
+        if (this.container) this.renderInto(this.container);
+    },
+
     _renderPickerList: function () {
         if (this._pickerTab === 'decks') {
             const items = [];
@@ -3233,23 +3246,70 @@ const CounterSim = {
             if (!items.length) return '<div class="ctrsim-empty">Sin decks guardados.</div>';
             return items.map(it => `<button class="ctrsim-picker-item" onclick="${it.onclick}">${it.label}</button>`).join('');
         }
-        const engines = window.Engines ? Engines.getAll() : [];
-        if (!engines.length) return '<div class="ctrsim-empty">Sin engines guardados.</div>';
-        return engines.map((e, i) => `
-            <button class="ctrsim-picker-item" onclick="CounterSim.addFromSource('engine', ${i})">${e.name}</button>`).join('');
+        if (this._pickerTab === 'engines') {
+            const engines = window.Engines ? Engines.getAll() : [];
+            if (!engines.length) return '<div class="ctrsim-empty">Sin engines guardados.</div>';
+            return engines.map((e, i) => `
+                <button class="ctrsim-picker-item" onclick="CounterSim.addFromSource('engine', ${i})">${e.name}</button>`).join('');
+        }
+        if (this._pickerTab === 'staples') {
+            const staples = window.ConfigManager ? ConfigManager.getStaples() : {};
+            const count = Object.keys(staples).length;
+            if (!count) return '<div class="ctrsim-empty">Sin Staples configurados.</div>';
+            return `<button class="ctrsim-picker-item" onclick="CounterSim.addFromSource('staples')">📌 Importar todos los Staples (${count})</button>`;
+        }
+        if (this._pickerTab === 'favoritas') {
+            const favs = window.Favoritas ? Favoritas.getAll() : {};
+            const count = Object.keys(favs).length;
+            if (!count) return '<div class="ctrsim-empty">Sin Favoritas guardadas.</div>';
+            return `<button class="ctrsim-picker-item" onclick="CounterSim.addFromSource('favoritas')">⭐ Importar todas las Favoritas (${count})</button>`;
+        }
+        return '';
+    },
+
+    // Añade una carta al Pool o a Counters según el switch "Importar a:"
+    _addToTarget: function (id, cardData, qty) {
+        if (this._pickerTarget === 'counters') {
+            if (!this.counters[id]) this.counters[id] = { data: cardData, isPerfect: false, manual: true, counterOf: {} };
+        } else {
+            if (this.pool[id]) this.pool[id].qty += (qty || 1);
+            else this.pool[id] = { data: cardData, qty: qty || 1, location: window.Deck?.isExtraDeckCard(cardData) ? 'extra' : 'main' };
+        }
+    },
+
+    _refreshPickerTarget: function () {
+        if (this._pickerTarget === 'counters') this._refreshCounters(); else this._refreshPool();
     },
 
     addFromSource: function (type, idx) {
+        if (type === 'staples' && window.ConfigManager) {
+            const staples = ConfigManager.getStaples();
+            Object.entries(staples).forEach(([id, s]) => {
+                const cardData = { id: s.id, name: s.name, type: s.type, card_images: [{ image_url_small: s.imageUrl }] };
+                this._addToTarget(id, cardData, 1);
+            });
+            this._refreshPickerTarget();
+            return;
+        }
+        if (type === 'favoritas' && window.Favoritas) {
+            const favs = Favoritas.getAll();
+            Object.entries(favs).forEach(([id, f]) => {
+                const cardData = f.data || { id: f.id, name: f.name, type: f.type, card_images: [{ image_url_small: f.img }] };
+                this._addToTarget(id, cardData, 1);
+            });
+            this._refreshPickerTarget();
+            return;
+        }
+
         let cards = {};
         if (type === 'active' && window.Deck) cards = Deck.cards;
         else if (type === 'saved'  && window.Deck)    cards = (Deck.getSavedDecks()[idx] || {}).cards || {};
         else if (type === 'engine' && window.Engines) cards = (Engines.getAll()[idx] || {}).cards || {};
 
         Object.entries(cards).forEach(([id, item]) => {
-            if (this.pool[id]) this.pool[id].qty += (item.qty || 1);
-            else this.pool[id] = { data: item.data, qty: item.qty || 1, location: item.location || 'main' };
+            this._addToTarget(id, item.data, item.qty || 1);
         });
-        this._refreshPool();
+        this._refreshPickerTarget();
     },
 
     // ── Pool (Container B) ──────────────────────────────
@@ -3295,9 +3355,16 @@ const CounterSim = {
         if (!entries.length) return '<div class="ctrsim-empty">Sin cartas objetivo seleccionadas.</div>';
         return entries.map(([id, item]) => `
 <div class="ctrsim-sel-thumb" title="${item.data?.name || ''}">
-    <img src="${this._imgFor(item.data, id)}" class="ctrsim-thumb-img" loading="lazy">
+    <img src="${this._imgFor(item.data, id)}" class="ctrsim-thumb-img" loading="lazy"
+         onclick="CounterSim.viewCard('${id}')">
     <button class="ctrsim-thumb-remove" onclick="CounterSim.toggleSelection('${id}')">✕</button>
 </div>`).join('');
+    },
+
+    viewCard: function (id) {
+        const item = this.selection[id];
+        if (!item?.data || !window.ZonaPractica) return;
+        ZonaPractica._openMiniCV(item.data);
     },
 
     _refreshSelection: function () {
@@ -3305,90 +3372,36 @@ const CounterSim = {
         if (el) el.innerHTML = this._renderSelection();
     },
 
-    // ── Búsqueda de cartas (compartida por Pool y Counters) ──
-    openPoolSearch:    function () { this._showSearchModal('pool'); },
-    openCounterSearch: function () { this._showSearchModal('counter'); },
+    // ── Búsqueda de cartas (reutiliza el buscador de Zona de Práctica:
+    //    filtros avanzados, chips por keyword, tope de 100 resultados) ──
+    openPoolSearch:    function () { this._openSharedSearch('pool'); },
+    openCounterSearch: function () { this._openSharedSearch('counter'); },
 
-    _showSearchModal: function (target) {
-        document.getElementById('ctrsim-search-modal')?.remove();
-        const overlay = document.createElement('div');
-        overlay.id = 'ctrsim-search-modal';
-        overlay.className = 'ctrsim-search-modal';
-        overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
-        overlay.innerHTML = `
-<div class="ctrsim-search-box eng-modal-box">
-    <div class="eng-modal-header">
-        <span>Buscar Cartas</span>
-        <button class="eng-modal-close" onclick="document.getElementById('ctrsim-search-modal').remove()">✕</button>
-    </div>
-    <input type="text" id="ctrsim-search-input" class="eng-input" placeholder="Nombre de la carta..."
-           oninput="CounterSim._onSearchInput('${target}')">
-    <div id="ctrsim-search-results" class="eng-search-results">
-        <div class="eng-search-hint">Escribe al menos 2 caracteres</div>
-    </div>
-</div>`;
-        document.body.appendChild(overlay);
-    },
-
-    _onSearchInput: function (target) {
-        clearTimeout(this._searchTimeout);
-        this._searchTimeout = setTimeout(() => this._doSearch(target), 380);
-    },
-
-    _doSearch: async function (target) {
-        const q   = document.getElementById('ctrsim-search-input')?.value?.trim();
-        const box = document.getElementById('ctrsim-search-results');
-        if (!box) return;
-        if (!q || q.length < 2) { box.innerHTML = '<div class="eng-search-hint">Escribe al menos 2 caracteres</div>'; return; }
-        box.innerHTML = '<div class="eng-search-hint">Buscando...</div>';
-        try {
-            const res  = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(q)}`);
-            const data = await res.json();
-            if (!data.data?.length) { box.innerHTML = '<div class="eng-search-hint">Sin resultados</div>'; return; }
-            this._searchResults = data.data;
-            this._searchPage    = 0;
-            this._renderSearchPage(target);
-        } catch (_) { box.innerHTML = '<div class="eng-search-hint">Error de conexión</div>'; }
-    },
-
-    _renderSearchPage: function (target) {
-        const box = document.getElementById('ctrsim-search-results');
-        if (!box) return;
-        const PAGE_SIZE   = 100;
-        const cards       = this._searchResults;
-        const totalPages  = Math.max(1, Math.ceil(cards.length / PAGE_SIZE));
-        if (this._searchPage >= totalPages) this._searchPage = totalPages - 1;
-        if (this._searchPage < 0) this._searchPage = 0;
-        const start     = this._searchPage * PAGE_SIZE;
-        const pageCards = cards.slice(start, start + PAGE_SIZE);
-
-        let html = pageCards.map((card, i) => `
-<div class="eng-sitem">
-    <img src="${this._imgFor(card, card.id)}" class="eng-sitem-img" loading="lazy">
-    <div class="eng-sitem-name">${card.name}</div>
-    <button class="eng-qty-btn eng-qty-active" onclick="CounterSim._addSearchResult('${target}', ${start + i})">＋ Añadir</button>
-</div>`).join('');
-
-        if (totalPages > 1) {
-            html += '<div class="ctrsim-search-pagination">';
-            for (let p = 0; p < totalPages; p++) {
-                const from = p * PAGE_SIZE + 1;
-                const to   = Math.min((p + 1) * PAGE_SIZE, cards.length);
-                html += `<button class="results-page-btn ${p === this._searchPage ? 'results-page-active' : ''}"
-                            onclick="CounterSim._goToSearchPage('${target}', ${p})">${from}-${to}</button>`;
+    _openSharedSearch: function (target) {
+        if (!window.ZonaPractica) { alert('Buscador no disponible.'); return; }
+        this._prevAddSearch = ZonaPractica._addSearchCard.bind(ZonaPractica);
+        ZonaPractica._addSearchCard = (index) => {
+            const card = ZonaPractica._lastSearchResults[index];
+            if (!card) return;
+            this._addSearchResultCard(target, card);
+            const btns = document.querySelectorAll('#pz-search-results .pz-search-add-btn');
+            const btn  = btns[index];
+            if (btn) {
+                const orig = btn.textContent;
+                btn.textContent = '✓';
+                btn.disabled = true;
+                setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 900);
             }
-            html += '</div>';
-        }
-        box.innerHTML = html;
+        };
+        ZonaPractica.openCardSearch();
+        const restore = () => { if (this._prevAddSearch) ZonaPractica._addSearchCard = this._prevAddSearch; };
+        const observer = new MutationObserver((muts, obs) => {
+            if (!document.getElementById('pz-search-overlay')) { restore(); obs.disconnect(); }
+        });
+        observer.observe(document.body, { childList: true });
     },
 
-    _goToSearchPage: function (target, page) {
-        this._searchPage = page;
-        this._renderSearchPage(target);
-    },
-
-    _addSearchResult: function (target, idx) {
-        const card = this._searchResults[idx];
+    _addSearchResultCard: function (target, card) {
         if (!card) return;
         const id = String(card.id);
         if (target === 'pool') {
@@ -3400,7 +3413,6 @@ const CounterSim = {
             this._refreshCounters();
         }
     },
-
 
    _renderCounters: function () {
         const entries = Object.entries(this.counters);

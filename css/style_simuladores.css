@@ -6178,7 +6178,7 @@
 .ctrsim-box-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .ctrsim-box-selection, .ctrsim-box-counters { width: 100%;}
 
-.ctrsim-picker-tabs { display: flex; gap: 6px; margin: 8px 0; }
+.ctrsim-picker-tabs { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
 .ctrsim-ptab-btn {
     flex: 1; padding: 6px; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px;
     background: transparent; color: var(--text-light); cursor: pointer; font-size: 0.8rem;
@@ -6202,6 +6202,7 @@
 }
 .ctrsim-thumb-img { width: 64px; height: 93px; object-fit: cover; border-radius: 6px; border: 2px solid transparent; }
 .ctrsim-thumb-selected .ctrsim-thumb-img { border-color: var(--gold-color); }
+.ctrsim-sel-thumb .ctrsim-thumb-img { cursor: pointer; }
 .ctrsim-thumb-qty {
     position: absolute; bottom: 2px; right: 2px; background: rgba(0,0,0,0.75); color: #fff;
     font-size: 0.65rem; padding: 1px 4px; border-radius: 4px;
@@ -6255,7 +6256,14 @@
 
 .ctrsim-search-pagination { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .ctrsim-counter-targets { font-size: 0.72rem; color: rgba(255,255,255,0.45); margin-top: 2px; }
-
+.ctrsim-picker-target-row { display: flex; align-items: center; gap: 6px; margin: 6px 0 8px; flex-wrap: wrap; }
+.ctrsim-picker-target-lbl { font-size: .72rem; color: var(--text-light); opacity: .7; }
+.ctrsim-ptarget-btn {
+    font-size: .72rem; padding: 3px 10px; border-radius: 12px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.15);
+    color: var(--text-light); cursor: pointer;
+}
+.ctrsim-ptarget-btn.active { background: var(--accent-color); color: #111; border-color: var(--accent-color); }
 /* ── Modo "resolviendo cadena" (post Resolver Cadena, hasta Cerrar Cadena) ── */
 
 /* Botón de cadena en el panel de Log */
