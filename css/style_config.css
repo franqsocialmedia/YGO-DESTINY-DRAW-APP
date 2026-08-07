@@ -2515,6 +2515,33 @@
 .form-quiz-check-btn--green {
     background: linear-gradient(135deg, #27ae60, #1e8449);
 }
+.festilo-quiz { display: flex; flex-direction: column; gap: 14px; }
+
+.festilo-result { display: flex; flex-direction: column; gap: 10px; }
+.festilo-result-title { color: #1a2a4a; margin: 10px 0 4px; font-size: 1rem; }
+
+.festilo-axes { display: flex; flex-direction: column; gap: 12px; }
+.festilo-axis-row { display: flex; flex-direction: column; gap: 4px; }
+.festilo-axis-labels {
+    display: flex; justify-content: space-between; font-size: 0.75rem; color: rgba(0,0,0,0.55);
+}
+.festilo-axis-track {
+    position: relative; height: 8px; border-radius: 4px; background: rgba(0,0,0,0.08); overflow: visible;
+}
+.festilo-axis-fill { height: 100%; border-radius: 4px; background: rgba(224, 90, 90, 0.35); }
+.festilo-axis-marker {
+    position: absolute; top: -3px; width: 3px; height: 14px; background: #e05a5a;
+    border-radius: 2px; transform: translateX(-50%);
+}
+
+.festilo-recs { display: flex; flex-direction: column; gap: 10px; }
+.festilo-rec-card {
+    background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 8px; padding: 12px;
+}
+.festilo-rec-name { font-weight: 700; color: #1a2a4a; margin-bottom: 4px; }
+.festilo-rec-desc { font-size: 0.85rem; color: #2a2a2a; margin: 0 0 8px; }
+.festilo-rec-btn { width: auto; }
 
 .tabintro-config-list {
     display: flex;

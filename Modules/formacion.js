@@ -14,6 +14,7 @@ const Formacion = {
     _pt: null,   // estado del Test Práctico activo (tablero aislado, no toca ZonaPractica)
     NOTES_KEY:     'yugioh_formacion_notes',
     MASTERED_KEY:  'yugioh_formacion_mastered',
+    ESTILO_KEY:    'yugioh_estilo_juego',
 
     TOPICS: [
         // ── MÓDULO 1 — Fundamentos del Juego ──
@@ -58,7 +59,90 @@ const Formacion = {
         { id: 'teoricos',  label: 'Teóricos',  icon: '📖' },
         { id: 'practicos', label: 'Prácticos', icon: '🎯' },
     ],
+// ── Tu Estilo de Juego — ejes de preferencia y catálogo de arquetipos ──
+    AXES: ['agresion', 'planificacion', 'riesgo', 'interaccion', 'complejidad'],
 
+    ESTILO_PREGUNTAS: [
+        { q: '¿Qué sensación buscas al final de un duelo ganado?', options: [
+            { text: 'Que fue rapidísimo, casi no le di tiempo a reaccionar.', delta: { agresion: 2, riesgo: 1 } },
+            { text: 'Que resistí toda la partida y terminé ganando por desgaste.', delta: { agresion: -2, riesgo: -1 } },
+            { text: 'Que ejecuté un combo largo sin errores.', delta: { planificacion: 2, complejidad: 1 } },
+            { text: 'Que leí bien la partida y me adapté sobre la marcha.', delta: { planificacion: -2, interaccion: 1 } }
+        ]},
+        { q: 'Al armar tu deck, ¿qué disfrutas más?', options: [
+            { text: 'Optimizar cada copia para que el combo nunca falle.', delta: { planificacion: 2, complejidad: 2 } },
+            { text: 'Meter la mayor cantidad de handtraps e interacción posible.', delta: { interaccion: 2 } },
+            { text: 'Buscar el mayor daño posible en el menor número de turnos.', delta: { agresion: 2, riesgo: 1 } },
+            { text: 'Tener respuestas para todo, aunque sea más lento.', delta: { agresion: -1, interaccion: 1, riesgo: -1 } }
+        ]},
+        { q: 'Si tu jugada principal es negada, ¿qué prefieres que pase después?', options: [
+            { text: 'Tener un plan B inmediato para seguir combeando.', delta: { planificacion: 2 } },
+            { text: 'Que no importe mucho, porque igual dejé un buen board defensivo.', delta: { agresion: -1, riesgo: -1 } },
+            { text: 'Que el rival pague un precio por negarme (2-for-1).', delta: { interaccion: 1, riesgo: 1 } },
+            { text: 'Aceptar el turno perdido y esperar mi momento.', delta: { riesgo: -2, agresion: -1 } }
+        ]},
+        { q: '¿Qué tipo de victoria se siente más satisfactoria?', options: [
+            { text: 'Ganar en el primer turno sin que el rival juegue.', delta: { agresion: 2, riesgo: 2 } },
+            { text: 'Ganar tras aguantar varias interrupciones del rival.', delta: { interaccion: 1, riesgo: -1, complejidad: 1 } },
+            { text: 'Ganar por agotamiento de recursos del rival.', delta: { agresion: -2, riesgo: -1 } },
+            { text: 'Ganar ejecutando algo técnico que pocos saben hacer.', delta: { complejidad: 2, planificacion: 1 } }
+        ]},
+        { q: 'En redes o videos de Yu-Gi-Oh!, ¿qué contenido te llama más?', options: [
+            { text: 'Combos largos y líneas de juego complejas.', delta: { complejidad: 2, planificacion: 1 } },
+            { text: 'Tier lists y qué está rompiendo el formato.', delta: { agresion: 1, riesgo: 1 } },
+            { text: 'Guías de counters y cómo vencer al meta.', delta: { interaccion: 2 } },
+            { text: 'Historias de decks poco convencionales (rogue).', delta: { complejidad: 1, riesgo: 1, interaccion: -1 } }
+        ]},
+        { q: '¿Qué te frustra más como jugador?', options: [
+            { text: 'Que mi combo se caiga por 1 sola handtrap.', delta: { planificacion: 1, riesgo: 1 } },
+            { text: 'No tener respuesta cuando el rival arma un board enorme.', delta: { interaccion: 2 } },
+            { text: 'Que la partida se alargue demasiado sin definirse.', delta: { agresion: 1, riesgo: 1 } },
+            { text: 'Cometer un error de secuencia por ir muy rápido.', delta: { complejidad: 1, planificacion: -1 } }
+        ]},
+        { q: 'Yendo de segundo contra un board completo, ¿cuál es tu plan ideal?', options: [
+            { text: 'Romper el campo con boardbreakers y tomar control.', delta: { interaccion: 2, agresion: 1 } },
+            { text: 'Negar lo importante y hacer mi propio combo encima.', delta: { planificacion: 2, interaccion: 1 } },
+            { text: 'Jugar seguro, esperar recursos y ganar más tarde.', delta: { riesgo: -2, agresion: -1 } },
+            { text: 'Ir con todo aunque sea arriesgado, buscando el OTK.', delta: { riesgo: 2, agresion: 2 } }
+        ]},
+        { q: '¿Qué tan importante es que tu deck sea difícil de pilotar?', options: [
+            { text: 'Mucho, disfruto el reto técnico.', delta: { complejidad: 2 } },
+            { text: 'Prefiero algo directo, que gane sin vueltas.', delta: { complejidad: -2, agresion: 1 } },
+            { text: 'Me da igual, mientras sea consistente.', delta: { riesgo: -1, planificacion: -1 } },
+            { text: 'Prefiero que sea flexible y se adapte a lo que enfrente.', delta: { interaccion: 1, planificacion: -1 } }
+        ]},
+        { q: 'Cuando pierdes, ¿en qué piensas primero?', options: [
+            { text: 'En qué punto del combo me equivoqué.', delta: { complejidad: 1, planificacion: 1 } },
+            { text: 'Qué handtrap o carta me faltó para responder.', delta: { interaccion: 1 } },
+            { text: 'Que jugué muy pasivo y debí arriesgar más.', delta: { riesgo: 1, agresion: 1 } },
+            { text: 'Que el rival tuvo la mano perfecta, mala suerte.', delta: { riesgo: -1 } }
+        ]},
+        { q: 'Si tuvieras que elegir solo una cosa para tu deck ideal, ¿cuál sería?', options: [
+            { text: 'Un combo que nadie pueda replicar fácil.', delta: { complejidad: 2, planificacion: 1 } },
+            { text: 'La mayor cantidad de interacción posible.', delta: { interaccion: 2 } },
+            { text: 'El mayor daño posible en el menor tiempo.', delta: { agresion: 2, riesgo: 1 } },
+            { text: 'Recursos infinitos para nunca quedarme sin jugadas.', delta: { agresion: -1, riesgo: -2, interaccion: -1 } }
+        ]}
+    ],
+
+    // vector: -1..1 por eje. Ajustable con el tiempo según cambie el meta.
+    ESTILO_ARQUETIPOS: [
+        { id: 'spright',        name: 'Spright',        desc: 'Swarm de Links pequeños con mucha autonomía y velocidad; combo corto pero constante.', vector: { agresion: 0.6, planificacion: 0.7, riesgo: 0.3, interaccion: -0.4, complejidad: 0.5 } },
+        { id: 'kashtira',       name: 'Kashtira',       desc: 'Control por desterrado: incomoda al rival negando recursos antes de que los use.', vector: { agresion: 0.2, planificacion: 0.2, riesgo: 0.1, interaccion: 0.8, complejidad: 0.4 } },
+        { id: 'branded',        name: 'Branded',        desc: 'Payoffs grandes de Fusión desde el cementerio; combo denso con mucho poder final.', vector: { agresion: 0.7, planificacion: 0.8, riesgo: 0.5, interaccion: -0.2, complejidad: 0.7 } },
+        { id: 'floowandereeze', name: 'Floowandereeze', desc: 'Stun/lock: reduce las opciones del rival y gana por asfixia, no por daño rápido.', vector: { agresion: -0.6, planificacion: -0.3, riesgo: -0.7, interaccion: 0.6, complejidad: 0.2 } },
+        { id: 'eldlich',        name: 'Eldlich',        desc: 'Backrow y grind puro: prioriza la consistencia y el desgaste sobre la velocidad.', vector: { agresion: -0.7, planificacion: -0.5, riesgo: -0.8, interaccion: 0.5, complejidad: 0.1 } },
+        { id: 'labrynth',       name: 'Labrynth',       desc: 'Control por trampas y floodgates; castiga cualquier jugada del rival que no se cuide.', vector: { agresion: -0.5, planificacion: -0.2, riesgo: -0.6, interaccion: 0.7, complejidad: 0.5 } },
+        { id: 'tenpai',         name: 'Tenpai Dragon',  desc: 'Burn/OTK agresivo: busca cerrar el duelo en el menor número de turnos posible.', vector: { agresion: 0.9, planificacion: 0.4, riesgo: 0.8, interaccion: -0.5, complejidad: 0.3 } },
+        { id: 'yubel',          name: 'Yubel',          desc: 'Resiliencia y recursión: es difícil de matar de verdad, gana por desgaste técnico.', vector: { agresion: -0.3, planificacion: 0.1, riesgo: -0.4, interaccion: 0.3, complejidad: 0.6 } },
+        { id: 'ryzeal',         name: 'Ryzeal',         desc: 'Combo extenso con muchos extenders; recompensa la ejecución precisa y técnica.', vector: { agresion: 0.5, planificacion: 0.9, riesgo: 0.4, interaccion: -0.6, complejidad: 0.8 } },
+        { id: 'centurion',      name: 'Centur-Ion',     desc: 'Toolbox flexible: se adapta a lo que enfrenta más que seguir una sola línea fija.', vector: { agresion: 0.4, planificacion: 0.6, riesgo: 0.2, interaccion: 0.1, complejidad: 0.6 } },
+        { id: 'fireking',       name: 'Fire King',      desc: 'Midrange con recursión constante; juega el largo plazo sin depender de un solo turno.', vector: { agresion: 0.1, planificacion: 0.3, riesgo: -0.2, interaccion: 0.4, complejidad: 0.5 } },
+        { id: 'exosister',      name: 'Exosister',      desc: 'Swarm pequeño con handtraps integradas; control temprano con presión moderada.', vector: { agresion: -0.2, planificacion: -0.4, riesgo: -0.5, interaccion: 0.6, complejidad: 0.2 } },
+        { id: 'purrely',        name: 'Purrely',        desc: 'Combo de Links con mucha autonomía; prioriza cerrar su propia línea sobre reaccionar.', vector: { agresion: 0.6, planificacion: 0.7, riesgo: 0.6, interaccion: -0.5, complejidad: 0.6 } },
+        { id: 'runick',         name: 'Runick',         desc: 'Denegación vía hechizos desde el cementerio rival; híbrido de control y combo técnico.', vector: { agresion: -0.4, planificacion: 0.2, riesgo: -0.3, interaccion: 0.7, complejidad: 0.7 } },
+        { id: 'vanquishsoul',   name: 'Vanquish Soul',  desc: 'Beatdown midrange equilibrado: sin extremos, gana por presión constante y pareja.', vector: { agresion: 0.5, planificacion: 0.3, riesgo: 0.3, interaccion: 0.3, complejidad: 0.4 } }
+    ],
     TESTS: {
         teoricos: [
             { id: 'test-rulings-torneo', label: 'Rulings y Toma de Decisiones en Torneo', level: 'Avanzado',
@@ -772,6 +856,8 @@ const Formacion = {
                         data-tab="temas" onclick="Formacion.switchTab('temas')">📚 Temas</button>
                 <button class="form-subnav-btn form-subnav-btn--green${this.activeTab === 'test' ? ' active' : ''}"
                         data-tab="test" onclick="Formacion.switchTab('test')">🧪 Test</button>
+                <button class="form-subnav-btn form-subnav-btn--green${this.activeTab === 'estilo' ? ' active' : ''}"
+                        data-tab="estilo" onclick="Formacion.switchTab('estilo')">🧭 Tu Estilo</button>
                 <button class="form-subnav-btn${this.activeTab === 'juegos' ? ' active' : ''}"
                         data-tab="juegos" onclick="Formacion.switchTab('juegos')">🎮 Juegos</button>
                 <button class="form-subnav-btn${this.activeTab === 'fuentes' ? ' active' : ''}"
@@ -811,6 +897,7 @@ const Formacion = {
     _renderCurrentTab: function () {
         if (this.activeTab === 'apuntes')  return this._renderApuntesTab();
         if (this.activeTab === 'test')     return this._renderTestTab();
+        if (this.activeTab === 'estilo')   return this._renderEstiloTab();
         if (this.activeTab === 'juegos')   return this._renderJuegosTab();
         if (this.activeTab === 'fuentes')  return this._renderFuentesTab();
         if (this.activeTab === 'maestros') return this._renderMaestrosTab();
@@ -932,6 +1019,150 @@ const Formacion = {
             </div>
         `;
     },
+
+// ── Tu Estilo de Juego ────────────────────────────────────
+    _renderEstiloTab: function () {
+        const result = this.getEstiloResult();
+        return `
+            <div class="form-topic-container">
+                <div class="form-notebook form-notebook--test">
+                    <h2 class="form-nb-title">🧭 Tu Estilo de Juego</h2>
+                    <p class="form-nb-text">Este test no mide conocimiento ni habilidad — explora qué es lo que realmente te atrae del juego a un nivel más instintivo, para sugerirte arquetipos que puedan encajar con tu forma natural de jugar.</p>
+                    ${result ? this._renderEstiloResult(result) : this._renderEstiloQuiz()}
+                </div>
+            </div>`;
+    },
+
+    _renderEstiloQuiz: function () {
+        return `
+            <div class="form-quiz form-quiz--test festilo-quiz" id="festilo-quiz">
+                ${this.ESTILO_PREGUNTAS.map((q, qi) => `
+                    <div class="form-quiz-q">
+                        <p class="form-quiz-question">${qi + 1}. ${q.q}</p>
+                        <div class="form-quiz-opts">
+                            ${q.options.map((op, oi) => `
+                                <label class="form-quiz-opt">
+                                    <input type="radio" name="festilo-q-${qi}" value="${oi}">
+                                    <span>${op.text}</span>
+                                </label>`).join('')}
+                        </div>
+                    </div>`).join('')}
+                <button class="form-quiz-check-btn form-quiz-check-btn--green" onclick="Formacion.checkEstilo()">🧭 Descubrir mi Estilo</button>
+            </div>`;
+    },
+
+    _computeEstiloAxes: function () {
+        const axes = {};
+        this.AXES.forEach(a => axes[a] = { raw: 0, max: 0 });
+        this.ESTILO_PREGUNTAS.forEach((q, qi) => {
+            const sel = document.querySelector(`input[name="festilo-q-${qi}"]:checked`);
+            const chosenIdx = sel ? Number(sel.value) : null;
+            this.AXES.forEach(axis => {
+                const maxAbs = Math.max(...q.options.map(op => Math.abs(op.delta?.[axis] || 0)));
+                axes[axis].max += maxAbs;
+            });
+            if (chosenIdx !== null) {
+                const delta = q.options[chosenIdx].delta || {};
+                Object.entries(delta).forEach(([axis, val]) => { if (axes[axis]) axes[axis].raw += val; });
+            }
+        });
+        return axes;
+    },
+
+    checkEstilo: function () {
+        const total = this.ESTILO_PREGUNTAS.length;
+        let answered = 0;
+        for (let qi = 0; qi < total; qi++) {
+            if (document.querySelector(`input[name="festilo-q-${qi}"]:checked`)) answered++;
+        }
+        if (answered < total) {
+            alert(`Responde las ${total} preguntas antes de descubrir tu estilo (llevas ${answered}).`);
+            return;
+        }
+
+        const axesRaw = this._computeEstiloAxes();
+        const perfil = {};
+        this.AXES.forEach(a => { perfil[a] = axesRaw[a].max ? +(axesRaw[a].raw / axesRaw[a].max).toFixed(3) : 0; });
+
+        const scored = this.ESTILO_ARQUETIPOS.map(arch => {
+            let distSq = 0;
+            this.AXES.forEach(a => { const d = (perfil[a] || 0) - (arch.vector[a] || 0); distSq += d * d; });
+            return { arch, dist: Math.sqrt(distSq) };
+        }).sort((a, b) => a.dist - b.dist);
+
+        const top4 = scored.slice(0, 4).map(s => s.arch.id);
+
+        this._saveEstiloResult({ perfil, top4, evaluatedAt: Date.now() });
+        const content = document.getElementById('form-tab-content');
+        if (content) content.innerHTML = this._renderCurrentTab();
+    },
+
+    getEstiloResult: function () {
+        try { return JSON.parse(localStorage.getItem(this.ESTILO_KEY)) || null; }
+        catch (_) { return null; }
+    },
+
+    _saveEstiloResult: function (data) {
+        try { localStorage.setItem(this.ESTILO_KEY, JSON.stringify(data)); } catch (_) {}
+    },
+
+    resetEstilo: function () {
+        if (!confirm('¿Rehacer el Test de Estilo de Juego? Se reemplazará tu resultado actual.')) return;
+        localStorage.removeItem(this.ESTILO_KEY);
+        const content = document.getElementById('form-tab-content');
+        if (content) content.innerHTML = this._renderCurrentTab();
+    },
+
+    _renderEstiloResult: function (result) {
+        const AXIS_LABELS = {
+            agresion:      { low: 'Control / Grind',         high: 'Agresión / OTK' },
+            planificacion: { low: 'Reactivo / Adaptable',     high: 'Combo / Planificado' },
+            riesgo:        { low: 'Seguridad / Consistencia', high: 'Riesgo / All-in' },
+            interaccion:   { low: 'Autonomía / Solitario',    high: 'Interacción / Disrupción' },
+            complejidad:   { low: 'Simple / Directo',         high: 'Técnico / Complejo' }
+        };
+        const barsHtml = this.AXES.map(a => {
+            const v = result.perfil[a] || 0;
+            const pct = Math.round(((v + 1) / 2) * 100);
+            return `
+            <div class="festilo-axis-row">
+                <div class="festilo-axis-labels">
+                    <span>${AXIS_LABELS[a].low}</span>
+                    <span>${AXIS_LABELS[a].high}</span>
+                </div>
+                <div class="festilo-axis-track">
+                    <div class="festilo-axis-fill" style="width:${pct}%"></div>
+                    <div class="festilo-axis-marker" style="left:${pct}%"></div>
+                </div>
+            </div>`;
+        }).join('');
+
+        const recsHtml = result.top4.map(id => {
+            const arch = this.ESTILO_ARQUETIPOS.find(a => a.id === id);
+            if (!arch) return '';
+            return `
+            <div class="festilo-rec-card">
+                <div class="festilo-rec-name">${arch.name}</div>
+                <p class="festilo-rec-desc">${arch.desc}</p>
+                <button class="form-quiz-check-btn festilo-rec-btn" onclick="Formacion.viewEstiloArchetype('${arch.name.replace(/'/g, "\\'")}')">🔍 Ver cartas en Buscador</button>
+            </div>`;
+        }).join('');
+
+        return `
+            <div class="festilo-result">
+                <h3 class="festilo-result-title">Tu perfil</h3>
+                <div class="festilo-axes">${barsHtml}</div>
+                <h3 class="festilo-result-title">Arquetipos que podrían encajar contigo</h3>
+                <div class="festilo-recs">${recsHtml}</div>
+                <button class="form-quiz-check-btn fpt-reset-btn" onclick="Formacion.resetEstilo()">↺ Rehacer Test</button>
+            </div>`;
+    },
+
+    viewEstiloArchetype: function (name) {
+        if (window.CardViewer?.openArchetypeInBuscador) { CardViewer.openArchetypeInBuscador(name); return; }
+        this.goToTab('buscador');
+    },
+
 // ═══════════════════════════════════════════════════════════
     // TEST PRÁCTICO — tablero aislado (no usa ZonaPractica real)
     // Interacción: tocar carta → seleccionar → tocar zona/carta destino
