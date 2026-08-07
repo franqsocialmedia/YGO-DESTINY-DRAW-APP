@@ -852,7 +852,7 @@ const Formacion = {
 
     _renderTestTab: function () {
         if (this.activeTestCat == null) this.activeTestCat = 'teoricos';
-        const testsOfCat  = this.TESTS[this.activeTestCat] || [];
+        const testsOfCat  = [...(this.TESTS[this.activeTestCat] || []), ...TestDuelo.getByCategory(this.activeTestCat)];
         const currentTest = testsOfCat.find(t => t.id === this.activeTestId);
 
         return `
@@ -894,32 +894,39 @@ const Formacion = {
                 <span class="form-nb-level-badge form-nb-level-badge--green">Nivel: ${test.level || 'Avanzado'}</span>
                 <h2 class="form-nb-title">${test.label}</h2>
                 ${test.desc ? `<p class="form-nb-text">${test.desc}</p>` : ''}
-                ${this._renderTestQuiz(test.id)}
+                ${this._renderTestQuiz(test)}
             </div>
         </div>
     `;
 },
 
-    _renderTestQuiz: function (testId) {
-        const qs = this.TEST_QUESTIONS[testId];
+    _renderTestQuiz: function (test) {
+        const testId = test.id;
+        const qs = test.questions || this.TEST_QUESTIONS[testId];
         if (!qs || !qs.length) return '<p class="form-empty">Preguntas próximamente.</p>';
         return `
             <div class="form-quiz form-quiz--test" id="test-${testId}">
-                ${qs.map((item, qi) => `
+                ${qs.map((item, qi) => {
+                    const opts = item.options.map(op => typeof op === 'string' ? { text: op, card: null } : op);
+                    return `
                     <div class="form-quiz-q">
                         <p class="form-quiz-question">${qi + 1}. ${item.q}</p>
                         ${item.scenario ? `<p class="form-quiz-scenario">${item.scenario}</p>` : ''}
+                        ${item.card ? `<img src="https://images.ygoprodeck.com/images/cards_small/${item.card.id}.jpg"
+                                            alt="${item.card.name}" style="width:64px;border-radius:4px;margin:4px 0;display:block;">` : ''}
                         <div class="form-quiz-opts">
-                            ${item.options.map((op, oi) => `
+                            ${opts.map((op, oi) => `
                                 <label class="form-quiz-opt">
                                     <input type="radio" name="test-${testId}-${qi}" value="${oi}">
-                                    <span>${op}</span>
+                                    ${op.card ? `<img src="https://images.ygoprodeck.com/images/cards_small/${op.card.id}.jpg"
+                                                      alt="${op.card.name}" style="width:28px;border-radius:3px;vertical-align:middle;margin-right:6px;">` : ''}
+                                    <span>${op.text}</span>
                                 </label>
                             `).join('')}
                         </div>
                         <div class="form-quiz-feedback" id="test-${testId}-${qi}-fb"></div>
-                    </div>
-                `).join('')}
+                    </div>`;
+                }).join('')}
                 <button class="form-quiz-check-btn form-quiz-check-btn--green" onclick="Formacion.checkTest('${testId}')">✅ Corregir Test</button>
                 <div class="form-quiz-score" id="test-${testId}-score"></div>
             </div>
@@ -953,70 +960,100 @@ const Formacion = {
     },
 
     _ptInit: function (test) {
+        const ZONE_KEYS = ['0','1','2','3','4','5','6','7','8','9','10','A','B'];
         const zones = {};
-        ['1','2','3','4','5','6','7','8','9','10'].forEach(z => zones[z] = null);
+        ZONE_KEYS.forEach(z => zones[z] = null);
+        if (test.board.zones) {
+            Object.keys(test.board.zones).forEach(z => {
+                const c = test.board.zones[z];
+                if (c && (z in zones)) zones[z] = { ...c };
+            });
+        }
         this._pt = {
             testId:   test.id,
             zones,
             hand:     test.board.hand.map(c => ({ ...c })),
             gy:       (test.board.gy || []).map(c => ({ ...c })),
             selected: null,
+            oppEnabled: !!test.board.oppEnabled,
+            oppZones: test.board.oppZones || {},
         };
     },
 
     _ptRenderBoard: function () {
-    const t = this._pt;
-    if (!t) return '';
-    const imgUrl = (c) => `https://images.ygoprodeck.com/images/cards/${c.imgId}.jpg`;
-    const chipMulti = (c) => `
-        <div class="pz-card-slot fpt-chip${t.selected === c.iid ? ' fpt-chip-selected' : ''}"
-             title="${(c.desc || c.label || '').replace(/"/g, '&quot;')}"
-             onclick="event.stopPropagation(); Formacion._ptCardClick('${c.iid}')">
-            <img src="${imgUrl(c)}" alt="${c.label}" draggable="false">
-        </div>`;
-    const chipField = (c) => `
-        <img class="pz-card-img fpt-chip${t.selected === c.iid ? ' fpt-chip-selected' : ''}"
-             src="${imgUrl(c)}" alt="${c.label}"
-             title="${(c.desc || c.label || '').replace(/"/g, '&quot;')}"
-             onclick="event.stopPropagation(); Formacion._ptCardClick('${c.iid}')" draggable="false">`;
-    const monsterZones = ['1','2','3','4','5'];
-    const stZones      = ['6','7','8','9','10'];
-    return `
-        <div class="pz-board-outer fpt-board" id="form-pt-board">
-            ${t.selected ? `<div class="pz-move-hint">🖐️ Toca la zona (o carta) destino — o vuelve a tocar la carta para cancelar.</div>` : ''}
-            <div class="pz-zone-row">
-                <span class="pz-row-label">Mon.</span>
-                ${monsterZones.map(z => `
-                    <div class="pz-zone pz-zone-monster" onclick="Formacion._ptZoneClick('${z}')">
-                        <span class="pz-zone-lbl">${z}</span>
-                        ${t.zones[z] ? chipField(t.zones[z]) : ''}
+        const t = this._pt;
+        if (!t) return '';
+        const imgUrl = (c) => `https://images.ygoprodeck.com/images/cards/${c.imgId}.jpg`;
+        const chipMulti = (c) => `
+            <div class="pz-card-slot fpt-chip${t.selected === c.iid ? ' fpt-chip-selected' : ''}"
+                 title="${(c.desc || c.label || '').replace(/"/g, '&quot;')}"
+                 onclick="event.stopPropagation(); Formacion._ptCardClick('${c.iid}')">
+                <img src="${imgUrl(c)}" alt="${c.label}" draggable="false">
+            </div>`;
+        const chipField = (c) => `
+            <img class="pz-card-img fpt-chip${t.selected === c.iid ? ' fpt-chip-selected' : ''}"
+                 src="${imgUrl(c)}" alt="${c.label}"
+                 title="${(c.desc || c.label || '').replace(/"/g, '&quot;')}"
+                 onclick="event.stopPropagation(); Formacion._ptCardClick('${c.iid}')" draggable="false">`;
+        const z = t.zones;
+        const fieldGrid = `
+            <div class="pz-field-grid" style="margin-bottom:6px;">
+                <div class="pz-zone pz-zone-emz pz-fg-emz-a" onclick="Formacion._ptZoneClick('A')">
+                    <span class="pz-zone-lbl">A</span>${z['A'] ? chipField(z['A']) : ''}
+                </div>
+                <div class="pz-logo-cell pz-fg-logo"></div>
+                <div class="pz-zone pz-zone-emz pz-fg-emz-b" onclick="Formacion._ptZoneClick('B')">
+                    <span class="pz-zone-lbl">B</span>${z['B'] ? chipField(z['B']) : ''}
+                </div>
+                <div class="pz-zone pz-zone-field pz-fg-c" onclick="Formacion._ptZoneClick('0')">
+                    <span class="pz-zone-lbl">0</span>${z['0'] ? chipField(z['0']) : ''}
+                </div>
+                ${['1','2','3','4','5'].map(n => `
+                    <div class="pz-zone pz-zone-monster" onclick="Formacion._ptZoneClick('${n}')">
+                        <span class="pz-zone-lbl">${n}</span>${z[n] ? chipField(z[n]) : ''}
+                    </div>`).join('')}
+                <div class="pz-fg-st-spacer"></div>
+                ${['6','7','8','9','10'].map(n => `
+                    <div class="pz-zone ${n=='6'||n=='10'?'pz-zone-pendulum':'pz-zone-st'}" onclick="Formacion._ptZoneClick('${n}')">
+                        <span class="pz-zone-lbl">${n}</span>${z[n] ? chipField(z[n]) : ''}
+                    </div>`).join('')}
+            </div>`;
+        const oppGrid = t.oppEnabled ? (() => {
+            const oz = t.oppZones || {};
+            const chip = (c) => `<img class="pz-card-img" src="https://images.ygoprodeck.com/images/cards_small/${c.imgId}.jpg" alt="${c.label}" title="${(c.label||'').replace(/"/g,'&quot;')}" draggable="false">`;
+            return `
+                <p style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin:0 0 4px;">📋 Campo Rival:</p>
+                <div class="pz-field-grid" style="margin-bottom:8px;opacity:0.85;">
+                    <div class="pz-zone pz-zone-emz pz-fg-emz-a"><span class="pz-zone-lbl">A</span>${oz['A']?chip(oz['A']):''}</div>
+                    <div class="pz-logo-cell pz-fg-logo"></div>
+                    <div class="pz-zone pz-zone-emz pz-fg-emz-b"><span class="pz-zone-lbl">B</span>${oz['B']?chip(oz['B']):''}</div>
+                    <div class="pz-zone pz-zone-field pz-fg-c"><span class="pz-zone-lbl">0</span>${oz['0']?chip(oz['0']):''}</div>
+                    ${['1','2','3','4','5'].map(n=>`<div class="pz-zone pz-zone-monster"><span class="pz-zone-lbl">${n}</span>${oz[n]?chip(oz[n]):''}</div>`).join('')}
+                    <div class="pz-fg-st-spacer"></div>
+                    ${['6','7','8','9','10'].map(n=>`<div class="pz-zone ${n=='6'||n=='10'?'pz-zone-pendulum':'pz-zone-st'}"><span class="pz-zone-lbl">${n}</span>${oz[n]?chip(oz[n]):''}</div>`).join('')}
+                </div>`;
+        })() : '';
+
+        return `
+            <div class="pz-board-outer fpt-board" id="form-pt-board">
+                ${oppGrid}
+                ${t.selected ? `<div class="pz-move-hint">🖐️ Toca la zona (o carta) destino — o vuelve a tocar la carta para cancelar.</div>` : ''}
+                ${fieldGrid}
+                <div class="pz-zone-row">
+                    <span class="pz-row-label">GY</span>
+                    <div class="pz-multi-zone pz-gy-zone" onclick="Formacion._ptMultiZoneClick('gy')">
+                        ${t.gy.length ? t.gy.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacío</span>'}
                     </div>
-                `).join('')}
-            </div>
-            <div class="pz-zone-row">
-                <span class="pz-row-label">S/T</span>
-                ${stZones.map(z => `
-                    <div class="pz-zone pz-zone-st" onclick="Formacion._ptZoneClick('${z}')">
-                        <span class="pz-zone-lbl">${z}</span>
-                        ${t.zones[z] ? chipField(t.zones[z]) : ''}
+                </div>
+                <div class="pz-zone-row">
+                    <span class="pz-row-label">Mano</span>
+                    <div class="pz-multi-zone pz-hand-zone" onclick="Formacion._ptMultiZoneClick('hand')">
+                        ${t.hand.length ? t.hand.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacía</span>'}
                     </div>
-                `).join('')}
-            </div>
-            <div class="pz-zone-row">
-                <span class="pz-row-label">GY</span>
-                <div class="pz-multi-zone pz-gy-zone" onclick="Formacion._ptMultiZoneClick('gy')">
-                    ${t.gy.length ? t.gy.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacío</span>'}
                 </div>
             </div>
-            <div class="pz-zone-row pz-hand-row">
-                <span class="pz-row-label">Mano</span>
-                <div class="pz-multi-zone pz-hand-zone" onclick="Formacion._ptMultiZoneClick('hand')">
-                    ${t.hand.length ? t.hand.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacía</span>'}
-                </div>
-            </div>
-        </div>
-    `;
-},
+        `;
+    },
 
     _ptCardClick: function (iid) {
         const t = this._pt;
@@ -1093,16 +1130,17 @@ const Formacion = {
     _ptCheck: function () {
         const t = this._pt;
         if (!t) return;
-        const test = this.TESTS.practicos.find(x => x.id === t.testId);
+        const test = this._findPracticoTest(t.testId);
         if (!test) return;
-        const groupOf = (z) => ['1','2','3','4','5'].includes(z) ? 'monster'
+        const groupOf = (z) => z === '0' ? 'field' : (z === 'A' || z === 'B') ? 'emz'
+                              : ['1','2','3','4','5'].includes(z) ? 'monster'
                               : ['6','7','8','9','10'].includes(z) ? 'st' : null;
         const currentGroup = {};
         for (const z in t.zones) { if (t.zones[z]) currentGroup[t.zones[z].iid] = groupOf(z); }
         t.hand.forEach(c => currentGroup[c.iid] = 'hand');
         t.gy.forEach(c => currentGroup[c.iid] = 'gy');
 
-        const allCards = [...test.board.hand, ...(test.board.gy || [])];
+        const allCards = [...test.board.hand, ...(test.board.gy || []), ...Object.values(test.board.zones || {}).filter(Boolean)];
         let allCorrect = true;
         const wrong = [];
         Object.keys(test.solution).forEach(iid => {
@@ -1113,30 +1151,31 @@ const Formacion = {
         const resultEl = document.getElementById('form-pt-result');
         if (!resultEl) return;
         resultEl.innerHTML = allCorrect
-            ? `<div class="fpt-result fpt-result--ok">✅ <strong>¡Resuelto!</strong> Cada carta quedó en su zona correcta.</div>`
-            : `<div class="fpt-result fpt-result--fail">❌ <strong>Todavía no.</strong> Revisa: ${wrong.join(', ')}</div>`;
+            ? `<div class="fpt-result fpt-result--ok">✅ <strong>${test.okMsg || '¡Resuelto!'}</strong>${test.okMsg ? '' : ' Cada carta quedó en su zona correcta.'}</div>`
+            : `<div class="fpt-result fpt-result--fail">❌ <strong>${test.failMsg || 'Todavía no.'}</strong>${test.failMsg ? '' : ` Revisa: ${wrong.join(', ')}`}</div>`;
     },
 
-    _ptShowHint: function () {
+  _ptShowHint: function () {
         const t = this._pt;
         if (!t) return;
-        const test = this.TESTS.practicos.find(x => x.id === t.testId);
+        const test = this._findPracticoTest(t.testId);
         const resultEl = document.getElementById('form-pt-result');
         if (resultEl && test?.hint) resultEl.innerHTML = `<div class="fpt-result fpt-result--hint">💡 ${test.hint}</div>`;
     },
 
-    _ptReset: function () {
+  _ptReset: function () {
         const t = this._pt;
         if (!t) return;
-        const test = this.TESTS.practicos.find(x => x.id === t.testId);
+        const test = this._findPracticoTest(t.testId);
         if (!test) return;
         this._ptInit(test);
         const resultEl = document.getElementById('form-pt-result');
         if (resultEl) resultEl.innerHTML = '';
         this._ptRefresh();
     },
-    checkTest: function (testId) {
-        const qs = this.TEST_QUESTIONS[testId];
+   checkTest: function (testId) {
+    const custom = [...this.TESTS.teoricos, ...TestDuelo.getByCategory('teoricos')].find(t => t.id === testId);
+    const qs = custom?.questions || this.TEST_QUESTIONS[testId];
         if (!qs) return;
         let correct = 0;
         qs.forEach((item, qi) => {
@@ -3431,8 +3470,86 @@ window.Meta = Meta;
 
 // ── Config — UI de configuración: roles, staples, nomenclatura, pilares, maestros, fuentes, música, borrado de datos ──
 
+// ── TestDuelo — almacenamiento y export/import de Tests custom (Teóricos y Prácticos) ──
+const TestDuelo = {
+    KEY: 'yugioh_custom_tests',
+
+    getAll: function () {
+        try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); }
+        catch (_) { return []; }
+    },
+    getByCategory: function (cat) { return this.getAll().filter(t => t.category === cat); },
+    get: function (id) { return this.getAll().find(t => t.id === id) || null; },
+
+    save: function (test) {
+        const list = this.getAll();
+        const idx  = list.findIndex(t => t.id === test.id);
+        if (idx > -1) list[idx] = test; else list.push(test);
+        localStorage.setItem(this.KEY, JSON.stringify(list));
+        return test;
+    },
+
+    remove: function (id) {
+        localStorage.setItem(this.KEY, JSON.stringify(this.getAll().filter(t => t.id !== id)));
+    },
+
+    _download: function (content, filename) {
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = filename;
+        a.click(); URL.revokeObjectURL(url);
+    },
+
+    exportTest: function (id, mode) {
+        const test = this.get(id);
+        if (!test) { alert('Selecciona un test válido.'); return; }
+        const stamp    = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+        const filename = `DD_Test_${(test.label || 'test').replace(/[^a-z0-9]+/gi, '_')}_${stamp}.txt`;
+        const content =
+            `# DESTINY DRAW — TEST EXPORTADO\n` +
+            `# Tipo: ${test.category === 'practicos' ? 'Práctico' : 'Teórico'} | Nivel: ${test.level}\n` +
+            `# Importa este archivo desde Config → Test de Duelo → 📥 Agregar Test\n\n` +
+            JSON.stringify(test, null, 2);
+
+        this._download(content, filename);
+
+        if (mode === 'send') {
+            const subject = encodeURIComponent(`Test Destiny Draw — ${test.label}`);
+            const body    = encodeURIComponent(
+                `Te comparto un Test de Duelo creado en Destiny Draw!\n\n` +
+                `Nombre: ${test.label}\nNivel: ${test.level}\n\n` +
+                `📎 Adjunta el archivo .txt que se acaba de descargar:\n  • ${filename}`
+            );
+            setTimeout(() => { window.location.href = `mailto:franq0524@gmail.com?subject=${subject}&body=${body}`; }, 600);
+            alert('✅ Test descargado.\nSe abrirá tu cliente de correo — adjunta el .txt al mensaje.');
+        } else {
+            alert('✅ Test descargado como .txt.');
+        }
+    },
+
+    importFromText: function (text) {
+        try {
+            const jsonPart = text.replace(/^#.*$/gm, '').trim();
+            const test = JSON.parse(jsonPart);
+            if (!test || (test.category !== 'teoricos' && test.category !== 'practicos')) {
+                throw new Error('Formato de test no reconocido.');
+            }
+            test.id     = `ct_${test.category === 'practicos' ? 'prac' : 'teo'}_${Date.now()}`;
+            test.custom = true;
+            this.save(test);
+            return test;
+        } catch (e) {
+            alert('❌ No se pudo importar el test: ' + e.message);
+            return null;
+        }
+    },
+};
 const Config = {
     container: null,
+    _ta: null,   // estado del Test Práctico en autoría
+    _tt: null,   // estado del Test Teórico en autoría (metadata)
+    _ttQ: null,  // pregunta actual en construcción
 
     init: function () {
         this.container = document.getElementById('config-content');
@@ -3600,6 +3717,16 @@ const Config = {
                 </h3>
                 <div id="formacion-topics-section" class="config-section-content" style="display:none;">
                     ${this.renderFormacionTopicsSection()}
+                </div>
+            </div>
+
+<!-- Sección: Test de Duelo -->
+            <div class="config-section" data-section-id="config-test-duelo">
+                <h3 class="config-section-title" onclick="Config.toggleSection('test-duelo-section')">
+                    ▶ 🧪 Test de Duelo
+                </h3>
+                <div id="test-duelo-section" class="config-section-content" style="display:none;">
+                    ${this.renderTestDueloSection()}
                 </div>
             </div>
 
@@ -4554,6 +4681,521 @@ enviarReporte: function (counter, dateStr) {
     this.cerrarReportarError();
     alert(`✅ Reporte #${counter}\n\nSe descargaron 2 archivos .txt automáticamente.\nSe abrirá tu cliente de correo — adjunta los archivos al correo.\nSi no tienes la confianza para aceptar el envio automático, puedes enviar los reportes directamente al creador de la APP.`);
 },
+
+// ═══════════════════════════════════════════════════════════
+    // TEST DE DUELO — autoría de tests Teóricos y Prácticos
+    // ═══════════════════════════════════════════════════════════
+
+    _testRefresh: function () {
+        const el = document.getElementById('test-duelo-section');
+        if (el) el.innerHTML = this.renderTestDueloSection();
+    },
+
+    renderTestDueloSection: function () {
+        if (!this._ta) this._taReset();
+        if (!this._tt) this._ttReset();
+        return `
+            <p class="stats-empty" style="margin-bottom:14px;">
+                Crea tests para practicar o enseñar a otro jugador. Se guardan en este dispositivo
+                y aparecen en Formación → Test.
+            </p>
+
+            <div class="config-section-block">
+                <div class="config-block-title">📖 Test Teórico</div>
+                ${this._renderTeoricoAuthor()}
+            </div>
+
+            <div class="config-section-block">
+                <div class="config-block-title">🎯 Test Práctico</div>
+                ${this._renderPracticoAuthor()}
+            </div>
+
+            <div class="config-section-block">
+                <div class="config-block-title">📥 Importar Test</div>
+                <p class="stats-empty">Agrega un test .txt exportado por ti o por otro jugador.</p>
+                <button class="btn btn-primary" onclick="document.getElementById('test-import-file').click()">📥 Agregar Test</button>
+                <input type="file" id="test-import-file" accept=".txt" style="display:none;" onchange="Config._importTestFile(this)">
+            </div>
+        `;
+    },
+
+    _renderTestList: function (category) {
+        const list = TestDuelo.getByCategory(category);
+        if (!list.length) return `<p class="stats-empty" style="margin-top:12px;">Aún no hay tests ${category === 'practicos' ? 'prácticos' : 'teóricos'} guardados.</p>`;
+        return `
+            <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.1);padding-top:10px;">
+                <p style="color:rgba(255,255,255,0.6);font-size:0.8rem;">Tests disponibles:</p>
+                <select id="${category}-select-list" class="config-input">
+                    ${list.map(t => `<option value="${t.id}">${t.label} (${t.level})</option>`).join('')}
+                </select>
+                <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="TestDuelo.exportTest(document.getElementById('${category}-select-list').value, 'download')">⬇ Descargar Test</button>
+                    <button class="btn btn-primary" onclick="TestDuelo.exportTest(document.getElementById('${category}-select-list').value, 'send')">📧 Enviar Test</button>
+                    <button class="btn btn-danger" style="background:#c0392b;" onclick="Config._deleteTestFromList('${category}')">🗑️ Borrar</button>
+                </div>
+            </div>`;
+    },
+
+    _deleteTestFromList: function (category) {
+        const sel = document.getElementById(`${category}-select-list`);
+        if (!sel || !sel.value) { alert('Selecciona un test de la lista.'); return; }
+        if (!confirm('¿Borrar este test guardado permanentemente?')) return;
+        TestDuelo.remove(sel.value);
+        this._testRefresh();
+    },
+
+    _importTestFile: function (inputEl) {
+        const file = inputEl.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const test = TestDuelo.importFromText(e.target.result);
+            if (test) {
+                this._testRefresh();
+                alert(`✅ Test "${test.label}" agregado. Disponible en Formación → Test → ${test.category === 'practicos' ? 'Prácticos' : 'Teóricos'}.`);
+            }
+        };
+        reader.readAsText(file);
+        inputEl.value = '';
+    },
+
+    // ── Teórico ──────────────────────────────────────────────────
+
+    _ttReset: function () {
+        this._tt  = { label: '', level: 'Avanzado', desc: '', questions: [] };
+        this._ttQ = { qText: '', card: null, options: [{ text: '', card: null }, { text: '', card: null }], correct: 0, explain: '' };
+    },
+
+    _ttSync: function () {
+        const q = this._ttQ, t = this._tt;
+        q.qText   = document.getElementById('tt-q-input')?.value ?? q.qText;
+        q.explain = document.getElementById('tt-explain')?.value ?? q.explain;
+        q.options.forEach((op, i) => { const el = document.getElementById(`tt-opt-${i}`); if (el) op.text = el.value; });
+        t.label = document.getElementById('tt-label')?.value ?? t.label;
+        t.level = document.getElementById('tt-level')?.value ?? t.level;
+        t.desc  = document.getElementById('tt-desc')?.value ?? t.desc;
+    },
+
+    _renderTeoricoAuthor: function () {
+        const tq = this._ttQ, t = this._tt;
+        const levels = ['Básico', 'Fundamental', 'Intermedio', 'Avanzado', 'Competitivo'];
+        const cardChip = (c, onRemove) => c ? `
+            <span class="keyword-chip" style="display:inline-flex;align-items:center;gap:6px;">
+                <img src="https://images.ygoprodeck.com/images/cards_small/${c.id}.jpg" style="width:22px;border-radius:3px;">
+                <span class="chip-text">${c.name}</span>
+                <span class="chip-remove" onclick="${onRemove}">×</span>
+            </span>` : '';
+
+        return `
+            <div class="config-new-role" style="flex-direction:column;align-items:stretch;gap:8px;">
+                <input type="text" id="tt-label" class="config-input" placeholder="Nombre del test..." value="${t.label || ''}">
+                <select id="tt-level" class="config-input">
+                    ${levels.map(l => `<option value="${l}" ${t.level === l ? 'selected' : ''}>${l}</option>`).join('')}
+                </select>
+                <textarea id="tt-desc" class="config-input" placeholder="Descripción del test (opcional)..." rows="2">${t.desc || ''}</textarea>
+            </div>
+
+            <div style="margin-top:12px;padding:10px;border:1px solid rgba(255,255,255,0.12);border-radius:8px;">
+                <p style="margin:0 0 6px;color:#FFD700;font-size:0.85rem;">Nueva pregunta</p>
+                <textarea id="tt-q-input" class="config-input" placeholder="Escribe la pregunta..." rows="2">${tq.qText || ''}</textarea>
+                <div style="margin:6px 0;">
+                    ${tq.card ? cardChip(tq.card, `Config._ttRemoveQCard()`)
+                              : `<button class="btn btn-secondary" onclick="Config._ttPickQCard()">🔍 Adjuntar carta a la pregunta</button>`}
+                </div>
+                <p style="margin:8px 0 4px;color:rgba(255,255,255,0.6);font-size:0.8rem;">Opciones (marca la correcta):</p>
+                ${tq.options.map((op, i) => `
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                        <input type="radio" name="tt-correct" ${tq.correct === i ? 'checked' : ''} onchange="Config._ttSetCorrect(${i})">
+                        <input type="text" id="tt-opt-${i}" class="config-input" style="flex:1;" placeholder="Texto de la opción..." value="${op.text || ''}">
+                        ${op.card ? cardChip(op.card, `Config._ttRemoveOptCard(${i})`)
+                                  : `<button class="btn btn-secondary" onclick="Config._ttPickOptCard(${i})">🔍</button>`}
+                        ${tq.options.length > 2 ? `<span class="chip-remove" onclick="Config._ttRemoveOption(${i})">×</span>` : ''}
+                    </div>`).join('')}
+                <button class="btn btn-secondary" onclick="Config._ttAddOption()" ${tq.options.length >= 6 ? 'disabled' : ''}>➕ Agregar Opción</button>
+                <textarea id="tt-explain" class="config-input" placeholder="Explicación (se muestra al corregir)..." rows="2" style="margin-top:8px;">${tq.explain || ''}</textarea>
+                <div style="margin-top:8px;">
+                    <button class="btn btn-primary" onclick="Config._ttAddQuestion()">➕ Agregar Pregunta al Test</button>
+                </div>
+            </div>
+
+            ${t.questions.length ? `
+                <div style="margin-top:10px;">
+                    <p style="color:rgba(255,255,255,0.6);font-size:0.8rem;">Preguntas en este test (${t.questions.length}):</p>
+                    ${t.questions.map((q, i) => `
+                        <div class="keyword-chip" style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                            <span class="chip-text">${i + 1}. ${(q.q || '').slice(0, 60)}</span>
+                            <span class="chip-remove" onclick="Config._ttRemoveQuestion(${i})">×</span>
+                        </div>`).join('')}
+                </div>` : ''}
+
+            <div style="margin-top:10px;">
+                <button class="btn btn-success" onclick="Config._ttSaveTest()">💾 Guardar Test Teórico</button>
+            </div>
+
+            ${this._renderTestList('teoricos')}
+        `;
+    },
+
+    _ttAddOption: function () {
+        this._ttSync();
+        if (this._ttQ.options.length >= 6) return;
+        this._ttQ.options.push({ text: '', card: null });
+        this._testRefresh();
+    },
+    _ttRemoveOption: function (i) {
+        this._ttSync();
+        if (this._ttQ.options.length <= 2) return;
+        this._ttQ.options.splice(i, 1);
+        if (this._ttQ.correct >= this._ttQ.options.length) this._ttQ.correct = 0;
+        this._testRefresh();
+    },
+    _ttSetCorrect: function (i) { this._ttSync(); this._ttQ.correct = i; this._testRefresh(); },
+    _ttPickQCard: function () {
+        this._ttSync();
+        CardViewer.openTestCardPicker((card) => { this._ttQ.card = { id: card.id, name: card.name }; this._testRefresh(); });
+    },
+    _ttRemoveQCard: function () { this._ttSync(); this._ttQ.card = null; this._testRefresh(); },
+    _ttPickOptCard: function (i) {
+        this._ttSync();
+        CardViewer.openTestCardPicker((card) => { this._ttQ.options[i].card = { id: card.id, name: card.name }; this._testRefresh(); });
+    },
+    _ttRemoveOptCard: function (i) { this._ttSync(); this._ttQ.options[i].card = null; this._testRefresh(); },
+
+    _ttAddQuestion: function () {
+        this._ttSync();
+        const q = this._ttQ;
+        if (!q.qText.trim()) { alert('⚠️ Escribe la pregunta.'); return; }
+        const validOpts = q.options.filter(o => o.text.trim());
+        if (validOpts.length < 2) { alert('⚠️ Necesitas al menos 2 opciones con texto.'); return; }
+        if (!q.options[q.correct] || !q.options[q.correct].text.trim()) { alert('⚠️ Marca cuál opción es la correcta (debe tener texto).'); return; }
+        this._tt.questions.push({
+            q: q.qText.trim(), card: q.card,
+            options: q.options.map(o => ({ text: o.text.trim(), card: o.card })),
+            correct: q.correct, explain: q.explain.trim(),
+        });
+        this._ttQ = { qText: '', card: null, options: [{ text: '', card: null }, { text: '', card: null }], correct: 0, explain: '' };
+        this._testRefresh();
+    },
+    _ttRemoveQuestion: function (i) { this._ttSync(); this._tt.questions.splice(i, 1); this._testRefresh(); },
+
+    _ttSaveTest: function () {
+        this._ttSync();
+        const t = this._tt;
+        if (!t.label.trim()) { alert('⚠️ Ponle un nombre al test.'); return; }
+        if (!t.questions.length) { alert('⚠️ Agrega al menos una pregunta.'); return; }
+        const test = {
+            id: `ct_teo_${Date.now()}`, category: 'teoricos', custom: true,
+            label: t.label.trim(), level: t.level, desc: t.desc.trim(), questions: t.questions,
+        };
+        TestDuelo.save(test);
+        this._ttReset();
+        this._testRefresh();
+        alert(`✅ Test teórico "${test.label}" guardado. Ya está disponible en Formación → Test.`);
+    },
+
+    // ── Práctico ─────────────────────────────────────────────────
+
+ _taReset: function () {
+        const ZONE_KEYS = ['0','1','2','3','4','5','6','7','8','9','10','A','B'];
+        this._ta = {
+            label: '', level: 'Avanzado', scenario: '', hint: '', okMsg: '', failMsg: '',
+            zones: Object.fromEntries(ZONE_KEYS.map(z => [z, null])),
+            oppEnabled: false,
+            oppZones: Object.fromEntries(ZONE_KEYS.map(z => [z, null])),
+            hand: [], gy: [], selected: null,
+            initial: null, finalSolution: null, _seq: 0,
+        };
+    },
+
+    _taSync: function () {
+        const a = this._ta;
+        a.label    = document.getElementById('ta-label')?.value ?? a.label;
+        a.level    = document.getElementById('ta-level')?.value ?? a.level;
+        a.scenario = document.getElementById('ta-scenario')?.value ?? a.scenario;
+        a.hint     = document.getElementById('ta-hint')?.value ?? a.hint;
+        a.okMsg    = document.getElementById('ta-okmsg')?.value ?? a.okMsg;
+        a.failMsg  = document.getElementById('ta-failmsg')?.value ?? a.failMsg;
+    },
+
+    _renderPracticoAuthor: function () {
+        const a = this._ta;
+        return `
+            <div class="config-new-role" style="flex-direction:column;align-items:stretch;gap:8px;">
+                <input type="text" id="ta-label" class="config-input" placeholder="Nombre del test..." value="${a.label || ''}">
+                <select id="ta-level" class="config-input">
+                    ${['Básico', 'Fundamental', 'Intermedio', 'Avanzado', 'Competitivo'].map(l => `<option value="${l}" ${a.level === l ? 'selected' : ''}>${l}</option>`).join('')}
+                </select>
+                <textarea id="ta-scenario" class="config-input" placeholder="Escenario que verá el jugador (ej: Es tu Main Phase 1...)..." rows="2">${a.scenario || ''}</textarea>
+                <textarea id="ta-hint" class="config-input" placeholder="Pista (opcional)..." rows="2">${a.hint || ''}</textarea>
+                <div style="display:flex;gap:8px;">
+                    <textarea id="ta-okmsg" class="config-input" style="flex:1;" placeholder="Mensaje si el jugador acierta..." rows="2">${a.okMsg || ''}</textarea>
+                    <textarea id="ta-failmsg" class="config-input" style="flex:1;" placeholder="Mensaje si el jugador falla..." rows="2">${a.failMsg || ''}</textarea>
+                </div>
+            </div>
+
+            <div style="margin:10px 0;">
+                <button class="btn btn-secondary" onclick="Config._taPickCard()">🔍 Buscar carta y agregar a la mano</button>
+            </div>
+
+            ${this._taRenderBoard()}
+
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+                <button class="btn btn-primary" onclick="Config._taSetInitial()">📍 Estado Inicial</button>
+                <button class="btn btn-primary" onclick="Config._taSetFinal()">🎯 Estado Final</button>
+                <button class="btn btn-secondary" onclick="Config._taClearBoard()">↺ Limpiar Tablero</button>
+            </div>
+            <div id="ta-status" style="margin-top:8px;font-size:0.8rem;color:rgba(255,255,255,0.6);">
+                ${a.initial ? '✅ Estado inicial capturado. ' : '⏳ Falta capturar el Estado Inicial. '}
+                ${a.finalSolution ? '✅ Estado final capturado.' : '⏳ Falta capturar el Estado Final.'}
+            </div>
+
+            <div style="margin-top:10px;">
+                <button class="btn btn-success" onclick="Config._taSaveTest()">💾 Guardar Test Práctico</button>
+            </div>
+
+            ${this._renderTestList('practicos')}
+        `;
+    },
+
+    _taRenderBoard: function () {
+        const a = this._ta;
+        const imgUrl = (c) => `https://images.ygoprodeck.com/images/cards_small/${c.id}.jpg`;
+        const chipMulti = (c) => `
+            <div class="pz-card-slot fpt-chip${a.selected === c.iid ? ' fpt-chip-selected' : ''}"
+                 title="${(c.name || '').replace(/"/g, '&quot;')}"
+                 onclick="event.stopPropagation();Config._taCardClick('${c.iid}')">
+                <img src="${imgUrl(c)}" alt="${c.name}" draggable="false">
+            </div>`;
+        return `
+            <div class="pz-board-outer fpt-board" id="ta-board">
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:0.8rem;color:rgba(255,255,255,0.7);">
+                    <input type="checkbox" ${a.oppEnabled ? 'checked' : ''} onchange="Config._taToggleOpp(this.checked)">
+                    🔁 Habilitar Campo Rival (contexto visual arriba del tuyo)
+                </label>
+                ${a.oppEnabled ? `
+                    <p style="font-size:0.72rem;color:rgba(255,255,255,0.45);margin:0 0 4px;">Campo Rival:</p>
+                    ${this._taRenderOppGrid()}
+                    <button class="btn btn-secondary" style="margin-bottom:10px;" onclick="Config._taPickOppCard()">🔍 Agregar carta al campo rival</button>
+                ` : ''}
+                ${a.selected ? `<div class="pz-move-hint">🖐️ Toca la zona (o carta) destino — o vuelve a tocar la carta para cancelar.</div>` : ''}
+                <p style="font-size:0.72rem;color:rgba(255,255,255,0.45);margin:6px 0 4px;">Tu Campo:</p>
+                ${this._taRenderFieldGrid()}
+                <div class="pz-zone-row">
+                    <span class="pz-row-label">GY</span>
+                    <div class="pz-multi-zone pz-gy-zone" onclick="Config._taMultiZoneClick('gy')">
+                        ${a.gy.length ? a.gy.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacío</span>'}
+                    </div>
+                </div>
+                <div class="pz-zone-row">
+                    <span class="pz-row-label">Mano</span>
+                    <div class="pz-multi-zone pz-hand-zone" onclick="Config._taMultiZoneClick('hand')">
+                        ${a.hand.length ? a.hand.map(chipMulti).join('') : '<span class="fpt-empty-lbl">Vacía</span>'}
+                    </div>
+                </div>
+            </div>`;
+    },
+_taRenderFieldGrid: function () {
+        const a = this._ta;
+        const imgUrl = (c) => `https://images.ygoprodeck.com/images/cards_small/${c.id}.jpg`;
+        const chipField = (c) => `
+            <img class="pz-card-img fpt-chip${a.selected === c.iid ? ' fpt-chip-selected' : ''}"
+                 src="${imgUrl(c)}" alt="${c.name}" title="${(c.name || '').replace(/"/g, '&quot;')}"
+                 onclick="event.stopPropagation();Config._taCardClick('${c.iid}')" draggable="false">`;
+        const z = a.zones;
+        return `
+            <div class="pz-field-grid" style="margin-bottom:6px;">
+                <div class="pz-zone pz-zone-emz pz-fg-emz-a" onclick="Config._taZoneClick('A')">
+                    <span class="pz-zone-lbl">A</span>${z['A'] ? chipField(z['A']) : ''}
+                </div>
+                <div class="pz-logo-cell pz-fg-logo"></div>
+                <div class="pz-zone pz-zone-emz pz-fg-emz-b" onclick="Config._taZoneClick('B')">
+                    <span class="pz-zone-lbl">B</span>${z['B'] ? chipField(z['B']) : ''}
+                </div>
+                <div class="pz-zone pz-zone-field pz-fg-c" onclick="Config._taZoneClick('0')">
+                    <span class="pz-zone-lbl">0</span>${z['0'] ? chipField(z['0']) : ''}
+                </div>
+                ${['1','2','3','4','5'].map(n => `
+                    <div class="pz-zone pz-zone-monster" onclick="Config._taZoneClick('${n}')">
+                        <span class="pz-zone-lbl">${n}</span>${z[n] ? chipField(z[n]) : ''}
+                    </div>`).join('')}
+                <div class="pz-fg-st-spacer"></div>
+                ${['6','7','8','9','10'].map(n => `
+                    <div class="pz-zone ${n=='6'||n=='10'?'pz-zone-pendulum':'pz-zone-st'}" onclick="Config._taZoneClick('${n}')">
+                        <span class="pz-zone-lbl">${n}</span>${z[n] ? chipField(z[n]) : ''}
+                    </div>`).join('')}
+            </div>`;
+    },
+
+    _taRenderOppGrid: function () {
+        const z = this._ta.oppZones;
+        const chip = (key, c) => `
+            <img class="pz-card-img" src="https://images.ygoprodeck.com/images/cards_small/${c.id}.jpg"
+                 alt="${c.name}" title="${(c.name || '').replace(/"/g, '&quot;')}"
+                 onclick="event.stopPropagation();Config._taOppZoneRemove('${key}')" draggable="false">`;
+        return `
+            <div class="pz-field-grid" style="margin-bottom:8px;opacity:0.85;">
+                <div class="pz-zone pz-zone-emz pz-fg-emz-a"><span class="pz-zone-lbl">A</span>${z['A'] ? chip('A', z['A']) : ''}</div>
+                <div class="pz-logo-cell pz-fg-logo"></div>
+                <div class="pz-zone pz-zone-emz pz-fg-emz-b"><span class="pz-zone-lbl">B</span>${z['B'] ? chip('B', z['B']) : ''}</div>
+                <div class="pz-zone pz-zone-field pz-fg-c"><span class="pz-zone-lbl">0</span>${z['0'] ? chip('0', z['0']) : ''}</div>
+                ${['1','2','3','4','5'].map(n => `<div class="pz-zone pz-zone-monster"><span class="pz-zone-lbl">${n}</span>${z[n] ? chip(n, z[n]) : ''}</div>`).join('')}
+                <div class="pz-fg-st-spacer"></div>
+                ${['6','7','8','9','10'].map(n => `<div class="pz-zone ${n=='6'||n=='10'?'pz-zone-pendulum':'pz-zone-st'}"><span class="pz-zone-lbl">${n}</span>${z[n] ? chip(n, z[n]) : ''}</div>`).join('')}
+            </div>`;
+    },
+
+    _taToggleOpp: function (checked) {
+        this._taSync();
+        this._ta.oppEnabled = checked;
+        this._testRefresh();
+    },
+
+    _taOppZoneRemove: function (key) {
+        if (!confirm('¿Quitar esta carta del campo rival?')) return;
+        this._ta.oppZones[key] = null;
+        this._testRefresh();
+    },
+
+    _taPickOppCard: function () {
+        CardViewer.openTestCardPicker((card) => {
+            const zone = (prompt('¿En qué zona del rival colocarla? (0, 1-5, A, B, 6-10)') || '').trim().toUpperCase();
+            if (!zone) return;
+            if (!(zone in this._ta.oppZones)) { alert('Zona no válida.'); return; }
+            this._ta.oppZones[zone] = { id: card.id, name: card.name };
+            this._taRefresh();
+        });
+    },
+    _taRefresh: function () { const el = document.getElementById('ta-board'); if (el) el.outerHTML = this._taRenderBoard(); },
+
+    _taCardClick: function (iid) {
+        const a = this._ta;
+        if (!a.selected) { a.selected = iid; this._taRefresh(); return; }
+        if (a.selected === iid) { a.selected = null; this._taRefresh(); return; }
+        this._taSwapInto(iid);
+    },
+    _taZoneClick: function (zone) {
+        const a = this._ta;
+        if (!a.selected) return;
+        const occupantIid = a.zones[zone]?.iid;
+        if (occupantIid && occupantIid !== a.selected) { this._taSwapInto(occupantIid); return; }
+        const moving = this._taFindAndRemove(a.selected);
+        if (!moving) { a.selected = null; this._taRefresh(); return; }
+        a.zones[zone] = moving; a.selected = null; this._taRefresh();
+    },
+    _taMultiZoneClick: function (zoneName) {
+        const a = this._ta;
+        if (!a.selected) return;
+        const moving = this._taFindAndRemove(a.selected);
+        if (!moving) { a.selected = null; this._taRefresh(); return; }
+        a[zoneName].push(moving); a.selected = null; this._taRefresh();
+    },
+    _taSwapInto: function (targetIid) {
+        const a = this._ta;
+        const movingIid = a.selected;
+        const loc = this._taLocate(targetIid);
+        const movingCard = this._taFindAndRemove(movingIid);
+        if (!movingCard) { a.selected = null; this._taRefresh(); return; }
+        if (loc.type === 'zone') {
+            const occupant = a.zones[loc.zone];
+            a.zones[loc.zone] = movingCard;
+            if (occupant) a.hand.push(occupant);
+        } else { a[loc.type].push(movingCard); }
+        a.selected = null; this._taRefresh();
+    },
+    _taLocate: function (iid) {
+        const a = this._ta;
+        for (const z in a.zones) { if (a.zones[z]?.iid === iid) return { type: 'zone', zone: z }; }
+        if (a.hand.some(c => c.iid === iid)) return { type: 'hand' };
+        if (a.gy.some(c => c.iid === iid))   return { type: 'gy' };
+        return { type: 'hand' };
+    },
+    _taFindAndRemove: function (iid) {
+        const a = this._ta;
+        for (const z in a.zones) { if (a.zones[z]?.iid === iid) { const c = a.zones[z]; a.zones[z] = null; return c; } }
+        let idx = a.hand.findIndex(c => c.iid === iid);
+        if (idx > -1) return a.hand.splice(idx, 1)[0];
+        idx = a.gy.findIndex(c => c.iid === iid);
+        if (idx > -1) return a.gy.splice(idx, 1)[0];
+        return null;
+    },
+
+    _taPickCard: function () {
+        CardViewer.openTestCardPicker((card) => {
+            this._ta.hand.push({ iid: `ta_${this._ta._seq++}`, id: card.id, name: card.name });
+            this._taRefresh();
+        });
+    },
+  _taClearBoard: function () {
+        if (!confirm('¿Vaciar el tablero? Se perderán las cartas agregadas.')) return;
+        this._taSync();
+        const keep = { label: this._ta.label, level: this._ta.level, scenario: this._ta.scenario, hint: this._ta.hint, okMsg: this._ta.okMsg, failMsg: this._ta.failMsg };
+        this._taReset();
+        Object.assign(this._ta, keep);
+        this._testRefresh();
+    },
+
+    _taSetInitial: function () {
+        this._taSync();
+        const a = this._ta;
+        if (!a.hand.length && !a.gy.length && !Object.values(a.zones).some(Boolean)) {
+            alert('⚠️ Agrega al menos una carta al tablero antes de capturar el Estado Inicial.'); return;
+        }
+        a.initial = {
+            zones: Object.fromEntries(Object.entries(a.zones).map(([k, v]) => [k, v ? { ...v } : null])),
+            hand:  a.hand.map(c => ({ ...c })),
+            gy:    a.gy.map(c => ({ ...c })),
+            oppEnabled: a.oppEnabled,
+            oppZones: Object.fromEntries(Object.entries(a.oppZones).map(([k, v]) => [k, v ? { ...v } : null])),
+        };
+        a.finalSolution = null;
+        this._testRefresh();
+        alert('📍 Estado Inicial capturado. Ahora mueve las cartas a su posición final y presiona 🎯 Estado Final.');
+    },
+
+ _taSetFinal: function () {
+        this._taSync();
+        const a = this._ta;
+        if (!a.initial) { alert('⚠️ Primero captura el Estado Inicial.'); return; }
+        const groupOf = (z) => z === '0' ? 'field' : (z === 'A' || z === 'B') ? 'emz'
+                              : ['1','2','3','4','5'].includes(z) ? 'monster'
+                              : ['6','7','8','9','10'].includes(z) ? 'st' : null;
+        const solution = {};
+        for (const z in a.zones) { if (a.zones[z]) solution[a.zones[z].iid] = groupOf(z); }
+        a.hand.forEach(c => solution[c.iid] = 'hand');
+        a.gy.forEach(c => solution[c.iid] = 'gy');
+        a.finalSolution = solution;
+        this._testRefresh();
+        alert('🎯 Estado Final capturado. Ya puedes guardar el test.');
+    },
+
+ _taSaveTest: function () {
+        this._taSync();
+        const a = this._ta;
+        if (!a.label.trim()) { alert('⚠️ Ponle un nombre al test.'); return; }
+        if (!a.initial) { alert('⚠️ Captura el Estado Inicial.'); return; }
+        if (!a.finalSolution) { alert('⚠️ Captura el Estado Final.'); return; }
+        const test = {
+            id: `ct_prac_${Date.now()}`, category: 'practicos', custom: true, type: 'board',
+            label: a.label.trim(), level: a.level,
+            scenario: a.scenario.trim(), hint: a.hint.trim(),
+            okMsg: a.okMsg.trim(), failMsg: a.failMsg.trim(),
+            board: {
+                hand: a.initial.hand.map(c => ({ iid: c.iid, label: c.name, imgId: c.id })),
+                gy:   a.initial.gy.map(c => ({ iid: c.iid, label: c.name, imgId: c.id })),
+                zones: Object.fromEntries(Object.entries(a.initial.zones).map(([z, c]) => [z, c ? { iid: c.iid, label: c.name, imgId: c.id } : null])),
+                oppEnabled: a.initial.oppEnabled,
+                oppZones: Object.fromEntries(Object.entries(a.initial.oppZones).map(([z, c]) => [z, c ? { label: c.name, imgId: c.id } : null])),
+            },
+            solution: a.finalSolution,
+        };
+        TestDuelo.save(test);
+        this._taReset();
+        this._testRefresh();
+        alert(`✅ Test práctico "${test.label}" guardado. Ya está disponible en Formación → Test.`);
+    },
+_findPracticoTest: function (id) {
+        return this.TESTS.practicos.find(x => x.id === id) || TestDuelo.get(id);
+    },
     exportConfig: function () {
         if (ConfigManager.exportConfig()) {
             alert('✅ Backup exportado correctamente.\n\nEl archivo contiene:\n• Decks guardados y deck activo\n• Engines y Staples\n• Config completa (roles, G1/G2 scoring, mecánicas, pilares, RPS, nomenclatura)\n• Matchups (Historial de Enfrentamientos) e Historial de Sesiones / Optimización (incluye Nivel como Piloto del Deck y Complejidad del Deck)\n• Winrates\n• Meta: decks, librería de cartas, scores y cross-scores\n• Favoritas, Torneo, Formación (apuntes, temas dominados, fallbacks de imágenes) y Banlist\n• Música y Perfil de contenido (novato/casual/competitivo)\n\nGuárdalo en un lugar seguro para restaurar tu progreso en cualquier momento.');

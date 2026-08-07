@@ -6346,6 +6346,7 @@ openChangeBan: function (formatName, cardId, cardName) {
     const isGenesys = data.formats[formatName]?.isGenesys;
     if (isGenesys) {
         const currentPts = this.getCardPoints(cardId);
+        
         CardViewer.openPointsEditor(formatName, cardId, cardName, currentPts);
     } else {
         if (window.CardViewer) CardViewer.openCardSearch(formatName, cardName);

@@ -2055,7 +2055,72 @@ openCardSearch: function (formatName, prefillName, mode) {
         cleanSearch();
     }
 },
+// ── Mini buscador genérico para Test de Duelo (Config → Test de Duelo) ──
+openTestCardPicker: function (onSelect) {
+    if (document.getElementById('cv-testpick-overlay')) return;
 
+    const overlay = document.createElement('div');
+    overlay.id = 'cv-testpick-overlay';
+    overlay.style.cssText = `
+        position:fixed;inset:0;background:rgba(0,0,0,0.82);
+        z-index:99999;display:flex;align-items:center;justify-content:center;`;
+
+    overlay.innerHTML = `
+        <div style="background:#111;border:1px solid rgba(255,255,255,0.15);
+                    border-radius:12px;padding:20px;width:340px;max-height:85vh;
+                    overflow:auto;position:relative;">
+            <button onclick="document.getElementById('cv-testpick-overlay').remove()"
+                    style="position:absolute;top:10px;right:10px;background:none;
+                           border:none;color:#fff;font-size:1.2rem;cursor:pointer;">✕</button>
+            <h4 style="margin:0 0 12px;color:#FFD700;">Elegir carta</h4>
+            <div style="display:flex;gap:6px;margin-bottom:10px;">
+                <input id="ctp-input" type="text" placeholder="Nombre de carta..."
+                       style="flex:1;padding:6px 10px;background:rgba(255,255,255,0.08);
+                              border:1px solid rgba(255,255,255,0.2);border-radius:6px;
+                              color:#fff;font-size:0.9rem;" autocomplete="off">
+                <button id="ctp-btn" style="padding:6px 12px;background:#0066cc;border:none;
+                               border-radius:6px;color:#fff;cursor:pointer;">🔍</button>
+            </div>
+            <div id="ctp-results" style="display:flex;flex-direction:column;gap:6px;
+                        max-height:55vh;overflow:auto;"></div>
+        </div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+    const inp   = document.getElementById('ctp-input');
+    const btn   = document.getElementById('ctp-btn');
+    const resEl = document.getElementById('ctp-results');
+
+    const doSearch = async () => {
+        const term = inp?.value?.trim();
+        if (!term) return;
+        resEl.innerHTML = '<p style="color:#aaa;font-size:0.85rem;">⏳ Buscando...</p>';
+        try {
+            const r    = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(term)}`);
+            const json = await r.json();
+            const cards = (json.data || []).slice(0, 15);
+            if (!cards.length) { resEl.innerHTML = '<p style="color:#aaa;font-size:0.85rem;">Sin resultados.</p>'; return; }
+            resEl.innerHTML = cards.map(c => `
+                <div class="ctp-result-row" data-id="${c.id}" data-name="${c.name.replace(/"/g, '&quot;')}"
+                     style="display:flex;align-items:center;gap:8px;padding:4px;border-radius:6px;cursor:pointer;">
+                    <img src="https://images.ygoprodeck.com/images/cards_small/${c.id}.jpg"
+                         style="width:36px;border-radius:3px;" alt="${c.name}">
+                    <span style="font-size:0.85rem;color:#eee;">${c.name}</span>
+                </div>`).join('');
+            resEl.querySelectorAll('.ctp-result-row').forEach(row => {
+                row.addEventListener('click', () => {
+                    onSelect({ id: parseInt(row.dataset.id), name: row.dataset.name });
+                    overlay.remove();
+                });
+            });
+        } catch (_) {
+            resEl.innerHTML = '<p style="color:#d63031;font-size:0.85rem;">Error de red.</p>';
+        }
+    };
+    btn?.addEventListener('click', doSearch);
+    inp?.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+    setTimeout(() => inp?.focus(), 100);
+},
 openPointsEditor: function (formatName, cardId, cardName, currentPoints) {
     if (document.getElementById('cv-pts-overlay')) return;
 
