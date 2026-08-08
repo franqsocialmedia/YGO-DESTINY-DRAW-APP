@@ -828,7 +828,76 @@ body[data-bg-theme="navy"] {
 
 
 /* ── style_welcome.css ── */
+/* ── Aviso de Actualización (Lobby) ── */
 
+.lobby-update-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.88);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99998;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.lobby-update-panel {
+    background: linear-gradient(160deg, #0f0119 0%, #1e0836 60%, #0f0119 100%);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    border-radius: 16px;
+    padding: 32px 28px 26px;
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(0, 100, 200, 0.2), 0 0 120px rgba(0, 0, 0, 0.6);
+}
+
+.lobby-update-logo-wrap {
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: center;
+}
+
+.lobby-update-logo {
+    max-width: 200px;
+    width: 100%;
+    filter: drop-shadow(0 0 18px rgba(255, 215, 0, 0.35));
+}
+
+.lobby-update-title {
+    color: #FFD700;
+    font-size: 1.2rem;
+    letter-spacing: 0.03em;
+    margin: 0 0 16px 0;
+}
+
+.lobby-update-list {
+    text-align: left;
+    color: var(--text-light, #eee);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    margin: 0 0 20px 0;
+    padding-left: 20px;
+}
+
+.lobby-update-list li {
+    margin-bottom: 8px;
+}
+
+.lobby-update-close-btn {
+    background: var(--gold-color, #FFD700);
+    color: #1a0a2e;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 28px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.lobby-update-close-btn:hover {
+    filter: brightness(1.08);
+}
 
 #welcome-overlay {
     position: fixed;

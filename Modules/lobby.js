@@ -1,11 +1,22 @@
 /* lobby.js — Pestaña Lobby: "Lo Nuevo" (últimas cartas TCG/OCG) + "Sugerencias" aleatorias */
 
+/**
+ * Cada vez que quieras anunciar algo nuevo: cambia UPDATE_VERSION (ej. 'v1.1') y reescribe UPDATE_NOTES. 
+ * Al no coincidir con lo guardado en dd_update_seen, vuelve a aparecer una vez para todos.
+ */
+
 const Lobby = {
 
     _latestCards: [],
     _lastFetch: 0,
     _activeSuggestions: [],
     CACHE_MS: 30 * 60 * 1000, // 30 min — evita refetch en cada cambio de pestaña
+
+    // ── Aviso de Actualización — editar estos 2 campos en cada nueva mejora ──
+    UPDATE_VERSION: 'v1.0',
+    UPDATE_NOTES: [
+        'Escribe aquí cada mejora de esta versión, una por línea.'
+    ],
 
     init: function() {
         this.render();
@@ -40,6 +51,7 @@ const Lobby = {
 
         this.renderSuggestions();
         this.loadLatestCards();
+        this.checkUpdateNotice();
     },
 
     toggleSugerencias: function() {
@@ -50,7 +62,41 @@ const Lobby = {
         body.style.display = hide ? 'none' : '';
         if (arrow) arrow.textContent = hide ? '▶' : '▼';
     },
+// ══════════════════════════════════════════════════════════
+    // AVISO DE ACTUALIZACIÓN — panel flotante, 1 vez por versión
+    // ══════════════════════════════════════════════════════════
+    UPDATE_SEEN_KEY: 'dd_update_seen',
 
+    checkUpdateNotice: function() {
+        if (document.getElementById('lobby-update-overlay')) return; // ya está abierto
+        const seen = localStorage.getItem(this.UPDATE_SEEN_KEY);
+        if (seen === this.UPDATE_VERSION) return;
+        this.showUpdateNotice();
+    },
+
+    showUpdateNotice: function() {
+        const overlay = document.createElement('div');
+        overlay.id = 'lobby-update-overlay';
+        overlay.className = 'lobby-update-overlay';
+        overlay.innerHTML = `
+            <div class="lobby-update-panel">
+                <div class="lobby-update-logo-wrap">
+                    <img src="img/LOGO_Destiny_Draw_Yugioh_APP-01.png" class="lobby-update-logo"
+                         alt="Destiny Draw" onerror="this.style.display='none'">
+                </div>
+                <h3 class="lobby-update-title">Actualización de App: Destiny Draw</h3>
+                <ul class="lobby-update-list">
+                    ${this.UPDATE_NOTES.map(n => `<li>${n}</li>`).join('')}
+                </ul>
+                <button class="lobby-update-close-btn" onclick="Lobby.dismissUpdateNotice()">Entendido</button>
+            </div>`;
+        document.body.appendChild(overlay);
+    },
+
+    dismissUpdateNotice: function() {
+        localStorage.setItem(this.UPDATE_SEEN_KEY, this.UPDATE_VERSION);
+        document.getElementById('lobby-update-overlay')?.remove();
+    },
     // ══════════════════════════════════════════════════════════
     // LO NUEVO — últimas 10 cartas por fecha de salida (TCG/OCG)
     // ══════════════════════════════════════════════════════════
