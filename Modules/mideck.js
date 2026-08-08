@@ -335,6 +335,7 @@ const Deck = {
 
         // Solo se crea una versión nueva si es el primer guardado o si hubo
         // cambios reales en la lista de cartas (no en notas, que van por saveNotes()).
+        let uid = prevRaw && prevRaw.uid;
         if (!prevRaw || hasChanges) {
             versions.push({
                 id:      Date.now() + '_' + Math.random().toString(36).slice(2, 7),
@@ -344,13 +345,17 @@ const Deck = {
                 diff:    diff
             });
             while (versions.length > this.MAX_VERSIONS) versions.shift();
+            uid = this._generateUid();
+        } else if (!uid) {
+            uid = this._generateUid(); // deck guardado antes de existir este ID
         }
 
         const deckData = {
             cards:    this.cards,
             notes:    this.notes || '',
             savedAt:  new Date().getTime(),
-            versions: versions
+            versions: versions,
+            uid:      uid
         };
         localStorage.setItem(`deck_${this.name}`, JSON.stringify(deckData));
         alert('Deck guardado');
@@ -361,7 +366,20 @@ const Deck = {
             if (panel) panel.innerHTML = Estadisticas.renderDeckSelectorPanel();
         }
     },
+// ── ID único del Deck (6 dígitos) ──────────────────────────────
+    _generateUid: function () {
+        return String(Math.floor(100000 + Math.random() * 900000));
+    },
 
+    regenerateUid: function (deckName) {
+        const name = deckName || this.name;
+        let raw;
+        try { raw = JSON.parse(localStorage.getItem(`deck_${name}`)); } catch (e) { raw = null; }
+        if (!raw) return null; // solo tiene ID un deck ya guardado
+        raw.uid = this._generateUid();
+        localStorage.setItem(`deck_${name}`, JSON.stringify(raw));
+        return raw.uid;
+    },
     // ── Historial de Versiones ──────────────────────────────────────
     _diffCards: function (oldCards, newCards) {
         oldCards = oldCards || {};
@@ -518,6 +536,7 @@ const Deck = {
         raw.cards   = raw.cards   || this.cards;
         raw.savedAt = raw.savedAt || new Date().getTime();
         raw.notes   = this.notes || '';
+        raw.uid     = this._generateUid();
         localStorage.setItem(`deck_${this.name}`, JSON.stringify(raw));
 
         const statusEl = document.getElementById('opt-notes-status');
@@ -539,7 +558,8 @@ const Deck = {
                     decks.push({
                         name: deckName,
                         cards: data.cards || data,
-                        savedAt: data.savedAt || 0
+                        savedAt: data.savedAt || 0,
+                        uid: data.uid || null
                     });
                 } catch (e) {
                     console.error('Error cargando deck:', key);
@@ -2251,6 +2271,7 @@ this.renderBuscadorDeckPreview();
         const sess = (data.sessions || []).find(s => s.id === id);
         data.sessions = (data.sessions || []).filter(s => s.id !== id);
         localStorage.setItem(`optimization_${this.name}`, JSON.stringify(data));
+        this.regenerateUid();
 
         // Vínculo con Historial de Enfrentamientos: si esta sesión vino de un import,
         // borra también su registro correspondiente en Matchups.
@@ -2268,6 +2289,7 @@ this.renderBuscadorDeckPreview();
         if (!sess) return;
         sess.rounds = sess.rounds.filter(r => r.id !== roundId);
         localStorage.setItem(`optimization_${this.name}`, JSON.stringify(data));
+        this.regenerateUid();
         const pane = document.getElementById('mideck-optimizacion-pane');
         if (pane) pane.innerHTML = this.renderOptimizacionPane();
     },
@@ -2495,6 +2517,7 @@ threatCards:      [...this._pendingThreatCards]
 
         sess.rounds.push(round);
         localStorage.setItem(`optimization_${this.name}`, JSON.stringify(data));
+        this.regenerateUid();
 
         this._syncRoundToMatchup(oppName, round, oppNotes);
 
@@ -2837,6 +2860,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         localStorage.setItem(`complejidad_${this.name}`, JSON.stringify({
             answers, aprender, dominar, total, evaluatedAt: new Date().getTime()
         }));
+        this.regenerateUid();
 
         const sum = document.getElementById('cxd-summary');
         if (sum) sum.innerHTML = this._renderComplejidadSummary();
@@ -4312,6 +4336,7 @@ const Combos = {
 
     saveAll: function (deckName, combos) {
         localStorage.setItem(`${this.STORAGE_PREFIX}${deckName}`, JSON.stringify(combos));
+        if (window.Deck) Deck.regenerateUid(deckName);
     },
 
     getAllAcrossDecks: function () {
@@ -6722,6 +6747,7 @@ _renderSavedDeckItems: function () {
         <div class="eng-item-name">${deck.name}</div>
         <div class="eng-item-counts">M:${mainCount} · E:${extraCount}</div>
         ${ptsHtml}
+        ${deck.uid ? `<div class="eng-item-counts">ID: ${deck.uid}</div>` : ''}
         ${wrHtml}
     </div>
     <div class="eng-item-btns">

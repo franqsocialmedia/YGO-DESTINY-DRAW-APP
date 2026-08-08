@@ -700,6 +700,7 @@ _totals: function (m) {
         if (!confirm(`¿Eliminar el registro de "${name}"?`)) return;
         list.splice(index, 1);
         this.save(list);
+        if (window.Deck) Deck.regenerateUid();
         this._removeImportedSessions(name);
 
         const pane = document.getElementById('mideck-optimizacion-pane');
