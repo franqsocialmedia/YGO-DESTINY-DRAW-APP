@@ -913,6 +913,17 @@ META_HISTORY: {
             { period: '2019 – 2021', title: 'Numeron / Virtual World / Adamancipator', desc: 'Formatos de combo extremo, algunos nunca tan dominantes en TCG por diferencias de banlist regional.', decks: 'Numeron, Virtual World, Adamancipator' },
             { period: '2024', title: 'Tenpai Dragon', desc: 'Uno de los OTK/board-building más opresivos que ha visto el OCG en años recientes — dominó torneos antes de su lanzamiento en TCG y recibió un baneo severo casi inmediato.', decks: 'Tenpai Dragon' },
             { period: '2024 – 2025', title: 'Fiendsmith / Yubel / Snake-Eye (OCG)', desc: 'Meta compartido con TCG pero con timing de banlist distinto — el OCG suele reaccionar más rápido y agresivo a formatos dominantes.', decks: 'Fiendsmith, Yubel, Snake-Eye' },
+        ],md: [
+            { period: 'Ene 2022', title: 'Lanzamiento', desc: 'Master Duel se lanza el 19 de enero de 2022 como simulador oficial gratuito con más de 10.000 cartas disponibles desde el día uno. El meta inicial hereda gran parte del formato TCG/OCG de ese momento.', decks: 'Adamancipator, Eldlich, Sky Striker, Tri-Brigade/Lyrilusc ("Bird-Up"), Virtual World, Drytron' },
+            { period: '2022', title: 'Primer año — expansión y primeros hits', desc: 'El pool de cartas crece con nuevos packs y Konami aplica su propia banlist de Master Duel, con timing separado de la banlist de papel — un mismo período puede tener metas distintos entre TCG/OCG físico y Master Duel.', decks: 'Kashtira, Tearlaments, Branded Despia, Spright, Purrely' },
+            { period: '2023', title: 'Snake-Eye y el techo de poder sube', desc: 'Snake-Eye se vuelve uno de los arquetipos más dominantes que ha tenido el juego, tanto en papel como en Master Duel, forzando baneos agresivos.', decks: 'Snake-Eye, Kashtira, Branded' },
+            { period: '2024', title: 'Fiendsmith / Yubel', desc: 'Dominancia sostenida de estrategias de Fusión/Link rápida apoyadas en handtraps genéricos como pilar constante del ladder competitivo.', decks: 'Fiendsmith, Yubel, Ryzeal' },
+            { period: '2025', title: 'Kashtira y Branded Despia vuelven al frente', desc: 'Tras varias rondas de banlist, el ladder de Master Duel se estabiliza con estos dos arquetipos como referentes, además de opciones más accesibles para F2P como Sky Striker y Labrynth.', decks: 'Kashtira, Branded Despia, Sky Striker, Labrynth' },
+            { period: 'Dic 2025 – Ene 2026', title: 'Aerial Superiority / Season 49', desc: 'Actualización de banlist tras el pack "Aerial Superiority Selection" reordena el tier list de nuevo — el ladder de Master Duel sigue moviéndose cada 1-2 meses con cada banlist o pack nuevo.', decks: 'Meta en movimiento — consultar tier list vigente' },
+        ],
+        mdChampions: [
+            { year: 2025, team: 'Ragnarok', players: 'Antonio "N3sh" Papa (Italia), Herman "Mist" Hansson (Suecia), Luka Forjan (Croacia)' },
+            { year: 2023, team: 'snipehunters', players: 'Josh, QuantalThink, Emre — primeros campeones mundiales de Master Duel (formato 3v3, inaugurado en WCS 2023)' },
         ],
         worlds: [
             { year: 2025, champion: 'Julien Leo Kehon', country: 'Estados Unidos', deck: 'K9 Vanquish Soul' },
@@ -948,9 +959,12 @@ META_HISTORY: {
                     <div class="form-level-nav">
                         <button class="form-level-btn${sub === 'tcg' ? ' active' : ''}" onclick="Formacion.switchHistoriaSub('tcg')">🇺🇸 TCG</button>
                         <button class="form-level-btn${sub === 'ocg' ? ' active' : ''}" onclick="Formacion.switchHistoriaSub('ocg')">🇯🇵 OCG</button>
+                        <button class="form-level-btn${sub === 'md' ? ' active' : ''}" onclick="Formacion.switchHistoriaSub('md')">🎮 Master Duel</button>
                         <button class="form-level-btn${sub === 'worlds' ? ' active' : ''}" onclick="Formacion.switchHistoriaSub('worlds')">🏆 Mundiales</button>
                     </div>
-                    ${sub === 'worlds' ? this._renderWorldsHistory() : this._renderEraHistory(sub)}
+                    ${sub === 'worlds' ? this._renderWorldsHistory()
+                        : sub === 'md' ? this._renderEraHistory('md') + this._renderMDChampions()
+                        : this._renderEraHistory(sub)}
                 </div>
             </div>
         `;
@@ -990,6 +1004,24 @@ META_HISTORY: {
                     </div>
                 `).join('')}
                 <p style="margin-top:10px;font-size:0.78rem;color:rgba(255,255,255,0.5);">Sin edición presencial en 2020-2022 (pandemia). Fuente: resultados públicos históricos del Campeonato Mundial.</p>
+            </div>
+        `;
+    },
+    _renderMDChampions: function () {
+        const rows = this.META_HISTORY.mdChampions || [];
+        if (!rows.length) return '';
+        return `
+            <div style="margin-top:16px;">
+                <h3 style="margin:0 0 8px;font-size:0.95rem;color:#FFD700;">🏆 Campeones del Mundial de Master Duel (formato 3v3)</h3>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    ${rows.map(r => `
+                        <div style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:rgba(255,255,255,0.04);border-radius:6px;flex-wrap:wrap;">
+                            <span style="min-width:44px;font-weight:700;color:#FFD700;font-size:0.85rem;">${r.year}</span>
+                            <span style="flex:1;font-size:0.85rem;color:#eee;">${r.team}</span>
+                            <span style="font-size:0.8rem;color:rgba(255,255,255,0.65);">${r.players}</span>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
         `;
     },
