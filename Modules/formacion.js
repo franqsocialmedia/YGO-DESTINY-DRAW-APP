@@ -888,7 +888,111 @@ const Formacion = {
             </div>
         `;
     },
+// ── Historia del Meta (TCG / OCG / Mundiales) ──────────────
+META_HISTORY: {
+        tcg: [
+            { period: '2002 – 2004', title: 'Chaos Control / Yata-Garasu', desc: 'Formato definido por Chaos Emperor Dragon, Yata-Garasu y Imperial Order — partidas cortas resueltas por ventaja de recursos brutal antes de que la Lista Prohibida golpeara fuerte estas piezas.', decks: 'Chaos Control, Yata-lock' },
+            { period: '2005 – 2006', title: 'Goat Format', desc: 'El formato más nostálgico y todavía jugado hoy como modalidad retro. Ritmo lento, control de campo con Monarchs tempranos, Scapegoat y trampas de respuesta.', decks: 'Metamorphosis, Magician of Faith, Exiled Force, Scapegoat, Mystic Tomato' },
+            { period: '2006 – 2008', title: 'Era de los Monarcas', desc: 'Sin Chaos dominando, los Monarchs (Caius, Raiza, Mobius) se vuelven el pilar de control de campo y ventaja de cartas del formato.', decks: 'Monarchs, Destiny Hero' },
+            { period: '2008 – 2011', title: 'Era Synchro', desc: 'Llegada de la Extra Deck Synchro (5D\'s). El formato acelera con extensores y bosses de nivel 8, y aparecen los primeros OTK consistentes vía Synchron.', decks: 'Dark Armed Dragon, Six Samurai, Blackwing, Plants, Turbo/Formula Synchron' },
+            { period: '2011 – 2013', title: 'Inzektor, Dino Rabbit, Wind-Up', desc: 'Combos explosivos de bajo costo de recursos previos a Pendulum; alto poder por carta individual con menos piezas necesarias para armar un tablero fuerte.', decks: 'Inzektor, Dino Rabbit, Wind-Up' },
+            { period: '2013 – 2014', title: 'Dragon Rulers', desc: 'Uno de los formatos más dominantes de la historia competitiva: ventaja de material casi gratuita vía descarte para invocar dragones nivel 7-8. Terminó en uno de los baneos más agresivos jamás aplicados.', decks: 'Dragon Ruler' },
+            { period: '2014 – 2015', title: 'Burning Abyss / Shaddoll / Qliphort', desc: 'Formato de mid-range consistente, con menos combos explosivos y más intercambio de recursos e interacción.', decks: 'Burning Abyss, Shaddoll, Qliphort' },
+            { period: '2015 – 2017', title: 'Era Pendulum', desc: 'Cambio de paradigma: invocación Péndulo permite armar tableros enormes en un solo turno. Formato de alta velocidad hasta que Pendulum recibe baneos severos.', decks: 'Performapal/Odd-Eyes, Kozmo, Metalfoes' },
+            { period: '2017 – 2019', title: 'Llegada de los Links (Master Rule 4)', desc: 'Nueva mecánica Link reestructura por completo la Extra Deck: solo se permite 1 monstruo Link antes de acceder a Fusión/Synchro/Xyz. Formato de alta interacción y negación.', decks: 'SPYRAL, Orcust, Salamangreat, Zoodiac' },
+            { period: '2019 – 2020', title: 'Master Rule 5', desc: 'Regreso de las Zonas de Monstruo Extra (2, compartidas), corrigiendo la rigidez de Master Rule 4. Formato de control de campo y grind mid-range.', decks: 'Eldlich, Adamancipator, Dragon Link' },
+            { period: '2020 – 2022', title: 'Pandemia / Torneos Online', desc: 'Sin eventos presenciales grandes durante la pandemia; el metagame se define en gran parte por Master Duel (lanzado 2022) y torneos online.', decks: 'Tri-Brigade, Drytron, Virtual World, Springans' },
+            { period: '2022 – 2023', title: 'Kashtira, Tearlaments, Spright', desc: 'Formato de altísima interacción: combos de cementerio, negaciones en cadena y decks capaces de ganar desde la mano del rival.', decks: 'Kashtira, Tearlaments, Spright, Purrely, Branded Despia' },
+            { period: '2023 – 2025', title: 'Snake-Eye / Fiendsmith / Yubel', desc: 'Dominancia de arquetipos de Fusión/Link rápida sostenidos por handtraps genéricos como pilar constante del formato (Ash Blossom, Nibiru, Effect Veiler).', decks: 'Snake-Eye, Fiendsmith, Yubel, Ryzeal' },
+        ],
+        ocg: [
+            { period: '2002 – 2005', title: 'Era temprana / Chaos', desc: 'Paralelo al TCG pero con acceso más temprano a las mismas piezas (Chaos Emperor Dragon, Yata-Garasu); Japón define gran parte del metagame mundial en esta era.', decks: 'Chaos Control' },
+            { period: '2005 – 2008', title: 'Monarcas / Control de campo', desc: 'Igual que TCG pero con card pool más amplio antes por diferencia de releases entre regiones.', decks: 'Monarchs, Dark World' },
+            { period: '2008 – 2012', title: 'Synchro temprano', desc: 'OCG suele recibir los arquetipos Synchro con semanas/meses de anticipación al TCG, marcando tendencia sobre qué se banea después en occidente.', decks: 'Six Samurai, Blackwing, Plants' },
+            { period: '2015 – 2017', title: 'Pendulum OCG', desc: 'Igual que TCG, pero el impacto de Pendulum se siente primero en Japón, generando los baneos que luego llegan a TCG.', decks: 'Performapal, Kozmo' },
+            { period: '2019 – 2021', title: 'Numeron / Virtual World / Adamancipator', desc: 'Formatos de combo extremo, algunos nunca tan dominantes en TCG por diferencias de banlist regional.', decks: 'Numeron, Virtual World, Adamancipator' },
+            { period: '2024', title: 'Tenpai Dragon', desc: 'Uno de los OTK/board-building más opresivos que ha visto el OCG en años recientes — dominó torneos antes de su lanzamiento en TCG y recibió un baneo severo casi inmediato.', decks: 'Tenpai Dragon' },
+            { period: '2024 – 2025', title: 'Fiendsmith / Yubel / Snake-Eye (OCG)', desc: 'Meta compartido con TCG pero con timing de banlist distinto — el OCG suele reaccionar más rápido y agresivo a formatos dominantes.', decks: 'Fiendsmith, Yubel, Snake-Eye' },
+        ],
+        worlds: [
+            { year: 2025, champion: 'Julien Leo Kehon', country: 'Estados Unidos', deck: 'K9 Vanquish Soul' },
+            { year: 2024, champion: 'Ruben Andres Penaranda', country: 'Estados Unidos', deck: 'Fiendsmith Yubel' },
+            { year: 2023, champion: 'Paul Stephen Aronson', country: 'Estados Unidos', deck: 'Bystial Dragon Link' },
+            { year: 2019, champion: 'Kosaka Kouki', country: 'Japón', deck: 'Salamangreat' },
+            { year: 2018, champion: 'Wang Chia Ching', country: 'Taipéi Chino', deck: 'Trickstar' },
+            { year: 2017, champion: 'Tsujimura Ryosuke', country: 'Japón', deck: 'True King Yang Zing Dinosaur' },
+            { year: 2016, champion: 'Hiyama Shunsuke', country: 'Japón', deck: 'Blue-Eyes' },
+            { year: 2015, champion: 'Hiyama Shunsuke', country: 'Japón', deck: 'Tellarknight' },
+            { year: 2014, champion: 'Sehabi Kheireddine', country: 'Canadá', deck: 'Infernity' },
+            { year: 2013, champion: 'Huang Shin En', country: 'Taipéi Chino', deck: 'Dragon Ruler' },
+            { year: 2012, champion: 'Saito Akikazu', country: 'Japón', deck: 'Inzektor' },
+            { year: 2011, champion: 'Ogawa Takashi', country: 'Japón', deck: 'Agent Fairy' },
+            { year: 2010, champion: 'Galileo Mauricio De Obaldia Soza', country: 'Panamá', deck: 'Frog FTK' },
+            { year: 2009, champion: 'Benjamin Tan Hong Hwee', country: 'Singapur', deck: 'Blackwing' },
+            { year: 2008, champion: 'Mutsuoka Kazuki', country: 'Japón', deck: 'Gladiator Beast' },
+            { year: 2007, champion: 'Patricio Andrés Toro Valenzuela', country: 'Chile', deck: 'Trooper Monarch' },
+            { year: 2006, champion: 'Dario Longo', country: 'Italia', deck: 'Chaos' },
+            { year: 2005, champion: 'Miltiadis Markou', country: 'Grecia', deck: 'Metamorphosis Chaos' },
+            { year: 2004, champion: 'Togawa Masatoshi', country: 'Japón', deck: 'Chaos' },
+            { year: 2003, champion: 'Ng Yu Leung', country: 'Hong Kong', deck: 'Hand Destruction' },
+        ],
+    },
+    _renderHistoriaTab: function () {
+        if (!this.historiaSubTab) this.historiaSubTab = 'tcg';
+        const sub = this.historiaSubTab;
+        return `
+            <div class="form-topic-container">
+                <div class="form-notebook form-notebook--test">
+                    <h2 class="form-nb-title">📜 Historia del Meta</h2>
+                    <p class="form-nb-text">Recorrido del metagame competitivo de Yu-Gi-Oh!, dividido en TCG, OCG y Campeonato Mundial. No existe una API para esto — es un registro curado a mano. Fechas y descripciones de eras son aproximadas (consenso de la comunidad competitiva); el listado de Mundiales sí son resultados verificados. Se puede ampliar editando <code>Formacion.META_HISTORY</code> en el código.</p>
+                    <div class="form-level-nav">
+                        <button class="form-level-btn${sub === 'tcg' ? ' active' : ''}" onclick="Formacion.switchHistoriaSub('tcg')">🇺🇸 TCG</button>
+                        <button class="form-level-btn${sub === 'ocg' ? ' active' : ''}" onclick="Formacion.switchHistoriaSub('ocg')">🇯🇵 OCG</button>
+                        <button class="form-level-btn${sub === 'worlds' ? ' active' : ''}" onclick="Formacion.switchHistoriaSub('worlds')">🏆 Mundiales</button>
+                    </div>
+                    ${sub === 'worlds' ? this._renderWorldsHistory() : this._renderEraHistory(sub)}
+                </div>
+            </div>
+        `;
+    },
 
+    switchHistoriaSub: function (sub) {
+        this.historiaSubTab = sub;
+        const content = document.getElementById('form-tab-content');
+        if (content) content.innerHTML = this._renderCurrentTab();
+    },
+
+    _renderEraHistory: function (region) {
+        const eras = this.META_HISTORY[region] || [];
+        return `
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
+                ${eras.map(e => `
+                    <div style="border-left:3px solid #FFD700;padding:8px 12px;background:rgba(255,255,255,0.04);border-radius:0 8px 8px 0;">
+                        <div style="color:#FFD700;font-size:0.75rem;font-weight:700;margin-bottom:2px;">${e.period}</div>
+                        <h3 style="margin:0 0 4px;font-size:1rem;color:#eee;">${e.title}</h3>
+                        <p style="margin:0;font-size:0.85rem;color:rgba(255,255,255,0.75);line-height:1.4;">${e.desc}</p>
+                        ${e.decks ? `<p style="margin:6px 0 0;font-size:0.78rem;color:rgba(255,255,255,0.55);"><strong style="color:rgba(255,255,255,0.7);">Decks/cartas clave:</strong> ${e.decks}</p>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    },
+
+    _renderWorldsHistory: function () {
+        const rows = this.META_HISTORY.worlds;
+        return `
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">
+                ${rows.map(r => `
+                    <div style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:rgba(255,255,255,0.04);border-radius:6px;flex-wrap:wrap;">
+                        <span style="min-width:44px;font-weight:700;color:#FFD700;font-size:0.85rem;">${r.year}</span>
+                        <span style="flex:1;font-size:0.85rem;color:#eee;">${r.champion} <em style="color:rgba(255,255,255,0.45);">(${r.country})</em></span>
+                        <span style="font-size:0.8rem;color:rgba(255,255,255,0.65);">${r.deck}</span>
+                    </div>
+                `).join('')}
+                <p style="margin-top:10px;font-size:0.78rem;color:rgba(255,255,255,0.5);">Sin edición presencial en 2020-2022 (pandemia). Fuente: resultados públicos históricos del Campeonato Mundial.</p>
+            </div>
+        `;
+    },
     checkQuiz: function (topicId) {
         const qs = this.QUIZZES[topicId];
         if (!qs) return;
@@ -907,6 +1011,7 @@ const Formacion = {
         const scoreEl = document.getElementById(`quiz-${topicId}-score`);
         if (scoreEl) scoreEl.textContent = `Puntaje: ${correct}/${qs.length}`;
     },
+
     init: function () {
         this.container = document.getElementById('formacion-content');
         if (!this.container) return;
@@ -926,6 +1031,8 @@ const Formacion = {
                         data-tab="apuntes" onclick="Formacion.switchTab('apuntes')">📓 Apuntes</button>
                 <button class="form-subnav-btn form-subnav-btn--green${(this.activeTab === 'temas' || this.TOPICS.some(t => t.id === this.activeTab)) ? ' active' : ''}"
                         data-tab="temas" onclick="Formacion.switchTab('temas')">📚 Temas</button>
+                <button class="form-subnav-btn${this.activeTab === 'historia' ? ' active' : ''}"
+                        data-tab="historia" onclick="Formacion.switchTab('historia')">📜 Historia del Meta</button>
                 <button class="form-subnav-btn form-subnav-btn--green${this.activeTab === 'test' ? ' active' : ''}"
                         data-tab="test" onclick="Formacion.switchTab('test')">🧪 Test</button>
                 <button class="form-subnav-btn form-subnav-btn--green${this.activeTab === 'estilo' ? ' active' : ''}"
@@ -938,6 +1045,7 @@ const Formacion = {
                         data-tab="fuentes" onclick="Formacion.switchTab('fuentes')">🔗 Fuentes</button>
                 <button class="form-subnav-btn${this.activeTab === 'maestros' ? ' active' : ''}"
                         data-tab="maestros" onclick="Formacion.switchTab('maestros')">🎓 Maestros</button>
+                
             </div>
 
             <!-- Contenido de sub-pestañas -->
@@ -976,6 +1084,7 @@ const Formacion = {
         if (this.activeTab === 'juegos')     return this._renderJuegosTab();
         if (this.activeTab === 'fuentes')  return this._renderFuentesTab();
         if (this.activeTab === 'maestros') return this._renderMaestrosTab();
+        if (this.activeTab === 'historia') return this._renderHistoriaTab();
         return this._renderTemasTab(); // 'temas' o cualquier id de TOPICS
     },
 
