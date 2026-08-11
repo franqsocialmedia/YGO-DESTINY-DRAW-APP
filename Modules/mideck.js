@@ -5386,16 +5386,17 @@ _stepIndex: function (combo, stepId) {
         const item = Deck.cards[cardId];
         if (!item) return;
 
-        const others = Object.entries(Deck.cards).filter(([id, c]) => id !== cardId && c.location === 'main');
+        const others = Object.entries(Deck.cards).filter(([id, c]) => id !== cardId && (c.location === 'main' || c.location === 'extra'));
         const rows = others.map(([id, c]) => {
             const name = c.data?.name || id;
             const img  = c.data?.card_images?.[0]?.image_url_small || '';
+            const tag  = c.location === 'extra' ? ' <small>(Extra)</small>' : '';
             return `<label class="combo-deps-row">
                 <input type="radio" name="combo-copyof-radio" value="${id}" ${item.copyOf === id ? 'checked' : ''}>
                 ${img ? `<img src="${img}" class="combo-deps-thumb" alt="">` : ''}
-                <span>${this._escape(name)}</span>
+                <span>${this._escape(name)}${tag}</span>
             </label>`;
-        }).join('') || '<p class="deck-empty">No hay otras cartas en el Main Deck.</p>';
+        }).join('') || '<p class="deck-empty">No hay otras cartas en el Main/Extra Deck.</p>';
 
         const overlay = document.createElement('div');
         overlay.id = 'combo-copyof-overlay';
@@ -5568,6 +5569,34 @@ _stepIndex: function (combo, stepId) {
                 </div>
             </div>
         </div>`;
+    },
+
+// Lista TODAS las cartas involucradas en el combo (mano inicial + pasos +
+    // endboard), tengan o no una zona asignada, para poder marcarlas como
+    // "copia de" aunque se hayan devuelto al mazo durante el combo.
+    _renderComboCopyPanel: function (combo) {
+        const ids = new Set();
+        (combo.startCards || []).forEach(id => ids.add(id));
+        (combo.steps || []).forEach(s => { if (s.cardId) ids.add(s.cardId); });
+        (combo.endboard || []).forEach(e => ids.add(e.id));
+
+        const rows = Array.from(ids).filter(id => Deck.cards[id]).map(id => {
+            const item = Deck.cards[id];
+            const name = item.data?.name || id;
+            const img  = item.data?.card_images?.[0]?.image_url_small || '';
+            const copyOfName = item.copyOf ? (Deck.cards[item.copyOf]?.data?.name || item.copyOf) : null;
+            return `<div class="combo-copy-row">
+                ${img ? `<img src="${img}" class="combo-deps-thumb" alt="">` : ''}
+                <span class="combo-copy-name">${this._escape(name)}</span>
+                <span class="combo-eb-deps-label">🧩 Copia de:</span>
+                ${copyOfName ? `<span class="combo-dep-chip">${this._escape(copyOfName)}</span>` : '<span class="combo-dep-empty">Ninguna</span>'}
+                <button class="combo-eb-deps-edit-btn" onclick="Combos.openCopyOfPicker('${combo.deckName}','${combo.id}','${id}')">✏️</button>
+            </div>`;
+        }).join('');
+
+        if (!rows) return '';
+        return `<h4 class="combo-steps-title">🧩 Copias de Carta (todas, tengan o no zona)</h4>
+        <div class="combo-copy-panel">${rows}</div>`;
     },
 
     // ── Consistencia del Starter (Etapa 8) — hipergeométrica ────────
@@ -5765,6 +5794,7 @@ _renderBranchBanner: function (combo) {
             ${this._renderStarterConsistency(combo)}
             ${this._renderInteractionStats(combo)}
             ${this._renderEndboard(combo)}
+            ${this._renderComboCopyPanel(combo)}
     <div class="combo-hint-box">
         💡 <strong>Carta Activa</strong>: sigue aportando algo después de terminado el combo (presión, protección, recursos), por eso suma al Poder. <strong>Depende de</strong>: de qué otra(s) pieza(s) necesita para conservar ese valor — si pierdes esas cartas, esta deja de aportar.
     </div>

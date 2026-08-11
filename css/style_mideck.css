@@ -3106,6 +3106,14 @@
 }
 .combo-dep-empty { opacity: .4; font-style: italic; }
 
+.combo-copy-panel { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 10px; }
+.combo-copy-row {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    font-size: .68rem; padding: 3px 4px; border-radius: 5px;
+    background: rgba(255,255,255,.03);
+}
+.combo-copy-name { color: var(--text-light); font-weight: bold; min-width: 90px; }
+
 .combo-deps-modal { max-width: 420px; }
 .combo-deps-list { max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
 .combo-deps-row {
