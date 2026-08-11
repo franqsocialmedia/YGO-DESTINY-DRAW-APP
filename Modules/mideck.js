@@ -5839,20 +5839,48 @@ _renderBranchBanner: function (combo) {
             return (a.bossCardId || '').localeCompare(b.bossCardId || '');
         });
 
-        const renderNode = (combo, depth) => {
+        const branchIcon = (combo) => combo.branchType === 'choke' ? '🚧' : '🔀';
+        const branchTitle = (combo) => combo.branchType === 'choke' ? 'Rama por interrupción' : 'Variante';
+
+        const renderBranchNode = (combo, depth) => {
             const row = `
-            <div class="combo-list-row ${depth > 0 ? 'combo-list-child' : ''}" ${depth > 0 ? `style="margin-left:${depth * 20}px"` : ''}
+            <div class="combo-branch-row" style="margin-left:${(depth - 1) * 16}px"
                  onclick="Combos.openCombo('${combo.deckName}','${combo.id}')">
-                ${combo.imageUrlSmall ? `<img src="${combo.imageUrlSmall}" class="combo-list-thumb" alt="">` : ''}
-                ${combo.parentComboId ? `<span class="combo-list-branch-badge" title="${combo.branchType === 'choke' ? 'Rama por interrupción' : 'Variante'}">${combo.branchType === 'choke' ? '🚧' : '🔀'}</span>` : ''}
-                <span class="combo-list-name">${combo.name ? this._escape(combo.name) : '(Sin nombre — ' + combo.status + ')'}</span>
-                <span class="combo-list-power">⚡ ${combo.power || 0}</span>
+                ${combo.imageUrlSmall ? `<img src="${combo.imageUrlSmall}" class="combo-branch-thumb" alt="">` : ''}
+                <span class="combo-list-branch-badge" title="${branchTitle(combo)}">${branchIcon(combo)}</span>
+                <span class="combo-branch-name">${combo.name ? this._escape(combo.name) : '(Sin nombre — ' + combo.status + ')'}</span>
+                <span class="combo-status-badge combo-status-${combo.status}">${combo.status}</span>
+                <span class="combo-branch-power">⚡ ${combo.power || 0}</span>
             </div>`;
             const children = sortSiblings(all.filter(c => c.parentComboId === combo.id));
-            return row + children.map(c => renderNode(c, depth + 1)).join('');
+            return row + children.map(c => renderBranchNode(c, depth + 1)).join('');
         };
 
-        return sortSiblings(roots).map(c => renderNode(c, 0)).join('');
+        const renderRootCard = (combo) => {
+            const branches = sortSiblings(all.filter(c => c.parentComboId === combo.id));
+            const branchesHTML = branches.length
+                ? `<div class="combo-branch-list">${branches.map(c => renderBranchNode(c, 1)).join('')}</div>`
+                : '';
+            return `
+            <div class="combo-root-card">
+                <div class="combo-root-main" onclick="Combos.openCombo('${combo.deckName}','${combo.id}')">
+                    ${combo.imageUrlSmall
+                        ? `<img src="${combo.imageUrlSmall}" class="combo-root-thumb" alt="">`
+                        : `<div class="combo-root-thumb combo-root-thumb-empty">🃏</div>`}
+                    <div class="combo-root-body">
+                        <div class="combo-root-top">
+                            <span class="combo-root-name">${combo.name ? this._escape(combo.name) : '(Sin nombre — ' + combo.status + ')'}</span>
+                            <span class="combo-status-badge combo-status-${combo.status}">${combo.status}</span>
+                        </div>
+                        <div class="combo-root-power">⚡ Poder: ${combo.power || 0}</div>
+                        ${branches.length ? `<div class="combo-root-branch-count">${branches.length} rama${branches.length === 1 ? '' : 's'}/variante${branches.length === 1 ? '' : 's'}</div>` : ''}
+                    </div>
+                </div>
+                ${branchesHTML}
+            </div>`;
+        };
+
+        return `<div class="combo-grid">${sortSiblings(roots).map(renderRootCard).join('')}</div>`;
     },
 
     // ── Borrar línea desde un paso (Etapa 9) ─────────────────────────

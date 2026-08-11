@@ -731,3 +731,7 @@
 @media (min-width: 769px) {
     .fpt-board .pz-field-grid { max-width: 60%; margin: 0 auto 6px; }
 }
+
+@media (max-width: 480px) {
+    .combo-grid { grid-template-columns: 1fr; }
+}
