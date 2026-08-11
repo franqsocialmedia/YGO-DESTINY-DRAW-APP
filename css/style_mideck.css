@@ -3272,3 +3272,22 @@
     text-transform: uppercase;
     letter-spacing: .04em;
 }
+/* ── Estadísticas de Interacciones (Línea de Combos) ── */
+.combo-stats-block { margin: 14px 0; }
+.combo-stats-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.combo-stat-chip {
+    font-size: .72rem; padding: 4px 9px; border-radius: 12px;
+    background: rgba(255,255,255,.05); border: 1px solid var(--border-color);
+}
+.combo-stat-chip strong { color: var(--gold-color); }
+.combo-stat-chip-manual { display: flex; align-items: center; gap: 5px; }
+.combo-stat-chip-remove { background: none; border: none; color: #ff9a9a; cursor: pointer; font-size: .68rem; padding: 0; }
+.combo-mi-add-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.combo-mi-input {
+    flex: 1; min-width: 140px; padding: 6px 8px; border-radius: 6px;
+    background: rgba(255,255,255,.04); border: 1px solid var(--border-color); color: var(--text-light); font-size: .78rem;
+}
+.combo-mi-qty-input {
+    width: 56px; padding: 6px 8px; border-radius: 6px;
+    background: rgba(255,255,255,.04); border: 1px solid var(--border-color); color: var(--text-light); font-size: .78rem;
+}

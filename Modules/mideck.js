@@ -4465,9 +4465,9 @@ _buildExtraPool: function () {
     });
     return pool;
 },
-    _logStep: function (combo, msg, cardId) {
+    _logStep: function (combo, msg, cardId, meta) {
         if (!combo.steps) combo.steps = [];
-        combo.steps.push({
+        const step = {
             id:            'step_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
             msg:           msg,
             cardId:        cardId || null,
@@ -4476,7 +4476,12 @@ _buildExtraPool: function () {
             // (Etapa 6) reconstruyendo el estado exacto en ese punto. Pasos
             // grabados antes de esta actualización no tendrán este campo.
             zonesSnapshot: combo.zones ? JSON.parse(JSON.stringify(combo.zones)) : null
-        });
+        };
+        // kind/from/to: metadata estructurada para Estadísticas de Interacciones
+        // (Robos/Invocaciones/Grinding/Recovery/Banish/Efectos). Pasos grabados
+        // antes de esta actualización no tendrán estos campos y no contarán.
+        if (meta) { step.kind = meta.kind; step.from = meta.from; step.to = meta.to; }
+        combo.steps.push(step);
     },
 
   _zoneLabel: function (zone) {
@@ -4539,7 +4544,7 @@ confirmResetZones: function (deckName, comboId) {
         const [entry] = combo.zones.deckPool.splice(idx, 1);
         entry.faceDown = true; // robo aleatorio simulado: se revela al moverla/activarla
         combo.zones.hand.push(entry);
-        this._logStep(combo, `🃏 Robas 1 carta`, null);
+        this._logStep(combo, `🃏 Robas 1 carta`, null, { kind: 'draw', from: 'deckPool', to: 'hand' });
     });
     this._refresh();
 },
@@ -4564,7 +4569,7 @@ confirmResetZones: function (deckName, comboId) {
 
             const cardData = Deck.cards[entry.id]?.data;
             const name = cardData?.name || entry.id;
-            this._logStep(combo, `${name}: ${this._zoneLabel(fromZone)} → ${this._zoneLabel(toZone)}`, entry.id);
+            this._logStep(combo, `${name}: ${this._zoneLabel(fromZone)} → ${this._zoneLabel(toZone)}`, entry.id, { kind: 'move', from: fromZone, to: toZone });
         });
         this._refresh();
     },
@@ -4591,7 +4596,7 @@ sendToDeck: function (deckName, comboId, uid, fromZone) {
 
         const name      = cardData?.name || entry.id;
         const destLabel = pendulumFaceUp ? 'boca arriba en el Extra Deck' : (toExtra ? 'Extra Deck' : 'Mazo');
-        this._logStep(combo, `${name}: ${this._zoneLabel(fromZone)} → ${destLabel}`, entry.id);
+        this._logStep(combo, `${name}: ${this._zoneLabel(fromZone)} → ${destLabel}`, entry.id, { kind: 'toDeck', from: fromZone, to: poolKey });
     });
     this._refresh();
 },
@@ -4608,7 +4613,7 @@ activateEffect: function (deckName, comboId, uid, zoneKey) {
 
         const cardData = Deck.cards[entry.id]?.data;
         const name = cardData?.name || entry.id;
-        this._logStep(combo, `✨ ${name}: Activación de Efecto (${this._zoneLabel(zoneKey)})`, entry.id);
+        this._logStep(combo, `✨ ${name}: Activación de Efecto (${this._zoneLabel(zoneKey)})`, entry.id, { kind: 'effect', from: zoneKey });
     });
     this._refresh();
 },
@@ -4808,7 +4813,7 @@ openExtraPicker: function (deckName, comboId) {
         combo.zones[toZone].push(entry);
         const cardData = Deck.cards[entry.id]?.data;
         const fromLabel = fromPool === 'extraPool' ? 'Extra Deck' : 'Mazo';
-        this._logStep(combo, `${cardData?.name || entry.id}: ${fromLabel} → ${this._zoneLabel(toZone)}`, entry.id);
+        this._logStep(combo, `${cardData?.name || entry.id}: ${fromLabel} → ${this._zoneLabel(toZone)}`, entry.id, { kind: 'fromPool', from: fromPool, to: toZone });
     });
     this._refresh();
     if (document.getElementById('combo-deckpicker-overlay')) this.openDeckPicker(deckName, comboId);
@@ -5424,6 +5429,88 @@ _stepIndex: function (combo, stepId) {
         this.saveAll(deckName, this.getAll(deckName)); // persiste starterCardId/power recalculado
         this._refresh();
     },
+    // ── Estadísticas de Interacciones: automáticas (por zona/tipo de paso) + manuales ──
+    _computeAutoInteractions: function (combo) {
+        const st = { robos:0, invocaciones:0, grinding:0, recovery:0, banish:0,
+                     efectosMano:0, efectosCampo:0, efectosGY:0, efectosBanish:0 };
+        (combo.steps || []).forEach(s => {
+            if (!s.kind) return; // paso viejo sin metadata — no contribuye
+            if (s.kind === 'draw') { st.robos++; return; }
+            if (s.kind === 'effect') {
+                if (s.from === 'hand')        st.efectosMano++;
+                else if (s.from === 'field')  st.efectosCampo++;
+                else if (s.from === 'gy')     st.efectosGY++;
+                else if (s.from === 'banish') st.efectosBanish++;
+                return;
+            }
+            const from = s.from, to = s.to;
+            if (to === 'banish') { st.banish++; return; }
+            if (to === 'field')  { st.invocaciones++; return; }
+            if (to === 'gy' && (from === 'hand' || from === 'deckPool' || from === 'extraPool')) { st.grinding++; return; }
+            if ((from === 'gy' || from === 'banish') && (to === 'hand' || to === 'field' || to === 'deckPool' || to === 'extraPool')) { st.recovery++; }
+        });
+        return st;
+    },
+
+    addManualInteraction: function (deckName, comboId) {
+        const labelInput = document.getElementById(`combo-mi-label-${comboId}`);
+        const qtyInput   = document.getElementById(`combo-mi-qty-${comboId}`);
+        const label = (labelInput?.value || '').trim();
+        const qty   = parseInt(qtyInput?.value, 10) || 1;
+        if (!label) return;
+        this._withCombo(deckName, comboId, combo => {
+            if (!combo.manualInteractions) combo.manualInteractions = [];
+            combo.manualInteractions.push({
+                id: 'mi_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+                label, qty
+            });
+        });
+        this._refresh();
+    },
+
+    removeManualInteraction: function (deckName, comboId, miId) {
+        this._withCombo(deckName, comboId, combo => {
+            combo.manualInteractions = (combo.manualInteractions || []).filter(m => m.id !== miId);
+        });
+        this._refresh();
+    },
+
+    _renderInteractionStats: function (combo) {
+        const auto = this._computeAutoInteractions(combo);
+        const AUTO_LABELS = {
+            robos:        '🃏 Robos',
+            invocaciones: '⬆️ Invocaciones',
+            grinding:     '⚰️ Grinding',
+            recovery:     '♻️ Recovery',
+            banish:       '🌀 Banish',
+            efectosMano:  '✋ Efectos en Mano',
+            efectosCampo: '🏟️ Efectos en Campo',
+            efectosGY:    '⚰️ Efecto en Cementerio',
+            efectosBanish:'🌀 Efectos desde el Destierro'
+        };
+        const autoChips = Object.keys(AUTO_LABELS).map(k =>
+            `<span class="combo-stat-chip">${AUTO_LABELS[k]}: <strong>${auto[k]}</strong></span>`).join('');
+
+        const manual = combo.manualInteractions || [];
+        const manualChips = manual.map(m => `
+            <span class="combo-stat-chip combo-stat-chip-manual">
+                ${this._escape(m.label)}: <strong>${m.qty}</strong>
+                <button class="combo-stat-chip-remove" onclick="Combos.removeManualInteraction('${combo.deckName}','${combo.id}','${m.id}')">✖</button>
+            </span>`).join('') || '<span class="deck-empty">Sin interacciones manuales aún.</span>';
+
+        return `
+        <div class="combo-stats-block">
+            <h5 class="combo-zone-title">📊 Interacciones (automático)</h5>
+            <div class="combo-stats-grid">${autoChips}</div>
+            <h5 class="combo-zone-title">✍️ Interacciones del Endboard (manual)</h5>
+            <div class="combo-stats-grid">${manualChips}</div>
+            <div class="combo-mi-add-row">
+                <input type="text" id="combo-mi-label-${combo.id}" class="combo-mi-input" placeholder="Ej: Pops, Negates...">
+                <input type="number" id="combo-mi-qty-${combo.id}" class="combo-mi-qty-input" min="1" value="1">
+                <button class="deck-move" onclick="Combos.addManualInteraction('${combo.deckName}','${combo.id}')">➕ Agregar</button>
+            </div>
+        </div>`;
+    },
     _renderEndboard: function (combo) {
         const zones = [['field', '🏟️ Field'], ['hand', '✋ HAND'], ['gy', '⚰️ GY'], ['banish', '🌀 Banish']];
         const groups = zones.map(([key, label]) => {
@@ -5676,6 +5763,7 @@ _renderBranchBanner: function (combo) {
             </div>
             ${this._renderPowerSummary(combo)}
             ${this._renderStarterConsistency(combo)}
+            ${this._renderInteractionStats(combo)}
             ${this._renderEndboard(combo)}
     <div class="combo-hint-box">
         💡 <strong>Carta Activa</strong>: sigue aportando algo después de terminado el combo (presión, protección, recursos), por eso suma al Poder. <strong>Depende de</strong>: de qué otra(s) pieza(s) necesita para conservar ese valor — si pierdes esas cartas, esta deja de aportar.
@@ -5693,6 +5781,7 @@ _renderBranchBanner: function (combo) {
                 <button class="opt-submit-btn" onclick="Combos.finishCombo('${combo.deckName}','${combo.id}')">🏁 Finalizar Combo</button>
             </div>
             ${this._renderZones(combo)}
+            ${this._renderInteractionStats(combo)}
             <div class="combo-reset-row">
                 <button class="deck-move combo-reset-btn" onclick="Combos.confirmResetZones('${combo.deckName}','${combo.id}')">🔄 Reiniciar Zonas</button>
             </div>
