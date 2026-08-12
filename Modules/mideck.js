@@ -102,14 +102,8 @@ const Deck = {
             return cardA.name.localeCompare(cardB.name);
             
         } else if (location === 'extra') {
-            // Ordenar Extra Deck
-            const typeA = this.getExtraDeckCardType(cardA);
-            const typeB = this.getExtraDeckCardType(cardB);
-            
-            if (typeA !== typeB) {
-                return typeA - typeB;
-            }
-            
+            // Extra Deck: un solo grupo, orden alfabético puro
+            // (sin subdividir por Fusión/Synchro/Xyz/Link).
             return cardA.name.localeCompare(cardB.name);
             
         } else {
@@ -4262,19 +4256,22 @@ _buildDeckViewPane: function (location) {
     if (!entries.length) return `<p class="stats-empty">Sin cartas en esta sección.</p>`;
 
     // Definir grupos según zona
+    // Extra Deck y Side Deck: un solo grupo cada uno, alfabético puro.
+    // Main Deck: subgrupos por tipo, en orden Ritual→Normal→Efecto→Péndulo→Mágicas→Trampas.
     let groups;
     if (location === 'extra') {
         groups = [
-            { label: 'Link',     test: t => t.includes('link') },
-            { label: 'Fusión',   test: t => t.includes('fusion') },
-            { label: 'Sincronía',test: t => t.includes('synchro') },
-            { label: 'Xyz',      test: t => t.includes('xyz') }
+            { label: 'Extra Deck', test: () => true }
+        ];
+    } else if (location === 'side') {
+        groups = [
+            { label: 'Side Deck', test: () => true }
         ];
     } else {
         groups = [
+            { label: 'Monstruos Rituales', test: t => t.includes('ritual') && !t.includes('pendulum') },
             { label: 'Monstruos Normales', test: t => t.includes('normal monster') && !t.includes('pendulum') },
             { label: 'Monstruos de Efecto',test: t => t.includes('monster') && !t.includes('normal monster') && !t.includes('ritual') && !t.includes('pendulum') && !t.includes('fusion') && !t.includes('synchro') && !t.includes('xyz') && !t.includes('link') },
-            { label: 'Monstruos Rituales', test: t => t.includes('ritual') && !t.includes('pendulum') },
             { label: 'Monstruos Péndulo',  test: t => t.includes('pendulum') },
             { label: 'Mágicas',            test: t => t.includes('spell') },
             { label: 'Trampas',            test: t => t.includes('trap') }
