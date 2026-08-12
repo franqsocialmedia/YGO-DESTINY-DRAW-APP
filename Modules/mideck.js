@@ -5073,10 +5073,16 @@ _stepIndex: function (combo, stepId) {
         // activa puntuando, + el # de combo registrado para este deck.
         const topName = bossName || starterName || null;
         if (topName) {
-            const deckCombos = this.getAll(combo.deckName).slice().sort((a, b) => a.createdAt - b.createdAt);
-            const seq = Math.max(1, deckCombos.findIndex(c => c.id === combo.id) + 1);
-            combo.name = `${topName} #${seq}`;
+            combo.name = `${topName} #${this._comboSeq(combo)}`;
         }
+    },
+
+    // Número de creación del combo dentro del deck (1, 2, 3...) — fijo, no
+    // depende del puntaje ni del orden en pantalla. Sirve para identificar
+    // el combo aunque todavía no tenga nombre o cambie de "carta top".
+    _comboSeq: function (combo) {
+        const deckCombos = this.getAll(combo.deckName).slice().sort((a, b) => a.createdAt - b.createdAt);
+        return Math.max(1, deckCombos.findIndex(c => c.id === combo.id) + 1);
     },
 
     // Cada Choke Point marcado descuenta % del poder según su frecuencia; se
@@ -5576,7 +5582,7 @@ _stepIndex: function (combo, stepId) {
                 </button>
                 <select class="combo-eb-func-sel" onchange="Combos.setEndboardFunction('${combo.deckName}','${combo.id}','${entry.uid}', this.value)">
                     <option value="">— Función principal —</option>
-                    ${roles.map(r => `<option value="${r}" ${entry.mainFunction === r ? 'selected' : ''}>${r}</option>`).join('')}
+                    ${roles.slice().sort((a, b) => a.localeCompare(b)).map(r => `<option value="${r}" ${entry.mainFunction === r ? 'selected' : ''}>${r}</option>`).join('')}
                 </select>
                 <div class="combo-eb-deps">
                     <span class="combo-eb-deps-label">🔗 Depende de:</span> ${deps}
@@ -5719,6 +5725,7 @@ _renderPowerSummary: function (combo) {
             <div class="combo-power-header">
                 ${combo.imageUrl ? `<img src="${combo.imageUrl}" class="combo-power-thumb" alt="${this._escape(combo.name || '')}">` : ''}
                 <div class="combo-power-info">
+                    <div class="combo-power-seq">Combo ${this._comboSeq(combo)}</div>
                     <div class="combo-power-name">${combo.name ? this._escape(combo.name) : '— agrega función principal a una carta activa —'}</div>
                     <div class="combo-power-value">⚡ Poder del Combo: <strong>${combo.power}</strong>
                         ${combo.powerBeforeMeta != null && combo.powerBeforeMeta !== combo.power ? `<span class="combo-power-premeta"> (antes del Meta: ${combo.powerBeforeMeta})</span>` : ''}
@@ -5897,6 +5904,7 @@ _renderBranchBanner: function (combo) {
                  onclick="Combos.openCombo('${combo.deckName}','${combo.id}')">
                 ${combo.imageUrlSmall ? `<img src="${combo.imageUrlSmall}" class="combo-branch-thumb" alt="">` : ''}
                 <span class="combo-list-branch-badge" title="${branchTitle(combo)}">${branchIcon(combo)}</span>
+                <span class="combo-branch-seq">Combo ${this._comboSeq(combo)}</span>
                 <span class="combo-branch-name">${combo.name ? this._escape(combo.name) : '(Sin nombre — ' + combo.status + ')'}</span>
                 <span class="combo-status-badge combo-status-${combo.status}">${combo.status}</span>
                 <span class="combo-branch-power">⚡ ${combo.power || 0}</span>
@@ -5917,6 +5925,7 @@ _renderBranchBanner: function (combo) {
                         ? `<img src="${combo.imageUrlSmall}" class="combo-root-thumb" alt="">`
                         : `<div class="combo-root-thumb combo-root-thumb-empty">🃏</div>`}
                     <div class="combo-root-body">
+                        <div class="combo-root-seq">Combo ${this._comboSeq(combo)}</div>
                         <div class="combo-root-top">
                             <span class="combo-root-name">${combo.name ? this._escape(combo.name) : '(Sin nombre — ' + combo.status + ')'}</span>
                             <span class="combo-status-badge combo-status-${combo.status}">${combo.status}</span>

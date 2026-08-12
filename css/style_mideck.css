@@ -2958,6 +2958,7 @@
     background: rgba(255,255,255,.05); font-size: 1.3rem;
 }
 .combo-root-body { flex: 1; min-width: 0; }
+.combo-root-seq { font-size: .62rem; opacity: .55; text-transform: uppercase; letter-spacing: .03em; margin-bottom: 1px; }
 .combo-root-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .combo-root-name { font-size: .92rem; font-weight: bold; color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .combo-root-power { font-size: .8rem; opacity: .85; margin-top: 3px; }
@@ -2976,6 +2977,7 @@
 .combo-branch-row:hover { background: rgba(255,255,255,.06); }
 .combo-branch-thumb { width: 20px; height: 28px; object-fit: cover; border-radius: 2px; flex-shrink: 0; }
 .combo-branch-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.combo-branch-seq { font-size: .6rem; opacity: .5; flex-shrink: 0; }
 .combo-branch-power { opacity: .8; flex-shrink: 0; }
 
 /* ── Línea de Combos (Etapa 2) ── */
@@ -3146,6 +3148,7 @@
 .combo-power-header { display: flex; gap: 10px; align-items: center; }
 .combo-power-thumb { width: 56px; height: 82px; object-fit: cover; border-radius: 5px; flex-shrink: 0; }
 .combo-power-info { flex: 1; min-width: 0; }
+.combo-power-seq { font-size: .64rem; opacity: .55; text-transform: uppercase; letter-spacing: .03em; margin-bottom: 1px; }
 .combo-power-name { font-size: .85rem; font-weight: bold; color: var(--gold-color); }
 .combo-power-value { font-size: .8rem; margin-top: 3px; }
 .combo-power-top { margin-top: 10px; }
