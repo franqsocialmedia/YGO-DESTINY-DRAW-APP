@@ -4322,6 +4322,9 @@ const Combos = {
     CARD_BACK: 'https://images.ygoprodeck.com/images/cards/back.jpg',
     
     _activeComboId: null,
+    // Vista compacta/detallada por zona de Endboard: clave `${comboId}:${zone}`.
+    // Solo en memoria (preferencia de sesión, no se persiste en el combo).
+    _zoneCompact: {},
 
     // Índice de grupo para ordenar listas de cartas: Ritual→Normal→Efecto→
     // Péndulo→Mágicas→Trampas→Extra Deck→Side Deck (mismo orden del panel "Ver Deck").
@@ -5320,6 +5323,14 @@ _stepIndex: function (combo, stepId) {
         ];
     },
 
+    // Alterna vista lista/detallada de una zona del Endboard (Field/HAND/GY/Banish).
+    // Preferencia solo visual, no dispara recálculo de poder.
+    toggleZoneView: function (comboId, zone) {
+        const key = `${comboId}:${zone}`;
+        this._zoneCompact[key] = !this._zoneCompact[key];
+        this._refresh();
+    },
+
     toggleEndboardActive: function (deckName, comboId, uid) {
         this._withCombo(deckName, comboId, combo => {
             const entry = combo.endboard?.find(e => e.uid === uid);
@@ -5542,12 +5553,44 @@ _stepIndex: function (combo, stepId) {
         const groups = zones.map(([key, label]) => {
             const entries = (combo.endboard || []).filter(e => e.zone === key);
             if (!entries.length) return '';
+            const compact = !!this._zoneCompact[`${combo.id}:${key}`];
+            const cardsHTML = entries
+                .map(e => compact ? this._renderEndboardCardCompact(combo, e) : this._renderEndboardCard(combo, e))
+                .join('');
             return `<div class="combo-eb-zone">
-                <h5 class="combo-zone-title">${label}</h5>
-                <div class="combo-eb-cards">${entries.map(e => this._renderEndboardCard(combo, e)).join('')}</div>
+                <div class="combo-eb-zone-header">
+                    <h5 class="combo-zone-title">${label}</h5>
+                    <button class="combo-eb-zone-view-btn" onclick="Combos.toggleZoneView('${combo.id}','${key}')"
+                        title="Cambiar entre vista lista y vista detallada">
+                        ${compact ? '🔍 Detalle' : '📋 Lista'}
+                    </button>
+                </div>
+                <div class="${compact ? 'combo-eb-cards-compact' : 'combo-eb-cards'}">${cardsHTML}</div>
             </div>`;
         }).join('');
         return `<h4 class="combo-steps-title">🎯 Endboard</h4><div class="combo-eb-grid">${groups}</div>`;
+    },
+
+    // Versión lista: nombre + badges (Activa/Starter/Función/Copia) en una sola
+    // línea, sin editores inline — para identificar rápido cuando hay muchas
+    // cartas. Click en la fila abre el visor de carta.
+    _renderEndboardCardCompact: function (combo, entry) {
+        const cardData   = Deck.cards[entry.id]?.data;
+        const item       = Deck.cards[entry.id];
+        const img        = cardData?.card_images?.[0]?.image_url_small || '';
+        const name       = cardData?.name || entry.id;
+        const isStarter  = combo.starterCardId === entry.id;
+        const copyOfName = item && item.copyOf ? (Deck.cards[item.copyOf]?.data?.name || item.copyOf) : null;
+        return `
+        <div class="combo-eb-card-compact ${entry.active ? 'combo-eb-active' : ''}"
+             onclick="Combos.viewCard('${entry.id}')" title="Click para ver la carta">
+            <img src="${img}" class="combo-eb-thumb-sm" alt="">
+            <span class="combo-eb-compact-name">${this._escape(name)}</span>
+            ${entry.active ? '<span class="combo-eb-chip combo-eb-chip-active">Activa</span>' : ''}
+            ${isStarter ? '<span class="combo-eb-chip combo-eb-chip-starter">⭐ Starter</span>' : ''}
+            ${entry.mainFunction ? `<span class="combo-eb-chip combo-eb-chip-func">${this._escape(entry.mainFunction)}</span>` : ''}
+            ${copyOfName ? `<span class="combo-eb-chip combo-eb-chip-copy">🧩 ${this._escape(copyOfName)}</span>` : ''}
+        </div>`;
     },
 
     _renderEndboardCard: function (combo, entry) {
