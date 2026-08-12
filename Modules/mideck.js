@@ -4323,6 +4323,15 @@ const Combos = {
     
     _activeComboId: null,
 
+    // Índice de grupo para ordenar listas de cartas: Ritual→Normal→Efecto→
+    // Péndulo→Mágicas→Trampas→Extra Deck→Side Deck (mismo orden del panel "Ver Deck").
+    _typeGroupIndex: function (location, cardData) {
+        if (location === 'extra') return 6;
+        if (location === 'side')  return 7;
+        const t = Deck.getMainDeckCardType ? Deck.getMainDeckCardType(cardData) : 2;
+        return (t === 999) ? 2 : t;
+    },
+
     // ── Persistencia (1 clave por deck: combos_${deckName}) ──────────
     getAll: function (deckName) {
         try {
@@ -5337,7 +5346,13 @@ _stepIndex: function (combo, stepId) {
         const entry = combo?.endboard?.find(e => e.uid === uid);
         if (!combo || !entry) return;
 
-        const others = combo.endboard.filter(e => e.uid !== uid);
+        const others = combo.endboard.filter(e => e.uid !== uid).sort((a, b) => {
+            const dataA = Deck.cards[a.id]?.data, dataB = Deck.cards[b.id]?.data;
+            const gA = this._typeGroupIndex(Deck.cards[a.id]?.location, dataA);
+            const gB = this._typeGroupIndex(Deck.cards[b.id]?.location, dataB);
+            if (gA !== gB) return gA - gB;
+            return (dataA?.name || '').localeCompare(dataB?.name || '');
+        });
         const rows = others.map(o => {
             const name    = Deck.cards[o.id]?.data?.name || o.id;
             const img     = Deck.cards[o.id]?.data?.card_images?.[0]?.image_url_small || '';
@@ -5383,7 +5398,14 @@ _stepIndex: function (combo, stepId) {
         const item = Deck.cards[cardId];
         if (!item) return;
 
-        const others = Object.entries(Deck.cards).filter(([id, c]) => id !== cardId && (c.location === 'main' || c.location === 'extra'));
+        const others = Object.entries(Deck.cards)
+            .filter(([id, c]) => id !== cardId && (c.location === 'main' || c.location === 'extra'))
+            .sort(([, a], [, b]) => {
+                const gA = this._typeGroupIndex(a.location, a.data);
+                const gB = this._typeGroupIndex(b.location, b.data);
+                if (gA !== gB) return gA - gB;
+                return (a.data?.name || '').localeCompare(b.data?.name || '');
+            });
         const rows = others.map(([id, c]) => {
             const name = c.data?.name || id;
             const img  = c.data?.card_images?.[0]?.image_url_small || '';
