@@ -21,7 +21,7 @@ const Formacion = {
         { id: 'que-es-yugioh',           label: '¿Qué es Yu-Gi-Oh!?',               level: 'Básico' },
         { id: 'vocabulario-legal',       label: 'Vocabulario Legal del Juego',      level: 'Básico' },
         { id: 'fases-del-duelo',         label: 'Las Fases del Duelo',              level: 'Básico' },
-        { id: 'tipos-cartas-basicas',    label: 'Tipos de Cartas Básicas',          level: 'Fundamental' },
+        { id: 'tipos-cartas-basicas',    label: 'Tipos de Cartas Básicas',          level: 'Básico' },
         { id: 'tipos-cartas-especiales', label: 'Tipos de Cartas Especiales',       level: 'Intermedio' },
         // ── MÓDULO 2 — Lectura de Cartas y Mentalidad ──
         { id: 'estructura-efecto-carta', label: 'Estructura de un Efecto de Carta', level: 'Intermedio' },
@@ -1121,8 +1121,8 @@ META_HISTORY: {
     },
 
     _renderTemasTab: function () {
-        const LEVEL_ORDER = ['Básico', 'Fundamental', 'Intermedio', 'Competitivo', 'Avanzado'];
-        const LEVEL_ICONS = { 'Básico':'🌱', 'Fundamental':'📘', 'Intermedio':'⚔️', 'Competitivo':'🏆', 'Avanzado':'🔬' };
+        const LEVEL_ORDER = ['Básico', 'Intermedio', 'Competitivo', 'Avanzado'];
+        const LEVEL_ICONS = { 'Básico':'🌱', 'Intermedio':'⚔️', 'Competitivo':'🏆', 'Avanzado':'🔬' };
         const activeTopics  = this._getActiveTopics();
         const levelsPresent = LEVEL_ORDER.filter(lv => activeTopics.some(t => t.level === lv));
         const currentTopic  = this.TOPICS.find(t => t.id === this.activeTab);
@@ -5481,7 +5481,7 @@ enviarReporte: function (counter, dateStr) {
 
     _renderTeoricoAuthor: function () {
         const tq = this._ttQ, t = this._tt;
-        const levels = ['Básico', 'Fundamental', 'Intermedio', 'Avanzado', 'Competitivo'];
+        const levels = ['Básico', 'Intermedio', 'Avanzado', 'Competitivo'];
         const cardChip = (c, onRemove) => c ? `
             <span class="keyword-chip" style="display:inline-flex;align-items:center;gap:6px;">
                 <img src="https://images.ygoprodeck.com/images/cards_small/${c.id}.jpg" style="width:22px;border-radius:3px;">
@@ -5627,7 +5627,7 @@ enviarReporte: function (counter, dateStr) {
             <div class="config-new-role" style="flex-direction:column;align-items:stretch;gap:8px;">
                 <input type="text" id="ta-label" class="config-input" placeholder="Nombre del test..." value="${a.label || ''}">
                 <select id="ta-level" class="config-input">
-                    ${['Básico', 'Fundamental', 'Intermedio', 'Avanzado', 'Competitivo'].map(l => `<option value="${l}" ${a.level === l ? 'selected' : ''}>${l}</option>`).join('')}
+                    ${['Básico', 'Intermedio', 'Avanzado', 'Competitivo'].map(l => `<option value="${l}" ${a.level === l ? 'selected' : ''}>${l}</option>`).join('')}
                 </select>
                 <textarea id="ta-scenario" class="config-input" placeholder="Escenario que verá el jugador (ej: Es tu Main Phase 1...)..." rows="2">${a.scenario || ''}</textarea>
                 <textarea id="ta-hint" class="config-input" placeholder="Pista (opcional)..." rows="2">${a.hint || ''}</textarea>
