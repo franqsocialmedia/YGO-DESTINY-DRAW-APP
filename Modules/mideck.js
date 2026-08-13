@@ -3901,20 +3901,17 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             const CANVAS_W   = PAD * 2 + COLS * CARD_W + (COLS - 1) * GAP_X;
 
             // ── Cargar todas las imágenes como HTMLImageElement vía blob ──
+            // images.ygoprodeck.com no manda Access-Control-Allow-Origin, así que
+            // cargar la imagen directo con crossOrigin='anonymous' siempre falla
+            // (necesario para toBlob() sin taintear el canvas). Se enruta vía
+            // wsrv.nl, un proxy de imágenes gratuito que sí agrega el header CORS.
+            const CORS_PROXY = url => `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
             const loadImg = (url) => new Promise(resolve => {
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
                 img.onload  = () => resolve(img);
-                img.onerror = () => {
-                    // Reintento CON crossOrigin (cache-bust). Sin esto el canvas
-                    // queda taintado y toBlob() falla al exportar.
-                    const img2 = new Image();
-                    img2.crossOrigin = 'anonymous';
-                    img2.onload  = () => resolve(img2);
-                    img2.onerror = () => resolve(null);
-                    img2.src = url + '?t=' + Date.now();
-                };
-                img.src = url;
+                img.onerror = () => resolve(null);
+                img.src = CORS_PROXY(url);
             });
 
             const allItems = [...mainCards, ...extraCards, ...sideCards];

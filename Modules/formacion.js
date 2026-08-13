@@ -1071,6 +1071,8 @@ META_HISTORY: {
                         data-tab="estilo" onclick="Formacion.switchTab('estilo')">🧭 Tu Estilo</button>
                 <button class="form-subnav-btn form-subnav-btn--green${this.activeTab === 'personaje' ? ' active' : ''}"
                         data-tab="personaje" onclick="Formacion.switchTab('personaje')">🎭 Tu Personaje</button>
+                <button class="form-subnav-btn${this.activeTab === 'decks' ? ' active' : ''}"
+                        data-tab="decks" onclick="Formacion.switchTab('decks')">🃏 Primeros Decks</button>
                 <button class="form-subnav-btn${this.activeTab === 'juegos' ? ' active' : ''}"
                         data-tab="juegos" onclick="Formacion.switchTab('juegos')">🎮 Juegos</button>
                 <button class="form-subnav-btn${this.activeTab === 'fuentes' ? ' active' : ''}"
@@ -1113,6 +1115,7 @@ META_HISTORY: {
         if (this.activeTab === 'test')     return this._renderTestTab();
         if (this.activeTab === 'estilo')     return this._renderEstiloTab();
         if (this.activeTab === 'personaje')  return this._renderPersonajeTab();
+        if (this.activeTab === 'decks')      return this._renderDecksTab();
         if (this.activeTab === 'juegos')     return this._renderJuegosTab();
         if (this.activeTab === 'fuentes')  return this._renderFuentesTab();
         if (this.activeTab === 'maestros') return this._renderMaestrosTab();
@@ -3832,7 +3835,33 @@ _topicPetDeckDominar: function () { return `
 
 
     // ===============================
-
+_renderDecksTab: function () {
+        if (!window.DecklistsData) {
+            return '<p class="form-empty" style="margin-top:20px;">No hay decklists cargadas (falta Modules/decklists.js).</p>';
+        }
+        const groups = DecklistsData.getGroupedByLevel();
+        const ROWS = [
+            { key: 'Basico',      label: 'Básico',      icon: '🌱' },
+            { key: 'Intermedio',  label: 'Intermedio',  icon: '⚔️' },
+            { key: 'Competitivo', label: 'Competitivo', icon: '🏆' }
+        ];
+        return `
+            <div class="form-section" style="margin-top:12px;">
+                <div class="form-section-content" style="border-top:none;">
+                    ${ROWS.map(row => `
+                        <div class="form-decks-row">
+                            <div class="form-decks-row-title">${row.icon} ${row.label}</div>
+                            <div class="form-decks-row-list">
+                                ${groups[row.key].length
+                                    ? groups[row.key].map(name => `<span class="form-deck-chip">${this._escHtml(name)}</span>`).join('')
+                                    : '<span class="form-empty">Sin decks en este nivel.</span>'}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    },
     _renderJuegosTab: function () {
         const games = window.ConfigManager?.getFormacionGames?.() ?? [];
         if (!games.length) {
