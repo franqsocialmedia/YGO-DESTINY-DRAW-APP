@@ -3906,8 +3906,10 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 img.crossOrigin = 'anonymous';
                 img.onload  = () => resolve(img);
                 img.onerror = () => {
-                    // Segundo intento sin crossOrigin (permite dibujar pero tainta el canvas)
+                    // Reintento CON crossOrigin (cache-bust). Sin esto el canvas
+                    // queda taintado y toBlob() falla al exportar.
                     const img2 = new Image();
+                    img2.crossOrigin = 'anonymous';
                     img2.onload  = () => resolve(img2);
                     img2.onerror = () => resolve(null);
                     img2.src = url + '?t=' + Date.now();
@@ -3950,10 +3952,10 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             canvasH += PAD;
 
             setMsg('⏳ Generando imagen...');
-            const canvas  = document.createElement('canvas');
+            let canvas  = document.createElement('canvas');
             canvas.width  = CANVAS_W;
             canvas.height = canvasH;
-            const ctx     = canvas.getContext('2d');
+            let ctx     = canvas.getContext('2d');
 
             // Fondo blanco
             ctx.fillStyle = '#ffffff';
@@ -4108,10 +4110,17 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     loadingMsg.remove();
                 });
             } catch(e) {
-                // Canvas taintado: descargar sin imágenes con placeholder visible
+                // Canvas taintado: reintentar en un canvas NUEVO sin imágenes
+                // (reusar el mismo canvas no sirve, el taint es permanente).
                 console.warn('Canvas taintado, descargando sin imágenes:', e);
                 Object.keys(imgCache).forEach(k => { imgCache[k] = null; });
-                // Re-dibujar con placeholders
+
+                const canvas2 = document.createElement('canvas');
+                canvas2.width  = CANVAS_W;
+                canvas2.height = canvasH;
+                const ctx2 = canvas2.getContext('2d');
+                ctx = ctx2; canvas = canvas2; // reasignar para reusar drawSection()
+
                 ctx.fillStyle = '#ffffff';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 y = PAD;
