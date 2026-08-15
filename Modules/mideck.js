@@ -89,23 +89,42 @@ const Deck = {
     compareCards: function(a, b, location) {
         const cardA = a[1].data;
         const cardB = b[1].data;
-        
+
+        // Nivel para monstruos normales/efecto/péndulo/ritual, Rango para Xyz
+        // (YGOProDeck también usa 'level' para Rango) y Link Rating para Link.
+        const lvl = c => (c.level != null ? c.level : (c.linkval != null ? c.linkval : 0));
+
         if (location === 'main') {
-            // Ordenar Main Deck
+            // Ordenar Main Deck: Ritual → Normal → Efecto → Péndulo → Mágicas → Trampas
             const typeA = this.getMainDeckCardType(cardA);
             const typeB = this.getMainDeckCardType(cardB);
-            
+
             if (typeA !== typeB) {
                 return typeA - typeB;
             }
-            
+
+            // Dentro de cada grupo de monstruos: Nivel ascendente (empieza en 1),
+            // a igual nivel, alfabético. No afecta a Mágicas/Trampas (sin nivel).
+            const diffLvl = lvl(cardA) - lvl(cardB);
+            if (diffLvl !== 0) return diffLvl;
+
             return cardA.name.localeCompare(cardB.name);
-            
+
         } else if (location === 'extra') {
-            // Extra Deck: un solo grupo, orden alfabético puro
-            // (sin subdividir por Fusión/Synchro/Xyz/Link).
+            // Extra Deck: Fusión → Synchro → Xyz → Link
+            const typeA = this.getExtraDeckCardType(cardA);
+            const typeB = this.getExtraDeckCardType(cardB);
+
+            if (typeA !== typeB) {
+                return typeA - typeB;
+            }
+
+            // Dentro de cada grupo: Nivel/Rango/Link Rating ascendente, luego alfabético
+            const diffLvl = lvl(cardA) - lvl(cardB);
+            if (diffLvl !== 0) return diffLvl;
+
             return cardA.name.localeCompare(cardB.name);
-            
+
         } else {
             return cardA.name.localeCompare(cardB.name);
         }
@@ -4264,9 +4283,12 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         document.body.appendChild(loadingMsg);
 
         try {
-            const mainCards  = Object.values(this.cards).filter(c => c.location === 'main');
-            const extraCards = Object.values(this.cards).filter(c => c.location === 'extra');
-            const sideCards  = Object.values(this.cards).filter(c => c.location === 'side');
+            const mainCards  = Object.entries(this.cards).filter(([, c]) => c.location === 'main')
+                .sort((a, b) => this.compareCards(a, b, 'main')).map(([, c]) => c);
+            const extraCards = Object.entries(this.cards).filter(([, c]) => c.location === 'extra')
+                .sort((a, b) => this.compareCards(a, b, 'extra')).map(([, c]) => c);
+            const sideCards  = Object.entries(this.cards).filter(([, c]) => c.location === 'side')
+                .sort((a, b) => this.compareCards(a, b, 'side')).map(([, c]) => c);
 
             // ── Parámetros de layout ──
             const SCALE      = 2;          // resolución x2
