@@ -1149,6 +1149,19 @@
     font-size: 0.8rem;
     white-space: nowrap;
 }
+.form-deck-chip {
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.form-deck-chip:hover {
+    background: rgba(255, 215, 0, 0.1);
+    border-color: rgba(255, 215, 0, 0.35);
+    transform: translateY(-1px);
+}
+.form-deck-chip:active {
+    transform: translateY(0);
+}
 /* ── Editor ─────────────────────────────────────────────────────── */
 .form-apuntes-editor {
     background: rgba(0, 0, 0, 0.2);

@@ -3853,7 +3853,7 @@ _renderDecksTab: function () {
                             <div class="form-decks-row-title">${row.icon} ${row.label}</div>
                             <div class="form-decks-row-list">
                                 ${groups[row.key].length
-                                    ? groups[row.key].map(name => `<span class="form-deck-chip">${this._escHtml(name)}</span>`).join('')
+                                    ? groups[row.key].map(name => `<button type="button" class="form-deck-chip" onclick="Formacion.loadDeckFromList('${this._escAttr(name)}')">${this._escHtml(name)}</button>`).join('')
                                     : '<span class="form-empty">Sin decks en este nivel.</span>'}
                             </div>
                         </div>
@@ -3861,6 +3861,13 @@ _renderDecksTab: function () {
                 </div>
             </div>
         `;
+    },
+    loadDeckFromList: async function (deckName) {
+        if (!window.DecklistsData || !window.Deck) return;
+        const entry = DecklistsData.getByName(deckName);
+        if (!entry) return;
+        await Deck.parseYDK(entry.ydk, entry.name + '.ydk');
+        if (typeof switchTab === 'function') switchTab('mideck');
     },
     _renderJuegosTab: function () {
         const games = window.ConfigManager?.getFormacionGames?.() ?? [];

@@ -16,7 +16,7 @@
    No escribe en localStorage ni modifica nada por sí solo.
    ==================================================================== */
 
-const DecklistsData = {
+window.DecklistsData = {
 
     decks: [
         {
