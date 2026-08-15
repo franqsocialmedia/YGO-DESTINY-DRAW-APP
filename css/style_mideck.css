@@ -3473,3 +3473,24 @@
 .exp-wr-cell { text-align: center; flex: 1; }
 .exp-wr-val { font-size: 1.3rem; font-weight: 700; color: var(--gold-color); }
 .exp-wr-tag { font-size: .75rem; opacity: .65; }
+
+/* ── Experiencia: Sets/Packs involucrados ── */
+.exp-sets-list { display: flex; flex-direction: column; gap: 6px; max-height: 360px; overflow-y: auto; }
+.exp-set-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 8px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+}
+.exp-set-row:hover { background: rgba(255,255,255,0.09); }
+.exp-set-row-on { border-color: var(--gold-color); background: rgba(255,215,0,0.08); }
+.exp-set-name { font-size: .85rem; font-weight: 600; }
+.exp-set-count { font-size: .75rem; opacity: .6; }
+.exp-set-thumbs { display: flex; gap: 2px; margin-left: auto; }
+.exp-set-thumbs img { width: 18px; height: 26px; object-fit: cover; border-radius: 2px; }
+.exp-set-more { font-size: .7rem; opacity: .6; align-self: center; }

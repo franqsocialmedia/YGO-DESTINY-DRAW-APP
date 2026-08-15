@@ -2932,14 +2932,27 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 <button class="exp-subtab-btn active" data-exp-tab="perfil" onclick="Deck.switchExperienciaTab('perfil')">🎚️ Perfil</button>
                 <button class="exp-subtab-btn" data-exp-tab="manos" onclick="Deck.switchExperienciaTab('manos')">🧱 Manos Muertas</button>
                 <button class="exp-subtab-btn" data-exp-tab="composicion" onclick="Deck.switchExperienciaTab('composicion')">🧬 Composición</button>
+                <button class="exp-subtab-btn" data-exp-tab="cartas" onclick="Deck.switchExperienciaTab('cartas')">🃏 Cartas Destacadas</button>
+                <button class="exp-subtab-btn" data-exp-tab="sets" onclick="Deck.switchExperienciaTab('sets')">📦 Sets</button>
                 <button class="exp-subtab-btn" data-exp-tab="rendimiento" onclick="Deck.switchExperienciaTab('rendimiento')">📡 Rendimiento</button>
             </div>
             <div id="exp-pane-perfil">${this.renderExpPerfil()}</div>
             <div id="exp-pane-manos" style="display:none;">${this.renderExpManosMuertas()}</div>
             <div id="exp-pane-composicion" style="display:none;">${this.renderExpComposicion()}</div>
+            <div id="exp-pane-cartas" style="display:none;">${this.renderExpCartas()}</div>
+            <div id="exp-pane-sets" style="display:none;">${this.renderExpSets()}</div>
             <div id="exp-pane-rendimiento" style="display:none;">${this.renderExpRendimiento()}</div>
         </div>
         </div>`;
+    },
+
+    switchExperienciaTab: function (tab) {
+        ['perfil', 'manos', 'composicion', 'cartas', 'sets', 'rendimiento'].forEach(t => {
+            const p = document.getElementById(`exp-pane-${t}`);
+            if (p) p.style.display = (t === tab) ? '' : 'none';
+        });
+        document.querySelectorAll('.exp-subtab-btn').forEach(b =>
+            b.classList.toggle('active', b.dataset.expTab === tab));
     },
 
     switchExperienciaTab: function (tab) {
@@ -2996,6 +3009,163 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
     setExpEstrategia: function (v) { this._saveExperiencia({ estrategia: v }); },
     setExpVariante:   function (v) { this._saveExperiencia({ variante: v.trim() }); },
     setExpNonEngine:  function (v) { this._saveExperiencia({ nonEngineSlots: Math.max(0, parseInt(v) || 0) }); },
+
+// ── Cartas Destacadas: selección desde las cartas propias del Main Deck ──
+    EXP_CARD_CATS: {
+        mainBeaters:   { label: '⚔️ Main Beaters',       max: 3, hint: 'Hasta 3 cartas que cierran el duelo por daño de batalla.' },
+        mainDefenders: { label: '🛡️ Main Defenders',     max: 3, hint: 'Hasta 3 cartas que sostienen el campo y frenan al rival.' },
+        keyCards:      { label: '🗝️ Key Cards',           max: 5, hint: 'Hasta 5 cartas que te encantaría ver en tu mano inicial.' },
+        mainStarters:  { label: '🚀 Main Starters',       max: 3, hint: 'Hasta 3 cartas que arrancan tu combo o plan de juego.' },
+        bestCard:      { label: '👑 Best Card',           max: 1, hint: 'La carta MVP del deck — solo 1.' },
+        menosUsadas:   { label: '📉 Cartas Menos Usadas', max: 3, hint: 'Hasta 3 cartas que rara vez terminan siendo relevantes.' }
+    },
+
+    _getExpCardList: function (cat) {
+        const d = this.getExperiencia();
+        if (cat === 'bestCard') return d.bestCard ? [d.bestCard] : [];
+        return Array.isArray(d[cat]) ? d[cat] : [];
+    },
+
+    toggleExpCard: function (cat, id, name, img) {
+        const meta = this.EXP_CARD_CATS[cat];
+        const d = this.getExperiencia();
+
+        if (cat === 'bestCard') {
+            const current = d.bestCard;
+            this._saveExperiencia({ bestCard: (current && current.id === id) ? null : { id, name, img } });
+        } else {
+            let list = Array.isArray(d[cat]) ? [...d[cat]] : [];
+            const idx = list.findIndex(c => c.id === id);
+            if (idx >= 0) {
+                list.splice(idx, 1);
+            } else {
+                if (list.length >= meta.max) { alert(`Máximo ${meta.max} cartas para ${meta.label}.`); return; }
+                list.push({ id, name, img });
+            }
+            this._saveExperiencia({ [cat]: list });
+        }
+        this._refreshExpCardCat(cat);
+    },
+
+    _refreshExpCardCat: function (cat) {
+        const wrap = document.getElementById(`exp-cat-${cat}`);
+        if (!wrap) return;
+        const gridEl = document.getElementById(`exp-grid-${cat}`);
+        const wasOpen = gridEl && gridEl.style.display !== 'none';
+        wrap.innerHTML = this._renderExpCardCatBlock(cat);
+        if (wasOpen) {
+            const newGrid = document.getElementById(`exp-grid-${cat}`);
+            if (newGrid) newGrid.style.display = '';
+        }
+    },
+
+    toggleExpCardGrid: function (cat) {
+        const el = document.getElementById(`exp-grid-${cat}`);
+        if (el) el.style.display = (el.style.display === 'none') ? '' : 'none';
+    },
+
+    _renderExpCardCatBlock: function (cat) {
+        const esc = s => (s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const meta = this.EXP_CARD_CATS[cat];
+        const selectedIds = this._getExpCardList(cat).map(c => c.id);
+
+        const mainCards = Object.entries(this.cards)
+            .filter(([, item]) => item.location === 'main')
+            .sort((a, b) => this.compareCards(a, b, 'main'))
+            .map(([id, item]) => ({
+                id, name: item.data.name,
+                img: item.data.card_images?.[0]?.image_url_small || ''
+            }));
+
+        const grid = mainCards.length ? `
+            <div class="opt-key-card-grid">
+                ${mainCards.map(c => `
+                    <img src="${c.img}" alt="${esc(c.name)}" title="${esc(c.name)}"
+                         class="opt-key-card-thumb ${selectedIds.includes(c.id) ? 'opt-key-card-thumb-selected' : ''}"
+                         onclick="Deck.toggleExpCard('${cat}','${c.id}','${esc(c.name)}','${c.img}')">
+                `).join('')}
+            </div>` : `<p class="opt-key-empty">Este deck no tiene cartas en Main.</p>`;
+
+        const selected = this._getExpCardList(cat);
+        const chips = selected.length ? `
+            <div class="opt-key-selected-row">
+                ${selected.map(c => `
+                    <div class="opt-key-chip">
+                        <img src="${c.img}" alt="${c.name}">
+                        <span>${c.name}</span>
+                        <button type="button" class="opt-key-chip-remove" onclick="Deck.toggleExpCard('${cat}','${c.id}')" title="Quitar">✕</button>
+                    </div>
+                `).join('')}
+            </div>` : `<p class="opt-key-empty">Ninguna seleccionada.</p>`;
+
+        return `
+            <div class="opt-group-hdr opt-full">${meta.label} <span class="opt-key-counter">(${selected.length}/${meta.max})</span></div>
+            <p class="opt-key-hint">${meta.hint}</p>
+            ${chips}
+            <button type="button" class="deck-move opt-key-search-btn" onclick="Deck.toggleExpCardGrid('${cat}')">🃏 Elegir de mis cartas</button>
+            <div id="exp-grid-${cat}" style="display:none;">${grid}</div>
+        `;
+    },
+
+    renderExpCartas: function () {
+        return Object.keys(this.EXP_CARD_CATS).map(cat =>
+            `<div class="exp-field-block" id="exp-cat-${cat}">${this._renderExpCardCatBlock(cat)}</div>`
+        ).join('');
+    },
+
+    // ── Productos / Sets involucrados (derivado de card_sets ya presente en cada carta) ──
+    renderExpSets: function () {
+        const mainExtra = Object.entries(this.cards).filter(([, c]) => c.location === 'main' || c.location === 'extra');
+        const setMap = {};
+        mainExtra.forEach(([id, item]) => {
+            const sets = item.data.card_sets || [];
+            const seen = new Set();
+            sets.forEach(s => {
+                const setName = s.set_name;
+                if (!setName || seen.has(setName)) return;
+                seen.add(setName);
+                if (!setMap[setName]) setMap[setName] = [];
+                setMap[setName].push({ id, name: item.data.name, img: item.data.card_images?.[0]?.image_url_small || '' });
+            });
+        });
+
+        const setNames = Object.keys(setMap).sort((a, b) => setMap[b].length - setMap[a].length || a.localeCompare(b));
+        if (!setNames.length) {
+            return `<p class="exp-empty">No se detectaron Packs/Sets en las cartas de este deck. Se rellenan automáticamente al importar por .ydk o agregar desde el Buscador.</p>`;
+        }
+
+        const d = this.getExperiencia();
+        const selected = new Set(d.sets || []);
+
+        const rows = setNames.map(setName => {
+            const cardsInSet = setMap[setName];
+            const isOn = selected.has(setName);
+            return `
+            <label class="exp-set-row ${isOn ? 'exp-set-row-on' : ''}">
+                <input type="checkbox" ${isOn ? 'checked' : ''} onchange="Deck.toggleExpSet('${setName.replace(/'/g, "\\'")}')">
+                <span class="exp-set-name">${setName}</span>
+                <span class="exp-set-count">(${cardsInSet.length} carta${cardsInSet.length > 1 ? 's' : ''})</span>
+                <span class="exp-set-thumbs">
+                    ${cardsInSet.slice(0, 6).map(c => `<img src="${c.img}" alt="${c.name}" title="${c.name}">`).join('')}
+                    ${cardsInSet.length > 6 ? `<span class="exp-set-more">+${cardsInSet.length - 6}</span>` : ''}
+                </span>
+            </label>`;
+        }).join('');
+
+        return `
+        <p class="exp-field-hint" style="margin-bottom:8px;">Marca los Packs/Sets en los que consideras que tu deck realmente está "involucrado" (donde salieron sus piezas clave).</p>
+        <div class="exp-sets-list">${rows}</div>`;
+    },
+
+    toggleExpSet: function (setName) {
+        const d = this.getExperiencia();
+        let sets = Array.isArray(d.sets) ? [...d.sets] : [];
+        const idx = sets.indexOf(setName);
+        if (idx >= 0) sets.splice(idx, 1); else sets.push(setName);
+        this._saveExperiencia({ sets });
+        const pane = document.getElementById('exp-pane-sets');
+        if (pane) pane.innerHTML = this.renderExpSets();
+    },
 
     // ── Manos Muertas (Brickeo manual, X/Y) ──
     renderExpManosMuertas: function () {
