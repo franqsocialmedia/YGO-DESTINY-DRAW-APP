@@ -3378,3 +3378,98 @@
     width: 56px; padding: 6px 8px; border-radius: 6px;
     background: rgba(255,255,255,.04); border: 1px solid var(--border-color); color: var(--text-light); font-size: .78rem;
 }
+/* ── Tu Experiencia con el Deck ── */
+.exp-subtabs-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+    padding-bottom: 6px;
+}
+.exp-subtab-btn {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.7);
+    border-radius: 6px 6px 0 0;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: .85rem;
+    transition: background .2s, color .2s;
+}
+.exp-subtab-btn.active,
+.exp-subtab-btn:hover {
+    background: rgba(255,215,0,0.15);
+    color: #ffd700;
+    border-color: #ffd700;
+}
+.exp-field-block {
+    background: rgba(26,0,8,0.35);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+}
+.exp-field-label {
+    display: block;
+    font-weight: 700;
+    color: var(--gold-color);
+    margin-bottom: 6px;
+    font-size: .9rem;
+}
+.exp-field-hint {
+    font-size: .75rem;
+    opacity: .6;
+    margin: 6px 0 0;
+}
+.exp-empty {
+    font-size: .82rem;
+    opacity: .55;
+    font-style: italic;
+}
+.exp-select, .exp-text-input, .exp-num-input {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border-color);
+    color: var(--text-light);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: .85rem;
+}
+.exp-num-input { width: 70px; }
+.exp-stars-row { display: flex; align-items: center; gap: 3px; }
+.exp-star {
+    font-size: 1.5rem;
+    color: rgba(255,255,255,0.2);
+    cursor: pointer;
+    transition: color .15s;
+}
+.exp-star-on { color: #ffd700; }
+.exp-stars-label {
+    margin-left: 8px;
+    font-size: .85rem;
+    opacity: .75;
+}
+.exp-mm-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.exp-mm-result { margin: 8px 0 0; font-size: .85rem; }
+.exp-chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.exp-chip {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 3px 10px;
+    font-size: .8rem;
+}
+.exp-radar-svg { width: 100%; max-width: 260px; display: block; margin: 4px auto; }
+.exp-radar-grid { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 1; }
+.exp-radar-axis { stroke: rgba(255,255,255,0.15); stroke-width: 1; }
+.exp-radar-data { fill: rgba(255,215,0,0.25); stroke: #ffd700; stroke-width: 2; }
+.exp-radar-label { font-size: 8px; fill: rgba(255,255,255,0.75); }
+.exp-radar-val { font-size: 8px; fill: #ffd700; font-weight: 700; }
+.exp-wr-row { display: flex; gap: 10px; }
+.exp-wr-cell { text-align: center; flex: 1; }
+.exp-wr-val { font-size: 1.3rem; font-weight: 700; color: var(--gold-color); }
+.exp-wr-tag { font-size: .75rem; opacity: .65; }

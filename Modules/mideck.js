@@ -765,7 +765,9 @@ exportTXT: function () {
             deckName:      name,
             deck:          get(`deck_${name}`)         || { cards: this.cards, notes: this.notes || '', savedAt: Date.now(), versions: [] },
             optimization:  get(`optimization_${name}`) || { sessions: [] },
+            
             complejidad:   get(`complejidad_${name}`)  || null,
+            experiencia:   get(`experiencia_${name}`)   || null,
             matchups:      get(`matchup_${name}`)      || [],
             combos:        get(`combos_${name}`)       || []
         };
@@ -828,6 +830,7 @@ exportTXT: function () {
 
         if (bundle.optimization) localStorage.setItem(`optimization_${name}`, JSON.stringify(bundle.optimization));
         if (bundle.complejidad) localStorage.setItem(`complejidad_${name}`, JSON.stringify(bundle.complejidad));
+        if (bundle.experiencia) localStorage.setItem(`experiencia_${name}`, JSON.stringify(bundle.experiencia));
         if (Array.isArray(bundle.matchups)) localStorage.setItem(`matchup_${name}`, JSON.stringify(bundle.matchups));
         if (Array.isArray(bundle.combos)) {
             const combos = bundle.combos.map(c => ({ ...c, deckName: name }));
@@ -2002,6 +2005,9 @@ if (isEmpty) {
     <h3 onclick="Deck.toggleSection('side-sec')">🃏 Side Deck (${sideC})</h3>
     <div id="side-sec">${this.renderRows('side')}</div>`;
 }
+if (!isEmpty) {
+    html += this.renderExperienciaSection();
+}
 
 if (!isEmpty) {
     html += `
@@ -2898,7 +2904,215 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             <p class="cxd-result-text">${nivel.texto}</p>
         </div>`;
     },
+// ═══════════════════════════════════════════════════════════════════
+    // TU EXPERIENCIA CON EL DECK — perfil cualitativo por deck (Etapa 1)
+    // ═══════════════════════════════════════════════════════════════════
+    EXP_ESTRELLAS_LABELS: ['Sin Estrategia', 'Fácil', 'Intermedio', 'Competitivo', 'Especializado'],
+    EXP_ESTRATEGIAS: ['Beatdown', 'Stun / Lock', 'Control', 'Combo', 'Midrange', 'Toolbox', 'Burn', 'OTK', 'FTK', 'Grind Game', 'Aggro'],
+    EXP_VARIANTES_SUGERIDAS: ['Puro', 'Híbrido', 'Splash', 'Engine Secundario', 'Turbo', 'FTK', 'OTK'],
 
+    getExperiencia: function (deckName) {
+        try { return JSON.parse(localStorage.getItem(`experiencia_${deckName || this.name}`)) || {}; }
+        catch (e) { return {}; }
+    },
+
+    _saveExperiencia: function (partial) {
+        const data = this.getExperiencia();
+        Object.assign(data, partial, { updatedAt: Date.now() });
+        localStorage.setItem(`experiencia_${this.name}`, JSON.stringify(data));
+        return data;
+    },
+
+    renderExperienciaSection: function () {
+        return `
+        <div data-section-id="deck-experiencia">
+        <h3 class="deck-section-title" onclick="Deck.toggleSection('experiencia-sec')">🧭 Tu Experiencia con el Deck</h3>
+        <div id="experiencia-sec" class="deck-section-content" style="display:none;">
+            <div class="exp-subtabs-nav">
+                <button class="exp-subtab-btn active" data-exp-tab="perfil" onclick="Deck.switchExperienciaTab('perfil')">🎚️ Perfil</button>
+                <button class="exp-subtab-btn" data-exp-tab="manos" onclick="Deck.switchExperienciaTab('manos')">🧱 Manos Muertas</button>
+                <button class="exp-subtab-btn" data-exp-tab="composicion" onclick="Deck.switchExperienciaTab('composicion')">🧬 Composición</button>
+                <button class="exp-subtab-btn" data-exp-tab="rendimiento" onclick="Deck.switchExperienciaTab('rendimiento')">📡 Rendimiento</button>
+            </div>
+            <div id="exp-pane-perfil">${this.renderExpPerfil()}</div>
+            <div id="exp-pane-manos" style="display:none;">${this.renderExpManosMuertas()}</div>
+            <div id="exp-pane-composicion" style="display:none;">${this.renderExpComposicion()}</div>
+            <div id="exp-pane-rendimiento" style="display:none;">${this.renderExpRendimiento()}</div>
+        </div>
+        </div>`;
+    },
+
+    switchExperienciaTab: function (tab) {
+        ['perfil', 'manos', 'composicion', 'rendimiento'].forEach(t => {
+            const p = document.getElementById(`exp-pane-${t}`);
+            if (p) p.style.display = (t === tab) ? '' : 'none';
+        });
+        document.querySelectorAll('.exp-subtab-btn').forEach(b =>
+            b.classList.toggle('active', b.dataset.expTab === tab));
+    },
+
+    // ── Perfil: Dificultad, Estrategia, Variante, Non-Engine Slots ──
+    renderExpPerfil: function () {
+        const d = this.getExperiencia();
+        const stars = [1, 2, 3, 4, 5].map(n =>
+            `<span class="exp-star ${d.dificultad >= n ? 'exp-star-on' : ''}" onclick="Deck.setExpDificultad(${n})">★</span>`
+        ).join('');
+        const nivelLabel = d.dificultad ? this.EXP_ESTRELLAS_LABELS[d.dificultad - 1] : 'Sin evaluar';
+        const estOpts = this.EXP_ESTRATEGIAS.map(e =>
+            `<option value="${e}" ${d.estrategia === e ? 'selected' : ''}>${e}</option>`).join('');
+        return `
+        <div class="exp-field-block">
+            <label class="exp-field-label">⭐ Dificultad de Juego</label>
+            <div class="exp-stars-row">${stars}<span class="exp-stars-label">${nivelLabel}</span></div>
+        </div>
+        <div class="exp-field-block">
+            <label class="exp-field-label">🎯 Tipo de Estrategia</label>
+            <select class="exp-select" onchange="Deck.setExpEstrategia(this.value)">
+                <option value="">— sin definir —</option>
+                ${estOpts}
+            </select>
+        </div>
+        <div class="exp-field-block">
+            <label class="exp-field-label">🧪 Variante</label>
+            <input type="text" class="exp-text-input" list="exp-variantes-list"
+                   value="${(d.variante || '').replace(/"/g, '&quot;')}"
+                   placeholder="Ej: Puro, Híbrido, FTK..." onchange="Deck.setExpVariante(this.value)">
+            <datalist id="exp-variantes-list">${this.EXP_VARIANTES_SUGERIDAS.map(v => `<option value="${v}">`).join('')}</datalist>
+        </div>
+        <div class="exp-field-block">
+            <label class="exp-field-label">🔧 Non-Engine Slots</label>
+            <input type="number" class="exp-num-input" min="0" max="20" value="${d.nonEngineSlots || 0}"
+                   onchange="Deck.setExpNonEngine(this.value)">
+            <p class="exp-field-hint">Cartas que no forman parte del plan de juego principal (tech, flex, situacionales en Main).</p>
+        </div>`;
+    },
+
+    setExpDificultad: function (n) {
+        const d = this.getExperiencia();
+        this._saveExperiencia({ dificultad: (d.dificultad === n ? 0 : n) });
+        const pane = document.getElementById('exp-pane-perfil');
+        if (pane) pane.innerHTML = this.renderExpPerfil();
+    },
+    setExpEstrategia: function (v) { this._saveExperiencia({ estrategia: v }); },
+    setExpVariante:   function (v) { this._saveExperiencia({ variante: v.trim() }); },
+    setExpNonEngine:  function (v) { this._saveExperiencia({ nonEngineSlots: Math.max(0, parseInt(v) || 0) }); },
+
+    // ── Manos Muertas (Brickeo manual, X/Y) ──
+    renderExpManosMuertas: function () {
+        const d = this.getExperiencia();
+        const x = d.manosMuertasX || 0, y = d.manosMuertasY || 0;
+        const pct = y > 0 ? ((x / y) * 100).toFixed(1) : '—';
+        return `
+        <div class="exp-field-block">
+            <label class="exp-field-label">🧱 Manos Muertas (Brickeo)</label>
+            <div class="exp-mm-row">
+                <input type="number" class="exp-num-input" min="0" id="exp-mm-x" value="${x}" placeholder="X"> /
+                <input type="number" class="exp-num-input" min="0" id="exp-mm-y" value="${y}" placeholder="Y">
+                <button class="deck-move" onclick="Deck.saveExpManosMuertas()">Guardar</button>
+            </div>
+            <p class="exp-field-hint">X = manos muertas registradas manualmente. Y = total de duelos jugados con este deck (siempre ≥ X).</p>
+            <p class="exp-mm-result">Tasa de brickeo manual: <strong>${pct}${pct !== '—' ? '%' : ''}</strong></p>
+        </div>`;
+    },
+
+    saveExpManosMuertas: function () {
+        const x = Math.max(0, parseInt(document.getElementById('exp-mm-x').value) || 0);
+        const y = Math.max(0, parseInt(document.getElementById('exp-mm-y').value) || 0);
+        if (x > y) { alert('Las Manos Muertas (X) no pueden ser más que el total de duelos (Y).'); return; }
+        this._saveExperiencia({ manosMuertasX: x, manosMuertasY: y });
+        const pane = document.getElementById('exp-pane-manos');
+        if (pane) pane.innerHTML = this.renderExpManosMuertas();
+    },
+
+    // ── Composición: Atributos y Tipos principales (auto, desde Main) ──
+    renderExpComposicion: function () {
+        const mainCards = Object.values(this.cards).filter(c => c.location === 'main');
+        const attrCounts = {}, raceCounts = {};
+        mainCards.forEach(item => {
+            const t = (item.data.type || '').toLowerCase();
+            if (t.includes('spell') || t.includes('trap')) return;
+            const qty = item.qty || 1;
+            if (item.data.attribute) attrCounts[item.data.attribute] = (attrCounts[item.data.attribute] || 0) + qty;
+            if (item.data.race) raceCounts[item.data.race] = (raceCounts[item.data.race] || 0) + qty;
+        });
+        const top = (obj, n) => Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n);
+        const attrTop = top(attrCounts, 3);
+        const raceTop = top(raceCounts, 3);
+        const chip = (label, qty) => `<span class="exp-chip">${label} <strong>${qty}</strong></span>`;
+        return `
+        <div class="exp-field-block">
+            <label class="exp-field-label">🌈 Atributos Principales</label>
+            <div class="exp-chips-row">${attrTop.length ? attrTop.map(([a, q]) => chip(a, q)).join('') : '<span class="exp-empty">Sin monstruos en Main.</span>'}</div>
+        </div>
+        <div class="exp-field-block">
+            <label class="exp-field-label">🧬 Tipos Principales</label>
+            <div class="exp-chips-row">${raceTop.length ? raceTop.map(([r, q]) => chip(r, q)).join('') : '<span class="exp-empty">Sin monstruos en Main.</span>'}</div>
+        </div>
+        <p class="exp-field-hint">Calculado automáticamente desde las cartas del Main Deck — se actualiza solo.</p>`;
+    },
+
+    // ── Rendimiento: gráfico de araña (Consistencia/Potencia/Resiliencia/Techo) + Winrate ──
+    renderExpRendimiento: function () {
+        const stats = window.Stats ? Stats.calculateInternalScore(this.cards) : null;
+        const g = window.Duelista ? Duelista.getDeckStats(this.name) : null;
+
+        let radarHtml = '<p class="exp-empty">Sin datos suficientes para el gráfico.</p>';
+        if (stats) {
+            const techo = stats.g1Score + stats.g2Score;
+            const axes = [
+                { label: 'Consistencia',   val: stats.consistency },
+                { label: 'Potencia',       val: stats.power },
+                { label: 'Resiliencia',    val: stats.resilience },
+                { label: 'Techo de Poder', val: techo }
+            ];
+            const maxVal = Math.max(1, ...axes.map(a => a.val));
+            const cx = 110, cy = 110, R = 85;
+            const angleFor = i => (Math.PI * 2 * i / axes.length) - Math.PI / 2;
+            const pt = (i, r) => { const a = angleFor(i); return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; };
+            const gridPolys = [0.25, 0.5, 0.75, 1].map(lv => axes.map((_, i) => pt(i, R * lv).join(',')).join(' '));
+            const dataPoly = axes.map((a, i) => pt(i, R * (a.val / maxVal)).join(',')).join(' ');
+            const axisLines = axes.map((a, i) => {
+                const [x, y] = pt(i, R);
+                return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" class="exp-radar-axis"/>`;
+            }).join('');
+            const labels = axes.map((a, i) => {
+                const [x, y] = pt(i, R + 22);
+                return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" class="exp-radar-label">${a.label}</text>`;
+            }).join('');
+            const valLabels = axes.map((a, i) => {
+                const [x, y] = pt(i, R * (a.val / maxVal) + 10);
+                return `<text x="${x}" y="${y}" text-anchor="middle" class="exp-radar-val">${a.val.toFixed(1)}</text>`;
+            }).join('');
+
+            radarHtml = `
+            <svg viewBox="0 0 220 220" class="exp-radar-svg">
+                ${gridPolys.map(p => `<polygon points="${p}" class="exp-radar-grid"/>`).join('')}
+                ${axisLines}
+                <polygon points="${dataPoly}" class="exp-radar-data"/>
+                ${labels}
+                ${valLabels}
+            </svg>`;
+        }
+
+        const wrHtml = (g && g.totalDuels > 0) ? `
+            <div class="exp-wr-row">
+                <div class="exp-wr-cell"><div class="exp-wr-val">${g.wrAll}%</div><div class="exp-wr-tag">General</div></div>
+                <div class="exp-wr-cell"><div class="exp-wr-val">${g.wr1st !== null ? g.wr1st + '%' : '—'}</div><div class="exp-wr-tag">1º</div></div>
+                <div class="exp-wr-cell"><div class="exp-wr-val">${g.wr2nd !== null ? g.wr2nd + '%' : '—'}</div><div class="exp-wr-tag">2º</div></div>
+            </div>
+            <p class="exp-field-hint">Tomado de Optimización → Historial de Sesiones (${g.totalDuels} rondas).</p>`
+            : `<p class="exp-empty">Sin rondas registradas aún en Optimización.</p>`;
+
+        return `
+        <div class="exp-field-block">
+            <label class="exp-field-label">📡 Perfil de Rendimiento</label>
+            ${radarHtml}
+        </div>
+        <div class="exp-field-block">
+            <label class="exp-field-label">🏆 Winrate del Deck</label>
+            ${wrHtml}
+        </div>`;
+    },
     // ═══════════════════════════════════════════════════════════════════
     // MODAL FLOTANTE — Nueva Ronda de Duelo (reemplaza el desplegable)
     // ═══════════════════════════════════════════════════════════════════

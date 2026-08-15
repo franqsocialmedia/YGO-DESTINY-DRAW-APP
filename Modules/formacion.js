@@ -6300,7 +6300,7 @@ borrarSeleccion: function () {
         if (window.Duelista) { const el = document.getElementById('duelista-content-opt'); if (el) Duelista.refreshSection(); }
     }
     if (selected.includes('optimizacion')) {
-        rmP('optimization_'); rmP('complejidad_');
+        rmP('optimization_'); rmP('complejidad_'); rmP('experiencia_');
         if (window.Duelista) { const el = document.getElementById('duelista-content-opt'); if (el) Duelista.refreshSection(); }
     }
     if (selected.includes('winrates')) {
