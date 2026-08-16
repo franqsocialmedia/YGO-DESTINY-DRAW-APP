@@ -2974,14 +2974,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             b.classList.toggle('active', b.dataset.expTab === tab));
     },
 
-    switchExperienciaTab: function (tab) {
-        ['perfil', 'manos', 'composicion', 'rendimiento'].forEach(t => {
-            const p = document.getElementById(`exp-pane-${t}`);
-            if (p) p.style.display = (t === tab) ? '' : 'none';
-        });
-        document.querySelectorAll('.exp-subtab-btn').forEach(b =>
-            b.classList.toggle('active', b.dataset.expTab === tab));
-    },
+    
 
     // ── Perfil: Dificultad, Estrategia, Variante, Non-Engine Slots ──
     renderExpPerfil: function () {
@@ -3096,14 +3089,27 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 img: item.data.card_images?.[0]?.image_url_small || ''
             }));
 
-        const grid = mainCards.length ? `
-            <div class="opt-key-card-grid">
-                ${mainCards.map(c => `
-                    <img src="${c.img}" alt="${esc(c.name)}" title="${esc(c.name)}"
-                         class="opt-key-card-thumb ${selectedIds.includes(c.id) ? 'opt-key-card-thumb-selected' : ''}"
-                         onclick="Deck.toggleExpCard('${cat}','${c.id}','${esc(c.name)}','${c.img}')">
-                `).join('')}
-            </div>` : `<p class="opt-key-empty">Este deck no tiene cartas en Main.</p>`;
+        const extraCards = Object.entries(this.cards)
+            .filter(([, item]) => item.location === 'extra')
+            .sort((a, b) => this.compareCards(a, b, 'extra'))
+            .map(([id, item]) => ({
+                id, name: item.data.name,
+                img: item.data.card_images?.[0]?.image_url_small || ''
+            }));
+
+        const thumb = c => `
+            <img src="${c.img}" alt="${esc(c.name)}" title="${esc(c.name)}"
+                 class="opt-key-card-thumb ${selectedIds.includes(c.id) ? 'opt-key-card-thumb-selected' : ''}"
+                 onclick="Deck.toggleExpCard('${cat}','${c.id}','${esc(c.name)}','${c.img}')">`;
+
+        const grid = (mainCards.length || extraCards.length) ? `
+            ${mainCards.length ? `
+                <p class="opt-key-group-label">Main Deck</p>
+                <div class="opt-key-card-grid">${mainCards.map(thumb).join('')}</div>` : ''}
+            ${extraCards.length ? `
+                <p class="opt-key-group-label">Extra Deck</p>
+                <div class="opt-key-card-grid">${extraCards.map(thumb).join('')}</div>` : ''}
+        ` : `<p class="opt-key-empty">Este deck no tiene cartas en Main ni en Extra.</p>`;
 
         const selected = this._getExpCardList(cat);
         const chips = selected.length ? `
@@ -3195,11 +3201,20 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         <div class="exp-field-block">
             <label class="exp-field-label">🧱 Manos Muertas (Brickeo)</label>
             <div class="exp-mm-row">
-                <input type="number" class="exp-num-input" min="0" id="exp-mm-x" value="${x}" placeholder="X"> /
-                <input type="number" class="exp-num-input" min="0" id="exp-mm-y" value="${y}" placeholder="Y">
+                <div class="exp-mm-field">
+                    <label class="exp-mm-sublabel">¿Cuántos duelos de prueba realizaste?</label>
+                    <input type="number" class="exp-num-input" min="0" id="exp-mm-y" value="${y}"
+                           placeholder="Total de duelos"
+                           oninput="document.getElementById('exp-mm-x').max=this.value">
+                </div>
+                <div class="exp-mm-field">
+                    <label class="exp-mm-sublabel">¿Cuántas de esas manos fueron injugables?</label>
+                    <input type="number" class="exp-num-input" min="0" max="${y}" id="exp-mm-x" value="${x}"
+                           placeholder="Manos injugables">
+                </div>
                 <button class="deck-move" onclick="Deck.saveExpManosMuertas()">Guardar</button>
             </div>
-            <p class="exp-field-hint">X = manos muertas registradas manualmente. Y = total de duelos jugados con este deck (siempre ≥ X).</p>
+            <p class="exp-field-hint">Las manos injugables nunca pueden superar el total de duelos jugados.</p>
             <p class="exp-mm-result">Tasa de brickeo manual: <strong>${pct}${pct !== '—' ? '%' : ''}</strong></p>
         </div>`;
     },
@@ -3207,7 +3222,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
     saveExpManosMuertas: function () {
         const x = Math.max(0, parseInt(document.getElementById('exp-mm-x').value) || 0);
         const y = Math.max(0, parseInt(document.getElementById('exp-mm-y').value) || 0);
-        if (x > y) { alert('Las Manos Muertas (X) no pueden ser más que el total de duelos (Y).'); return; }
+        if (x > y) { alert('Las manos injugables no pueden ser más que el total de duelos de prueba realizados.'); return; }
         this._saveExperiencia({ manosMuertasX: x, manosMuertasY: y });
         const pane = document.getElementById('exp-pane-manos');
         if (pane) pane.innerHTML = this.renderExpManosMuertas();
@@ -3240,47 +3255,135 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         <p class="exp-field-hint">Calculado automáticamente desde las cartas del Main Deck — se actualiza solo.</p>`;
     },
 
-    // ── Rendimiento: gráfico de araña (Consistencia/Potencia/Resiliencia/Techo) + Winrate ──
-    renderExpRendimiento: function () {
-        const stats = window.Stats ? Stats.calculateInternalScore(this.cards) : null;
-        const g = window.Duelista ? Duelista.getDeckStats(this.name) : null;
+    // ── Rendimiento: gráfico de araña de 6 ejes + Winrate ──
+    // Consistencia/Ceiling/Follow Up/Fragilidad: derivados del combo más
+    // fuerte registrado en Línea de Combos. Resiliencia: agregado de TODAS
+    // las rondas de Optimización. Eficiencia: Non-Engine Slots (Perfil) vs.
+    // tamaño del Main.
+    EXP_RADAR_POWER_REF: 25, // referencia de "poder de combo tope" para normalizar Ceiling/Follow Up a 0-10
 
-        let radarHtml = '<p class="exp-empty">Sin datos suficientes para el gráfico.</p>';
-        if (stats) {
-            const techo = stats.g1Score + stats.g2Score;
-            const axes = [
-                { label: 'Consistencia',   val: stats.consistency },
-                { label: 'Potencia',       val: stats.power },
-                { label: 'Resiliencia',    val: stats.resilience },
-                { label: 'Techo de Poder', val: techo }
-            ];
-            const maxVal = Math.max(1, ...axes.map(a => a.val));
-            const cx = 110, cy = 110, R = 85;
+    _getTopCombo: function () {
+        if (!window.Combos) return null;
+        const combos = Combos.getAll(this.name);
+        if (!combos.length) return null;
+        return combos.reduce((best, c) => (c.power || 0) > (best.power || 0) ? c : best, combos[0]);
+    },
+
+    _getResilienciaFromOptimizacion: function () {
+        const data = this.getOptimizacion();
+        const rounds = (data.sessions || []).reduce((all, s) => all.concat(s.rounds || []), []);
+        const presion = rounds.filter(r =>
+            (r.rivalInterrupciones || 0) >= 1 || r.rivalRompio || (r.vecesRivalRompioBoard || 0) >= 1);
+        if (!presion.length) return null;
+        const wins = presion.filter(r => r.resultado === 'victoria').length;
+        return { pct: Math.round((wins / presion.length) * 100), n: presion.length };
+    },
+
+    _getRendimientoAxes: function () {
+        const topCombo = this._getTopCombo();
+        const d = this.getExperiencia();
+        const clamp = v => Math.max(0, Math.min(10, v));
+
+        // Consistencia (Starter + Extender del combo más fuerte)
+        let consist = null;
+        if (topCombo && window.Combos) {
+            const s = Combos._starterConsistency(topCombo);
+            const e = Combos._extenderConsistency(topCombo);
+            if (s && e != null) consist = Math.round(((s.probCurrent + e) / 2) * 10) / 10;
+            else if (s) consist = s.probCurrent;
+        }
+
+        // Ceiling / Follow Up / Fragilidad (combo más fuerte)
+        const ceiling  = topCombo ? topCombo.power : null;
+        const followUp = topCombo ? (topCombo.powerBeforeMeta ?? topCombo.power) : null;
+        let fragilidad = null;
+        if (topCombo && topCombo.powerBeforeMeta) {
+            fragilidad = Math.round((1 - (topCombo.power / topCombo.powerBeforeMeta)) * 1000) / 10;
+        } else if (topCombo) {
+            fragilidad = 0;
+        }
+
+        // Resiliencia (Optimización, todas las sesiones)
+        const resil = this._getResilienciaFromOptimizacion();
+
+        // Eficiencia (Non-Engine Slots vs Main)
+        const mainTotal = Object.values(this.cards).filter(c => c.location === 'main')
+            .reduce((sum, c) => sum + (c.qty || 0), 0);
+        const nonEngine = d.nonEngineSlots || 0;
+        const eficiencia = mainTotal > 0 ? Math.round((1 - Math.min(1, nonEngine / mainTotal)) * 1000) / 10 : null;
+
+        const pow = v => v == null ? 0 : clamp((v / this.EXP_RADAR_POWER_REF) * 10);
+        const pct = v => v == null ? 0 : clamp(v / 10);
+
+        return [
+            { key: 'consistencia', label: 'Consistencia', raw: consist,  unit: '%', norm: pct(consist),
+              desc: 'Prob. de abrir Starter + Extender del combo más fuerte (Línea de Combos).', has: consist != null },
+            { key: 'ceiling', label: 'Ceiling', raw: ceiling, unit: 'pts', norm: pow(ceiling),
+              desc: 'Poder final (post Choke Points) del combo más fuerte.', has: ceiling != null },
+            { key: 'resiliencia', label: 'Resiliencia', raw: resil ? resil.pct : null, unit: '%', norm: pct(resil ? resil.pct : null),
+              desc: 'Winrate en rondas de Optimización con interrupción o rotura de campo del rival.', has: !!resil },
+            { key: 'followup', label: 'Follow Up', raw: followUp, unit: 'pts', norm: pow(followUp),
+              desc: 'Poder bruto del combo más fuerte antes de descontar sus Choke Points (grind game).', has: followUp != null },
+            { key: 'fragilidad', label: 'Fragilidad', raw: fragilidad, unit: '%', norm: pct(fragilidad),
+              desc: '% de poder perdido por Choke Points del combo más fuerte (más alto = más frágil).', has: fragilidad != null },
+            { key: 'eficiencia', label: 'Eficiencia', raw: eficiencia, unit: '%', norm: pct(eficiencia),
+              desc: 'Proporción del Main que SÍ es Engine (100% − Non-Engine Slots de Perfil).', has: eficiencia != null }
+        ];
+    },
+
+    renderExpRendimiento: function () {
+        const axes = this._getRendimientoAxes();
+        const g = window.Duelista ? Duelista.getDeckStats(this.name) : null;
+        const anyData = axes.some(a => a.has);
+
+        let radarHtml = '<p class="exp-empty">Sin datos suficientes — registra al menos un combo en 🧬 Línea de Combos y rondas en 🎯 Optimización.</p>';
+        if (anyData) {
+            const cx = 160, cy = 160, R = 85, labelR = R + 32, valR = R + 12;
             const angleFor = i => (Math.PI * 2 * i / axes.length) - Math.PI / 2;
             const pt = (i, r) => { const a = angleFor(i); return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; };
             const gridPolys = [0.25, 0.5, 0.75, 1].map(lv => axes.map((_, i) => pt(i, R * lv).join(',')).join(' '));
-            const dataPoly = axes.map((a, i) => pt(i, R * (a.val / maxVal)).join(',')).join(' ');
+            const dataPoly = axes.map((a, i) => pt(i, R * (a.norm / 10)).join(',')).join(' ');
             const axisLines = axes.map((a, i) => {
                 const [x, y] = pt(i, R);
                 return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" class="exp-radar-axis"/>`;
             }).join('');
             const labels = axes.map((a, i) => {
-                const [x, y] = pt(i, R + 22);
-                return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" class="exp-radar-label">${a.label}</text>`;
+                const [x, y] = pt(i, labelR);
+                const angle = angleFor(i), cos = Math.cos(angle);
+                const anchor = cos > 0.35 ? 'start' : (cos < -0.35 ? 'end' : 'middle');
+                return `<text x="${x}" y="${y}" text-anchor="${anchor}" dominant-baseline="middle" class="exp-radar-label">${a.label}</text>`;
             }).join('');
             const valLabels = axes.map((a, i) => {
-                const [x, y] = pt(i, R * (a.val / maxVal) + 10);
-                return `<text x="${x}" y="${y}" text-anchor="middle" class="exp-radar-val">${a.val.toFixed(1)}</text>`;
+                const [x, y] = pt(i, R * (a.norm / 10) + (a.norm > 0 ? 10 : valR * 0));
+                return a.has
+                    ? `<text x="${x}" y="${y}" text-anchor="middle" class="exp-radar-val">${a.raw}${a.unit === '%' ? '%' : ''}</text>`
+                    : '';
             }).join('');
 
             radarHtml = `
-            <svg viewBox="0 0 220 220" class="exp-radar-svg">
+            <svg viewBox="0 0 320 320" class="exp-radar-svg">
                 ${gridPolys.map(p => `<polygon points="${p}" class="exp-radar-grid"/>`).join('')}
                 ${axisLines}
                 <polygon points="${dataPoly}" class="exp-radar-data"/>
                 ${labels}
                 ${valLabels}
-            </svg>`;
+            </svg>
+            <div class="exp-radar-legend">
+                ${axes.map(a => `
+                    <div class="exp-radar-legend-item ${a.has ? '' : 'exp-radar-legend-missing'}">
+                        <strong>${a.label}${a.has ? `: ${a.raw}${a.unit === '%' ? '%' : ' pts'}` : ': sin datos'}</strong>
+                        <span>${a.desc}</span>
+                    </div>
+                `).join('')}
+            </div>
+            <p class="exp-field-hint exp-radar-note">
+                📐 Cada eje se muestra normalizado a una escala de 0 a 10 para poder compararlos en el mismo gráfico
+                (el valor real de cada uno está en la leyenda arriba). Ceiling/Follow Up usan como referencia de escala
+                un poder de combo de ${this.EXP_RADAR_POWER_REF} pts = 10/10; ajústalo en <code>Deck.EXP_RADAR_POWER_REF</code>
+                si tus combos suelen superar ese poder. Consistencia/Ceiling/Follow Up/Fragilidad toman el combo con
+                mayor Poder registrado en 🧬 Línea de Combos; Resiliencia se calcula sobre todas las rondas de
+                🎯 Optimización; Eficiencia usa los Non-Engine Slots definidos en 🎚️ Perfil.
+            </p>`;
         }
 
         const wrHtml = (g && g.totalDuels > 0) ? `
@@ -6188,6 +6291,21 @@ _stepIndex: function (combo, stepId) {
             copiesNeeded,
             probWithNeeded: probWithNeeded != null ? Math.round(probWithNeeded * 1000) / 10 : null
         };
+    },
+
+// Consistencia de abrir al menos 1 Extender activo del combo (mismo
+    // motor hipergeométrico que _starterConsistency, pool = todos los
+    // Extenders marcados como función principal en el Endboard de este combo).
+    _extenderConsistency: function (combo) {
+        const entries = (combo.endboard || []).filter(e => e.active && e.mainFunction === 'Extender');
+        if (!entries.length) return null;
+        const ids = [...new Set(entries.map(e => e.id))];
+        const deckSize = this._mainDeckSize();
+        const handSize = (combo.startCards || []).length || 5;
+        const successes = ids.reduce((sum, id) => sum + this._effectiveCopies(id), 0);
+        if (successes <= 0) return null;
+        const prob = this._hyperAtLeast(deckSize, successes, handSize);
+        return Math.round(prob * 1000) / 10;
     },
 
     _renderStarterConsistency: function (combo) {

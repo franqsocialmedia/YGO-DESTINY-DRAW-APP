@@ -2833,6 +2833,7 @@
 }
 .opt-key-card-thumb:hover { opacity: 1; }
 .opt-key-card-thumb-selected { opacity: 1; border-color: var(--gold-color); }
+.opt-key-group-label { font-size: .72rem; font-weight: 700; opacity: .6; margin: 6px 0 3px; text-transform: uppercase; letter-spacing: .03em; }
 
 .opt-key-selected-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .opt-key-chip {
@@ -3463,7 +3464,7 @@
     padding: 3px 10px;
     font-size: .8rem;
 }
-.exp-radar-svg { width: 100%; max-width: 260px; display: block; margin: 4px auto; }
+.exp-radar-svg { width: 100%; max-width: 300px; display: block; margin: 4px auto; }
 .exp-radar-grid { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 1; }
 .exp-radar-axis { stroke: rgba(255,255,255,0.15); stroke-width: 1; }
 .exp-radar-data { fill: rgba(255,215,0,0.25); stroke: #ffd700; stroke-width: 2; }
@@ -3473,6 +3474,14 @@
 .exp-wr-cell { text-align: center; flex: 1; }
 .exp-wr-val { font-size: 1.3rem; font-weight: 700; color: var(--gold-color); }
 .exp-wr-tag { font-size: .75rem; opacity: .65; }
+
+.exp-radar-svg { width: 100%; max-width: 300px; }
+.exp-radar-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-top: 10px; }
+.exp-radar-legend-item { font-size: .72rem; line-height: 1.3; display: flex; flex-direction: column; gap: 1px; }
+.exp-radar-legend-item strong { color: var(--gold-color); font-size: .74rem; }
+.exp-radar-legend-item span { opacity: .7; }
+.exp-radar-legend-missing strong { color: rgba(255,255,255,0.4); }
+.exp-radar-note { margin-top: 8px; font-size: .7rem; opacity: .6; }
 
 /* ── Experiencia: Sets/Packs involucrados ── */
 .exp-sets-list { display: flex; flex-direction: column; gap: 6px; max-height: 360px; overflow-y: auto; }
@@ -3494,3 +3503,7 @@
 .exp-set-thumbs { display: flex; gap: 2px; margin-left: auto; }
 .exp-set-thumbs img { width: 18px; height: 26px; object-fit: cover; border-radius: 2px; }
 .exp-set-more { font-size: .7rem; opacity: .6; align-self: center; }
+
+.exp-mm-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.exp-mm-field { display: flex; flex-direction: column; gap: 3px; }
+.exp-mm-sublabel { font-size: .75rem; opacity: .75; }
