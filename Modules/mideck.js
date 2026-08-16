@@ -795,7 +795,8 @@ exportTXT: function () {
             `# Destiny Draw — Data completa del Deck`,
             `# Deck: ${name}`,
             `# Incluye: cartas, Carta As, notas, historial de versiones, Optimización,`,
-            `# Complejidad del Deck, Historial de Enfrentamientos y Líneas de Combo.`,
+            `# Complejidad del Deck, Tu Experiencia con el Deck, Historial de`,
+            `# Enfrentamientos y Líneas de Combo.`,
             `# No editar manualmente el bloque JSON de abajo.`,
             ''
         ].join('\n');
