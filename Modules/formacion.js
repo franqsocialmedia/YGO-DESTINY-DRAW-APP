@@ -7599,10 +7599,19 @@ document.addEventListener('DOMContentLoaded', () => Welcome.init());
 const HelpPanel = {
     activeTab: 'help',
     isOpen: false,
-
     // Contenido de ayuda por pestaña activa
     tabContent: {
+    lobby: `
+        <h4>🏠 Lobby</h4>
+        <p>Pantalla de inicio de la app.</p>
+        <ul>
+            <li><strong>Lo Nuevo:</strong> tira con las últimas cartas lanzadas en TCG/OCG en el último mes (se actualiza cada 30 min). Toca una carta para abrir su Vista de Carta.</li>
+            <li><strong>Sugerencias:</strong> accesos aleatorios a otras secciones de la app (Simuladores, Optimización, Buscador por arquetipo, Config, etc.). Usa "🔀 Otras sugerencias" para re-randomizar, o toca una tarjeta para ir directo. Sección colapsable.</li>
+            <li><strong>Aviso de actualización:</strong> resumen de novedades de la versión actual. Aparece una sola vez por versión.</li>
+        </ul>`,
+
     buscador: `
+        <h4>🔍 Buscador de Cartas</h4>
         <h4>🔍 Buscador de Cartas</h4>
         <p>Busca cualquier carta de Yu-Gi-Oh! por nombre, arquetipo, set o palabras clave en su efecto.</p>
         <ul>
@@ -7629,6 +7638,12 @@ const HelpPanel = {
             <li><strong>Guardar / Cargar:</strong> guarda el deck activo en la app o carga uno guardado previamente.</li>
             <li><strong>Internal Score y Análisis:</strong> visibles en el sub-tab Construcción. Se recalculan automáticamente con cada cambio.</li>
             <li><strong>Optimización:</strong> sub-tab con <strong>Nivel como Piloto del Deck</strong> (dominio del deck según rondas registradas), <strong>Complejidad del Deck</strong> (evaluación de dificultad), <strong>Notas del Deck</strong> y <strong>Historial de Enfrentamientos</strong> (W/L manual por rival). Aquí también registras cada ronda jugada (rival, resultado, going first/second) para alimentar el <strong>Historial de Sesiones</strong>.</li>
+            <li><strong>Importar Lista Oficial (.pdf):</strong> lee el PDF de torneo de Konami y arma el deck automáticamente detectando Main, Extra y Side por encabezados de columna.</li>
+            <li><strong>Side Deck:</strong> al mover una carta al Side Deck, un panel te pregunta cuántas copias enviar (por defecto todas). Podés dejar, por ejemplo, 2 copias en Main y sidear solo 1 — competitivamente útil para planes de juego que cambian según el rival.</li>
+            <li><strong>Tu Experiencia con el Deck:</strong> 6 sub-tabs — Perfil (dificultad, estrategia, variante), Manos Muertas, Composición automática, Cartas Destacadas, Sets involucrados y Rendimiento (gráfico de araña + winrate).</li>
+            <li><strong>Línea de Combos:</strong> mapea combos por zonas (mano, campo, cementerio, baneadas) con starters/Boss Monster auto-detectados, choke points, restricciones, interacciones y endboard. Incluye un <strong>modo de ejecución paso a paso</strong> (robar, mover cartas, log de jugadas) para simular la línea jugada a jugada, y exporta/importa como .txt.</li>
+            <li><strong>Cartas Clave y Amenazas:</strong> ranking de cartas marcadas como clave o amenaza del rival durante las rondas de Optimización.</li>
+            <li><strong>Historial de Versiones:</strong> cada guardado del deck queda registrado con diff de cambios y comentario editable.</li>
         </ul>`,
 
     estadisticas: `
@@ -7658,8 +7673,10 @@ const HelpPanel = {
             <li><strong>Winrate:</strong> registro rápido de partidas G1/G2 vinculado al deck activo. Lleva el winrate general y por turno (primero/segundo).</li>
             <li><strong>Torneo:</strong> gestiona un torneo local con sistema suizo — rondas, standings, puntos y bracket.</li>
             <li><strong>Duelo en Vivo:</strong> cronómetro maestro con control de LP, conteo de turnos y temporizador por jugador. Modos estándar y Master Duel.</li>
-            <li><strong>Experimentación:</strong> herramientas analíticas para explorar métricas y comportamiento del deck activo.</li>
-            <li><strong>Zona de Práctica:</strong> campo de duelo visual donde puedes mover cartas, marcar estados (boca abajo, en posición de ataque/defensa, usado) y guardar posiciones del campo.</li>
+            <li><strong>Counters:</strong> arma un pool (deck activo, Engine, Staples, Favoritas o búsqueda manual), marca las cartas del rival que querés contrarrestar y te muestra los counters conocidos. Marcá los mejores como ⭐ Perfect Counter y convertí el resultado en Engine.</li>
+            <li><strong>Gauntlet:</strong> testea tu deck/engine/pool contra "Pruebas" propias (éxito/fallo, a mano o desde Zona de Práctica) frente a chips de decks del meta. Guarda un Ranking global exportable y plantillas reutilizables.</li>
+            <li><strong>Experimentación:</strong> lienzo libre con zoom para plantear líneas de juego visualmente, con cartas buscadas, .ydk o de un deck guardado.</li>
+            <li><strong>Zona de Práctica:</strong> campo de duelo por zonas. Incluye resolución de cadena (chain links + botón de resolución), información oculta por zona (para jugar contra otra persona sin revelar mano/campo), visor de mazo/cementerio/baneadas manipulable, log de duelo exportable, navegador de estados guardados con preview y exportación del campo como imagen.</li>
         </ul>`,
 
     formacion: `
@@ -7673,7 +7690,7 @@ const HelpPanel = {
             <li><strong>Maestros:</strong> galería de streamers y jugadores de referencia que configuras en Config.</li>
         </ul>`,
 
-    config: `
+        config: `
         <h4>⚙️ Configuración</h4>
         <p>Personaliza cómo la app analiza cartas y decks. Todo lo que cambies aquí afecta directamente los scores, la detección de roles y el resaltado de efectos.</p>
         <ul>
@@ -7684,13 +7701,20 @@ const HelpPanel = {
             <li><strong>Pilares del Internal Score:</strong> asigna qué roles aportan a Consistencia, Potencia y Resiliencia. Aquí también se configura el RPS (qué pilar vence a cuál) con opción "Ninguno" para pilares sin counter natural.</li>
             <li><strong>Scoring Avanzado (G1/G2):</strong> define si cada rol aporta al Going First, Going Second o ambos; su Poder Base (L3, escala 0–10); la tabla de fiabilidad por copias; y los multiplicadores de las capas L1, L2, L4 y L5.</li>
             <li><strong>Rendimientos Decrecientes:</strong> controla cómo cada copia adicional de un rol aporta progresivamente menos al score.</li>
-            <li><strong>Banlist del Formato:</strong> gestiona la lista de cartas prohibidas, limitadas y semi-limitadas activa. Se indica en la Vista de Carta del Buscador.</li>
+            <li><strong>Banlist del Formato:</strong> podés tener <strong>varios formatos activos a la vez</strong> y crear/borrar formatos custom propios además de los predefinidos y Genesys. Cada formato tiene un toggle "invertido". Se indica en la Vista de Carta del Buscador y en Mi Deck.</li>
             <li><strong>Atajos Rápidos:</strong> hasta 6 accesos directos desde el botón ⚡ flotante.</li>
+            <li><strong>Intro de Pestañas:</strong> activa o desactiva el overlay de bienvenida por pestaña.</li>
+            <li><strong>Maestros del Duelo:</strong> gestiona los perfiles que se muestran en Formación → Maestros.</li>
+            <li><strong>Fuentes Externas del Meta:</strong> administra los links embebidos de Formación → Fuentes.</li>
+            <li><strong>Juegos Alternativos de Yu-Gi-Oh!:</strong> gestiona el contenido de Formación → Juegos.</li>
+            <li><strong>Temas de Formación:</strong> gestiona y activa los temas de Formación → Temas.</li>
+            <li><strong>Test de Duelo:</strong> creá, editá, exportá e importá tests teóricos y prácticos custom para Formación → Test.</li>
             <li><strong>Contenido de la App:</strong> muestra u oculta pestañas y secciones individuales según un perfil base (Novato/Casual/Competitivo), con override manual por sección.</li>
             <li><strong>Música:</strong> asigna pistas por perfil y controla el volumen.</li>
             <li><strong>Exportar / Importar Data:</strong> guarda o restaura toda la data de la app en un archivo .txt. Incluye decks, engines, config, scores, meta, matchups y más.</li>
             <li><strong>Restaurar Configuración:</strong> resetea TODO a los valores de fábrica. Irreversible sin un backup previo.</li>
-            <li><strong>Zona de Borrado:</strong> elimina categorías específicas de data sin afectar las demás.</li>
+            <li><strong>Zona de Borrado:</strong> elimina categorías específicas de data sin afectar las demás (16 categorías).</li>
+            <li><strong>Reportar Error / Generar Reporte:</strong> "Generar Reporte" descarga el log técnico de la sesión. "Reportar Error" además arma un resumen de tu config y abre tu cliente de correo para enviarlo.</li>
         </ul>`,
 
     default: `
@@ -7743,6 +7767,22 @@ const HelpPanel = {
         {
             q: '¿Qué son las Especialidades y Counters?',
             a: 'Son pares de mecánicas configurables en la sección Counters. Una Especialidad es un patrón de juego que un deck ejecuta (por ejemplo: "invocación especial masiva"). Un Counter es lo que lo interrumpe. Configurar estos pares activa el Power Score del meta, el External Score del deck activo y el cross-score entre decks del meta.'
+        },
+        {
+            q: '¿Qué es la Línea de Combos?',
+            a: 'Es un mapeo detallado del combo de tu deck en Mi Deck, organizado por zonas (mano, campo, cementerio, baneadas), con starters y Boss Monster detectados automáticamente (o marcados a mano), choke points, restricciones, interacciones entre cartas y el endboard resultante. Tiene un modo de ejecución paso a paso para simular la línea jugada a jugada, con log de jugadas exportable como .txt.'
+        },
+        {
+            q: '¿Qué es Gauntlet?',
+            a: 'Es un simulador de testing competitivo: elegís un deck, engine o pool manual y lo probás contra "Pruebas" (situaciones de éxito/fallo definidas por vos) frente a chips de decks del meta. Lleva un Ranking global exportable/importable y permite guardar plantillas reutilizables de pruebas.'
+        },
+        {
+            q: '¿Puedo tener copias de una carta en Main y en Side Deck a la vez?',
+            a: 'Sí. Al mover una carta al Side Deck, la app te pregunta cuántas copias enviar (por defecto todas). Si elegís menos que el total, el resto queda en Main/Extra Deck y solo esa parte se registra en el Side — competitivamente equivale a tener un plan de juego que cambia una cantidad puntual de copias según el rival.'
+        },
+        {
+            q: '¿Cómo funciona la Banlist con varios formatos?',
+            a: 'Podés activar más de un formato de Banlist a la vez y crear formatos custom propios además de los predefinidos y Genesys. Cada formato tiene un toggle "invertido". El estado de ban de una carta se muestra tanto en la Vista de Carta del Buscador como en Mi Deck.'
         }
     ],
 
