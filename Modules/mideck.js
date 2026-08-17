@@ -3382,15 +3382,17 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 `).join('')}
             </div>
             <p class="exp-field-hint exp-radar-note">
-                📐 El número dentro del gráfico es un índice normalizado de 0 a 10 en cada eje (para poder comparar
-                ejes con unidades distintas en el mismo polígono) — el valor real de cada uno está en la leyenda de
-                arriba. En los 6 ejes, más punto SIEMPRE es mejor para el deck (incluido Blindaje: mide qué tan bien
-                resiste el combo sus propios Choke Points, no qué tan frágil es). Ceiling/Follow Up usan como
-                referencia de escala un poder de combo de ${this.EXP_RADAR_POWER_REF} pts = 10/10; ajústalo en
-                <code>Deck.EXP_RADAR_POWER_REF</code> si tus combos suelen superar ese poder. Consistencia/Ceiling/
-                Follow Up/Blindaje toman el combo con mayor Poder registrado en 🧬 Línea de Combos; Resiliencia se
-                calcula sobre todas las rondas de 🎯 Optimización; Eficiencia usa los Non-Engine Slots definidos en
-                🎚️ Perfil (más Non-Engine sobrante = Engine más compacto).
+                📐 El número que ves en cada punta es una nota de 0 a 10 (para poder comparar cosas tan distintas
+                como "puntos de poder" y "porcentajes" en el mismo gráfico) — el dato real de cada eje lo tienes en
+                la lista de arriba. En los 6 ejes aplica la misma regla: <strong>mientras más alto el punto, mejor
+                para tu deck</strong> (Blindaje incluido: mide qué tan bien aguanta el combo sus propios Choke
+                Points, no qué tan frágil es).<br><br>
+                Para que este gráfico tenga datos necesitas: registrar al menos un combo en 🧠 Mi Deck → 🧬 Línea de
+                Combos (de ahí salen Consistencia, Ceiling, Follow Up y Blindaje — se usa siempre tu combo más
+                poderoso); jugar rondas en 🎯 Optimización (de ahí sale Resiliencia); y completar los Non-Engine
+                Slots en 🎚️ Perfil (de ahí sale Eficiencia — mientras más cartas Non-Engine te sobren, más
+                compacto es tu Engine). Ceiling y Follow Up se miden contra un tope de referencia de
+                ${this.EXP_RADAR_POWER_REF} pts = 10/10, pensado para un combo fuerte típico.
             </p>`;
         }
 
