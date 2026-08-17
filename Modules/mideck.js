@@ -3294,24 +3294,28 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             else if (s) consist = s.probCurrent;
         }
 
-        // Ceiling / Follow Up / Fragilidad (combo más fuerte)
+        // Ceiling / Follow Up / Blindaje (combo más fuerte)
         const ceiling  = topCombo ? topCombo.power : null;
         const followUp = topCombo ? (topCombo.powerBeforeMeta ?? topCombo.power) : null;
-        let fragilidad = null;
+        // Blindaje = % de poder que el combo CONSERVA pese a sus Choke Points
+        // (100% = ningún choke le resta nada; más alto siempre es mejor).
+        let blindaje = null;
         if (topCombo && topCombo.powerBeforeMeta) {
-            fragilidad = Math.round((1 - (topCombo.power / topCombo.powerBeforeMeta)) * 1000) / 10;
+            blindaje = Math.round((topCombo.power / topCombo.powerBeforeMeta) * 1000) / 10;
         } else if (topCombo) {
-            fragilidad = 0;
+            blindaje = 100;
         }
 
         // Resiliencia (Optimización, todas las sesiones)
         const resil = this._getResilienciaFromOptimizacion();
 
-        // Eficiencia (Non-Engine Slots vs Main)
+        // Eficiencia (Non-Engine Slots vs Main) — más Non-Engine "sobrante"
+        // significa que el Engine necesita MENOS slots para cumplir su plan,
+        // así que un % alto de Non-Engine = Engine más eficiente.
         const mainTotal = Object.values(this.cards).filter(c => c.location === 'main')
             .reduce((sum, c) => sum + (c.qty || 0), 0);
         const nonEngine = d.nonEngineSlots || 0;
-        const eficiencia = mainTotal > 0 ? Math.round((1 - Math.min(1, nonEngine / mainTotal)) * 1000) / 10 : null;
+        const eficiencia = mainTotal > 0 ? Math.round(Math.min(1, nonEngine / mainTotal) * 1000) / 10 : null;
 
         const pow = v => v == null ? 0 : clamp((v / this.EXP_RADAR_POWER_REF) * 10);
         const pct = v => v == null ? 0 : clamp(v / 10);
@@ -3325,10 +3329,10 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
               desc: 'Winrate en rondas de Optimización con interrupción o rotura de campo del rival.', has: !!resil },
             { key: 'followup', label: 'Follow Up', raw: followUp, unit: 'pts', norm: pow(followUp),
               desc: 'Poder bruto del combo más fuerte antes de descontar sus Choke Points (grind game).', has: followUp != null },
-            { key: 'fragilidad', label: 'Fragilidad', raw: fragilidad, unit: '%', norm: pct(fragilidad),
-              desc: '% de poder perdido por Choke Points del combo más fuerte (más alto = más frágil).', has: fragilidad != null },
+            { key: 'blindaje', label: 'Blindaje', raw: blindaje, unit: '%', norm: pct(blindaje),
+              desc: '% de poder que el combo más fuerte CONSERVA pese a sus Choke Points (más alto = más resistente a ser interrumpido).', has: blindaje != null },
             { key: 'eficiencia', label: 'Eficiencia', raw: eficiencia, unit: '%', norm: pct(eficiencia),
-              desc: 'Proporción del Main que SÍ es Engine (100% − Non-Engine Slots de Perfil).', has: eficiencia != null }
+              desc: '% del Main que es Non-Engine sin sacrificar el plan de juego — más alto = Engine más compacto y eficiente.', has: eficiencia != null }
         ];
     },
 
@@ -3357,7 +3361,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             const valLabels = axes.map((a, i) => {
                 const [x, y] = pt(i, R * (a.norm / 10) + (a.norm > 0 ? 10 : valR * 0));
                 return a.has
-                    ? `<text x="${x}" y="${y}" text-anchor="middle" class="exp-radar-val">${a.raw}${a.unit === '%' ? '%' : ''}</text>`
+                    ? `<text x="${x}" y="${y}" text-anchor="middle" class="exp-radar-val">${a.norm.toFixed(1)}</text>`
                     : '';
             }).join('');
 
@@ -3378,20 +3382,23 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 `).join('')}
             </div>
             <p class="exp-field-hint exp-radar-note">
-                📐 Cada eje se muestra normalizado a una escala de 0 a 10 para poder compararlos en el mismo gráfico
-                (el valor real de cada uno está en la leyenda arriba). Ceiling/Follow Up usan como referencia de escala
-                un poder de combo de ${this.EXP_RADAR_POWER_REF} pts = 10/10; ajústalo en <code>Deck.EXP_RADAR_POWER_REF</code>
-                si tus combos suelen superar ese poder. Consistencia/Ceiling/Follow Up/Fragilidad toman el combo con
-                mayor Poder registrado en 🧬 Línea de Combos; Resiliencia se calcula sobre todas las rondas de
-                🎯 Optimización; Eficiencia usa los Non-Engine Slots definidos en 🎚️ Perfil.
+                📐 El número dentro del gráfico es un índice normalizado de 0 a 10 en cada eje (para poder comparar
+                ejes con unidades distintas en el mismo polígono) — el valor real de cada uno está en la leyenda de
+                arriba. En los 6 ejes, más punto SIEMPRE es mejor para el deck (incluido Blindaje: mide qué tan bien
+                resiste el combo sus propios Choke Points, no qué tan frágil es). Ceiling/Follow Up usan como
+                referencia de escala un poder de combo de ${this.EXP_RADAR_POWER_REF} pts = 10/10; ajústalo en
+                <code>Deck.EXP_RADAR_POWER_REF</code> si tus combos suelen superar ese poder. Consistencia/Ceiling/
+                Follow Up/Blindaje toman el combo con mayor Poder registrado en 🧬 Línea de Combos; Resiliencia se
+                calcula sobre todas las rondas de 🎯 Optimización; Eficiencia usa los Non-Engine Slots definidos en
+                🎚️ Perfil (más Non-Engine sobrante = Engine más compacto).
             </p>`;
         }
 
         const wrHtml = (g && g.totalDuels > 0) ? `
             <div class="exp-wr-row">
                 <div class="exp-wr-cell"><div class="exp-wr-val">${g.wrAll}%</div><div class="exp-wr-tag">General</div></div>
-                <div class="exp-wr-cell"><div class="exp-wr-val">${g.wr1st !== null ? g.wr1st + '%' : '—'}</div><div class="exp-wr-tag">1º</div></div>
-                <div class="exp-wr-cell"><div class="exp-wr-val">${g.wr2nd !== null ? g.wr2nd + '%' : '—'}</div><div class="exp-wr-tag">2º</div></div>
+                <div class="exp-wr-cell"><div class="exp-wr-val">${g.wr1st !== null ? g.wr1st + '%' : '—'}</div><div class="exp-wr-tag">Going 1st</div></div>
+                <div class="exp-wr-cell"><div class="exp-wr-val">${g.wr2nd !== null ? g.wr2nd + '%' : '—'}</div><div class="exp-wr-tag">Going 2nd</div></div>
             </div>
             <p class="exp-field-hint">Tomado de Optimización → Historial de Sesiones (${g.totalDuels} rondas).</p>`
             : `<p class="exp-empty">Sin rondas registradas aún en Optimización.</p>`;
