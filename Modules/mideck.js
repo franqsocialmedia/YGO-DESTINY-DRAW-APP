@@ -241,6 +241,27 @@ const Deck = {
         const item = this.cards[id];
         if (!item || item.location === 'extra') return; // usa moveExtraToSide
 
+        // Entrada dividida (venía de un split parcial hacia Side): al volver,
+        // se reintegra en la entrada de origen bajo el id real en vez de
+        // quedar como key compuesta suelta.
+        if (item.location === 'side' && String(id).endsWith(this._SIDE_SPLIT_SUFFIX)) {
+            const realId = String(id).slice(0, -this._SIDE_SPLIT_SUFFIX.length);
+            const target = this.cards[realId];
+            if (target) {
+                target.qty += item.qty;
+            } else {
+                this.cards[realId] = {
+                    qty: item.qty,
+                    location: this.isExtraDeckCard(item.data) ? 'extra' : 'main',
+                    data: item.data,
+                    roles: item.roles ? [...item.roles] : []
+                };
+            }
+            delete this.cards[id];
+            this.render();
+            return;
+        }
+
         if (item.location === 'side' && this.isExtraDeckCard(item.data)) {
             item.location = 'extra'; // carta que originalmente vino del Extra Deck
         } else {
@@ -262,7 +283,89 @@ const Deck = {
         item.location = 'side';
         this.render();
     },
+    // Sufijo de la key "dividida": cuando solo se sidea una parte de las
+    // copias, el resto queda bajo el id real (Main/Extra) y la porción
+    // enviada al Side Deck vive en esta key separada.
+    _SIDE_SPLIT_SUFFIX: '::split',
 
+    _splitKey: function (id) {
+        return String(id) + this._SIDE_SPLIT_SUFFIX;
+    },
+
+    // Panel flotante: cuántas copias enviar al Side Deck. origin: 'main'|'extra'
+    openSideQtyPanel: function (id, origin) {
+        const item = this.cards[id];
+        if (!item || item.location !== origin) return;
+
+        const max = item.qty;
+        const overlay = document.createElement('div');
+        overlay.className = 'deck-overlay';
+        overlay.innerHTML = `
+            <div class="deck-modal">
+                <h3>Enviar al Side Deck</h3>
+                <p class="deck-modal-highlight">${item.data.name}</p>
+                <p class="deck-modal-note">¿Cuántas copias enviar al Side Deck? (tenés ${max} en ${origin === 'extra' ? 'Extra Deck' : 'Main Deck'})</p>
+                <div class="deck-qty side-qty-stepper">
+                    <button onclick="Deck._sideQtyStep(-1)">◀</button>
+                    <input type="number" id="side-qty-input" min="1" max="${max}" value="${max}" inputmode="numeric">
+                    <button onclick="Deck._sideQtyStep(1)">▶</button>
+                </div>
+                <div class="deck-modal-buttons">
+                    <button onclick="Deck.confirmMoveToSide('${id}', '${origin}')">Mover al Side</button>
+                    <button onclick="Deck.closeModal()">Cancelar</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    },
+
+    _sideQtyStep: function (delta) {
+        const input = document.getElementById('side-qty-input');
+        if (!input) return;
+        const max = parseInt(input.max, 10) || 1;
+        let val = (parseInt(input.value, 10) || 1) + delta;
+        if (val < 1) val = 1;
+        if (val > max) val = max;
+        input.value = val;
+    },
+
+    confirmMoveToSide: function (id, origin) {
+        const item = this.cards[id];
+        if (!item || item.location !== origin) { this.closeModal(); return; }
+
+        const input = document.getElementById('side-qty-input');
+        let qty = input ? parseInt(input.value, 10) : item.qty;
+        if (!qty || qty < 1) qty = 1;
+        if (qty > item.qty) qty = item.qty;
+
+        const sideTotal = this.count('side');
+        if (sideTotal + qty > 15) {
+            alert(`No puedes mover ${qty} copia(s) al Side Deck: el límite es 15 cartas y ya tienes ${sideTotal}/15.`);
+            return;
+        }
+
+        if (qty >= item.qty) {
+            // Bloque completo — misma key, comportamiento clásico.
+            item.location = 'side';
+        } else {
+            // Split: el resto queda en origin, la porción sideada va a key aparte.
+            item.qty -= qty;
+            const sKey = this._splitKey(id);
+            if (this.cards[sKey]) {
+                this.cards[sKey].qty += qty;
+            } else {
+                this.cards[sKey] = {
+                    qty: qty,
+                    location: 'side',
+                    data: item.data,
+                    roles: item.roles ? [...item.roles] : []
+                };
+            }
+        }
+
+        this.closeModal();
+        this.render();
+    },
     // ===============================
     count: function (loc) {
         return Object.values(this.cards)
@@ -342,8 +445,8 @@ const Deck = {
                     ${checkboxesHTML}
                 </div>
                 <div class="deck-modal-buttons">
-                    <button onclick="Deck.assignRoles(${id})">Asignar Rol</button>
-                    <button onclick="Deck.removeRoles(${id})">Quitar Roles</button>
+                    <button onclick="Deck.assignRoles('${id}')">Asignar Rol</button>
+                    <button onclick="Deck.removeRoles('${id}')">Quitar Roles</button>
                     <button onclick="Deck.closeModal()">Cancelar</button>
                 </div>
             </div>
@@ -753,10 +856,11 @@ tryDeckExperimentacion: function (deckName) {
         let main = '', extra = '', side = '';
 
         Object.entries(this.cards).forEach(([id, item]) => {
+            const realId = item.data.id;
             for (let i = 0; i < item.qty; i++) {
-                if (item.location === 'main') main += id + '\n';
-                if (item.location === 'extra') extra += id + '\n';
-                if (item.location === 'side') side += id + '\n';
+                if (item.location === 'main') main += realId + '\n';
+                if (item.location === 'extra') extra += realId + '\n';
+                if (item.location === 'side') side += realId + '\n';
             }
         });
 
@@ -1549,31 +1653,31 @@ html += `
     <div class="deck-row" style="${backgroundStyle}">
         <img src="${card.card_images[0].image_url_small}" 
              class="${imgClass}"
-             onclick="CardViewer.openFromDeck(${id})">
+             onclick="CardViewer.openFromDeck(${item.data.id})">
         <div class="${nameClass}">${card.name}</div>
         <div class="deck-roles">
             ${subtypesBadges}${rolesBadges}
-            ${window.Banlist ? Banlist.getBadgeHTML(id) : ''}
+            ${window.Banlist ? Banlist.getBadgeHTML(item.data.id) : ''}
         </div>
 
                     <div class="deck-qty">
-                        <button onclick="Deck.changeQty(${id}, -1)">◀</button>
+                        <button onclick="Deck.changeQty('${id}', -1)">◀</button>
                         <span class="qty-number" style="color: ${qtyColor}">x${item.qty}</span>
-                        <button onclick="Deck.changeQty(${id}, 1)">▶</button>
+                        <button onclick="Deck.changeQty('${id}', 1)">▶</button>
                     </div>
 
                     <div class="deck-buttons">
                         ${location === 'extra' ? `
-                            <button class="deck-move" onclick="Deck.moveExtraToSide(${id})">
+                            <button class="deck-move" onclick="Deck.openSideQtyPanel('${id}', 'extra')">
                                 Side Deck
                             </button>
                         ` : `
-                            <button class="deck-move" onclick="Deck.toggleLocation(${id})">
+                            <button class="deck-move" onclick="${item.location === 'main' ? `Deck.openSideQtyPanel('${id}', 'main')` : `Deck.toggleLocation('${id}')`}">
                                 ${item.location === 'main' ? 'Side Deck' : (this.isExtraDeckCard(card) ? 'Extra Deck' : 'Main Deck')}
                             </button>
                         `}
 
-                        <button class="deck-role-btn" data-section-id="deck-role-btn" onclick="Deck.openRolePanel(${id})">
+                        <button class="deck-role-btn" data-section-id="deck-role-btn" onclick="Deck.openRolePanel('${id}')">
                             Rol
                         </button>
                     </div>
