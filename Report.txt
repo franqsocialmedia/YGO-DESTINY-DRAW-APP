@@ -1,140 +1,105 @@
 # DESTINY DRAW — REPORTE TÉCNICO
-**Versión:** v3.0 | **Fecha:** Jul 2026 (auditado línea por línea contra el código fuente)
-**Stack:** Vanilla JS (ES6 objects) · CSS modular · HTML5 SPA · YGOProDeck API · localStorage
+**Versión del reporte:** v6.0 (estado actual, sin historial de cambios)
+**Stack:** Vanilla JS (ES6 objects) · CSS modular · HTML5 SPA · YGOProDeck API · Yugipedia API · localStorage
 
-> **Nota de auditoría:** este reporte fue verificado contra los 11 módulos JS actuales
-> (los 6 archivos CSS no se incluyeron en esta pasada por no estar disponibles — las
-> referencias a clases CSS de versiones anteriores del reporte siguen siendo válidas,
-> las nuevas de esta v3.0 se marcan como no verificadas).
-> El footer de `index.html` marca **VERSION 7.8** — el número de versión de este documento
-> (v3.0) es independiente y solo referencia la revisión del propio reporte.
-> Cambio relevante desde la v2.9 (`mideck.js` / `buscador.js` / `historial.js` — ver 5.9,
-> 5.10, 5.11, 5.12 y correcciones en 1.2/3/6, nuevo, léelos antes de asumir el estado anterior):
-> 1. **Importar Deck desde Lista Oficial (.pdf)** — nuevo sub-tab "📥 Importar Deck" en
->    Mi Deck (antes de Decklist). `Deck.importPDF()` parsea la Lista Oficial de Konami
->    con `pdf.min.js` + `pdf.worker.min.js` (nuevas dependencias, ya cargadas en
->    `index.html`), detecta encabezados de columna (Monster/Spell/Trap Cards, Extra
->    Deck, Side Deck), resuelve cada nombre contra la base completa de YGOProDeck y
->    arma el deck. Cartas no reconocidas quedan listadas para agregar a mano. Ver 5.10.
-> 2. **CardViewer — "Posibles Roles" y "Aporte al deck activo"** — al ver cualquier
->    carta el visor simula agregarla al deck activo y muestra el delta de
->    Consistencia/Potencia/Resiliencia/Internal Score, además de los roles que
->    detectaría `autoAssignRoles` si se agregara. Ver 5.9.
-> 3. **Alta rápida de cartas a Banlist/Genesys** — el botón "＋ Agregar carta" de cada
->    formato (Mi Deck → sidebar → Banlist) abre un mini-buscador
->    (`CardViewer.openCardSearch`) que permite marcar Ban/Limitada/Semi-Limit o,
->    en formatos Genesys, asignar puntos (`CardViewer.openPointsEditor`) sin salir
->    del panel. Ver 5.11.
-> 4. **Matchups — Exportar/Importar Historial de Enfrentamientos (.txt)** —
->    `Matchups.exportTXT()` / `importTXT()`: exporta enfrentamientos + sesiones
->    completas de Optimización del deck activo a un único .txt; al importar, fusiona
->    enfrentamientos por nombre de rival (suma W/L) y copia las sesiones completas a
->    Historial de Sesiones. Cada enfrentamiento puede llevar el decklist del rival
->    (importado por .ydk) para verlo luego con "Ver Deck". Ver 5.12 y corrección de
->    estructura en sección 3.
-> Cambio relevante desde la v2.8 (`mideck.js` — Optimización, ver 6.3, nuevo):
-> 1. **Nuevo campo "Boardbreaker en mano"** en el formulario de Rondas de Duelo, ubicado
->    entre Handtraps y Bricks. Cuenta cartas que rompen campo jugando de segundo (Raigeki,
->    Dark Ruler No More, Evenly Matched, etc.). Se guarda como `round.boardbreakers`,
->    alimenta un promedio propio (`avgBoardbreaker`) y una sugerencia nueva en
->    `getOptDiagnostics()`. No afecta el cálculo de Brick Rate ni ningún otro campo.
-> 2. **"Bricks en mano" renombrado a "Bricks/Tech en mano"** — cambio solo de rótulo visible;
->    a nivel de cálculo (Brick Rate, diagnósticos, export a Matchups) sigue considerándose
->    negativo/brick exactamente igual que antes, sin ningún campo o id nuevo.
+> Este reporte describe el estado ACTUAL de la app: qué existe, cómo funciona a nivel
+> de flujo de código, y qué hace cada pestaña para el usuario. No contiene changelog
+> ni historial de bugs resueltos — solo lo que el próximo programador necesita para
+> seguir construyendo sin romper nada.
 >
-> Cambios relevantes encontrados desde la v2.6 (`mideck.js` / `historial.js` — ver 6.1 y 6.2,
-> nuevo, léelos antes de asumir el estado anterior):
-> 1. **Complejidad del Deck** — nuevo clasificador de dificultad de uso/aprendizaje (quiz de
->    8 preguntas) dentro de Mi Deck → Optimización, con resultado también visible en
->    Construcción. Persiste en `complejidad_${deckName}`.
-> 2. **Duelista ("Nivel como Piloto del Deck") reescrito por completo** — antes agregaba
->    duelos de TODOS los decks a lo largo de toda la vida de la app; ahora se calcula
->    EXCLUSIVAMENTE con las rondas de Optimización del deck activo, con una escala de
->    niveles reducida y nueva. Se renderiza en dos sitios (Estadísticas y Mi Deck →
->    Optimización) con el mismo contenido.
-> 3. Los enfrentamientos de **Matchups** (Historial de Enfrentamientos) ahora son
->    clicables y filtran el "Historial de Sesiones" de Optimización por rival —
->    `Matchups.selectDeckFilter()` / `clearDeckFilter()`.
->
-> El sistema G1/G2 Score sigue completamente implementado (ver 7.2, sin cambios desde v2.6).
->
-> Cambios relevantes desde la v2.7 (`buscador.js` / `style_buscador.css` — CardViewer,
-> ver 5.9, nuevo, léelos antes de asumir el estado anterior del panel "Ver"):
-> 1. **Bloque de stats reordenado y renombrado** — orden ahora Nivel → Atributo → Tipo (antes
->    Atributo → Nivel, sin Tipo). El antiguo campo `card.type` (Effect Monster / Spell Card /
->    Trap Card…) ahora se rotula **"Carta:"**; el nuevo campo `card.type` **"Tipo:"** muestra
->    `card.race` (la Clase de monstruo — Dragón, Guerrero, etc.) y cae en "—" si la carta no
->    es monstruo. Evita la confusión histórica Tipo/Clase del juego.
-> 2. **"Arquetipo:" añadido debajo de DEF** — enlace clicable (sin subrayado) que cierra el
->    CardViewer, cambia a la pestaña Buscador y ejecuta la búsqueda con ese arquetipo como
->    filtro activo, vía el nuevo `CardViewer.openArchetypeInBuscador()` (gemelo de
->    `openSetInBuscador`). Sin arquetipo → "—" sin enlace.
-> 3. **"Lanzamiento TCG:" / "Lanzamiento OCG:" y "Disponible en:" (Master Duel / Duel Links)**
->    añadidos arriba de "📦 Pack / Set", poblados de forma async reutilizando el fetch
->    `misc=yes` que ya existía para los sets. "Disponible en:" solo se muestra si hay al
->    menos un formato; si no hay ninguno, la fila entera queda oculta.
-> 4. **Bug corregido:** ese fetch leía `tcg_date`/`ocg_date`/`formats` en la raíz del objeto
->    de la carta, pero con `misc=yes` la API los anida dentro de `misc_info[0]`. Por eso
->    ninguna carta mostraba fecha ni disponibilidad. Ver bug #19 en sección 9.
-> 5. **`ID:` del CardViewer ahora en `--gold-color`** (antes gris translúcido casi ilegible
->    sobre el fondo oscuro).
+> **Aviso de auditoría:** la última pasada línea-por-línea completa (flujos exactos,
+> conteo de líneas, clases CSS confirmadas) es anterior a la incorporación de Lobby,
+> Línea de Combos, Gauntlet, Counters (CounterSim), Tu Experiencia con el Deck,
+> Historial de Versiones, TabIntro, tema de fondo y la integración con Yugipedia.
+> Todo lo referido a esos módulos/bloques viene de la prosa funcional más reciente
+> (qué hacen para el usuario), **no** de una relectura de su código. Se marca
+> explícitamente cada vez que un dato es "conocido pero no re-verificado" vs.
+> "confirmado en esta pasada".
+> **Verificado directamente contra el `index.html` actual en esta pasada** (no es
+> inferencia): orden real de carga de `<script>`, estructura del `<nav>`, IDs de
+> sección y footer.
 
 ---
 
-## 1. ESTRUCTURA DE ARCHIVOS ACTUAL
+## 1. ESTRUCTURA DE ARCHIVOS
 
 ### 1.1 HTML
 ```
 index.html — Shell SPA. El Buscador trae su HTML estático completo (barra de
-              búsqueda, filtros, sets); el resto de secciones (#mideck-content,
-              #estadisticas-content, #simuladores-content, #meta-content,
-              #formacion-content) están vacías y el JS llena el DOM en runtime.
+              búsqueda, filtros, sets); el resto de secciones (#lobby-content,
+              #mideck-content, #estadisticas-content, #simuladores-content,
+              #meta-content, #formacion-content, #config-content) están vacías
+              (o con placeholder) y el JS llena el DOM en runtime.
+Footer real:  "VERSION 9.7.4" (independiente del número de este reporte).
 ```
 
-### 1.2 JavaScript — 11 módulos + 1 módulo de datos por defecto
+**Detalle verificado directo del `index.html` actual, útil para no asumir de más:**
+- Todos los botones de `.nav-tabs` usan `onclick="switchTab('xxx')"` **excepto** el de
+  Config, que solo trae `data-tab="config"` sin `onclick`. Probablemente se apoya en
+  delegación por `data-tab` desde `Navigation` (igual que los demás, como respaldo),
+  pero no está confirmado en esta pasada — si algún día "Config" deja de cambiar de
+  pestaña al hacer clic, empezar a revisar por acá.
+- El `<li>` de la pestaña Meta tiene `style="display:none"` inline — coincide con que
+  Meta no está en `Navigation.tabs` y se activa solo internamente.
+- `#config-content` trae un placeholder estático `"Contenido de configuración
+  (pendiente de implementación)"` en el HTML — es cosmético, se sobreescribe apenas
+  corre `Config.render()`.
+- `Modules/pdf.min.js` se carga como `<script>` normal en el `<head>`; `pdf.worker.min.js`
+  **no** tiene su propio `<script>` tag — se asume que `pdfjsLib.GlobalWorkerOptions.workerSrc`
+  apunta a él en runtime dentro de `mideck.js`.
 
-**Orden de carga en index.html (crítico):**
+### 1.2 JavaScript — 12 módulos + 1 módulo de datos por defecto
+
+**Orden de carga real en `index.html` (confirmado, crítico):**
 ```
-core.js → data.js → buscador.js →
+core.js → data.js → buscador.js → lobby.js →
 mideck.js → historial.js → estadisticas.js →
 simuladores.js → simuladores-campo.js → formacion.js →
 default_data.js → logger.js  (SIEMPRE AL FINAL)
 ```
 
-| Archivo | Objetos globales | Líneas | Descripción |
-|---------|-----------------|--------|-------------|
-| `logger.js` | `DDLogger` | 365 | Logger no-invasivo. Envuelve todos los objetos globales post-`window.load`. API: `DDLogger.exportReport()`, `getLogs()`, `getStats()`, `enable/disable/clear()`. Intercepta localStorage y errores globales. |
-| `core.js` | `Navigation`, `Shortcuts`, `ContentManager`, `switchTab` | 549 | navigation + utils + contentmanager |
-| `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 2311 | Config global (incl. estructuras y motor de Scoring G1/G2 — ver 7.2), cálculo de scores, analizadores de carta. Incluye `duplicateNomenclatureCategory`. `exportConfig()` cubre también las claves dinámicas `optimization_`/`complejidad_` (ver 6.1/6.2). |
-| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 2238 | buscador + cardviewer + favoritas + botón Carta Random. `CardViewer.open()` resuelve Lanzamiento TCG/OCG, disponibilidad MD/DL, link de Arquetipo, **simulación "Aporte al deck activo" y alta rápida a Banlist/Genesys — nuevo, ver 5.9/5.11** |
-| `mideck.js` | `Deck`, `Banlist`, `Engines` | 4632 | deck + banlist + engines + Optimización (deck testing) + Complejidad del Deck (ver 6.1) + campo Boardbreaker en mano (ver 6.3) + **Importar Deck desde Lista Oficial (.pdf) — nuevo, ver 5.10** |
-| `historial.js` | `Matchups`, `Duelista` | 929 | matchups + duelista. `Duelista` reescrito — ya no agrega todos los decks, ver 6.2. Matchups filtra Optimización por rival (`selectDeckFilter`) y **exporta/importa Historial + Sesiones como .txt — nuevo, ver 5.12** |
-| `estadisticas.js` | `Estadisticas` | 2586 | scores, meta, cross-score, análisis de deck. `recalculateAllMetaDeckScores` es async con enriquecimiento automático. `renderDeckAnalysis()` ahora también pinta el bloque G1/G2 (ver 7.2) y aloja `#duelista-content` (ver 6.2). |
-| `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria` | 3150 | winrate + torneo + duelo en vivo + hipergeometría (crecimiento interno, sin cambios de arquitectura detectados en esta pasada) |
-| `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3339 | zonapractica + experimentacion (crecimiento interno, sin cambios de arquitectura detectados en esta pasada) |
-| `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | 4341 | formacion (contenido educativo, crecimiento por más temas) + meta + config completo (Scoring G1/G2 UI, Nomenclatura con pencil/clone/delete, RPS Ninguno, etiqueta y borrado de Optimización) + welcome + help. Zona de Borrado "Optimización" ahora limpia también `complejidad_` (ver 3). |
-| `default_data.js` | `DefaultData` | 1228 | Inyección única de datos por defecto. Parchea `Config.resetToDefault`. |
+> ⚠️ **Discrepancia a confirmar:** la prosa funcional más reciente describe un módulo
+> `decklists.js` (`DecklistsData`, decklists `.ydk` embebidas por nivel para "🃏 Primeros
+> Decks" en Formación) cargado entre `default_data.js` y `logger.js`. **Ese `<script>` no
+> existe en el `index.html` actual.** O falta el tag, o "Primeros Decks" vive embebido
+> dentro de otro módulo (candidatos: `formacion.js` o `default_data.js`). Confirmar antes
+> de asumir que `DecklistsData` existe como objeto global.
 
-**Nota:** `Stats` vive dentro de `data.js`. `Winrate` y `DueloEnVivo` son los objetos correctos en `simuladores.js`; el antiguo `Duelo` ya no existe.
+| Archivo | Objetos globales | Líneas (última medición) | Descripción |
+|---------|-----------------|---------------------------|--------------|
+| `core.js` | `Navigation`, `TabIntro`, `Shortcuts`, `ContentManager`, `switchTab` | 549 — **desactualizado**, `TabIntro` y tema de fondo se agregaron después | Navegación entre pestañas, intro por pestaña, accesos rápidos, visibilidad por perfil, tema de fondo |
+| `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 2311 | Config global, motor de Scoring (Internal, G1/G2, External, RPS), analizadores de carta |
+| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 2238 — **desactualizado**, no incluye el bloque de Lore vía Yugipedia | Búsqueda, visor de carta, favoritas, imagen de portada configurable, Lore (Yugipedia) |
+| `lobby.js` | `Lobby` | sin medir | Pestaña de inicio: Lo Nuevo, Sugerencias, aviso de actualización |
+| `mideck.js` | `Deck`, `Combos`, `Banlist`, `Engines` | 4632 — **desactualizado**, no incluye `Combos` (Línea de Combos) ni Tu Experiencia con el Deck ni Historial de Versiones | Deck activo, Optimización, Complejidad, Experiencia con el Deck, Línea de Combos, Banlist/Genesys, Importar PDF/.ydk, sidebar |
+| `historial.js` | `Matchups`, `Duelista` | 929 | Historial por rival y Nivel como Piloto del deck activo |
+| `estadisticas.js` | `Estadisticas` | 2586 | Scores del deck activo y del meta, Top Tier, carpetas del meta, Poder de Cartas |
+| `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria`, `CounterSim`, `Gauntlet` | 3150 — **desactualizado**, no incluye `CounterSim` ni `Gauntlet` | Simuladores de testing y práctica competitiva |
+| `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3339 | Simulación de campo por zonas y lienzo libre |
+| `formacion.js` | `Formacion`, `Meta`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | 4341 | Contenido educativo, Config completo, bienvenida, música, ayuda |
+| `default_data.js` | `DefaultData` | 1228 | Inyección única de datos por defecto. Parchea `Config.resetToDefault` |
+| `logger.js` | `DDLogger` | 365 — **desactualizado**, `TARGETS` probablemente no cubre `Lobby`, `Combos`, `CounterSim`, `Gauntlet`, `TabIntro` | Logger no-invasivo. `exportReport()`, `getLogs()`, `getStats()`, `enable/disable/clear()` |
 
-### 1.3 CSS — 6 archivos (consolidados)
+**Nota:** `Stats` vive dentro de `data.js`. `Winrate`/`DueloEnVivo` son los objetos correctos en `simuladores.js` (el antiguo `Duelo` ya no existe). `default_data.js` carga después de `formacion.js` y antes de `logger.js`.
 
-**Orden de carga en index.html:**
-```html
+### 1.3 CSS — 6 archivos
+
+**Orden de carga en `index.html` (confirmado):**
+```
 style_core.css → style_buscador.css → style_mideck.css →
 style_simuladores.css → style_config.css → responsive_style.css
 ```
 
-| Archivo | Líneas | Absorbe |
-|---------|--------|---------|
+| Archivo | Líneas (última medición) | Absorbe |
+|---------|---------------------------|---------|
 | `style_core.css` | 1326 | style_global + style_welcome + style_cardviewer |
-| `style_buscador.css` | ~1045 | — (+ `.cv-archetype-link`, `.cv-release-block`, `.cv-card-id` ahora en gold — ver 5.9 y 11) |
-| `style_mideck.css` | 2524 | — (incluye 94 reglas `.opt-*` del panel de Optimización + nuevas `.cxd-*` de Complejidad del Deck, ver 6.1) |
-| `style_simuladores.css` | 6019 | style_simuladores + style_estadisticas |
+| `style_buscador.css` | ~1045 | — (+ `.cv-archetype-link`, `.cv-release-block`, `.cv-card-id`, `.cv-contribution-*`, `.cv-role-*`, y probablemente el bloque de Lore de Yugipedia, no confirmado) |
+| `style_mideck.css` | 2524 — **desactualizado**, no incluye clases de Línea de Combos ni Tu Experiencia con el Deck | — (incluye `.opt-*` de Optimización, `.cxd-*` de Complejidad del Deck) |
+| `style_simuladores.css` | 6019 — **desactualizado**, no incluye clases de `CounterSim`/`Gauntlet` | style_simuladores + style_estadisticas |
 | `style_config.css` | 2292 | style_config + style_formacion + style_meta + clases de Scoring G1/G2 |
-| `responsive_style.css` | 611 | Todos los @media del proyecto |
+| `responsive_style.css` | 611 | Todos los `@media` del proyecto |
 
-**Todos los archivos CSS tienen sus `@media` eliminados** — viven exclusivamente en `responsive_style.css` (verificado: 0 ocurrencias en los 5 archivos temáticos, 28 en `responsive_style.css`).
+**Todos los `@media` viven exclusivamente en `responsive_style.css`** (los 5 archivos temáticos no traen `@media` propio — última verificación confirmó 0 ocurrencias en ellos).
 
 ---
 
@@ -142,19 +107,20 @@ style_simuladores.css → style_config.css → responsive_style.css
 
 | ID sección | Pestaña | Llenado por |
 |-----------|---------|-------------|
+| `#lobby-content` | Lobby | `Lobby.render()` |
 | `#buscador-content` | Buscador | HTML estático + `Buscador.init()` |
 | `#mideck-content` | Mi Deck | `Deck.render()` → `#deck-container` |
 | `#estadisticas-content` | Estadísticas | `Estadisticas.render()` |
 | `#simuladores-content` | Simuladores | `Torneo.init()` (lazy) |
-| `#meta-content` | Meta | `Meta.init()` — fuera de `Navigation.tabs` |
+| `#meta-content` | Meta | `Meta.init()` — fuera de `Navigation.tabs`, se activa internamente |
 | `#formacion-content` | Formación | `Formacion.init()` |
 | `#config-content` | Config | `Config.render()` |
 
-**Navigation.tabs:**
 ```javascript
-['buscador', 'mideck', 'estadisticas', 'simuladores', 'formacion', 'config']
+Navigation.tabs = ['lobby', 'buscador', 'mideck', 'estadisticas', 'simuladores', 'formacion', 'config']
+Navigation.currentTab (default) = 'lobby'
 ```
-`meta` está oculto en el nav HTML y no figura en `Navigation.tabs`; se activa internamente vía `Meta.init()` o `switchTab('meta')`.
+`meta` está oculto en el nav HTML (`style="display:none"` en el `<li>`) y no figura en `Navigation.tabs`; se activa vía `Meta.init()` o `switchTab('meta')` desde otra sección.
 
 ---
 
@@ -162,45 +128,43 @@ style_simuladores.css → style_config.css → responsive_style.css
 
 | Clave | Módulo | Tipo | Descripción |
 |-------|--------|------|-------------|
-| `yugioh_config` | `ConfigManager` | Object | Config principal: roles, roleConditions, roleWeights, staples, specialties, nomenclature, pillars, pillarRPS, **g1g2Roles, roleBasePower, reliabilityTable, scoringLayers** (ver nota 7.2), metaMasters, metaLinks, formacionGames, formacionTopics, shortcuts, music |
+| `yugioh_config` | `ConfigManager` | Object | Config principal: roles, roleConditions, roleWeights, staples, specialties, nomenclature, pillars, pillarRPS, g1g2Roles, roleBasePower, reliabilityTable, scoringLayers, metaMasters, metaLinks, formacionGames, formacionTopics, shortcuts, music |
 | `yugioh_player_level` | `ConfigManager` | String | `'novato'\|'casual'\|'competitivo'\|'default'` |
-| `dd_player_profile` | `ContentManager` | String | Controla visibilidad de secciones |
-| `dd_content_visibility` | `ContentManager` | Object | Override manual de visibilidad por sección |
+| `dd_player_profile` | `ContentManager` | String | Controla visibilidad de secciones por perfil |
+| `dd_content_visibility` | `ContentManager` | Object | Override manual de visibilidad por sección/componente |
+| `dd_bg_theme` | `ContentManager` | String | Tema de fondo elegido |
+| `dd_tabintro_disabled` | `TabIntro` | Array/Object | Pestañas con la intro desactivada |
 | `dd_welcome_dismissed` | `Welcome` | String `'true'` | Panel reaparece solo al Borrar Data |
+| `dd_update_seen` | `Lobby` | String/Number | Última versión de aviso de actualización ya vista |
+| `dd_buscador_sidebar_img` | `Buscador` | String | Imagen de portada elegida por el usuario |
 | `yugioh_favoritas` | `Favoritas` | Object | `{cardId: {id,name,type,img,data}}` |
 | `yugioh_engines` | `Engines` | Array | `[{id,name,cards,roles,notes,cover}]` |
-| `deck_${nombre}` (prefijo, 1 clave por deck) | `Deck` | Object | Decks guardados: `{cards, notes, savedAt}`. `getSavedDecks()` escanea `localStorage` por el prefijo `deck_`. **No existe un único objeto `yugioh_decks`** — esa clave es una referencia legacy que solo se usa como limpieza de seguridad en Borrar Data / Exportar Reporte, nunca se escribe en el flujo normal. |
-| `optimization_${nombre}` | `Deck` | Object | Datos de la pestaña 🎯 Optimización (testing de matchups): `{sessions:[{id,date,label,rounds:[{id,orden,resultado,tipoVictoria,tipoDerrota,presionTiempo,comboCompleto,brick,starter,extenders,handtraps,rompioBoard,negoJugada,rivalRompio,notas}]}]}`. Incluye migración automática desde un formato viejo `records[]`. `Duelista.getDeckStats()` lee estas rondas para calcular el Nivel como Piloto (ver 6.2). |
-| `complejidad_${nombre}` | `Deck` | Object | **Nuevo.** Resultado del clasificador "Complejidad del Deck" (Mi Deck → Optimización): `{answers:[8 valores 1-3], aprender, dominar, total, evaluatedAt}`. Ver 6.1. |
-| `matchup_${deckName}` | `Matchups` | Array | `[{id,opponentName,wins1st,losses1st,wins2nd,losses2nd,notes,cardData,createdAt}]`. `cardData` es opcional (decklist del rival importado por `.ydk`, `{[cardId]:{name,type,qty,location,img}}`), visible con "Ver Deck" (`Matchups.openDeckPanel`). Todo el registro es exportable/importable en bloque — ver 5.12. |
+| `deck_${nombre}` (prefijo, 1 clave por deck) | `Deck` | Object | `{cards, notes, savedAt, uid, versions[]}`. `getSavedDecks()` escanea `localStorage` por el prefijo `deck_`. No existe un único objeto `yugioh_decks` — esa clave es referencia legacy usada solo como limpieza de seguridad en Borrar Data / Exportar Reporte. `versions[]` (Historial de Versiones) se guarda dentro de esta misma clave. |
+| `combos_${deckName}` | `Combos` | — (no auditado) | Líneas de combo del deck: starters/boss detectados, choke points, restricciones, endboard, ramificaciones |
+| `experiencia_${deckName}` | `Deck` | Object | Perfil cualitativo: dificultad, estrategia, variante, non-engine slots, manos muertas, composición, cartas destacadas, sets |
+| `optimization_${nombre}` | `Deck` | Object | Datos de 🎯 Optimización: `{sessions:[{id,date,label,rounds:[{id,orden,resultado,tipoVictoria,tipoDerrota,presionTiempo,comboCompleto,brick,starter,extenders,handtraps,boardbreakers,rompioBoard,negoJugada,rivalRompio,notas}]}]}`. Migración automática desde formato viejo `records[]`. |
+| `complejidad_${nombre}` | `Deck` | Object | `{answers:[8 valores 1-3], aprender, dominar, total, evaluatedAt}` — ver sección 7.1 |
+| `matchup_${deckName}` | `Matchups` | Array | `[{id,opponentName,wins1st,losses1st,wins2nd,losses2nd,notes,cardData,createdAt}]`. `cardData` opcional (decklist del rival vía `.ydk`), visible con "Ver Deck". |
+| `pz_states_${deckName}` | `ZonaPractica` | — | Estados guardados del campo de práctica |
+| `gauntlet_${tipo}_${nombre}` | `Gauntlet` | — (no auditado) | Pruebas y config de un pool testeado contra el meta |
+| `yugioh_gauntlet_rankings` / `yugioh_gauntlet_templates` | `Gauntlet` | — | Ranking global y plantillas reutilizables de pruebas |
 | `yugioh_music_config` | `ConfigManager` | Object | `{enabled, volume, tracks:{novato,casual,competitivo}}` |
 | `yugioh_meta_fallbacks` | `ConfigManager` | Object | Imágenes fallback para Maestros |
 | `yugioh_formacion_fallbacks` | `ConfigManager` | Object | Imágenes fallback para Juegos |
 | `yugioh_formacion_notes` | `Formacion` | Array | `[{title,content,date}]` |
 | `yugioh_formacion_mastered` | `Formacion` | Array | IDs de temas dominados |
 | `yugioh_power_cache` | `Estadisticas` | Object | Cache de Power Scores calculados |
-| `yugioh_cross_scores` | `Estadisticas` | Object | Cross-scores entre decks del meta (base del External Score del meta) |
+| `yugioh_cross_scores` | `Estadisticas` | Object | Cross-scores entre decks del meta |
 | `yugioh_meta_decks` | `Estadisticas` | Array | Decks del meta importados (.ydk) |
 | `yugioh_meta_deck_scores` | `Estadisticas` | Object | Scores calculados de cada deck del meta |
 | `yugioh_meta_card_library` | `Estadisticas` | Object | Librería de cartas del meta (cache local de la API) |
 | `dd_report_counter` | `DDLogger` | Number | Contador de reportes exportados |
 
-**Flags de DefaultData** (sobreviven a Borrar Data, se eliminan solo con Restaurar Config):
-
-| Clave | Descripción |
-|-------|-------------|
-| `dd_default_decks_loaded` | Decks de ejemplo ya inyectados |
-| `dd_default_notes_loaded` | Apuntes por defecto ya inyectados |
-| `dd_default_staples_loaded` | Staples por defecto ya inyectados |
-| `dd_default_specialties_loaded` | Especialidades por defecto ya inyectadas |
-| `dd_default_engines_loaded` | Engines por defecto ya inyectados |
-| `dd_default_games_loaded` | Juegos de Formación por defecto ya inyectados |
-| `dd_default_masters_loaded` | Maestros del Meta por defecto ya inyectados |
-| `dd_default_genesys_loaded` | Banlist Genesys ya generado desde API |
+**Flags de DefaultData** (sobreviven a Borrar Data, se eliminan solo con Restaurar Config): `dd_default_decks_loaded`, `dd_default_notes_loaded`, `dd_default_staples_loaded`, `dd_default_specialties_loaded`, `dd_default_engines_loaded`, `dd_default_games_loaded`, `dd_default_masters_loaded`, `dd_default_genesys_loaded`.
 
 **Nota:** `g1g2Roles`, `roleBasePower`, `reliabilityTable` y `scoringLayers` viven dentro de `yugioh_config`. Export, Import, Borrar (Config), Reporte y Restaurar Config los cubren automáticamente.
 
-**Zona de Borrado selectivo — opciones disponibles (16 categorías):**
+### Zona de Borrado selectivo (16 categorías)
 
 | data-key | Claves eliminadas | En memoria |
 |----------|------------------|------------|
@@ -221,425 +185,121 @@ style_simuladores.css → style_config.css → responsive_style.css
 | `perfil` | `yugioh_player_level`, `dd_player_profile`, `dd_content_visibility`, `dd_welcome_dismissed` | — |
 | `fallbacks` | `yugioh_meta_fallbacks`, `yugioh_formacion_fallbacks` | — |
 
----
-
-## 4. DEPENDENCIAS ENTRE MÓDULOS
-
-```
-data.js (ConfigManager)  <── buscador, mideck, historial, estadisticas,
-                               simuladores, formacion, core (ContentManager)
-
-data.js (Stats)          <── estadisticas, mideck (Deck.render usa
-                               calculateInternalScore — ver nota 7.2 sobre G1/G2)
-
-core.js (ContentManager) <── formacion (applyProfile al cambiar perfil)
-                               navigation applyAll() en cada tab change
-
-mideck.js (Engines)      <── Favoritas.render() delega si _activeTab='favoritas'
-                               Staples: usa campo imageUrl (NO img)
-
-mideck.js (Deck)         <── Optimización usa Deck.name como clave
-                               (`optimization_${this.name}`), independiente de cards
-
-historial.js (Duelista)  <── YA NO lee matchup_${deckName}. Lee EXCLUSIVAMENTE
-                               optimization_${Deck.name} (rondas del deck activo) vía
-                               Deck.getOptimizacion() — ver 6.2
-
-historial.js (Matchups)  <── selectDeckFilter()/clearDeckFilter() re-renderizan
-                               #mideck-optimizacion-pane (Deck.renderOptimizacionPane)
-
-formacion.js (Meta)      <── Sub-tabs Fuentes y Maestros de Formacion delegan a
-                               Meta._renderFuentesSection() / Meta._renderMaestrosSection()
-
-formacion.js (Welcome)   <── llama ConfigManager.savePlayerLevel() Y
-                               ContentManager.applyProfile() al hacer enter()
-
-default_data.js          <── requiere ConfigManager, Deck, Engines, Formacion,
-(DefaultData)                 Meta, Banlist (todos ya cargados antes en index.html)
-                               Parchea Config.resetToDefault al final del load.
-```
+> ⚠️ **Gap a confirmar:** `combos_${deckName}`, `experiencia_${deckName}`, `gauntlet_${tipo}_${nombre}`, `yugioh_gauntlet_rankings/templates`, `dd_bg_theme`, `dd_tabintro_disabled`, `dd_update_seen`, `dd_buscador_sidebar_img` **no aparecen mapeados a ninguna de las 16 categorías** de arriba. O están cubiertos implícitamente por una categoría existente (ej. `combos_` bajo `decks`) y falta documentarlo, o son datos huérfanos que Borrar Data no limpia. Confirmar antes de asumir que "Borrar Todo" los alcanza.
 
 ---
 
-## 5. FLUJOS CRÍTICOS
+## 4. PESTAÑAS Y HERRAMIENTAS
 
-### 5.1 Cambio de pestaña
+### 4.1 🏠 Lobby
+Pestaña de inicio, activa por defecto.
+- **🆕 Lo Nuevo:** tira horizontal con las últimas 10 cartas lanzadas en TCG u OCG en el último mes, fusionadas por fecha (si salió en ambos formatos, se muestra una sola vez con la fecha más temprana). Clic abre `CardViewer`. Cache de 30 min.
+- **💡 Sugerencias:** collage de 5 tarjetas aleatorias (pool de 10) que invitan a otras secciones (Simuladores, Optimización, Matchups, Buscador por arquetipo, Config → Scoring, Complejidad del Deck, Banlist, Formación, Importar Deck, Estadísticas). "🔀 Otras sugerencias" re-randomiza. Clic navega directo.
+- **Aviso de actualización:** overlay con las mejoras de la versión actual (`Lobby.UPDATE_NOTES`), una sola vez por versión, se descarta con "Entendido".
+
+### 4.2 🔍 Buscador
+Búsqueda contra la base completa de YGOProDeck.
+- **Barra compacta (mobile) y completa:** input de nombre, Buscar, Limpiar, "🎲 Carta Random".
+- **Filtros:** palabras clave libres sobre la descripción; filtros avanzados (tipo de carta, atributo, nivel, ATK/DEF, etc.); selector de Arquetipo; selector de Packs y Sets.
+- **Resultados:** grid de cartas; clic abre `CardViewer`.
+- **Imagen de portada:** columna izquierda del Buscador (y banner de Mi Deck vacío) elegible entre varias opciones (`Buscador.setSidebarImage`).
+- **CardViewer:**
+  - Stats: Nivel → Atributo → Tipo/Clase de monstruo → ATK/DEF.
+  - "Carta:" (Effect Monster/Spell/Trap…) y "Arquetipo:" como link clicable que filtra el Buscador.
+  - ID, Lanzamiento TCG/OCG, disponibilidad Master Duel/Duel Links, Pack/Set.
+  - **Aporte al deck activo:** simula +1 copia y muestra el delta de Consistencia/Potencia/Resiliencia/Internal Score.
+  - **Posibles Roles:** roles que se asignarían automáticamente si se agregara al deck activo.
+  - **Lore de la carta:** historia del personaje (o del arquetipo si no hay personaje) desde Yugipedia.
+  - "🖼 Ver HD" para imagen a tamaño completo.
+- **Favoritas:** cartas marcadas, accesible desde el sidebar de Mi Deck.
+
+### 4.3 🗂️ Mi Deck
+Gestión del deck activo — 5 sub-tabs + sidebar.
+
+**Sidebar:** Engines | Decks | Staples | Favoritas.
+
+**📥 Import/Export Deck**
+- Importar `.ydk`.
+- Importar **Lista Oficial en PDF** de Konami (ver flujo 8.10): detecta Main/Extra/Side por encabezados de columna, arma el deck, lista lo no reconocido.
+- Guardar deck (nueva versión con diff respecto a la anterior si cambiaron las cartas).
+- Exportar `.ydk`, `.txt`, imagen de decklist (`.png`), o **Data completa** (bundle: cartas, Carta As, notas, versiones, Optimización, Complejidad, Matchups y Combos).
+- Importar Data completa.
+
+**📋 Decklist**
+- Encabezado con nombre editable, conteo por zona, indicador de puntos si la Banlist activa es Genesys.
+- Filas de carta con acciones rápidas (ver, quitar, marcar Carta As).
+- **🧭 Tu Experiencia con el Deck** (6 sub-tabs): Perfil (dificultad 1-5★, estrategia, variante, non-engine slots) · Manos Muertas (X muertas / Y jugadas) · Composición (top atributos/tipos, automático) · Cartas Destacadas (selección manual por categoría) · Sets (packs detectados, marcables) · Rendimiento (gráfico de araña Consistencia/Potencia/Resiliencia/Techo de Poder G1+G2 + winrate de Duelista).
+- **Historial de Versiones:** versiones guardadas con diff, comentario editable, score promedio de las sesiones de Optimización de ese rango.
+- **📌 Cartas Clave y Amenazas:** ranking agregado de cartas marcadas clave/amenaza en rondas de Optimización.
+- **Notas del Deck**, **⚔️ Historial de Enfrentamientos** (Matchups embebido), **🎖️ Nivel como Piloto** (Duelista embebido).
+
+**🔨 Construcción**
+Asignación/revisión de roles por carta (auto o manual), composición del deck, tarjeta de resultado (solo lectura) de Complejidad del Deck.
+
+**🎯 Optimización**
+Registro de rondas de duelo por matchup (ver 7.1–7.3 y 8.6 para detalle de campos y flujo). Sesiones etiquetables con badges de calidad. Incluye Complejidad del Deck, Duelista y Matchups embebidos.
+
+**🧬 Línea de Combos**
+Mapeo de combos por zonas (mano/campo/cementerio/baneadas): starters y Boss Monster auto-detectados (override manual) · choke points con nivel de riesgo · restricciones por severidad y dependencias entre pasos · endboard con función por carta · ramificaciones (combos hijos por choke point/variante) · Power del combo + consistencia inicial (hipergeométrica) · export/import `.txt`.
+
+### 4.4 📊 Estadísticas
+- **🔄 Actualizar Data:** recalcula en cadena todos los scores del meta (enriquece cartas faltantes, Internal Score por deck, Cross-Score N×N) y Poder de Cartas, con barra de progreso por fases (ver flujo 8.5).
+- **🏆 Top Tier:** ranking de decks (propios + meta) en Tier 1/2/3/Fun por score promedio; filtrable por Powercreep, Consistencia, Potencia o Resiliencia.
+- **🗂️ Carpetas del Meta:** organiza decks del meta por carpeta; import `.ydk`; export/import de carpetas como "Chips".
+- **Decks del Meta:** listado filtrado por carpeta, ver/cargar/eliminar.
+- **Poder de Cartas del Meta:** score de poder por carta según presencia y desempeño en decks del meta.
+- **Análisis de Deck:** Internal Score, External Score, Going First/Going Second (G1/G2 + perfil), vulnerabilidades G1/G2, especializaciones, bloques de Duelista.
+
+### 4.5 🎮 Simuladores
+- **🎲 Mulligan (Hipergeometría):** probabilidad de abrir cierta combinación en mano inicial (distribución hipergeométrica sobre el deck actual).
+- **📊 Winrate:** registro manual ganadas/perdidas, general o por deck.
+- **🏆 Torneo:** simulador Swiss — rondas, emparejamientos, tabla de posiciones.
+- **⚔️ Duelo en Vivo:** asistente para un duelo real en curso — Cronómetro Estándar y Cronómetro Master Duel (temporizador por turno).
+- **🛡️ Counters:** arma un pool (deck activo, Engine, Staples, Favoritas o búsqueda manual), marca cartas objetivo del rival, busca sus counters conocidos; el resultado puede convertirse en Engine.
+- **🥊 Gauntlet:** testing de deck/engine/pool manual contra "Pruebas" del usuario (Éxitos/Fallos a mano o en Zona de Práctica), con chips de decks del meta como oponentes (excluyendo cartas puntuales), Ranking global y plantillas reutilizables.
+- **🧪 Experimentación:** lienzo libre — cartas buscadas, `.ydk` o de un deck guardado — para plantear líneas de juego visualmente, con zoom.
+- **🎴 Zona de Práctica:** simulación de campo por zonas para practicar jugadas; guarda/recupera estados por deck.
+
+### 4.6 🎓 Formación
+- **📓 Apuntes:** notas propias — guardar, abrir, borrar, export/import `.txt`.
+- **📚 Temas:** biblioteca educativa competitiva (vocabulario legal, fases del duelo, tipos de carta, estructura de efectos y arquetipos, mentalidad de juego, cadenas y prioridad, staples, anatomía de deck competitivo, debilidades de deck, elegir/construir/optimizar un deck, equilibrio de deck, rulings de invocación/batalla, timing if/when, lectura de campo rival, gestión de LP y recursos, diferencias entre formatos, side deck, tiers del meta, etc.)
+- **📜 Historia del Meta:** eras TCG/OCG, campeonatos mundiales (Worlds), campeones de Master Duel.
+- **🧪 Test:** quizzes teóricos (opción múltiple) y prácticos (armar campo objetivo contra campo rival dado); herramienta de autoría propia, export/import.
+- **🧭 Tu Estilo:** quiz de ejes de preferencia → recomienda arquetipo afín, con link al Buscador.
+- **🎭 Tu Personaje:** quiz similar → recomienda personaje del anime/manga afín.
+- **🃏 Primeros Decks:** decklists `.ydk` por nivel (Básico/Intermedio/Competitivo), un clic las carga en Mi Deck (ver discrepancia sobre `decklists.js` en 1.2).
+- **🎮 Juegos:** juegos y variantes relacionadas a Yu-Gi-Oh!, con plataforma.
+- **🔗 Fuentes:** fuentes externas del meta embebidas en iframe (fallback a link externo si el sitio bloquea el embed).
+- **🎓 Maestros:** perfiles de jugadores destacados, video embebido (YouTube) cuando aplica.
+
+### 4.7 ⚙️ Config
 ```
-switchTab(name) → Navigation.showTab(name)
-  → oculta todos .tab-content, activa #name-content
-  → Estadisticas.updateFloatingWidgetVisibility(tabName)
-  → si simuladores:       Torneo.init()
-  → si mideck:             Engines.init()
-  → si saliendo de simuladores: ZonaPractica._cleanupFloatBtns()
-  → si meta:               Meta.init()
-  → si formacion:          Formacion.init()
-  → window.scrollTo({ top:0, behavior:'smooth' })
-  → ContentManager.applyAll()
-```
-
-### 5.2 Agregar carta al deck (desde Buscador)
-```
-Buscador.addCard(index)
-  → Deck.syncFromViewer(card.id, card, currentQty + 1)
-  → si carta nueva: autoAssignRoles() + SpecialtyAnalyzer + NomenclatureAnalyzer
-  → Deck.render()  → recalcula Internal Score en tiempo real
-    (Stats.calculateInternalScore — el mismo cálculo también actualiza g1Score/g2Score, ver 7.2)
-  → External Score se recalcula si powerScoreCache existe
-```
-
-### 5.3 Importar .ydk a Mi Deck
-```
-Deck.importYDK()
-  → input[file] .ydk → parseYDK(content, filename)
-  → overlay de carga "Importando deck... N cartas"
-  → fetch API YGOProDeck (batch por IDs únicos)
-  → construye newCards con autoAssignRoles()
-  → Deck.cards = newCards; Deck.render(); Deck.onDeckLoaded()
-  → elimina overlay → alert "Deck importado"
-```
-
-### 5.4 Cálculo de scores — ciclo completo
-```
-Stats.calculateInternalScore(Deck.cards)
-  → loop de roles → rendimientos decrecientes por pilar (consistency/power/resilience)
-  → EN EL MISMO LOOP, por carta: calcula G1/G2 Score (ver fórmula completa en 7.2)
-  → devuelve { internalScore, consistency, power, resilience,
-               totalCards, mainCards, penalty, g1Score, g2Score }
-
-Stats.calculateExternalScore(Deck.cards, powerScoreCache, metaDecks)
-  → cruza specialties del deck con powerScoreCache
-  → RPS modifier (ignorando loser='ninguno')
-  → devuelve { externalScore, g1Vulnerability, g2Vulnerability, ... }
-```
-
-### 5.5 Actualizar Scores del Meta — flujo automático completo (async)
-```
-Estadisticas.recalculateAllMetaDeckScores()  ← async
-  → lista todos los decks con secciones (sin importar si fueron abiertos antes)
-  → crea overlay #meta-update-overlay con spinner + barra de progreso + nombre del deck actual
-
-  FASE 1 (0–60%) Enriquecimiento automático:
-    por cada deck en la lista:
-      → IDs no presentes en metaCardLibrary → fetch API en batches de 10
-      → autoAssignRoles() + SpecialtyAnalyzer para cada carta nueva
-    → _saveMetaCardLibrary()
-
-  FASE 2 (60–92%) Cálculo de scores:
-    por cada deck:
-      → _computeAndSaveMetaDeckScore(folder, filename)
-      → Internal Score + pilares con fakeCards desde la librería
-
-  FASE 3 (92–100%) Cross-Score N×N:
-    → calculateCrossExternalScores()
-    → metaDeckScores[key].externalScore = crossExternalScore
-    → guarda yugioh_cross_scores + yugioh_meta_deck_scores
-
-  → "¡Listo! N decks actualizados" 700ms → overlay desaparece → render()
-```
-Ya no es necesario abrir cada deck manualmente. Un solo clic procesa todos.
-
-### 5.6 Selección de perfil
-```
-Welcome.enter(tabName, levelKey)
-  → ContentManager.applyProfile(levelKey)  → 'dd_player_profile'
-  → ConfigManager.savePlayerLevel(levelKey) → 'yugioh_player_level'
-  → MusicPlayer.setTrack(cfg.tracks[levelKey])
-  → Welcome.dismiss() → 'dd_welcome_dismissed' = 'true'
-  → Navigation.showTab(tabName)
-```
-
-### 5.7 Borrar Todo / Restaurar Config
-```
-Config.borrarTodo()
-  → localStorage.clear() + _resetModulesInMemory() + Welcome.init()
-
-Config.resetToDefault()  ← parcheado por DefaultData
-  → localStorage.clear() + await DefaultData.init()
-```
-
-### 5.8 DefaultData.init() — inyección única por tipo
-```
-window.load → DefaultData.init()
-  → _initNotes / _initSpecialties / _initGames / _initMasters
-  → _initDecks / _initStaples / _initEngines / _initGenesys  (fetch API)
-  → _patchConfig() → sobreescribe Config.resetToDefault
-```
-
-### 5.9 Abrir CardViewer (panel "Ver" de carta) — NUEVO detalle documentado
-```
-CardViewer.open(card)
-  → pinta overlay síncrono con lo que ya trae `card`:
-      Carta: card.type (antes rotulado "Tipo:")
-      Nivel → Atributo → Tipo (card.race; "—" si no es monstruo) → ATK → DEF
-      Arquetipo: card.archetype como link, o "—" sin link si no tiene
-      ID: card.id (en --gold-color)
-  → fetch cardinfo.php?id=${card.id}&misc=yes (un único fetch, async)
-      → card_sets  → rellena "📦 Pack / Set" (ya existía)
-      → misc_info[0].tcg_date / ocg_date → "Lanzamiento TCG:" / "Lanzamiento OCG:"
-        (fmtDate → toLocaleDateString('es-ES'); "No disponible" si falta)
-      → misc_info[0].formats → "Disponible en:" (Master Duel / Duel Links).
-        Fila oculta por completo si no hay match en ninguno de los dos.
-  → click en Arquetipo → CardViewer.openArchetypeInBuscador(name)
-      → cierra overlay → Navigation.showTab('buscador') → Buscador.clear()
-      → Buscador._loadArchetypes() → advancedFilters.archetype = name → autoSearch()
-      (mismo patrón que CardViewer.openSetInBuscador para sets)
-  → si el deck activo tiene cartas: `renderCardContribution(card)` (**nuevo, no
-    documentado en versiones previas**)
-      → `detectPossibleRoles(card)` — como `autoAssignRoles`, pero sin persistir,
-        solo para listar "🎯 Posibles Roles" en el visor
-      → `calculateCardContribution(card, roles)` — clona `Deck.cards`, simula +1
-        copia (o la inserta si no está en el deck) y compara
-        `Stats.calculateInternalScore()` antes/después
-      → pinta "📊 Aporte al deck activo": barras de Consistencia/Potencia/
-        Resiliencia + delta de Internal Score. Se oculta si el deck está vacío o si
-        `ContentManager.isVisible('cv-roles'|'cv-contribution')` lo desactiva
-```
-**Importante:** `tcg_date`, `ocg_date` y `formats` SOLO existen dentro de `misc_info[0]`
-cuando se pasa `misc=yes` — nunca en la raíz del objeto de la carta. Ver bug #19.
-
-**Nota — funciones sin usar:** `CardViewer.generateCardDecklistHTML2Canvas()`,
-`generateCardDecklistCanvas()` y `generateCardDecklistFallback()` existen en el código
-(exportar la carta como imagen tipo decklist) pero no están enganchadas a ningún botón
-del visor actual — el botón "🖼 Ver HD" solo abre la imagen a tamaño completo. No tocar
-salvo que se pida reactivar esa función.
-
-### 5.10 Importar Deck desde Lista Oficial (.pdf) — NUEVO
-```
-Deck.importPDF()
-  → input[file] .pdf → Deck.parsePDFDeckList(file)
-  → overlay "⏳ Leyendo Lista Oficial (.pdf)..."
-  → _pdfExtractEntries(file) — usa pdfjsLib (pdf.min.js) para leer texto por página:
-      → agrupa items por línea (tolerancia Y) y por clusters (gap X) → detecta
-        encabezados de columna (Monster/Spell/Trap Cards, Extra Deck, Side Deck) y
-        arma rangos de X (columnDefs) para asignar cada línea a main/extra/side
-      → descarta líneas de ruido (encabezados de juez, paginación, códigos de barra)
-      → por cada línea de carta genera candidatos {qty, name} (cantidad al inicio o
-        al final del texto)
-      → si no se detectó NINGÚN encabezado → Error "PDF no reconocido"
-  → overlay "⏳ Buscando cartas en la base de datos..."
-  → _pdfFetchFullCardDB() — fetch sin filtros a cardinfo.php (base completa, sin
-    caché) para poder matchear cualquier nombre
-  → _pdfMatchEntries() — matchea cada candidato contra la base por nombre exacto y,
-    si falla, por nombre normalizado (espacios colapsados); acumula cantidades por
-    id+zona; lo que no matchea queda en `unknown[]`
-  → arma `newCards`, pide nombre de deck (prompt, default = nombre del archivo),
-    reemplaza `Deck.cards`/`Deck.name`, `render()` + `onDeckLoaded()`
-  → alert final con total de cartas reconocidas y detalle de líneas no reconocidas
-    (si las hay) para agregarlas a mano desde el Buscador
-```
-Botón: sub-tab "📥 Importar Deck" (nuevo, primero en la barra de Mi Deck, antes de
-Decklist) → "Lista Oficial (.pdf)", junto a "Archivo .ydk" (`importYDK()`, ya existía).
-Requiere `Modules/pdf.min.js` + `Modules/pdf.worker.min.js` (cargados en `index.html`);
-usa además CDN externo (`cdn.jsdelivr.net`) para cmaps y fuentes estándar del PDF —
-única dependencia de red fuera de YGOProDeck en toda la app. No crea claves nuevas de
-localStorage: el deck resultante se guarda igual que cualquier otro vía `saveDeck()`.
-
-### 5.11 Alta rápida de cartas a Banlist/Genesys — NUEVO
-```
-Banlist.renderFormatList(formatName) → botón "＋ Agregar carta"
-  → CardViewer.openCardSearch(formatName, prefillName?, mode?)
-      → detecta modo puntos si Banlist.getData().formats[formatName].isGenesys
-      → mini-buscador propio (fetch cardinfo.php?fname=) con overlay #cv-search-overlay
-      → modo normal: chips Ban / Limitada / Semi-Limit → clic en resultado →
-        Banlist.setCardStatus(formatName, cardId, {name,img}, status)
-      → modo Genesys: stepper de puntos → clic en resultado →
-        Banlist.setCardPoints(formatName, cardId, {name,img}, puntos)
-      → repinta banlist-cards-${formatName} y el contador de cartas del formato
-  → cada carta ya agregada a un formato Genesys puede reabrir sus puntos con
-    CardViewer.openPointsEditor(formatName, cardId, cardName, currentPoints)
-    (overlay #cv-pts-overlay, stepper + Guardar)
-```
-No agrega claves nuevas de localStorage — ambos escriben sobre la misma estructura de
-`Banlist` ya existente (formats[...].cards).
-
-### 5.12 Exportar/Importar Historial de Enfrentamientos (.txt) — NUEVO
-```
-Matchups.exportTXT()
-  → junta this.getAll() (enfrentamientos) + Deck.getOptimizacion().sessions
-    (sesiones completas de Optimización del deck activo, con sus rondas reales)
-  → descarga un .txt: cabecera de comentarios (#) + JSON {matchups, sessions}
-
-Matchups.importTXT()
-  → input[file] .txt → _mergeImported(text)
-      → ignora líneas que empiezan con # antes de hacer JSON.parse
-      → por cada enfrentamiento: si el nombre de rival ya existe (case-insensitive),
-        SUMA wins1st/losses1st/wins2nd/losses2nd y concatena notas; si no existe, lo
-        crea. Compatible con exports viejos (array plano sin `sessions`)
-      → _importRealSessions(sessions) — copia las sesiones TAL CUAL (mismas rondas:
-        turnos, starters, extenders, bricks, boardbreakers...) al
-        `optimization_${deckName}` del deck activo, con IDs regenerados para no
-        chocar con las existentes; si todas las rondas de una sesión son contra el
-        mismo rival, la sesión queda etiquetada para Historial de Sesiones
-      → limpia el filtro activo de Matchups (por si ocultaba las sesiones recién
-        importadas) y repinta `#mideck-optimizacion-pane`
-```
-No afecta el cálculo de `Duelista` (que sigue leyendo TODAS las rondas del deck activo,
-importadas o no). Cada registro de Matchups puede llevar además `cardData` (decklist
-del rival), importable por separado con `Matchups._importYDK()` al crear/editar el
-enfrentamiento, y visible luego con `Matchups.openDeckPanel(index)` (overlay con grid
-de imágenes por Main/Extra/Side). Ver corrección de estructura en sección 3.
-
----
-
-## 6. SUB-TABS Y SECCIONES
-
-### Mi Deck
-```
-Sub-tabs: Importar Deck | Decklist | Construcción | Optimización
-          (📥 Importar Deck es nuevo, primer sub-tab — ver 5.10; ofrece
-          Archivo .ydk y Lista Oficial .pdf. El botón viejo "Importar Deck (.ydk)"
-          dentro de Decklist → Acciones se mantiene intacto, es redundante pero no
-          se tocó)
-Sidebar:  Engines | Decks | Staples | Favoritas
-
-Optimización (🎯) — sub-tab de deck testing por matchup:
-  → registra "rondas de duelo" con: orden (1º/2º), resultado, tipo de victoria/derrota,
-    presión de tiempo, combo completo, starter, extenders, handtraps, boardbreaker en
-    mano (ver 6.3), bricks/tech en mano, rompió board, negó jugada, rival rompió, notas.
-  → agrupa rondas en "sesiones" (etiquetables: torneo, casual…), con badges de
-    calidad (winrate, brick rate, % starters, consistencia de combo, score).
-  → persiste en `optimization_${deckName}` vía Deck.getOptimizacion() /
-    saveOptimizacionSession() / addOptimizacionRound() / renderOptimizacionPane().
-  → migra automáticamente datos de un formato antiguo `records[]` a `sessions[]`.
-  → orden de bloques dentro del pane: 🎖️ Nivel como Piloto (6.2) → 🧩 Complejidad
-    del Deck (6.1) → 📝 Notas del Deck → ⚔️ Historial de Enfrentamientos (Matchups)
-    → barra de sesión activa → 📊 Historial de Sesiones (rondas).
-```
-
-### 6.1 Complejidad del Deck — NUEVO (clasificador de dificultad de uso/aprendizaje)
-
-Quiz de 8 preguntas fijas (`Deck.CXD_PREGUNTAS`) repartidas en dos grupos de 4, cada
-respuesta vale 1-3 puntos:
-```
-grupo 'aprender' (curva de entrada): flujo del deck, ejecución de combos, margen de
-                                       error para un novato, lectura de cartas
-grupo 'dominar'   (techo de habilidad): recursos a controlar, densidad de decisiones,
-                                       conocimiento del meta requerido, adaptación
-                                       ante interrupción rival
-```
-`Deck.calcularComplejidad()` suma cada grupo (0-12 c/u, total 0-24) y guarda en
-`complejidad_${Deck.name}` (`{answers, aprender, dominar, total, evaluatedAt}`).
-`Deck._complejidadNivel(total)` clasifica en 5 tramos, coherentes con el juego
-competitivo real (curva de aprendizaje vs. techo de habilidad son ejes independientes,
-igual que en la práctica un deck puede ser fácil de aprender pero difícil de pilotar
-al máximo nivel, o viceversa):
-```
-0-11   🟢 Ideal para empezar
-12-15  🟢 Principiante
-16-18  🟡 Intermedio
-19-21  🟠 Avanzado
-22-24  🔴 Experto
-```
-Se renderiza en **dos** lugares con `Deck.renderComplejidadResultCard()`:
-- Mi Deck → Optimización → bloque "🧩 Complejidad del Deck" (con el formulario).
-- Mi Deck → Construcción → `#construccion-complejidad-box` (solo resultado, sin form).
-No se recalcula solo — el jugador debe re-evaluar manualmente si cambia el deck.
-Cubierto por `ConfigManager.exportConfig()` (prefijo `complejidad_`) y por la Zona de
-Borrado bajo la opción "Optimización" (ver 3).
-
-### 6.2 Duelista / "Nivel como Piloto del Deck" — REESCRITO (antes: agregado global)
-
-**Cambio de diseño importante respecto a versiones anteriores del reporte:** `Duelista`
-ya NO suma duelos de todos los decks guardados a lo largo de la vida de la app. Ahora
-`Duelista.getDeckStats(deckName)` lee EXCLUSIVAMENTE las rondas de
-`Deck.getOptimizacion(deckName)` (pestaña Optimización) del **deck actualmente cargado**
-— no tiene relación con `Matchups` (winrate manual por rival) ni con otros decks.
-
-```
-Duelista.LEVELS (por rondas totales del deck activo, escala reducida):
-  0 Novato · 5 Aprendiz · 15 Piloto · 30 Rival · 50 Competidor ·
-  100 Semi-Pro · 200 Pro · 400 Élite · 800 Legendario
-```
-`Duelista.renderSection()` pinta nivel actual, barra de progreso al siguiente nivel, y
-winrate general / going 1st / going 2nd calculado solo con esas rondas.
-`Duelista.refreshSection()` re-renderiza **ambas** instancias visibles a la vez:
-`#duelista-content` (Estadísticas) y `#duelista-content-opt` (Mi Deck → Optimización,
-sobre Complejidad del Deck).
-
-**Integración nueva con Matchups:** cada fila de "⚔️ Historial de Enfrentamientos"
-(dentro de Optimización) es clicable — `Matchups.selectDeckFilter(nombreRival)` filtra
-la sección "📊 Historial de Sesiones" (rondas) para mostrar solo las de ese rival,
-re-renderizando `#mideck-optimizacion-pane`. `clearDeckFilter()` quita el filtro. Esto
-es puramente visual/UI, no afecta el cálculo de `Duelista` (que siempre usa TODAS las
-rondas del deck, filtradas o no).
-
-### 6.3 Campo "Boardbreaker en mano" y renombrado "Bricks/Tech en mano" — NUEVO
-
-En el formulario de Rondas de Duelo (Mi Deck → Optimización → 🃏 Mano Inicial), entre
-Handtraps y Bricks, se agregó un nuevo select `opt-r-boardbreaker` (0/1/2/3+) para
-registrar cuántas cartas rompe-campo (Boardbreakers: Raigeki, Dark Ruler No More,
-Evenly Matched, etc.) trae el jugador en la mano inicial — relevante especialmente
-jugando de segundo, donde el plan de juego depende de romper el campo del rival.
-
-```
-Guardado:    round.boardbreakers = n('opt-r-boardbreaker')  (addOptimizacionRound)
-Métrica:     m.avgBoardbreaker — promedio de boardbreakers por ronda (calcOptMetrics)
-Sugerencia:  getOptDiagnostics() — si avgBoardbreaker < 0.5 y hay ≥3 rondas jugando de
-             segundo (m.rSecond.length >= 3): "⚠ Pocos Boardbreakers en mano jugando de
-             segundo. Considera sumar cartas que rompan el campo rival (...)"
-Visible en:  chip de resumen de sesión (🧨 øX.X BB) y en el detalle de cada ronda
-             individual (🧨X junto al tag de Handtraps).
-```
-
-El campo es completamente independiente del cálculo de Brick Rate — no resta ni suma
-a `bricks`/`br`, solo alimenta su propio promedio y su propia sugerencia.
-
-**"Bricks en mano" → "Bricks/Tech en mano":** cambio puramente de rótulo visible en el
-`<label>` del formulario. El id (`opt-r-bricks`), el campo guardado (`round.bricks`) y
-todo el cálculo (Brick Rate, diagnósticos de exceso de bricks, exportación a Matchups)
-siguen tratando ese valor exactamente igual que antes — como negativo/brick. No hay
-distinción real entre "brick puro" y "tech situacional" a nivel de datos, solo de
-nomenclatura visible para el usuario.
-
-### Config — secciones colapsables
-```
-Mecánicas y Roles
-  Panel colapsable por rol.
-  Header: badge nombre (read-only) | ✏️ focusRenameInput | ⧉ duplicateRole | 🗑️ deleteRole
-  Cuerpo: keywords · conditionals · notContains · nomenclaturas · peso en pilares
-
-Counters          — pares mecánica/counter con 🗑️ por par
-
-Staples           — cartas esenciales del formato
-
-Nomenclatura de Efectos
-  Panel colapsable por categoría.
-  Header: badge coloreado (read-only) | color picker | ✏️ focusNomRenameInput | ⧉ duplicateNomCategory | 🗑️ deleteNomCategory
-  Cuerpo: startsWith · contains · notContains · endsWith
-
-Pilares del Internal Score
-  Roles por pilar + RPS con opción "Ninguno" (ese pilar no activa modifier)
-
-Scoring Avanzado (G1/G2)
-  G1/G2 por rol | Poder Base (L3) | Fiabilidad por copias | Capas L1/L2/L4/L5 en columnas
-  ✅ Panel funcional (guarda en yugioh_config) Y consumido en tiempo real por
-  Stats.calculateInternalScore() — ver 7.2.
-
+Roles y Palabras Asociadas    (panel colapsable por rol — ver 6.2)
+Counters                      (pares mecánica/counter, 🗑️ por par)
+Staples                       (cartas esenciales del formato)
+Nomenclatura de Efectos       (panel colapsable por categoría — ver 6.2)
+Pilares del Internal Score    (roles por pilar + RPS con opción "Ninguno")
+Scoring Avanzado (G1/G2)      (ver sección 5.6 — 7 métodos save)
 Rendimientos Decrecientes
 Atajos Rápidos
-Banlist del Formato        ("＋ Agregar carta" abre mini-buscador CardViewer — ver 5.11)
+Banlist del Formato           ("＋ Agregar carta" → mini-buscador CardViewer, ver 8.11)
 Música
-Exportar / Importar Data   (importar pide confirmación; exportar muestra detalle del contenido)
-Restaurar Configuración
-Zona de Borrado            (16 categorías selectivas, cache y meta_library separados)
+Contenido de la App           (visibilidad granular por perfil, tema de fondo, intro por pestaña)
+Exportar / Importar Data      (importar pide confirmación; exportar detalla contenido)
+Restaurar Configuración       (re-ejecuta DefaultData.init())
+Zona de Borrado               (16 categorías selectivas — ver sección 3)
 ```
 
 ---
 
-## 7. SISTEMA DE SCORING — DETALLE
+## 5. SISTEMA DE SCORING — DETALLE
 
-### 7.1 Internal Score
-`Stats.calculateInternalScore(cards)`. Loop de roles con rendimientos decrecientes.
-Devuelve `{internalScore, consistency, power, resilience, totalCards, mainCards, penalty}`.
+### 5.1 Internal Score
+`Stats.calculateInternalScore(cards)`. Loop de roles con rendimientos decrecientes por pilar. Devuelve `{internalScore, consistency, power, resilience, totalCards, mainCards, penalty, g1Score, g2Score}`.
 
-### 7.2 G1/G2 Score — IMPLEMENTADO Y CONECTADO (antes documentado como pendiente)
+### 5.2 G1/G2 Score
 
-**Estado real verificado en el código (Jul 2026): la v2.5 de este reporte decía que esta
-funcionalidad estaba "a medias" (config + UI sin motor de cálculo). Eso ya no es correcto —
-el motor existe, se ejecuta en cada render de deck y se pinta en pantalla.**
-
-Cálculo — dentro del mismo loop de `Stats.calculateInternalScore()` (`data.js`, dentro del
-`for` sobre `cards`, dominio `loc === 'main'`):
+Calculado dentro del mismo loop de `calculateInternalScore()` (`data.js`, `for` sobre `cards`, dominio `loc === 'main'`):
 
 ```
 Por cada carta (loc='main'):
@@ -669,33 +329,6 @@ Por cada carta (loc='main'):
        'neutral' → mitad y mitad (g1Score += cardScore*0.5, g2Score += cardScore*0.5)
 ```
 
-`Stats.calculateInternalScore()` devuelve `g1Score` y `g2Score` (redondeados a 2 decimales)
-junto al resto de campos ya documentados en 7.1.
-
-**Clasificación G1/G2 por rol (default, `g1g2Roles` en `data.js`)** — coherente con el
-metagame competitivo real: roles de apertura de mano/setup (`Starter`, `Extender`, `Booster`,
-`Boss Monster`, `Tower`, `Token Summoner`, `Ignition`, familia `Stun-*`) → **g1**. Roles de
-respuesta/interacción (`Handtrap`, `Boardbreaker`, `Disruptor`, `Removal`,
-`Negate-activation`, `Negate-effect`, `Negater`, `Handloop`, `Speed-4`, `Anti-damage`) →
-**g2**. El resto (`Searcher*`, `Recycler`, `Draw-engine`, `Protector`, etc.) → **neutral**.
-
-**Renderizado** — `Estadisticas.renderDeckAnalysis()` (`estadisticas.js`):
-- Bloque "Going First / Going Second" con `internalStats.g1Score` / `g2Score` en las clases
-  `.analysis-g1g2-row/-item/-label/-val` — **ya no son huérfanas**, están en uso.
-- `g1g2Profile`: frase de diagnóstico según proporción g1/g2 (diferencia >1.3x → "dependiente
-  del dado" o "reactivo"; si no, "equilibrado") en `.analysis-g1g2-profile`.
-- Si `analysis.hasPowerData && analysis.hasSpecData`, también muestra `g1Vulnerability` /
-  `g2Vulnerability` (0-10), calculados en `Stats.calculateExternalScore()`.
-
-**Detalle a tener en cuenta (no es un bug, es una decisión de diseño existente):**
-`g1Vulnerability`/`g2Vulnerability` clasifican las **specialties/mecánicas** que counterean
-al deck reutilizando `ConfigManager.getRoleG1G2()` — la misma tabla pensada para **roles**
-de carta, no para nombres de mecánica. Si una specialty no coincide textualmente con una key
-de `g1g2Roles`, `classify()` cae en `'neutral'` y esa amenaza no suma a ninguna de las dos
-vulnerabilidades. Antes de tocar esta área, confirma con el usuario si quiere una tabla
-G1/G2 separada para specialties o si reutilizar la de roles es intencional.
-
-**Fórmula (ya implementada, no solo prevista):**
 ```
 CardScore = BasePower(L3) x L1_mult x L2_mult x L4_mult x L5_mult x Reliability
 
@@ -703,27 +336,25 @@ L1 — Velocidad:   keywords en 'condicionActivacion'
 L2 — Coste:       keywords en 'costoActivacion'
 L4 — Restricción: keywords en 'restriccion'
 L5 — Alcance:     keywords en 'efectoGenerico'
-Reliability: tabla por copias (1→0.40, 2→0.65, 3→0.85, 4→0.90, 5→0.95)
-             + pool indirecto de searchers del mismo arquetipo
-
-g1g2Roles[dominantRole] === 'g1' → g1Score
-g1g2Roles[dominantRole] === 'g2' → g2Score
-'neutral'                        → 50/50
 ```
 
-### 7.3 External Score (deck activo)
-`Stats.calculateExternalScore()` — deck vs powerScoreCache.
-RPS modifier ignorando loser='ninguno'.
-Devuelve `{externalScore, g1Vulnerability, g2Vulnerability, ...}`.
+**Clasificación G1/G2 por rol (default, `g1g2Roles` en `data.js`):** roles de apertura de mano/setup (`Starter`, `Extender`, `Booster`, `Boss Monster`, `Tower`, `Token Summoner`, `Ignition`, familia `Stun-*`) → **g1**. Roles de respuesta/interacción (`Handtrap`, `Boardbreaker`, `Disruptor`, `Removal`, `Negate-activation`, `Negate-effect`, `Negater`, `Handloop`, `Speed-4`, `Anti-damage`) → **g2**. El resto (`Searcher*`, `Recycler`, `Draw-engine`, `Protector`, etc.) → **neutral**.
 
-### 7.4 External Score (meta) = Cross-Score N×N
-`calculateCrossExternalScores()`. Para cada deck A: amenazas de counters de B ponderadas por internalScore de B y RPS. `crossExternalScore = (1 - threat/baseline) × 10`.
+**Renderizado** — `Estadisticas.renderDeckAnalysis()`: bloque Going First/Going Second con `g1Score`/`g2Score` (`.analysis-g1g2-row/-item/-label/-val`); `g1g2Profile` (diferencia >1.3x → "dependiente del dado" o "reactivo"; si no, "equilibrado", en `.analysis-g1g2-profile`); si `hasPowerData && hasSpecData`, también `g1Vulnerability`/`g2Vulnerability` (0-10) de `calculateExternalScore()`.
 
-### 7.5 RPS
+**Decisión de diseño (no bug):** `g1Vulnerability`/`g2Vulnerability` clasifican **specialties/mecánicas** reutilizando `getRoleG1G2()` — pensada para **roles de carta**, no para nombres de mecánica. Si una specialty no coincide textualmente con una key de `g1g2Roles`, cae en `'neutral'` y no suma a ninguna vulnerabilidad. Confirmar con el usuario si se quiere una tabla G1/G2 separada para specialties antes de tocar esta área.
+
+### 5.3 External Score (deck activo)
+`Stats.calculateExternalScore(cards, powerScoreCache, metaDecks)` — cruza specialties del deck con `powerScoreCache`, RPS modifier (ignorando `loser='ninguno'`). Devuelve `{externalScore, g1Vulnerability, g2Vulnerability, ...}`.
+
+### 5.4 External Score (meta) = Cross-Score N×N
+`calculateCrossExternalScores()`. Para cada deck A: amenazas de counters de B ponderadas por `internalScore` de B y RPS. `crossExternalScore = (1 - threat/baseline) × 10`.
+
+### 5.5 RPS
 Reglas `[ganador, perdedor]`. `perdedor='ninguno'` → ese pilar no tiene counter. Modificadores: ×1.25 ventaja / ×0.75 desventaja / ×1.0 neutral.
 
-### 7.6 Scoring Avanzado — métodos save en Config
-Estos métodos SÍ funcionan (guardan correctamente en `yugioh_config`); lo que falta es el consumidor de estos datos (ver 7.2).
+### 5.6 Scoring Avanzado — métodos save en Config
+Guardan correctamente en `yugioh_config` y son consumidos en tiempo real por `calculateInternalScore()` (ver 5.2).
 
 | Función | Qué guarda |
 |---------|-----------|
@@ -737,9 +368,9 @@ Estos métodos SÍ funcionan (guardan correctamente en `yugioh_config`); lo que 
 
 ---
 
-## 8. SISTEMA DE ROLES Y NOMENCLATURA — GESTIÓN EN CONFIG
+## 6. SISTEMA DE ROLES Y NOMENCLATURA
 
-### 8.1 Detección de roles
+### 6.1 Detección de roles
 ```
 autoAssignRoles(card) → detectPossibleRoles(card)
   por cada rol en roleConditions:
@@ -751,8 +382,8 @@ autoAssignRoles(card) → detectPossibleRoles(card)
 roleConditions[roleName]: { keywords:[], conditionals:[], notContains:[] }
 ```
 
-### 8.2 Pattern de renombrado con input oculto (roles y nomenclatura)
-El badge de nombre es siempre el elemento visible. El input se oculta con `display:none`.
+### 6.2 Pattern de renombrado con input oculto (roles y nomenclatura)
+El badge de nombre es siempre el elemento visible; el input se oculta con `display:none`.
 
 | Elemento | Roles | Nomenclatura |
 |---------|-------|-------------|
@@ -763,61 +394,363 @@ El badge de nombre es siempre el elemento visible. El input se oculta con `displ
 | Clonar | `duplicateRole(roleName)` → `ConfigManager.duplicateRole` | `duplicateNomCategory(catId)` → `ConfigManager.duplicateNomenclatureCategory` |
 | Borrar | `deleteRole(roleName)` | `deleteNomCategory(catId)` |
 
-`duplicateNomenclatureCategory(catId)` — deep-copy de la categoría, nuevo ID `custom_` + timestamp, nombre + " (copia)", insertada inmediatamente después de la original. Devuelve el nuevo ID para scroll.
+`duplicateNomenclatureCategory(catId)` — deep-copy de la categoría, nuevo ID `custom_` + timestamp, nombre + " (copia)", insertada inmediatamente después de la original. Devuelve el nuevo ID para hacer scroll.
 
 ---
 
-## 9. BUGS RESUELTOS
+## 7. COMPLEJIDAD DEL DECK, DUELISTA Y BOARDBREAKER
 
-| # | Bug | Archivo | Solución |
-|---|-----|---------|----------|
-| 1 | `_calcWR` duplicado 3 veces | `historial.js` | Eliminadas copias extra |
-| 2 | `yugioh_player_level` y `dd_player_profile` desincronizados | `formacion.js` | `enter()` escribe ambas claves |
-| 3 | Welcome reaparecía al recargar | `formacion.js` | `init()` lee `dd_welcome_dismissed` |
-| 4 | `logger.js` referenciado pero inexistente | `index.html` | Nuevo DDLogger creado |
-| 5 | MusicPlayer ignoraba perfil guardado | `formacion.js` | Lee nivel al inicio |
-| 6 | Botón ▶ pausaba en lugar de detener | `formacion.js` | Stop real + rebuild |
-| 7 | `dd_power_scores_cache` inconsistente | `estadisticas.js` | Renombrado a `yugioh_power_cache` |
-| 8 | Pyro ausente en filtros avanzados | `buscador.js` | Añadido a `FILTER_DATA.monsterTypes` |
-| 9 | External Score idéntico para todos los decks del meta | `estadisticas.js` | Cross-score N×N reemplaza al External Score del meta |
-| 10 | Sin pantalla de carga al importar .ydk | `mideck.js` | Overlay en `parseYDK` |
-| 11 | Nombre de rol duplicado (texto + input simultáneos) | `formacion.js` | Badge read-only + ✏️ activa input oculto |
-| 12 | Botones clonar/borrar desaparecidos en rol | `formacion.js` | Restaurados ⧉ 🗑️ |
-| 13 | Config no mostraba nada al cargar | `formacion.js` | `renderScoringSection` llamada pero no definida — error silencioso rompía `Config.render()` completo. Función implementada con sus 7 métodos save. |
-| 14 | Había que abrir cada deck del meta para calcular scores | `estadisticas.js` | `recalculateAllMetaDeckScores` ahora async: descarga cartas faltantes de todos los decks automáticamente en 3 fases |
-| 15 | Borrar "Cache" no limpiaba `metaDeckScores` en memoria | `formacion.js` | Añadido `Estadisticas.metaDeckScores = {}` |
-| 16 | Borrar "Carpetas del Meta" dejaba cross-scores y deck scores | `formacion.js` | Limpia `yugioh_meta_decks`, `yugioh_meta_deck_scores`, `yugioh_cross_scores` |
-| 17 | `segmentDescription` ausente en `NomenclatureAnalyzer` | `data.js` | Reintegrada como función; **resuelto (Jul 2026): ahora sí es invocada desde `calculateInternalScore()` — las capas L1–L5 aplican multiplicadores en tiempo de ejecución, ver 7.2** |
-| 18 | G1/G2 Score sin motor de cálculo (config + UI sin consumidor) | `data.js`, `estadisticas.js` | Implementado el cálculo dentro de `calculateInternalScore()` (BasePower × capas × Reliability, repartido en g1Score/g2Score) y su render en `renderDeckAnalysis()` — ver 7.2 |
-| 19 | CardViewer nunca mostraba Lanzamiento TCG/OCG ni disponibilidad en Master Duel/Duel Links (para NINGUNA carta) | `buscador.js` | El fetch `misc=yes` leía `tcg_date`/`ocg_date`/`formats` en la raíz del objeto de la carta; la API los devuelve anidados en `misc_info[0]`. Corregido leyendo `info.misc_info?.[0]` — ver 5.9 |
+### 7.1 Complejidad del Deck (clasificador de dificultad de uso/aprendizaje)
+
+Quiz de 8 preguntas fijas (`Deck.CXD_PREGUNTAS`) repartidas en dos grupos de 4, cada respuesta vale 1-3 puntos:
+```
+grupo 'aprender' (curva de entrada):   flujo del deck, ejecución de combos,
+                                        margen de error para un novato, lectura de cartas
+grupo 'dominar'  (techo de habilidad): recursos a controlar, densidad de decisiones,
+                                        conocimiento del meta requerido, adaptación
+                                        ante interrupción rival
+```
+`Deck.calcularComplejidad()` suma cada grupo (0-12 c/u, total 0-24) y guarda en `complejidad_${Deck.name}` (`{answers, aprender, dominar, total, evaluatedAt}`).
+
+`Deck._complejidadNivel(total)` clasifica en 5 tramos (curva de aprendizaje y techo de habilidad son ejes independientes — un deck puede ser fácil de aprender pero difícil de pilotar al máximo nivel, o viceversa):
+```
+0-11   🟢 Ideal para empezar
+12-15  🟢 Principiante
+16-18  🟡 Intermedio
+19-21  🟠 Avanzado
+22-24  🔴 Experto
+```
+Se renderiza en dos lugares con `Deck.renderComplejidadResultCard()`: Mi Deck → Optimización → bloque completo (con formulario), y Mi Deck → Construcción → `#construccion-complejidad-box` (solo resultado, sin form). No se recalcula solo — el jugador debe re-evaluar manualmente si cambia el deck.
+
+### 7.2 Duelista / "Nivel como Piloto del Deck"
+
+`Duelista.getDeckStats(deckName)` lee **exclusivamente** las rondas de `Deck.getOptimizacion(deckName)` (pestaña Optimización) del **deck actualmente cargado** — no tiene relación con `Matchups` (winrate manual por rival) ni con otros decks guardados.
+
+```
+Duelista.LEVELS (por rondas totales del deck activo):
+  0 Novato · 5 Aprendiz · 15 Piloto · 30 Rival · 50 Competidor ·
+  100 Semi-Pro · 200 Pro · 400 Élite · 800 Legendario
+```
+`Duelista.renderSection()` pinta nivel actual, barra de progreso al siguiente nivel, winrate general / going 1st / going 2nd calculado solo con esas rondas.
+
+`Duelista.refreshSection()` re-renderiza **ambas** instancias visibles: `#duelista-content` (Estadísticas) y `#duelista-content-opt` (Mi Deck → Optimización, sobre Complejidad del Deck).
+
+**Integración con Matchups:** cada fila de "⚔️ Historial de Enfrentamientos" es clicable — `Matchups.selectDeckFilter(nombreRival)` filtra "📊 Historial de Sesiones" (rondas) para mostrar solo las de ese rival, re-renderizando `#mideck-optimizacion-pane`. `clearDeckFilter()` quita el filtro. Es puramente visual/UI — no afecta el cálculo de Duelista (que siempre usa TODAS las rondas del deck, filtradas o no en pantalla).
+
+### 7.3 Campo "Boardbreaker en mano" y "Bricks/Tech en mano"
+
+En el formulario de Rondas de Duelo (Mi Deck → Optimización → 🃏 Mano Inicial), entre Handtraps y Bricks: select `opt-r-boardbreaker` (0/1/2/3+) para cartas rompe-campo (Raigeki, Dark Ruler No More, Evenly Matched, etc.) en mano inicial — relevante jugando de segundo, donde el plan de juego depende de romper el campo rival.
+
+```
+Guardado:    round.boardbreakers = n('opt-r-boardbreaker')  (addOptimizacionRound)
+Métrica:     m.avgBoardbreaker — promedio de boardbreakers por ronda (calcOptMetrics)
+Sugerencia:  getOptDiagnostics() — si avgBoardbreaker < 0.5 y hay ≥3 rondas jugando de
+             segundo (m.rSecond.length >= 3): "⚠ Pocos Boardbreakers en mano jugando de
+             segundo. Considera sumar cartas que rompan el campo rival (...)"
+Visible en:  chip de resumen de sesión (🧨 øX.X BB) y detalle de cada ronda (🧨X junto
+             al tag de Handtraps).
+```
+Campo independiente del cálculo de Brick Rate — no resta ni suma a `bricks`/`br`, solo alimenta su propio promedio y sugerencia.
+
+**"Bricks en mano" → "Bricks/Tech en mano":** cambio de rótulo visible únicamente. El id (`opt-r-bricks`), el campo guardado (`round.bricks`) y todo el cálculo (Brick Rate, diagnósticos, export a Matchups) siguen tratando el valor exactamente igual — como negativo/brick. No hay distinción real a nivel de datos entre "brick puro" y "tech situacional", solo de nomenclatura visible.
+
+---
+
+## 8. FLUJOS CRÍTICOS
+
+> Confirmados en la última auditoría línea-por-línea. Válidos salvo que el módulo en
+> cuestión haya crecido después (ver aviso al inicio del reporte) — en ese caso se
+> marca explícitamente.
+
+### 8.1 Cambio de pestaña
+```
+switchTab(name) → Navigation.showTab(name)
+  → oculta todos .tab-content, activa #name-content
+  → Estadisticas.updateFloatingWidgetVisibility(tabName)
+  → si simuladores:       Torneo.init()
+  → si mideck:             Engines.init()
+  → si saliendo de simuladores: ZonaPractica._cleanupFloatBtns()
+  → si meta:               Meta.init()
+  → si formacion:          Formacion.init()
+  → window.scrollTo({ top:0, behavior:'smooth' })
+  → ContentManager.applyAll()
+```
+**No confirmado en esta pasada:** el hook de `TabIntro` (intro por pestaña) y la aplicación del tema de fondo (`dd_bg_theme`) — ambos se agregaron después de esta auditoría, se asume que cuelgan de este mismo flujo pero no está verificado dónde exactamente.
+
+### 8.2 Agregar carta al deck (desde Buscador)
+```
+Buscador.addCard(index)
+  → Deck.syncFromViewer(card.id, card, currentQty + 1)
+  → si carta nueva: autoAssignRoles() + SpecialtyAnalyzer + NomenclatureAnalyzer
+  → Deck.render()  → recalcula Internal Score en tiempo real
+    (Stats.calculateInternalScore — el mismo cálculo actualiza g1Score/g2Score, ver 5.2)
+  → External Score se recalcula si powerScoreCache existe
+```
+
+### 8.3 Importar .ydk a Mi Deck
+```
+Deck.importYDK()
+  → input[file] .ydk → parseYDK(content, filename)
+  → overlay de carga "Importando deck... N cartas"
+  → fetch API YGOProDeck (batch por IDs únicos)
+  → construye newCards con autoAssignRoles()
+  → Deck.cards = newCards; Deck.render(); Deck.onDeckLoaded()
+  → elimina overlay → alert "Deck importado"
+```
+
+### 8.4 Cálculo de scores — ciclo completo
+```
+Stats.calculateInternalScore(Deck.cards)
+  → loop de roles → rendimientos decrecientes por pilar (consistency/power/resilience)
+  → EN EL MISMO LOOP, por carta: calcula G1/G2 Score (fórmula completa en 5.2)
+  → devuelve { internalScore, consistency, power, resilience,
+               totalCards, mainCards, penalty, g1Score, g2Score }
+
+Stats.calculateExternalScore(Deck.cards, powerScoreCache, metaDecks)
+  → cruza specialties del deck con powerScoreCache
+  → RPS modifier (ignorando loser='ninguno')
+  → devuelve { externalScore, g1Vulnerability, g2Vulnerability, ... }
+```
+
+### 8.5 Actualizar Scores del Meta — flujo automático completo (async)
+```
+Estadisticas.recalculateAllMetaDeckScores()  ← async
+  → lista todos los decks con secciones (sin importar si fueron abiertos antes)
+  → crea overlay #meta-update-overlay con spinner + barra de progreso + nombre del deck actual
+
+  FASE 1 (0–60%) Enriquecimiento automático:
+    por cada deck en la lista:
+      → IDs no presentes en metaCardLibrary → fetch API en batches de 10
+      → autoAssignRoles() + SpecialtyAnalyzer para cada carta nueva
+    → _saveMetaCardLibrary()
+
+  FASE 2 (60–92%) Cálculo de scores:
+    por cada deck:
+      → _computeAndSaveMetaDeckScore(folder, filename)
+      → Internal Score + pilares con fakeCards desde la librería
+
+  FASE 3 (92–100%) Cross-Score N×N:
+    → calculateCrossExternalScores()
+    → metaDeckScores[key].externalScore = crossExternalScore
+    → guarda yugioh_cross_scores + yugioh_meta_deck_scores
+
+  → "¡Listo! N decks actualizados" 700ms → overlay desaparece → render()
+```
+Un solo clic procesa todos los decks — no hace falta abrirlos manualmente.
+
+### 8.6 Selección de perfil
+```
+Welcome.enter(tabName, levelKey)
+  → ContentManager.applyProfile(levelKey)  → 'dd_player_profile'
+  → ConfigManager.savePlayerLevel(levelKey) → 'yugioh_player_level'
+  → MusicPlayer.setTrack(cfg.tracks[levelKey])
+  → Welcome.dismiss() → 'dd_welcome_dismissed' = 'true'
+  → Navigation.showTab(tabName)
+```
+
+### 8.7 Borrar Todo / Restaurar Config
+```
+Config.borrarTodo()
+  → localStorage.clear() + _resetModulesInMemory() + Welcome.init()
+
+Config.resetToDefault()  ← parcheado por DefaultData
+  → localStorage.clear() + await DefaultData.init()
+```
+
+### 8.8 DefaultData.init() — inyección única por tipo
+```
+window.load → DefaultData.init()
+  → _initNotes / _initSpecialties / _initGames / _initMasters
+  → _initDecks / _initStaples / _initEngines / _initGenesys  (fetch API)
+  → _patchConfig() → sobreescribe Config.resetToDefault
+```
+
+### 8.9 Abrir CardViewer (panel "Ver" de carta)
+```
+CardViewer.open(card)
+  → pinta overlay síncrono con lo que ya trae `card`:
+      Carta: card.type ("Carta:")
+      Nivel → Atributo → Tipo (card.race; "—" si no es monstruo) → ATK → DEF
+      Arquetipo: card.archetype como link, o "—" sin link si no tiene
+      ID: card.id (en --gold-color)
+  → fetch cardinfo.php?id=${card.id}&misc=yes (un único fetch, async)
+      → card_sets  → rellena "📦 Pack / Set"
+      → misc_info[0].tcg_date / ocg_date → "Lanzamiento TCG:" / "Lanzamiento OCG:"
+        (fmtDate → toLocaleDateString('es-ES'); "No disponible" si falta)
+      → misc_info[0].formats → "Disponible en:" (Master Duel / Duel Links).
+        Fila oculta por completo si no hay match en ninguno de los dos.
+  → click en Arquetipo → CardViewer.openArchetypeInBuscador(name)
+      → cierra overlay → Navigation.showTab('buscador') → Buscador.clear()
+      → Buscador._loadArchetypes() → advancedFilters.archetype = name → autoSearch()
+  → si el deck activo tiene cartas: renderCardContribution(card)
+      → detectPossibleRoles(card) — como autoAssignRoles pero sin persistir,
+        solo para listar "🎯 Posibles Roles"
+      → calculateCardContribution(card, roles) — clona Deck.cards, simula +1
+        copia (o la inserta si no está) y compara calculateInternalScore() antes/después
+      → pinta "📊 Aporte al deck activo": barras de Consistencia/Potencia/
+        Resiliencia + delta de Internal Score. Se oculta si el deck está vacío o si
+        ContentManager.isVisible('cv-roles'|'cv-contribution') lo desactiva
+```
+**Importante:** `tcg_date`, `ocg_date` y `formats` SOLO existen dentro de `misc_info[0]` cuando se pasa `misc=yes` — nunca en la raíz del objeto de la carta.
+
+**No confirmado en esta pasada:** el paso de "Lore de la carta" vía Yugipedia (descrito en 4.2/9) se agregó después de esta auditoría. Se asume que cuelga de `CardViewer.open()` como un fetch adicional async, pero el nombre exacto del método y su punto de inserción en la secuencia no están verificados.
+
+**Funciones sin usar (no tocar salvo que se pida reactivarlas):** `CardViewer.generateCardDecklistHTML2Canvas()`, `generateCardDecklistCanvas()`, `generateCardDecklistFallback()` existen (exportar la carta como imagen tipo decklist) pero no están enganchadas a ningún botón — "🖼 Ver HD" solo abre la imagen a tamaño completo.
+
+### 8.10 Importar Deck desde Lista Oficial (.pdf)
+```
+Deck.importPDF()
+  → input[file] .pdf → Deck.parsePDFDeckList(file)
+  → overlay "⏳ Leyendo Lista Oficial (.pdf)..."
+  → _pdfExtractEntries(file) — usa pdfjsLib (pdf.min.js) para leer texto por página:
+      → agrupa items por línea (tolerancia Y) y por clusters (gap X) → detecta
+        encabezados de columna (Monster/Spell/Trap Cards, Extra Deck, Side Deck) y
+        arma rangos de X (columnDefs) para asignar cada línea a main/extra/side
+      → descarta líneas de ruido (encabezados de juez, paginación, códigos de barra)
+      → por cada línea de carta genera candidatos {qty, name} (cantidad al inicio o
+        al final del texto)
+      → si no se detectó NINGÚN encabezado → Error "PDF no reconocido"
+  → overlay "⏳ Buscando cartas en la base de datos..."
+  → _pdfFetchFullCardDB() — fetch sin filtros a cardinfo.php (base completa, sin
+    caché) para matchear cualquier nombre
+  → _pdfMatchEntries() — matchea cada candidato por nombre exacto y, si falla, por
+    nombre normalizado (espacios colapsados); acumula cantidades por id+zona; lo que
+    no matchea queda en unknown[]
+  → arma newCards, pide nombre de deck (prompt, default = nombre del archivo),
+    reemplaza Deck.cards/Deck.name, render() + onDeckLoaded()
+  → alert final con total reconocido y detalle de líneas no reconocidas
+```
+Requiere `Modules/pdf.min.js` + `pdf.worker.min.js`; usa además `cdn.jsdelivr.net` para cmaps y fuentes estándar del PDF — única dependencia de red fuera de YGOProDeck (y Yugipedia) en toda la app. No crea claves nuevas de localStorage.
+
+### 8.11 Alta rápida de cartas a Banlist/Genesys
+```
+Banlist.renderFormatList(formatName) → botón "＋ Agregar carta"
+  → CardViewer.openCardSearch(formatName, prefillName?, mode?)
+      → detecta modo puntos si Banlist.getData().formats[formatName].isGenesys
+      → mini-buscador propio (fetch cardinfo.php?fname=) con overlay #cv-search-overlay
+      → modo normal: chips Ban / Limitada / Semi-Limit → clic en resultado →
+        Banlist.setCardStatus(formatName, cardId, {name,img}, status)
+      → modo Genesys: stepper de puntos → clic en resultado →
+        Banlist.setCardPoints(formatName, cardId, {name,img}, puntos)
+      → repinta banlist-cards-${formatName} y el contador de cartas del formato
+  → cada carta ya agregada a un formato Genesys puede reabrir sus puntos con
+    CardViewer.openPointsEditor(formatName, cardId, cardName, currentPoints)
+```
+No agrega claves nuevas de localStorage — escribe sobre `Banlist.formats[...].cards`.
+
+### 8.12 Exportar/Importar Historial de Enfrentamientos (.txt)
+```
+Matchups.exportTXT()
+  → junta this.getAll() (enfrentamientos) + Deck.getOptimizacion().sessions
+    (sesiones completas de Optimización del deck activo)
+  → descarga un .txt: cabecera de comentarios (#) + JSON {matchups, sessions}
+
+Matchups.importTXT()
+  → input[file] .txt → _mergeImported(text)
+      → ignora líneas que empiezan con # antes de JSON.parse
+      → por cada enfrentamiento: si el rival ya existe (case-insensitive), SUMA
+        wins1st/losses1st/wins2nd/losses2nd y concatena notas; si no, lo crea.
+        Compatible con exports viejos (array plano sin sessions)
+      → _importRealSessions(sessions) — copia sesiones TAL CUAL al
+        optimization_${deckName} del deck activo, con IDs regenerados; si todas
+        las rondas de una sesión son del mismo rival, queda etiquetada
+      → limpia el filtro activo de Matchups y repinta #mideck-optimizacion-pane
+```
+No afecta el cálculo de Duelista (sigue leyendo TODAS las rondas del deck activo). Cada registro de Matchups puede llevar `cardData` (decklist del rival vía `.ydk`), visible con `Matchups.openDeckPanel(index)`.
+
+**No auditados a nivel de flujo en esta pasada** (existen como feature en la prosa funcional, sin verificación línea por línea): exportar/importar Data completa del deck (bundle con Combos incluido), Línea de Combos completa, Gauntlet, Counters (CounterSim), Tu Experiencia con el Deck, Historial de Versiones, Lore vía Yugipedia.
+
+---
+
+## 9. DEPENDENCIAS ENTRE MÓDULOS
+
+> Base confirmada en la última auditoría línea-por-línea (módulos previos a Lobby/
+> Combos/Gauntlet/CounterSim). Addendum al final para los módulos agregados después,
+> inferido de la prosa funcional — no verificado en código.
+
+```
+data.js (ConfigManager)  <── buscador, mideck, historial, estadisticas,
+                               simuladores, formacion, core (ContentManager)
+
+data.js (Stats)          <── estadisticas, mideck (Deck.render usa
+                               calculateInternalScore — ver 5.2 sobre G1/G2)
+
+core.js (ContentManager) <── formacion (applyProfile al cambiar perfil)
+                               navigation applyAll() en cada tab change
+
+mideck.js (Engines)      <── Favoritas.render() delega si _activeTab='favoritas'
+                               Staples: usa campo imageUrl (NO img)
+
+mideck.js (Deck)         <── Optimización usa Deck.name como clave
+                               (`optimization_${this.name}`), independiente de cards
+
+historial.js (Duelista)  <── Lee EXCLUSIVAMENTE optimization_${Deck.name} (rondas del
+                               deck activo) vía Deck.getOptimizacion() — ver 7.2. NO lee
+                               matchup_${deckName}.
+
+historial.js (Matchups)  <── selectDeckFilter()/clearDeckFilter() re-renderizan
+                               #mideck-optimizacion-pane (Deck.renderOptimizacionPane)
+
+formacion.js (Meta)      <── Sub-tabs Fuentes y Maestros de Formacion delegan a
+                               Meta._renderFuentesSection() / Meta._renderMaestrosSection()
+
+formacion.js (Welcome)   <── llama ConfigManager.savePlayerLevel() Y
+                               ContentManager.applyProfile() al hacer enter()
+
+default_data.js          <── requiere ConfigManager, Deck, Engines, Formacion,
+(DefaultData)                 Meta, Banlist (todos ya cargados antes en index.html)
+                               Parchea Config.resetToDefault al final del load.
+```
+
+**Addendum — módulos agregados después (no verificado, inferido de la prosa funcional):**
+```
+lobby.js (Lobby)         <── probablemente depende de ConfigManager (dd_update_seen) y
+                               de fetch YGOProDeck (Lo Nuevo). Sugerencias navegan a
+                               otras pestañas, así que probablemente llama switchTab()
+                               de core.js.
+
+mideck.js (Combos)       <── casi seguro depende de Deck.cards (starters/boss auto-
+                               detectados). Relación exacta con autoAssignRoles() no
+                               confirmada.
+
+simuladores.js           <── CounterSim probablemente lee Deck.cards / Engines /
+(CounterSim, Gauntlet)        Staples / Favoritas (arma el pool desde ahí, según 4.5).
+                               Gauntlet probablemente depende de Estadisticas.metaDecks
+                               (chips de decks del meta como oponentes) y de
+                               ZonaPractica (jugar pruebas ahí). No confirmado.
+
+core.js (TabIntro)       <── probablemente se dispara en Navigation.showTab(), junto
+                               a ContentManager.applyAll() (ver flujo 8.1). No confirmado
+                               el punto exacto de enganche.
+```
+Antes de modificar cualquiera de estos cuatro, confirmar la dependencia real leyendo el archivo — no asumir el addendum como hecho verificado.
 
 ---
 
 ## 10. API EXTERNA
 
-**YGOProDeck** (sin auth, CORS libre)
+**YGOProDeck** (sin auth, CORS libre) — base `https://db.ygoprodeck.com/api/v7/`:
 ```
-Base: https://db.ygoprodeck.com/api/v7/
-cardinfo.php?id=      búsqueda/lookup por ID (batch con IDs separados por coma)
-cardinfo.php?fname=   búsqueda difusa por nombre (usada por el buscador; no se usa ?name=)
-cardinfo.php?id=&misc=yes   usado en CardViewer.open() (ver 5.9) para sets, fechas de
-                             lanzamiento y disponibilidad MD/DL. Con misc=yes, tcg_date,
-                             ocg_date y formats viajan DENTRO de misc_info[0], no en la raíz.
-archetypes.php        lista de arquetipos
-cardsets.php          lista de packs/sets
-cardinfo.php          fetch completo sin filtros, usado por DefaultData._initGenesys()
-                       y por Deck._pdfFetchFullCardDB() (matching de nombres al
-                       importar Lista Oficial .pdf — ver 5.10)
+cardinfo.php?id=                        búsqueda/lookup por ID (batch por comas)
+cardinfo.php?fname=                     búsqueda difusa por nombre (Buscador; no se usa ?name=)
+cardinfo.php?id=&misc=yes               usado en CardViewer.open() (ver 8.9) para sets,
+                                         fechas de lanzamiento y disponibilidad MD/DL.
+                                         tcg_date/ocg_date/formats viven DENTRO de
+                                         misc_info[0], no en la raíz.
+cardinfo.php?misc=yes&startdate=&dateregion=   usado por Lobby para "🆕 Lo Nuevo"
+archetypes.php                          lista de arquetipos
+cardsets.php                            lista de packs/sets
+cardinfo.php (sin filtros)              fetch completo, usado por DefaultData._initGenesys()
+                                         y Deck._pdfFetchFullCardDB() (ver 8.10)
 
 Imágenes:
 https://images.ygoprodeck.com/images/cards/{id}.jpg        → full
 https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 ```
 
-**Dependencia externa nueva (no YGOProDeck):** `_pdfExtractEntries()` (Importar PDF,
-ver 5.10) usa `pdf.min.js`, que a su vez pide a `cdn.jsdelivr.net` los cmaps y fuentes
-estándar del PDF en tiempo de ejecución. Es la única llamada de red de la app que no
-apunta a `db.ygoprodeck.com` ni a `images.ygoprodeck.com`.
+**Yugipedia** (`yugipedia.com/api.php?action=parse&prop=wikitext`) — usado por `CardViewer` para el panel de Lore; fallback a proxy CORS (`api.allorigins.win`) si el fetch directo falla. **No auditado a nivel de flujo en esta pasada** — confirmar nombre real del método antes de modificarlo.
+
+**pdf.js** (`Modules/pdf.min.js` + `pdf.worker.min.js`) — usado por `Deck.importPDF()` (ver 8.10); depende además de `cdn.jsdelivr.net` para cmaps y fuentes estándar del PDF en tiempo de ejecución.
 
 ---
 
@@ -828,9 +761,9 @@ apunta a `db.ygoprodeck.com` ni a `images.ygoprodeck.com`.
 | `.tab-content` / `.active` | style_core | Secciones de pestañas |
 | `.engines-sidebar` | style_mideck | Sidebar 4 tabs Mi Deck |
 | `.cv-overlay` | style_core | Visor de carta |
-| `.cv-archetype-link` | style_buscador | **Nuevo.** Link "Arquetipo:" sin subrayado (ver 5.9), llama a `CardViewer.openArchetypeInBuscador()` |
-| `.cv-release-block` | style_buscador | **Nuevo.** Contenedor de "Lanzamiento TCG/OCG" y "Disponible en:" (ver 5.9) |
-| `.cv-card-id` | style_buscador | Ahora en `var(--gold-color)` (antes `rgba(255,255,255,0.28)`, poco legible) |
+| `.cv-archetype-link` | style_buscador | Link "Arquetipo:" sin subrayado, llama a `CardViewer.openArchetypeInBuscador()` |
+| `.cv-release-block` | style_buscador | Contenedor de "Lanzamiento TCG/OCG" y "Disponible en:" |
+| `.cv-card-id` | style_buscador | En `var(--gold-color)` |
 | `#welcome-overlay.welcome-visible` | style_core | Panel bienvenida |
 | `.role-panel` / `.role-panel-header` | style_config | Panel colapsable de rol y nomenclatura |
 | `.scoring-layers-grid` | style_config | Grid de columnas L1/L2/L4/L5 |
@@ -838,18 +771,18 @@ apunta a `db.ygoprodeck.com` ni a `images.ygoprodeck.com`.
 | `.config-section-block` / `.config-block-title` | style_config | Bloques dentro de Scoring Avanzado |
 | `.scoring-layer-col` / `.scoring-layer-entry` | style_config | Columnas y entradas de capas |
 | `.asb-bar-track` / `.asb-bar-fill` | style_simuladores | Barras de score (Internal/External) en Análisis |
-| `.analysis-block` / `.analysis-block-title` | style_simuladores | Bloques de sección dentro de Análisis de Deck (Mecánicas, G1/G2, etc.) |
-| `.analysis-g1g2-row` / `.analysis-g1g2-item` / `.analysis-g1g2-profile` | style_simuladores | En uso — pintan `g1Score`/`g2Score`/`g1g2Profile` en `Estadisticas.renderDeckAnalysis()` (ver 7.2) |
-| `.opt-*` (form, session-bar, badges…) | style_mideck | Panel de Optimización (deck testing) en Mi Deck |
-| `.cxd-*` (pregunta, opcion, bar-track/fill, result-card…) | style_mideck | **Nuevo.** Quiz y tarjeta de resultado de Complejidad del Deck (ver 6.1) |
-| `.duelista-*` (card, level-block, progress-track, wr-grid…) | style_simuladores | Bloque "Nivel como Piloto del Deck" (ver 6.2), en Estadísticas y Mi Deck → Optimización |
-| `.matchup-row-selected` / `.opt-filter-banner` | style_mideck | Estado visual del filtro Matchups → Historial de Sesiones (ver 6.2) |
+| `.analysis-block` / `.analysis-block-title` | style_simuladores | Bloques dentro de Análisis de Deck |
+| `.analysis-g1g2-row` / `.analysis-g1g2-item` / `.analysis-g1g2-profile` | style_simuladores | Pintan g1Score/g2Score/g1g2Profile en `renderDeckAnalysis()` |
+| `.opt-*` (form, session-bar, badges…) | style_mideck | Panel de Optimización (deck testing) |
+| `.cxd-*` (pregunta, opcion, bar-track/fill, result-card…) | style_mideck | Quiz y tarjeta de resultado de Complejidad del Deck |
+| `.duelista-*` (card, level-block, progress-track, wr-grid…) | style_simuladores | Bloque "Nivel como Piloto del Deck", en Estadísticas y Mi Deck → Optimización |
+| `.matchup-row-selected` / `.opt-filter-banner` | style_mideck | Estado visual del filtro Matchups → Historial de Sesiones |
 | `#meta-update-overlay` | inline en estadisticas.js | Overlay de carga del Actualizar Scores |
-| `.cv-contribution-block` / `.cv-contrib-row` / `.cv-contrib-bar-track` / `.cv-contrib-bar` / `.cv-contrib-val` / `.cv-contrib-delta` / `.cv-contrib-total` / `.cv-contrib-empty` / `.cv-contrib-section-title` / `.cv-deck-name` | **Nuevo, sin verificar.** No están en `style.css` inline — se usan como clases desde `renderCardContribution()` (ver 5.9), probablemente en `style_buscador.css` junto al resto de `.cv-*`, pero no se confirmó por no tener los CSS en esta pasada |
-| `.cv-role-chip` / `.cv-role-none` / `.cv-roles-row` | **Nuevo, sin verificar.** Chips de "🎯 Posibles Roles" en CardViewer (ver 5.9), misma salvedad que la fila anterior |
-| `.tdp-overlay` / `.tdp-panel` / `.tdp-close` / `.tdp-title` / `.tdp-counts` / `.tdp-loc-label` / `.tdp-cards-grid` / `.tdp-card` / `.tdp-qty` | **Nuevo, sin verificar.** Panel "Ver Deck" del rival en Matchups (`Matchups.openDeckPanel`, ver 5.12); por convención de nombres (`opt-*`/`cxd-*` viven en `style_mideck`) lo más probable es que estén ahí también, pero no se confirmó |
+| `.cv-contribution-block` / `.cv-contrib-row` / `.cv-contrib-bar-track` / `.cv-contrib-bar` / `.cv-contrib-val` / `.cv-contrib-delta` / `.cv-contrib-total` / `.cv-contrib-empty` / `.cv-contrib-section-title` / `.cv-deck-name` | style_buscador (probable, no confirmado) | Usadas desde `renderCardContribution()` — "Aporte al deck activo" |
+| `.cv-role-chip` / `.cv-role-none` / `.cv-roles-row` | style_buscador (probable, no confirmado) | Chips de "🎯 Posibles Roles" en CardViewer |
+| `.tdp-overlay` / `.tdp-panel` / `.tdp-close` / `.tdp-title` / `.tdp-counts` / `.tdp-loc-label` / `.tdp-cards-grid` / `.tdp-card` / `.tdp-qty` | style_mideck (probable, no confirmado) | Panel "Ver Deck" del rival en Matchups (`Matchups.openDeckPanel`) |
 
-**Nota:** las filas marcadas "sin verificar" están confirmadas por uso en JS (clases realmente aplicadas por el código), pero no se auditó el CSS de esta versión — los 6 archivos CSS no fueron subidos en esta pasada. Confirmar ubicación real antes de asumirla en un cambio futuro.
+**Pendiente de auditar por completo (módulos agregados después de la última pasada CSS):** clases de Lobby (`.lobby-*`?), Línea de Combos (`.combo-*`?), Gauntlet (`.gauntlet-*`?), Counters/CounterSim (`.cs-*`?), Tu Experiencia con el Deck, Historial de Versiones, tema de fondo, TabIntro. No se listan nombres porque no están confirmados — evitar asumirlos al escribir CSS nuevo, revisar el archivo real primero.
 
 ---
 
@@ -861,40 +794,31 @@ apunta a `db.ygoprodeck.com` ni a `images.ygoprodeck.com`.
 
 **Archivos que NO necesitas subir salvo cambios:**
 - `html2canvas_min.js` — librería externa
-- `pdf_min.js` / `pdf_worker_min.js` — librería externa (pdf.js, usada por
-  `Deck.importPDF()` — ver 5.10)
+- `pdf_min.js` / `pdf_worker_min.js` — librería externa (pdf.js, usada por `Deck.importPDF()`)
 - `logger.js` — solo si cambia `TARGETS` o formato del reporte
 
 **Variables CSS globales** (en `style_core.css`):
 `--gold-color` · `--accent-color` · `--bg-card` · `--text-light` · `--danger-color` · `--spacing-sm/md/lg`
-
-**Renombrados respecto a versiones anteriores:**
-- `Duelo` → `DueloEnVivo` (simuladores.js)
-- `dd_power_scores_cache` → `yugioh_power_cache`
-- `Stats` vive dentro de `data.js`
-- `default_data.js` carga DESPUÉS de `formacion.js` y ANTES de `logger.js`
-
-**Cambio de comportamiento (no es un rename, es un cambio de alcance — jul 2026):**
-- `Duelista` ya NO es un agregado global de todos los decks; ahora es por-deck-activo,
-  leyendo solo `optimization_${deckName}`. Ver 6.2 antes de tocar `historial.js`.
 
 **Diferencia clave entre los dos External Scores:**
 - Deck activo → `Stats.calculateExternalScore()` → deck vs powerScoreCache
 - Decks del meta → `calculateCrossExternalScores()` → N×N real
 
 **Diferencia clave entre Peso de Rol y Poder Base:**
-- `roleWeights` → escala 0.1–2.0 → Internal Score clásico (rendimientos decrecientes) — ACTIVO
-- `roleBasePower` → escala 0–10 → alimenta el G1/G2 Score — ACTIVO (ver 7.2)
+- `roleWeights` → escala 0.1–2.0 → Internal Score clásico (rendimientos decrecientes)
+- `roleBasePower` → escala 0–10 → alimenta el G1/G2 Score
 
-**Nota de diseño abierta (no es bug):**
-- Las vulnerabilidades G1/G2 del External Score (`g1Vulnerability`/`g2Vulnerability`)
-  reutilizan la tabla `g1g2Roles` (pensada para roles de carta) aplicada sobre nombres de
-  specialty/mecánica. Confirmar con el usuario si se quiere una tabla G1/G2 propia para
-  specialties antes de tocar esa parte de `calculateExternalScore()`. Ver 7.2.
+**Nota de diseño abierta (no es bug):** las vulnerabilidades G1/G2 del External Score reutilizan la tabla `g1g2Roles` (pensada para roles de carta) aplicada sobre nombres de specialty/mecánica. Confirmar con el usuario si se quiere una tabla G1/G2 propia para specialties antes de tocar `calculateExternalScore()`.
 
 **Regla de oro para añadir una sección a Config:**
-1. Añadir el bloque HTML en `Config.render()` con el ID de sección
-2. Definir `renderXxxSection()` que devuelve el HTML interno
-3. Definir los métodos save que llaman `ConfigManager.getConfig()` / `saveConfig(cfg)`
-4. Si hay datos nuevos en `defaultConfig`, añadir los getters correspondientes en `ConfigManager`
+1. Añadir el bloque HTML en `Config.render()` con el ID de sección.
+2. Definir `renderXxxSection()` que devuelve el HTML interno.
+3. Definir los métodos save que llaman `ConfigManager.getConfig()` / `saveConfig(cfg)`.
+4. Si hay datos nuevos en `defaultConfig`, añadir los getters correspondientes en `ConfigManager`.
 Si se omite el paso 2, `Config.render()` lanza un TypeError silencioso y la pestaña queda en blanco.
+
+**Posible bug a revisar:** `Deck.switchExperienciaTab` está definido dos veces en `mideck.js`; la segunda definición sobrescribe la primera y no incluye `'cartas'` ni `'sets'` en la lista de panes que oculta/muestra — al hacer clic en esos dos sub-tabs de "Tu Experiencia con el Deck", el pane puede no mostrarse correctamente. Confirmar comportamiento en la app antes de tocar esa sección.
+
+**Observación directa del `index.html` actual (no es bug confirmado, solo una asimetría a tener presente):** el botón de nav de Config es el único sin `onclick="switchTab(...)"` explícito — depende de que `Navigation` delegue por `data-tab`. Si algún día se toca `core.js` (Navigation) y Config deja de responder al clic, empezar a revisar por ahí antes que por `formacion.js` (Config vive ahí).
+
+**Discrepancia a resolver antes de tocar Formación → Primeros Decks:** ver aviso en sección 1.2 — `decklists.js` no está cargado en el `index.html` actual pese a estar documentado como módulo activo.
