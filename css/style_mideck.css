@@ -140,6 +140,13 @@
 .dv-add { color: #6fcf6f; }
 .dv-rem { color: #e06666; }
 .dv-chg { color: #ffd966; }
+.dl-view-switch { display: flex; gap: 6px; margin: 8px 0 10px; }
+.dl-view-btn {
+    flex: 1; padding: 6px 10px; font-size: .8rem; font-weight: 600;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px; color: rgba(255,255,255,0.6); cursor: pointer;
+}
+.dl-view-btn.active { background: var(--gold-color); border-color: var(--gold-color); color: #1a1a1a; }
 .deck-version-comment {
     flex-basis: 100%;
     background: rgba(26, 0, 8, 0.5);

@@ -84,7 +84,13 @@ const Deck = {
         
         return 999;
     },
-    
+    // Orden de una carta dentro del Side Deck: primero cartas de origen
+    // Main Deck (mismo orden que Main), después cartas de origen Extra Deck
+    // (Fusión→Sincronía→Xyz→Link), siempre al final.
+    getSideDeckCardType: function (card) {
+        if (this.isExtraDeckCard(card)) return 6 + this.getExtraDeckCardType(card);
+        return this.getMainDeckCardType(card);
+    },
     // Comparador para ordenamiento
     compareCards: function(a, b, location) {
         const cardA = a[1].data;
@@ -120,6 +126,22 @@ const Deck = {
             }
 
             // Dentro de cada grupo: Nivel/Rango/Link Rating ascendente, luego alfabético
+            const diffLvl = lvl(cardA) - lvl(cardB);
+            if (diffLvl !== 0) return diffLvl;
+
+            return cardA.name.localeCompare(cardB.name);
+
+        } else if (location === 'side') {
+            // Side Deck: primero cartas de origen Main Deck (mismo orden que
+            // Main), después cartas de origen Extra Deck (Fusión→Sincronía→
+            // Xyz→Link), siempre al final.
+            const typeA = this.getSideDeckCardType(cardA);
+            const typeB = this.getSideDeckCardType(cardB);
+
+            if (typeA !== typeB) {
+                return typeA - typeB;
+            }
+
             const diffLvl = lvl(cardA) - lvl(cardB);
             if (diffLvl !== 0) return diffLvl;
 
@@ -217,9 +239,27 @@ const Deck = {
 
     toggleLocation: function (id) {
         const item = this.cards[id];
-        if (!item || item.location === 'extra') return;
+        if (!item || item.location === 'extra') return; // usa moveExtraToSide
 
-        item.location = item.location === 'main' ? 'side' : 'main';
+        if (item.location === 'side' && this.isExtraDeckCard(item.data)) {
+            item.location = 'extra'; // carta que originalmente vino del Extra Deck
+        } else {
+            item.location = item.location === 'main' ? 'side' : 'main';
+        }
+        this.render();
+    },
+
+    // Envía una carta del Extra Deck al Side Deck, respetando el tope de 15.
+    moveExtraToSide: function (id) {
+        const item = this.cards[id];
+        if (!item || item.location !== 'extra') return;
+
+        const sideTotal = this.count('side');
+        if (sideTotal + item.qty > 15) {
+            alert(`No puedes mover esta carta al Side Deck: el límite es 15 cartas y ya tienes ${sideTotal}/15.`);
+            return;
+        }
+        item.location = 'side';
         this.render();
     },
 
@@ -1523,17 +1563,20 @@ html += `
                     </div>
 
                     <div class="deck-buttons">
-                        ${location !== 'extra' ? `
-                            <button class="deck-move" onclick="Deck.toggleLocation(${id})">
-                                ${item.location === 'main' ? 'Side Deck' : 'Main Deck'}
+                        ${location === 'extra' ? `
+                            <button class="deck-move" onclick="Deck.moveExtraToSide(${id})">
+                                Side Deck
                             </button>
-                        ` : ''}
-                        
+                        ` : `
+                            <button class="deck-move" onclick="Deck.toggleLocation(${id})">
+                                ${item.location === 'main' ? 'Side Deck' : (this.isExtraDeckCard(card) ? 'Extra Deck' : 'Main Deck')}
+                            </button>
+                        `}
+
                         <button class="deck-role-btn" data-section-id="deck-role-btn" onclick="Deck.openRolePanel(${id})">
                             Rol
                         </button>
                     </div>
-
                 </div>
             `;
         });
@@ -2018,12 +2061,18 @@ if (isEmpty) {
         <button class="deck-move" onclick="Deck.clearDeck()" ${isEmpty ? 'disabled' : ''}>🗑️ Limpiar Deck</button>
     </div>
     ${window.Banlist?.isGenesysActive?.() ? Banlist.renderDeckPointsIndicator(this.cards) : ''}
+    <div class="dl-view-switch">
+        <button class="dl-view-btn ${this.getDecklistViewMode() === 'detallada' ? 'active' : ''}"
+                onclick="Deck.setDecklistViewMode('detallada')">📝 Detallada</button>
+        <button class="dl-view-btn ${this.getDecklistViewMode() === 'resumida' ? 'active' : ''}"
+                onclick="Deck.setDecklistViewMode('resumida')">📋 Resumida</button>
+    </div>
     <h3 onclick="Deck.toggleSection('main-sec')">🃏 Main Deck (${mainC})</h3>
-    <div id="main-sec">${this.renderRows('main')}</div>
+    <div id="main-sec">${this.getDecklistViewMode() === 'resumida' ? this.renderRowsSummary('main') : this.renderRows('main')}</div>
     <h3 onclick="Deck.toggleSection('extra-sec')">🃏 Extra Deck (${extraC})</h3>
-    <div id="extra-sec">${this.renderRows('extra')}</div>
+    <div id="extra-sec">${this.getDecklistViewMode() === 'resumida' ? this.renderRowsSummary('extra') : this.renderRows('extra')}</div>
     <h3 onclick="Deck.toggleSection('side-sec')">🃏 Side Deck (${sideC})</h3>
-    <div id="side-sec">${this.renderRows('side')}</div>`;
+    <div id="side-sec">${this.getDecklistViewMode() === 'resumida' ? this.renderRowsSummary('side') : this.renderRows('side')}</div>`;
 }
 if (!isEmpty) {
     html += this.renderExperienciaSection();
@@ -4829,6 +4878,70 @@ _buildDeckViewPane: function (location) {
 
     html += '</div>';
     return html;
+},
+
+// ── Vista Resumida del Decklist (toggle en Decklist) ──────────
+// Grid compacto tipo Construcción: solo cantidad de copias, sin
+// dividir visualmente por subgrupos (Ritual/Normal/etc.), pero
+// ordenado internamente con ese mismo criterio. Clic abre el CardViewer.
+renderRowsSummary: function (location) {
+    let entries = Object.entries(this.cards).filter(([, c]) => c.location === location);
+    if (!entries.length) return `<p class="deck-empty">Vacio</p>`;
+
+    if (location === 'main' || location === 'side') {
+        // Side Deck: mismo orden que Main, con cartas de origen Extra Deck
+        // (Fusión→Sincronía→Xyz→Link) al final.
+        entries.sort((a, b) => {
+            const ta = this.getSideDeckCardType(a[1].data);
+            const tb = this.getSideDeckCardType(b[1].data);
+            if (ta !== tb) return ta - tb;
+            return (a[1].data?.name || '').localeCompare(b[1].data?.name || '');
+        });
+    } else if (location === 'extra') {
+        entries.sort((a, b) => {
+            const ta = this.getExtraDeckCardType(a[1].data);
+            const tb = this.getExtraDeckCardType(b[1].data);
+            if (ta !== tb) return ta - tb;
+            return (a[1].data?.name || '').localeCompare(b[1].data?.name || '');
+        });
+    }
+
+    const cardsHtml = entries.map(([id, item]) => {
+        const img  = item.data?.card_images?.[0]?.image_url_small || '';
+        const name = (item.data?.name || '').replace(/"/g, '&quot;');
+        const qty  = item.qty || 1;
+        const imgClass = location === 'side' ? 'deck-img-desaturated' : '';
+        return `
+<div class="tdp-card" onclick="Deck.viewDeckCard('${id}')" title="${name}">
+    <img src="${img}" alt="${name}" class="${imgClass}" onerror="this.style.opacity='0.3'">
+    <span class="tdp-qty">x${qty}</span>
+</div>`;
+    }).join('');
+
+    return `<div class="dv-pane"><div class="tdp-cards-grid">${cardsHtml}</div></div>`;
+},
+
+viewDeckCard: function (cardId) {
+    const cardData = this.cards[cardId]?.data;
+    if (!cardData) return;
+    if (window.CardViewer && typeof CardViewer.open === 'function') CardViewer.open(cardData);
+},
+
+// ── Toggle Detallada/Resumida del Decklist — persiste en localStorage ──
+getDecklistViewMode: function () {
+    if (this._decklistViewMode) return this._decklistViewMode;
+    try {
+        const stored = localStorage.getItem('dd_decklist_view_mode');
+        if (stored === 'detallada' || stored === 'resumida') { this._decklistViewMode = stored; return stored; }
+    } catch (e) {}
+    this._decklistViewMode = 'resumida';
+    return this._decklistViewMode;
+},
+
+setDecklistViewMode: function (mode) {
+    this._decklistViewMode = mode;
+    try { localStorage.setItem('dd_decklist_view_mode', mode); } catch (e) {}
+    this.render();
 },
 };
 
