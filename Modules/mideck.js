@@ -5107,7 +5107,14 @@ const Combos = {
     _findCombo: function (deckName, comboId) {
         return this.getAll(deckName).find(c => c.id === comboId) || null;
     },
-
+    // Normaliza copyOf a array siempre — protege contra datos legacy/corruptos
+    // donde copyOf pudo guardarse como string único u otro valor no-array.
+    _copyOfArr: function (item) {
+        const raw = item && item.copyOf;
+        if (Array.isArray(raw)) return raw;
+        if (raw) return [raw];
+        return [];
+    },
     _updateCombo: function (deckName, comboId, patch) {
         const combos = this.getAll(deckName);
         const combo  = combos.find(c => c.id === comboId);
@@ -5791,7 +5798,7 @@ _stepIndex: function (combo, stepId) {
             if (!item) return false;
             if ((item.roles || []).includes('Starter')) return true;
             // Cuenta también si esta carta es "copia de" un Starter (ver #4).
-            return (item.copyOf || []).some(cid => (Deck.cards[cid]?.roles || []).includes('Starter'));
+            return this._copyOfArr(item).some(cid => (Deck.cards[cid]?.roles || []).includes('Starter'));
         }) || startCards[0] || null;
         const starterId = combo.manualStarterId || autoStarterId;
 
@@ -6155,7 +6162,7 @@ _stepIndex: function (combo, stepId) {
         document.getElementById('combo-copyof-overlay')?.remove();
         const item = Deck.cards[cardId];
         if (!item) return;
-        const selected = new Set(item.copyOf || []);
+        const selected = new Set(this._copyOfArr(item));
 
         const others = Object.entries(Deck.cards)
             .filter(([id, c]) => id !== cardId && (c.location === 'main' || c.location === 'extra'))
@@ -6201,7 +6208,7 @@ _stepIndex: function (combo, stepId) {
         const checked = Array.from(document.querySelectorAll('#combo-copyof-list input[name="combo-copyof-check"]:checked')).map(cb => cb.value);
 
         const newSet = new Set(checked);
-        const oldSet = new Set(item.copyOf || []);
+        const oldSet = new Set(this._copyOfArr(item));
 
         // Relación simétrica: si A queda marcada como copia de B, B también
         // marca a A como copia suya (y viceversa al desmarcar) — sin tener
@@ -6339,7 +6346,7 @@ _stepIndex: function (combo, stepId) {
         const img        = cardData?.card_images?.[0]?.image_url_small || '';
         const name       = cardData?.name || entry.id;
         const isStarter  = combo.starterCardId === entry.id;
-        const copyOfNames = item ? (item.copyOf || []).map(cid => Deck.cards[cid]?.data?.name || cid) : [];
+        const copyOfNames = item ? this._copyOfArr(item).map(cid => Deck.cards[cid]?.data?.name || cid) : [];
         return `
         <div class="combo-eb-card-compact ${entry.active ? 'combo-eb-active' : ''}"
              onclick="Combos.viewCard('${entry.id}')" title="Click para ver la carta">
@@ -6364,7 +6371,7 @@ _stepIndex: function (combo, stepId) {
             return `<span class="combo-dep-chip">${this._escape(depName)}</span>`;
         }).join('') || '<span class="combo-dep-empty">Sin dependencias</span>';
 
-        const copyOfNames = item ? (item.copyOf || []).map(cid => Deck.cards[cid]?.data?.name || cid) : [];
+        const copyOfNames = item ? this._copyOfArr(item).map(cid => Deck.cards[cid]?.data?.name || cid) : [];
         const isStarter  = combo.starterCardId === entry.id;
 
         return `
@@ -6426,7 +6433,7 @@ _stepIndex: function (combo, stepId) {
             const item = Deck.cards[id];
             const name = item.data?.name || id;
             const img  = item.data?.card_images?.[0]?.image_url_small || '';
-            const copyOfNames = (item.copyOf || []).map(cid => Deck.cards[cid]?.data?.name || cid);
+            const copyOfNames = this._copyOfArr(item).map(cid => Deck.cards[cid]?.data?.name || cid);
             const copyOfHTML = copyOfNames.length
                 ? copyOfNames.map(n => `<span class="combo-dep-chip">${this._escape(n)}</span>`).join('')
                 : '<span class="combo-dep-empty">Ninguna</span>';
@@ -6467,7 +6474,7 @@ _stepIndex: function (combo, stepId) {
         if (!item) return 0;
         let total = item.qty || 0;
         Object.entries(Deck.cards).forEach(([id, c]) => {
-            if ((c.copyOf || []).includes(cardId)) total += this._effectiveCopies(id, seen);
+            if (this._copyOfArr(c).includes(cardId)) total += this._effectiveCopies(id, seen);
         });
         return total;
     },
