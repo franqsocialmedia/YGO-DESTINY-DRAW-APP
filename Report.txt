@@ -1,5 +1,5 @@
 # DESTINY DRAW — REPORTE TÉCNICO
-**Versión del reporte:** v7.0 (estado actual, sin historial de cambios)
+**Versión del reporte:** v8.0 (estado actual, sin historial de cambios)
 **Stack:** Vanilla JS (ES6 objects) · CSS modular · HTML5 SPA · YGOProDeck API · Yugipedia API · localStorage
 
 > Este reporte describe el estado ACTUAL de la app: qué existe, cómo funciona a nivel
@@ -23,6 +23,21 @@
 > **Verificado directamente contra el `index.html` actual en esta pasada** (no es
 > inferencia): orden real de carga de `<script>`, estructura del `<nav>`, IDs de
 > sección y footer.
+>
+> **Aviso de auditoría (v8.0):** pasada dirigida sobre `mideck.js`, `style_mideck.css`
+> e `index.html`, a raíz de cambios reportados en Mi Deck (vista Detallada/Resumida
+> del Decklist, ajustes de Side Deck). `index.html` y `mideck.js` resultaron ser
+> **byte-idénticos** a los ya auditados en v7.0 (mismos límites de línea exactos para
+> `Deck`/`Combos`/`Banlist`/`Engines`) — no hubo cambios de código nuevos entre
+> pasadas. Lo que sí cambió es la cobertura del reporte: la v7.0 no había bajado al
+> nivel de detalle de la Vista Resumida/Detallada ni de las reglas de orden/tope del
+> Side Deck, que ya existían en el archivo y quedan documentadas recién ahora (ver
+> 4.3). `style_mideck.css` sí se leyó por primera vez en esta pasada — confirma que
+> las clases de Combos, Tu Experiencia con el Deck, Complejidad y Optimización
+> flaggeadas como "no confirmado" en v6.0 sí están ahí, pero destapa que `.tdp-*`
+> (usada por `mideck.js` para el panel de "Ver Deck" y ahora también para la Vista
+> Resumida) **no** tiene ninguna regla en este archivo — vive en otro CSS no leído
+> todavía, o está sin estilos.
 
 ---
 
@@ -72,7 +87,7 @@ default_data.js → decklists.js → logger.js  (SIEMPRE AL FINAL)
 | `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 2311 — sin cambios | Config global, motor de Scoring (Internal, G1/G2, External, RPS), analizadores de carta |
 | `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 2477 (antes 2238) — ahora incluye el bloque de Lore vía Yugipedia y calidad de imagen configurable | Búsqueda, visor de carta, favoritas, imagen de portada configurable, Lore (Yugipedia) |
 | `lobby.js` | `Lobby` | 247 (antes "sin medir") | Pestaña de inicio: Lo Nuevo, Sugerencias (colapsable), aviso de actualización |
-| `mideck.js` | `Deck`, `Combos`, `Banlist`, `Engines` | 8321 (antes 4632) — casi el doble; ahora incluye `Combos` completo (con modo de ejecución/log de jugadas), Tu Experiencia con el Deck e Historial de Versiones | Deck activo, Optimización, Complejidad, Experiencia con el Deck, Línea de Combos, Banlist/Genesys, Importar PDF/.ydk, sidebar |
+| `mideck.js` | `Deck`, `Combos`, `Banlist`, `Engines` | 8321 — confirmado byte-idéntico a la pasada anterior (mismos límites de línea de `Deck`/`Combos`/`Banlist`/`Engines`); incluye `Combos` completo (con modo de ejecución/log de jugadas), Tu Experiencia con el Deck, Historial de Versiones, y ahora también documentados: Vista Detallada/Resumida del Decklist y reglas de orden/tope del Side Deck (ver 4.3) | Deck activo, Optimización, Complejidad, Experiencia con el Deck, Línea de Combos, Banlist/Genesys, Importar PDF/.ydk, sidebar |
 | `historial.js` | `Matchups`, `Duelista` | 930 (antes 929) — sin cambios relevantes | Historial por rival y Nivel como Piloto del deck activo |
 | `estadisticas.js` | `Estadisticas` | 2673 (antes 2586) — ahora incluye 3 funciones de exportación y el floating widget de selección de deck | Scores del deck activo y del meta, Top Tier, carpetas del meta, Poder de Cartas |
 | `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria`, `CounterSim`, `Gauntlet` | 4330 (antes 3150) — ahora incluye `CounterSim` y `Gauntlet` completos | Simuladores de testing y práctica competitiva |
@@ -98,7 +113,7 @@ style_simuladores.css → style_config.css → responsive_style.css
 |---------|---------------------------|---------|
 | `style_core.css` | 1326 | style_global + style_welcome + style_cardviewer |
 | `style_buscador.css` | ~1045 | — (+ `.cv-archetype-link`, `.cv-release-block`, `.cv-card-id`, `.cv-contribution-*`, `.cv-role-*`, y probablemente el bloque de Lore de Yugipedia, no confirmado) |
-| `style_mideck.css` | 2524 — **desactualizado**, no incluye clases de Línea de Combos ni Tu Experiencia con el Deck | — (incluye `.opt-*` de Optimización, `.cxd-*` de Complejidad del Deck) |
+| `style_mideck.css` | 3515 — **confirmado en esta pasada** (antes 2524). Ya incluye `.combo-*` (Línea de Combos, editor + objetivo + ramificaciones), `.exp-*` (Tu Experiencia con el Deck), `.dl-view-*`/`.dv-*`/`.dzc-*` (Vista Detallada/Resumida y chips de zona, ver 4.3). **Gap confirmado:** `.tdp-*` (grid de cartas del panel "Ver Deck" / Vista Resumida) tiene **0 ocurrencias** en este archivo pese a que `mideck.js` la usa en varios lugares — vive en otro CSS todavía no leído, o está sin estilos | — (incluye `.opt-*` de Optimización — 165 ocurrencias confirmadas —, `.cxd-*` de Complejidad del Deck — 26 confirmadas) |
 | `style_simuladores.css` | 6019 — **desactualizado**, no incluye clases de `CounterSim`/`Gauntlet` | style_simuladores + style_estadisticas |
 | `style_config.css` | 2292 | style_config + style_formacion + style_meta + clases de Scoring G1/G2 |
 | `responsive_style.css` | 611 | Todos los `@media` del proyecto |
@@ -152,6 +167,7 @@ Navigation.currentTab (default) = 'lobby'
 | `yugioh_favoritas` | `Favoritas` | Object | `{cardId: {id,name,type,img,data}}` |
 | `yugioh_engines` | `Engines` | Array | `[{id,name,cards,roles,notes,cover}]` |
 | `deck_${nombre}` (prefijo, 1 clave por deck) | `Deck` | Object | `{cards, notes, savedAt, uid, versions[]}`. `getSavedDecks()` escanea `localStorage` por el prefijo `deck_`. No existe un único objeto `yugioh_decks` — esa clave es referencia legacy usada solo como limpieza de seguridad en Borrar Data / Exportar Reporte. `versions[]` (Historial de Versiones) se guarda dentro de esta misma clave. |
+| `dd_decklist_view_mode` *(nuevo, confirmado en v8.0)* | `Deck` | String | `'detallada'\|'resumida'` — modo de vista del Decklist (Main/Extra/Side), default `'resumida'` en un deck nuevo. Es una preferencia global de UI, no por deck. |
 | `combos_${deckName}` | `Combos` | Object (confirmado que existe y se usa; estructura interna no auditada línea por línea) | Líneas de combo del deck: zonas (mano/campo/cementerio/baneadas), starters/Boss Monster detectados o manuales, choke points con frecuencia, restricciones por severidad, dependencias entre pasos, "copia de" (uso alternativo de una copia), interacciones automáticas + manuales, endboard con función por carta, objetivo del combo, ramificaciones |
 | `experiencia_${deckName}` | `Deck` | Object | Perfil cualitativo: dificultad, estrategia, variante, non-engine slots, manos muertas, composición, cartas destacadas, sets |
 | `optimization_${nombre}` | `Deck` | Object | Datos de 🎯 Optimización: `{sessions:[{id,date,label,rounds:[{id,orden,resultado,tipoVictoria,tipoDerrota,presionTiempo,comboCompleto,brick,starter,extenders,handtraps,boardbreakers,rompioBoard,negoJugada,rivalRompio,notas}]}]}`. Migración automática desde formato viejo `records[]`. |
@@ -202,7 +218,7 @@ Navigation.currentTab (default) = 'lobby'
 | `perfil` | `yugioh_player_level`, `dd_player_profile`, `dd_content_visibility`, `dd_welcome_dismissed` | — |
 | `fallbacks` | `yugioh_meta_fallbacks`, `yugioh_formacion_fallbacks` | — |
 
-> ⚠️ **Gap a confirmar (ampliado en esta pasada):** `combos_${deckName}`, `experiencia_${deckName}`, `gauntlet_${tipo}_${nombre}`, `yugioh_gauntlet_rankings/templates`, `dd_bg_theme`, `dd_tabintro_disabled`, `dd_update_seen`, `dd_buscador_sidebar_img` — y ahora también las claves nuevas confirmadas en esta pasada: `yugioh_img_quality`, `yugioh_estilo_juego`, `yugioh_personaje_resultado`, `yugioh_custom_tests`, `dd_report_counter` — **no aparecen mapeados a ninguna de las 16 categorías** de arriba. O están cubiertos implícitamente por una categoría existente (ej. `combos_` bajo `decks`) y falta documentarlo, o son datos huérfanos que Borrar Data no limpia. Confirmar antes de asumir que "Borrar Todo" los alcanza.
+> ⚠️ **Gap a confirmar (ampliado en esta pasada):** `combos_${deckName}`, `experiencia_${deckName}`, `gauntlet_${tipo}_${nombre}`, `yugioh_gauntlet_rankings/templates`, `dd_bg_theme`, `dd_tabintro_disabled`, `dd_update_seen`, `dd_buscador_sidebar_img` — y ahora también las claves nuevas confirmadas en esta pasada: `yugioh_img_quality`, `yugioh_estilo_juego`, `yugioh_personaje_resultado`, `yugioh_custom_tests`, `dd_report_counter`, `dd_decklist_view_mode` — **no aparecen mapeados a ninguna de las 16 categorías** de arriba. O están cubiertos implícitamente por una categoría existente (ej. `combos_` bajo `decks`) y falta documentarlo, o son datos huérfanos que Borrar Data no limpia. Confirmar antes de asumir que "Borrar Todo" los alcanza.
 
 ---
 
@@ -244,7 +260,15 @@ Gestión del deck activo — 5 sub-tabs + sidebar.
 - Importar Data completa.
 
 **📋 Decklist**
-- Encabezado con nombre editable, conteo por zona, indicador de puntos si la Banlist activa es Genesys.
+- Encabezado con nombre editable, chips de conteo por zona (`🃏 Main` / `✨ Extra` / `🔄 Side`), indicador de puntos si la Banlist activa es Genesys.
+- **Vista Detallada / Resumida** *(confirmado en esta pasada, ya existía sin documentar)*: toggle `Deck.setDecklistViewMode('detallada'|'resumida')`, persiste en `dd_decklist_view_mode`, default `'resumida'` en un deck nuevo.
+  - **Detallada** (`renderRows`) — fila completa por carta: imagen, badges de subtipo/rol, badge de estado en Banlist (`Banlist.getBadgeHTML`), stepper de cantidad, botón mover de zona, botón Rol.
+  - **Resumida** (`renderRowsSummary`) — grid compacto tipo "Ver Deck" (imagen + `x${qty}`, sin badges ni acciones), clic abre `CardViewer`; internamente sigue el mismo orden que la vista Detallada. Las cartas del Side Deck se muestran con la imagen desaturada (`.deck-img-desaturated`) para diferenciarlas de un vistazo.
+  - Aplica de forma independiente a las 3 zonas (Main/Extra/Side comparten el mismo modo elegido).
+- **Side Deck — reglas confirmadas en esta pasada:**
+  - **Orden:** primero las cartas de origen Main Deck (mismo criterio de orden que el Main), después las de origen Extra Deck al final (Fusión→Sincronía→Xyz→Link) — `Deck.getSideDeckCardType()`.
+  - **Tope de 15:** al mandar una carta del Extra Deck al Side (`Deck.moveExtraToSide`) se valida contra el límite real de 15 cartas de Side Deck y se bloquea con alert si se excede. **Este tope NO se valida** cuando una carta de Main pasa a Side por el botón normal (`Deck.toggleLocation`) — queda como posible inconsistencia a resolver si se quiere el mismo tope para ambos caminos.
+  - Una carta que volvió de Side y originalmente venía del Extra Deck, al tocar "volver" regresa a Extra (no a Main) — respeta su origen real.
 - Filas de carta con acciones rápidas (ver, quitar, marcar Carta As).
 - **🧭 Tu Experiencia con el Deck** (6 sub-tabs): Perfil (dificultad 1-5★, estrategia, variante, non-engine slots) · Manos Muertas (X muertas / Y jugadas) · Composición (top atributos/tipos, automático) · Cartas Destacadas (selección manual por categoría) · Sets (packs detectados, marcables) · Rendimiento (gráfico de araña Consistencia/Potencia/Resiliencia/Techo de Poder G1+G2 + winrate de Duelista). **Bug de la v6.0 resuelto:** `Deck.switchExperienciaTab` ya solo tiene una definición y sí incluye `'cartas'` y `'sets'` en la lista de panes — el clic en esos dos sub-tabs funciona correctamente.
 - **Historial de Versiones:** versiones guardadas con diff, comentario editable, score promedio de las sesiones de Optimización de ese rango.
