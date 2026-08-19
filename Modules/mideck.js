@@ -2506,13 +2506,25 @@ this.renderBuscadorDeckPreview();
         this._optToggleTipo();
         if (round.resultado === 'victoria') this._setCatVictoria(round.categoriaVictoria || 3);
     },
-
+    // Mano Muerta REAL, derivada automáticamente de los datos ya registrados
+    // en la ronda (no depende de ningún checkbox manual):
+    // - Yendo de PRIMERO: sin Starter y sin Extender en mano.
+    // - Yendo de SEGUNDO: sin Starter, sin Extender, sin Boardbreaker y sin
+    //   Handtrap — no hay con qué interactuar ni con qué armar el plan.
+    // Si el campo "orden" no está seteado, no se puede evaluar (false).
+    _isManoMuerta: function (r) {
+        const starter = r.starter || 0, ext = r.extenders || 0;
+        const bb = r.boardbreakers || 0, ht = r.handtraps || 0;
+        if (r.orden === 'primero') return starter === 0 && ext === 0;
+        if (r.orden === 'segundo') return starter === 0 && ext === 0 && bb === 0 && ht === 0;
+        return false;
+    },
     calcOptMetrics: function(session) {
         const rounds = session.rounds || [];
         const p = Math.max(rounds.length, 1);
         const wins        = rounds.filter(r => r.resultado === 'victoria').length;
         const losses      = rounds.filter(r => r.resultado === 'derrota').length;
-        const bricks      = rounds.filter(r => (r.bricks || 0) >= 1 || r.brick).length;
+        const bricks      = rounds.filter(r => this._isManoMuerta(r)).length;
         const starters    = rounds.filter(r => (r.starter || 0) >= 1).length;
         const extenders   = rounds.filter(r => (r.extenders || 0) >= 1).length;
         const rivalInterr = rounds.filter(r => (r.rivalInterrupciones || 0) >= 1 || r.comboCompleto).length;
@@ -3573,9 +3585,10 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             followUp = Math.round(interrFirstPct * 10) / 10;
         }
 
-        // 5. Blindaje — inverso de la tasa de bricks (bricks o bricks/tech en mano >= 1)
-        const bricks = rounds.filter(r => (r.bricks || 0) >= 1 || r.brick).length;
-        const blindaje = Math.round((100 - (bricks / total) * 100) * 10) / 10;
+        // 5. Blindaje — inverso de la tasa de Manos Muertas REALES (ver
+        // _isManoMuerta). Ya escoпado a la versión actual vía rounds.
+        const manosMuertas = rounds.filter(r => this._isManoMuerta(r)).length;
+        const blindaje = Math.round((100 - (manosMuertas / total) * 100) * 10) / 10;
 
         // 6. Eficiencia — inverso del exceso de slots reactivos en mano:
         // handtraps (3+) o boardbreakers (3+). Se cuenta la ronda una sola
@@ -3593,7 +3606,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             { key: 'followup', label: 'Follow Up', raw: followUp, unit: '%', norm: pct10(followUp),
               desc: 'Winrate jugando de segundo (remontar sin ventaja de turno) + % de interrupciones hechas yendo de primero.', has: followUp != null },
             { key: 'blindaje', label: 'Blindaje', raw: blindaje, unit: '%', norm: pct10(blindaje),
-              desc: 'Inverso de la tasa de bricks — qué tan blindado está el build contra manos muertas.', has: true },
+              desc: `Inverso de la tasa de Manos Muertas reales (${manosMuertas}/${total} duelos de esta versión) — sin Starter/Extender (y sin Boardbreaker/Handtrap yendo de segundo).`, has: true },
             { key: 'eficiencia', label: 'Eficiencia', raw: eficiencia, unit: '%', norm: pct10(eficiencia),
               desc: 'Inverso del exceso de handtraps o boardbreakers en mano (3+) — evita slots reactivos desperdiciados en manos donde no aportan.', has: true }
         ];
@@ -3650,7 +3663,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 Los 6 ejes se calculan sobre <strong>todas las rondas de todas tus sesiones de 🎯 Optimización</strong>
                 para este deck: Consistencia (combo abierto: starter + extender en la misma ronda), Ceiling (calidad
                 de tus victorias + tasa de FTK), Resiliencia (winrate bajo interrupción/rotura de campo rival),
-                Follow Up (winrate jugando de segundo), Blindaje (inverso de la tasa de bricks) y Eficiencia (inverso
+                Follow Up (winrate jugando de segundo), Blindaje (inverso de la tasa de Manos Muertas reales) y Eficiencia (inverso
                 del exceso de handtraps en mano). Mientras más rondas registres, más confiable es el gráfico.
             </p>`;
         }
