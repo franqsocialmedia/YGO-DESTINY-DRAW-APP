@@ -2512,7 +2512,7 @@ this.renderBuscadorDeckPreview();
         const p = Math.max(rounds.length, 1);
         const wins        = rounds.filter(r => r.resultado === 'victoria').length;
         const losses      = rounds.filter(r => r.resultado === 'derrota').length;
-        const bricks      = rounds.filter(r => r.brick).length;
+        const bricks      = rounds.filter(r => (r.bricks || 0) >= 1 || r.brick).length;
         const starters    = rounds.filter(r => (r.starter || 0) >= 1).length;
         const extenders   = rounds.filter(r => (r.extenders || 0) >= 1).length;
         const rivalInterr = rounds.filter(r => (r.rivalInterrupciones || 0) >= 1 || r.comboCompleto).length;
@@ -3488,13 +3488,122 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
               desc: '% del Main que es Non-Engine sin sacrificar el plan de juego — más alto = Engine más compacto y eficiente.', has: eficiencia != null }
         ];
     },
+    // ── Rendimiento: gráfico de araña de 6 ejes + Winrate ──
+    // Los 6 ejes salen 100% de 🎯 Optimización (TODAS las rondas de TODAS
+    // las sesiones registradas para este deck, no solo la última sesión).
+    // Ya no dependen de Línea de Combos ni de Non-Engine Slots (Perfil) —
+    // ambos quedan libres de ser obligatorios para tener el gráfico completo.
+    EXP_RADAR_MIN_ROUNDS: 3, // rondas mínimas totales para mostrar el radar
 
+    _getAllOptRounds: function () {
+        const data = this.getOptimizacion();
+        return (data.sessions || []).reduce((all, s) => all.concat(s.rounds || []), []);
+    },
+    // Rondas de Optimización SOLO de la versión actualmente guardada (última
+    // de versions[]) — si el deck aún no tiene versiones guardadas, cae en
+    // todas las rondas registradas.
+    _getCurrentVersionOptRounds: function () {
+        const versions = this.getVersions(this.name);
+        if (!versions.length) return this._getAllOptRounds();
+        const startAt = versions[versions.length - 1].savedAt;
+        const sessions = this._sessionsInRange(this.name, startAt, Infinity);
+        return sessions.reduce((all, s) => all.concat(s.rounds || []), []);
+    },
+    _getRendimientoAxes: function () {
+        const rounds = this._getCurrentVersionOptRounds();
+        const total = rounds.length;
+        const clamp = v => Math.max(0, Math.min(10, v));
+        const pct10 = v => v == null ? 0 : clamp(v / 10);
+
+        if (total < this.EXP_RADAR_MIN_ROUNDS) {
+            return [
+                { key: 'consistencia', label: 'Consistencia', raw: null, unit: '%', norm: 0,
+                  desc: '% de rondas donde abriste Starter + Extender (combo abierto completo).', has: false },
+                { key: 'ceiling', label: 'Ceiling', raw: null, unit: 'pts', norm: 0,
+                  desc: 'Poder de cierre: calidad de tus victorias (categoría) + tasa de FTK.', has: false },
+                { key: 'resiliencia', label: 'Resiliencia', raw: null, unit: '%', norm: 0,
+                  desc: 'Winrate en rondas con interrupción o rotura de campo del rival.', has: false },
+                { key: 'followup', label: 'Follow Up', raw: null, unit: '%', norm: 0,
+                  desc: 'Winrate jugando de segundo (remontar sin ventaja de turno).', has: false },
+                { key: 'blindaje', label: 'Blindaje', raw: null, unit: '%', norm: 0,
+                  desc: 'Inverso de la tasa de bricks — qué tan blindado está el build contra manos muertas.', has: false },
+                { key: 'eficiencia', label: 'Eficiencia', raw: null, unit: '%', norm: 0,
+                  desc: 'Inverso del exceso de handtraps en mano (3+) — evita slots desperdiciados en interacción reactiva.', has: false }
+            ];
+        }
+
+        // 1. Consistencia — combo abierto completo (starter + extender misma ronda)
+        const comboAbierto = rounds.filter(r => (r.starter || 0) >= 1 && (r.extenders || 0) >= 1).length;
+        const consist = Math.round((comboAbierto / total) * 1000) / 10;
+
+        // 2. Ceiling (Poder de Cierre) — calidad de victorias (categoría) +
+        // tasa de FTK + % de rondas donde ROMPISTE el campo rival (rompioBoard)
+        const winPoints = rounds.reduce((a, r) =>
+            a + (r.resultado === 'victoria' ? this._catVictoriaWeight(r.categoriaVictoria) : 0), 0);
+        const winQuality = (winPoints / total) * 100;
+        const ftkRate = (rounds.filter(r => r.tipoVictoria === 'ftk').length / total) * 100;
+        const boardBreakRate = (rounds.filter(r => r.rompioBoard).length / total) * 100;
+        const ceiling = Math.round((winQuality * 0.5 + ftkRate * 0.2 + boardBreakRate * 0.3) * 10) / 10;
+
+        // 3. Resiliencia — winrate bajo presión del rival (interrupción o rotura de campo)
+        const presion = rounds.filter(r =>
+            (r.rivalInterrupciones || 0) >= 1 || r.rivalRompio || (r.vecesRivalRompioBoard || 0) >= 1);
+        const resil = presion.length
+            ? { pct: Math.round((presion.filter(r => r.resultado === 'victoria').length / presion.length) * 1000) / 10, n: presion.length }
+            : null;
+
+        // 4. Follow Up — winrate jugando de segundo (remontar sin ventaja de
+        // turno) combinado con % de rondas yendo de PRIMERO donde igual
+        // metiste interrupción/negación (interrupciones >= 1). Si solo hay
+        // datos de un lado, se usa ese solo.
+        const rSecond = rounds.filter(r => r.orden === 'segundo');
+        const rFirst  = rounds.filter(r => r.orden === 'primero');
+        const winSecondPct = rSecond.length
+            ? (rSecond.filter(r => r.resultado === 'victoria').length / rSecond.length) * 100
+            : null;
+        const interrFirstPct = rFirst.length
+            ? (rFirst.filter(r => (r.interrupciones || 0) >= 1).length / rFirst.length) * 100
+            : null;
+        let followUp = null;
+        if (winSecondPct != null && interrFirstPct != null) {
+            followUp = Math.round((winSecondPct * 0.6 + interrFirstPct * 0.4) * 10) / 10;
+        } else if (winSecondPct != null) {
+            followUp = Math.round(winSecondPct * 10) / 10;
+        } else if (interrFirstPct != null) {
+            followUp = Math.round(interrFirstPct * 10) / 10;
+        }
+
+        // 5. Blindaje — inverso de la tasa de bricks (bricks o bricks/tech en mano >= 1)
+        const bricks = rounds.filter(r => (r.bricks || 0) >= 1 || r.brick).length;
+        const blindaje = Math.round((100 - (bricks / total) * 100) * 10) / 10;
+
+        // 6. Eficiencia — inverso del exceso de slots reactivos en mano:
+        // handtraps (3+) o boardbreakers (3+). Se cuenta la ronda una sola
+        // vez aunque exceda en ambos (no se penaliza doble).
+        const excesoRounds = rounds.filter(r => (r.handtraps || 0) >= 3 || (r.boardbreakers || 0) >= 3).length;
+        const eficiencia = Math.round((100 - (excesoRounds / total) * 100) * 10) / 10;
+
+        return [
+            { key: 'consistencia', label: 'Consistencia', raw: consist, unit: '%', norm: pct10(consist),
+              desc: '% de rondas donde abriste Starter + Extender (combo abierto completo).', has: true },
+            { key: 'ceiling', label: 'Ceiling', raw: ceiling, unit: 'pts', norm: pct10(ceiling),
+              desc: 'Poder de cierre: calidad de tus victorias (categoría) + tasa de FTK + % de rondas donde rompiste el campo rival.', has: true },
+            { key: 'resiliencia', label: 'Resiliencia', raw: resil ? resil.pct : null, unit: '%', norm: pct10(resil ? resil.pct : null),
+              desc: 'Winrate en rondas con interrupción o rotura de campo del rival.', has: !!resil },
+            { key: 'followup', label: 'Follow Up', raw: followUp, unit: '%', norm: pct10(followUp),
+              desc: 'Winrate jugando de segundo (remontar sin ventaja de turno) + % de interrupciones hechas yendo de primero.', has: followUp != null },
+            { key: 'blindaje', label: 'Blindaje', raw: blindaje, unit: '%', norm: pct10(blindaje),
+              desc: 'Inverso de la tasa de bricks — qué tan blindado está el build contra manos muertas.', has: true },
+            { key: 'eficiencia', label: 'Eficiencia', raw: eficiencia, unit: '%', norm: pct10(eficiencia),
+              desc: 'Inverso del exceso de handtraps o boardbreakers en mano (3+) — evita slots reactivos desperdiciados en manos donde no aportan.', has: true }
+        ];
+    },
     renderExpRendimiento: function () {
         const axes = this._getRendimientoAxes();
         const g = window.Duelista ? Duelista.getDeckStats(this.name) : null;
         const anyData = axes.some(a => a.has);
 
-        let radarHtml = '<p class="exp-empty">Sin datos suficientes — registra al menos un combo en 🧬 Línea de Combos y rondas en 🎯 Optimización.</p>';
+        let radarHtml = `<p class="exp-empty">Sin datos suficientes — registra al menos ${this.EXP_RADAR_MIN_ROUNDS} rondas en 🎯 Optimización (Registro de Ronda de Duelo) para generar el gráfico.</p>`;
         if (anyData) {
             const cx = 160, cy = 160, R = 85, labelR = R + 32, valR = R + 12;
             const angleFor = i => (Math.PI * 2 * i / axes.length) - Math.PI / 2;
@@ -3535,17 +3644,14 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 `).join('')}
             </div>
             <p class="exp-field-hint exp-radar-note">
-                📐 El número que ves en cada punta es una nota de 0 a 10 (para poder comparar cosas tan distintas
-                como "puntos de poder" y "porcentajes" en el mismo gráfico) — el dato real de cada eje lo tienes en
-                la lista de arriba. En los 6 ejes aplica la misma regla: <strong>mientras más alto el punto, mejor
-                para tu deck</strong> (Blindaje incluido: mide qué tan bien aguanta el combo sus propios Choke
-                Points, no qué tan frágil es).<br><br>
-                Para que este gráfico tenga datos necesitas: registrar al menos un combo en 🧠 Mi Deck → 🧬 Línea de
-                Combos (de ahí salen Consistencia, Ceiling, Follow Up y Blindaje — se usa siempre tu combo más
-                poderoso); jugar rondas en 🎯 Optimización (de ahí sale Resiliencia); y completar los Non-Engine
-                Slots en 🎚️ Perfil (de ahí sale Eficiencia — mientras más cartas Non-Engine te sobren, más
-                compacto es tu Engine). Ceiling y Follow Up se miden contra un tope de referencia de
-                ${this.EXP_RADAR_POWER_REF} pts = 10/10, pensado para un combo fuerte típico.
+                📐 El número que ves en cada punta es una nota de 0 a 10 sobre el % real de cada eje (el dato
+                exacto lo tienes en la lista de abajo). En los 6 ejes aplica la misma regla: <strong>mientras más
+                alto el punto, mejor para tu deck</strong>.<br><br>
+                Los 6 ejes se calculan sobre <strong>todas las rondas de todas tus sesiones de 🎯 Optimización</strong>
+                para este deck: Consistencia (combo abierto: starter + extender en la misma ronda), Ceiling (calidad
+                de tus victorias + tasa de FTK), Resiliencia (winrate bajo interrupción/rotura de campo rival),
+                Follow Up (winrate jugando de segundo), Blindaje (inverso de la tasa de bricks) y Eficiencia (inverso
+                del exceso de handtraps en mano). Mientras más rondas registres, más confiable es el gráfico.
             </p>`;
         }
 
@@ -3555,7 +3661,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 <div class="exp-wr-cell"><div class="exp-wr-val">${g.wr1st !== null ? g.wr1st + '%' : '—'}</div><div class="exp-wr-tag">Going 1st</div></div>
                 <div class="exp-wr-cell"><div class="exp-wr-val">${g.wr2nd !== null ? g.wr2nd + '%' : '—'}</div><div class="exp-wr-tag">Going 2nd</div></div>
             </div>
-            <p class="exp-field-hint">Tomado de Optimización → Historial de Sesiones (${g.totalDuels} rondas).</p>`
+            <p class="exp-field-hint">* Tomado de Optimización → Historial de Sesiones (${g.totalDuels} rondas).</p>`
             : `<p class="exp-empty">Sin rondas registradas aún en Optimización.</p>`;
 
         return `
