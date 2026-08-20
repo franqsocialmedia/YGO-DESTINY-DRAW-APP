@@ -3545,3 +3545,14 @@
 .exp-mm-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
 .exp-mm-field { display: flex; flex-direction: column; gap: 3px; }
 .exp-mm-sublabel { font-size: .75rem; opacity: .75; }
+
+.deck-header-radar {
+    display: flex;
+    justify-content: center;
+    max-width: 220px;
+    margin: 0 auto var(--spacing-md);
+}
+.deck-header-radar .exp-radar-svg {
+    width: 100%;
+    height: auto;
+}

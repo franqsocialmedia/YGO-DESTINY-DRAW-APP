@@ -2202,6 +2202,8 @@ html += `</div>`;
 html += `<div id="mideck-construccion-pane" style="display:none;">`;
 
 if (!isEmpty) {
+    
+    html += `${this.renderDeckHeaderRadar()}`;
     html += `<div id="construccion-complejidad-box">${this.renderComplejidadResultCard()}</div>`;
     html += `<div data-section-id="deck-chart">${this.renderDeckStatsBlock()}</div>`;
 
@@ -3638,6 +3640,48 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
               desc: 'Inverso del exceso de handtraps o boardbreakers en mano (3+) — evita slots reactivos desperdiciados en manos donde no aportan.', has: true }
         ];
     },
+        // Construye solo el <svg> del radar (sin leyenda ni párrafo explicativo)
+    // — reutilizable para la copia compacta del header de Mi Deck.
+    _buildRendimientoRadarSvg: function (axes) {
+        const cx = 160, cy = 160, R = 85, labelR = R + 32, valR = R + 12;
+        const angleFor = i => (Math.PI * 2 * i / axes.length) - Math.PI / 2;
+        const pt = (i, r) => { const a = angleFor(i); return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; };
+        const gridPolys = [0.25, 0.5, 0.75, 1].map(lv => axes.map((_, i) => pt(i, R * lv).join(',')).join(' '));
+        const dataPoly = axes.map((a, i) => pt(i, R * (a.norm / 10)).join(',')).join(' ');
+        const axisLines = axes.map((a, i) => {
+            const [x, y] = pt(i, R);
+            return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" class="exp-radar-axis"/>`;
+        }).join('');
+        const labels = axes.map((a, i) => {
+            const [x, y] = pt(i, labelR);
+            const angle = angleFor(i), cos = Math.cos(angle);
+            const anchor = cos > 0.35 ? 'start' : (cos < -0.35 ? 'end' : 'middle');
+            return `<text x="${x}" y="${y}" text-anchor="${anchor}" dominant-baseline="middle" class="exp-radar-label">${a.label}</text>`;
+        }).join('');
+        const valLabels = axes.map((a, i) => {
+            const [x, y] = pt(i, R * (a.norm / 10) + (a.norm > 0 ? 10 : valR * 0));
+            return a.has
+                ? `<text x="${x}" y="${y}" text-anchor="middle" class="exp-radar-val">${a.norm.toFixed(1)}</text>`
+                : '';
+        }).join('');
+
+        return `
+        <svg viewBox="0 0 320 320" class="exp-radar-svg">
+            ${gridPolys.map(p => `<polygon points="${p}" class="exp-radar-grid"/>`).join('')}
+            ${axisLines}
+            <polygon points="${dataPoly}" class="exp-radar-data"/>
+            ${labels}
+            ${valLabels}
+        </svg>`;
+    },
+        // Copia compacta del radar de Rendimiento para el header de Mi Deck
+    // (sin leyenda ni nota explicativa). Vacío si no hay datos suficientes.
+    renderDeckHeaderRadar: function () {
+        const axes = this._getRendimientoAxes();
+        const anyData = axes.some(a => a.has);
+        if (!anyData) return '';
+        return `<div class="deck-header-radar">${this._buildRendimientoRadarSvg(axes)}</div>`;
+    },
     renderExpRendimiento: function () {
         const axes = this._getRendimientoAxes();
         // Winrate calculado sobre las MISMAS rondas del radar (scopeadas a la
@@ -3659,36 +3703,8 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
 
         let radarHtml = `<p class="exp-empty">Sin datos suficientes — registra al menos ${this.EXP_RADAR_MIN_ROUNDS} rondas en 🎯 Optimización (Registro de Ronda de Duelo) para generar el gráfico.</p>`;
         if (anyData) {
-            const cx = 160, cy = 160, R = 85, labelR = R + 32, valR = R + 12;
-            const angleFor = i => (Math.PI * 2 * i / axes.length) - Math.PI / 2;
-            const pt = (i, r) => { const a = angleFor(i); return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; };
-            const gridPolys = [0.25, 0.5, 0.75, 1].map(lv => axes.map((_, i) => pt(i, R * lv).join(',')).join(' '));
-            const dataPoly = axes.map((a, i) => pt(i, R * (a.norm / 10)).join(',')).join(' ');
-            const axisLines = axes.map((a, i) => {
-                const [x, y] = pt(i, R);
-                return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" class="exp-radar-axis"/>`;
-            }).join('');
-            const labels = axes.map((a, i) => {
-                const [x, y] = pt(i, labelR);
-                const angle = angleFor(i), cos = Math.cos(angle);
-                const anchor = cos > 0.35 ? 'start' : (cos < -0.35 ? 'end' : 'middle');
-                return `<text x="${x}" y="${y}" text-anchor="${anchor}" dominant-baseline="middle" class="exp-radar-label">${a.label}</text>`;
-            }).join('');
-            const valLabels = axes.map((a, i) => {
-                const [x, y] = pt(i, R * (a.norm / 10) + (a.norm > 0 ? 10 : valR * 0));
-                return a.has
-                    ? `<text x="${x}" y="${y}" text-anchor="middle" class="exp-radar-val">${a.norm.toFixed(1)}</text>`
-                    : '';
-            }).join('');
-
             radarHtml = `
-            <svg viewBox="0 0 320 320" class="exp-radar-svg">
-                ${gridPolys.map(p => `<polygon points="${p}" class="exp-radar-grid"/>`).join('')}
-                ${axisLines}
-                <polygon points="${dataPoly}" class="exp-radar-data"/>
-                ${labels}
-                ${valLabels}
-            </svg>
+            ${this._buildRendimientoRadarSvg(axes)}
             <div class="exp-radar-legend">
                 ${axes.map(a => `
                     <div class="exp-radar-legend-item ${a.has ? '' : 'exp-radar-legend-missing'}">
