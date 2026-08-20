@@ -3377,6 +3377,27 @@
     text-transform: uppercase;
     letter-spacing: .04em;
 }
+/* Cartas Destacadas (Tu Experiencia con el Deck) — mismo estilo que
+   Cartas Clave y Amenazas (.opt-topcards-*), 20% más chico, con botón ✕. */
+.exp-destacada-row { gap: 8px; }
+.exp-destacada-item { width: 72px; position: relative; }
+.exp-destacada-item img { width: 72px; cursor: pointer; }
+.exp-destacada-remove {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 18px;
+    height: 18px;
+    line-height: 16px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.2);
+    background: rgba(20,20,20,.85);
+    color: var(--text-light);
+    font-size: 0.65rem;
+    cursor: pointer;
+}
+.exp-destacada-remove:hover { color: var(--danger-color); border-color: var(--danger-color); }
 /* ── Estadísticas de Interacciones (Línea de Combos) ── */
 .combo-stats-block { margin: 14px 0; }
 .combo-stats-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }

@@ -3225,21 +3225,19 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         this._refreshExpCardCat(cat);
     },
 
+    // Estado "abierto/cerrado" del picker por categoría — en memoria, no en
+    // localStorage, para decidir qué botón mostrar (➕ Agregar / 💾 Guardar).
+    _expOpenGridCats: {},
+
     _refreshExpCardCat: function (cat) {
         const wrap = document.getElementById(`exp-cat-${cat}`);
         if (!wrap) return;
-        const gridEl = document.getElementById(`exp-grid-${cat}`);
-        const wasOpen = gridEl && gridEl.style.display !== 'none';
         wrap.innerHTML = this._renderExpCardCatBlock(cat);
-        if (wasOpen) {
-            const newGrid = document.getElementById(`exp-grid-${cat}`);
-            if (newGrid) newGrid.style.display = '';
-        }
     },
 
     toggleExpCardGrid: function (cat) {
-        const el = document.getElementById(`exp-grid-${cat}`);
-        if (el) el.style.display = (el.style.display === 'none') ? '' : 'none';
+        this._expOpenGridCats[cat] = !this._expOpenGridCats[cat];
+        this._refreshExpCardCat(cat);
     },
 
     _renderExpCardCatBlock: function (cat) {
@@ -3278,23 +3276,30 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         ` : `<p class="opt-key-empty">Este deck no tiene cartas en Main ni en Extra.</p>`;
 
         const selected = this._getExpCardList(cat);
+        const isFull = selected.length >= meta.max;
+        const isOpen = !!this._expOpenGridCats[cat];
+
         const chips = selected.length ? `
-            <div class="opt-key-selected-row">
+            <div class="opt-topcards-row exp-destacada-row">
                 ${selected.map(c => `
-                    <div class="opt-key-chip">
-                        <img src="${c.img}" alt="${c.name}">
-                        <span>${c.name}</span>
-                        <button type="button" class="opt-key-chip-remove" onclick="Deck.toggleExpCard('${cat}','${c.id}')" title="Quitar">✕</button>
+                    <div class="opt-topcards-item exp-destacada-item" title="${esc(c.name)}">
+                        <img src="${c.img}" alt="${esc(c.name)}" onclick="Combos.viewMetaCard('${c.id}')">
+                        <span class="opt-topcards-name">${c.name}</span>
+                        <button type="button" class="exp-destacada-remove" onclick="Deck.toggleExpCard('${cat}','${c.id}')" title="Quitar">✕</button>
                     </div>
                 `).join('')}
             </div>` : `<p class="opt-key-empty">Ninguna seleccionada.</p>`;
+
+        const actionBtn = isOpen
+            ? `<button type="button" class="deck-move opt-key-search-btn" onclick="Deck.toggleExpCardGrid('${cat}')">💾 Guardar Selección</button>`
+            : `<button type="button" class="deck-move opt-key-search-btn" onclick="Deck.toggleExpCardGrid('${cat}')" ${isFull ? 'disabled title="Máximo alcanzado — quita una carta para agregar otra"' : ''}>➕ Agregar</button>`;
 
         return `
             <div class="opt-group-hdr opt-full">${meta.label} <span class="opt-key-counter">(${selected.length}/${meta.max})</span></div>
             <p class="opt-key-hint">${meta.hint}</p>
             ${chips}
-            <button type="button" class="deck-move opt-key-search-btn" onclick="Deck.toggleExpCardGrid('${cat}')">🃏 Elegir de mis cartas</button>
-            <div id="exp-grid-${cat}" style="display:none;">${grid}</div>
+            ${actionBtn}
+            <div id="exp-grid-${cat}" style="${isOpen ? '' : 'display:none;'}">${grid}</div>
         `;
     },
 
