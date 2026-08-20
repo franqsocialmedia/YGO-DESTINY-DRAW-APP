@@ -25,6 +25,7 @@ const Deck = {
     MAX_VERSIONS: 25,
     _pendingThreatCards: [],
     _roundDraft: null,
+    _activeVersionId: null,   // versión actualmente cargada en el editor (null = la más reciente)
 
     init: function () {
         this.container = document.getElementById('deck-container');
@@ -513,6 +514,7 @@ const Deck = {
             versions: versions,
             uid:      uid
         };
+        this._activeVersionId = null;
         localStorage.setItem(`deck_${this.name}`, JSON.stringify(deckData));
         alert('Deck guardado');
         this.render();
@@ -655,6 +657,7 @@ const Deck = {
 
         this.cards = JSON.parse(JSON.stringify(v.cards));
         this.name  = deckName;
+        this._activeVersionId = v.id;
 
         Object.entries(this.cards).forEach(([id, item]) => {
             if (item.data) item.roles = this.autoAssignRoles(item.data);
@@ -779,6 +782,7 @@ const Deck = {
             this.cards = data.cards || data;
             this.name  = deckName;
             this.notes = data.notes || '';
+            this._activeVersionId = null;
 
             Object.entries(this.cards).forEach(([id, item]) => {
                 if (item.data) {
@@ -823,6 +827,7 @@ const Deck = {
 
     clearDeck: function () {
         this.cards = {};
+        this._activeVersionId = null;
         this.render();
     },
 tryDeck: function () {
@@ -2349,7 +2354,24 @@ this.renderBuscadorDeckPreview();
             return t >= startAt && t < endAt;
         });
     },
-
+    // Rango [savedAt, siguiente savedAt) de la versión ACTUALMENTE cargada en
+    // el editor (this._activeVersionId). Si no hay versión activa (deck recién
+    // cargado o recién guardado), usa la última versión de versions[].
+    _getActiveVersionRange: function (deckName) {
+        const name = deckName || this.name;
+        const versions = this.getVersions(name);
+        if (!versions.length) return null;
+        let idx = versions.length - 1;
+        if (this._activeVersionId) {
+            const found = versions.findIndex(v => v.id === this._activeVersionId);
+            if (found >= 0) idx = found;
+        }
+        return {
+            startAt: versions[idx].savedAt,
+            endAt:   versions[idx + 1] ? versions[idx + 1].savedAt : Infinity,
+            version: versions[idx]
+        };
+    },
     // Promedio de puntaje de sesión dentro de un rango de tiempo (una versión).
     // null si no hay sesiones registradas en ese rango.
     getVersionScore: function(deckName, startAt, endAt) {
@@ -3110,6 +3132,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
 
     renderExperienciaSection: function () {
         return `
+        
         <div data-section-id="deck-experiencia">
         <h3 class="deck-section-title" onclick="Deck.toggleSection('experiencia-sec')">🧭 Tu Experiencia con el Deck</h3>
         <div id="experiencia-sec" class="deck-section-content" style="display:none;">
@@ -3520,10 +3543,9 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
     // de versions[]) — si el deck aún no tiene versiones guardadas, cae en
     // todas las rondas registradas.
     _getCurrentVersionOptRounds: function () {
-        const versions = this.getVersions(this.name);
-        if (!versions.length) return this._getAllOptRounds();
-        const startAt = versions[versions.length - 1].savedAt;
-        const sessions = this._sessionsInRange(this.name, startAt, Infinity);
+        const range = this._getActiveVersionRange(this.name);
+        if (!range) return this._getAllOptRounds();
+        const sessions = this._sessionsInRange(this.name, range.startAt, range.endAt);
         return sessions.reduce((all, s) => all.concat(s.rounds || []), []);
     },
     _getRendimientoAxes: function () {
