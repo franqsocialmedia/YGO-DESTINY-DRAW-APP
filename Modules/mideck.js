@@ -3640,7 +3640,21 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
     },
     renderExpRendimiento: function () {
         const axes = this._getRendimientoAxes();
-        const g = window.Duelista ? Duelista.getDeckStats(this.name) : null;
+        // Winrate calculado sobre las MISMAS rondas del radar (scopeadas a la
+        // versión activa del deck) — ya no usa Duelista.getDeckStats, que
+        // suma TODAS las versiones sin distinción.
+        const rounds = this._getCurrentVersionOptRounds();
+        const g = rounds.length ? (() => {
+            const wins = r => r.filter(x => x.resultado === 'victoria').length;
+            const r1st = rounds.filter(r => r.orden === 'primero');
+            const r2nd = rounds.filter(r => r.orden === 'segundo');
+            return {
+                totalDuels: rounds.length,
+                wrAll: Math.round((wins(rounds) / rounds.length) * 1000) / 10,
+                wr1st: r1st.length ? Math.round((wins(r1st) / r1st.length) * 1000) / 10 : null,
+                wr2nd: r2nd.length ? Math.round((wins(r2nd) / r2nd.length) * 1000) / 10 : null
+            };
+        })() : null;
         const anyData = axes.some(a => a.has);
 
         let radarHtml = `<p class="exp-empty">Sin datos suficientes — registra al menos ${this.EXP_RADAR_MIN_ROUNDS} rondas en 🎯 Optimización (Registro de Ronda de Duelo) para generar el gráfico.</p>`;
@@ -3701,7 +3715,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 <div class="exp-wr-cell"><div class="exp-wr-val">${g.wr1st !== null ? g.wr1st + '%' : '—'}</div><div class="exp-wr-tag">Going 1st</div></div>
                 <div class="exp-wr-cell"><div class="exp-wr-val">${g.wr2nd !== null ? g.wr2nd + '%' : '—'}</div><div class="exp-wr-tag">Going 2nd</div></div>
             </div>
-            <p class="exp-field-hint">* Tomado de Optimización → Historial de Sesiones (${g.totalDuels} rondas).</p>`
+                <p class="exp-field-hint">* Rondas de la versión actualmente cargada de este deck (${g.totalDuels}).</p>`
             : `<p class="exp-empty">Sin rondas registradas aún en Optimización.</p>`;
 
         return `
