@@ -246,3 +246,262 @@ const Lobby = {
 };
 
 window.Lobby = Lobby;
+// ============================================
+// TourGate — orquesta el orden de paneles de bienvenida:
+// Lobby Update Panel -> Welcome Panel -> App Tour -> Tab Intro
+// No modifica Lobby/Welcome/TabIntro, solo observa su estado en DOM/localStorage.
+// ============================================
+const TourGate = {
+  _updateDone: false,
+  _welcomeDone: false,
+
+  init() {
+    this._watchUpdateOverlay();
+    this._watchWelcomeOverlay();
+  },
+
+  _watchUpdateOverlay() {
+    const selector = '.lobby-update-overlay, #lobby-update-overlay, .update-overlay';
+    const check = () => {
+      const stillThere = document.querySelector(selector);
+      if (!stillThere) { this._updateDone = true; }
+      else setTimeout(check, 300);
+    };
+    check();
+  },
+
+  _watchWelcomeOverlay() {
+    const check = () => {
+      const w = document.getElementById('welcome-overlay');
+      const visible = w && w.classList.contains('welcome-visible');
+      const dismissed = localStorage.getItem('dd_welcome_dismissed') === 'true';
+      if (dismissed && !visible) { this._welcomeDone = true; }
+      else setTimeout(check, 300);
+    };
+    check();
+  },
+
+  ready() { return this._updateDone && this._welcomeDone; },
+
+  waitUntilReady(cb) {
+    const poll = () => {
+      if (this.ready()) cb();
+      else setTimeout(poll, 300);
+    };
+    poll();
+  }
+};
+// ============================================
+// GUÍA VISUAL DE LA APP (AppTour)
+// Recorrido de onboarding por pestañas, una sola vez.
+// No depende de ni modifica ningún método existente de Lobby.
+// ============================================
+const AppTour = {
+  STORAGE_KEY: 'dd_apptour_seen',
+
+    steps: [
+    { tab: 'lobby', slides: [
+      { text: 'Esta es la pestaña donde podrás mantenerte al tanto de las actualizaciones tanto de la app como de revelaciones de cartas.', keywords: ['actualizaciones', 'revelaciones de cartas'] },
+      { text: 'Al fondo de la app podrás ver la versión y detalles de creación de esta app.', keywords: ['versión y detalles de creación'] }
+    ]},
+    { tab: 'buscador', slides: [
+      { text: 'Busca cualquier carta específica o al azar. Puedes emplear filtros por tipo, atributos y tipo de carta, tanto por set/pack como por arquetipo.', keywords: ['filtros', 'set/pack', 'arquetipo'] },
+      { text: 'Al buscar una carta puedes ver su ficha de detalles o agregarla a la lista activa del deck en turno. Si no hay deck activo, se creará el Decklist con las cartas que vayas agregando.', keywords: ['ficha de detalles', 'deck en turno'] },
+      { text: 'Podrás también marcar cartas como Staples, Favoritas, y si la carta lo posee, revisar el arquetipo del que proviene o el Lore al que pertenece.', keywords: ['Staples', 'Favoritas', 'Lore'] }
+    ]},
+    { tab: 'mideck', slides: [
+      { text: 'En esta pestaña podrás ver una versión resumida y detallada de tus cartas del deck activo, ponerle nombre al deck, guardar cambios o importar Decklist o recetas en formato .ydk.', keywords: ['resumida y detallada', '.ydk'] },
+      { text: 'En el panel lateral (en el celular lo verás abajo) podrás revisar los Decks Guardados, tus cartas Favoritas, tus Engines guardados y tus cartas marcadas como Staples.', keywords: ['Decks Guardados', 'Engines', 'Staples'] },
+      { text: 'En la vista Detallada, cada carta la podrás pasar al Side Deck o cambiar su rol en el deck. La app evalúa automáticamente los efectos de la carta para sugerir sus posibles roles.', keywords: ['Side Deck', 'roles'] },
+      { text: 'Tu Experiencia con el Deck se registra al fondo de esta pestaña.', keywords: ['Tu Experiencia con el Deck'] },
+      { text: 'El Historial de Versiones se irá actualizando solo mientras haces cambios y guardas, pudiendo recuperar una versión anterior.', keywords: ['Historial de Versiones'] },
+      { text: 'Podrás pasar rápidamente a Experimentar o Probar el deck en los Simuladores.', keywords: ['Simuladores'] },
+      { text: 'En Mi Deck también podrás ver la Construcción del deck, considerando las cartas más usadas en los decks agregados al Meta.', keywords: ['Construcción del deck', 'Meta'] },
+      { text: 'En Optimización podrás registrar tus duelos para analizar tu Winrate yendo 1ro y 2do, evaluar la Complejidad del deck según tu conocimiento del mismo, y anotar detalles a tener en cuenta a futuro.', keywords: ['Optimización', 'Complejidad del deck'] },
+      { text: 'Podrás ver las cartas más clave de tu deck según las veces que fueron marcadas como cartas clave en las rondas registradas.', keywords: ['cartas clave'] },
+      { text: 'El Historial de Enfrentamientos se puede exportar en formato .txt para analizarlo luego. También podrás registrar Nuevas Rondas de Duelo marcando los detalles en vivo.', keywords: ['Historial de Enfrentamientos', 'Nuevas Rondas de Duelo'] },
+      { text: 'En el Historial de Sesiones podrás ver cada conjunto de rondas como una sesión, analizando la racha y resultados según la versión del deck.', keywords: ['Historial de Sesiones'] },
+      { text: 'En Línea de Combos puedes registrar combos de ese deck guardado para analizar los procedimientos de la estrategia.', keywords: ['Línea de Combos'] }
+    ]},
+    { tab: 'estadisticas', slides: [
+      { text: 'Aquí podrás crear carpetas de listas de Decks (.ydk), y con ello la app tomará en cuenta las cartas más recurrentes y el nivel de poder de los demás contendientes.', keywords: ['carpetas de listas de Decks', 'nivel de poder'] }
+    ]},
+    { tab: 'simuladores', slides: [
+      { text: 'Aquí podrás hacer diferentes pruebas y cálculos con los decks guardados.', keywords: ['pruebas y cálculos'] },
+      { text: 'Puedes crear y anotar Torneos para tus duelos en grupo en vivo.', keywords: ['Torneos'] },
+      { text: 'Incluso puedes practicar tus decks en un simulador de campo, como si estuvieras jugando en formato físico.', keywords: ['simulador de campo'] }
+    ]},
+    { tab: 'formacion', slides: [
+      { text: 'Podrás tomar apuntes y leer lecciones para aprender más del juego, desde nivel básico hasta nivel competitivo.', keywords: ['apuntes', 'lecciones'] },
+      { text: 'Puedes hacer tests para medir tu conocimiento, trivias para ver qué tipo de deck sería ideal para ti, y descubrir qué personaje del anime podrías ser según tu forma de ver el juego.', keywords: ['tests', 'trivias'] }
+    ]},
+    { tab: 'config', slides: [
+      { text: 'En esta pestaña podrás ajustar y cambiar las bases de la app a tu gusto, por si deseas plasmar tu forma personal de automatizar la aplicación.', keywords: ['ajustar y cambiar las bases'] }
+    ]}
+  ],
+
+  _stepIdx: 0,
+  _slideIdx: 0,
+  _els: null,
+
+   maybeStart() {
+    if (localStorage.getItem(this.STORAGE_KEY) === 'true') return;
+    TourGate.init();
+    TourGate.waitUntilReady(() => this.start());
+  },
+
+  start() {
+    this._stepIdx = 0;
+    this._slideIdx = 0;
+    this._injectStyles();
+    this._buildDOM();
+    this._fadeDim();
+    this._goToTab(this.steps[0].tab);
+    this._goToTab(this.steps[0].tab);
+    this._render();
+  },
+
+  _currentStep() { return this.steps[this._stepIdx]; },
+  _currentSlideText() { return this._currentStep().slides[this._slideIdx].text; },
+
+  _highlightHTML(slide) {
+    let html = slide.text;
+    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    (slide.keywords || []).forEach(kw => {
+      const re = new RegExp(esc(kw), 'i');
+      html = html.replace(re, match => `<span class="apptour-keyword">${match}</span>`);
+    });
+    return html;
+  },
+
+    next() {
+    const step = this._currentStep();
+    if (this._slideIdx < step.slides.length - 1) { this._slideIdx++; this._render(); return; }
+    if (this._stepIdx < this.steps.length - 1) {
+      this._stepIdx++; this._slideIdx = 0;
+      this._goToTab(this.steps[this._stepIdx].tab);
+      this._fadeDim();
+      this._render();
+      return;
+    }
+    this.finish();
+  },
+
+  prev() {
+    if (this._slideIdx > 0) { this._slideIdx--; this._render(); return; }
+    if (this._stepIdx > 0) {
+      this._stepIdx--;
+      this._slideIdx = this.steps[this._stepIdx].slides.length - 1;
+      this._goToTab(this.steps[this._stepIdx].tab);
+      this._fadeDim();
+      this._render();
+    }
+  },
+
+  finish() {
+    localStorage.setItem(this.STORAGE_KEY, 'true');
+    this._destroyDOM();
+  },
+
+  _goToTab(tabName) {
+    if (typeof switchTab === 'function') switchTab(tabName);
+  },
+  _fadeDim() {
+    if (!this._els) return;
+    const dim = this._els.dim;
+    dim.classList.remove('apptour-dim-anim');
+    void dim.offsetWidth; // fuerza reflow para reiniciar la animación
+    dim.classList.add('apptour-dim-anim');
+  },
+  _buildDOM() {
+    const dim = document.createElement('div');
+    dim.id = 'apptour-dim';
+    document.body.appendChild(dim);
+
+    const panel = document.createElement('div');
+    panel.id = 'apptour-panel';
+    panel.innerHTML = `
+      <div id="apptour-text"></div>
+      <div id="apptour-dots"></div>
+      <div id="apptour-controls">
+        <button id="apptour-skip" type="button">Saltar</button>
+        <button id="apptour-prev" type="button">Atrás</button>
+        <button id="apptour-next" type="button">Siguiente</button>
+      </div>`;
+    document.body.appendChild(panel);
+
+    this._els = {
+      dim, panel,
+      text: panel.querySelector('#apptour-text'),
+      dots: panel.querySelector('#apptour-dots'),
+      skip: panel.querySelector('#apptour-skip'),
+      prevBtn: panel.querySelector('#apptour-prev'),
+      nextBtn: panel.querySelector('#apptour-next')
+    };
+    this._els.skip.onclick = () => this.finish();
+    this._els.prevBtn.onclick = () => this.prev();
+    this._els.nextBtn.onclick = () => this.next();
+  },
+
+  _destroyDOM() {
+    if (!this._els) return;
+    this._els.dim.remove();
+    this._els.panel.remove();
+    this._els = null;
+  },
+
+  _render() {
+    if (!this._els) return;
+    const step = this._currentStep();
+    this._els.text.innerHTML = this._highlightHTML(this._currentStep().slides[this._slideIdx]);
+    this._els.dots.innerHTML = step.slides.map((_, i) =>
+      `<span class="apptour-dot${i === this._slideIdx ? ' apptour-dot-active' : ''}"></span>`
+    ).join('');
+    this._els.prevBtn.style.visibility = (this._stepIdx === 0 && this._slideIdx === 0) ? 'hidden' : 'visible';
+    const isLast = this._stepIdx === this.steps.length - 1 && this._slideIdx === step.slides.length - 1;
+    this._els.nextBtn.textContent = isLast ? 'Finalizar' : 'Siguiente';
+  },
+
+  _injectStyles() {
+    if (document.getElementById('apptour-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'apptour-styles';
+    style.textContent = `
+    #apptour-dim { position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 9998; opacity: 1; }
+      #apptour-dim.apptour-dim-anim { animation: apptourDimFade 1s ease-in; }
+      @keyframes apptourDimFade { from { opacity: 0; } to { opacity: 1; } }
+      .apptour-keyword { color: var(--gold-color, #d4af37); font-weight: 700; }
+      #apptour-panel {
+        position: fixed; left: 0; right: 0; bottom: 0; max-height: 22vh;
+        background: var(--bg-card, #1c1c24); color: var(--text-light, #fff);
+        border-top: 2px solid var(--gold-color, #d4af37); z-index: 9999;
+        padding: var(--spacing-md, 16px) var(--spacing-lg, 24px);
+        display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;
+      }
+      #apptour-text { font-size: 0.95rem; line-height: 1.35; overflow-y: auto; }
+      #apptour-dots { display: flex; gap: 6px; justify-content: center; margin: 8px 0; }
+      .apptour-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3); }
+      .apptour-dot-active { background: var(--gold-color, #d4af37); }
+      #apptour-controls { display: flex; justify-content: space-between; align-items: center; }
+      #apptour-controls button {
+        background: none; border: 1px solid var(--gold-color, #d4af37);
+        color: var(--text-light, #fff); border-radius: 6px; padding: 6px 14px;
+        cursor: pointer; font-size: 0.85rem;
+      }
+      #apptour-next { background: var(--gold-color, #d4af37); color: #1c1c24; font-weight: 600; }
+      @media (max-width: 600px) { #apptour-panel { max-height: 26vh; padding: 12px 14px; } }
+    `;
+    document.head.appendChild(style);
+  }
+};
+// Bloquea TabIntro hasta que el App Tour se complete por primera vez.
+// Si el usuario ya vio el Tour antes, TabIntro funciona normal sin demora.
+(function gateTabIntro() {
+  if (typeof TabIntro === 'undefined' || typeof TabIntro.maybeShow !== 'function') return;
+  const originalMaybeShow = TabIntro.maybeShow.bind(TabIntro);
+  TabIntro.maybeShow = function(tabName) {
+    if (localStorage.getItem(AppTour.STORAGE_KEY) !== 'true') return;
+    return originalMaybeShow(tabName);
+  };
+})();
+window.addEventListener('load', () => AppTour.maybeStart());
