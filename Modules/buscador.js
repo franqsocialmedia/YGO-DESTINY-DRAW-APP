@@ -996,7 +996,8 @@ const html = `
             <button id="cv-close" class="cv-close-btn">✕</button>
 
             <div class="cv-name">${card.name}</div>
-
+            <div class="cv-body">
+            <div class="cv-col-media">
             <img id="cv-main-img" src="${mainImg}" class="cv-main-img">
 
             <div id="cv-quality-switch" class="cv-quality-switch">
@@ -1010,7 +1011,8 @@ const html = `
 
             <div id="cv-thumbs" class="cv-thumbs">${thumbsHtml}</div>
             <div id="cv-ban-btns" class="cv-ban-area"></div>
-
+            </div>
+            <div class="cv-col-info">
             <hr class="cv-hr">
 
             <div class="cv-stats-block">

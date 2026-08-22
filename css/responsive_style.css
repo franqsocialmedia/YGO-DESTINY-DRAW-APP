@@ -39,6 +39,7 @@
     /* Scroll buttons: alejar del footer en móvil */
     #scrollTopBtn    { bottom: 122px; right: 12px; width: 36px; height: 36px; font-size: 15px; }
 #scrollBottomBtn { bottom: 80px;  right: 12px; width: 36px; height: 36px; font-size: 15px; }
+
 }
 
 @media (max-width: 480px) {
@@ -155,6 +156,8 @@
     .modal-content      { padding: var(--spacing-sm); gap: 10px; }
     .modal-info h3      { font-size: 1.1rem; }
     .cv-modal           { width: calc(100vw - 20px); }
+    .cv-body            { flex-direction: column; }
+    .cv-col-media       { flex: none; width: 100%; }
     .cv-lore-modal       { width: calc(100vw - 20px); }
 
     /* Chips de filtro más pequeños */

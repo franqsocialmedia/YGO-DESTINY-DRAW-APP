@@ -503,9 +503,9 @@ body[data-bg-theme="navy"] {
    SHORTCUTS FLOAT BUTTON
 ══════════════════════════════════════════ */
 .shortcuts-float-btn {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
+    width: 60px;
+    height: 28px;
+    border-radius: 10%;
     background: var(--gold-color, #FFD700);
     color: #000;
     font-size: 0.95rem;
@@ -616,9 +616,9 @@ body[data-bg-theme="navy"] {
 
 /* ── BOTÓN FLOTANTE DE MÚSICA ── */
 #music-float-btn {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
+    width: 60px;
+    height: 28px;
+    border-radius: 10%;
     background: #c0c0c0;
     color: #222;
     border: none;

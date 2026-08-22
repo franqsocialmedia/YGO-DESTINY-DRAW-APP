@@ -7581,7 +7581,7 @@ const MusicPlayer = {
         const btn = document.getElementById('music-float-btn');
         if (!btn) return;
         const playing   = this.audio && !this.audio.paused;
-        btn.textContent = playing ? '⏹' : '▶';
+        btn.textContent = playing ? '⏹ Stop' : '▶ Play';
         btn.title       = playing ? 'Detener música' : 'Reproducir música';
     }
 };
