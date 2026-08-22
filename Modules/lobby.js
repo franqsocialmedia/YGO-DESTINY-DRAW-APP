@@ -16,6 +16,7 @@ const Lobby = {
     UPDATE_VERSION: 'v1.0',
     UPDATE_NOTES: [
         '*Nuevo*: Panel de Lobby con novedades y sugerencias.',
+        '*Mejoras*: Grafico de Perfil de Rendimiento del Deck.',
         '* Filtrador*: Filtrador de Buscador por arquetipo, Set y palabras clave.',
         '* Mejoras*: Mejoras en la interfaz y el rendimiento general.',
         '* Exportado del Deck*: Puedes exportar toda la Data de tu deck y asi importarlo en otro dispositivo con ese mismo archivo.',

@@ -3520,6 +3520,18 @@
 .exp-radar-legend-item span { opacity: .7; }
 .exp-radar-legend-missing strong { color: rgba(255,255,255,0.4); }
 .exp-radar-note { margin-top: 8px; font-size: .7rem; opacity: .6; }
+.exp-mm-box {
+    margin-top: 10px;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.exp-mm-box strong { color: var(--gold-color); font-size: .8rem; }
+.exp-mm-box span { font-size: .72rem; opacity: .7; }
 
 /* ── Experiencia: Sets/Packs involucrados ── */
 .exp-sets-list { display: flex; flex-direction: column; gap: 6px; max-height: 360px; overflow-y: auto; }

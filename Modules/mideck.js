@@ -2203,7 +2203,7 @@ html += `<div id="mideck-construccion-pane" style="display:none;">`;
 
 if (!isEmpty) {
     
-    html += `${this.renderDeckHeaderRadar()}`;
+    html += `${this.renderExpRendimiento()}`;
     html += `<div id="construccion-complejidad-box">${this.renderComplejidadResultCard()}</div>`;
     html += `<div data-section-id="deck-chart">${this.renderDeckStatsBlock()}</div>`;
 
@@ -3144,20 +3144,20 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 <button class="exp-subtab-btn" data-exp-tab="composicion" onclick="Deck.switchExperienciaTab('composicion')">🧬 Composición</button>
                 <button class="exp-subtab-btn" data-exp-tab="cartas" onclick="Deck.switchExperienciaTab('cartas')">🃏 Cartas Destacadas</button>
                 <button class="exp-subtab-btn" data-exp-tab="sets" onclick="Deck.switchExperienciaTab('sets')">📦 Sets</button>
-                <button class="exp-subtab-btn" data-exp-tab="rendimiento" onclick="Deck.switchExperienciaTab('rendimiento')">📡 Rendimiento</button>
+
             </div>
             <div id="exp-pane-perfil">${this.renderExpPerfil()}</div>
             <div id="exp-pane-manos" style="display:none;">${this.renderExpManosMuertas()}</div>
             <div id="exp-pane-composicion" style="display:none;">${this.renderExpComposicion()}</div>
             <div id="exp-pane-cartas" style="display:none;">${this.renderExpCartas()}</div>
             <div id="exp-pane-sets" style="display:none;">${this.renderExpSets()}</div>
-            <div id="exp-pane-rendimiento" style="display:none;">${this.renderExpRendimiento()}</div>
+
         </div>
         </div>`;
     },
 
     switchExperienciaTab: function (tab) {
-        ['perfil', 'manos', 'composicion', 'cartas', 'sets', 'rendimiento'].forEach(t => {
+        ['perfil', 'manos', 'composicion', 'cartas', 'sets'].forEach(t => {
             const p = document.getElementById(`exp-pane-${t}`);
             if (p) p.style.display = (t === tab) ? '' : 'none';
         });
@@ -3559,22 +3559,20 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         if (total < this.EXP_RADAR_MIN_ROUNDS) {
             return [
                 { key: 'consistencia', label: 'Consistencia (Recurrencia del Combo)', raw: null, unit: '%', norm: 0,
-                  desc: '% de rondas donde abriste Starter + Extender (combo abierto completo).', has: false },
+                  desc: '% de rondas donde abriste al menos 1 Starter en mano.', has: false },
                 { key: 'ceiling', label: 'Ceiling (Techo de Poder)', raw: null, unit: 'pts', norm: 0,
                   desc: 'Poder de cierre: calidad de tus victorias (categoría) + tasa de FTK.', has: false },
                 { key: 'resiliencia', label: 'Resiliencia (Floor)', raw: null, unit: '%', norm: 0,
                   desc: 'Winrate en rondas con interrupción o rotura de campo del rival.', has: false },
-                { key: 'followup', label: 'Follow Up (Capacidad de Respuesta)', raw: null, unit: '%', norm: 0,
+                { key: 'followup', label: 'Versatilidad (Capacidad de Respuesta)', raw: null, unit: '%', norm: 0,
                   desc: 'Winrate jugando de segundo (remontar sin ventaja de turno).', has: false },
-                { key: 'blindaje', label: 'Blindaje (Manos Jugables)', raw: null, unit: '%', norm: 0,
-                  desc: 'Inverso de la tasa de bricks — qué tan blindado está el build contra manos muertas.', has: false },
                 { key: 'eficiencia', label: 'Eficiencia (Balance entre Engines)', raw: null, unit: '%', norm: 0,
                   desc: 'Inverso del exceso de handtraps en mano (3+) — evita slots desperdiciados en interacción reactiva.', has: false }
             ];
         }
 
-        // 1. Consistencia — combo abierto completo (starter + extender misma ronda)
-        const comboAbierto = rounds.filter(r => (r.starter || 0) >= 1 && (r.extenders || 0) >= 1).length;
+        // 1. Consistencia — al menos 1 Starter en mano (no requiere Extender)
+        const comboAbierto = rounds.filter(r => (r.starter || 0) >= 1).length;
         const consist = Math.round((comboAbierto / total) * 1000) / 10;
 
         // 2. Ceiling (Poder de Cierre) — calidad de victorias (categoría) +
@@ -3614,12 +3612,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             followUp = Math.round(interrFirstPct * 10) / 10;
         }
 
-        // 5. Blindaje — inverso de la tasa de Manos Muertas REALES (ver
-        // _isManoMuerta). Ya escoпado a la versión actual vía rounds.
-        const manosMuertas = rounds.filter(r => this._isManoMuerta(r)).length;
-        const blindaje = Math.round((100 - (manosMuertas / total) * 100) * 10) / 10;
-
-        // 6. Eficiencia — inverso del exceso de slots reactivos en mano:
+        // 5. Eficiencia — inverso del exceso de slots reactivos en mano:
         // handtraps (3+) o boardbreakers (3+). Se cuenta la ronda una sola
         // vez aunque exceda en ambos (no se penaliza doble).
         const excesoRounds = rounds.filter(r => (r.handtraps || 0) >= 3 || (r.boardbreakers || 0) >= 3).length;
@@ -3627,18 +3620,24 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
 
         return [
             { key: 'consistencia', label: 'Consistencia (Recurrencia del Combo)', raw: consist, unit: '%', norm: pct10(consist),
-              desc: '% de rondas donde abriste Starter + Extender (combo abierto completo).', has: true },
+              desc: '% de rondas donde abriste al menos 1 Starter en mano.', has: true },
             { key: 'ceiling', label: 'Ceiling (Techo de Poder)', raw: ceiling, unit: 'pts', norm: pct10(ceiling),
               desc: 'Poder de cierre: calidad de tus victorias (categoría) + tasa de FTK + % de rondas donde rompiste el campo rival.', has: true },
             { key: 'resiliencia', label: 'Resiliencia (Floor)', raw: resil ? resil.pct : null, unit: '%', norm: pct10(resil ? resil.pct : null),
               desc: 'Winrate en rondas con interrupción o rotura de campo del rival.', has: !!resil },
-            { key: 'followup', label: 'Follow Up (Capacidad de Respuesta)', raw: followUp, unit: '%', norm: pct10(followUp),
+            { key: 'followup', label: 'Versatilidad (Capacidad de Respuesta)', raw: followUp, unit: '%', norm: pct10(followUp),
               desc: 'Winrate jugando de segundo (remontar sin ventaja de turno) + % de interrupciones hechas yendo de primero.', has: followUp != null },
-            { key: 'blindaje', label: 'Blindaje (Manos Jugables)', raw: blindaje, unit: '%', norm: pct10(blindaje),
-              desc: `Inverso de la tasa de Manos Muertas reales (${manosMuertas}/${total} duelos de esta versión) — sin Starter/Extender (y sin Boardbreaker/Handtrap yendo de segundo).`, has: true },
             { key: 'eficiencia', label: 'Eficiencia (Balance entre Engines)', raw: eficiencia, unit: '%', norm: pct10(eficiencia),
               desc: 'Inverso del exceso de handtraps o boardbreakers en mano (3+) — evita slots reactivos desperdiciados en manos donde no aportan.', has: true }
         ];
+    },
+        // Manos Muertas reales de la versión actual (x/y) — ya no alimenta un eje
+    // del radar, se muestra como mini-leyenda aparte debajo del gráfico.
+    _getManosMuertasStat: function () {
+        const rounds = this._getCurrentVersionOptRounds();
+        const total = rounds.length;
+        const manosMuertas = rounds.filter(r => this._isManoMuerta(r)).length;
+        return { x: manosMuertas, y: total };
     },
         // Construye solo el <svg> del radar (sin leyenda ni párrafo explicativo)
     // — reutilizable para la copia compacta del header de Mi Deck.
@@ -3703,6 +3702,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
 
         let radarHtml = `<p class="exp-empty">Sin datos suficientes — registra al menos ${this.EXP_RADAR_MIN_ROUNDS} rondas en 🎯 Optimización (Registro de Ronda de Duelo) para generar el gráfico.</p>`;
         if (anyData) {
+            const mm = this._getManosMuertasStat();
             radarHtml = `
             ${this._buildRendimientoRadarSvg(axes)}
             <div class="exp-radar-legend">
@@ -3713,15 +3713,19 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     </div>
                 `).join('')}
             </div>
+            <div class="exp-mm-box">
+                <strong>🧱 Manos Muertas: ${mm.x}/${mm.y}</strong>
+                <span>Duelos de esta versión sin Starter/Extender (y sin Boardbreaker/Handtrap yendo de segundo).</span>
+            </div>
             <p class="exp-field-hint exp-radar-note">
                 📐 El número que ves en cada punta es una nota de 0 a 10 sobre el % real de cada eje (el dato
-                exacto lo tienes en la lista de abajo). En los 6 ejes aplica la misma regla: <strong>mientras más
+                exacto lo tienes en la lista de abajo). En los 5 ejes aplica la misma regla: <strong>mientras más
                 alto el punto, mejor para tu deck</strong>.<br><br>
-                Los 6 ejes se calculan sobre <strong>todas las rondas de todas tus sesiones de 🎯 Optimización</strong>
-                para este deck: Consistencia (combo abierto: starter + extender en la misma ronda), Ceiling (calidad
+                Los 5 ejes se calculan sobre <strong>todas las rondas de todas tus sesiones de 🎯 Optimización</strong>
+                para este deck: Consistencia (al menos 1 Starter en mano), Ceiling (calidad
                 de tus victorias + tasa de FTK), Resiliencia (winrate bajo interrupción/rotura de campo rival),
-                Follow Up (winrate jugando de segundo), Blindaje (inverso de la tasa de Manos Muertas reales) y Eficiencia (inverso
-                del exceso de handtraps en mano). Mientras más rondas registres, más confiable es el gráfico.
+                Versatilidad (winrate jugando de segundo) y Eficiencia (inverso del exceso de handtraps en mano).
+                Mientras más rondas registres, más confiable es el gráfico.
             </p>`;
         }
 
