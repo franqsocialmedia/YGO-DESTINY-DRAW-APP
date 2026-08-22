@@ -3516,17 +3516,17 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         const pct = v => v == null ? 0 : clamp(v / 10);
 
         return [
-            { key: 'consistencia', label: 'Consistencia', raw: consist,  unit: '%', norm: pct(consist),
+            { key: 'consistencia', label: 'Consistencia (Recurrencia del Combo)', raw: consist,  unit: '%', norm: pct(consist),
               desc: 'Prob. de abrir Starter + Extender del combo más fuerte (Línea de Combos).', has: consist != null },
-            { key: 'ceiling', label: 'Ceiling', raw: ceiling, unit: 'pts', norm: pow(ceiling),
+            { key: 'ceiling', label: 'Ceiling (Techo de Poder)', raw: ceiling, unit: 'pts', norm: pow(ceiling),
               desc: 'Poder final (post Choke Points) del combo más fuerte.', has: ceiling != null },
-            { key: 'resiliencia', label: 'Resiliencia', raw: resil ? resil.pct : null, unit: '%', norm: pct(resil ? resil.pct : null),
+            { key: 'resiliencia', label: 'Resiliencia (Floor)', raw: resil ? resil.pct : null, unit: '%', norm: pct(resil ? resil.pct : null),
               desc: 'Winrate en rondas de Optimización con interrupción o rotura de campo del rival.', has: !!resil },
-            { key: 'followup', label: 'Follow Up', raw: followUp, unit: 'pts', norm: pow(followUp),
+            { key: 'followup', label: 'Follow Up (Capacidad de Respuesta)', raw: followUp, unit: 'pts', norm: pow(followUp),
               desc: 'Poder bruto del combo más fuerte antes de descontar sus Choke Points (grind game).', has: followUp != null },
-            { key: 'blindaje', label: 'Blindaje', raw: blindaje, unit: '%', norm: pct(blindaje),
+            { key: 'blindaje', label: 'Blindaje (Manos Jugables)', raw: blindaje, unit: '%', norm: pct(blindaje),
               desc: '% de poder que el combo más fuerte CONSERVA pese a sus Choke Points (más alto = más resistente a ser interrumpido).', has: blindaje != null },
-            { key: 'eficiencia', label: 'Eficiencia', raw: eficiencia, unit: '%', norm: pct(eficiencia),
+            { key: 'eficiencia', label: 'Eficiencia (Balance entre Engines)', raw: eficiencia, unit: '%', norm: pct(eficiencia),
               desc: '% del Main que es Non-Engine sin sacrificar el plan de juego — más alto = Engine más compacto y eficiente.', has: eficiencia != null }
         ];
     },
@@ -3558,17 +3558,17 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
 
         if (total < this.EXP_RADAR_MIN_ROUNDS) {
             return [
-                { key: 'consistencia', label: 'Consistencia', raw: null, unit: '%', norm: 0,
+                { key: 'consistencia', label: 'Consistencia (Recurrencia del Combo)', raw: null, unit: '%', norm: 0,
                   desc: '% de rondas donde abriste Starter + Extender (combo abierto completo).', has: false },
-                { key: 'ceiling', label: 'Ceiling', raw: null, unit: 'pts', norm: 0,
+                { key: 'ceiling', label: 'Ceiling (Techo de Poder)', raw: null, unit: 'pts', norm: 0,
                   desc: 'Poder de cierre: calidad de tus victorias (categoría) + tasa de FTK.', has: false },
-                { key: 'resiliencia', label: 'Resiliencia', raw: null, unit: '%', norm: 0,
+                { key: 'resiliencia', label: 'Resiliencia (Floor)', raw: null, unit: '%', norm: 0,
                   desc: 'Winrate en rondas con interrupción o rotura de campo del rival.', has: false },
-                { key: 'followup', label: 'Follow Up', raw: null, unit: '%', norm: 0,
+                { key: 'followup', label: 'Follow Up (Capacidad de Respuesta)', raw: null, unit: '%', norm: 0,
                   desc: 'Winrate jugando de segundo (remontar sin ventaja de turno).', has: false },
-                { key: 'blindaje', label: 'Blindaje', raw: null, unit: '%', norm: 0,
+                { key: 'blindaje', label: 'Blindaje (Manos Jugables)', raw: null, unit: '%', norm: 0,
                   desc: 'Inverso de la tasa de bricks — qué tan blindado está el build contra manos muertas.', has: false },
-                { key: 'eficiencia', label: 'Eficiencia', raw: null, unit: '%', norm: 0,
+                { key: 'eficiencia', label: 'Eficiencia (Balance entre Engines)', raw: null, unit: '%', norm: 0,
                   desc: 'Inverso del exceso de handtraps en mano (3+) — evita slots desperdiciados en interacción reactiva.', has: false }
             ];
         }
@@ -3626,17 +3626,17 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         const eficiencia = Math.round((100 - (excesoRounds / total) * 100) * 10) / 10;
 
         return [
-            { key: 'consistencia', label: 'Consistencia', raw: consist, unit: '%', norm: pct10(consist),
+            { key: 'consistencia', label: 'Consistencia (Recurrencia del Combo)', raw: consist, unit: '%', norm: pct10(consist),
               desc: '% de rondas donde abriste Starter + Extender (combo abierto completo).', has: true },
-            { key: 'ceiling', label: 'Ceiling', raw: ceiling, unit: 'pts', norm: pct10(ceiling),
+            { key: 'ceiling', label: 'Ceiling (Techo de Poder)', raw: ceiling, unit: 'pts', norm: pct10(ceiling),
               desc: 'Poder de cierre: calidad de tus victorias (categoría) + tasa de FTK + % de rondas donde rompiste el campo rival.', has: true },
-            { key: 'resiliencia', label: 'Resiliencia', raw: resil ? resil.pct : null, unit: '%', norm: pct10(resil ? resil.pct : null),
+            { key: 'resiliencia', label: 'Resiliencia (Floor)', raw: resil ? resil.pct : null, unit: '%', norm: pct10(resil ? resil.pct : null),
               desc: 'Winrate en rondas con interrupción o rotura de campo del rival.', has: !!resil },
-            { key: 'followup', label: 'Follow Up', raw: followUp, unit: '%', norm: pct10(followUp),
+            { key: 'followup', label: 'Follow Up (Capacidad de Respuesta)', raw: followUp, unit: '%', norm: pct10(followUp),
               desc: 'Winrate jugando de segundo (remontar sin ventaja de turno) + % de interrupciones hechas yendo de primero.', has: followUp != null },
-            { key: 'blindaje', label: 'Blindaje', raw: blindaje, unit: '%', norm: pct10(blindaje),
+            { key: 'blindaje', label: 'Blindaje (Manos Jugables)', raw: blindaje, unit: '%', norm: pct10(blindaje),
               desc: `Inverso de la tasa de Manos Muertas reales (${manosMuertas}/${total} duelos de esta versión) — sin Starter/Extender (y sin Boardbreaker/Handtrap yendo de segundo).`, has: true },
-            { key: 'eficiencia', label: 'Eficiencia', raw: eficiencia, unit: '%', norm: pct10(eficiencia),
+            { key: 'eficiencia', label: 'Eficiencia (Balance entre Engines)', raw: eficiencia, unit: '%', norm: pct10(eficiencia),
               desc: 'Inverso del exceso de handtraps o boardbreakers en mano (3+) — evita slots reactivos desperdiciados en manos donde no aportan.', has: true }
         ];
     },

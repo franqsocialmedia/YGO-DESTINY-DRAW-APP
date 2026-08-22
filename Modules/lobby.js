@@ -15,7 +15,21 @@ const Lobby = {
     // ── Aviso de Actualización — editar estos 2 campos en cada nueva mejora ──
     UPDATE_VERSION: 'v1.0',
     UPDATE_NOTES: [
-        'Escribe aquí cada mejora de esta versión, una por línea.'
+        '*Nuevo*: Panel de Lobby con novedades y sugerencias.',
+        '* Filtrador*: Filtrador de Buscador por arquetipo, Set y palabras clave.',
+        '* Mejoras*: Mejoras en la interfaz y el rendimiento general.',
+        '* Exportado del Deck*: Puedes exportar toda la Data de tu deck y asi importarlo en otro dispositivo con ese mismo archivo.',
+        '* Perfil de Rendimiento*: Puedes ver el grafico de tu rendimiento con el Deck segun registros de duelos.',
+        '* Historial de Versiones*: Puedes ver el historial de todas las versiones de tu deck, con su puntaje de poder y todos las las cartas que tenia en esa version anterior.',
+        '* Linea de Combos*: Puedes crear y guardar líneas de combos para optimizar tu estrategia.',
+        '* Gestion del META*: Puedes subir los decks en formato .ydk de los decks del META para que tus decks sean comparados con las cartas mas populares del momento.',
+        '* Counters*: Analiza los counters de tus cartas en Simuladores.',
+        '* 2 Players*: Pon aprueba tu deck contra otro al mismo tiempo, jugando en ambas pantallas para simular un duelo en fisico.',
+        '* Temas*: Mejora en el juego con los temas disponibles segun tu nivel de habilidad.',
+        '* Tu Personaje*: Mira cual posible personaje del anime de Yugioh se alinea a tu personalidad y forma de ver el juego.',
+        '* Test de Duelo*: Crea tu propio test de duelo para probar tu estrategia o enseñar a otros compartiendo tus pruebas de Duelo Practicas y Teoricas.',
+
+
     ],
 
     init: function() {
