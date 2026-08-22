@@ -3619,16 +3619,16 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         const eficiencia = Math.round((100 - (excesoRounds / total) * 100) * 10) / 10;
 
         return [
-            { key: 'consistencia', label: 'Consistencia (Recurrencia del Combo)', raw: consist, unit: '%', norm: pct10(consist),
-              desc: '% de rondas donde abriste al menos 1 Starter en mano.', has: true },
-            { key: 'ceiling', label: 'Ceiling (Techo de Poder)', raw: ceiling, unit: 'pts', norm: pct10(ceiling),
-              desc: 'Poder de cierre: calidad de tus victorias (categoría) + tasa de FTK + % de rondas donde rompiste el campo rival.', has: true },
-            { key: 'resiliencia', label: 'Resiliencia (Floor)', raw: resil ? resil.pct : null, unit: '%', norm: pct10(resil ? resil.pct : null),
-              desc: 'Winrate en rondas con interrupción o rotura de campo del rival.', has: !!resil },
-            { key: 'followup', label: 'Versatilidad (Capacidad de Respuesta)', raw: followUp, unit: '%', norm: pct10(followUp),
-              desc: 'Winrate jugando de segundo (remontar sin ventaja de turno) + % de interrupciones hechas yendo de primero.', has: followUp != null },
-            { key: 'eficiencia', label: 'Eficiencia (Balance entre Engines)', raw: eficiencia, unit: '%', norm: pct10(eficiencia),
-              desc: 'Inverso del exceso de handtraps o boardbreakers en mano (3+) — evita slots reactivos desperdiciados en manos donde no aportan.', has: true }
+            { key: 'consistencia', label: 'Consistencia', raw: consist, unit: '%', norm: pct10(consist),
+              desc: '(Capacidad de Iniciar Combo) Porciento de rondas donde abriste al menos 1 Starter en mano.', has: true },
+            { key: 'ceiling', label: 'Ceiling', raw: ceiling, unit: 'pts', norm: pct10(ceiling),
+              desc: '(Techo de Poder) Calidad de tus victorias + capacidad de rompimiento del campo rival.', has: true },
+            { key: 'resiliencia', label: 'Floor', raw: resil ? resil.pct : null, unit: '%', norm: pct10(resil ? resil.pct : null),
+              desc: '(Resiliencia) Winrate en rondas con interrupción o rotura de campo del rival.', has: !!resil },
+            { key: 'followup', label: 'Versatilidad', raw: followUp, unit: '%', norm: pct10(followUp),
+              desc: '(Capacidad de Adaptación) Winrate tomando en cuenta la capacidad de ir de primero y de ir segundo.', has: followUp != null },
+            { key: 'eficiencia', label: 'Eficiencia', raw: eficiencia, unit: '%', norm: pct10(eficiencia),
+              desc: '(Balance entre Engines) Equilibrio para no solo abrir solo con Handtraps y Boardbreakers.', has: true }
         ];
     },
         // Manos Muertas reales de la versión actual (x/y) — ya no alimenta un eje
