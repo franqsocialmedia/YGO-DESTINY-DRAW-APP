@@ -113,6 +113,10 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                 <span class="pz-float-title">🎴 Zona de Práctica</span>
             </div>
 
+            <p class="sim-tool-intro">Simulación de campo por zonas para practicar aperturas y líneas de
+            combo: manejá mano, campo, cementerio y baneadas, resolvé la cadena, controlá el LP y guardá
+            el estado para retomarlo después.</p>
+
             <div class="pz-controls-bar">
                     <button class="pz-ctrl-btn pz-ctrl-search"
                             onclick="ZonaPractica.openCardSearch()">🔍 Buscar Carta</button>
@@ -3237,6 +3241,10 @@ const Experimentacion = {
     _buildShell: function () {
         return `
 <div class="exp-wrap">
+
+  <p class="sim-tool-intro">Lienzo libre para plantear líneas de juego visualmente: traé cartas del Buscador,
+  un .ydk o un deck guardado, organizalas en el tablero y usá el zoom para revisar combos paso a paso sin
+  gastar duelos reales.</p>
 
   <!-- Barra superior -->
   <div class="exp-toolbar">

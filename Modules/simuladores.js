@@ -380,8 +380,12 @@ const Torneo = {
     });
     const torneoEl = document.getElementById('sim-torneo-content');
     if (!torneoEl) return;
-    torneoEl.innerHTML = `
+        torneoEl.innerHTML = `
             <div class="torneo-section">
+
+                <p class="sim-tool-intro">Organiza un torneo local con sistema suizo: registra participantes,
+                generá los emparejamientos de cada ronda, llevá el bracket y el historial completo.
+                Ideal para simular la presión de un evento real de varias rondas contra distintos rivales.</p>
 
                 <div class="torneo-top-bar">
                     <div class="torneo-title-row">
@@ -537,6 +541,9 @@ const Torneo = {
             wrEl.innerHTML = `
                 <div style="padding:16px 0;max-width:520px">
                     <div class="sim-wr-col-title" style="margin-bottom:12px">📊 Winrate del Deck</div>
+                    <p class="sim-tool-intro">Registro rápido de partidas con tu deck activo, separado por
+                    Going 1st y Going 2nd. Útil para llevar una muestra estadística real de tu winrate sin
+                    tener que anotar cada duelo a mano en otro lado.</p>
                     <div id="winrate-sec"></div>
                 </div>`;
             if (window.Winrate) Winrate.refreshSection();
@@ -1376,6 +1383,9 @@ herr: {
     _buildShell: function () {
         return `
         <div class="duelo-section">
+            <p class="sim-tool-intro">Cronómetro y herramientas de mesa para un duelo real en curso: control
+            de turnos, LP y temporizador por jugador (estándar o Master Duel), más moneda y dados para
+            resolver empates o efectos aleatorios sin salir de la app.</p>
             <div class="duelo-sub-tabs">
                 <button class="duelo-sub-tab ${this.subTab === 'estandar'   ? 'active' : ''}"
                         onclick="DueloEnVivo.showSubTab('estandar')">⏱ Cronómetro Estándar</button>

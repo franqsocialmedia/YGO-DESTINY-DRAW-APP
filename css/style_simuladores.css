@@ -1120,6 +1120,21 @@
 .hiper-intro strong { color: var(--gold-color, #FFD700); }
 .hiper-intro em     { color: rgba(241,241,241,0.9); font-style: italic; }
 
+
+/* Clase compartida para la mini-descripción de cada herramienta de Simuladores */
+.sim-tool-intro {
+    font-size: 0.88rem;
+    color: rgba(241,241,241,0.7);
+    line-height: 1.6;
+    margin: 0 0 18px 0;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.04);
+    border-left: 3px solid var(--gold-color, #FFD700);
+    border-radius: 0 6px 6px 0;
+}
+.sim-tool-intro strong { color: var(--gold-color, #FFD700); }
+.sim-tool-intro em     { color: rgba(241,241,241,0.9); font-style: italic; }
+
 /* ── PESTAÑAS INTERNAS ────────────────────────────────────── */
 .hiper-tabs {
     display: flex;
@@ -6164,7 +6179,7 @@
 /* ── SIMULADOR DE COUNTERS ── */
 .ctrsim-wrap { display: flex; flex-direction: column; gap: 16px; padding: 16px 0; }
 .ctrsim-title { margin: 0; color: var(--gold-color); }
-.ctrsim-hint { margin: 0; font-size: 0.85rem; color: rgba(255,255,255,0.6); }
+.ctrsim-hint { margin: 0 0 18px 0; font-size: 0.88rem; color: rgba(241,241,241,0.7); line-height: 1.6; padding: 12px 14px; background: rgba(255,255,255,0.04); border-left: 3px solid var(--gold-color, #FFD700); border-radius: 0 6px 6px 0; }
 
 .ctrsim-row-top { display: flex; gap: 16px; flex-wrap: wrap; }
 .ctrsim-box {
@@ -6353,7 +6368,7 @@ img.fpt-chip-selected { border-radius: 4px; }
 /* ── GAUNTLET — Testing de Deck/Engine ── */
 .gnt-wrap { display: flex; flex-direction: column; gap: 16px; padding: 16px 0; }
 .gnt-title { margin: 0; color: var(--gold-color); }
-.gnt-hint { margin: 0; font-size: 0.85rem; color: rgba(255,255,255,0.6); }
+.gnt-hint { margin: 0 0 18px 0; font-size: 0.88rem; color: rgba(241,241,241,0.7); line-height: 1.6; padding: 12px 14px; background: rgba(255,255,255,0.04); border-left: 3px solid var(--gold-color, #FFD700); border-radius: 0 6px 6px 0; }
 
 .gnt-box {
     background: var(--bg-card);
