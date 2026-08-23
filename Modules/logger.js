@@ -40,15 +40,18 @@
 
     // Módulos globales a interceptar (según Reporte técnico)
     const TARGETS = [
-        'Navigation', 'Shortcuts', 'ContentManager',
+        'Navigation', 'Shortcuts', 'ContentManager', 'TabIntro',
         'ConfigManager', 'SpecialtyAnalyzer', 'NomenclatureAnalyzer',
         'Buscador', 'CardViewer', 'Favoritas',
-        'Deck', 'Banlist', 'Engines',
+        'Deck', 'Combos', 'Banlist', 'Engines',
         'Matchups', 'Duelista',
         'Estadisticas',
-        'Torneo', 'Duelo', 'Hipergeometria',
+        'Winrate', 'Torneo', 'DueloEnVivo', 'Hipergeometria', 'CounterSim', 'Gauntlet',
+        'DecklistsData',
         'ZonaPractica', 'Experimentacion',
-        'Formacion', 'Meta', 'Config', 'Welcome', 'MusicPlayer', 'HelpPanel',
+        'Formacion', 'Meta', 'Config', 'Welcome', 'MusicPlayer', 'HelpPanel', 'TestDuelo',
+        'DefaultData',
+        'Lobby',
     ];
 
     // ── Estado interno ──────────────────────────────────────

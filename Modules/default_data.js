@@ -1222,6 +1222,7 @@ _defaultSpecialties: [
         console.log('[DefaultData] Config parchado.');
     }
 };
+window.DefaultData = DefaultData;
 
 window.addEventListener('load', async () => {
     await DefaultData.init();

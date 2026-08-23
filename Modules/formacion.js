@@ -4284,6 +4284,7 @@ const TestDuelo = {
         }
     },
 };
+window.TestDuelo = TestDuelo;
 const Config = {
     container: null,
     _ta: null,   // estado del Test Práctico en autoría
