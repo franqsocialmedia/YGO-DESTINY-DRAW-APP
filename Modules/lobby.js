@@ -10,7 +10,8 @@ const Lobby = {
     _latestCards: [],
     _lastFetch: 0,
     _activeSuggestions: [],
-    CACHE_MS: 30 * 60 * 1000, // 30 min — evita refetch en cada cambio de pestaña
+    CACHE_MS: 24 * 60 * 60 * 1000, // 24 horas — evita refetch en cada reload/cambio de pestaña
+    CACHE_KEY: 'dd_lobby_latest_cache',
 
     // ── Aviso de Actualización — editar estos 2 campos en cada nueva mejora ──
     UPDATE_VERSION: 'v1.0',
@@ -118,17 +119,53 @@ const Lobby = {
 
     loadLatestCards: async function(force) {
         const now = Date.now();
+
+        // 1) caché en memoria (misma sesión de navegación)
         if (!force && this._latestCards.length && (now - this._lastFetch) < this.CACHE_MS) {
             this._renderNuevoStrip();
             return;
         }
+
+        // 2) caché persistida en localStorage (sobrevive a reload de página)
+        if (!force) {
+            const cached = this._loadCache();
+            if (cached) {
+                this._latestCards = cached.cards;
+                this._lastFetch = cached.ts;
+                this._renderNuevoStrip();
+                return;
+            }
+        }
+
         try {
             this._latestCards = await this._fetchLatest();
             this._lastFetch = now;
+            this._saveCache(this._latestCards, now);
             this._renderNuevoStrip();
         } catch (e) {
             const strip = document.getElementById('lobby-nuevo-strip');
             if (strip) strip.innerHTML = '<p class="lobby-empty">No se pudieron cargar las novedades.</p>';
+        }
+    },
+
+    _loadCache: function() {
+        try {
+            const raw = localStorage.getItem(this.CACHE_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || !Array.isArray(parsed.cards) || !parsed.ts) return null;
+            if ((Date.now() - parsed.ts) >= this.CACHE_MS) return null; // vencida
+            return parsed;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    _saveCache: function(cards, ts) {
+        try {
+            localStorage.setItem(this.CACHE_KEY, JSON.stringify({ ts, cards }));
+        } catch (e) {
+            // localStorage lleno/bloqueado — sigue funcionando en memoria igual
         }
     },
 
@@ -176,7 +213,27 @@ const Lobby = {
                     card_images: card.card_images,
                     _sortDate: earliest,
                     _region: earliest === tcgDate ? 'TCG' : 'OCG',
-                    _raw: card
+                    // _raw recortado: solo lo que CardViewer.open() pinta de forma
+                    // síncrona antes de su propio fetch (ver 8.9 del reporte).
+                    // Se descartan card_sets/card_prices/misc_info completos.
+                    _raw: {
+                        id: card.id,
+                        name: card.name,
+                        type: card.type,
+                        race: card.race,
+                        attribute: card.attribute,
+                        level: card.level,
+                        atk: card.atk,
+                        def: card.def,
+                        archetype: card.archetype,
+                        card_images: card.card_images,
+                        desc: card.desc,
+                        pend_desc: card.pend_desc,
+                        monster_desc: card.monster_desc,
+                        scale: card.scale,
+                        linkval: card.linkval,
+                        linkmarkers: card.linkmarkers
+                    }
                 });
             });
         };
