@@ -176,26 +176,26 @@ OVERLAY_ZONES: ['1','2','3','4','5','A','B'],
                             <!-- Fila EMZ -->
                             
                             <div class="pz-zone pz-zone-emz pz-fg-emz-a" id="pz-zone-A" data-zone="A"
-                                 onclick="ZonaPractica.onZoneClick('A')" onpointerdown="ZonaPractica._startLongPress('A', event)" onpointerup="ZonaPractica._cancelLongPress()" onpointerleave="ZonaPractica._cancelLongPress()" onpointercancel="ZonaPractica._cancelLongPress()" oncontextmenu="return false;"ondragstart="return false;"><span class="pz-zone-lbl">A</span></div>
+                                 onclick="ZonaPractica.onZoneClick('A', event)" onpointerdown="ZonaPractica._startLongPress('A', event)" onpointerup="ZonaPractica._cancelLongPress()" onpointerleave="ZonaPractica._cancelLongPress()" onpointercancel="ZonaPractica._cancelLongPress()" oncontextmenu="return false;"ondragstart="return false;"><span class="pz-zone-lbl">A</span></div>
                             <div class="pz-logo-cell pz-fg-logo">
                                 <img src="img/LOGO - Destiny Draw Yugioh APP.png" class="pz-logo-img"
                                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                                 <div class="pz-logo-fallback" style="display:none">🃏</div>
                             </div>
                             <div class="pz-zone pz-zone-emz pz-fg-emz-b" id="pz-zone-B" data-zone="B"
-                                 onclick="ZonaPractica.onZoneClick('B')" onpointerdown="ZonaPractica._startLongPress('B', event)" onpointerup="ZonaPractica._cancelLongPress()" onpointerleave="ZonaPractica._cancelLongPress()" onpointercancel="ZonaPractica._cancelLongPress()" oncontextmenu="return false;"ondragstart="return false;"><span class="pz-zone-lbl">B</span></div>
+                                                                  onclick="ZonaPractica.onZoneClick('B', event)" onpointerdown="ZonaPractica._startLongPress('B', event)" onpointerup="ZonaPractica._cancelLongPress()" onpointerleave="ZonaPractica._cancelLongPress()" onpointercancel="ZonaPractica._cancelLongPress()" oncontextmenu="return false;"ondragstart="return false;"><span class="pz-zone-lbl">B</span></div>
                             
                             <div class="pz-zone pz-zone-field pz-fg-c" id="pz-zone-C" data-zone="C"
-                                 onclick="ZonaPractica.onZoneClick('C')" onpointerdown="ZonaPractica._startLongPress('C', event)" onpointerup="ZonaPractica._cancelLongPress()" onpointerleave="ZonaPractica._cancelLongPress()" onpointercancel="ZonaPractica._cancelLongPress()" oncontextmenu="return false;"ondragstart="return false;"><span class="pz-zone-lbl">C</span></div>
+                                                                  onclick="ZonaPractica.onZoneClick('C', event)" onpointerdown="ZonaPractica._startLongPress('C', event)"onpointerup="ZonaPractica._cancelLongPress()" onpointerleave="ZonaPractica._cancelLongPress()" onpointercancel="ZonaPractica._cancelLongPress()" oncontextmenu="return false;"ondragstart="return false;"><span class="pz-zone-lbl">C</span></div>
                             ${[1,2,3,4,5].map(n=>`
                             <div class="pz-zone pz-zone-monster" id="pz-zone-${n}" data-zone="${n}"
-                                 onclick="ZonaPractica.onZoneClick('${n}')" onpointerdown="ZonaPractica._startLongPress('${n}', event)" onpointerup="ZonaPractica._cancelLongPress()" onpointerleave="ZonaPractica._cancelLongPress()" onpointercancel="ZonaPractica._cancelLongPress()" oncontextmenu="return false;"ondragstart="return false;"><span class="pz-zone-lbl">${n}</span></div>`).join('')}
+                                 onclick="ZonaPractica.onZoneClick('${n}', event)" onpointerdown="ZonaPractica._startLongPress('${n}', event)" onpointerup="ZonaPractica._cancelLongPress()" onpointerleave="ZonaPractica._cancelLongPress()" onpointercancel="ZonaPractica._cancelLongPress()" oncontextmenu="return false;"ondragstart="return false;"><span class="pz-zone-lbl">${n}</span></div>`).join('')}
 
                             <!-- Fila S/T -->
                             <div class="pz-fg-st-spacer"></div>
                             ${[6,7,8,9,10].map(n=>`
                             <div class="pz-zone ${n==6||n==10?'pz-zone-pendulum':'pz-zone-st'}" id="pz-zone-${n}" data-zone="${n}"
-                                 onclick="ZonaPractica.onZoneClick('${n}')" onpointerdown="ZonaPractica._startLongPress('${n}', event)" onpointerup="ZonaPractica._cancelLongPress()" onpointerleave="ZonaPractica._cancelLongPress()" onpointercancel="ZonaPractica._cancelLongPress()" oncontextmenu="return false;"ondragstart="return false;"><span class="pz-zone-lbl">${n}</span></div>`).join('')}
+                                 onclick="ZonaPractica.onZoneClick('${n}', event)" onpointerdown="ZonaPractica._startLongPress('${n}', event)" onpointerup="ZonaPractica._cancelLongPress()" onpointerleave="ZonaPractica._cancelLongPress()" onpointercancel="ZonaPractica._cancelLongPress()" oncontextmenu="return false;"ondragstart="return false;"><span class="pz-zone-lbl">${n}</span></div>`).join('')}
                             <!-- ARREGLAR AQUI-->
 
                         </div>
@@ -1046,7 +1046,7 @@ _defaultPlayerState: function () {
         btn.classList.toggle('pz-float-btn-p2', this._activePlayer === 'P2');
     },
     // ═══════════════════════════════════════════════════════
-    onZoneClick: function (zone) {
+    onZoneClick: function (zone, e) {
     if (this._longPressPreventClick) { this._longPressPreventClick = false; return; }
     if (this._activePlacement) { this._completePlacement(zone); return; }
     if (this._activeMove) { this._completeMoveToField(zone); return; }
@@ -1060,7 +1060,7 @@ _defaultPlayerState: function () {
             return;
         }
         if (!this.field[zone]) return;
-        this._showZoneMenu(zone, null, 'field');
+        this._zmStartMove(zone, null, 'field', e);
     },
 
     _showZoneMenu: function (zone, slotIndex, zoneType) {
@@ -1081,27 +1081,27 @@ _defaultPlayerState: function () {
         if (slots[slotIndex]) anchor = slots[slotIndex];
     }
 
+    const hasMats   = zoneType === 'field' && this.OVERLAY_ZONES.includes(String(zone)) && (this.field[zone]?._materials?.length > 0);
+    const canAttack = this._canAttack(zone, zoneType);
+
     const menu = document.createElement('div');
     menu.className = 'pz-zone-menu';
     menu.id = 'pz-zone-menu-active';
-    if (zone === 'hand') {
-        menu.innerHTML = `
-            <button class="pz-zmenu-btn pz-zmenu-ver"
-                    onclick="ZonaPractica._zmView('hand',${slotIndex},event)">Ver</button>
-            <button class="pz-zmenu-btn pz-zmenu-activate"
-                    onclick="ZonaPractica._zmActivate('hand',${slotIndex},'multi',event)">Activar</button>
-            <button class="pz-zmenu-btn pz-zmenu-move"
-                    onclick="ZonaPractica._zmStartMove('hand',${slotIndex},'multi',event)" onmouseup="ZonaPractica._zmStartMove('hand',${slotIndex},'multi',event)">Mover</button>`;
-    } else {
-        menu.innerHTML = `
-            <button class="pz-zmenu-btn pz-zmenu-ver"
-                    onclick="ZonaPractica._zmView('${zone}',${slotIndex},event)">Ver</button>
-            <button class="pz-zmenu-btn pz-zmenu-accion"
-                    onclick="ZonaPractica._zmShowAction('${zone}',${slotIndex},'${zoneType}',event)">Acción</button>`;
-    }
+    menu.innerHTML = `
+        <button class="pz-zmenu-btn pz-zmenu-ver"
+                onclick="ZonaPractica._zmView('${zone}',${slotIndex},event)">Ver</button>
+        ${hasMats ? `<button class="pz-zmenu-btn"
+                onclick="ZonaPractica._showDetachMenu('${zone}',event)">⛓ Desacoplar</button>` : ''}
+        <button class="pz-zmenu-btn pz-zmenu-activate"
+                onclick="ZonaPractica._zmActivate('${zone}',${slotIndex},'${zoneType}',event)">Activar</button>
+        ${zoneType === 'field' ? `<button class="pz-zmenu-btn pz-zmenu-position"
+                onclick="ZonaPractica._zmTogglePosition(event)">Posición</button>` : ''}
+        ${canAttack ? `<button class="pz-zmenu-btn pz-zmenu-attack"
+                onclick="ZonaPractica._zmAttack('${zone}',event)">Atacar</button>` : ''}`;
     anchor.appendChild(menu);
 
     const close = (e) => {
+        if (this._longPressPreventClick) return; // ignora el click de cierre que termina el propio long-press
         if (!menu.contains(e.target)) {
             this._closeZoneMenus();
             document.removeEventListener('click', close, true);
@@ -1115,7 +1115,8 @@ _startLongPress: function (zone, e) {
         this._cancelLongPress();
         this._longPressTimer = setTimeout(() => {
             this._longPressPreventClick = true;
-            this._showQuickActionMenu(zone, e);
+            if (navigator.vibrate) navigator.vibrate(50);
+            this._showZoneMenu(zone, null, 'field');
         }, 250);
     },
 
@@ -1153,7 +1154,8 @@ _startLongPressMulti: function (zone, idx, e) {
         this._cancelLongPress();
         this._longPressTimer = setTimeout(() => {
             this._longPressPreventClick = true;
-            this._zmShowAction(zone, idx, 'multi', e);
+            if (navigator.vibrate) navigator.vibrate(50);
+            this._showZoneMenu(zone, idx, 'multi');
         }, 250);
     },
     _showQuickActionMenu: function (zone, e) {
@@ -1325,6 +1327,12 @@ _startLongPressMulti: function (zone, idx, e) {
         const card = entry?.card;
         if (!card) return;
         this._addLog(`${card.name} → <span style="color:#d63031;font-weight:700">Ataca</span>`, card);
+    },
+
+    _zmTogglePosition: function (e) {
+        e?.stopPropagation();
+        this._closeZoneMenus();
+        this.toggleChangePosition();
     },
     // ═══════════════════════════════════════════════════════
     _showChainResolveBtn: function () {
@@ -1667,7 +1675,7 @@ _showDetachMenu: function (zone, e) {
             const img  = m.card?.card_images?.[0]?.image_url_small || this.CARD_BACK;
             const name = m.card?.name || '?';
             return `<div class="pz-detach-submenu-item"
-                         onclick="ZonaPractica._detachMaterial('${zone}',${i})">
+                         onclick="event.stopPropagation();ZonaPractica._detachMaterial('${zone}',${i})">
                 <img src="${img}" class="pz-detach-sub-thumb" onerror="this.src='${this.CARD_BACK}'">
                 <span class="pz-detach-sub-name">${name}</span>
             </div>`;
@@ -1685,6 +1693,10 @@ _showDetachMenu: function (zone, e) {
             ? this.field[mv.sourceZone]
             : this._getMultiArray(mv.sourceZone)[mv.sourceSlot];
         if (!entry) { this._cancelMoveMode(); return; }
+        if (mv.sourceType === 'field' && String(mv.sourceZone) === String(targetZone)) {
+            this._cancelMoveMode();
+            return;
+        }
         if (this.field[targetZone]) {
             if (this.OVERLAY_ZONES.includes(String(targetZone))) {
                 if (mv.sourceType === 'field') this.field[mv.sourceZone] = null;
@@ -1728,7 +1740,7 @@ _showDetachMenu: function (zone, e) {
         if (!slot) return;
         e.stopPropagation();
         const idx = Array.from(slot.parentElement.children).indexOf(slot);
-        this._showZoneMenu(zone, idx, 'multi');
+        this._zmStartMove(zone, idx, 'multi', e);
     },
 
     _completeMoveToMulti: function (targetZone, targetSlot) {
@@ -1738,6 +1750,10 @@ _showDetachMenu: function (zone, e) {
             ? this.field[mv.sourceZone]
             : this._getMultiArray(mv.sourceZone)[mv.sourceSlot];
         if (!entry) { this._cancelMoveMode(); return; }
+        if (mv.sourceType === 'multi' && mv.sourceZone === targetZone) {
+            this._cancelMoveMode();
+            return;
+        }
         if (entry._isToken && ['hand','gy','banish'].includes(targetZone)) {
             if (mv.sourceType === 'field') this.field[mv.sourceZone] = null;
             else this._getMultiArray(mv.sourceZone).splice(mv.sourceSlot, 1);
@@ -2929,7 +2945,15 @@ const minGap = isHand ? -52 : -18;
             else if (entry.rotation) img.style.transform = `rotate(${entry.rotation}deg)`;
 
             slot.appendChild(img);
-            
+
+            slot.addEventListener('pointerdown', (ev) => {
+                if (ev.button !== 0 && ev.type !== 'pointerdown') return;
+                this._startLongPressMulti(zoneName, i, ev);
+            });
+            slot.addEventListener('pointerup',     () => this._cancelLongPress());
+            slot.addEventListener('pointerleave',  () => this._cancelLongPress());
+            slot.addEventListener('pointercancel', () => this._cancelLongPress());
+            slot.addEventListener('contextmenu',   (ev) => ev.preventDefault());
 
             if (entry._chainNum) {
                 const badge = document.createElement('span');
