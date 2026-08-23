@@ -468,7 +468,12 @@ const ConfigManager = {
                 'yugioh_formacion_mastered', 'yugioh_torneo_actual',
                 'dd_content_visibility', 'dd_player_profile',
                 'yugioh_music_config', 'yugioh_player_level',
-                'yugioh_meta_fallbacks', 'yugioh_formacion_fallbacks'
+                'yugioh_meta_fallbacks', 'yugioh_formacion_fallbacks',
+                'yugioh_gauntlet_rankings', 'yugioh_gauntlet_templates',
+                'dd_buscador_sidebar_img', 'yugioh_img_quality',
+                'yugioh_estilo_juego', 'yugioh_personaje_resultado', 'yugioh_custom_tests',
+                'dd_bg_theme', 'dd_tabintro_disabled', 'dd_update_seen',
+                'dd_decklist_view_mode', 'dd_report_counter'
             ];
             staticKeys.forEach(k => {
                 const v = localStorage.getItem(k);
@@ -480,7 +485,8 @@ const ConfigManager = {
                 const k = localStorage.key(i);
                 if (!k) continue;
                 if (k.startsWith('deck_') || k.startsWith('matchup_') || k.startsWith('pz_states_')
-                    || k.startsWith('optimization_') || k.startsWith('complejidad_')) {
+                    || k.startsWith('optimization_') || k.startsWith('complejidad_')
+                    || k.startsWith('combos_') || k.startsWith('gauntlet_')) {
                     snapshot[k] = localStorage.getItem(k);
                 }
             }

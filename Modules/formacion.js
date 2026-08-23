@@ -4498,7 +4498,8 @@ const Config = {
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="banlist"> <span>Banlist del Formato</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="config"> <span>Configuración (roles, scoring, mecánicas…)</span></label>
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="perfil"> <span>Perfil y bienvenida</span></label>
-        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="fallbacks"> <span>Imágenes y Fallbacks</span></label>
+        <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="combos"> <span>Líneas de Combos</span></label>
+<label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="gauntlet"> <span>Gauntlet (pruebas y rankings)</span></label>
     </div>
     <div class="borrar-footer-row">
         <label class="borrar-select-all-label">
@@ -5384,6 +5385,9 @@ enviarReporte: function (counter, dateStr) {
             'dd_content_visibility','yugioh_favoritas','yugioh_engines',
             'yugioh_music_config','yugioh_meta_decks','yugioh_meta_fallbacks',
             'yugioh_formacion_notes','yugioh_formacion_mastered','yugioh_formacion_fallbacks',
+            'dd_buscador_sidebar_img','yugioh_img_quality',
+            'yugioh_estilo_juego','yugioh_personaje_resultado','yugioh_custom_tests',
+            'dd_bg_theme','dd_tabintro_disabled','dd_update_seen','dd_decklist_view_mode',
         ];
         const exportObj = { exportDate: dateStr, reportNumber: counter };
         claves.forEach(k=>{ const v=localStorage.getItem(k); if(v){ try{ exportObj[k]=JSON.parse(v); }catch(_){ exportObj[k]=v; } } });
@@ -6276,6 +6280,7 @@ borrarSeleccion: function () {
         banlist: 'Banlist del Formato',
         config: 'Configuración (roles, scoring, mecánicas…)',
         perfil: 'Perfil y bienvenida', fallbacks: 'Imágenes y Fallbacks',
+        combos: 'Líneas de Combos', gauntlet: 'Gauntlet (pruebas y rankings)',
     };
     const lista = selected.map(k => `• ${etiquetas[k]}`).join('\n');
     if (!confirm(`⚠️ ¿Borrar lo siguiente?\n\n${lista}\n\nEsta acción NO se puede deshacer.`)) return;
@@ -6319,6 +6324,19 @@ borrarSeleccion: function () {
     if (selected.includes('practica')) {
         rmP('pz_states_');
     }
+        if (selected.includes('combos')) {
+        rmP('combos_');
+        if (window.Deck && document.getElementById('mideck-content')) Deck.render();
+    }
+    if (selected.includes('gauntlet')) {
+        rmP('gauntlet_'); rm('yugioh_gauntlet_rankings'); rm('yugioh_gauntlet_templates');
+        if (window.Gauntlet) {
+            Gauntlet.pool = {}; Gauntlet.tests = [];
+            Gauntlet.poolType = null; Gauntlet.poolKey = null;
+            Gauntlet.selectedChips = []; Gauntlet.excludedMetaCards = {};
+            if (Gauntlet.container && typeof Gauntlet._refreshBody === 'function') Gauntlet._refreshBody();
+        }
+    }
     if (selected.includes('cache')) {
         rm('yugioh_power_cache'); rm('yugioh_cross_scores'); rm('dd_power_scores_cache');
         rm('yugioh_meta_deck_scores');
@@ -6337,6 +6355,7 @@ borrarSeleccion: function () {
     }
     if (selected.includes('formacion')) {
         rm('yugioh_formacion_notes'); rm('yugioh_formacion_mastered');
+        rm('yugioh_estilo_juego'); rm('yugioh_personaje_resultado'); rm('yugioh_custom_tests');
     }
     if (selected.includes('meta_folders')) {
         rm('yugioh_meta_folders'); rm('yugioh_meta_decks');
@@ -6365,11 +6384,17 @@ borrarSeleccion: function () {
         rm('yugioh_player_level'); rm('dd_player_profile');
         rm('dd_content_visibility'); rm('dd_welcome_dismissed');
         rm('yugioh_music_config');
+        rm('dd_bg_theme'); rm('dd_tabintro_disabled'); rm('dd_update_seen');
+        rm('dd_decklist_view_mode'); rm('dd_report_counter');
         if (window.Welcome) { Welcome.dismissed = false; Welcome.init(); }
-        if (window.ContentManager) ContentManager.applyAll();
+        if (window.ContentManager) { ContentManager.applyAll(); ContentManager.applyBgTheme('purple'); }
+        if (window.Deck) { Deck._decklistViewMode = null; if (document.getElementById('deck-content')) Deck.render(); }
     }
     if (selected.includes('fallbacks')) {
         rm('yugioh_meta_fallbacks'); rm('yugioh_formacion_fallbacks');
+        rm('dd_buscador_sidebar_img'); rm('yugioh_img_quality');
+        if (window.Buscador && typeof Buscador._applySidebarImage === 'function') Buscador._applySidebarImage();
+        if (window.CardViewer) CardViewer._imgQuality = 'low';
     }
 
     this.render();
