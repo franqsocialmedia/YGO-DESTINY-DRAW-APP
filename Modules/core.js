@@ -133,7 +133,8 @@ const TabIntro = {
                 'Arma y edita tu Main, Extra y Side Deck.',
                 'Consulta tu Internal Score, Consistencia, Potencia y Resiliencia en tiempo real.',
                 'Registra rondas en Optimización para medir tu nivel real como piloto del deck.',
-                'Lleva el historial de enfrentamientos por rival en Matchups.'
+                'Lleva el historial de enfrentamientos por rival en Matchups.',
+                'Mapea tu Línea de Combos por zonas y simulala paso a paso.'
             ]
         },
         estadisticas: {
@@ -150,7 +151,8 @@ const TabIntro = {
                 'Calcula probabilidades de mano inicial con Hipergeometría.',
                 'Simula torneos Swiss completos con tu deck.',
                 'Practica manos en la Zona de Práctica y Duelo en Vivo.',
-                'Registra winrates y experimenta variantes de tu lista.'
+                'Registra winrates y experimenta variantes de tu lista.',
+                'Busca counters a las cartas del rival en Counters, o testea tu pool contra el meta en Gauntlet.'
             ]
         },
         formacion: {
@@ -159,7 +161,9 @@ const TabIntro = {
                 'Aprende mecánicas y conceptos del juego competitivo.',
                 'Consulta Fuentes recomendadas y Maestros del Duelo del meta actual.',
                 'Guarda tus propios apuntes de estrategia.',
-                'Descubre juegos alternativos de Yu-Gi-Oh! para practicar.'
+                'Descubre juegos alternativos de Yu-Gi-Oh! para practicar.',
+                'Ponte a prueba con Tests de Duelo, o descubre tu Estilo y Personaje afín.',
+                'Carga un deck listo desde Primeros Decks si recién empiezas.'
             ]
         },
         config: {
