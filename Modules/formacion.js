@@ -7623,6 +7623,8 @@ const HelpPanel = {
             <li>Toca la imagen de la carta para abrir su <strong>Vista de Carta</strong> detallada.</li>
             <li>Desde la Vista puedes agregarla al Main, Extra o Side Deck, marcarla como Staple o Favorita, ver sus roles detectados, aporte estimado al deck y estado de banlist.</li>
             <li>El efecto de la carta se resalta por segmentos según la Nomenclatura configurada en Config.</li>
+            <li><strong>Lore de la carta:</strong> historia del personaje (o del arquetipo si no aplica) obtenida de Yugipedia, en pestañas si hay más de una sección. Se abre desde el botón de Lore en la Vista de Carta.</li>
+            <li><strong>Calidad de imagen:</strong> elegí la calidad preferida de las imágenes de carta desde el Buscador; se recuerda para toda la app.</li>
         </ul>`,
 
     mideck: `
@@ -7640,7 +7642,8 @@ const HelpPanel = {
             <li><strong>Internal Score y Análisis:</strong> visibles en el sub-tab Construcción. Se recalculan automáticamente con cada cambio.</li>
             <li><strong>Optimización:</strong> sub-tab con <strong>Nivel como Piloto del Deck</strong> (dominio del deck según rondas registradas), <strong>Complejidad del Deck</strong> (evaluación de dificultad), <strong>Notas del Deck</strong> y <strong>Historial de Enfrentamientos</strong> (W/L manual por rival). Aquí también registras cada ronda jugada (rival, resultado, going first/second) para alimentar el <strong>Historial de Sesiones</strong>.</li>
             <li><strong>Importar Lista Oficial (.pdf):</strong> lee el PDF de torneo de Konami y arma el deck automáticamente detectando Main, Extra y Side por encabezados de columna.</li>
-            <li><strong>Side Deck:</strong> al mover una carta al Side Deck, un panel te pregunta cuántas copias enviar (por defecto todas). Podés dejar, por ejemplo, 2 copias en Main y sidear solo 1 — competitivamente útil para planes de juego que cambian según el rival.</li>
+            <li><strong>Side Deck:</strong> al mover una carta al Side Deck, un panel te pregunta cuántas copias enviar (por defecto todas). Podés dejar, por ejemplo, 2 copias en Main y sidear solo 1 — competitivamente útil para planes de juego que cambian según el rival. El orden del Side sigue primero las cartas de origen Main y después las de origen Extra (Fusión→Sincronía→Xyz→Link); una carta del Extra que vuelve del Side regresa a Extra, no a Main.</li>
+            <li><strong>Vista Detallada / Resumida:</strong> alterná entre la fila completa por carta (imagen, badges, stepper, rol) y un grid compacto tipo "Ver Deck" (solo imagen y cantidad). Aplica igual a Main, Extra y Side.</li>
             <li><strong>Tu Experiencia con el Deck:</strong> 6 sub-tabs — Perfil (dificultad, estrategia, variante), Manos Muertas, Composición automática, Cartas Destacadas, Sets involucrados y Rendimiento (gráfico de araña + winrate).</li>
             <li><strong>Línea de Combos:</strong> mapea combos por zonas (mano, campo, cementerio, baneadas) con starters/Boss Monster auto-detectados, choke points, restricciones, interacciones y endboard. Incluye un <strong>modo de ejecución paso a paso</strong> (robar, mover cartas, log de jugadas) para simular la línea jugada a jugada, y exporta/importa como .txt.</li>
             <li><strong>Cartas Clave y Amenazas:</strong> ranking de cartas marcadas como clave o amenaza del rival durante las rondas de Optimización.</li>
@@ -7689,6 +7692,11 @@ const HelpPanel = {
             <li><strong>Juegos:</strong> acceso rápido a plataformas de Yu-Gi-Oh! configuradas en Config.</li>
             <li><strong>Fuentes:</strong> links a sitios del meta (YGOPro, masterduelmeta, etc.) configurados en Config.</li>
             <li><strong>Maestros:</strong> galería de streamers y jugadores de referencia que configuras en Config.</li>
+            <li><strong>Historia del Meta:</strong> repaso de eras TCG/OCG, campeonatos mundiales y campeones de Master Duel.</li>
+            <li><strong>Test:</strong> quizzes teóricos (opción múltiple) y prácticos (armar un campo objetivo contra un campo rival dado). Podés crear tus propios tests y exportarlos/importarlos para compartir.</li>
+            <li><strong>Tu Estilo:</strong> quiz de ejes de preferencia que recomienda un arquetipo afín, con link directo al Buscador.</li>
+            <li><strong>Tu Personaje:</strong> quiz similar que recomienda un personaje del anime/manga afín a tu forma de jugar.</li>
+            <li><strong>Primeros Decks:</strong> decklists .ydk listas para cargar por nivel — Básico, Intermedio y Competitivo.</li>
         </ul>`,
 
         config: `
@@ -7784,6 +7792,18 @@ const HelpPanel = {
         {
             q: '¿Cómo funciona la Banlist con varios formatos?',
             a: 'Podés activar más de un formato de Banlist a la vez y crear formatos custom propios además de los predefinidos y Genesys. Cada formato tiene un toggle "invertido". El estado de ban de una carta se muestra tanto en la Vista de Carta del Buscador como en Mi Deck.'
+        },
+        {
+            q: '¿Cuál es la diferencia entre Vista Detallada y Resumida del Decklist?',
+            a: 'La Detallada muestra fila completa por carta con imagen, badges de rol y estado de banlist, stepper de cantidad y botones de acción. La Resumida es un grid compacto (imagen + cantidad) sin badges ni acciones, más rápido de escanear. Aplica igual a Main, Extra y Side, y se recuerda entre sesiones.'
+        },
+        {
+            q: '¿Hay un tope de cartas en el Side Deck?',
+            a: 'Sí, 15 cartas. Se valida al mandar una carta del Extra Deck al Side. El orden interno respeta primero las cartas de origen Main y luego las de origen Extra (Fusión→Sincronía→Xyz→Link), y una carta del Extra que vuelve del Side regresa a Extra, no a Main.'
+        },
+        {
+            q: '¿Qué son Tu Estilo y Tu Personaje en Formación?',
+            a: 'Son quizzes de autoconocimiento: Tu Estilo evalúa tus preferencias de juego y te recomienda un arquetipo afín con link directo al Buscador. Tu Personaje hace lo mismo pero recomendando un personaje del anime/manga de Yu-Gi-Oh! según tu forma de jugar.'
         }
     ],
 
