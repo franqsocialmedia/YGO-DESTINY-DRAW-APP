@@ -31,27 +31,27 @@ const Formacion = {
         { id: 'mentalidad-del-jugador',  label: 'Mentalidad del Jugador',           level: 'Intermedio' },
         { id: 'secuenciacion',           label: 'Secuenciación: El Orden Importa', level: 'Avanzado' },
         // ── MÓDULO 3 — Construcción y Optimización de Mazo ──
-        { id: 'elegir-construir-deck',      label: 'Elegir y Construir tu Deck',        level: 'Competitivo' },
-{ id: 'pet-deck-dominar',           label: 'Pet Deck: De Jugarlo a Dominarlo',  level: 'Competitivo' },
-{ id: 'valorar-carta',              label: 'Cómo Valorar una Carta',            level: 'Competitivo' },
-{ id: 'staples-formato',            label: 'Staples del Formato',               level: 'Competitivo' },
-        { id: 'anatomia-deck-competitivo',  label: 'Anatomía de un Deck Competitivo',   level: 'Competitivo' },
-        { id: 'debilidades-deck',           label: 'Qué Hace Débil a un Deck o Arquetipo', level: 'Competitivo' },
-        { id: 'optimizar-deck',             label: 'Cómo Optimizar tu Deck',            level: 'Competitivo' },
-{ id: 'equilibrio-deck',            label: 'Equilibrio del Deck: Detectando Excesos', level: 'Competitivo' },
+        { id: 'elegir-construir-deck',      label: 'Elegir y Construir tu Deck',        level: 'Avanzado' },
+{ id: 'pet-deck-dominar',           label: 'Pet Deck: De Jugarlo a Dominarlo',  level: 'Avanzado' },
+{ id: 'valorar-carta',              label: 'Cómo Valorar una Carta',            level: 'Avanzado' },
+{ id: 'staples-formato',            label: 'Staples del Formato',               level: 'Avanzado' },
+        { id: 'anatomia-deck-competitivo',  label: 'Anatomía de un Deck Competitivo',   level: 'Avanzado' },
+        { id: 'debilidades-deck',           label: 'Qué Hace Débil a un Deck o Arquetipo', level: 'Avanzado' },
+        { id: 'optimizar-deck',             label: 'Cómo Optimizar tu Deck',            level: 'Avanzado' },
+{ id: 'equilibrio-deck',            label: 'Equilibrio del Deck: Detectando Excesos', level: 'Avanzado' },
 // ── MÓDULO 4 — Motor Técnico del Juego ──
         { id: 'cadenas-prioridad',       label: 'Cadenas, Prioridad y Spell Speed', level: 'Avanzado' },
         { id: 'rulings-invocaciones',    label: 'Rulings de Invocaciones',          level: 'Avanzado' },
         { id: 'rulings-batalla',         label: 'Rulings en Fase de Batalla',       level: 'Avanzado' },
         { id: 'if-when-timing',          label: 'IF vs WHEN y Timing Avanzado',     level: 'Avanzado' },
         // ── MÓDULO 5 — Metajuego y Torneo ──
-        { id: 'leer-campo-oponente',     label: 'Leer el Campo del Oponente',       level: 'Competitivo' },
-        { id: 'gestion-lp-recursos',     label: 'Gestión de LP y Recursos',         level: 'Competitivo' },
-        { id: 'formatos-diferencias',    label: 'Formatos y sus Diferencias',       level: 'Competitivo' },
-        { id: 'side-deck',               label: 'El Side Deck',                    level: 'Competitivo' },
-{ id: 'bo1-vs-bo3',              label: 'Bo1 vs Bo3: Diferencias Estratégicas', level: 'Competitivo' },
-{ id: 'practicar-evento',        label: 'Practicar Antes de un Evento',     level: 'Competitivo' },
-{ id: 'meta-tiers',              label: 'El Meta y los Tiers de Poder',     level: 'Competitivo' },
+        { id: 'leer-campo-oponente',     label: 'Leer el Campo del Oponente',       level: 'Avanzado' },
+        { id: 'gestion-lp-recursos',     label: 'Gestión de LP y Recursos',         level: 'Avanzado' },
+        { id: 'formatos-diferencias',    label: 'Formatos y sus Diferencias',       level: 'Avanzado' },
+        { id: 'side-deck',               label: 'El Side Deck',                    level: 'Avanzado' },
+{ id: 'bo1-vs-bo3',              label: 'Bo1 vs Bo3: Diferencias Estratégicas', level: 'Avanzado' },
+{ id: 'practicar-evento',        label: 'Practicar Antes de un Evento',     level: 'Avanzado' },
+{ id: 'meta-tiers',              label: 'El Meta y los Tiers de Poder',     level: 'Avanzado' },
     ],
 
     PLATFORMS: ['PC', 'GBC', 'GBA', 'PS1', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'Físico'],
@@ -1124,8 +1124,8 @@ META_HISTORY: {
     },
 
     _renderTemasTab: function () {
-        const LEVEL_ORDER = ['Básico', 'Intermedio', 'Competitivo', 'Avanzado'];
-        const LEVEL_ICONS = { 'Básico':'🌱', 'Intermedio':'⚔️', 'Competitivo':'🏆', 'Avanzado':'🔬' };
+        const LEVEL_ORDER = ['Básico', 'Intermedio', 'Avanzado'];
+        const LEVEL_ICONS = { 'Básico':'🌱', 'Intermedio':'⚔️', 'Avanzado':'🔬' };
         const activeTopics  = this._getActiveTopics();
         const levelsPresent = LEVEL_ORDER.filter(lv => activeTopics.some(t => t.level === lv));
         const currentTopic  = this.TOPICS.find(t => t.id === this.activeTab);
