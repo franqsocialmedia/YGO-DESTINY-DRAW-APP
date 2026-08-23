@@ -1,5 +1,5 @@
 # DESTINY DRAW — REPORTE TÉCNICO
-**Versión del reporte:** v8.0 (estado actual, sin historial de cambios)
+**Versión del reporte:** v9.0 (estado actual, sin historial de cambios)
 **Stack:** Vanilla JS (ES6 objects) · CSS modular · HTML5 SPA · YGOProDeck API · Yugipedia API · localStorage
 
 > Este reporte describe el estado ACTUAL de la app: qué existe, cómo funciona a nivel
@@ -39,6 +39,28 @@
 > Resumida) **no** tiene ninguna regla en este archivo — vive en otro CSS no leído
 > todavía, o está sin estilos.
 
+> **Aviso de auditoría (v9.0):** pasada sobre el lote completo de JS/CSS subido
+> directamente (no vía proyecto): `buscador.js`, `core.js`, `data.js`,
+> `decklists.js`, `default_data.js`, `estadisticas.js`, `formacion.js`,
+> `historial.js`, `lobby.js`, `logger.js`, `mideck.js`, `simuladores.js`,
+> `simuladores-campo.js` y los 6 CSS. Varios archivos crecieron sustancialmente
+> desde la v8.0 sin que el reporte lo reflejara — en particular `lobby.js`
+> (247→578 líneas: suma dos módulos globales nuevos, `TourGate` y `AppTour`,
+> no documentados hasta ahora) y `decklists.js` (105→659 líneas: pasó de 10 a
+> **204** decklists embebidas). Se confirma y documenta por primera vez un
+> sistema de scoring completo que ya existía en `data.js`/`estadisticas.js` pero
+> nunca se había descrito (**Counter-Deck Score**, ver 5.3bis), el panel global
+> de Ayuda/FAQ (`HelpPanel`, ya listado en la tabla de módulos desde v7.0 pero
+> nunca desarrollado en el cuerpo del reporte), el botón flotante "Guardar
+> Deck" de `mideck.js`, y se resuelve el punto abierto del flujo 8.1 sobre dónde
+> se dispara `TabIntro.maybeShow()`. `.tdp-*` (gap de la v8.0) se confirma que
+> vive en `style_simuladores.css`, no en `style_mideck.css`. **Esta pasada NO
+> fue línea-por-línea sobre los módulos ya confirmados a fondo en v6.0-v8.0**
+> (Combos, Gauntlet, CounterSim, ZonaPractica, Experiencia con el Deck) — se
+> enfocó en detectar features nuevas/no registradas vía inventario de objetos
+> globales, claves de `localStorage` y crecimiento de línea por archivo. Donde
+> no se indica lo contrario, las secciones de v6.0-v8.0 siguen vigentes.
+
 ---
 
 ## 1. ESTRUCTURA DE ARCHIVOS
@@ -50,7 +72,7 @@ index.html — Shell SPA. El Buscador trae su HTML estático completo (barra de
               #mideck-content, #estadisticas-content, #simuladores-content,
               #meta-content, #formacion-content, #config-content) están vacías
               (o con placeholder) y el JS llena el DOM en runtime.
-Footer real:  "VERSION 10.2.9" (independiente del número de este reporte).
+Footer real:  "VERSION 10.4.9" (independiente del número de este reporte — **corregido en v9.0**, la v8.0 decía "10.2.9").
 ```
 
 **Detalle verificado directo del `index.html` actual, útil para no asumir de más:**
@@ -83,23 +105,23 @@ default_data.js → decklists.js → logger.js  (SIEMPRE AL FINAL)
 
 | Archivo | Objetos globales | Líneas (confirmado en esta pasada) | Descripción |
 |---------|-----------------|---------------------------|--------------|
-| `core.js` | `Navigation`, `TabIntro`, `Shortcuts`, `ContentManager`, `switchTab` | 666 (antes 549) | Navegación entre pestañas, intro por pestaña, accesos rápidos, visibilidad por perfil, tema de fondo |
-| `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 2311 — sin cambios | Config global, motor de Scoring (Internal, G1/G2, External, RPS), analizadores de carta |
-| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 2477 (antes 2238) — ahora incluye el bloque de Lore vía Yugipedia y calidad de imagen configurable | Búsqueda, visor de carta, favoritas, imagen de portada configurable, Lore (Yugipedia) |
-| `lobby.js` | `Lobby` | 247 (antes "sin medir") | Pestaña de inicio: Lo Nuevo, Sugerencias (colapsable), aviso de actualización |
-| `mideck.js` | `Deck`, `Combos`, `Banlist`, `Engines` | 8321 — confirmado byte-idéntico a la pasada anterior (mismos límites de línea de `Deck`/`Combos`/`Banlist`/`Engines`); incluye `Combos` completo (con modo de ejecución/log de jugadas), Tu Experiencia con el Deck, Historial de Versiones, y ahora también documentados: Vista Detallada/Resumida del Decklist y reglas de orden/tope del Side Deck (ver 4.3) | Deck activo, Optimización, Complejidad, Experiencia con el Deck, Línea de Combos, Banlist/Genesys, Importar PDF/.ydk, sidebar |
-| `historial.js` | `Matchups`, `Duelista` | 930 (antes 929) — sin cambios relevantes | Historial por rival y Nivel como Piloto del deck activo |
-| `estadisticas.js` | `Estadisticas` | 2673 (antes 2586) — ahora incluye 3 funciones de exportación y el floating widget de selección de deck | Scores del deck activo y del meta, Top Tier, carpetas del meta, Poder de Cartas |
-| `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria`, `CounterSim`, `Gauntlet` | 4330 (antes 3150) — ahora incluye `CounterSim` y `Gauntlet` completos | Simuladores de testing y práctica competitiva |
-| `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3617 (antes 3339) — `ZonaPractica` trae sistemas no documentados antes: resolución de cadena, información oculta, navegador de estados, log de duelo exportable, visor de mazo/GY/baneadas manipulable | Simulación de campo por zonas y lienzo libre |
-| `formacion.js` | `Formacion`, `Meta`, `TestDuelo`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | 7858 (antes 4341) — casi el doble; se agrega `TestDuelo` (no listado antes) y 6 secciones nuevas dentro de Config | Contenido educativo, Config completo, bienvenida, música, ayuda, Tests de Duelo custom |
-| `default_data.js` | `DefaultData` | 1228 — sin cambios | Inyección única de datos por defecto. Parchea `Config.resetToDefault` |
-| `decklists.js` | `DecklistsData` | 105 — confirmado, cargado y en uso | Repositorio de 10 decklists `.ydk` embebidas (Básico/Intermedio/Competitivo) para "🃏 Primeros Decks" en Formación |
-| `logger.js` | `DDLogger` | 365 — sin cambios | Logger no-invasivo. `exportReport()`, `getLogs()`, `getStats()`, `enable/disable/clear()` |
+| `core.js` | `Navigation`, `TabIntro`, `Shortcuts`, `ContentManager`, `switchTab` | 692 (antes 666) — crecimiento menor: `Navigation.showTab` ahora también llama `Deck.updateSaveFloatingBtnVisibility` y `Lobby.init` (ver 8.1) | Navegación entre pestañas, intro por pestaña, accesos rápidos, visibilidad por perfil, tema de fondo |
+| `data.js` | `ConfigManager`, `Stats`, `SpecialtyAnalyzer`, `NomenclatureAnalyzer` | 2317 (antes 2311) — incluye `Stats.calculateCounterDeckScore` (ver 5.3bis), no documentado hasta v9.0 | Config global, motor de Scoring (Internal, G1/G2, External, Counter-Deck, RPS), analizadores de carta |
+| `buscador.js` | `Buscador`, `CardViewer`, `Favoritas` | 2480 (antes 2477) — sin cambios relevantes | Búsqueda, visor de carta, favoritas, imagen de portada configurable, Lore (Yugipedia) |
+| `lobby.js` | `Lobby`, `TourGate`, `AppTour` | 578 (antes 247) — el objeto `Lobby` en sí no cambió; el crecimiento es por dos módulos nuevos agregados al final del archivo (ver 4.1bis) | Pestaña de inicio: Lo Nuevo, Sugerencias (colapsable), aviso de actualización — más `TourGate` (orquestador de orden de paneles de bienvenida) y `AppTour` (tour guiado de onboarding por pestañas) |
+| `mideck.js` | `Deck`, `Combos`, `Banlist`, `Engines` | 8612 (antes 8321) — crecimiento por el botón flotante "💾 Guardar Deck" y `Deck.saveNotes()` (ver 4.3), no documentados hasta v9.0 | Deck activo, Optimización, Complejidad, Experiencia con el Deck, Línea de Combos, Banlist/Genesys, Importar PDF/.ydk, sidebar, guardado rápido |
+| `historial.js` | `Matchups`, `Duelista` | 930 — sin cambios | Historial por rival y Nivel como Piloto del deck activo |
+| `estadisticas.js` | `Estadisticas` | 2673 — sin cambios | Scores del deck activo y del meta, Top Tier, carpetas del meta, Poder de Cartas |
+| `simuladores.js` | `Winrate`, `Torneo`, `DueloEnVivo`, `Hipergeometria`, `CounterSim`, `Gauntlet` | 4330 — sin cambios de línea, pero se confirma en v9.0 que `Hipergeometria` tiene 3 sub-modos (Estándar/Mis Decks/Prueba Mulligan, ver 4.5), no documentados antes | Simuladores de testing y práctica competitiva |
+| `simuladores-campo.js` | `ZonaPractica`, `Experimentacion` | 3641 (antes 3617) — crecimiento menor, sin features nuevas de fondo detectadas en esta pasada | Simulación de campo por zonas y lienzo libre |
+| `formacion.js` | `Formacion`, `Meta`, `TestDuelo`, `Config`, `Welcome`, `MusicPlayer`, `HelpPanel` | 7944 (antes 7858) — el crecimiento corresponde al contenido completo de `HelpPanel` (panel de Ayuda/FAQ global, ver 4.8), listado en esta tabla desde v7.0 pero nunca descrito en el cuerpo del reporte hasta v9.0 | Contenido educativo, Config completo, bienvenida, música, ayuda/FAQ global, Tests de Duelo custom |
+| `default_data.js` | `DefaultData` | 1229 (antes 1228) — sin cambios relevantes | Inyección única de datos por defecto. Parchea `Config.resetToDefault` |
+| `decklists.js` | `DecklistsData` | 659 (antes 105) — **confirmado en esta pasada: 204 decklists**, no 10 | Repositorio de 204 decklists `.ydk` embebidas, cada una con su propio campo `level` (`'Basico'\|'Intermedio'\|'Competitivo'`) para "🃏 Primeros Decks" en Formación. `getGroupedByLevel()` agrupa y ordena alfabéticamente dentro de cada nivel (ver 4.6) |
+| `logger.js` | `DDLogger` | 368 (antes 365) — `TARGETS` se amplió y quedó al día salvo `TourGate`/`AppTour` (ver nota debajo de esta tabla) | Logger no-invasivo. `exportReport()`, `getLogs()`, `getStats()`, `enable/disable/clear()` |
 
 **Nota:** `Stats` vive dentro de `data.js`. `Winrate`/`DueloEnVivo` son los objetos correctos en `simuladores.js` (el antiguo `Duelo` ya no existe). `default_data.js` carga después de `formacion.js`, antes de `decklists.js`, y `logger.js` sigue siempre al final.
 
-**⚠️ Bug confirmado en `logger.js`:** `TARGETS` (línea ~42) todavía no cubre `Lobby`, `Combos`, `CounterSim`, `Gauntlet`, `TabIntro` ni `TestDuelo` — ninguno se audita ni aparece en `exportReport()`. Además sigue listando el nombre obsoleto `'Duelo'` en vez de `'DueloEnVivo'`, así que `DueloEnVivo` tampoco se loguea aunque el módulo exista y esté activo. `DecklistsData` no aplica (es solo data, sin métodos que interceptar).
+**✅ Bug de `logger.js` — RESUELTO, confirmado en v9.0:** `TARGETS` ya cubre `Lobby`, `Combos`, `CounterSim`, `Gauntlet`, `TabIntro`, `TestDuelo` y el nombre correcto `'DueloEnVivo'` (ya no aparece el obsoleto `'Duelo'`). Lista completa actual: `Navigation, Shortcuts, ContentManager, TabIntro, ConfigManager, SpecialtyAnalyzer, NomenclatureAnalyzer, Buscador, CardViewer, Favoritas, Deck, Combos, Banlist, Engines, Matchups, Duelista, Estadisticas, Winrate, Torneo, DueloEnVivo, Hipergeometria, CounterSim, Gauntlet, DecklistsData, ZonaPractica, Experimentacion, Formacion, Meta, Config, Welcome, MusicPlayer, HelpPanel, TestDuelo, DefaultData, Lobby`. `DecklistsData` sigue sin aplicar (es solo data, sin métodos que interceptar). **⚠️ Gap nuevo confirmado en v9.0:** `TourGate` y `AppTour` (ver 4.1bis, agregados a `lobby.js` después de que se armó la lista de `TARGETS`) **no** están en `TARGETS` — no se auditan ni aparecen en `exportReport()`.
 
 ### 1.3 CSS — 6 archivos
 
@@ -111,20 +133,21 @@ style_simuladores.css → style_config.css → responsive_style.css
 
 | Archivo | Líneas (última medición) | Absorbe |
 |---------|---------------------------|---------|
-| `style_core.css` | 1326 | style_global + style_welcome + style_cardviewer |
-| `style_buscador.css` | ~1045 | — (+ `.cv-archetype-link`, `.cv-release-block`, `.cv-card-id`, `.cv-contribution-*`, `.cv-role-*`, y probablemente el bloque de Lore de Yugipedia, no confirmado) |
-| `style_mideck.css` | 3515 — **confirmado en esta pasada** (antes 2524). Ya incluye `.combo-*` (Línea de Combos, editor + objetivo + ramificaciones), `.exp-*` (Tu Experiencia con el Deck), `.dl-view-*`/`.dv-*`/`.dzc-*` (Vista Detallada/Resumida y chips de zona, ver 4.3). **Gap confirmado:** `.tdp-*` (grid de cartas del panel "Ver Deck" / Vista Resumida) tiene **0 ocurrencias** en este archivo pese a que `mideck.js` la usa en varios lugares — vive en otro CSS todavía no leído, o está sin estilos | — (incluye `.opt-*` de Optimización — 165 ocurrencias confirmadas —, `.cxd-*` de Complejidad del Deck — 26 confirmadas) |
-| `style_simuladores.css` | 6019 — **desactualizado**, no incluye clases de `CounterSim`/`Gauntlet` | style_simuladores + style_estadisticas |
-| `style_config.css` | 2292 | style_config + style_formacion + style_meta + clases de Scoring G1/G2 |
-| `responsive_style.css` | 611 | Todos los `@media` del proyecto |
+| `style_core.css` | 1614 (antes 1326) — crecimiento confirmado en v9.0, coincide con las clases de `.help-panel-*`/`.faq-*` (HelpPanel, ver 4.8) y el grueso de `.lobby-*`/`.tabintro-*` | style_global + style_welcome + style_cardviewer + Ayuda/FAQ |
+| `style_buscador.css` | 1383 (antes ~1045) — confirmado en v9.0 | — (+ `.cv-archetype-link`, `.cv-release-block`, `.cv-card-id`, `.cv-contribution-*`, `.cv-role-*`, y probablemente el bloque de Lore de Yugipedia, no confirmado) |
+| `style_mideck.css` | 3569 (antes 3515) — confirmado en v9.0. Ya incluye `.combo-*` (Línea de Combos, editor + objetivo + ramificaciones), `.exp-*` (Tu Experiencia con el Deck), `.dl-view-*`/`.dv-*`/`.dzc-*` (Vista Detallada/Resumida y chips de zona, ver 4.3). **Gap del `.tdp-*` RESUELTO en v9.0:** esas clases no viven acá — ver fila de `style_simuladores.css` | — (incluye `.opt-*` de Optimización — 165 ocurrencias confirmadas —, `.cxd-*` de Complejidad del Deck — 26 confirmadas) |
+| `style_simuladores.css` | 6518 (antes 6019) — **confirmado en v9.0 que acá vive `.tdp-*`** (14 ocurrencias, panel "Ver Deck" de Matchups, ver sección 11). Sigue **desactualizado** para `CounterSim`/`Gauntlet`: no se detectaron clases con esos nombres pese al crecimiento del archivo — es posible que reutilicen clases genéricas existentes en vez de un prefijo propio; confirmar antes de asumir que están sin estilos | style_simuladores + style_estadisticas |
+| `style_config.css` | 2646 (antes 2292) — confirmado en v9.0 | style_config + style_formacion + style_meta + clases de Scoring G1/G2 + subconjunto de `.tabintro-*`/`.lobby-*` (sección "Intro de Pestañas") |
+| `responsive_style.css` | 739 (antes 611) — confirmado en v9.0 | Todos los `@media` del proyecto |
 
 **Todos los `@media` viven exclusivamente en `responsive_style.css`** (los 5 archivos temáticos no traen `@media` propio — última verificación confirmó 0 ocurrencias en ellos).
 
-> Los 6 archivos CSS **no** fueron parte de esta pasada (v7.0) — las líneas de arriba
-> siguen siendo la última medición de la v6.0. Dado que `mideck.js`, `simuladores.js`
-> y `formacion.js` casi duplicaron su tamaño en JS, es altamente probable que el CSS
-> real también haya crecido bastante más de lo que dice esta tabla. Tratar estas
-> cifras como piso, no como techo.
+> **Actualizado en v9.0:** los 6 archivos CSS sí fueron leídos directamente en esta
+> pasada (medición de línea real vía `wc -l`, más grep dirigido de clases clave) —
+> las cifras de la tabla de arriba ya no son la medición de v6.0. Sigue sin hacerse
+> una lectura línea-por-línea de cada regla; lo confirmado es el conteo total y la
+> ubicación real de los grupos de clases mencionados arriba (`.tdp-*`, `.help-panel-*`,
+> `.lobby-*`/`.tabintro-*`).
 
 ---
 
@@ -162,6 +185,8 @@ Navigation.currentTab (default) = 'lobby'
 | `dd_tabintro_shown_${tab}` *(nuevo, confirmado)* | `TabIntro` | **sessionStorage**, String `'true'` | Marca que la intro de esa pestaña ya se mostró en esta sesión de navegador (se resetea al recargar). No es `localStorage` — no aparece en Exportar/Importar Data ni en Zona de Borrado. |
 | `dd_welcome_dismissed` | `Welcome` | String `'true'` | Panel reaparece solo al Borrar Data |
 | `dd_update_seen` | `Lobby` | String/Number | Última versión de aviso de actualización ya vista |
+| `dd_lobby_latest_cache` *(nuevo, confirmado v9.0)* | `Lobby` | Object `{ts, cards}` | Caché persistida de "🆕 Lo Nuevo" — vigente 24h (`Lobby.CACHE_MS`), evita refetch a la API en cada reload de página |
+| `dd_apptour_seen` *(nuevo, confirmado v9.0)* | `AppTour` | String `'true'` | Marca que el usuario ya completó el tour guiado de onboarding — mientras no esté en `'true'`, bloquea también todas las intros individuales de `TabIntro` (ver 4.1bis) |
 | `dd_buscador_sidebar_img` | `Buscador` | String | Imagen de portada elegida por el usuario |
 | `yugioh_img_quality` *(nuevo, confirmado)* | `Buscador` | String | Calidad de imagen de carta preferida (`Buscador.setImgQuality`) |
 | `yugioh_favoritas` | `Favoritas` | Object | `{cardId: {id,name,type,img,data}}` |
@@ -218,7 +243,7 @@ Navigation.currentTab (default) = 'lobby'
 | `perfil` | `yugioh_player_level`, `dd_player_profile`, `dd_content_visibility`, `dd_welcome_dismissed` | — |
 | `fallbacks` | `yugioh_meta_fallbacks`, `yugioh_formacion_fallbacks` | — |
 
-> ⚠️ **Gap a confirmar (ampliado en esta pasada):** `combos_${deckName}`, `experiencia_${deckName}`, `gauntlet_${tipo}_${nombre}`, `yugioh_gauntlet_rankings/templates`, `dd_bg_theme`, `dd_tabintro_disabled`, `dd_update_seen`, `dd_buscador_sidebar_img` — y ahora también las claves nuevas confirmadas en esta pasada: `yugioh_img_quality`, `yugioh_estilo_juego`, `yugioh_personaje_resultado`, `yugioh_custom_tests`, `dd_report_counter`, `dd_decklist_view_mode` — **no aparecen mapeados a ninguna de las 16 categorías** de arriba. O están cubiertos implícitamente por una categoría existente (ej. `combos_` bajo `decks`) y falta documentarlo, o son datos huérfanos que Borrar Data no limpia. Confirmar antes de asumir que "Borrar Todo" los alcanza.
+> ⚠️ **Gap a confirmar (ampliado en v9.0):** `combos_${deckName}`, `experiencia_${deckName}`, `gauntlet_${tipo}_${nombre}`, `yugioh_gauntlet_rankings/templates`, `dd_bg_theme`, `dd_tabintro_disabled`, `dd_update_seen`, `dd_buscador_sidebar_img`, `yugioh_img_quality`, `yugioh_estilo_juego`, `yugioh_personaje_resultado`, `yugioh_custom_tests`, `dd_report_counter`, `dd_decklist_view_mode` — y ahora también las dos claves nuevas confirmadas en esta pasada: `dd_lobby_latest_cache`, `dd_apptour_seen` — **no aparecen mapeados a ninguna de las 16 categorías** de arriba. O están cubiertos implícitamente por una categoría existente (ej. `combos_` bajo `decks`) y falta documentarlo, o son datos huérfanos que Borrar Data no limpia. Confirmar antes de asumir que "Borrar Todo" los alcanza.
 
 ---
 
@@ -226,9 +251,15 @@ Navigation.currentTab (default) = 'lobby'
 
 ### 4.1 🏠 Lobby
 Pestaña de inicio, activa por defecto. **Confirmado contra código en esta pasada** (antes era solo prosa funcional, sin relectura).
-- **🆕 Lo Nuevo:** tira horizontal con las últimas 10 cartas lanzadas en TCG u OCG en el último mes, fusionadas por fecha (si salió en ambos formatos, se muestra una sola vez con la fecha más temprana). Clic abre `CardViewer`. Cache de 30 min.
+- **🆕 Lo Nuevo:** tira horizontal con las últimas 10 cartas lanzadas en TCG u OCG en el último mes, fusionadas por fecha (si salió en ambos formatos, se muestra una sola vez con la fecha más temprana). Clic abre `CardViewer`. **Corregido en v9.0:** la caché real es de **24 horas** (`Lobby.CACHE_MS`) y persiste en `localStorage` (`dd_lobby_latest_cache`, ver 3), no solo en memoria por 30 min — sobrevive a un reload de página.
 - **💡 Sugerencias:** collage de 5 tarjetas aleatorias (pool de 10) que invitan a otras secciones (Simuladores, Optimización, Matchups, Buscador por arquetipo, Config → Scoring, Complejidad del Deck, Banlist, Formación, Importar Deck, Estadísticas). "🔀 Otras sugerencias" re-randomiza. Clic navega directo. Toda la sección es **colapsable** (`Lobby.toggleSugerencias()`, flecha ▼/▶) — "Lo Nuevo" no lo es.
 - **Aviso de actualización:** overlay con las mejoras de la versión actual (`Lobby.UPDATE_NOTES`), una sola vez por versión, se descarta con "Entendido".
+
+### 4.1bis `TourGate` y `AppTour` *(nuevos en `lobby.js`, confirmados en esta pasada — no documentados hasta ahora)*
+Dos módulos globales añadidos al final de `lobby.js`, sin modificar `Lobby`/`Welcome`/`TabIntro` — solo observan su estado por DOM/`localStorage`.
+- **`TourGate`:** orquesta el orden de los paneles de bienvenida al primer uso: Aviso de Actualización de Lobby → Panel de Bienvenida (`Welcome`) → App Tour → recién ahí `TabIntro` queda habilitado. `_watchUpdateOverlay()`/`_watchWelcomeOverlay()` hacen polling cada 300ms sobre el DOM/`dd_welcome_dismissed` hasta que ambos overlays se cerraron; `waitUntilReady(cb)` dispara el callback cuando `ready()` es `true`.
+- **`AppTour`:** tour guiado de onboarding, una sola vez por usuario (`localStorage: dd_apptour_seen`). `maybeStart()` se dispara en `window.addEventListener('load', ...)` y espera a `TourGate` antes de arrancar. Recorre las 7 pestañas principales (`steps[]`) navegando con `switchTab()`, mostrando 1-3 "slides" de texto por pestaña con palabras clave resaltadas (`_highlightHTML`, regex sobre `slide.keywords`). Panel fijo abajo de pantalla con dots de progreso, botones Atrás/Siguiente/Saltar; `finish()` persiste `dd_apptour_seen='true'` y destruye el DOM del tour. **Efecto colateral importante:** parchea `TabIntro.maybeShow` (IIFE `gateTabIntro()` al final del archivo) para que no dispare ninguna intro de pestaña hasta que `dd_apptour_seen === 'true'` — si el AppTour nunca se completa, las intros individuales de `TabIntro` quedan bloqueadas indefinidamente.
+- **Gap confirmado:** ni `TourGate` ni `AppTour` están en `TARGETS` de `logger.js` (ver 1.2) — no se auditan ni aparecen en `DDLogger.exportReport()`.
 
 ### 4.2 🔍 Buscador
 Búsqueda contra la base completa de YGOProDeck.
@@ -251,6 +282,8 @@ Búsqueda contra la base completa de YGOProDeck.
 Gestión del deck activo — 5 sub-tabs + sidebar.
 
 **Sidebar:** Engines | Decks | Staples | Favoritas.
+
+**💾 Botón flotante "Guardar Deck"** *(nuevo, confirmado en esta pasada, no documentado antes)* — `Deck.createSaveFloatingBtn()` inyecta un botón flotante fijo con icono 💾 que llama a `Deck.saveDeck()`. Ocupa el mismo espacio en pantalla que el widget flotante de selección de deck de Estadísticas (ver 4.4), pero con visibilidad inversa: `Deck.updateSaveFloatingBtnVisibility(tabName)` (invocado desde `Navigation.showTab`, ver 8.1) solo lo muestra en la pestaña Mi Deck. Además, `Deck.saveNotes()` permite un guardado rápido de **solo las notas** desde Optimización sin navegar a Decklist ni disparar el guardado completo del deck — no toca `cards` ni pisa `savedAt` salvo que el deck todavía no tuviera ningún guardado previo.
 
 **📥 Import/Export Deck**
 - Importar `.ydk`.
@@ -291,11 +324,11 @@ Mapeo de combos por zonas (mano/campo/cementerio/baneadas): starters y Boss Mons
 - **Decks del Meta:** listado filtrado por carpeta, ver/cargar/eliminar.
 - **Poder de Cartas del Meta:** score de poder por carta según presencia y desempeño en decks del meta.
 - **Análisis de Deck:** Internal Score, External Score, Going First/Going Second (G1/G2 + perfil), vulnerabilidades G1/G2, especializaciones, bloques de Duelista.
-- **📥 Exportar** *(nuevo, confirmado en esta pasada, no mencionado en versiones previas del reporte)*: `exportDeckReport()` (reporte del deck activo), `exportMetaPowerRanking()` (ranking de Poder de Cartas del meta) y `exportMetaFrequency()` (frecuencia de cartas en el meta) — cada uno descarga un `.txt` vía `_downloadTxt()`.
+- **📥 Exportar** *(nuevo, confirmado en esta pasada, no mencionado en versiones previas del reporte)*: `exportDeckReport()` (reporte del deck activo, descarga `.txt`), `exportMetaPowerRanking()` (ranking de Poder de Cartas del meta) y `exportMetaFrequency()` (frecuencia de cartas en el meta) — **corregido en v9.0:** estos dos últimos descargan `.csv`, no `.txt` (`_downloadTxt()` es un nombre de método genérico que descarga cualquier extensión pasada por parámetro, no solo `.txt`).
 - **Widget flotante de deck** *(nuevo, confirmado)*: selector de deck activo persistente entre pestañas (`createDeckFloatingWidget`, lista expandible/colapsable con `expandDeckList`/`collapseDeckList`), visible u oculto según la pestaña actual vía `updateFloatingWidgetVisibility` (ya referenciado mecánicamente en el flujo 8.1 desde la v6.0, pero nunca descrito como feature hasta ahora).
 
 ### 4.5 🎮 Simuladores
-- **🎲 Mulligan (Hipergeometría):** probabilidad de abrir cierta combinación en mano inicial (distribución hipergeométrica sobre el deck actual).
+- **🎲 Mulligan (Hipergeometría):** probabilidad de abrir cierta combinación en mano inicial (distribución hipergeométrica sobre el deck actual). **Ampliado en v9.0 — confirmado 3 modos** (`Hipergeometria.switchTab()`), no documentados antes: **Cálculo Estándar** (hipergeométrica manual, entrada libre de combinación buscada), **Cálculo con Mis Decks** (usa directamente un deck guardado en vez de armar la combinación a mano) y **Prueba Mulligan** (simulación visual de apertura de mano, no solo el cálculo de probabilidad).
 - **📊 Winrate:** registro manual ganadas/perdidas, general o por deck.
 - **🏆 Torneo:** simulador Swiss — rondas, emparejamientos, tabla de posiciones.
 - **⚔️ Duelo en Vivo:** asistente para un duelo real en curso — Cronómetro Estándar y Cronómetro Master Duel (temporizador por turno).
@@ -318,7 +351,7 @@ Mapeo de combos por zonas (mano/campo/cementerio/baneadas): starters y Boss Mons
 - **🧪 Test:** quizzes teóricos (opción múltiple) y prácticos (armar campo objetivo contra campo rival dado); herramienta de autoría propia, export/import. **Confirmado en esta pasada:** los tests custom se guardan en `yugioh_custom_tests` vía el objeto global `TestDuelo` (`getAll/get/save/remove/exportTest/importFromText`), que no depende de ningún otro módulo. También se gestionan desde Config → 🧪 Test de Duelo (ver 4.7).
 - **🧭 Tu Estilo:** quiz de ejes de preferencia → recomienda arquetipo afín, con link al Buscador. Resultado guardado en `yugioh_estilo_juego` (confirmado en esta pasada, clave no listada antes).
 - **🎭 Tu Personaje:** quiz similar → recomienda personaje del anime/manga afín. Resultado guardado en `yugioh_personaje_resultado` (confirmado en esta pasada, clave no listada antes).
-- **🃏 Primeros Decks:** decklists `.ydk` por nivel (Básico/Intermedio/Competitivo), un clic las carga en Mi Deck. **Discrepancia de la v6.0 resuelta:** viven en `decklists.js` (`DecklistsData`, 10 decks), y ese `<script>` sí está cargado en `index.html`.
+- **🃏 Primeros Decks:** decklists `.ydk` por nivel (Básico/Intermedio/Competitivo), un clic las carga en Mi Deck. **Discrepancia de la v6.0 resuelta:** viven en `decklists.js` (`DecklistsData`), y ese `<script>` sí está cargado en `index.html`. **Actualizado en v9.0:** ya no son 10 decks — `DecklistsData.decks` trae **204** entradas `{name, filename, level, ydk}`. `getByName(name)` busca case-insensitive; `getNames()` devuelve solo nombres; `getGroupedByLevel()` agrupa por `level` y ordena alfabéticamente (`localeCompare('es')`) dentro de cada grupo, con `'Basico'` como fallback si `level` no coincide con los 3 valores esperados.
 - **🎮 Juegos:** juegos y variantes relacionadas a Yu-Gi-Oh!, con plataforma.
 - **🔗 Fuentes:** fuentes externas del meta embebidas en iframe (fallback a link externo si el sitio bloquea el embed).
 - **🎓 Maestros:** perfiles de jugadores destacados, video embebido (YouTube) cuando aplica.
@@ -367,6 +400,13 @@ Zona de Borrado               (16 categorías selectivas — ver sección 3, con
 Acciones adicionales          (nuevo, confirmado: "📧 Reportar Error" y "📋 Generar
                                 Reporte" — ver flujo 8.13)
 ```
+
+### 4.8 ❓ Panel de Ayuda / FAQ (`HelpPanel`) *(nuevo en el reporte v9.0 — el objeto ya figuraba en la tabla de módulos de `formacion.js` desde v7.0 pero nunca se había descrito su funcionalidad)*
+Panel global flotante, disponible en **todas** las pestañas — no es contenido de una sección de Config, vive suelto en `formacion.js` y se auto-inicializa en `DOMContentLoaded`.
+- **Botón flotante `?`** (`help-float-btn`) fijo en pantalla, abre/cierra el panel (`HelpPanel.toggle()`).
+- **Tab "Ayuda":** contenido contextual según la pestaña activa (`HelpPanel.getActiveTab()` lee `Navigation.currentTab`) — texto explicativo de cada sección de esa pestaña, tomado de `HelpPanel.tabContent[tab]` (una entrada por cada una de las 7 pestañas + `default`). Se actualiza solo si el panel está abierto y el usuario cambia de pestaña con el panel visible, ya que `showTab()` vuelve a leer la pestaña activa cada vez.
+- **Tab "FAQ":** lista fija de preguntas frecuentes (`HelpPanel.faqContent[]`, acordeón colapsable por pregunta vía `toggleFAQ(i)`) centrada en explicar el sistema de scoring y las mecánicas menos obvias de la app: qué es el Internal Score, el G1/G2 Score, el External Score (deck activo y meta), el **Counter-Deck Score** (ver 5.3bis), el peso de roles vs Poder Base, cómo exportar/importar toda la data, qué es "Nivel como Piloto del Deck", qué hace "Restaurar Configuración", Especialidades y Counters, Línea de Combos, Gauntlet, copias de una carta repartidas entre Main y Side, Banlist con varios formatos activos, diferencia entre Vista Detallada/Resumida, el tope de 15 cartas del Side Deck, y Tu Estilo/Tu Personaje.
+- No depende de ningún otro módulo para renderizar — solo lee `Navigation.currentTab` si existe, con fallback a buscar `.nav-tab.active`/`.tab-btn.active`/`[data-tab].active` en el DOM.
 
 ---
 
@@ -423,7 +463,24 @@ L5 — Alcance:     keywords en 'efectoGenerico'
 **Decisión de diseño (no bug):** `g1Vulnerability`/`g2Vulnerability` clasifican **specialties/mecánicas** reutilizando `getRoleG1G2()` — pensada para **roles de carta**, no para nombres de mecánica. Si una specialty no coincide textualmente con una key de `g1g2Roles`, cae en `'neutral'` y no suma a ninguna vulnerabilidad. Confirmar con el usuario si se quiere una tabla G1/G2 separada para specialties antes de tocar esta área.
 
 ### 5.3 External Score (deck activo)
-`Stats.calculateExternalScore(cards, powerScoreCache, metaDecks)` — cruza specialties del deck con `powerScoreCache`, RPS modifier (ignorando `loser='ninguno'`). Devuelve `{externalScore, g1Vulnerability, g2Vulnerability, ...}`.
+`Stats.calculateExternalScore(cards, powerScoreCache, metaDecks)` — cruza specialties del deck con `powerScoreCache`, RPS modifier (ignorando `loser='ninguno'`). Devuelve `{externalScore, g1Vulnerability, g2Vulnerability, deckSpecs, threatCards, counterDecks, missingStaples, hasPowerData, hasSpecData, baseline, totalThreat, ...}`. `counterDecks` (hasta 5) alimenta el bloque "Mayor amenaza" del Análisis de Deck en Estadísticas.
+
+### 5.3bis Counter-Deck Score *(nuevo, confirmado en esta pasada — no documentado en ninguna versión previa del reporte)*
+`Stats.calculateCounterDeckScore(cards, powerData)` — mide la capacidad **Anti-META** del deck activo: qué tan preparado está para interrumpir las estrategias del meta cargado, a diferencia del External Score (que mide qué tan expuesto está el deck a ser interrumpido).
+
+```
+Por cada carta en Main/Extra (item.location):
+  si tiene rol 'brick' → suma a brickCount, no aporta counter, sigue a la siguiente
+  si está en powerScoreCache y cached.isCounter && cached.counterBonus > 0:
+      contrib = cached.counterBonus × qty  → suma a rawCounter
+  si NO hay powerScoreCache pero SpecialtyAnalyzer detecta counters en la carta
+  (item.data): fallback binario, contrib = 5 × qty (marcado estimated:true)
+
+brickRatio   = brickCount / totalCards
+brickPenalty = round(rawCounter × brickRatio × 0.6)
+finalScore   = max(0, rawCounter − brickPenalty)
+```
+Clasificación por `finalScore`: 0 → "Sin capacidad Anti-META" · 1-30 → "Anti-META Bajo" · 31-70 → "Anti-META Medio" · 71-120 → "Anti-META Alto" · 121+ → "⚡ Anti-META Élite". Devuelve `{finalScore, rawCounter, brickPenalty, brickCount, counterCards, totalCards, breakdown[], level, levelColor, hasPowerData}`. Consumido por `Estadisticas.renderDeckAnalysis()` y por `exportDeckReport()`. Depende de los mismos pares mecánica/counter configurados en Config → Counters que alimentan el Power Score del meta y el External Score (5.3).
 
 ### 5.4 External Score (meta) = Cross-Score N×N
 `calculateCrossExternalScores()`. Para cada deck A: amenazas de counters de B ponderadas por `internalScore` de B y RPS. `crossExternalScore = (1 - threat/baseline) × 10`.
@@ -548,15 +605,20 @@ Campo independiente del cálculo de Brick Rate — no resta ni suma a `bricks`/`
 switchTab(name) → Navigation.showTab(name)
   → oculta todos .tab-content, activa #name-content
   → Estadisticas.updateFloatingWidgetVisibility(tabName)
+  → Deck.updateSaveFloatingBtnVisibility(tabName)      ← nuevo, confirmado v9.0 (ver 4.3)
   → si simuladores:       Torneo.init()
   → si mideck:             Engines.init()
   → si saliendo de simuladores: ZonaPractica._cleanupFloatBtns()
   → si meta:               Meta.init()
   → si formacion:          Formacion.init()
+  → si lobby:              Lobby.init()                ← nuevo, confirmado v9.0
   → window.scrollTo({ top:0, behavior:'smooth' })
+  → si typeof updateButtons === 'function': updateButtons()
+  → window.dispatchEvent(new Event('scroll'))
   → ContentManager.applyAll()
+  → TabIntro.maybeShow(tabName)                        ← punto de enganche RESUELTO en v9.0
 ```
-**Sigue sin confirmar el punto exacto de enganche** de `TabIntro.maybeShow(tabName)` (aplica el tema de fondo `dd_bg_theme` probablemente vía `ContentManager.applyAll()`, eso sí es consistente con lo visto en `core.js`). La pasada v7.0 confirmó que `TabIntro.maybeShow` existe y su lógica interna (sesión vs. `dd_tabintro_disabled`, ver sección 3), pero no encontró la llamada a `maybeShow()` dentro de `core.js` — probablemente se dispara desde `mideck.js` u otro módulo dentro de `switchTab`, o inline en `index.html`. Revisar antes de tocar este flujo.
+**Resuelto en v9.0:** `TabIntro.maybeShow(tabName)` se dispara al final de `Navigation.showTab()`, en `core.js`, como el último paso — después de `ContentManager.applyAll()`. La v7.0-v8.0 no la habían encontrado ahí porque quedó agregada en una edición posterior de `core.js` (junto con `Deck.updateSaveFloatingBtnVisibility` y `Lobby.init`, ambos también nuevos en esta llamada). El tema de fondo `dd_bg_theme` sigue aplicándose vía `ContentManager.applyAll()`, no vía `TabIntro`.
 
 ### 8.2 Agregar carta al deck (desde Buscador)
 ```
@@ -928,7 +990,9 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 | `#meta-update-overlay` | inline en estadisticas.js | Overlay de carga del Actualizar Scores |
 | `.cv-contribution-block` / `.cv-contrib-row` / `.cv-contrib-bar-track` / `.cv-contrib-bar` / `.cv-contrib-val` / `.cv-contrib-delta` / `.cv-contrib-total` / `.cv-contrib-empty` / `.cv-contrib-section-title` / `.cv-deck-name` | style_buscador (probable, no confirmado) | Usadas desde `renderCardContribution()` — "Aporte al deck activo" |
 | `.cv-role-chip` / `.cv-role-none` / `.cv-roles-row` | style_buscador (probable, no confirmado) | Chips de "🎯 Posibles Roles" en CardViewer |
-| `.tdp-overlay` / `.tdp-panel` / `.tdp-close` / `.tdp-title` / `.tdp-counts` / `.tdp-loc-label` / `.tdp-cards-grid` / `.tdp-card` / `.tdp-qty` | style_mideck (probable, no confirmado) | Panel "Ver Deck" del rival en Matchups (`Matchups.openDeckPanel`) |
+| `.tdp-overlay` / `.tdp-panel` / `.tdp-close` / `.tdp-title` / `.tdp-counts` / `.tdp-loc-label` / `.tdp-cards-grid` / `.tdp-card` / `.tdp-qty` | **`style_simuladores.css` — resuelto y confirmado en v9.0** (14 ocurrencias; NO vive en `style_mideck.css` como se sospechaba en v8.0) | Panel "Ver Deck" del rival en Matchups (`Matchups.openDeckPanel`) |
+
+**Confirmado en v9.0 (lectura real de los 6 CSS, no solo grep de nombres probables):** `.help-panel-*`/`.faq-*` (panel de Ayuda/FAQ, ver 4.8), `.lobby-*`, `.tabintro-*` y las clases del App Tour (`#apptour-*`, inyectadas dinámicamente por JS vía `<style>` propio, no en ningún archivo CSS del proyecto) viven mayormente en `style_core.css`; un subconjunto de `.tabintro-*`/`.lobby-*` también aparece en `style_config.css` (14 ocurrencias, ligado a la sección "Intro de Pestañas" de Config) y en `responsive_style.css` (6 ocurrencias, breakpoints propios).
 
 **Pendiente de auditar por completo (los 6 archivos CSS no fueron parte de la pasada v7.0 — solo se auditó JS).** Ahora que se confirmó a nivel de JS que existen Lobby, Combos (con modo de ejecución), Gauntlet, CounterSim, Tu Experiencia con el Deck, Historial de Versiones, tema de fondo, TabIntro, y las 6 secciones nuevas de Config (Intro de Pestañas, Maestros del Duelo, Fuentes Externas del Meta, Juegos Alternativos, Temas de Formación, Test de Duelo), es prácticamente seguro que existen clases CSS propias para cada uno (`.lobby-*`, `.combo-*`, `.gauntlet-*`, `.cs-*`, `.exp-*`, `.tabintro-*`, `.error-report-*`, etc. — algunos nombres ya se vieron literalmente en el HTML generado por JS, ej. `.lobby-card`, `.lobby-suggestion-card`, `.tabintro-overlay`, `.tabintro-panel`, `.error-report-overlay`, `.error-report-panel`, `.exp-subtab-btn`). No se listan como confirmados en esta tabla porque no se leyó el CSS real — evitar asumir nombres exactos de propiedades/estilos al escribir CSS nuevo, revisar el archivo real primero.
 
@@ -943,7 +1007,7 @@ https://images.ygoprodeck.com/images/cards_small/{id}.jpg  → small
 **Archivos que NO necesitas subir salvo cambios:**
 - `html2canvas_min.js` — librería externa
 - `pdf_min.js` / `pdf_worker_min.js` — librería externa (pdf.js, usada por `Deck.importPDF()`)
-- `logger.js` — solo si cambia `TARGETS` o formato del reporte (recordar: hoy le faltan Lobby, Combos, CounterSim, Gauntlet, TabIntro, TestDuelo, y tiene el nombre obsoleto `'Duelo'` — ver 1.2)
+- `logger.js` — solo si cambia `TARGETS` o formato del reporte (recordar: `TARGETS` está al día salvo `TourGate`/`AppTour`, que faltan agregar — ver 1.2)
 
 **Variables CSS globales** (en `style_core.css`):
 `--gold-color` · `--accent-color` · `--bg-card` · `--text-light` · `--danger-color` · `--spacing-sm/md/lg`
