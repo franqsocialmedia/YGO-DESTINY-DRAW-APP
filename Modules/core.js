@@ -375,6 +375,8 @@ const ContentManager = {
         { id: 'deck-experiencia',     group: 'Mi Deck', label: 'Tu Experiencia con el Deck',      novato: false, casual: true, competitivo: true },
         { id: 'deck-topcards',        group: 'Mi Deck', label: 'Cartas Clave y Amenazas',         novato: false, casual: false, competitivo: true },
         { id: 'deck-versiones',       group: 'Mi Deck', label: 'Historial de Versiones',          novato: false, casual: false, competitivo: true },
+        { id: 'deck-combos',          group: 'Mi Deck', label: 'Línea de Combos',                 novato: false, casual: false, competitivo: true },
+        { id: 'deck-opt-history',     group: 'Mi Deck', label: 'Historial de Sesiones',           novato: false, casual: false, competitivo: true },
         { id: 'deck-notas',          group: 'Mi Deck', label: 'Notas del Deck',                  novato: true,  casual: true, competitivo: true },
 
         { id: 'sim-mulligan',         group: 'Simuladores', label: 'Mulligan / Hipergeometría',          novato: false, casual: false, competitivo: true },

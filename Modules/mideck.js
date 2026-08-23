@@ -2114,7 +2114,7 @@ html += `
     <button class="mideck-subtab-btn active sim-tab-btn" data-tab="decklist" onclick="Deck.switchMiDeckTab('decklist')">📋 Decklist</button>
     <button class="mideck-subtab-btn sim-tab-btn" data-tab="construccion" onclick="Deck.switchMiDeckTab('construccion')">🔨 Construcción</button>
     <button class="mideck-subtab-btn sim-tab-btn" data-tab="optimizacion" onclick="Deck.switchMiDeckTab('optimizacion')">🎯 Optimización</button>
-    <button class="mideck-subtab-btn sim-tab-btn" data-tab="combos" onclick="Deck.switchMiDeckTab('combos')">🧬 Línea de Combos</button>
+    <button class="mideck-subtab-btn sim-tab-btn" data-tab="combos" data-section-id="deck-combos" onclick="Deck.switchMiDeckTab('combos')">🧬 Línea de Combos</button>
 </div>`;
 
 html += `
@@ -2227,7 +2227,7 @@ if (!isEmpty) {
 
 html += `</div>`;
 html += `<div id="mideck-optimizacion-pane" style="display:none;">${!isEmpty ? this.renderOptimizacionPane() : this._renderEmptyDeckNotice('Carga un deck para usar Optimización.')}</div>`;
-html += `<div id="mideck-combos-pane" style="display:none;">${window.Combos ? Combos.renderPane() : ''}</div>`;
+html += `<div id="mideck-combos-pane" data-section-id="deck-combos" style="display:none;">${window.Combos ? Combos.renderPane() : ''}</div>`;
 
 if (isEmpty) {
     html += `</div></div>`;
@@ -4548,9 +4548,9 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             : sessions;
 
         if (sessions.length > 0) {
-            html += `<h3 class="deck-section-title" style="margin-top:14px;" onclick="Deck.toggleSection('opt-hist-sec')">
+            html += `<h3 class="deck-section-title" data-section-id="deck-opt-history" style="margin-top:14px;" onclick="Deck.toggleSection('opt-hist-sec')">
                 📊 Historial de Sesiones <span style="font-size:.72em;opacity:.6">(${viewSessions.length})</span>
-            </h3><div id="opt-hist-sec" class="deck-section-content">`;
+            </h3><div id="opt-hist-sec" data-section-id="deck-opt-history" class="deck-section-content">`;
 
             const cartaAsCard = Object.values(this.cards).find(c => c.roles?.includes('Carta As'));
             const coverCard   = cartaAsCard || this.getMostRepeatedCard(this.cards);
