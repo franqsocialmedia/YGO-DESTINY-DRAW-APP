@@ -1060,25 +1060,25 @@ META_HISTORY: {
             <!-- Sub-nav estilo Simuladores -->
             <div class="form-subnav" id="form-subnav">
                 <button class="form-subnav-btn${this.activeTab === 'apuntes' ? ' active' : ''}"
-                        data-tab="apuntes" onclick="Formacion.switchTab('apuntes')">📓 Apuntes</button>
+                        data-tab="apuntes" data-section-id="form-apuntes" onclick="Formacion.switchTab('apuntes')">📓 Apuntes</button>
                 <button class="form-subnav-btn form-subnav-btn--green${(this.activeTab === 'temas' || this.TOPICS.some(t => t.id === this.activeTab)) ? ' active' : ''}"
-                        data-tab="temas" onclick="Formacion.switchTab('temas')">📚 Temas</button>
+                        data-tab="temas" data-section-id="form-temas" onclick="Formacion.switchTab('temas')">📚 Temas</button>
                 <button class="form-subnav-btn${this.activeTab === 'historia' ? ' active' : ''}"
-                        data-tab="historia" onclick="Formacion.switchTab('historia')">📜 Historia del Meta</button>
+                        data-tab="historia" data-section-id="form-historia" onclick="Formacion.switchTab('historia')">📜 Historia del Meta</button>
                 <button class="form-subnav-btn form-subnav-btn--green${this.activeTab === 'test' ? ' active' : ''}"
-                        data-tab="test" onclick="Formacion.switchTab('test')">🧪 Test</button>
+                        data-tab="test" data-section-id="form-test" onclick="Formacion.switchTab('test')">🧪 Test</button>
                 <button class="form-subnav-btn form-subnav-btn--green${this.activeTab === 'estilo' ? ' active' : ''}"
-                        data-tab="estilo" onclick="Formacion.switchTab('estilo')">🧭 Tu Estilo</button>
+                        data-tab="estilo" data-section-id="form-estilo" onclick="Formacion.switchTab('estilo')">🧭 Tu Estilo</button>
                 <button class="form-subnav-btn form-subnav-btn--green${this.activeTab === 'personaje' ? ' active' : ''}"
-                        data-tab="personaje" onclick="Formacion.switchTab('personaje')">🎭 Tu Personaje</button>
+                        data-tab="personaje" data-section-id="form-personaje" onclick="Formacion.switchTab('personaje')">🎭 Tu Personaje</button>
                 <button class="form-subnav-btn${this.activeTab === 'decks' ? ' active' : ''}"
-                        data-tab="decks" onclick="Formacion.switchTab('decks')">🃏 Primeros Decks</button>
+                        data-tab="decks" data-section-id="form-decks" onclick="Formacion.switchTab('decks')">🃏 Primeros Decks</button>
                 <button class="form-subnav-btn${this.activeTab === 'juegos' ? ' active' : ''}"
-                        data-tab="juegos" onclick="Formacion.switchTab('juegos')">🎮 Juegos</button>
+                        data-tab="juegos" data-section-id="form-juegos" onclick="Formacion.switchTab('juegos')">🎮 Juegos</button>
                 <button class="form-subnav-btn${this.activeTab === 'fuentes' ? ' active' : ''}"
-                        data-tab="fuentes" onclick="Formacion.switchTab('fuentes')">🔗 Fuentes</button>
+                        data-tab="fuentes" data-section-id="form-fuentes" onclick="Formacion.switchTab('fuentes')">🔗 Fuentes</button>
                 <button class="form-subnav-btn${this.activeTab === 'maestros' ? ' active' : ''}"
-                        data-tab="maestros" onclick="Formacion.switchTab('maestros')">🎓 Maestros</button>
+                        data-tab="maestros" data-section-id="form-maestros" onclick="Formacion.switchTab('maestros')">🎓 Maestros</button>
                 
             </div>
 

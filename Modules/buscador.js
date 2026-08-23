@@ -2166,6 +2166,7 @@ openPointsEditor: function (formatName, cardId, cardName, currentPoints) {
 
     // ── Lore de la carta/arquetipo (Yugipedia API) ──
     _loadLore: function (card) {
+        if (window.ContentManager && !ContentManager.isVisible('cv-lore')) return;
         const wrap = document.getElementById('cv-lore-btn-wrap');
         if (!wrap) return;
 
