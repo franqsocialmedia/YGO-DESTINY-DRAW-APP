@@ -232,23 +232,50 @@ window.TabIntro = TabIntro;
 // ── SHORTCUTS ────────────────────────────────────────────────────────
 // Botón flotante ⚡ con menú de accesos rápidos configurables
 const Shortcuts = {
-    CATALOG: [
-        { label: 'Rendimientos Decrecientes', tab: 'config',       sectionId: 'diminishing-section',            module: 'Config' },
-        { label: 'Atajos Rápidos',             tab: 'config',       sectionId: 'shortcuts-section',              module: 'Config' },
+        CATALOG: [
+        // Lobby / Buscador / Mi Deck / Estadísticas — nivel pestaña
+        { label: 'Lobby',                       tab: 'lobby' },
+        { label: 'Buscador',                    tab: 'buscador' },
+        { label: 'Mi Deck',                     tab: 'mideck' },
+        { label: 'Estadísticas',                tab: 'estadisticas' },
+
+        // Config — todas las secciones del acordeón
+        { label: 'Mecánicas y Roles',           tab: 'config',       sectionId: 'roles-section',                  module: 'Config' },
+        { label: 'Counters',                    tab: 'config',       sectionId: 'specialties-section',            module: 'Config' },
+        { label: 'Lista de Staples',            tab: 'config',       sectionId: 'staples-section',                module: 'Config' },
+        { label: 'Nomenclatura de Efectos',     tab: 'config',       sectionId: 'nomenclature-section',           module: 'Config' },
+        { label: 'Pilares del Internal Score',  tab: 'config',       sectionId: 'pillars-section',                module: 'Config' },
+        { label: 'Scoring Avanzado (G1/G2)',    tab: 'config',       sectionId: 'scoring-section',                module: 'Config' },
+        { label: 'Rendimientos Decrecientes',   tab: 'config',       sectionId: 'diminishing-section',            module: 'Config' },
+        { label: 'Atajos Rápidos',              tab: 'config',       sectionId: 'shortcuts-section',              module: 'Config' },
         { label: 'Banlist del Formato',         tab: 'config',       sectionId: 'banlist-section',                module: 'Config' },
         { label: 'Ajustes de Música',           tab: 'config',       sectionId: 'music-section',                  module: 'Config' },
+        { label: 'Intro de Pestañas',           tab: 'config',       sectionId: 'tabintro-section',               module: 'Config' },
         { label: 'Maestros del Duelo',          tab: 'config',       sectionId: 'meta-masters-config-section',    module: 'Config' },
         { label: 'Fuentes del Meta (Config)',   tab: 'config',       sectionId: 'meta-links-config-section',      module: 'Config' },
         { label: 'Juegos Alternativos',         tab: 'config',       sectionId: 'formacion-games-config-section', module: 'Config' },
         { label: 'Temas de Formación',          tab: 'config',       sectionId: 'formacion-topics-section',       module: 'Config' },
+        { label: 'Test de Duelo (Config)',      tab: 'config',       sectionId: 'test-duelo-section',             module: 'Config' },
         { label: 'Contenido de la App',         tab: 'config',       sectionId: null,                             module: 'Config' },
+        { label: 'Zona de Borrado',             tab: 'config',       sectionId: 'config-danger-zone',             module: 'Config' },
+
+        // Simuladores — nivel pestaña (deep-link pendiente de simuladores.js)
         { label: 'Mulligan / Hipergeometría',   tab: 'simuladores',  sectionId: null },
         { label: 'Torneo (Swiss)',               tab: 'simuladores',  sectionId: null },
         { label: 'Experimentación',             tab: 'simuladores',  sectionId: null },
         { label: 'Campo de Práctica',           tab: 'simuladores',  sectionId: null },
-        { label: 'Formación - Apuntes',         tab: 'formacion',    sectionId: null },
-        { label: 'Formación - Juegos',          tab: 'formacion',    sectionId: null },
-        { label: 'Formación - Fuentes',         tab: 'formacion',    sectionId: null },
+
+        // Formación — sub-pestañas reales vía Formacion.switchTab
+        { label: 'Formación - Apuntes',         tab: 'formacion',    subtab: 'apuntes' },
+        { label: 'Formación - Temas',           tab: 'formacion',    subtab: 'temas' },
+        { label: 'Formación - Historia del Meta', tab: 'formacion',  subtab: 'historia' },
+        { label: 'Formación - Test',            tab: 'formacion',    subtab: 'test' },
+        { label: 'Formación - Tu Estilo',        tab: 'formacion',    subtab: 'estilo' },
+        { label: 'Formación - Tu Personaje',     tab: 'formacion',    subtab: 'personaje' },
+        { label: 'Formación - Primeros Decks',   tab: 'formacion',    subtab: 'decks' },
+        { label: 'Formación - Juegos',          tab: 'formacion',    subtab: 'juegos' },
+        { label: 'Formación - Fuentes',         tab: 'formacion',    subtab: 'fuentes' },
+        { label: 'Formación - Maestros',        tab: 'formacion',    subtab: 'maestros' },
     ],
 
     init: function() { this._createButton(); },
@@ -298,6 +325,9 @@ const Shortcuts = {
         if (!s) return;
         this.closeMenu();
         if (window.Navigation) Navigation.showTab(s.tab);
+        if (s.subtab && s.tab === 'formacion') {
+            setTimeout(() => { if (window.Formacion) Formacion.switchTab(s.subtab); }, 80);
+        }
         if (s.sectionId) {
             setTimeout(() => {
                 const el = document.getElementById(s.sectionId);

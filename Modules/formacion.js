@@ -4480,7 +4480,7 @@ const Config = {
             </div>
 
             <!-- Zona de borrado -->
-            <div class="config-danger-zone" data-section-id="config-danger-zone">
+            <div class="config-danger-zone" id="config-danger-zone" data-section-id="config-danger-zone">
     <div class="config-danger-title">⚠️ Zona de borrado</div>
     <div class="borrar-opciones-grid">
         <label class="borrar-opcion-row"><input type="checkbox" class="borrar-opcion-cb" data-key="decks"> <span>Decks guardados</span></label>
