@@ -3242,7 +3242,7 @@ const Experimentacion = {
         return `
 <div class="exp-wrap">
 
-  <p class="sim-tool-intro">Lienzo libre para plantear líneas de juego visualmente: traé cartas del Buscador,
+  <p class="sim-tool-intro">Lienzo libre para plantear líneas de juego visualmente. Imagina tener tus cartas encima de una mesa todas visibles para ver el todo: traé cartas del Buscador,
   un .ydk o un deck guardado, organizalas en el tablero y usá el zoom para revisar combos paso a paso sin
   gastar duelos reales.</p>
 

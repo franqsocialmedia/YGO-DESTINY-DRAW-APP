@@ -3588,7 +3588,7 @@ const Gauntlet = {
         container.innerHTML = `
         <div class="gnt-wrap">
             <h3 class="gnt-title">🥊 Gauntlet — Testing de Deck/Engine</h3>
-            <p class="gnt-hint">Elige el Deck o Engine a testear (o arma un pool manual buscando cartas), define tus Pruebas y registra Éxitos/Fallos jugando manos reales o en Zona de Práctica.</p>
+            <p class="gnt-hint">Elige el Deck o Engine a testear (o arma un pool manual buscando cartas), define tus Pruebas y registra Éxitos/Fallos jugando manos reales o en Zona de Práctica. Para ir midiendo el nivel de fragilidad de cada deck delante de tu lista de pruebas</p>
             <div class="gnt-view-tabs">
                 <button class="gnt-vtab-btn ${this._view === 'testing' ? 'active' : ''}" onclick="Gauntlet.switchView('testing')">🧪 Testing</button>
                 <button class="gnt-vtab-btn ${this._view === 'ranking' ? 'active' : ''}" onclick="Gauntlet.switchView('ranking')">🏆 Ranking</button>
