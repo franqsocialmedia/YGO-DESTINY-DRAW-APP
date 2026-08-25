@@ -208,21 +208,37 @@ const TabIntro = {
         overlay.id = `tabintro-overlay-${tabName}`;
         overlay.innerHTML = `
             <div class="tabintro-panel">
-                <h3 class="tabintro-title">${data.title}</h3>
+                <button class="tabintro-x-btn" onclick="TabIntro.close('${tabName}')" title="Cerrar" aria-label="Cerrar">✕</button>
+                <div class="tabintro-header">
+                    <span class="tabintro-eyebrow">Guía rápida</span>
+                    <h3 class="tabintro-title">${data.title}</h3>
+                </div>
                 <ul class="tabintro-list">
-                    ${data.items.map(i => `<li>${i}</li>`).join('')}
+                    ${data.items.map((i, idx) => `
+                        <li class="tabintro-item">
+                            <span class="tabintro-item-num">${idx + 1}</span>
+                            <span class="tabintro-item-text">${i}</span>
+                        </li>`).join('')}
                 </ul>
-                <label class="tabintro-disable-label">
-                    <input type="checkbox" onchange="TabIntro.setDisabled('${tabName}', this.checked)">
-                    No volver a mostrar esta intro
-                </label>
-                <button class="tabintro-close-btn" onclick="TabIntro.close('${tabName}')">Entendido</button>
+                <div class="tabintro-footer">
+                    <label class="tabintro-disable-label">
+                        <span class="tabintro-toggle">
+                            <input type="checkbox" onchange="TabIntro.setDisabled('${tabName}', this.checked)">
+                            <span class="tabintro-toggle-track"><span class="tabintro-toggle-thumb"></span></span>
+                        </span>
+                        No volver a mostrar esta intro
+                    </label>
+                    <button class="tabintro-close-btn" onclick="TabIntro.close('${tabName}')">Entendido</button>
+                </div>
             </div>`;
         document.body.appendChild(overlay);
     },
 
     close: function(tabName) {
-        document.getElementById(`tabintro-overlay-${tabName}`)?.remove();
+        const overlay = document.getElementById(`tabintro-overlay-${tabName}`);
+        if (!overlay) return;
+        overlay.classList.add('tabintro-hiding');
+        setTimeout(() => overlay.remove(), 180);
     }
 };
 
