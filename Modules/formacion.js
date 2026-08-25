@@ -122,6 +122,30 @@ const Formacion = {
             { text: 'La mayor cantidad de interacción posible.', delta: { interaccion: 2 } },
             { text: 'El mayor daño posible en el menor tiempo.', delta: { agresion: 2, riesgo: 1 } },
             { text: 'Recursos infinitos para nunca quedarme sin jugadas.', delta: { agresion: -1, riesgo: -2, interaccion: -1 } }
+        ]},
+        { q: '¿Cómo prefieres armar tu Side Deck para el Game 2?', options: [
+            { text: 'Cartas puntuales para el matchup exacto, aunque sean muertas en otros.', delta: { planificacion: 1, complejidad: 1 } },
+            { text: 'Interacción genérica que funcione contra casi cualquier rival.', delta: { interaccion: 2 } },
+            { text: 'Casi no cambio nada, mi Main ya está diseñado para ganar rápido.', delta: { agresion: 1, riesgo: 1 } },
+            { text: 'Depende del rival, decido sobre la marcha entre rondas.', delta: { riesgo: 1, planificacion: -1 } }
+        ]},
+        { q: 'Ante un formato con banlist agresiva contra tu deck, ¿qué haces?', options: [
+            { text: 'Reconstruyo la línea de combo desde cero con lo que quede.', delta: { planificacion: 2, complejidad: 1 } },
+            { text: 'Cambio de arquetipo, prefiero seguir el poder del meta.', delta: { riesgo: 1, agresion: 1 } },
+            { text: 'Sigo con mi deck igual, aunque sea más débil en papel.', delta: { riesgo: -1, interaccion: 1 } },
+            { text: 'Busco el hueco del meta que nadie está cubriendo.', delta: { interaccion: 1, complejidad: 1, riesgo: 1 } }
+        ]},
+        { q: '¿Qué rol te gustaría cumplir en un equipo de torneo?', options: [
+            { text: 'El que arma la línea de combo perfecta, sin margen de error.', delta: { planificacion: 2, complejidad: 1 } },
+            { text: 'El que trae la interrupción y sostiene la defensa del equipo.', delta: { interaccion: 2 } },
+            { text: 'El que cierra rápido y saca ventaja de puntos.', delta: { agresion: 2, riesgo: 1 } },
+            { text: 'El que se adapta y juega lo que el equipo necesite.', delta: { interaccion: 1, riesgo: -1 } }
+        ]},
+        { q: 'Al ver un board rival intimidante antes de que sea tu turno, sientes...', options: [
+            { text: 'Confianza, ya tengo el negador exacto preparado.', delta: { interaccion: 2, planificacion: 1 } },
+            { text: 'Emoción, es la oportunidad de un buen desafío.', delta: { riesgo: 1, agresion: 1 } },
+            { text: 'Calma, mi plan no depende de lo que el rival haga.', delta: { riesgo: -1, planificacion: 1 } },
+            { text: 'Ganas de ir con todo antes de que se consolide más.', delta: { agresion: 2, riesgo: 2 } }
         ]}
     ],
 
@@ -141,7 +165,14 @@ const Formacion = {
         { id: 'exosister',      name: 'Exosister',      desc: 'Swarm pequeño con handtraps integradas; control temprano con presión moderada.', vector: { agresion: -0.2, planificacion: -0.4, riesgo: -0.5, interaccion: 0.6, complejidad: 0.2 } },
         { id: 'purrely',        name: 'Purrely',        desc: 'Combo de Links con mucha autonomía; prioriza cerrar su propia línea sobre reaccionar.', vector: { agresion: 0.6, planificacion: 0.7, riesgo: 0.6, interaccion: -0.5, complejidad: 0.6 } },
         { id: 'runick',         name: 'Runick',         desc: 'Denegación vía hechizos desde el cementerio rival; híbrido de control y combo técnico.', vector: { agresion: -0.4, planificacion: 0.2, riesgo: -0.3, interaccion: 0.7, complejidad: 0.7 } },
-        { id: 'vanquishsoul',   name: 'Vanquish Soul',  desc: 'Beatdown midrange equilibrado: sin extremos, gana por presión constante y pareja.', vector: { agresion: 0.5, planificacion: 0.3, riesgo: 0.3, interaccion: 0.3, complejidad: 0.4 } }
+        { id: 'vanquishsoul',   name: 'Vanquish Soul',  desc: 'Beatdown midrange equilibrado: sin extremos, gana por presión constante y pareja.', vector: { agresion: 0.5, planificacion: 0.3, riesgo: 0.3, interaccion: 0.3, complejidad: 0.4 } },
+        { id: 'snake-eye',      name: 'Snake-Eye',      desc: 'Explosión de un solo turno con handtraps propias integradas; abre el juego y castiga de inmediato.', vector: { agresion: 0.8, planificacion: 0.5, riesgo: 0.5, interaccion: 0.2, complejidad: 0.4 } },
+        { id: 'fiendsmith',     name: 'Fiendsmith',     desc: 'Fusión desde el cementerio con mucho control; grindea recursos y termina con negación constante.', vector: { agresion: -0.2, planificacion: 0.4, riesgo: -0.3, interaccion: 0.6, complejidad: 0.7 } },
+        { id: 'mannadium',      name: 'Mannadium',      desc: 'Swarm de Links a través de Special Summons encadenados; combo denso con salida de control.', vector: { agresion: 0.3, planificacion: 0.7, riesgo: 0.2, interaccion: 0.3, complejidad: 0.7 } },
+        { id: 'azamina',        name: 'Azamina',        desc: 'Negación de Invocaciones Especiales vía Fusión splashable; incomoda antes de que el rival arranque.', vector: { agresion: -0.1, planificacion: 0.1, riesgo: -0.2, interaccion: 0.8, complejidad: 0.4 } },
+        { id: 'rescue-ace',     name: 'Rescue-Ace',     desc: 'Bloquea el Extra Deck rival mientras arma su propio combo corto; control por restricción, no por negación pura.', vector: { agresion: 0.1, planificacion: 0.4, riesgo: -0.4, interaccion: 0.7, complejidad: 0.5 } },
+        { id: 'mathmech',       name: 'Mathmech',       desc: 'Combo Synchro técnico con cálculos exactos de ATK; recompensa la precisión y el orden correcto de pasos.', vector: { agresion: 0.4, planificacion: 0.9, riesgo: 0.3, interaccion: -0.3, complejidad: 0.9 } },
+        { id: 's-force',        name: 'S-Force',        desc: 'Toolbox de persecución: caza amenazas específicas del rival con piezas intercambiables según el matchup.', vector: { agresion: 0.0, planificacion: 0.5, riesgo: 0.0, interaccion: 0.5, complejidad: 0.5 } }
     ],
 
 // ── Tu Personaje de Yu-Gi-Oh! — personalidad, motivaciones y objetivos ──
@@ -196,6 +227,30 @@ const Formacion = {
             { text: 'El trofeo, el reconocimiento del logro.', delta: { ambicion: 2 } },
             { text: 'Los momentos intensos que viví duelo a duelo.', delta: { instinto: 1, resiliencia: 1 } },
             { text: 'Haber jugado con honor, gane o pierda.', delta: { moralidad: 2 } }
+        ]},
+        { q: 'Descubres que puedes ganar aprovechando un error del árbitro. ¿Qué haces?', options: [
+            { text: 'Lo señalo, prefiero ganar limpio o no ganar.', delta: { moralidad: 2 } },
+            { text: 'Lo aprovecho, una victoria es una victoria.', delta: { moralidad: -2, ambicion: 1 } },
+            { text: 'Decido en el momento según cómo me sienta.', delta: { instinto: 1 } },
+            { text: 'Ya calculé que no vale el riesgo de una sanción.', delta: { instinto: -1, resiliencia: 1 } }
+        ]},
+        { q: '¿Qué buscas al enfrentar a alguien mucho más débil que tú?', options: [
+            { text: 'Enseñarle algo, no solo ganar.', delta: { vinculo: 1, moralidad: 2 } },
+            { text: 'Terminarlo rápido, no me interesan los rivales fáciles.', delta: { ambicion: 1, moralidad: -1 } },
+            { text: 'Divertirme probando algo nuevo, sin presión.', delta: { instinto: 2 } },
+            { text: 'Usarlo para practicar líneas de juego con precisión.', delta: { instinto: -2 } }
+        ]},
+        { q: '¿Cómo describirías tu mayor miedo como duelista?', options: [
+            { text: 'Decepcionar a las personas que confían en mí.', delta: { vinculo: 2 } },
+            { text: 'Dejar de ser el mejor, que alguien me supere.', delta: { ambicion: 2 } },
+            { text: 'Quedarme sin opciones y no poder improvisar.', delta: { instinto: 1, resiliencia: -1 } },
+            { text: 'Que un plan perfecto falle por algo fuera de mi control.', delta: { instinto: -2 } }
+        ]},
+        { q: 'Un rival del pasado que te venció busca la revancha. Tú...', options: [
+            { text: 'Acepto con gusto, esa rivalidad me hizo mejor.', delta: { vinculo: 1, resiliencia: 1 } },
+            { text: 'La espero con ansias, es mi oportunidad de probar que mejoré.', delta: { ambicion: 2 } },
+            { text: 'Duelo igual que siempre, sin darle más peso del necesario.', delta: { instinto: 1 } },
+            { text: 'Ya preparé una estrategia específica pensando en esa revancha.', delta: { instinto: -2, resiliencia: 1 } }
         ]}
     ],
 
@@ -212,7 +267,13 @@ const Formacion = {
         { id: 'mai-valentine',  name: 'Mai Valentine',   img: 'img/personajes/mai-valentine.jpg',  desc: 'Independiente y orgullosa, juega para sí misma pero termina encontrando valor en los lazos que crea.', vector: { vinculo: 0.2, ambicion: 0.5, instinto: 0.3, resiliencia: 0.6, moralidad: 0.3 } },
         { id: 'aster-phoenix',  name: 'Aster Phoenix',   img: 'img/personajes/aster-phoenix.jpg',  desc: 'Profesional calculador, cada duelo es un paso hacia un objetivo personal que persigue con frialdad.', vector: { vinculo: -0.1, ambicion: 0.6, instinto: -0.5, resiliencia: 0.7, moralidad: 0.5 } },
         { id: 'yuma-tsukumo',   name: 'Yuma Tsukumo',    img: 'img/personajes/yuma-tsukumo.jpg',   desc: 'Puro corazón y adrenalina; salta al riesgo sin pensarlo dos veces, siempre por sus amigos.', vector: { vinculo: 0.9, ambicion: -0.5, instinto: 0.9, resiliencia: 0.8, moralidad: 0.8 } },
-        { id: 'kaito-tenjo',    name: 'Kaito Tenjo',     img: 'img/personajes/kaito-tenjo.jpg',    desc: 'Reservado y metódico, duelea con un objetivo mayor en mente que rara vez comparte con nadie.', vector: { vinculo: 0.1, ambicion: 0.4, instinto: -0.6, resiliencia: 0.7, moralidad: 0.6 } }
+        { id: 'kaito-tenjo',    name: 'Kaito Tenjo',     img: 'img/personajes/kaito-tenjo.jpg',    desc: 'Reservado y metódico, duelea con un objetivo mayor en mente que rara vez comparte con nadie.', vector: { vinculo: 0.1, ambicion: 0.4, instinto: -0.6, resiliencia: 0.7, moralidad: 0.6 } },
+        { id: 'atem',           name: 'Atem (Faraón)',   img: 'img/personajes/atem.jpg',           desc: 'Rey milenario que duelea guiado por la justicia y el deber; sabio, protector y sereno incluso bajo presión.', vector: { vinculo: 0.7, ambicion: 0.2, instinto: -0.3, resiliencia: 0.9, moralidad: 0.95 } },
+        { id: 'weevil',         name: 'Weevil Underwood', img: 'img/personajes/weevil.jpg',        desc: 'Astuto y sin escrúpulos, hace trampa sin remordimiento si eso le asegura la victoria.', vector: { vinculo: -0.7, ambicion: 0.6, instinto: 0.5, resiliencia: 0.2, moralidad: -0.8 } },
+        { id: 'rebecca',        name: 'Rebecca Hawkins', img: 'img/personajes/rebecca.jpg',        desc: 'Prodigio calculadora que confía en la estadística y el cálculo por sobre la improvisación.', vector: { vinculo: 0.3, ambicion: 0.5, instinto: -0.8, resiliencia: 0.5, moralidad: 0.5 } },
+        { id: 'yuya-sakaki',    name: 'Yuya Sakaki',     img: 'img/personajes/yuya-sakaki.jpg',    desc: 'Cree en el Duelo de Entretenimiento: sonreír al rival importa tanto como ganar el duelo.', vector: { vinculo: 0.8, ambicion: -0.2, instinto: 0.7, resiliencia: 0.8, moralidad: 0.8 } },
+        { id: 'shay-obsidian',  name: 'Shay Obsidian',   img: 'img/personajes/shay-obsidian.jpg',  desc: 'Solitario impulsado por la venganza; guarda distancia pero da todo por quienes considera su gente.', vector: { vinculo: 0.2, ambicion: 0.7, instinto: 0.3, resiliencia: 0.7, moralidad: 0.3 } },
+        { id: 'declan-akaba',   name: 'Declan Akaba',    img: 'img/personajes/declan-akaba.jpg',   desc: 'Mente maestra estratégica que mueve piezas a largo plazo; cada duelo es parte de un plan mayor.', vector: { vinculo: -0.2, ambicion: 0.8, instinto: -0.7, resiliencia: 0.6, moralidad: 0.2 } }
     ],
 
     TESTS: {
