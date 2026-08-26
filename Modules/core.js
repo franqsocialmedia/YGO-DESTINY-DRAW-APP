@@ -248,50 +248,84 @@ window.TabIntro = TabIntro;
 // ── SHORTCUTS ────────────────────────────────────────────────────────
 // Botón flotante ⚡ con menú de accesos rápidos configurables
 const Shortcuts = {
-        CATALOG: [
-        // Lobby / Buscador / Mi Deck / Estadísticas — nivel pestaña
-        { label: 'Lobby',                       tab: 'lobby' },
-        { label: 'Buscador',                    tab: 'buscador' },
-        { label: 'Mi Deck',                     tab: 'mideck' },
-        { label: 'Estadísticas',                tab: 'estadisticas' },
+    CATALOG: [
+        // ── Lobby ──
+        { label: 'Lobby',                        tab: 'lobby' },
+        { label: 'Lobby - Lo Nuevo',              tab: 'lobby',        sectionId: 'lobby-nuevo-section' },
+        { label: 'Lobby - Sugerencias',           tab: 'lobby',        sectionId: 'lobby-sugerencias-section' },
 
-        // Config — todas las secciones del acordeón
-        { label: 'Mecánicas y Roles',           tab: 'config',       sectionId: 'roles-section',                  module: 'Config' },
-        { label: 'Counters',                    tab: 'config',       sectionId: 'specialties-section',            module: 'Config' },
-        { label: 'Lista de Staples',            tab: 'config',       sectionId: 'staples-section',                module: 'Config' },
-        { label: 'Nomenclatura de Efectos',     tab: 'config',       sectionId: 'nomenclature-section',           module: 'Config' },
-        { label: 'Pilares del Internal Score',  tab: 'config',       sectionId: 'pillars-section',                module: 'Config' },
-        { label: 'Scoring Avanzado (G1/G2)',    tab: 'config',       sectionId: 'scoring-section',                module: 'Config' },
-        { label: 'Rendimientos Decrecientes',   tab: 'config',       sectionId: 'diminishing-section',            module: 'Config' },
-        { label: 'Atajos Rápidos',              tab: 'config',       sectionId: 'shortcuts-section',              module: 'Config' },
-        { label: 'Banlist del Formato',         tab: 'config',       sectionId: 'banlist-section',                module: 'Config' },
-        { label: 'Ajustes de Música',           tab: 'config',       sectionId: 'music-section',                  module: 'Config' },
-        { label: 'Intro de Pestañas',           tab: 'config',       sectionId: 'tabintro-section',               module: 'Config' },
-        { label: 'Maestros del Duelo',          tab: 'config',       sectionId: 'meta-masters-config-section',    module: 'Config' },
-        { label: 'Fuentes del Meta (Config)',   tab: 'config',       sectionId: 'meta-links-config-section',      module: 'Config' },
-        { label: 'Juegos Alternativos',         tab: 'config',       sectionId: 'formacion-games-config-section', module: 'Config' },
-        { label: 'Temas de Formación',          tab: 'config',       sectionId: 'formacion-topics-section',       module: 'Config' },
-        { label: 'Test de Duelo (Config)',      tab: 'config',       sectionId: 'test-duelo-section',             module: 'Config' },
-        { label: 'Contenido de la App',         tab: 'config',       sectionId: null,                             module: 'Config' },
-        { label: 'Zona de Borrado',             tab: 'config',       sectionId: 'config-danger-zone',             module: 'Config' },
+        // ── Buscador ──
+        { label: 'Buscador',                     tab: 'buscador' },
 
-        // Simuladores — nivel pestaña (deep-link pendiente de simuladores.js)
-        { label: 'Mulligan / Hipergeometría',   tab: 'simuladores',  sectionId: null },
-        { label: 'Torneo (Swiss)',               tab: 'simuladores',  sectionId: null },
-        { label: 'Experimentación',             tab: 'simuladores',  sectionId: null },
-        { label: 'Campo de Práctica',           tab: 'simuladores',  sectionId: null },
+        // ── Mi Deck ──
+        { label: 'Mi Deck',                      tab: 'mideck' },
+        { label: 'Mi Deck - Import/Export',      tab: 'mideck',       steps: [{ fn: 'Deck.switchMiDeckTab', arg: 'importar' }] },
+        { label: 'Mi Deck - Decklist',           tab: 'mideck',       steps: [{ fn: 'Deck.switchMiDeckTab', arg: 'decklist' }] },
+        { label: 'Mi Deck - Tu Experiencia con el Deck', tab: 'mideck', steps: [{ fn: 'Deck.switchMiDeckTab', arg: 'decklist' }], sectionId: 'experiencia-sec' },
+        { label: 'Mi Deck - Historial de Versiones',     tab: 'mideck', steps: [{ fn: 'Deck.switchMiDeckTab', arg: 'decklist' }], sectionId: 'versiones-sec' },
+        { label: 'Mi Deck - Construcción',       tab: 'mideck',       steps: [{ fn: 'Deck.switchMiDeckTab', arg: 'construccion' }] },
+        { label: 'Mi Deck - Complejidad (resultado)', tab: 'mideck',  steps: [{ fn: 'Deck.switchMiDeckTab', arg: 'construccion' }], sectionId: 'construccion-complejidad-box' },
+        { label: 'Mi Deck - Análisis vs Meta',   tab: 'mideck',       steps: [{ fn: 'Deck.switchMiDeckTab', arg: 'construccion' }], sectionId: 'construccion-deck-analysis-sec' },
+        { label: 'Mi Deck - Optimización',       tab: 'mideck',       steps: [{ fn: 'Deck.switchMiDeckTab', arg: 'optimizacion' }] },
+        { label: 'Mi Deck - Nivel como Piloto',  tab: 'mideck',       steps: [{ fn: 'Deck.switchMiDeckTab', arg: 'optimizacion' }], sectionId: 'piloto-sec' },
+        { label: 'Mi Deck - Complejidad (evaluar)', tab: 'mideck',    steps: [{ fn: 'Deck.switchMiDeckTab', arg: 'optimizacion' }], sectionId: 'cxd-sec' },
+        { label: 'Mi Deck - Notas del Deck',     tab: 'mideck',       steps: [{ fn: 'Deck.switchMiDeckTab', arg: 'optimizacion' }], sectionId: 'notes-sec' },
+        { label: 'Mi Deck - Cartas Clave y Amenazas', tab: 'mideck',  steps: [{ fn: 'Deck.switchMiDeckTab', arg: 'optimizacion' }], sectionId: 'topcards-sec' },
+        { label: 'Mi Deck - Historial de Enfrentamientos', tab: 'mideck', steps: [{ fn: 'Deck.switchMiDeckTab', arg: 'optimizacion' }], sectionId: 'matchups-sec' },
+        { label: 'Mi Deck - Línea de Combos',    tab: 'mideck',       steps: [{ fn: 'Deck.switchMiDeckTab', arg: 'combos' }] },
 
-        // Formación — sub-pestañas reales vía Formacion.switchTab
-        { label: 'Formación - Apuntes',         tab: 'formacion',    subtab: 'apuntes' },
-        { label: 'Formación - Temas',           tab: 'formacion',    subtab: 'temas' },
-        { label: 'Formación - Historia del Meta', tab: 'formacion',  subtab: 'historia' },
-        { label: 'Formación - Test',            tab: 'formacion',    subtab: 'test' },
-        { label: 'Formación - Tu Estilo',        tab: 'formacion',    subtab: 'estilo' },
-        { label: 'Formación - Tu Personaje',     tab: 'formacion',    subtab: 'personaje' },
-        { label: 'Formación - Primeros Decks',   tab: 'formacion',    subtab: 'decks' },
-        { label: 'Formación - Juegos',          tab: 'formacion',    subtab: 'juegos' },
-        { label: 'Formación - Fuentes',         tab: 'formacion',    subtab: 'fuentes' },
-        { label: 'Formación - Maestros',        tab: 'formacion',    subtab: 'maestros' },
+        // ── Estadísticas ──
+        { label: 'Estadísticas',                 tab: 'estadisticas' },
+        { label: 'Estadísticas - Top Tier',      tab: 'estadisticas', sectionId: 'top-tier-sec' },
+        { label: 'Estadísticas - Carpetas del Meta', tab: 'estadisticas', sectionId: 'meta-management-sec' },
+        { label: 'Estadísticas - Decks del Meta', tab: 'estadisticas', sectionId: 'meta-decks-sec' },
+        { label: 'Estadísticas - Recurrencia de Cartas', tab: 'estadisticas', sectionId: 'meta-card-stats-sec' },
+        { label: 'Estadísticas - Poder de Cartas del Meta', tab: 'estadisticas', sectionId: 'power-scores-sec' },
+        { label: 'Estadísticas - Exportar Datos', tab: 'estadisticas', sectionId: 'export-sec' },
+
+        // ── Simuladores ──
+        { label: 'Simuladores - Mulligan',              tab: 'simuladores', steps: [{ fn: 'Torneo.showSimTab', arg: 'mulligan' }] },
+        { label: 'Simuladores - Mulligan con Mis Decks', tab: 'simuladores', steps: [{ fn: 'Torneo.showSimTab', arg: 'mulligan' }, { fn: 'Hipergeometria.switchTab', arg: 'deck' }] },
+        { label: 'Simuladores - Prueba Mulligan',        tab: 'simuladores', steps: [{ fn: 'Torneo.showSimTab', arg: 'mulligan' }, { fn: 'Hipergeometria.switchTab', arg: 'mul' }] },
+        { label: 'Simuladores - Winrate',        tab: 'simuladores', steps: [{ fn: 'Torneo.showSimTab', arg: 'winrate' }], sectionId: 'winrate-sec' },
+        { label: 'Simuladores - Torneo (Swiss)', tab: 'simuladores', steps: [{ fn: 'Torneo.showSimTab', arg: 'torneo' }] },
+        { label: 'Simuladores - Duelo en Vivo',  tab: 'simuladores', steps: [{ fn: 'Torneo.showSimTab', arg: 'duelo' }] },
+        { label: 'Simuladores - Counters',       tab: 'simuladores', steps: [{ fn: 'Torneo.showSimTab', arg: 'counters' }] },
+        { label: 'Simuladores - Gauntlet',       tab: 'simuladores', steps: [{ fn: 'Torneo.showSimTab', arg: 'gauntlet' }] },
+        { label: 'Simuladores - Experimentación', tab: 'simuladores', steps: [{ fn: 'Torneo.showSimTab', arg: 'experimentacion' }] },
+        { label: 'Simuladores - Zona de Práctica', tab: 'simuladores', steps: [{ fn: 'Torneo.showSimTab', arg: 'practica' }] },
+
+        // ── Formación ──
+        { label: 'Formación - Apuntes',          tab: 'formacion', steps: [{ fn: 'Formacion.switchTab', arg: 'apuntes' }] },
+        { label: 'Formación - Temas',            tab: 'formacion', steps: [{ fn: 'Formacion.switchTab', arg: 'temas' }] },
+        { label: 'Formación - Historia del Meta', tab: 'formacion', steps: [{ fn: 'Formacion.switchTab', arg: 'historia' }] },
+        { label: 'Formación - Test',             tab: 'formacion', steps: [{ fn: 'Formacion.switchTab', arg: 'test' }] },
+        { label: 'Formación - Tu Estilo',        tab: 'formacion', steps: [{ fn: 'Formacion.switchTab', arg: 'estilo' }] },
+        { label: 'Formación - Tu Personaje',     tab: 'formacion', steps: [{ fn: 'Formacion.switchTab', arg: 'personaje' }] },
+        { label: 'Formación - Primeros Decks',   tab: 'formacion', steps: [{ fn: 'Formacion.switchTab', arg: 'decks' }] },
+        { label: 'Formación - Juegos',           tab: 'formacion', steps: [{ fn: 'Formacion.switchTab', arg: 'juegos' }] },
+        { label: 'Formación - Fuentes',          tab: 'formacion', steps: [{ fn: 'Formacion.switchTab', arg: 'fuentes' }] },
+        { label: 'Formación - Maestros',         tab: 'formacion', steps: [{ fn: 'Formacion.switchTab', arg: 'maestros' }] },
+
+        // ── Config ──
+        { label: 'Mecánicas y Roles',            tab: 'config', sectionId: 'roles-section',                  module: 'Config' },
+        { label: 'Counters',                     tab: 'config', sectionId: 'specialties-section',            module: 'Config' },
+        { label: 'Lista de Staples',             tab: 'config', sectionId: 'staples-section',                module: 'Config' },
+        { label: 'Nomenclatura de Efectos',      tab: 'config', sectionId: 'nomenclature-section',           module: 'Config' },
+        { label: 'Pilares del Internal Score',   tab: 'config', sectionId: 'pillars-section',                module: 'Config' },
+        { label: 'Scoring Avanzado (G1/G2)',     tab: 'config', sectionId: 'scoring-section',                module: 'Config' },
+        { label: 'Rendimientos Decrecientes',    tab: 'config', sectionId: 'diminishing-section',            module: 'Config' },
+        { label: 'Atajos Rápidos',               tab: 'config', sectionId: 'shortcuts-section',              module: 'Config' },
+        { label: 'Banlist del Formato',          tab: 'config', sectionId: 'banlist-section',                module: 'Config' },
+        { label: 'Ajustes de Música',            tab: 'config', sectionId: 'music-section',                  module: 'Config' },
+        { label: 'Intro de Pestañas',            tab: 'config', sectionId: 'tabintro-section',               module: 'Config' },
+        { label: 'Maestros del Duelo',           tab: 'config', sectionId: 'meta-masters-config-section',    module: 'Config' },
+        { label: 'Fuentes del Meta (Config)',    tab: 'config', sectionId: 'meta-links-config-section',      module: 'Config' },
+        { label: 'Juegos Alternativos',          tab: 'config', sectionId: 'formacion-games-config-section', module: 'Config' },
+        { label: 'Temas de Formación',           tab: 'config', sectionId: 'formacion-topics-section',       module: 'Config' },
+        { label: 'Test de Duelo (Config)',       tab: 'config', sectionId: 'test-duelo-section',             module: 'Config' },
+        { label: 'Contenido de la App',          tab: 'config', sectionId: null,                             module: 'Config' },
+        { label: 'Zona de Borrado',              tab: 'config', sectionId: 'config-danger-zone',             module: 'Config' },
     ],
 
     init: function() { this._createButton(); },
@@ -334,32 +368,45 @@ const Shortcuts = {
         document.getElementById('shortcuts-overlay')?.remove();
     },
 
-    // Navega a la pestaña y sección del shortcut seleccionado
+    // Ejecuta s.steps en cadena (ej: cambiar sub-pestaña de Mi Deck/Simuladores/Formación)
+    _runSteps: function(steps, i) {
+        if (!steps || i >= steps.length) return;
+        const step = steps[i];
+        const fn = step.fn.split('.').reduce((o, k) => o && o[k], window);
+        if (typeof fn === 'function') fn(step.arg);
+        setTimeout(() => this._runSteps(steps, i + 1), 60);
+    },
+
+    // Navega a la pestaña, ejecuta los pasos de sub-navegación y hace scroll a la sección
     go: function(index) {
         const shortcuts = window.ConfigManager?.getShortcuts?.() || this.CATALOG.slice(0, 4);
         const s = shortcuts[index];
         if (!s) return;
         this.closeMenu();
         if (window.Navigation) Navigation.showTab(s.tab);
-        if (s.subtab && s.tab === 'formacion') {
-            setTimeout(() => { if (window.Formacion) Formacion.switchTab(s.subtab); }, 80);
-        }
-        if (s.sectionId) {
-            setTimeout(() => {
-                const el = document.getElementById(s.sectionId);
-                if (!el) return;
-                if (!el.style.display || el.style.display === 'none') el.style.display = 'block';
-                if (s.sectionId === 'winrate-sec'  && window.Winrate)      Winrate.refreshSection();
-                if (s.sectionId === 'duelista-sec' && window.Duelista)     Duelista.refreshSection();
-                if (s.sectionId === 'top-tier-sec' && window.Estadisticas) Estadisticas._refreshTopTier();
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 80);
-        }
+
+        setTimeout(() => {
+            if (s.steps) this._runSteps(s.steps, 0);
+
+            if (s.sectionId) {
+                const delay = 60 + (s.steps ? s.steps.length * 60 : 0);
+                setTimeout(() => {
+                    const el = document.getElementById(s.sectionId);
+                    if (!el) return;
+                    if (!el.style.display || el.style.display === 'none') el.style.display = 'block';
+                    if (s.sectionId === 'winrate-sec' && window.Winrate)      Winrate.refreshSection();
+                    if (s.sectionId === 'piloto-sec'  && window.Duelista)     Duelista.refreshSection();
+                    if (s.sectionId === 'top-tier-sec' && window.Estadisticas) Estadisticas._refreshTopTier();
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, delay);
+            }
+        }, 80);
     }
 };
 
 window.Shortcuts = Shortcuts;
 document.addEventListener('DOMContentLoaded', () => Shortcuts.init());
+
 
 // ── UTILS (SCROLL BUTTONS) ────────────────────────────────────────────
 // Botones flotantes ▲▼ de scroll, se ocultan en la pestaña Simuladores

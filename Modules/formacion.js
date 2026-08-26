@@ -22,7 +22,9 @@ const Formacion = {
         { id: 'vocabulario-legal',       label: 'Vocabulario Legal del Juego',      level: 'Básico' },
         { id: 'fases-del-duelo',         label: 'Las Fases del Duelo',              level: 'Básico' },
         { id: 'tipos-cartas-basicas',    label: 'Tipos de Cartas Básicas',          level: 'Básico' },
-        { id: 'tipos-cartas-especiales', label: 'Tipos de Cartas Especiales',       level: 'Básico' },
+        { id: 'tipos-cartas-especiales', label: 'Tipos de Cartas Especiales',       level: 'Intermedio' },
+        { id: 'fusion-rulings',          label: 'Monstruos Fusión y sus Rulings',   level: 'Básico' },
+        { id: 'sincronia-rulings',       label: 'Monstruos Sincronía y sus Rulings', level: 'Básico' },
         // ── MÓDULO 2 — Lectura de Cartas y Mentalidad ──
         { id: 'estructura-efecto-carta', label: 'Estructura de un Efecto de Carta', level: 'Básico' },
         { id: 'funciones-de-las-cartas', label: 'Funciones de las Cartas (Roles)',  level: 'Intermedio' },
@@ -42,7 +44,8 @@ const Formacion = {
 // ── MÓDULO 4 — Motor Técnico del Juego ──
         { id: 'cadenas-prioridad',       label: 'Cadenas, Prioridad y Spell Speed', level: 'Básico' },
         { id: 'rulings-invocaciones',    label: 'Rulings de Invocaciones',          level: 'Intermedio' },
-        { id: 'rulings-batalla',         label: 'Rulings en Fase de Batalla',       level: 'Intermedio' },
+                { id: 'rulings-batalla',         label: 'Rulings en Fase de Batalla',       level: 'Avanzado' },
+        { id: 'jerarquia-dano-batalla',  label: 'Jerarquía de Efectos de Daño de Batalla', level: 'Avanzado' },
         { id: 'if-when-timing',          label: 'IF vs WHEN y Timing Avanzado',     level: 'Intermedio' },
         // ── MÓDULO 5 — Metajuego y Torneo ──
         { id: 'leer-campo-oponente',     label: 'Leer el Campo del Oponente',       level: 'Intermedio' },
@@ -568,39 +571,39 @@ const Formacion = {
       options: ['Que sea el deck más caro del meta', 'Que realmente disfrutes jugarlo y que su Complejidad sea la que estás dispuesto a asumir', 'Que tenga el mayor ATK posible', 'Que no tenga ninguna Handtrap'], correct: 1,
       explain: 'Comprometerse con el deck equivocado hace que la inversión de tiempo en dominarlo se sienta como una carga, no como progreso.' },
 ],
-        'anatomia-deck-competitivo': [
-            { q: '¿Qué mide el eje "Engine — Consistencia"?',
-              options: ['Qué tan poderoso es el endboard', 'Qué tan probable es armar la estrategia desde la mano inicial', 'Cuántas Handtraps tiene el rival', 'El precio del deck'], correct: 1,
-              explain: 'Consistencia mide la probabilidad de abrir con al menos 1 Starter y ejecutar tu plan de juego.' },
-            { q: '¿Qué significa que un deck sea "Glass Cannon"?',
-              options: ['Que tiene mucho Floor', 'Que tiene alto Techo de Poder pero baja Resiliencia — interrumpido, queda muerto', 'Que es muy barato', 'Que no tiene engine'], correct: 1,
-              explain: 'Sin Floor, una sola interrupción del rival deja al deck sin ningún plan B.' },
-            { q: '¿Qué son las "cartas multifuncionales" según esta lección?',
-              options: ['Cartas prohibidas', 'Cartas que cumplen más de un rol (ej. Starter y Extender) según el contexto', 'Cartas que solo sirven en el Extra Deck', 'Cartas sin efecto'], correct: 1,
-              explain: 'Reducen el tamaño efectivo del engine sin perder funciones — son muy valiosas para el espacio del deck.' },
-            { q: '¿Qué pregunta corresponde al eje "Fragilidad / Choke Point"?',
-              options: ['¿Cuánto cuesta el deck?', '¿Qué carta del meta me destruye completamente?', '¿Cuántas copias tengo de mi Starter?', '¿Cuál es mi Boss Monster?'], correct: 1,
-              explain: 'Fragilidad mide qué tan vulnerable es el deck a una sola carta o combo específico del rival.' },
-            { q: 'Según el Consejo Clave, ¿qué determina realmente si un deck es competitivo?',
-              options: ['Solo el techo de poder', 'El balance entre los 6 ejes, no solo el poder bruto', 'La cantidad de Staples', 'El nombre del arquetipo'], correct: 1,
-              explain: 'Un deck con techo altísimo pero Floor bajo pierde igual contra un rival que estudió sus debilidades.' },
+                'anatomia-deck-competitivo': [
+            { q: '¿Cuántos ejes calcula realmente el Perfil de Rendimiento de la app?',
+              options: ['3', '4', '5', '6'], correct: 2,
+              explain: 'Son 5: Consistencia, Ceiling (Techo de Poder), Floor (Resiliencia), Versatilidad y Eficiencia.' },
+            { q: '¿Qué mide exactamente el eje Consistencia?',
+              options: ['Cuántas Handtraps tiene el rival', '% de rondas donde abriste con al menos 1 Starter en mano inicial', 'El precio del deck', 'Cuántas negaciones tiene tu endboard'], correct: 1,
+              explain: 'Consistencia responde una sola pregunta: ¿cuántas veces tu deck realmente arrancó su plan de juego?' },
+            { q: 'Yendo de segundo, ¿cuándo se considera una ronda como "Mano Muerta"?',
+              options: ['Solo si no tenías Starter ni Extender', 'Si además de no tener Starter/Extender tampoco tenías Boardbreaker ni Handtrap', 'Nunca — de segundo no existen manos muertas', 'Si perdiste el duelo'], correct: 1,
+              explain: 'De segundo, la interacción (Handtrap/Boardbreaker) sí cuenta como mano jugable — el criterio es más exigente que yendo de primero.' },
+            { q: '¿Qué mide el eje Eficiencia?',
+              options: ['El poder bruto del endboard', 'El inverso de las rondas donde abriste con 3+ Handtraps o 3+ Boardbreakers', 'Cuántos Starters tiene el deck', 'El winrate general'], correct: 1,
+              explain: 'Eficiencia penaliza las manos donde te llenaste de cartas reactivas y no pudiste ejecutar tu propio plan de juego.' },
+            { q: '¿Por qué el radar de Rendimiento no se muestra con 1 o 2 rondas registradas?',
+              options: ['Es un error de la app', 'Con una muestra tan chica, una sola racha de suerte distorsiona completamente el número', 'Solo funciona con decks Tier 1', 'Hace falta pagar una versión premium'], correct: 1,
+              explain: 'Igual que en testeos reales de torneo, necesitás una muestra mínima antes de confiar en cualquier porcentaje.' },
         ],
-        'debilidades-deck': [
+                'debilidades-deck': [
             { q: '¿Qué es un "Single Point of Failure" en el diseño de un arquetipo?',
               options: ['Una carta prohibida', 'Una única pieza de la que depende todo el combo, sin redundancia ni buscador alternativo', 'El monstruo con más ATK del deck', 'Una carta que solo sirve en el Side Deck'], correct: 1,
-              explain: 'Si esa única pieza es negada, desterrada o no aparece en mano, el deck entero se detiene — es la debilidad de diseño más peligrosa.' },
-            { q: '¿Por qué un combo con muchos pasos (5+) suele ser más débil que uno corto, aunque termine en el mismo endboard?',
-              options: ['Porque tarda más en jugarse', 'Porque cada paso es un Choke Point donde una sola Handtrap puede romper toda la línea', 'Porque usa más cartas del Extra Deck', 'Los combos largos siempre son mejores'], correct: 1,
-              explain: 'Cada eslabón adicional del combo es una ventana extra donde el rival puede negar y detener todo lo que viene después.' },
-            { q: '¿Qué señala que un deck tiene "Garnets" en exceso?',
-              options: ['Que tiene muchas Handtraps', 'Que carga cartas situacionales que son inútiles en la mano inicial y solo sirven combadas con otra pieza específica', 'Que tiene un buen Techo de Poder', 'Que el Extra Deck está lleno'], correct: 1,
-              explain: 'Un Garnet en la mano inicial (sin la pieza que lo activa) es una carta muerta — reducirlos al mínimo mejora la Consistencia real.' },
-            { q: 'Un deck sin ningún Extender ni forma de responder tras una Handtrap del rival es...',
-              options: ['Un deck de control', 'Un "Glass Cannon" — techo alto pero Floor nulo, muere a la primera interrupción', 'Un deck con buen Grind Game', 'Un deck imposible de construir'], correct: 1,
-              explain: 'Sin Resiliencia (Floor), basta 1 sola negación bien puesta para dejar al jugador sin plan alguno.' },
-            { q: '¿Qué hace especialmente débil a un arquetipo frente al meta según esta lección?',
-              options: ['Tener pocas cartas de Extra Deck', 'Que exista 1 sola carta común del formato que anule su plan de juego por completo, sin alternativa', 'Que sea un arquetipo nuevo', 'Que tenga Field Spell'], correct: 1,
-              explain: 'Un Choke Point tan amplio como "1 carta me gana el duelo" es la máxima expresión de Fragilidad — el rival ni siquiera necesita tech específica.' },
+              explain: 'Si esa única pieza es negada o no aparece en mano, el Floor se desploma casi a 0% — no hay plan B.' },
+            { q: '¿Sobre qué rondas específicas calcula la app el eje Floor?',
+              options: ['Todas las rondas jugadas por igual', 'Solo las rondas donde el rival te interrumpió o rompió tu campo', 'Solo las rondas que ganaste', 'Solo las rondas yendo de primero'], correct: 1,
+              explain: 'Floor es tu winrate filtrado exclusivamente a las rondas bajo presión del rival — mide qué pasa cuando el plan A no sale limpio.' },
+            { q: '¿Para qué sirven específicamente los Extenders en relación al Floor?',
+              options: ['Para subir el Techo de Poder', 'Para sostener el plan de juego después de que el rival negó tu primera pieza', 'Para ganar velocidad de invocación', 'No tienen relación con el Floor'], correct: 1,
+              explain: 'Los Extenders son literalmente la carta que existe para que el combo sobreviva a una interrupción.' },
+            { q: '¿Qué define a un deck "Glass Cannon"?',
+              options: ['Que tiene poco Ceiling', 'Que tiene Ceiling alto pero Floor bajo — imparable si nadie interrumpe, muerto si lo hacen', 'Que no tiene Extra Deck', 'Que es barato de construir'], correct: 1,
+              explain: 'Es el desequilibrio clásico entre los dos ejes: todo el poder depende de que el rival no toque nada.' },
+            { q: '¿Cuál es la forma más grave de Fragilidad frente al meta?',
+              options: ['Que el deck sea nuevo', 'Que exista 1 sola carta común del formato que anule tu plan sin que tengas ninguna respuesta', 'Que tenga pocos Boardbreakers', 'Que use Field Spell'], correct: 1,
+              explain: 'Un Choke Point tan amplio como "1 carta me gana el duelo" es el peor escenario posible de Floor bajo.' },
         ],
         'secuenciacion': [
     { q: '¿Cuál es la pregunta que hace un jugador de nivel Master antes de jugar su mejor carta?',
@@ -619,22 +622,22 @@ const Formacion = {
       options: ['Saber con certeza que no la tiene', 'Reducir las posibilidades de lo que tiene en mano, sin certeza absoluta', 'Nada, es información inútil', 'Confirmar que ganaste el duelo'], correct: 1,
       explain: 'No es certeza total, pero reduces el abanico de posibilidades de forma significativa — de 100 opciones a unas pocas.' },
 ],
-        'optimizar-deck': [
-            { q: '¿Cuál es la señal de que te falta Consistencia?',
-              options: ['El endboard es débil', 'Brickeas frecuentemente o hay turnos sin nada que hacer', 'Pierdes contra la misma jugada repetida', 'Tienes demasiados Handtraps'], correct: 1,
-              explain: 'Brickear seguido es la señal clásica de un problema de Consistencia, no de Potencia ni Defensa.' },
-            { q: '¿Qué tipo de optimización corresponde a "agregar protecciones al Boss Monster"?',
-              options: ['Consistencia', 'Techo de Poder (Endboard)', 'Defensa', 'Versatilidad'], correct: 1,
-              explain: 'Reforzar el endboard para que sea más difícil de romper es optimización de Techo de Poder.' },
-            { q: 'Según el proceso de optimización, ¿cuántos cambios deberías probar a la vez?',
-              options: ['Todos los que se te ocurran', 'Uno a la vez, para saber qué causó qué', 'Ninguno, se prueba el deck completo', 'Solo cambios de Extra Deck'], correct: 1,
-              explain: 'Un cambio = una variable. Cambiar varias cosas a la vez impide saber qué funcionó.' },
-            { q: '¿Cuántas partidas mínimo sugiere esta lección para evaluar un cambio correctamente?',
-              options: ['1-2', '10-15', '50', 'No hace falta jugarlas'], correct: 1,
-              explain: 'Menos de 10-15 partidas no es una muestra confiable para juzgar si un cambio funcionó.' },
-            { q: '¿Por qué la optimización "nunca termina" según el Consejo Clave?',
-              options: ['Porque siempre hay más dinero que gastar', 'Porque el meta cambia constantemente', 'Porque las cartas se dañan', 'Porque el Extra Deck es ilimitado'], correct: 1,
-              explain: 'Un deck optimizado para el meta de hace 3 meses puede ser mediocre hoy — el meta nunca es estático.' },
+                'optimizar-deck': [
+            { q: '¿Cuánto suma al Ceiling una victoria por missplay o novatada del rival?',
+              options: ['El máximo (peso 1.0)', 'Un peso medio (0.70)', 'Cero — no mide tu deck, midió al oponente', 'El doble que una victoria normal'], correct: 2,
+              explain: 'La categoría de victoria pondera 1.0 si superaste al rival totalmente, 0.70 si fue por resignación/Carta Counter, y 0 si fue por error del rival.' },
+            { q: '¿Qué mide la tasa de FTK dentro del Ceiling?',
+              options: ['Cuántas veces jugaste de segundo', 'La forma más extrema de Ceiling: el rival ni siquiera llega a jugar su turno', 'Tu Resiliencia bajo presión', 'El balance entre Handtraps y Boardbreakers'], correct: 1,
+              explain: 'Un First Turn Kill es el techo de poder máximo posible en una ronda.' },
+            { q: '¿Qué dos cosas combina el eje Versatilidad?',
+              options: ['Consistencia y Eficiencia', 'Winrate yendo de segundo + tasa de interrupción yendo de primero', 'Precio del deck y cantidad de Staples', 'FTK rate y rondas totales jugadas'], correct: 1,
+              explain: 'Versatilidad mide si tu deck sabe jugar ambos lados de la moneda: remontar de segundo, e interactuar aunque tengas la iniciativa de primero.' },
+            { q: '¿Por qué un deck 100% ofensivo yendo de primero es predecible?',
+              options: ['Porque siempre pierde', 'Porque gasta todos sus slots en ofensiva y ninguno en interacción, así que el rival sabe que no va a negar nada', 'Porque no puede jugar de segundo nunca', 'Porque no tiene Extra Deck'], correct: 1,
+              explain: 'Sin ningún slot de interacción yendo primero, el rival juega sin miedo a represalias — es un patrón fácil de explotar.' },
+            { q: 'Según el Consejo Clave, ¿qué pasa si subís Ceiling sin subir Versatilidad?',
+              options: ['El deck mejora en todos los aspectos por igual', 'Queda con un solo plan de juego: gana en blowout o no gana, y en Bo3 eso te expone la mitad de las veces', 'No cambia nada en la práctica', 'El Floor sube automáticamente'], correct: 1,
+              explain: 'Optimizar de verdad es subir ambos ejes a la vez, no maximizar uno a costa del otro.' },
         ],
         'cadenas-prioridad': [
             { q: '¿Puede un efecto de Velocidad 2 responder a uno de Velocidad 3?',
@@ -653,23 +656,40 @@ const Formacion = {
               options: ['Solo en la End Phase', 'Cuando el jugador activo activa un efecto, invoca, o hace una acción visible', 'Nunca, siempre puedes activar lo que quieras', 'Solo si tienes una Trampa boca abajo'], correct: 1,
               explain: 'La ventana se abre con cualquier acción del jugador activo — activación, invocación o acción visible.' },
         ],
-        'equilibrio-deck': [
-    { q: '¿Cuál es el enfoque correcto para juzgar si tienes "demasiadas" Handtraps?',
-      options: ['Contar el número absoluto de copias', 'Ver el porcentaje del deck que ocupan y qué le restaron al engine', 'Nunca se puede tener demasiadas Handtraps', 'Depende solo del precio de las cartas'], correct: 1,
-      explain: 'Un número absoluto no dice nada por sí solo — importa qué proporción del deck ocupa y qué sacrificaste por ello.' },
-    { q: '¿Qué problema genera un exceso de Boardbreakers en un deck que suele ir primero?',
-      options: ['Ninguno, siempre son útiles', 'Se vuelven cartas muertas en mano la mayoría de las partidas', 'Bajan el Internal Score automáticamente', 'Solo afectan en Master Duel'], correct: 1,
-      explain: 'Los Boardbreakers brillan yendo segundo — un exceso en un deck que va primero resta espacio útil sin retorno frecuente.' },
-    { q: 'Según la lección, ¿qué es tan problemático como un exceso de un rol?',
-      options: ['Tener 40 cartas exactas', 'Tener 0 copias de un rol crítico (ej. 0 Extenders)', 'Jugar solo un arquetipo', 'Usar el Buscador de la app'], correct: 1,
-      explain: 'El desbalance tiene dos direcciones: exceso y ausencia total de un rol necesario son la misma falla, en sentido contrario.' },
-    { q: '¿Cuál es la pregunta recomendada para detectar una copia sobrante de un rol?',
-      options: ['¿Cuánto cuesta la carta?', '¿Qué perdería realmente si sacara 1 copia de este rol?', '¿Es una carta rara?', '¿La usa el meta actual?'], correct: 1,
-      explain: 'Si sacar una copia no cambia casi nada porque ya hay redundancia, ese espacio probablemente rinde más en otro rol.' },
-    { q: '¿Existe una proporción universal correcta de Starters/Extenders/Handtraps para todo deck?',
-      options: ['Sí, siempre 4/4/9', 'No, depende de la identidad del deck y el meta que enfrenta', 'Sí, la que usa el deck top 1 del formato', 'No importa, cualquier proporción funciona igual'], correct: 1,
-      explain: 'Un deck combo largo, uno lineal y uno de control tienen necesidades de balance distintas — no hay fórmula fija.' },
-],
+                'jerarquia-dano-batalla': [
+            { q: '¿Cuántas categorías numeradas de efectos de daño de batalla existen, según el orden oficial de aplicación?',
+              options: ['5', '8', '10', '12'], correct: 2,
+              explain: 'Son 10 categorías (01 a 10), aplicadas siempre en ese orden fijo cuando coexisten varias.' },
+            { q: 'Si un efecto "06" (daño de batalla se vuelve 0) ya se aplicó, ¿se siguen aplicando los efectos restantes de la lista?',
+              options: ['Sí, todos igual', 'No, una vez en 0 el resto de efectos ya no se aplican', 'Solo el "08" se sigue aplicando', 'Depende del ATK del monstruo'], correct: 1,
+              explain: 'Si el daño llegó a 0 mediante un efecto "06", los pasos posteriores de la lista quedan sin efecto — no hay nada que duplicar o redirigir.' },
+            { q: 'Ohime the Manifested Mikanko ("03": el rival recibe tu daño de batalla en tu lugar) ataca directamente. ¿Cuántas veces recibe daño el rival?',
+              options: ['Una vez', 'Dos veces', 'Cero veces', 'Depende de su DEF'], correct: 1,
+              explain: 'El "03" no duplica nada por sí solo, pero al atacar directo el daño ya se calcula una vez y se redirige — en el caso Ⓐ el propio efecto de Ohime funciona junto a un "02" (Double-Edged Sword) que sí duplica, dando dos instancias de daño al rival.' },
+            { q: 'Dos monstruos con efecto "03" (ambos "el rival recibe mi daño de batalla") se enfrentan entre sí. ¿Qué ocurre con el daño?',
+              options: ['Se duplica para ambos', 'Cada jugador recibe la diferencia de ATK una sola vez — el efecto del otro monstruo no se aplica sobre ese mismo daño', 'Ninguno recibe daño', 'Solo el jugador con menor ATK recibe daño'], correct: 1,
+              explain: 'Cuando el efecto de un monstruo ya hizo que el rival reciba SU daño, el efecto equivalente del monstruo contrario no vuelve a aplicarse sobre esa misma instancia — no se combinan ni se duplican entre sí.' },
+            { q: 'Un monstruo con efecto "03" ataca a un monstruo con efecto "08" (dobla su propio daño) que NO tiene forma de redirigir daño al rival. ¿Se duplica el daño en esa batalla?',
+              options: ['Sí, siempre que exista un "08" en la batalla', 'No — el "08" solo duplica el daño que ESE monstruo inflige al rival, y aquí no inflige ninguno', 'Solo si ambos jugadores tienen los mismos LP', 'Se duplica pero solo para el atacante'], correct: 1,
+              explain: 'Un efecto "08" duplica el daño que su propio controlador causaría al rival. Si ese monstruo no está infligiendo daño al rival en esa batalla (porque el "03" lo redirigió), no hay nada que duplicar.' },
+        ],
+                'equilibrio-deck': [
+            { q: '¿Qué es un "Garnet" y por qué afecta la Consistencia?',
+              options: ['Una carta prohibida', 'Una carta situacional que solo sirve combada con otra pieza específica — es carta muerta en mano inicial', 'Un tipo de Handtrap', 'Una carta del Extra Deck únicamente'], correct: 1,
+              explain: 'Cada Garnet extra en el Main resta Consistencia real, aunque en abstracto parezca poderosa.' },
+            { q: '¿Qué indica ganar rondas por pura interacción (Floor alto) sin meter presión propia?',
+              options: ['Que el deck está perfectamente equilibrado', 'Una Eficiencia real baja disfrazada de buen resultado — sobrevivís pero no ejecutás tu plan', 'Que tu Ceiling es máximo', 'Que necesitás menos Handtraps de inmediato'], correct: 1,
+              explain: 'Sobrevivir sin ejecutar tu propio plan de juego es la señal clásica de que el ratio de non-engine está desbalanceado.' },
+            { q: '¿Qué corrige tener el non-engine "alineado con tu meta local" en vez de por moda de internet?',
+              options: ['El precio del deck', 'Que cada slot reactivo realmente sume Eficiencia contra lo que de verdad enfrentás', 'La velocidad de invocación', 'El tamaño del Extra Deck'], correct: 1,
+              explain: 'Un non-engine "genérico" puede ser ciego a la amenaza real que te está ganando torneos en tu meta específico.' },
+            { q: 'Un Manos Muertas alto específicamente yendo de PRIMERO apunta a un problema de...',
+              options: ['Eficiencia', 'Consistencia — pocos Starters/Extenders reales frente a Garnets', 'Versatilidad', 'Categoría de victoria'], correct: 1,
+              explain: 'De primero, mano muerta solo depende de Starter/Extender — si es alto, el engine no tiene suficiente redundancia.' },
+            { q: 'Según la lección, ¿por qué el balance entre Consistencia y Eficiencia "nunca es gratis"?',
+              options: ['Porque cuestan dinero real las cartas', 'Porque compiten por los mismos 40 slots del deck — cada Handtrap de más es un Starter de menos', 'Porque no se pueden calcular juntos', 'Porque son el mismo eje'], correct: 1,
+              explain: 'Todo espacio que le des al non-engine reactivo se lo quitás directamente al engine que arma tu combo.' },
+        ],
         'rulings-invocaciones': [
             { q: '¿Qué diferencia a una Invocación Inherente de una Invocación por Efecto?',
               options: ['No hay diferencia', 'La Inherente ocurre por las reglas del juego; la de Efecto la realiza un efecto de carta y no puede negarse la invocación misma', 'La de Efecto siempre es más fuerte', 'La Inherente solo aplica a Fusión'], correct: 1,
@@ -839,6 +859,41 @@ const Formacion = {
             { q: 'En Destiny Draw!, ¿qué botón recalcula el Top Tier y el Poder de Cartas del meta importado?',
               options: ['Guardar Deck', 'Actualizar Data', 'Restaurar Configuración', 'Exportar Reporte'], correct: 1,
               explain: '"Actualizar Data" descarga cartas faltantes y recalcula de una vez los scores de Decks del Meta y el Poder de Cartas del Meta.' },
+        ],
+                'fusion-rulings': [
+            { q: '¿Qué distingue a la Fusión de Contacto de la Fusión por Magia?',
+              options: ['No requiere materiales', 'Es una invocación inherente activada por el propio monstruo, sin usar una Magia de Fusión', 'Solo funciona con Tokens', 'Ocurre automáticamente al final del turno'], correct: 1,
+              explain: 'La Fusión de Contacto es inherente: el propio monstruo trae el efecto que la realiza. No hay Magia de Fusión en la cadena — importa para saber qué puedes negar.' },
+            { q: 'Si niegan (Solemn Judgment, Solemn Strike) la Invocación por Fusión de un monstruo, ¿qué pasa con los materiales que ya se enviaron?',
+              options: ['Regresan a la mano', 'Regresan al Extra Deck', 'Se quedan en el cementerio — la negación no los devuelve', 'Regresan al Main Deck'], correct: 2,
+              explain: 'El costo de enviar los materiales ya se pagó antes de resolver la invocación. Negar la invocación afecta solo al Fusión resultante, no revierte el costo ya pagado.' },
+            { q: 'Por defecto, ¿a dónde van los monstruos usados como Material de Fusión?',
+              options: ['Al cementerio, salvo que la carta que fusiona diga expresamente otra cosa (desterrar, volver al deck, etc.)', 'Siempre son desterrados', 'Siempre vuelven al Extra Deck', 'Depende del nivel del monstruo'], correct: 0,
+              explain: 'La regla por defecto de Fusión es cementerio. Cualquier destino distinto (baneados, deck) debe estar escrito explícitamente en la carta que realiza la fusión.' },
+            { q: '¿Qué es un "Fusion Substitute Monster"?',
+              options: ['Cualquier monstruo con Nivel 4 o menos', 'Un monstruo que su propio texto le permite ser tratado como un Material de Fusión con nombre específico', 'Un Token usado como material', 'Un monstruo que ya está en el cementerio'], correct: 1,
+              explain: 'Solo puede sustituir a un material nombrado si su propio texto lo autoriza explícitamente (ej. "esta carta puede ser tratada como \'X\' para una Invocación de Fusión"). No es algo que el jugador decida libremente.' },
+            { q: 'Una Magia de Fusión Rápida (Quick-Play) permite fusionar…',
+              options: ['Solo en tu Main Phase', 'Solo en Battle Phase', 'Durante cualquier momento en que se pueda activar una Magia Rápida (incluido el turno del rival), a diferencia de una Magia de Fusión Normal', 'Nunca — no existen Magias de Fusión Rápidas'], correct: 2,
+              explain: 'Una Magia Rápida de Fusión abre la ventana de reacción: puede activarse en el turno del rival, algo que una Magia de Fusión Normal no permite (solo Main Phase propia, sin cadena previa activa salvo excepciones).' },
+        ],
+
+        'sincronia-rulings': [
+            { q: 'Para una Invocación Sincro, la suma de niveles de los materiales debe…',
+              options: ['Ser mayor o igual al Nivel del Sincro', 'Igualar exactamente el Nivel del Sincro, salvo que el Sincro diga "o menos"/"o más"', 'Ser cualquier valor, el nivel del Sincro es solo cosmético', 'Sumar siempre 8'], correct: 1,
+              explain: 'La regla inherente exige coincidencia EXACTA de niveles. Solo cartas que digan explícitamente "Nivel X o menos/más" rompen esa exactitud.' },
+            { q: '¿Es obligatorio que los materiales de una Invocación Sincro sean del mismo Tipo o Atributo?',
+              options: ['Sí, siempre', 'No, salvo que el propio monstruo Sincro lo exija en su texto', 'Solo si son Tuners', 'Solo en Sincros de Nivel 8+'], correct: 1,
+              explain: 'La regla base de Sincronía solo exige 1+ Tuner y que la suma de niveles sea exacta. Cualquier restricción de Tipo/Atributo debe estar escrita en el propio monstruo Sincro (ej. requerir Tuners de un archetype).' },
+            { q: '¿A dónde van por defecto los materiales usados en una Invocación Sincro?',
+              options: ['Al cementerio, salvo que el propio Sincro o un efecto diga lo contrario', 'Siempre vuelven a la mano', 'Se destierran automáticamente', 'Quedan debajo del Sincro como en XYZ'], correct: 0,
+              explain: 'Igual que en Fusión, el destino por defecto es cementerio. Algunos Sincros (ej. Naturia Beast) devuelven los no-Tuner a la mano — pero eso es una excepción escrita en la propia carta, no la regla general.' },
+            { q: '¿Puedes combinar más de un Tuner en la misma Invocación Sincro?',
+              options: ['No, solo se permite exactamente 1 Tuner', 'Sí, siempre que la suma total de niveles (Tuners + no-Tuners) sea exacta al del Sincro', 'Solo si ambos Tuners tienen el mismo nombre', 'Solo en formato Genesys'], correct: 1,
+              explain: 'La regla inherente pide "1 o más Tuners + 1 o más no-Tuners" — múltiples Tuners son válidos mientras la suma total cuadre exacto.' },
+            { q: '¿Por qué importa que un monstruo haya sido específicamente "Sincro Invocado" y no solo Invocado Especialmente por otro medio?',
+              options: ['No importa, es lo mismo para cualquier efecto', 'Porque algunos efectos de cartas exigen textualmente "si esta carta fue Sincro Invocada" como condición — un monstruo puesto en campo por otro método no la cumple', 'Solo afecta el ATK del monstruo', 'Determina si puede atacar ese turno'], correct: 1,
+              explain: 'Muchos monstruos Sincro (ej. Crystal Wing Synchro Dragon) tienen efectos condicionados a haber sido Sincro Invocados específicamente. Ponerlos en campo vía otro Special Summon no activa esos efectos.' },
         ],
         'estructura-arquetipos': [
             { q: '¿Cuál es la diferencia oficial entre "Arquetipo" y "Serie" en Yu-Gi-Oh!?',
@@ -2195,6 +2250,8 @@ _ptLongPressStart: function (iid, ev) {
             'tipos-cartas-basicas':    this._topicTiposCartasBasicas(),
             'estructura-efecto-carta': this._topicEstructuraEfecto(),
             'tipos-cartas-especiales': this._topicTiposCartasEspeciales(),
+            'fusion-rulings':          this._topicFusionRulings(),
+            'sincronia-rulings':       this._topicSincroniaRulings(),
             'funciones-de-las-cartas': this._topicFuncionesCartas(),
             'palabras-tecnicas-juego': this._topicPalabrasTecnicas(),
             'estructura-arquetipos':   this._topicEstructuraArquetipos(),
@@ -2211,6 +2268,7 @@ _ptLongPressStart: function (iid, ev) {
 'equilibrio-deck':           this._topicEquilibrioDeck(),  
             'rulings-invocaciones':    this._topicRulingsInvocaciones(),
             'rulings-batalla':         this._topicRulingsBatalla(),
+            'jerarquia-dano-batalla':  this._topicJerarquiaDanoBatalla(),
             'if-when-timing':          this._topicIfWhenTiming(),
             'leer-campo-oponente':     this._topicLeerCampoOponente(),
             'gestion-lp-recursos':     this._topicGestionLpRecursos(),
@@ -2557,7 +2615,72 @@ _topicBo1VsBo3: function () { return `
         </p>
 
         `; },
+    _topicFusionRulings: function () { return `
+        <h2 class="form-nb-title">Monstruos Fusión y sus Rulings</h2>
+        <p class="form-nb-text">La Fusión es la mecánica de Extra Deck más antigua del juego, pero sus rulings específicos (a dónde van los materiales, qué pasa si te niegan la invocación, qué es un sustituto válido) son la base para entender todas las demás invocaciones de Extra Deck.</p>
 
+        <h3 class="form-nb-subtitle">🟣 Las Dos Formas de Fusionar</h3>
+        <ul class="form-nb-list">
+            <li><strong>Por Magia de Fusión:</strong> una Magia (Normal, Continua o Rápida) selecciona los materiales y realiza la fusión como parte de SU efecto. Ej: <a href="#" class="form-link" onclick="Formacion.openCard('Polymerization'); return false;">Polymerization</a>.</li>
+            <li><strong>Fusión de Contacto:</strong> el propio monstruo Fusión trae en su texto la condición para invocarse a sí mismo sin usar Magia — es una invocación <em>inherente</em>, no un efecto. Ej: <a href="#" class="form-link" onclick="Formacion.openCard('Elemental HERO Sunrise'); return false;">Elemental HERO Sunrise</a>.</li>
+            <li><strong>¿Por qué importa la diferencia?</strong> Solo puedes negar la Magia de Fusión mientras está en cadena (Solemn Judgment sobre la Magia). Una Fusión de Contacto, al ser inherente, se niega directamente como invocación (Solemn Warning, por ejemplo) — la respuesta correcta cambia según cuál sea.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">📦 A Dónde Van los Materiales</h3>
+        <p class="form-nb-text">Regla por defecto: los monstruos usados como Material de Fusión van al <strong>Cementerio</strong>. Cualquier destino distinto (desterrados, devueltos al Deck, devueltos a la mano) debe estar escrito explícitamente en la carta que realiza la fusión — nunca es una elección del jugador.</p>
+
+        <h3 class="form-nb-subtitle">🚫 Negación y Costos ya Pagados</h3>
+        <p class="form-nb-text">Si niegan la invocación por Fusión (ej. Solemn Strike sobre una Fusión de Contacto), el monstruo Fusión nunca llega al campo — pero los materiales que ya fueron enviados al cementerio (o donde corresponda) <strong>no regresan</strong>. Enviar los materiales es el costo del efecto/invocación, y los costos ya pagados no se revierten aunque la invocación falle.</p>
+
+        <h3 class="form-nb-subtitle">🔁 Fusion Substitute Monsters</h3>
+        <p class="form-nb-text">Algunas cartas pueden reemplazar a un Material de Fusión con nombre específico, pero <strong>solo si su propio texto lo autoriza explícitamente</strong> (frase típica: "esta carta puede ser tratada como '[Nombre]' para una Invocación de Fusión"). No es una regla general — un jugador no puede decidir libremente que cualquier monstruo "cuenta como" otro para cumplir un material nombrado.</p>
+
+        <h3 class="form-nb-subtitle">⚡ Magia de Fusión Normal vs Rápida</h3>
+        <p class="form-nb-text">Una Magia de Fusión Normal solo puede activarse en tu Main Phase, sin cadena previa que lo impida. Una Magia de Fusión Rápida (Quick-Play) puede activarse en cualquier momento en que se permita una Magia Rápida — incluido el turno del rival — dándote una fusión de reacción en vez de solo de desarrollo.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Antes de comprometer una línea con Fusión, identifica si tu pieza clave es de Contacto o por Magia — determina qué carta del rival puede detenerte y en qué punto exacto de la cadena.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('fusion-rulings')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Filtra en <strong>Buscador → ⚙ Filtros avanzados → Monstruo → Fusion</strong> para revisar materiales exactos de tus Fusiones.
+            Marca el choke point de negación de tu Fusión en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck','combos'); return false;">Mi Deck → 🧬 Línea de Combos</a>.
+        </p>
+    `; },
+
+    _topicSincroniaRulings: function () { return `
+        <h2 class="form-nb-title">Monstruos Sincronía y sus Rulings</h2>
+        <p class="form-nb-text">La Sincronía introdujo el concepto de Tuner y la exigencia de niveles exactos. Entender sus rulings evita errores comunes de principiante, como asumir que cualquier combinación de niveles sirve o que los materiales siempre vuelven a la mano.</p>
+
+        <h3 class="form-nb-subtitle">⚪ La Regla Inherente</h3>
+        <p class="form-nb-text">Necesitas 1 o más monstruos <strong>Tuner</strong> + 1 o más monstruos <strong>no-Tuner</strong>, todos boca arriba en tu campo. La suma total de sus Niveles debe <strong>igualar exactamente</strong> el Nivel del monstruo Sincro — salvo que el propio Sincro diga "Nivel X o menos" / "o más", rompiendo esa exactitud. Ej: <a href="#" class="form-link" onclick="Formacion.openCard('Stardust Dragon'); return false;">Stardust Dragon</a> (Nivel 8) necesita exactamente 8 niveles combinados entre Tuner(s) y no-Tuner(s).</p>
+
+        <h3 class="form-nb-subtitle">🔢 Múltiples Tuners y Múltiples No-Tuners</h3>
+        <p class="form-nb-text">No hay límite de 1 Tuner por invocación — puedes combinar 2 o más Tuners junto a uno o más no-Tuners, siempre que la suma total cuadre exacto con el Nivel del Sincro. Tampoco se exige que los materiales compartan Tipo o Atributo, salvo que el propio Sincro lo pida en su texto.</p>
+
+        <h3 class="form-nb-subtitle">📦 A Dónde Van los Materiales</h3>
+        <p class="form-nb-text">Igual que en Fusión, la regla por defecto es <strong>Cementerio</strong>. Existen excepciones específicas escritas en el propio monstruo Sincro — por ejemplo, <a href="#" class="form-link" onclick="Formacion.openCard('Naturia Beast'); return false;">Naturia Beast</a> devuelve los materiales no-Tuner a la mano en vez de mandarlos al cementerio. Esa devolución NUNCA es la regla general — siempre depende de texto explícito.</p>
+
+        <h3 class="form-nb-subtitle">🏷️ "Fue Sincro Invocado" como Condición</h3>
+        <p class="form-nb-text">Muchos monstruos Sincro tienen efectos que solo se activan <strong>si el propio monstruo fue Sincro Invocado</strong> (no simplemente Invocado Especialmente por otro medio, como un efecto que lo trae directo del cementerio). Ej: <a href="#" class="form-link" onclick="Formacion.openCard('Crystal Wing Synchro Dragon'); return false;">Crystal Wing Synchro Dragon</a> exige haber sido Sincro Invocado para ciertos efectos. Poner ese mismo monstruo en campo por otra vía no cumple esa condición.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Antes de armar una línea Sincro, calcula la suma exacta de niveles disponibles en tu mano/campo real — no asumas que "tener un Tuner" basta. El error más común de principiante es no llegar exacto al nivel objetivo por falta de un no-Tuner de relleno.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('sincronia-rulings')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Filtra en <strong>Buscador → ⚙ Filtros avanzados → Monstruo → Synchro</strong> y revisa el Nivel exacto que necesitas armar.
+            Practica la suma de niveles disponible en tu mano inicial con
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','hipergeometria'); return false;">Simuladores → 🎲 Mulligan</a>.
+        </p>
+    `; },
     _topicEstructuraEfecto: function () { return `
         <h2 class="form-nb-title">Estructura de un Efecto de Carta</h2>
         <p class="form-nb-text">Leer mal una carta es uno de los errores más costosos en Yu-Gi-Oh!. Cada línea de texto tiene una función específica. Este tema te enseña a diseccionar cualquier efecto, incluso uno que nunca hayas visto.</p>
@@ -3057,103 +3180,89 @@ _topicSecuenciacion: function () { return `
             información obtuviste (o ignoraste) del rival — con el tiempo verás patrones en tus propias decisiones de orden.
         </p>
     `; },
-    _topicAnatomiaDeckCompetitivo: function () { return `
+        _topicAnatomiaDeckCompetitivo: function () { return `
         <h2 class="form-nb-title">Anatomía de un Deck Competitivo</h2>
-        <p class="form-nb-text">Todo deck competitivo puede diseccionarse en los mismos componentes. Aprende a leer estas métricas y podrás evaluar cualquier deck que veas, incluso uno que nunca hayas jugado.</p>
+        <p class="form-nb-text">Todo deck competitivo puede diseccionarse en los mismos componentes. Esta lección no es teoría suelta: es el mapa exacto de los 5 ejes que Destiny Draw! calcula en vivo dentro de <strong>Mi Deck → 🧭 Tu Experiencia con el Deck → 📡 Perfil de Rendimiento</strong>, a partir de tus propias rondas registradas en Optimización.</p>
 
-        <h3 class="form-nb-subtitle">📐 Los 6 Ejes de Evaluación</h3>
+        <h3 class="form-nb-subtitle">📐 Los 5 Ejes del Perfil de Rendimiento</h3>
         <ul class="form-nb-list">
-            <li><strong>1. Engine — Consistencia:</strong> qué tan probable es que el deck arme su estrategia desde la mano inicial. Ideal: 85%+ de las partidas abriendo con al menos 1 Starter (13+ cartas del engine). Pregunta clave: ¿cuántas cartas del deck "activan" el plan de juego?</li>
-            <li><strong>2. Techo de Poder (The Ceiling):</strong> qué tan poderoso es el endboard si el oponente no interrumpió nada. Ideal: 2+ negaciones en campo, con Boardbreakers disponibles y al menos 1 carta anti-meta que el oponente no pueda remover fácilmente.</li>
-            <li><strong>3. The Floor — Resiliencia:</strong> qué pasa cuando el oponente interrumpe el combo. Ideal: sobrepasar 2 negaciones corridas y aun así tener una amenaza en campo. Sin Floor = "Glass Cannon" (lo interrumpes y queda muerto). La solución son los Extenders.</li>
-            <li><strong>4. Slot Non-Engine — Eficiencia:</strong> el espacio que le queda al deck para Handtraps, Boardbreakers y tech cards después del engine. Un engine de 18 deja 22 para non-engine — mucha libertad. Un engine de 30 en un deck de 40 deja muy poco.</li>
-            <li><strong>5. Grind Game / Follow-Up:</strong> qué hace el deck en los turnos 3, 4 y 5 si el duelo se extiende. Ideal: tener jugadas para esos turnos. Sin Grind Game, el deck pierde automáticamente si no cierra rápido.</li>
-            <li><strong>6. Fragilidad / Choke Point:</strong> qué tan vulnerable es el deck a una sola carta o combo del oponente. Pregunta clave: ¿qué carta del meta me destruye completamente?</li>
+            <li><strong>1. Consistencia:</strong> % de rondas donde abriste con al menos 1 Starter en mano inicial. Responde la pregunta "¿cuántas veces mi deck realmente arrancó su plan de juego?". Es el eje más importante — un deck con techo altísimo que no abre nunca no gana torneos.</li>
+            <li><strong>2. Ceiling (Techo de Poder):</strong> qué tan fuertes fueron tus victorias cuando ganaste — combina la calidad de la victoria (¿ganaste superando al rival, o porque erró, o por resignación/Carta Counter?), tu tasa de FTK, y cuántas veces rompiste el campo del rival en el camino.</li>
+            <li><strong>3. Floor (Resiliencia):</strong> tu winrate específicamente en las rondas donde el rival te interrumpió o te rompió el campo. Es la contracara del Ceiling: qué tan bien sobrevivís cuando el plan A no sale limpio.</li>
+            <li><strong>4. Versatilidad:</strong> combina tu winrate yendo de segundo (capacidad de remontar sin ventaja de turno) con tu tasa de interrupción yendo de primero (¿negás/interactuás aunque tengas la iniciativa?). Mide si tu deck sabe jugar ambos lados de la moneda, no solo uno.</li>
+            <li><strong>5. Eficiencia:</strong> inverso del exceso de slots reactivos en mano — cuenta cuántas rondas abriste con 3+ Handtraps o 3+ Boardbreakers. Un deck eficiente no desperdicia manos enteras en pura interacción sin poder ejecutar su propio plan.</li>
         </ul>
 
-        <h3 class="form-nb-subtitle">📈 Otras Métricas Importantes</h3>
+        <h3 class="form-nb-subtitle">🧱 Manos Muertas — la Medida Cruda de Consistencia</h3>
+        <p class="form-nb-text">
+            Aparte del radar, la app lleva un contador directo de <strong>Manos Muertas (X/Y)</strong>: de tus últimas Y rondas, cuántas X fueron brickeos reales. La regla cambia según el turno, porque "brick" significa algo distinto según quién tiene la iniciativa:
+        </p>
         <ul class="form-nb-list">
-            <li><strong>Linealidad:</strong> qué tan fijo es el camino del combo. Un deck lineal es predecible pero poderoso; uno no-lineal tiene múltiples caminos, menos predecible pero más complejo de aprender.</li>
-            <li><strong>Versatilidad:</strong> cuántas formas distintas de jugar tiene el deck según la mano y el oponente.</li>
-            <li><strong>Cartas Multifuncionales:</strong> cumplen más de un rol en el mismo deck (ej. Starter y Extender según el contexto). Son oro: reducen el tamaño efectivo del engine sin perder funciones.</li>
-            <li><strong>Tipo de Interacción:</strong> ¿destruye, destierra, regresa al deck, niega activaciones, niega efectos? Importa porque el oponente puede tener protecciones contra uno u otro.</li>
-            <li><strong>Novedad:</strong> qué tan expuesta está la mecánica del deck al meta. Un deck nuevo sorprende porque nadie tiene counters preparados; uno viejo ya es conocido por todos.</li>
+            <li><strong>Yendo de primero:</strong> es mano muerta si no tenías ningún Starter NI ningún Extender. No importa si tenías Handtraps — de primero esas cartas no arman tu turno.</li>
+            <li><strong>Yendo de segundo:</strong> es mano muerta solo si además de no tener Starter/Extender tampoco tenías ningún Boardbreaker ni Handtrap. De segundo, la interacción SÍ cuenta como mano jugable.</li>
         </ul>
+        <p class="form-nb-text">Es la métrica más honesta que existe: no es una probabilidad calculada, es el conteo real de manos que tuviste que jugar. Si tu Manos Muertas es alto pero tu eje de Consistencia del radar se ve aceptable, hay un problema de muestra chica — revisa cuántas rondas llevás registradas.</p>
+
+        <h3 class="form-nb-subtitle">⚠️ Por Qué Necesitás Datos Reales, No Solo Teoría</h3>
+        <p class="form-nb-text">El radar de Rendimiento no aparece hasta que registrás un mínimo de rondas de Optimización — con 1 o 2 rondas cualquier racha de suerte (buena o mala) distorsiona completamente el número. Esto no es un capricho de la app: es la misma razón por la que en un evento real nadie confía en el "creo que mi deck es consistente" sin haber jugado testeos reales primero.</p>
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
-        <p class="form-nb-text">Cuando evalúes tu deck, no preguntes solo "¿es poderoso?". Pregunta: ¿es consistente? ¿qué pasa si me niegan? ¿puedo seguir jugando? Un deck con 10/10 de techo de poder pero 2/10 de Floor perderá contra cualquier jugador que haya estudiado sus weaknesses. El balance entre estos 6 ejes es lo que hace a un deck realmente competitivo.</p>
-
-        <h3 class="form-nb-subtitle">🔗 Estos 6 Ejes ya los Mide la App</h3>
-        <p class="form-nb-text">
-            No son solo teoría: <strong>Engine — Consistencia</strong>, <strong>Techo de Poder</strong> y
-            <strong>Floor — Resiliencia</strong> son literalmente los 3 pilares del <strong>Internal Score</strong>
-            (Consistencia/Potencia/Resiliencia) que la app calcula en vivo. La <strong>Fragilidad / Choke Point</strong> es
-            lo que mide el <strong>External Score</strong> junto a la vulnerabilidad G1/G2 contra el meta cargado.
-        </p>
+        <p class="form-nb-text">No preguntes solo "¿es poderoso mi deck?". Pregunta: ¿abre seguido (Consistencia)? ¿qué tan fuerte cierra cuando abre (Ceiling)? ¿sobrevive si lo interrumpen (Floor)? ¿sabe jugar de segundo (Versatilidad)? ¿desperdicia manos en pura interacción (Eficiencia)? Un deck 10/10 en Ceiling pero 2/10 en Floor pierde contra cualquiera que haya estudiado su única debilidad.</p>
 
         <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
         ${this._renderQuiz('anatomia-deck-competitivo')}
 
         <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
         <p class="form-nb-text">
-            Con tu deck activo cargado, entra a
-            <a href="#" class="form-link" onclick="Formacion.goToTab('estadisticas'); return false;">Estadísticas</a>
-            y abre el Análisis de Deck: verás las barras de Consistencia/Potencia/Resiliencia (tus 3 primeros ejes) y, si
-            tienes Power Scores del meta cargados, el External Score con la vulnerabilidad G1/G2 (tu eje de Fragilidad).
-            Compara ese desglose numérico contra tu propia evaluación cualitativa de los 6 ejes.
+            Con tu deck activo y al menos 3 rondas registradas en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck'); return false;">Mi Deck → 🎯 Optimización</a>,
+            entra a Tu Experiencia con el Deck → Rendimiento para ver el gráfico de araña de estos 5 ejes en vivo, más
+            tu contador de Manos Muertas debajo. Cada eje trae su fórmula exacta al pasar el cursor — no es una
+            estimación, sale 100% de tus propias rondas jugadas.
         </p>
     `; },
 
-    _topicDebilidadesDeck: function () { return `
-        <h2 class="form-nb-title">Qué Hace Débil a un Deck o Arquetipo</h2>
-        <p class="form-nb-text">Si la Anatomía de un Deck Competitivo te enseña a leer lo que hace fuerte a un deck, esta lección es la contraparte: aprender a diagnosticar por qué un deck pierde, de forma sistemática, antes de sentarte a jugar 50 rondas para descubrirlo por prueba y error. Las debilidades vienen de dos fuentes distintas — el diseño del propio arquetipo (lo que Konami imprimió) y las decisiones de construcción (lo que tú decidiste meter o dejar fuera). Separarlas es clave: no puedes arreglar con Optimización un problema que es de diseño.</p>
+        _topicDebilidadesDeck: function () { return `
+        <h2 class="form-nb-title">Qué Hace Débil a un Deck: el Eje Floor</h2>
+        <p class="form-nb-text">Si Anatomía de un Deck Competitivo te enseña a leer los 5 ejes en general, esta lección va a fondo en el que más partidas de torneo decide: <strong>Floor (Resiliencia)</strong> — tu winrate específicamente en las rondas donde el rival te interrumpió o te rompió el campo. Un deck con Ceiling altísimo y Floor bajo es exactamente lo que se conoce como Glass Cannon: imparable si nadie te toca, muerto en cuanto alguien lo hace.</p>
 
         <h3 class="form-nb-subtitle">🧬 Debilidades de Diseño (el Arquetipo en Sí)</h3>
         <ul class="form-nb-list">
-            <li><strong>Single Point of Failure:</strong> todo el combo depende de 1 sola pieza sin redundancia real (sin buscador, sin sustituto). Si esa carta es negada o no llega a mano, el deck no tiene plan B. Se detecta preguntando: "¿qué pasa si me niegan exactamente esta carta primero?".</li>
-            <li><strong>Combo Lineal de Muchos Pasos:</strong> cuantos más eslabones tiene la línea antes de llegar al endboard, más ventanas de interrupción existen. Un combo de 8 pasos da al rival 8 oportunidades de romperte con 1 sola Handtrap; uno de 3 pasos da solo 3.</li>
-            <li><strong>Sin Protección/Negación Propia:</strong> arquetipos que dependen 100% de non-engine prestado (Handtraps, Boardbreakers genéricos) para sobrevivir, porque su propio kit no incluye ninguna interrupción. Reduce drásticamente el espacio disponible para tech cards.</li>
-            <li><strong>Curva de Invocación Alta sin Payoff Proporcional:</strong> el arquetipo exige mucho esfuerzo (varios materiales, varias invocaciones intermedias) para un resultado que otro deck logra con la mitad de recursos. Es ineficiente incluso si "funciona".</li>
-            <li><strong>Sin Follow-Up (Grind Game Nulo):</strong> el deck todo lo apuesta al primer turno; si el duelo se extiende a los turnos 3-5, no tiene nada más que hacer y pierde por desgaste.</li>
-            <li><strong>Dependencia de un Tipo de Invocación Fácil de Hatear:</strong> arquetipos 100% Special Summon (o 100% Fusión, o 100% Sincro) son vulnerables en bloque a cartas que niegan ese tipo específico de invocación (Dimensional Barrier, Skill Drain, Vanity's Emptiness).</li>
+            <li><strong>Single Point of Failure:</strong> todo el combo depende de 1 sola pieza sin redundancia real. Si esa carta es negada primero, no hay plan B — el Floor se desploma a casi 0%.</li>
+            <li><strong>Combo Lineal de Muchos Pasos:</strong> más eslabones antes del endboard significa más ventanas de interrupción. Un combo de 8 pasos le da al rival 8 oportunidades de romperte con 1 sola Handtrap.</li>
+            <li><strong>Sin Protección/Negación Propia:</strong> arquetipos que dependen 100% de non-engine prestado para sobrevivir porque su propio kit no incluye interrupción — su Floor depende enteramente de lo que vos decidas splashear.</li>
+            <li><strong>Dependencia de un Tipo de Invocación Fácil de Hatear:</strong> arquetipos 100% Special Summon (o 100% Fusión/Sincro) caen en bloque contra Dimensional Barrier, Skill Drain, Vanity's Emptiness — su Floor colapsa ante una sola carta genérica.</li>
         </ul>
 
-        <h3 class="form-nb-subtitle">🎴 Debilidades de Construcción (Decisiones del Jugador)</h3>
+        <h3 class="form-nb-subtitle">🎴 Debilidades de Construcción (lo que Vos Decidiste)</h3>
         <ul class="form-nb-list">
-            <li><strong>Exceso de Garnets:</strong> cartas situacionales que solo funcionan combadas con otra pieza específica y son cartas muertas en la mano inicial. Cada Garnet extra resta Consistencia real, aunque en teoría sea "poderoso".</li>
-            <li><strong>Ratios Mal Calculados:</strong> 1-2 copias de la pieza que realmente activa el combo mientras se meten 3 copias de una tech situacional. El Starter real siempre necesita ser el más redundante del deck.</li>
-            <li><strong>Non-Engine Desalineado con el Meta Local:</strong> Handtraps y Boardbreakers elegidos por moda de internet, no por lo que realmente enfrentas en tu meta. Un non-engine "genérico" puede ser ciego a la amenaza real que te está ganando torneos.</li>
-            <li><strong>Splash sin Sinergia Real:</strong> mezclar 2 engines de arquetipos distintos que no se potencian entre sí solo porque "ambos son buenos por separado". Resta espacio de deck y consistencia sin sumar un plan de juego coherente.</li>
-            <li><strong>Cero Extenders:</strong> construir pensando solo en el Techo de Poder e ignorar el Floor. El deck es imparable si nadie interrumpe, y completamente muerto si lo hacen.</li>
+            <li><strong>Cero Extenders:</strong> construir pensando solo en el Ceiling e ignorar el Floor. El deck es imparable si nadie interrumpe, y completamente muerto si lo hacen. Los Extenders son literalmente la carta que existe para sostener el Floor.</li>
+            <li><strong>Endboard sin capas:</strong> si tu campo final tiene 1 sola negación en vez de 2+, cualquier Handtrap del rival te deja sin nada — no hay "segunda capa" que sostenga la partida.</li>
         </ul>
 
-        <h3 class="form-nb-subtitle">⚠️ Señales Claras de que tu Deck es Débil</h3>
+        <h3 class="form-nb-subtitle">⚠️ Señales Claras de Floor Bajo</h3>
         <ul class="form-nb-list">
-            <li>Brickeas seguido con manos de 5-6 cartas que "en teoría" deberían tener algo jugable.</li>
-            <li>Pierdes recurrentemente contra la misma carta o el mismo tipo de jugada del rival.</li>
             <li>Con 1 sola Handtrap encima, tu turno termina sin ningún resultado en campo.</li>
-            <li>Ganas el turno 1 casi siempre, pero pierdes casi siempre que el duelo llega al turno 3+.</li>
-            <li>Tienes cartas en el deck que nunca recuerdas haber usado en ninguna partida reciente.</li>
+            <li>Ganás casi siempre cuando vas limpio, pero perdés casi siempre en las rondas donde el rival tenía interrupción.</li>
+            <li>Tu winrate general se ve bien, pero cae fuerte si filtrás solo las rondas con presión del rival.</li>
         </ul>
 
-        <h3 class="form-nb-subtitle">🥊 Fragilidad Estructural Frente al Meta</h3>
-        <p class="form-nb-text">La debilidad más grave no es interna, es relacional: existe 1 carta o combo específico del formato que, si el rival la tiene, tu deck no tiene ninguna respuesta. Esto no se arregla con más copias de tu propio engine — se arregla identificando esa amenaza puntual y dedicándole espacio de non-engine específico (Tech Cards), o aceptando conscientemente el riesgo si es poco común en tu meta local.</p>
+        <h3 class="form-nb-subtitle">🥊 Fragilidad Frente al Meta</h3>
+        <p class="form-nb-text">La versión más grave de Floor bajo no es interna, es relacional: existe 1 carta específica del formato que, si el rival la tiene, no tenés ninguna respuesta. Esto no se arregla con más copias de tu propio engine — se arregla dedicando espacio de non-engine específico a esa amenaza puntual, o aceptando conscientemente el riesgo si es poco común en tu meta local.</p>
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
-        <p class="form-nb-text">Diagnosticar antes de optimizar. No agregues cartas al azar esperando que "algo mejore" — primero identifica si el problema es de diseño (el arquetipo tiene un techo bajo por naturaleza) o de construcción (tus decisiones de ratio y non-engine). Un arquetipo con debilidad de diseño real tiene un límite competitivo que ninguna optimización de construcción puede superar del todo.</p>
+        <p class="form-nb-text">No optimices el Ceiling de un deck con Floor roto — primero preguntate qué pasa cuando NO te sale la línea perfecta, porque en un torneo real eso pasa más seguido de lo que crees.</p>
 
         <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
         ${this._renderQuiz('debilidades-deck')}
 
         <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
         <p class="form-nb-text">
-            La app traduce estos conceptos en números concretos: un <strong>Internal Score</strong> con Resiliencia baja en
-            <a href="#" class="form-link" onclick="Formacion.goToTab('estadisticas'); return false;">Estadísticas</a>
-            es la señal directa de "Glass Cannon"; un <strong>External Score</strong> con vulnerabilidad G1/G2 alta apunta a
-            Fragilidad frente al meta cargado. Revisa también <strong>Mi Deck → 🎯 Optimización → getOptDiagnostics()</strong>,
-            que detecta patrones reales de tus propias rondas (exceso de bricks, pocos Boardbreakers de segundo) en vez de
-            teoría genérica. Y si dudas de cuánto esfuerzo pide el arquetipo antes de rendir, el quiz de
-            <strong>🧩 Complejidad del Deck</strong> te da un número honesto del techo de habilidad que exige.
+            Tu Floor real está en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck'); return false;">Mi Deck → 🧭 Tu Experiencia con el Deck → Rendimiento</a>:
+            es el eje "Floor" del radar, calculado exclusivamente sobre las rondas donde marcaste interrupción o rotura de
+            campo del rival. Si es bajo, revisá tu Manos Muertas yendo de segundo — ahí se mide justamente si sobrevivís
+            sin tu combo principal.
         </p>
     `; },
 
@@ -3283,50 +3392,39 @@ _topicValorarCarta: function () { return `
             así respondes la Pregunta 2 del test ("¿qué carta sale?") con datos, no con intuición.
         </p>
     `; },
-    _topicOptimizarDeck: function () { return `
-        <h2 class="form-nb-title">Cómo Optimizar tu Deck</h2>
-        <p class="form-nb-text">Un deck construido y un deck optimizado son cosas distintas. La construcción es el primer borrador. La optimización es el proceso continuo de pulirlo hasta que cada carta en el deck tiene una razón clara de estar ahí, y cada carta fuera del deck tiene una razón clara de no estar.</p>
+       _topicOptimizarDeck: function () { return `
+        <h2 class="form-nb-title">Cómo Optimizar tu Deck: Ceiling y Versatilidad</h2>
+        <p class="form-nb-text">Optimizar no es "agregar cartas más fuertes" — es subir específicamente los dos ejes del Perfil de Rendimiento que definen qué tan bien tu deck cierra partidas y qué tan bien se adapta al turno que le toque: <strong>Ceiling (Techo de Poder)</strong> y <strong>Versatilidad</strong>.</p>
 
-        <h3 class="form-nb-subtitle">🔧 Los 6 Tipos de Optimización</h3>
+        <h3 class="form-nb-subtitle">🏔️ Ceiling — Qué Tan Fuerte Cerrás Cuando Abrís</h3>
+        <p class="form-nb-text">La app calcula el Ceiling combinando tres señales de tus propias rondas ganadas:</p>
         <ul class="form-nb-list">
-            <li><strong>1. Consistencia:</strong> reduce Garnets al mínimo (0-2), agrega buscadores de buscadores, recorta cartas situacionales que no sirven en mano inicial. Señal: brickeas frecuentemente o hay turnos sin nada que hacer.</li>
-            <li><strong>2. Potencia (Combo):</strong> estudia si un extender habilita un endboard más fuerte, revisa si el Extra Deck está optimizado para las líneas que realmente usas. Señal: el endboard final es débil o el oponente lo rompe fácilmente.</li>
-            <li><strong>3. Techo de Poder (Endboard):</strong> agrega protecciones al Boss Monster, busca un Lock más específico, considera cartas de Extra Deck con efectos continuos. Señal: el oponente rompe tu campo consistentemente con recursos básicos.</li>
-            <li><strong>4. Defensa:</strong> analiza con qué cartas estás perdiendo más seguido y ajusta el ratio de Handtraps para ese meta. Señal: pierdes al mismo tipo de jugada repetidamente sin poder responder.</li>
-            <li><strong>5. Versatilidad:</strong> busca Extenders alternativos desde diferentes estados del campo, agrega un "Plan B" y Bridges que conecten piezas que normalmente no interactúan. Señal: el deck es muy lineal y sin segunda opción si le niegan el primer paso.</li>
-            <li><strong>6. Resiliencia (Floor):</strong> agrega Extenders que activen después de una negación, busca cartas de "recovery". Señal: con 1 Handtrap encima, el deck queda muerto.</li>
+            <li><strong>Calidad de la victoria:</strong> no todas las victorias valen lo mismo. Ganar superando totalmente al rival vale el máximo; ganar por resignación o Carta Counter vale menos; ganar por missplay/novatada del rival no suma nada — porque no midió tu deck, midió al oponente.</li>
+            <li><strong>Tasa de FTK:</strong> % de tus rondas que terminaron en First Turn Kill. Es la forma más extrema de Ceiling: el rival ni siquiera llega a jugar.</li>
+            <li><strong>% de rondas donde rompiste el campo rival:</strong> Ceiling también es capacidad ofensiva bajo presión, no solo cuando el rival no hizo nada.</li>
         </ul>
+        <p class="form-nb-text">Para subir Ceiling de verdad: mejorá la calidad de tu endboard (más negaciones simultáneas, no más cartas redundantes), sumá Boardbreakers a tu propia línea en vez de depender solo de non-engine prestado, y revisá si tus victorias se están ganando "de verdad" o por errores del rival que no vas a poder repetir contra un jugador experimentado.</p>
 
-        <h3 class="form-nb-subtitle">🔄 El Proceso de Optimización</h3>
+        <h3 class="form-nb-subtitle">🔄 Versatilidad — Jugar Ambos Lados de la Moneda</h3>
+        <p class="form-nb-text">Este eje combina dos cosas que casi nunca se entrenan juntas:</p>
         <ul class="form-nb-list">
-            <li><strong>Paso 1 — Identifica el problema específico:</strong> no optimices "en general". ¿Pierdo por inconsistencia, endboard débil, o falta de respuesta a X del meta?</li>
-            <li><strong>Paso 2 — Un cambio a la vez:</strong> si cambias 3 cosas a la vez, no sabes cuál causó qué. Un cambio = una variable.</li>
-            <li><strong>Paso 3 — Prueba con suficientes partidas:</strong> un cambio necesita al menos 10-15 partidas para evaluarse correctamente.</li>
-            <li><strong>Paso 4 — Documenta:</strong> anota qué cambiaste y qué efecto tuvo. La memoria no es confiable con varios ajustes a lo largo de semanas.</li>
+            <li><strong>Winrate yendo de segundo:</strong> ¿tu deck puede remontar sin tener la ventaja de mover primero? Un deck que solo gana yendo primero es un deck a mitad de camino — en un Best of 3, vas a ir de segundo al menos una vez.</li>
+            <li><strong>Interacción yendo de primero:</strong> ¿metés alguna negación/interrupción aunque tengas la iniciativa? Un deck 100% ofensivo yendo primero es predecible y fácil de romper una vez que el rival sabe que no vas a interactuar.</li>
         </ul>
-
-        <h3 class="form-nb-subtitle">✅ Señales de un Deck Bien Optimizado</h3>
-        <ul class="form-nb-list">
-            <li>Rara vez tienes cartas "muertas" en mano.</li>
-            <li>El non-engine se siente exactamente calibrado para el meta local.</li>
-            <li>Las líneas de combo son fluidas porque las conoces.</li>
-            <li>Puedes responder a la mayoría de las amenazas comunes del meta.</li>
-            <li>El deck se siente "tuyo" — ajustado a tu estilo y a tu entorno de juego.</li>
-        </ul>
+        <p class="form-nb-text">Para subir Versatilidad: si tu Versatilidad es baja por el lado de "segundo", necesitás más Boardbreakers/Handtraps genéricas que funcionen sin depender de tu engine. Si es baja por el lado de "primero", tu build está gastando todos los slots en ofensiva pura y ninguno en interacción — un ratio a corregir en Equilibrio del Deck.</p>
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
-        <p class="form-nb-text">La optimización nunca termina mientras el meta cambie. Un deck optimizado para el meta de hace 3 meses puede ser mediocre hoy. Trata tu deck como un proyecto en evolución, no como algo terminado.</p>
+        <p class="form-nb-text">Un deck que solo sube Ceiling sin subir Versatilidad es un deck de un solo plan de juego: gana en blowout o no gana. En un torneo de rondas suizas y Best of 3, eso te deja expuesto exactamente la mitad de las veces. Optimizar de verdad es subir ambos ejes a la vez, no maximizar uno a costa del otro.</p>
 
         <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
         ${this._renderQuiz('optimizar-deck')}
 
         <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
         <p class="form-nb-text">
-            El proceso completo (identificar problema → un cambio a la vez → probar → documentar) está integrado en
-            <strong>Mi Deck → 🎯 Optimización</strong>: registra cada ronda de prueba (resultado, si brickeaste, si el rival
-            rompió tu jugada) y revisa <strong>getOptDiagnostics()</strong> — la app misma te sugiere si te falta
-            Consistencia, Boardbreakers u otro ajuste según tus propias rondas. Antes y después del cambio, compara el
-            Internal Score en <strong>Estadísticas</strong> para confirmar con números si realmente mejoró.
+            Registrá tus rondas marcando honestamente la <strong>Categoría de Victoria</strong>, si hubo FTK, y si rompiste
+            el campo rival, en <a href="#" class="form-link" onclick="Formacion.goToTab('mideck'); return false;">Mi Deck → 🎯 Optimización</a>.
+            Esos 3 datos alimentan directo tu Ceiling. Tu Versatilidad sale sola combinando tus rondas de primero y de
+            segundo — revisala en Tu Experiencia con el Deck → Rendimiento antes de decidir qué agregar al deck.
         </p>
     `; },
 _topicPetDeckDominar: function () { return `
@@ -3369,48 +3467,42 @@ _topicPetDeckDominar: function () { return `
         </p>
 
     `; },
-    _topicEquilibrioDeck: function () { return `
-        <h2 class="form-nb-title">Equilibrio del Deck: Detectando Excesos</h2>
-        <p class="form-nb-text">Un deck no se rompe solo por tener cartas malas — se rompe cuando tiene demasiado de algo bueno. Cada rol que agregas (Starter, Extender, Handtrap, Boardbreaker...) compite por el mismo espacio de 40-60 cartas. Esta lección enseña a leer proporciones, no cantidades sueltas.</p>
+        _topicEquilibrioDeck: function () { return `
+        <h2 class="form-nb-title">Equilibrio del Deck: Consistencia y Eficiencia</h2>
+        <p class="form-nb-text">Esta lección profundiza en los dos ejes del Perfil de Rendimiento que dependen directamente de cómo repartís tus 40+ cartas: Consistencia (¿abrís tu plan?) y Eficiencia (¿o tu mano se llena de cartas reactivas que no ejecutan nada?). Ambos se rompen por el mismo error de raíz: ratios mal calculados.</p>
 
-        <h3 class="form-nb-subtitle">📐 Piensa en Ratios, No en Cantidades Absolutas</h3>
-        <p class="form-nb-text">"Tengo 9 Handtraps" no dice nada por sí solo. La pregunta correcta es: ¿qué porcentaje de mi deck son Handtraps, y qué le quité al engine para meterlas? Un deck de 40 cartas con 9 Handtraps dejó solo 31 espacios para Motor + Consistencia + Extensores + Finalizadores — probablemente muy poco para un combo real.</p>
-
-        <h3 class="form-nb-subtitle">⚠️ Señales de Exceso por Rol</h3>
+        <h3 class="form-nb-subtitle">🎯 Consistencia — Ratios que Sí Abren el Combo</h3>
         <ul class="form-nb-list">
-            <li><strong>Exceso de Starters:</strong> muchas manos abren con 2-3 formas de empezar el mismo combo — redundante. El espacio de la 3ra o 4ta fuente de arranque casi siempre rinde más como Extensor o Handtrap.</li>
-            <li><strong>Exceso de Extenders sin Starters suficientes:</strong> tienes con qué seguir el combo, pero no suficientes formas de empezarlo — el deck bricka porque nunca llega a usarlos.</li>
-            <li><strong>Exceso de Handtraps:</strong> por encima de ~9-11 copias en un deck combo empieza a robarle espacio crítico al engine. Un deck que interrumpe mucho pero no arma su propio plan de juego pierde el juego largo.</li>
-            <li><strong>Exceso de Boardbreakers:</strong> son cartas que solo brillan yendo segundo — si tu deck es principalmente de ir primero, un exceso de Boardbreakers son cartas muertas en mano la mayoría de las partidas.</li>
-            <li><strong>Exceso de Bricks/Tech situacional:</strong> cartas que solo sirven combadas con otra pieza específica. Cada Garnet extra resta consistencia real aunque en teoría sea poderoso — la regla general es no pasar de 2 en el deck.</li>
-            <li><strong>Cero de un rol crítico:</strong> el exceso no es el único problema — 0 Extenders (glass cannon) o 0 Boardbreakers (indefenso yendo segundo) son la misma falla de balance, en dirección contraria.</li>
+            <li><strong>Exceso de Garnets:</strong> cartas situacionales que solo sirven combadas con otra pieza específica. Cada Garnet extra en el Main es una carta muerta más en la mano inicial — resta Consistencia real aunque en abstracto sea "poderosa".</li>
+            <li><strong>El Starter real necesita ser el más redundante:</strong> si tu pieza que realmente activa el combo tiene 1-2 copias mientras una tech situacional tiene 3, tu deck depende de encontrar la carta menos probable de las dos.</li>
+            <li><strong>Non-Engine desalineado con tu meta local:</strong> Handtraps elegidas por moda de internet en vez de por lo que realmente te gana partidas no suman Consistencia real — solo ocupan espacio que pudo ir a un segundo Starter.</li>
+            <li><strong>Splash sin sinergia real:</strong> mezclar 2 engines que no se potencian entre sí resta espacio de deck (y por lo tanto densidad de Starters) sin sumar un plan de juego coherente.</li>
         </ul>
 
-        <h3 class="form-nb-subtitle">🧮 Cómo Detectarlo Sin Adivinar</h3>
-        <p class="form-nb-text">No se trata de "sentir" que algo está desbalanceado — se trata de medirlo con datos de tus propias partidas:</p>
+        <h3 class="form-nb-subtitle">⚖️ Eficiencia — No Desperdicies Slots Reactivos</h3>
+        <p class="form-nb-text">La app mide Eficiencia contando cuántas de tus rondas abriste con 3 o más Handtraps, o 3 o más Boardbreakers, en la misma mano. No es que las Handtraps sean malas — es que una mano con 3 Handtraps y 0 Starters es una mano que <em>sobrevive</em> pero no <em>gana</em>: no ejecutás tu propio plan de juego.</p>
         <ul class="form-nb-list">
-            <li>Si brickeas seguido con manos de 5-6 cartas "que en teoría deberían tener algo jugable" → señal de exceso de Bricks o falta de Consistencia.</li>
-            <li>Si con 1 sola Handtrap encima tu turno termina sin nada en campo → señal de falta de Extenders (Floor bajo).</li>
-            <li>Si el promedio de Boardbreakers en mano yendo de segundo es consistentemente bajo pero pierdes casi siempre yendo segundo → señal de que necesitas más, no menos.</li>
-            <li>Si tienes 2+ negaciones y el oponente igual te rompe el campo con recursos básicos → no es problema de cantidad de Handtraps, es problema de Techo de Poder (otro eje distinto, no lo confundas).</li>
+            <li><strong>Regla práctica de ratio:</strong> definí de antemano cuántos slots non-engine caben en tu build (Main total menos el engine mínimo funcional) y repartilos entre Handtraps/Boardbreakers/Tech — no los acumules todos en la misma categoría.</li>
+            <li><strong>Síntoma de Eficiencia baja:</strong> ganás la ronda por pura interacción (negaste todo) pero no metiste presión propia — es un Floor alto disfrazando una Consistencia real baja.</li>
+            <li><strong>El non-engine también compite por espacio con el engine:</strong> cada Handtrap de más es un Starter de menos. Eficiencia y Consistencia se pelean por los mismos 40 slots — el balance nunca es gratis.</li>
         </ul>
 
-        <h3 class="form-nb-subtitle">🎯 El Balance no es 50/50 — es Contextual</h3>
-        <p class="form-nb-text">No existe una proporción universal correcta. Un deck combo lineal de pocos pasos necesita menos Extenders que uno de combo largo con muchas ventanas de interrupción. Un deck de control necesita más Interrupción que Motor. El equilibrio correcto es el que responde a la identidad de tu deck y al meta que enfrentas, no una fórmula fija copiada de otro arquetipo.</p>
+        <h3 class="form-nb-subtitle">🧱 Manos Muertas Como Termómetro de Ratios</h3>
+        <p class="form-nb-text">Si tu Manos Muertas (X/Y) es alto yendo de primero, el problema casi siempre es Consistencia: pocos Starters/Extenders reales frente a Garnets. Si es alto específicamente yendo de segundo (recordá: ahí también cuenta Handtraps/Boardbreakers en 0), el problema es distinto — tu non-engine no está distribuido para que SIEMPRE tengas algo jugable sin importar el turno. Separar estos dos casos te dice si necesitás más engine o mejor non-engine, en vez de agregar cartas al azar.</p>
 
         <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
-        <p class="form-nb-text">Cuando dudes si tienes exceso de un rol, pregúntate: "si sacara 1 copia de este rol, ¿qué perdería realmente?". Si la respuesta es "casi nada, porque ya tengo redundancia de sobra", esa copia probablemente está de más y ese espacio rinde más en otro rol que hoy tienes en cero o casi cero.</p>
+        <p class="form-nb-text">Antes de agregar una carta nueva, preguntate qué ratio existente vas a sacrificar. Un deck "equilibrado" no es el que tiene un poco de todo — es el que reparte sus slots según lo que realmente mueve la aguja en Consistencia y Eficiencia, no según lo que se ve poderoso en el vacío.</p>
 
         <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
         ${this._renderQuiz('equilibrio-deck')}
 
         <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
         <p class="form-nb-text">
-            En <strong>Mi Deck → 🎯 Optimización</strong>, cada ronda que registras alimenta promedios reales por rol
-            (Starters, Extenders, Handtraps, Boardbreaker en mano, Bricks/Tech). Revisa <strong>getOptDiagnostics()</strong>:
-            la app te avisa directamente si tu <em>avgBoardbreaker</em> es bajo jugando de segundo, o si tu Brick Rate está
-            alto. Compleméntalo con <strong>Estadísticas → Internal Score</strong>: si Consistencia es sólida pero
-            Resiliencia es baja, es una señal cuantitativa de que te falta balance hacia Extenders, no hacia más Motor.
+            En <a href="#" class="form-link" onclick="Formacion.goToTab('mideck'); return false;">Mi Deck → 🧭 Tu Experiencia con el Deck → Rendimiento</a>
+            compará tus valores de Consistencia y Eficiencia lado a lado con tu Manos Muertas (X/Y). Si Consistencia es alta
+            pero Eficiencia es baja, tenés demasiado non-engine reactivo. Revisá también
+            <strong>🎯 Optimización → getOptDiagnostics()</strong>, que señala directamente exceso de bricks o desbalance
+            de Handtraps/Boardbreakers en tus propias rondas.
         </p>
     `; },
     _topicRulingsInvocaciones: function () { return `
@@ -3510,6 +3602,49 @@ _topicPetDeckDominar: function () { return `
             avanza a Battle Phase y practica declarar el ataque, esperar la ventana y simular un Replay cambiando el campo antes
             de pasar al daño. Para sentir el ritmo real de una Battle Phase con presión de tiempo, usa
             <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','duelo'); return false;">Simuladores → ⚔️ Duelo en Vivo</a>.
+        </p>
+    `; },
+    _topicJerarquiaDanoBatalla: function () { return `
+        <h2 class="form-nb-title">Jerarquía de Efectos de Daño de Batalla</h2>
+        <p class="form-nb-text">Cuando dos o más cartas modifican el daño de batalla en la misma batalla — duplicarlo, redirigirlo al rival, convertirlo en daño de efecto, anularlo — el resultado NO se decide al azar ni por orden de activación. Existe un orden oficial fijo de 10 categorías que Konami aplica siempre en la misma secuencia. No conocerlo es la causa de la mayoría de disputas de daño mal calculado en torneo con decks de "burn" o de daño reflejado.</p>
+
+        <h3 class="form-nb-subtitle">📋 Las 10 Categorías, en Orden de Aplicación</h3>
+        <ol class="form-nb-list">
+            <li><strong>01 — Daño doble propio:</strong> "Esta carta inflige el doble de daño de batalla." Ej: <a href="#" class="form-link" onclick="Formacion.openCard('Blue-Eyes Chaos MAX Dragon'); return false;">Blue-Eyes Chaos MAX Dragon</a>.</li>
+            <li><strong>02 — Ambos jugadores reciben el daño:</strong> el daño de batalla lo toman los dos, no solo el que normalmente lo recibiría. Ej: Double-Edged Sword.</li>
+            <li><strong>03 — Redirección de daño:</strong> "el daño de batalla que tomarías, lo toma tu rival en su lugar" / "también se lo infliges a tu rival". Ej: Ohime the Manifested Mikanko, Number C96: Dark Storm, Amazoness Swords Woman.</li>
+            <li><strong>04 — Conversión a daño de efecto:</strong> el daño de batalla pasa a tratarse como daño de efecto (deja de ser detenible por cartas que solo aplican a daño de batalla).</li>
+            <li><strong>05 — Ganancia de LP en vez de daño:</strong> el jugador que recibiría el daño gana LP en su lugar.</li>
+            <li><strong>06 — Daño se vuelve 0:</strong> anula el daño de batalla por completo. <strong>Importante:</strong> si el daño ya llegó a 0 aquí, ninguna categoría posterior (07-10) se aplica — no hay nada que duplicar, halvear ni fijar.</li>
+            <li><strong>07 — Daño a la mitad.</strong></li>
+            <li><strong>08 — Daño doble (al rival):</strong> distinto del "01" — este duplica específicamente el daño que tú infliges a tu oponente. Si tu monstruo no le está infligiendo daño al rival en esa batalla (por ejemplo, porque un "03" ya redirigió el daño), este efecto no tiene nada que duplicar. Ej: Garura, Wings of Resonant Life.</li>
+            <li><strong>09 — Daño fijo (X):</strong> el daño de batalla se convierte en un valor predeterminado por la carta, sin importar la diferencia de ATK.</li>
+            <li><strong>10 — Inmunidad condicional:</strong> "no recibes daño de batalla si es mayor o menor a X".</li>
+        </ol>
+
+        <h3 class="form-nb-subtitle">🔍 Caso Resuelto: Ohime + Double-Edged Sword</h3>
+        <p class="form-nb-text">Ohime the Manifested Mikanko (efecto "03": el rival recibe tu daño de batalla en tu lugar) equipada con Double-Edged Sword (efecto "02": ambos jugadores reciben el daño) sirve para ver la jerarquía en acción:</p>
+        <ul class="form-nb-list">
+            <li><strong>Ataque directo:</strong> el rival recibe el daño de batalla de Ohime <strong>dos veces</strong> — una por el "02" (que hace que ambos jugadores tomen el daño) y otra por el "03" (que redirige tu propio daño también al rival).</li>
+            <li><strong>Vs un monstruo "03" del rival (otra Ohime, o Number C96: Dark Storm):</strong> cada jugador recibe la diferencia de ATK <strong>una sola vez</strong>. Los dos efectos "03" enfrentados NO se combinan ni se apilan sobre la misma instancia de daño — el efecto del monstruo contrario simplemente no vuelve a aplicarse sobre un daño que ya fue redirigido.</li>
+            <li><strong>Vs un monstruo con "08" que no redirige nada (ej. Odd-Eyes Pendulum Dragon):</strong> como Odd-Eyes no le inflige ningún daño al rival en esa batalla (Ohime ya redirigió el suyo), no hay daño de Odd-Eyes que duplicar — su "08" queda sin efecto en esa batalla puntual.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">⚠️ Regla de Oro</h3>
+        <p class="form-nb-text">Un efecto de categoría más alta en la lista NO puede aplicarse "de vuelta" sobre un daño que ya fue neutralizado por una categoría anterior (especialmente el "06"). Y un efecto que depende de que TÚ inflijas daño al rival (como el "08") simplemente no tiene nada que hacer si ese daño ya fue redirigido, convertido o anulado por una categoría anterior en la misma batalla.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Ante cualquier batalla con más de un efecto modificador de daño en juego, identifica primero la categoría numérica de cada efecto (01-10) y aplícalos en ese orden fijo — nunca en el orden en que se activaron ni por intuición de "cuál se ve más fuerte".</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('jerarquia-dano-batalla')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Busca en <strong>Buscador</strong> las cartas mencionadas para leer su texto exacto y ubicar tú mismo a qué categoría
+            pertenece cada efecto. Simula la batalla paso a paso en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','practica'); return false;">Simuladores → 🎴 Zona de Práctica</a>
+            para practicar aplicar el orden correcto antes de un torneo con decks de daño reflejado o burn.
         </p>
     `; },
 

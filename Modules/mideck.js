@@ -2539,9 +2539,45 @@ this.renderBuscadorDeckPreview();
     _isManoMuerta: function (r) {
         const starter = r.starter || 0, ext = r.extenders || 0;
         const bb = r.boardbreakers || 0, ht = r.handtraps || 0;
-        if (r.orden === 'primero') return starter === 0 && ext === 0;
+        if (r.orden === 'primero') return starter === 0 && ext === 0 && ht === 0;
         if (r.orden === 'segundo') return starter === 0 && ext === 0 && bb === 0 && ht === 0;
         return false;
+    },
+
+    // Clasificación de Calidad de Mano Inicial — 5 tramos según turno (1ro/2do)
+    // y piezas simultáneas en mano (Starter, Extender, Handtrap, Boardbreaker).
+    _handQuality: function (r) {
+        const st = r.starter || 0, ex = r.extenders || 0;
+        const ht = r.handtraps || 0, bb = r.boardbreakers || 0;
+        if (r.orden === 'segundo') {
+            if (st >= 1 && ex >= 1 && (bb >= 2 || ht >= 2)) return 'excelente';
+            if (st >= 1 && ex >= 1 && bb >= 1)                return 'buena';
+            if (st >= 1 && ex >= 1)                           return 'regular';
+            if (st === 0 && ex === 0 && bb >= 1)              return 'pesima';
+            if (st === 0 && ex === 0 && bb === 0 && ht === 0) return 'muerta';
+            return 'pesima';
+        }
+        if (st >= 1 && ex >= 1 && ht >= 2) return 'excelente';
+        if (st >= 1 && ex >= 1 && ht >= 1) return 'buena';
+        if (st >= 1 && ht >= 1)            return 'regular';
+        if (st === 0 && ex === 0 && ht >= 1) return 'pesima';
+        if (st === 0 && ex === 0 && ht === 0) return 'muerta';
+        return 'regular';
+    },
+
+    // Pésima no suma (0), Mano Muerta resta (negativo) — cada tramo peor que el anterior.
+    _handQualityWeight: function (q) {
+        return { excelente: 1.0, buena: 0.75, regular: 0.5, pesima: 0, muerta: -0.5 }[q] ?? 0;
+    },
+
+    _handQualityLabel: function (q) {
+        return {
+            excelente: { emoji: '🌟', label: 'Mano Excelente' },
+            buena:     { emoji: '👍', label: 'Mano Buena' },
+            regular:   { emoji: '➖', label: 'Mano Regular' },
+            pesima:    { emoji: '⚠️', label: 'Pésima Mano' },
+            muerta:    { emoji: '💀', label: 'Mano Muerta' }
+        }[q] || { emoji: '—', label: '—' };
     },
     calcOptMetrics: function(session) {
         const rounds = session.rounds || [];
@@ -2570,6 +2606,11 @@ this.renderBuscadorDeckPreview();
         const avgRivalInterr  = rounds.reduce((a, r) => a + (r.rivalInterrupciones    || 0), 0) / p;
         const avgRivalBreaks  = rounds.reduce((a, r) => a + (r.vecesRivalRompioBoard  || 0), 0) / p;
         const htExceso    = rounds.filter(r => (r.handtraps || 0) >= 3).length;
+        const hqCount = { excelente:0, buena:0, regular:0, pesima:0, muerta:0 };
+        rounds.forEach(r => hqCount[this._handQuality(r)]++);
+        const hqWeightSum = rounds.reduce((a, r) => a + this._handQualityWeight(this._handQuality(r)), 0);
+        const hq = Math.round((hqWeightSum / p) * 100); // puede ser negativo (predominio de Mano Muerta)
+
 
         // ── Frecuencia de Cartas Clave / Amenazas del Oponente ────────
         const keyCardFreq = {}, threatCardFreq = {};
@@ -2614,7 +2655,7 @@ this.renderBuscadorDeckPreview();
             (wr * 0.35) + ((100 - br) * 0.20) + (str * 0.15) + ((100 - ri) * 0.15) + (bb * 0.10) + (ctrl * 0.05)
         ));
         return {
-            p, wins, losses, wr, br, str, extr, ri, rib, bb, ctrl, htRate, score,
+            p, wins, losses, wr, br, str, extr, ri, rib, bb, ctrl, htRate, score, hq, hqCount,
             ftks, rendiciones, tiempoGan, tiempoPer, criticos, ajustados,
             rFirst, rSecond, avgStarter, avgExtender, avgHandtrap, avgBoardbreaker, avgRivalInterr, avgRivalBreaks,
             turnDist, turnTotal, keyCardStats, threatCardStats
@@ -2646,6 +2687,8 @@ this.renderBuscadorDeckPreview();
             const top = m.threatCardStats[0];
             if (top.count / m.p >= 0.3) w.push(`⚠ "${top.name}" apareció como Amenaza del Oponente en ${top.count}/${m.p} rondas. Evalúa tech en Side Deck específico contra esa carta.`);
         }
+        if (m.hq < 20) w.push('⚠ Calidad de Mano baja en general (predominan manos Pésimas/Muertas). Revisa proporción de Starters/Extenders vs situacionales.');
+        if (m.hqCount.muerta / m.p > 0.15) w.push(`⚠ ${m.hqCount.muerta} Mano${m.hqCount.muerta>1?'s':''} Muerta${m.hqCount.muerta>1?'s':''} registrada${m.hqCount.muerta>1?'s':''} (${Math.round(m.hqCount.muerta/m.p*100)}%). Problema estructural de consistencia.`);
         return w;
     },
 
@@ -3571,9 +3614,10 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             ];
         }
 
-        // 1. Consistencia — al menos 1 Starter en mano (no requiere Extender)
-        const comboAbierto = rounds.filter(r => (r.starter || 0) >= 1).length;
-        const consist = Math.round((comboAbierto / total) * 1000) / 10;
+        // 1. Consistencia — Calidad de Mano Inicial (Excelente/Buena/Regular/
+        // Pésima/Mano Muerta) según turno y piezas simultáneas en mano.
+        const hqWeightSum = rounds.reduce((a, r) => a + this._handQualityWeight(this._handQuality(r)), 0);
+        const consist = Math.round((hqWeightSum / total) * 1000) / 10;
 
         // 2. Ceiling (Poder de Cierre) — calidad de victorias (categoría) +
         // tasa de FTK + % de rondas donde ROMPISTE el campo rival (rompioBoard)
@@ -3620,7 +3664,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
 
         return [
             { key: 'consistencia', label: 'Consistencia', raw: consist, unit: '%', norm: pct10(consist),
-              desc: '(Capacidad de Iniciar Combo) Porciento de rondas donde abriste al menos 1 Starter en mano.', has: true },
+              desc: '(Calidad de Mano Inicial) Promedio ponderado de Mano Excelente/Buena/Regular/Pésima/Muerta según turno y piezas en mano.', has: true },
             { key: 'ceiling', label: 'Ceiling', raw: ceiling, unit: 'pts', norm: pct10(ceiling),
               desc: '(Techo de Poder) Calidad de tus victorias + capacidad de rompimiento del campo rival.', has: true },
             { key: 'resiliencia', label: 'Floor', raw: resil ? resil.pct : null, unit: '%', norm: pct10(resil ? resil.pct : null),
@@ -4468,6 +4512,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         const strB  = v => v>=70&&v<=85?['✅ Ideal','opt-c-green']:v<60?['❌ Faltan starters','opt-c-red']:v<70?['⚠ Bajo el ideal','opt-c-yellow']:['⚠ Exceso','opt-c-yellow'];
         const riB   = v => badge(v,[[0,15,'💎 Resiliente','opt-c-green'],[15,30,'✅ Controlado','opt-c-blue'],[30,45,'⚠ Vulnerable','opt-c-yellow'],[45,101,'❌ Muy interrumpido','opt-c-red']]);
         const scrB  = v => badge(v,[[80,101,'💎 Competitivo','opt-c-green'],[65,80,'✅ Optimizado','opt-c-blue'],[50,65,'⚠ Funcional','opt-c-yellow'],[0,50,'❌ Desbalanceado','opt-c-red']]);
+        const hqB   = v => badge(v,[[70,101,'💎 Manos fuertes','opt-c-green'],[45,70,'✅ Aceptable','opt-c-blue'],[20,45,'⚠ Inconsistente','opt-c-yellow'],[-1000,20,'❌ Manos débiles','opt-c-red']]);
 
         // ── WINRATE DEL DECK (Historial de Sesiones) — siempre desplegado ──────
         let html = `
@@ -4571,6 +4616,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 const [bLbl,bCls]  = brkB(m.br);
                 const [stLbl,stCls]= strB(m.str);
                 const [riLbl,riCls] = riB(m.ri);
+                const [hqLbl,hqCls] = hqB(m.hq);
                 const isThisActive = sess.id === this._activeSessionId;
 
                 const wrFirst  = m.rFirst.length
@@ -4608,6 +4654,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                         <div class="opt-metric"><div class="opt-m-name">Interrupción Rival</div><div class="opt-m-val">${m.ri}% ${tr(m.ri, prev?.ri, false)}</div><div class="opt-m-badge ${riCls}">${riLbl}</div></div>
                         <div class="opt-metric"><div class="opt-m-name">Board Break</div><div class="opt-m-val">${m.bb}% ${tr(m.bb, prev?.bb, true)}</div><div class="opt-m-badge opt-c-neutral">Going 2nd</div></div>
                         <div class="opt-metric"><div class="opt-m-name">Control Rate</div><div class="opt-m-val">${m.ctrl}% ${tr(m.ctrl, prev?.ctrl, true)}</div><div class="opt-m-badge opt-c-neutral">Going 1st</div></div>
+                        <div class="opt-metric"><div class="opt-m-name">Calidad de Mano</div><div class="opt-m-val">${m.hq}% ${tr(m.hq, prev?.hq, true)}</div><div class="opt-m-badge ${hqCls}">${hqLbl}</div></div>
                     </div>
 
                     <div class="opt-order-split">
@@ -4643,6 +4690,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     <div class="opt-raw-chips">
                         <span>🃏 ${m.p} rondas · ✅ ${m.wins}V / ❌ ${m.losses}D</span>
                         <span>🧱 ${sess.rounds.filter(r=>(r.bricks||0)>=1 || r.brick).length} bricks</span>
+                        <span title="Excelente/Buena/Regular/Pésima/Muerta">🎴 ${m.hqCount.excelente}E · ${m.hqCount.buena}B · ${m.hqCount.regular}R · ${m.hqCount.pesima}P · ${m.hqCount.muerta}M</span>
                         <span>⚡ ø${m.avgStarter.toFixed(1)} starters</span>
                         <span>🔗 ø${m.avgExtender.toFixed(1)} extenders</span>
                         <span>🖐 ø${m.avgHandtrap.toFixed(1)} HT</span>
@@ -4685,8 +4733,10 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                                 const tipoV  = r.tipoVictoria === 'ftk' ? ' FTK' : r.tipoVictoria === 'rendicion' ? ' Rend.' : r.tipoVictoria === 'tiempo' ? ' Tpo.' : '';
                                 const tipoD  = r.tipoDerrota === 'ftk' ? ' FTK' : r.tipoDerrota === 'rendicion' ? ' Rend.' : r.tipoDerrota === 'tiempo' ? ' Tpo.' : '';
                                 const tiempo = r.presionTiempo === 'critico' ? '🔴' : r.presionTiempo === 'ajustado' ? '🟡' : '🟢';
+                                const hqR = this._handQuality(r), hqInfo = this._handQualityLabel(hqR);
                                 return `<div class="opt-round-row">
                                     <span class="opt-rn">#${ri+1}</span>
+                                    <span title="${hqInfo.label}" class="opt-hq-${hqR}">${hqInfo.emoji}</span>
                                     <span>${orden}</span>
                                     <span>${res}${tipoV}${tipoD}${r.oppDeck ? ` vs ${r.oppDeck}` : ''}</span>
                                     <span title="Tiempo">${tiempo}</span>

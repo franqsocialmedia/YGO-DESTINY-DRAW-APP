@@ -307,7 +307,7 @@ const ConfigManager = {
         // ⭐ META MASTERS - Maestros del Juego
         metaMasters: [],
         shortcuts: [
-            { label: 'Winrate',              tab: 'estadisticas', sectionId: 'winrate-sec',                  module: 'Estadisticas' },
+            { label: 'Winrate',              tab: 'simuladores', steps: [{ fn: 'Torneo.showSimTab', arg: 'winrate' }], sectionId: 'winrate-sec', module: 'Simuladores' },
             { label: 'Formación - Apuntes',  tab: 'formacion',    sectionId: null,                           module: null },
             { label: 'Banlist del Formato',  tab: 'config',       sectionId: 'banlist-section',              module: 'Config' },
             { label: 'Maestros del Duelo',   tab: 'config',       sectionId: 'meta-masters-config-section',  module: 'Config' },
