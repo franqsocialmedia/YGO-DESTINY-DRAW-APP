@@ -22,39 +22,51 @@ const Formacion = {
         { id: 'vocabulario-legal',       label: 'Vocabulario Legal del Juego',      level: 'Básico' },
         { id: 'fases-del-duelo',         label: 'Las Fases del Duelo',              level: 'Básico' },
         { id: 'tipos-cartas-basicas',    label: 'Tipos de Cartas Básicas',          level: 'Básico' },
-        { id: 'tipos-cartas-especiales', label: 'Tipos de Cartas Especiales',       level: 'Intermedio' },
+        { id: 'tipos-cartas-especiales', label: 'Tipos de Cartas Especiales',       level: 'Básico' },
         { id: 'fusion-rulings',          label: 'Monstruos Fusión y sus Rulings',   level: 'Básico' },
         { id: 'sincronia-rulings',       label: 'Monstruos Sincronía y sus Rulings', level: 'Básico' },
+        { id: 'xyz-rulings',             label: 'Monstruos Xyz y sus Rulings',      level: 'Básico' },
+        { id: 'link-rulings',            label: 'Monstruos Link y sus Rulings',     level: 'Básico' },
+        { id: 'pendulo-rulings',         label: 'Monstruos Péndulo y sus Rulings',  level: 'Básico' },
+        { id: 'especiales-rulings',      label: 'Monstruos Especiales y sus Rulings', level: 'Básico' },
+        { id: 'clasificacion-arquetipos-estrategia', label: 'Clasificación de Arquetipos por Estrategia', level: 'Básico' },
         // ── MÓDULO 2 — Lectura de Cartas y Mentalidad ──
         { id: 'estructura-efecto-carta', label: 'Estructura de un Efecto de Carta', level: 'Básico' },
         { id: 'funciones-de-las-cartas', label: 'Funciones de las Cartas (Roles)',  level: 'Intermedio' },
         { id: 'palabras-tecnicas-juego', label: 'Palabras Clave y Técnicas del Juego', level: 'Intermedio' },
         { id: 'estructura-arquetipos', label: 'Estructura de un Arquetipo (Diseño TCG)', level: 'Intermedio' },
         { id: 'mentalidad-del-jugador',  label: 'Mentalidad del Jugador',           level: 'Intermedio' },
+        { id: 'probabilidad-basica-deck', label: 'Probabilidad Básica: El Grosor del Deck', level: 'Intermedio' },
         { id: 'secuenciacion',           label: 'Secuenciación: El Orden Importa', level: 'Avanzado' },
         // ── MÓDULO 3 — Construcción y Optimización de Mazo ──
         { id: 'elegir-construir-deck',      label: 'Elegir y Construir tu Deck',        level: 'Intermedio' },
-{ id: 'pet-deck-dominar',           label: 'Pet Deck: De Jugarlo a Dominarlo',  level: 'Avanzado' },
-{ id: 'valorar-carta',              label: 'Cómo Valorar una Carta',            level: 'Avanzado' },
-{ id: 'staples-formato',            label: 'Staples del Formato',               level: 'Básico' },
+        { id: 'pet-deck-dominar',           label: 'Pet Deck: De Jugarlo a Dominarlo',  level: 'Avanzado' },
+        { id: 'valorar-carta',              label: 'Cómo Valorar una Carta',            level: 'Avanzado' },
+        { id: 'staples-formato',            label: 'Staples del Formato',               level: 'Básico' },
         { id: 'anatomia-deck-competitivo',  label: 'Anatomía de un Deck Competitivo',   level: 'Avanzado' },
         { id: 'debilidades-deck',           label: 'Qué Hace Débil a un Deck o Arquetipo', level: 'Avanzado' },
         { id: 'optimizar-deck',             label: 'Cómo Optimizar tu Deck',            level: 'Avanzado' },
-{ id: 'equilibrio-deck',            label: 'Equilibrio del Deck: Detectando Excesos', level: 'Intermedio' },
+        { id: 'equilibrio-deck',            label: 'Equilibrio del Deck: Detectando Excesos', level: 'Avanzado' },
+        { id: 'redundancia-lineas-alternativas', label: 'Redundancia y Líneas Alternativas de Combo', level: 'Avanzado' },
 // ── MÓDULO 4 — Motor Técnico del Juego ──
         { id: 'cadenas-prioridad',       label: 'Cadenas, Prioridad y Spell Speed', level: 'Básico' },
         { id: 'rulings-invocaciones',    label: 'Rulings de Invocaciones',          level: 'Intermedio' },
-                { id: 'rulings-batalla',         label: 'Rulings en Fase de Batalla',       level: 'Avanzado' },
+        { id: 'rulings-batalla',         label: 'Rulings en Fase de Batalla',       level: 'Avanzado' },
         { id: 'jerarquia-dano-batalla',  label: 'Jerarquía de Efectos de Daño de Batalla', level: 'Avanzado' },
         { id: 'if-when-timing',          label: 'IF vs WHEN y Timing Avanzado',     level: 'Intermedio' },
         // ── MÓDULO 5 — Metajuego y Torneo ──
-        { id: 'leer-campo-oponente',     label: 'Leer el Campo del Oponente',       level: 'Intermedio' },
+        { id: 'leer-campo-oponente',     label: 'Leer el Campo del Oponente',       level: 'Avanzado' },
+        { id: 'jugar-alrededor-outs',    label: 'Jugar Alrededor de Outs (Playing Around)', level: 'Avanzado' },
         { id: 'gestion-lp-recursos',     label: 'Gestión de LP y Recursos',         level: 'Avanzado' },
-        { id: 'formatos-diferencias',    label: 'Formatos y sus Diferencias',       level: 'Básico' },
-        { id: 'side-deck',               label: 'El Side Deck',                    level: 'Intermedio' },
-{ id: 'bo1-vs-bo3',              label: 'Bo1 vs Bo3: Diferencias Estratégicas', level: 'Básico' },
-{ id: 'practicar-evento',        label: 'Practicar Antes de un Evento',     level: 'Avanzado' },
-{ id: 'meta-tiers',              label: 'El Meta y los Tiers de Poder',     level: 'Intermedio' },
+        { id: 'notas-durante-duelo',     label: 'Toma de Notas Durante un Duelo',   level: 'Avanzado' },
+        { id: 'formatos-diferencias',    label: 'Formatos y sus Diferencias',       level: 'Avanzado' },
+        { id: 'side-deck',               label: 'El Side Deck',                    level: 'Avanzado' },
+        { id: 'postboard-plan-side',     label: 'Postboard: Plan de Side por Matchup', level: 'Avanzado' },
+        { id: 'bo1-vs-bo3',              label: 'Bo1 vs Bo3: Diferencias Estratégicas', level: 'Avanzado' },
+        { id: 'practicar-evento',        label: 'Practicar Antes de un Evento',     level: 'Avanzado' },
+        { id: 'meta-tiers',              label: 'El Meta y los Tiers de Poder',     level: 'Avanzado' },
+        { id: 'reglas-torneo-juez',      label: 'Reglas de Torneo y Llamado al Juez', level: 'Avanzado' },
+        { id: 'manejo-reloj-tiempo',     label: 'Manejo del Reloj y Tiempo de Ronda', level: 'Avanzado' },
     ],
 
     PLATFORMS: ['PC', 'GBC', 'GBA', 'PS1', 'PS2', 'PS3', 'PS4', 'PS5', 'PSP', 'Físico'],
@@ -436,22 +448,22 @@ const Formacion = {
               explain: 'Es un monstruo Péndulo icónico — su marco mitad verde/naranja lo identifica de inmediato.' },
         ],
         'valorar-carta': [
-    { q: 'Según la lección, ¿cuál es la pregunta correcta al evaluar una carta?',
-      options: ['¿Es fuerte?', '¿Qué trabajo hace esta carta en mi deck?', '¿Cuánto cuesta en el mercado?', '¿Es rara?'], correct: 1,
-      explain: 'Una carta nunca se evalúa aislada — siempre dentro del sistema completo del deck.' },
-    { q: '¿Qué función cumple una carta si "el deck casi no funciona" cuando no la robas?',
-      options: ['Finalizador', 'Motor (Engine)', 'Recuperación', 'Flex'], correct: 1,
-      explain: 'El Motor es la función cuya ausencia impide que el deck ejecute su plan de juego.' },
-    { q: 'En el Test de 5 Preguntas, ¿qué pregunta "destruye malos hábitos" según la lección?',
-      options: ['¿Cuánto ATK tiene?', '¿Qué carta sale para hacerle espacio?', '¿Es una carta nueva?', '¿La tengo en Extra Deck?'], correct: 1,
-      explain: 'Decir que una carta es buena no basta — hay que poder señalar cuál de las 40 actuales es peor.' },
-    { q: '¿Qué es el "costo oculto" de una carta?',
-      options: ['El precio de mercado', 'La inconsistencia que genera un efecto poderoso pero muy condicionado', 'El costo de LP que paga', 'Un tipo de Trampa Continua'], correct: 1,
-      explain: 'Un efecto fuerte con muchas condiciones puede valer menos en la práctica que uno modesto pero siempre disponible.' },
-    { q: 'Al elegir entre dos cartas similares (ej. dos Handtraps), ¿qué NO recomienda esta lección?',
-      options: ['Comparar cuál depende de menos condiciones', 'Elegir solo por cuál "se ve más poderosa" en su texto', 'Ver en qué % de manos sería una carta muerta', 'Evaluar cuál te acerca más a tu condición de victoria'], correct: 1,
-      explain: 'El criterio siempre debe ser el trabajo real que cumple en tu deck, no la impresión superficial de poder.' },
-],
+            { q: 'Según la lección, ¿cuál es la pregunta correcta al evaluar una carta?',
+            options: ['¿Es fuerte?', '¿Qué trabajo hace esta carta en mi deck?', '¿Cuánto cuesta en el mercado?', '¿Es rara?'], correct: 1,
+            explain: 'Una carta nunca se evalúa aislada — siempre dentro del sistema completo del deck.' },
+            { q: '¿Qué función cumple una carta si "el deck casi no funciona" cuando no la robas?',
+            options: ['Finalizador', 'Motor (Engine)', 'Recuperación', 'Flex'], correct: 1,
+            explain: 'El Motor es la función cuya ausencia impide que el deck ejecute su plan de juego.' },
+            { q: 'En el Test de 5 Preguntas, ¿qué pregunta "destruye malos hábitos" según la lección?',
+            options: ['¿Cuánto ATK tiene?', '¿Qué carta sale para hacerle espacio?', '¿Es una carta nueva?', '¿La tengo en Extra Deck?'], correct: 1,
+            explain: 'Decir que una carta es buena no basta — hay que poder señalar cuál de las 40 actuales es peor.' },
+            { q: '¿Qué es el "costo oculto" de una carta?',
+            options: ['El precio de mercado', 'La inconsistencia que genera un efecto poderoso pero muy condicionado', 'El costo de LP que paga', 'Un tipo de Trampa Continua'], correct: 1,
+            explain: 'Un efecto fuerte con muchas condiciones puede valer menos en la práctica que uno modesto pero siempre disponible.' },
+            { q: 'Al elegir entre dos cartas similares (ej. dos Handtraps), ¿qué NO recomienda esta lección?',
+            options: ['Comparar cuál depende de menos condiciones', 'Elegir solo por cuál "se ve más poderosa" en su texto', 'Ver en qué % de manos sería una carta muerta', 'Evaluar cuál te acerca más a tu condición de victoria'], correct: 1,
+            explain: 'El criterio siempre debe ser el trabajo real que cumple en tu deck, no la impresión superficial de poder.' },
+        ],
         'estructura-efecto-carta': [
             { q: 'En "Descarta 1 carta: roba 2 cartas", ¿qué parte es el Costo?',
               options: ['"roba 2 cartas"', '"Descarta 1 carta"', 'Ambas por igual', 'Ninguna, es solo Efecto'], correct: 1,
@@ -555,22 +567,22 @@ const Formacion = {
               explain: 'Un Staple mal incluido, que rompe tu propio combo, es peor que no incluirlo.' },
         ],
         'pet-deck-dominar': [
-    { q: 'Según la analogía del ajedrez, ¿qué logra fijar un solo deck durante mucho tiempo?',
-      options: ['Aburrir al jugador', 'Aislar los errores como errores de decisión puros, no de falta de experiencia', 'Reducir el número de partidas posibles', 'Nada relevante para el nivel competitivo'], correct: 1,
-      explain: 'Al eliminar la variable "cambiar de deck", los errores que quedan son de razonamiento, que es lo que realmente se puede corregir.' },
-    { q: '¿Cuál es la diferencia clave entre "jugar" un deck y "pilotarlo"?',
-      options: ['No hay ninguna diferencia real', 'Pilotarlo implica conocer líneas alternativas y matchups específicos, no solo el combo principal', 'Pilotar significa tener más copias del deck', 'Jugarlo es más rápido que pilotarlo'], correct: 1,
-      explain: 'Pilotar implica profundidad de decisión: saber qué hacer cuando el plan A falla, no solo ejecutar el combo ideal.' },
-    { q: '¿Contra qué matchups recomienda la lección practicar con más repetición?',
-      options: ['Contra los que ya dominas', 'Contra los 2-3 arquetipos donde peor te va', 'Solo contra bots', 'Contra cualquier deck al azar'], correct: 1,
-      explain: 'El mayor aprendizaje viene de repetir el matchup más difícil, no de reforzar lo que ya sabes hacer bien.' },
-    { q: '¿Cómo se mide el dominio real de un pet deck, según la lección?',
-      options: ['Por cuántas gemas se gastaron en él', 'Con métricas concretas: Winrate, Brick Rate, Nivel como Piloto a lo largo del tiempo', 'Solo por la opinión de otros jugadores', 'No se puede medir, es subjetivo'], correct: 1,
-      explain: 'El progreso real debe reflejarse en números que mejoran con el tiempo, no solo en una sensación de comodidad.' },
-    { q: '¿Qué se recomienda confirmar ANTES de comprometerse a dominar un deck?',
-      options: ['Que sea el deck más caro del meta', 'Que realmente disfrutes jugarlo y que su Complejidad sea la que estás dispuesto a asumir', 'Que tenga el mayor ATK posible', 'Que no tenga ninguna Handtrap'], correct: 1,
-      explain: 'Comprometerse con el deck equivocado hace que la inversión de tiempo en dominarlo se sienta como una carga, no como progreso.' },
-],
+            { q: 'Según la analogía del ajedrez, ¿qué logra fijar un solo deck durante mucho tiempo?',
+            options: ['Aburrir al jugador', 'Aislar los errores como errores de decisión puros, no de falta de experiencia', 'Reducir el número de partidas posibles', 'Nada relevante para el nivel competitivo'], correct: 1,
+            explain: 'Al eliminar la variable "cambiar de deck", los errores que quedan son de razonamiento, que es lo que realmente se puede corregir.' },
+            { q: '¿Cuál es la diferencia clave entre "jugar" un deck y "pilotarlo"?',
+            options: ['No hay ninguna diferencia real', 'Pilotarlo implica conocer líneas alternativas y matchups específicos, no solo el combo principal', 'Pilotar significa tener más copias del deck', 'Jugarlo es más rápido que pilotarlo'], correct: 1,
+            explain: 'Pilotar implica profundidad de decisión: saber qué hacer cuando el plan A falla, no solo ejecutar el combo ideal.' },
+            { q: '¿Contra qué matchups recomienda la lección practicar con más repetición?',
+            options: ['Contra los que ya dominas', 'Contra los 2-3 arquetipos donde peor te va', 'Solo contra bots', 'Contra cualquier deck al azar'], correct: 1,
+            explain: 'El mayor aprendizaje viene de repetir el matchup más difícil, no de reforzar lo que ya sabes hacer bien.' },
+            { q: '¿Cómo se mide el dominio real de un pet deck, según la lección?',
+            options: ['Por cuántas gemas se gastaron en él', 'Con métricas concretas: Winrate, Brick Rate, Nivel como Piloto a lo largo del tiempo', 'Solo por la opinión de otros jugadores', 'No se puede medir, es subjetivo'], correct: 1,
+            explain: 'El progreso real debe reflejarse en números que mejoran con el tiempo, no solo en una sensación de comodidad.' },
+            { q: '¿Qué se recomienda confirmar ANTES de comprometerse a dominar un deck?',
+            options: ['Que sea el deck más caro del meta', 'Que realmente disfrutes jugarlo y que su Complejidad sea la que estás dispuesto a asumir', 'Que tenga el mayor ATK posible', 'Que no tenga ninguna Handtrap'], correct: 1,
+            explain: 'Comprometerse con el deck equivocado hace que la inversión de tiempo en dominarlo se sienta como una carga, no como progreso.' },
+        ],
                 'anatomia-deck-competitivo': [
             { q: '¿Cuántos ejes calcula realmente el Perfil de Rendimiento de la app?',
               options: ['3', '4', '5', '6'], correct: 2,
@@ -606,22 +618,22 @@ const Formacion = {
               explain: 'Un Choke Point tan amplio como "1 carta me gana el duelo" es el peor escenario posible de Floor bajo.' },
         ],
         'secuenciacion': [
-    { q: '¿Cuál es la pregunta que hace un jugador de nivel Master antes de jugar su mejor carta?',
-      options: ['¿Cómo la juego más rápido?', '¿Qué quiero averiguar antes de comprometerla?', '¿Cuánto ATK tiene?', '¿Puedo jugarla dos veces?'], correct: 1,
-      explain: 'La secuenciación empieza por decidir qué información necesitas antes de exponer tu pieza más valiosa.' },
-    { q: '¿Qué es una "carta de prueba"?',
-      options: ['Una carta prohibida en torneo', 'Una carta de valor medio jugada primero para hacer hablar al rival', 'Una carta que solo funciona en Master Duel', 'Un tipo de Handtrap específico'], correct: 1,
-      explain: 'Si el rival gasta una negación importante sobre ella, obtienes información valiosa antes de arriesgar tu pieza clave.' },
-    { q: 'Según la lección, ¿cuál es el error del 90% de los jugadores con una mano de 2 motores, 1 extensor, 1 handtrap y 1 buscador?',
-      options: ['No jugar ninguna carta', 'Empezar con el motor más fuerte sin evaluar alternativas', 'Guardar todo para el turno 2', 'Usar la Handtrap primero'], correct: 1,
-      explain: 'Muchas veces conviene más empezar con la jugada menos comprometida para observar la respuesta del rival.' },
-    { q: '¿Qué distingue a una "amenaza latente" de una "amenaza inmediata"?',
-      options: ['La latente no existe realmente', 'La latente no hace nada ahora pero será un problema en turnos siguientes', 'Son exactamente lo mismo', 'La latente solo aplica en GOAT Format'], correct: 1,
-      explain: 'Los jugadores promedio ignoran las amenazas latentes; los buenos las identifican antes de que crezcan.' },
-    { q: 'Al leer manos por deducción, ¿qué logras cuando el rival no usa Ash Blossom en tu buscador?',
-      options: ['Saber con certeza que no la tiene', 'Reducir las posibilidades de lo que tiene en mano, sin certeza absoluta', 'Nada, es información inútil', 'Confirmar que ganaste el duelo'], correct: 1,
-      explain: 'No es certeza total, pero reduces el abanico de posibilidades de forma significativa — de 100 opciones a unas pocas.' },
-],
+            { q: '¿Cuál es la pregunta que hace un jugador de nivel Master antes de jugar su mejor carta?',
+            options: ['¿Cómo la juego más rápido?', '¿Qué quiero averiguar antes de comprometerla?', '¿Cuánto ATK tiene?', '¿Puedo jugarla dos veces?'], correct: 1,
+            explain: 'La secuenciación empieza por decidir qué información necesitas antes de exponer tu pieza más valiosa.' },
+            { q: '¿Qué es una "carta de prueba"?',
+            options: ['Una carta prohibida en torneo', 'Una carta de valor medio jugada primero para hacer hablar al rival', 'Una carta que solo funciona en Master Duel', 'Un tipo de Handtrap específico'], correct: 1,
+            explain: 'Si el rival gasta una negación importante sobre ella, obtienes información valiosa antes de arriesgar tu pieza clave.' },
+            { q: 'Según la lección, ¿cuál es el error del 90% de los jugadores con una mano de 2 motores, 1 extensor, 1 handtrap y 1 buscador?',
+            options: ['No jugar ninguna carta', 'Empezar con el motor más fuerte sin evaluar alternativas', 'Guardar todo para el turno 2', 'Usar la Handtrap primero'], correct: 1,
+            explain: 'Muchas veces conviene más empezar con la jugada menos comprometida para observar la respuesta del rival.' },
+            { q: '¿Qué distingue a una "amenaza latente" de una "amenaza inmediata"?',
+            options: ['La latente no existe realmente', 'La latente no hace nada ahora pero será un problema en turnos siguientes', 'Son exactamente lo mismo', 'La latente solo aplica en GOAT Format'], correct: 1,
+            explain: 'Los jugadores promedio ignoran las amenazas latentes; los buenos las identifican antes de que crezcan.' },
+            { q: 'Al leer manos por deducción, ¿qué logras cuando el rival no usa Ash Blossom en tu buscador?',
+            options: ['Saber con certeza que no la tiene', 'Reducir las posibilidades de lo que tiene en mano, sin certeza absoluta', 'Nada, es información inútil', 'Confirmar que ganaste el duelo'], correct: 1,
+            explain: 'No es certeza total, pero reduces el abanico de posibilidades de forma significativa — de 100 opciones a unas pocas.' },
+        ],
                 'optimizar-deck': [
             { q: '¿Cuánto suma al Ceiling una victoria por missplay o novatada del rival?',
               options: ['El máximo (peso 1.0)', 'Un peso medio (0.70)', 'Cero — no mide tu deck, midió al oponente', 'El doble que una victoria normal'], correct: 2,
@@ -810,39 +822,39 @@ const Formacion = {
               explain: '15 cartas específicas para tu meta local superan a 15 Staples genéricos.' },
         ],
         'bo1-vs-bo3': [
-    { q: '¿Qué característica tiene Bo1 (Master Duel Ranked) que no tiene Bo3?',
-      options: ['Side Deck disponible', 'Ningún ajuste posible entre partidas — es un ambiente ciego', 'Partidas ilimitadas', 'Elección de quién va primero siempre'], correct: 1,
-      explain: 'En Bo1 no hay Game 2/3 ni Side Deck: la lista con la que empiezas es la única disponible.' },
-    { q: '¿Por qué el tech card muy específico pierde valor relativo en Bo1?',
-      options: ['Porque está prohibido en Ranked', 'Porque puede ser carta muerta en la mayoría de tus duelos, al no haber Side Deck para reservarlo', 'Porque cuesta más gemas', 'Porque no se puede jugar en Extra Deck'], correct: 1,
-      explain: 'Sin Side Deck, cada carta del Main debe defenderse en todos los matchups posibles, no solo en el ideal.' },
-    { q: '¿Qué ventaja da el formato Bo3 que no existe en Bo1?',
-      options: ['Mazos ilimitados', 'Poder observar la lista del rival en Game 1 y ajustar con el Side Deck', 'Jugar siempre de primero', 'Cartas prohibidas habilitadas'], correct: 1,
-      explain: 'El Side Deck permite corregir matchups específicos después de ver qué juega el rival.' },
-    { q: 'Según la lección, ¿qué tipo de cartas conviene priorizar en un Main Deck pensado para Bo1?',
-      options: ['Solo tech extremadamente específico', 'Cartas genéricas y flexibles (rol Flex)', 'Solo cartas caras', 'Cartas prohibidas en Banlist'], correct: 1,
-      explain: 'Sin oportunidad de ajustar, las cartas versátiles rinden mejor contra el pool completo de rivales posibles.' },
-    { q: '¿Qué recomienda la lección antes de copiar una lista de internet?',
-      options: ['Nada, cualquier lista sirve igual en cualquier formato', 'Confirmar para qué formato (Bo1 o Bo3) fue diseñada originalmente', 'Solo copiarla si es del Tier 1', 'Ignorar el Side Deck siempre'], correct: 1,
-      explain: 'Una lista pensada para Ranked suele ser más segura/genérica que una pensada para torneo físico con Side.' },
-],
+            { q: '¿Qué característica tiene Bo1 (Master Duel Ranked) que no tiene Bo3?',
+            options: ['Side Deck disponible', 'Ningún ajuste posible entre partidas — es un ambiente ciego', 'Partidas ilimitadas', 'Elección de quién va primero siempre'], correct: 1,
+            explain: 'En Bo1 no hay Game 2/3 ni Side Deck: la lista con la que empiezas es la única disponible.' },
+            { q: '¿Por qué el tech card muy específico pierde valor relativo en Bo1?',
+            options: ['Porque está prohibido en Ranked', 'Porque puede ser carta muerta en la mayoría de tus duelos, al no haber Side Deck para reservarlo', 'Porque cuesta más gemas', 'Porque no se puede jugar en Extra Deck'], correct: 1,
+            explain: 'Sin Side Deck, cada carta del Main debe defenderse en todos los matchups posibles, no solo en el ideal.' },
+            { q: '¿Qué ventaja da el formato Bo3 que no existe en Bo1?',
+            options: ['Mazos ilimitados', 'Poder observar la lista del rival en Game 1 y ajustar con el Side Deck', 'Jugar siempre de primero', 'Cartas prohibidas habilitadas'], correct: 1,
+            explain: 'El Side Deck permite corregir matchups específicos después de ver qué juega el rival.' },
+            { q: 'Según la lección, ¿qué tipo de cartas conviene priorizar en un Main Deck pensado para Bo1?',
+            options: ['Solo tech extremadamente específico', 'Cartas genéricas y flexibles (rol Flex)', 'Solo cartas caras', 'Cartas prohibidas en Banlist'], correct: 1,
+            explain: 'Sin oportunidad de ajustar, las cartas versátiles rinden mejor contra el pool completo de rivales posibles.' },
+            { q: '¿Qué recomienda la lección antes de copiar una lista de internet?',
+            options: ['Nada, cualquier lista sirve igual en cualquier formato', 'Confirmar para qué formato (Bo1 o Bo3) fue diseñada originalmente', 'Solo copiarla si es del Tier 1', 'Ignorar el Side Deck siempre'], correct: 1,
+            explain: 'Una lista pensada para Ranked suele ser más segura/genérica que una pensada para torneo físico con Side.' },
+        ],
 'practicar-evento': [
-    { q: '¿Qué caracteriza a una buena rutina de práctica pre-torneo, según la lección?',
-      options: ['Jugar solo contra bots fáciles', 'Practicar contra las listas más probables del meta, bajo presión real', 'Evitar jugar de segundo', 'Cambiar la lista constantemente hasta el día del evento'], correct: 1,
-      explain: 'Practicar contra amenazas realistas y en ambos turnos es lo que realmente prepara para el torneo.' },
-    { q: '¿Qué significa "congelar la lista"?',
-      options: ['Guardarla en el navegador', 'Fijar un punto de corte para dejar de tocar el Main Deck antes del evento', 'Prohibir jugar con ella', 'Eliminarla al terminar el torneo'], correct: 1,
-      explain: 'Cambiar cartas hasta último momento genera un deck que nunca se practicó realmente.' },
-    { q: 'En el Método AAR, ¿cuál de estas NO es una de las 5 preguntas post-duelo?',
-      options: ['¿Cuál era mi plan al empezar?', '¿Qué decisión me dio más dudas?', '¿Cuánto ATK tenía mi monstruo más fuerte?', 'Si jugara otra vez, ¿qué haría diferente?'], correct: 2,
-      explain: 'El AAR se enfoca en el proceso de decisión, no en estadísticas de cartas individuales.' },
-    { q: '¿Cuál es el objetivo real de practicar antes de un evento, según la lección?',
-      options: ['Ganar el 100% de las prácticas', 'Descubrir fallas de decisión antes de que cuesten un torneo real', 'Memorizar el combo más largo posible', 'Evitar jugar contra rivales fuertes'], correct: 1,
-      explain: 'Si nunca pierdes en la práctica, probablemente no estás practicando contra la presión correcta.' },
-    { q: '¿Por qué es importante practicar tanto yendo primero como yendo segundo?',
-      options: ['Es una regla obligatoria del torneo', 'Muchos jugadores solo ensayan ir primero y llegan sin plan real yendo segundo', 'Yendo segundo nunca importa', 'Solo aplica en Master Duel'], correct: 1,
-      explain: 'Un plan de juego incompleto para uno de los dos turnos es una de las causas más comunes de derrotas evitables.' },
-],
+            { q: '¿Qué caracteriza a una buena rutina de práctica pre-torneo, según la lección?',
+            options: ['Jugar solo contra bots fáciles', 'Practicar contra las listas más probables del meta, bajo presión real', 'Evitar jugar de segundo', 'Cambiar la lista constantemente hasta el día del evento'], correct: 1,
+            explain: 'Practicar contra amenazas realistas y en ambos turnos es lo que realmente prepara para el torneo.' },
+            { q: '¿Qué significa "congelar la lista"?',
+            options: ['Guardarla en el navegador', 'Fijar un punto de corte para dejar de tocar el Main Deck antes del evento', 'Prohibir jugar con ella', 'Eliminarla al terminar el torneo'], correct: 1,
+            explain: 'Cambiar cartas hasta último momento genera un deck que nunca se practicó realmente.' },
+            { q: 'En el Método AAR, ¿cuál de estas NO es una de las 5 preguntas post-duelo?',
+            options: ['¿Cuál era mi plan al empezar?', '¿Qué decisión me dio más dudas?', '¿Cuánto ATK tenía mi monstruo más fuerte?', 'Si jugara otra vez, ¿qué haría diferente?'], correct: 2,
+            explain: 'El AAR se enfoca en el proceso de decisión, no en estadísticas de cartas individuales.' },
+            { q: '¿Cuál es el objetivo real de practicar antes de un evento, según la lección?',
+            options: ['Ganar el 100% de las prácticas', 'Descubrir fallas de decisión antes de que cuesten un torneo real', 'Memorizar el combo más largo posible', 'Evitar jugar contra rivales fuertes'], correct: 1,
+            explain: 'Si nunca pierdes en la práctica, probablemente no estás practicando contra la presión correcta.' },
+            { q: '¿Por qué es importante practicar tanto yendo primero como yendo segundo?',
+            options: ['Es una regla obligatoria del torneo', 'Muchos jugadores solo ensayan ir primero y llegan sin plan real yendo segundo', 'Yendo segundo nunca importa', 'Solo aplica en Master Duel'], correct: 1,
+            explain: 'Un plan de juego incompleto para uno de los dos turnos es una de las causas más comunes de derrotas evitables.' },
+        ],
         'meta-tiers': [
             { q: '¿Cuál es la diferencia principal entre "Meta global" y "Meta local"?',
               options: ['No hay diferencia', 'El Meta local refleja lo que realmente juega tu región/tienda, el global es la referencia mundial', 'El Meta global siempre es más útil para el Side Deck', 'El Meta local nunca cambia'], correct: 1,
@@ -911,6 +923,221 @@ const Formacion = {
             { q: '¿Qué identifica normalmente al "As" (Boss Monster) de un arquetipo?',
               options: ['Es el monstruo más barato de invocar', 'Suele dar nombre al arquetipo y requiere la Invocación más compleja o de mayor Nivel/Rango', 'Siempre es una Magia Continua', 'Nunca aparece en el arte de portada del producto'], correct: 1,
               explain: 'El As casi siempre da nombre al arquetipo y representa el punto más alto de la curva de invocación del mazo.' },
+        ],
+                'xyz-rulings': [
+            { q: 'Cuando invocas un Monstruo Xyz, ¿a dónde van los materiales usados?',
+              options: ['Al cementerio, como en Fusión y Sincronía', 'Se colocan adjuntos debajo del propio Xyz, no van al cementerio', 'Se destierran automáticamente', 'Vuelven a la mano'], correct: 1,
+              explain: 'Xyz es la excepción a la regla: los materiales quedan adjuntos (attached) bajo el monstruo, no se envían a ningún otro lugar hasta que se desprenden.' },
+            { q: 'Cuando desprendes ("detach") un material Xyz como costo de un efecto, ¿a dónde va por defecto?',
+              options: ['Al cementerio, salvo que el efecto diga otra cosa', 'Se destierra siempre', 'Vuelve al Extra Deck', 'Se queda adjunto a otro monstruo'], correct: 0,
+              explain: 'Al desprenderse, el material sigue la regla general por defecto: cementerio, salvo texto explícito distinto.' },
+            { q: '¿Qué es correcto sobre Xyz y "Nivel"?',
+              options: ['Los Xyz tienen Nivel, igual que cualquier otro monstruo', 'Los Xyz tienen Rango (Rank), no Nivel — cartas que referencian "Nivel" no los afectan salvo que mencionen Rango', 'Rango y Nivel son sinónimos para todo efecto', 'Los Xyz no tienen ninguno de los dos'], correct: 1,
+              explain: 'Xyz usa el stat "Rango". Un efecto que dice "monstruos de Nivel 4" no incluye Xyz salvo que también mencione Rango explícitamente.' },
+            { q: 'En una Chaos Xyz Evolution (usar un Xyz como material de otro Xyz superior), ¿qué pasa con los materiales que ya tenía el Xyz original?',
+              options: ['Se pierden, el nuevo Xyz nace sin materiales', 'Se envían al cementerio junto con el Xyz original', 'Se transfieren y quedan adjuntos al nuevo Xyz', 'Vuelven al Extra Deck'], correct: 2,
+              explain: 'Los materiales acompañan al Xyz usado como material — el Xyz resultante hereda esos materiales adjuntos.' },
+            { q: 'Si el efecto que pedía desprender un material como costo es negado después, ¿el material desprendido regresa?',
+              options: ['Sí, siempre regresa', 'No — desprenderlo fue el costo, ya se pagó antes de que el efecto se resolviera (o fuera negado)', 'Solo si el material era un Tuner', 'Depende del Rango del Xyz'], correct: 1,
+              explain: 'Mismo principio que en Fusión/Sincronía: los costos ya pagados no se revierten aunque el efecto termine siendo negado.' },
+        ],
+
+        'link-rulings': [
+            { q: '¿Pueden los Monstruos Link colocarse en Posición de Defensa?',
+              options: ['Sí, igual que cualquier monstruo', 'No — los Link no tienen DEF y siempre se tratan en Posición de Ataque', 'Solo si tienen 2+ flechas', 'Solo durante el turno del rival'], correct: 1,
+              explain: 'Los Link Monsters carecen de DEF impresa y no pueden colocarse en Defensa — siempre están, efectivamente, en Ataque.' },
+            { q: 'Sin ningún Monstruo Link en el campo, ¿dónde pueden colocarse los monstruos de Extra Deck (Fusión/Sincro/Xyz/Link)?',
+              options: ['En cualquier Zona de Monstruos libre', 'Solo en las Zonas de Monstruo Extra (Extra Monster Zones)', 'Solo en la Zona Péndulo', 'No pueden invocarse sin un Link previo'], correct: 1,
+              explain: 'Regla de Master Rule: sin flechas de Link apuntando a una Zona Principal, los monstruos de Extra Deck solo pueden ir a las 2 Zonas de Monstruo Extra compartidas.' },
+            { q: 'Por defecto, ¿a dónde van los materiales usados para una Invocación Link?',
+              options: ['Quedan adjuntos como en Xyz', 'Al cementerio, salvo que el propio Link diga otra cosa', 'Vuelven al Extra Deck', 'Se destierran siempre'], correct: 1,
+              explain: 'Link no usa el sistema de materiales adjuntos de Xyz — sigue la regla general de cementerio por defecto.' },
+            { q: '¿Qué significa que dos Monstruos Link estén "co-linkeados" (co-linked)?',
+              options: ['Comparten el mismo nombre', 'Sus flechas de Link se apuntan mutuamente entre sí', 'Fueron invocados el mismo turno', 'Tienen el mismo Link Rating'], correct: 1,
+              explain: 'Co-linked ocurre cuando las flechas de dos Link Monsters se señalan entre sí — varias cartas dan bonificaciones a monstruos co-linkeados.' },
+            { q: 'Por regla general, ¿cuántos materiales necesita un Monstruo Link?',
+              options: ['Siempre exactamente 1, sin importar el Link Rating', 'Un número igual a su Link Rating, salvo que su propio texto pida otra cosa', 'Siempre 2, mínimo', 'Depende del Nivel de los materiales'], correct: 1,
+              explain: 'La cantidad de materiales por defecto coincide con el Link Rating del monstruo, aunque el propio Link puede alterar esa exigencia en su texto.' },
+        ],
+
+        'pendulo-rulings': [
+            { q: 'Si colocas una nueva carta Péndulo en una Zona Péndulo ya ocupada, ¿qué pasa con la que estaba antes?',
+              options: ['Va al cementerio', 'Es destruida y por la regla de reemplazo va boca arriba al Extra Deck, no al cementerio', 'Vuelve a la mano', 'Se destierra'], correct: 1,
+              explain: 'Los Monstruos Péndulo destruidos (como Magia en la Zona Péndulo, o como monstruo en el Campo) van boca arriba al Extra Deck en vez de al cementerio, salvo excepciones específicas.' },
+            { q: 'Un Monstruo Péndulo en el Campo (Zona de Monstruos) es destruido en batalla. ¿A dónde va?',
+              options: ['Al cementerio, como cualquier monstruo normal', 'Boca arriba al Extra Deck — misma regla de reemplazo que en la Zona Péndulo', 'Se destierra', 'Depende de su Escala'], correct: 1,
+              explain: 'La regla de reemplazo Péndulo aplica sin importar si la destrucción ocurre en la Zona Péndulo o en la Zona de Monstruos.' },
+            { q: 'Un Monstruo Péndulo es usado como material para una Invocación Sincro. ¿A dónde va?',
+              options: ['Boca arriba al Extra Deck, como siempre', 'Al cementerio — usarlo como material sigue la regla de esa invocación, no la regla de reemplazo Péndulo', 'Se queda en el campo', 'Vuelve a la mano'], correct: 1,
+              explain: 'La regla de reemplazo Péndulo aplica a destrucción/envío al cementerio, no cuando el monstruo se usa como material — ahí manda la regla de la invocación que lo consume.' },
+            { q: 'Una Invocación Péndulo permite Invocar Especialmente monstruos desde…',
+              options: ['Solo el cementerio', 'La mano y el Extra Deck (los que estén boca arriba ahí por Péndulo)', 'Solo el Extra Deck', 'Solo la mano'], correct: 1,
+              explain: 'La Invocación Péndulo trae simultáneamente monstruos de la mano Y del Extra Deck boca arriba (los enviados ahí previamente), no del cementerio.' },
+            { q: '¿Cuántas veces por turno puedes hacer una Invocación Péndulo, por defecto?',
+              options: ['Ilimitadas', 'Una vez por turno, salvo que un efecto diga lo contrario', 'Dos veces por turno siempre', 'Nunca en el turno que se invocó una carta Péndulo'], correct: 1,
+              explain: 'Como cualquier invocación, la Péndulo es 1 vez por turno por defecto, ampliable solo por efectos específicos.' },
+        ],
+
+        'especiales-rulings': [
+            { q: 'Un Token es destruido y enviado "al cementerio" por un efecto. ¿Qué ocurre en realidad?',
+              options: ['Va al cementerio normalmente', 'Deja de existir — los Tokens nunca van a cementerio, mano, deck o baneados, ni siquiera brevemente', 'Se convierte en una carta al azar', 'Vuelve a Invocarse el turno siguiente'], correct: 1,
+              explain: 'Los Tokens no son cartas físicas: cuando saldrían del campo hacia cualquier otro lugar, simplemente dejan de existir.' },
+            { q: '¿Pueden los Tokens usarse como Tributo para una Invocación Ritual?',
+              options: ['No, nunca', 'Sí, mientras nada lo prohíba explícitamente — cumplen con ser "monstruos" para el Tributo', 'Solo si son Tokens de Nivel 4+', 'Solo para Xyz, nunca para Ritual'], correct: 1,
+              explain: 'Un Token es un monstruo válido para Tributo Ritual salvo que la carta específica lo prohíba — error común asumir que "no sirven para nada especial".' },
+            { q: 'Una carta "Monstruo Trampa" (Trap Monster) mientras está boca abajo en la Zona de Magia/Trampa, ¿qué es?',
+              options: ['Ya es un monstruo aunque esté boca abajo', 'Es únicamente una Carta de Trampa — se vuelve monstruo solo al activarse/voltearse según su propio efecto', 'Es ambas cosas a la vez desde que se coloca', 'No puede colocarse boca abajo'], correct: 1,
+              explain: 'Mientras está Set, es solo una Trampa. Se convierte en monstruo en el momento que su propio efecto lo especifica (normalmente al activarse).' },
+            { q: 'Un Monstruo Union equipado a otro monstruo (tratado como Magia de Equipo) — si el monstruo equipado sale del campo, ¿qué pasa con el Union?',
+              options: ['Va directo al cementerio sin más', 'Por regla general se Invoca Especialmente de vuelta al campo (si es posible) en vez de irse al cementerio', 'Se destierra', 'Permanece en la Zona de Magia/Trampa para siempre'], correct: 1,
+              explain: 'La mecánica Union está diseñada para que, al perder a su anfitrión, el propio monstruo regrese al campo como monstruo en vez de perderse.' },
+            { q: 'Una carta cuyo texto dice "esta carta es siempre tratada como [Nombre]" (ej. Buster Blader, the Destruction Swordmaster tratada como "Buster Blader") — ¿qué cambia realmente?',
+              options: ['Se convierte físicamente en esa otra carta, perdiendo su propio Tipo/ATK/DEF', 'Solo afecta cómo la interpretan OTROS efectos que buscan ese nombre — sus propios stats/tipo de carta no cambian salvo que el texto lo diga también', 'Solo funciona mientras está en el cementerio', 'Anula su propio efecto impreso'], correct: 1,
+              explain: 'El "tratado como" es puramente de nombre para efectos de soporte por nombre — no reescribe Tipo, ATK/DEF ni clasificación de carta salvo que el texto lo indique explícitamente.' },
+        ],
+
+        'clasificacion-arquetipos-estrategia': [
+            { q: '¿Qué es un FTK (First Turn Kill)?',
+              options: ['Ganar en el primer turno del duelo, antes de que el rival juegue', 'Ganar en cualquier turno propio con un solo turno de combo', 'Un deck de solo control', 'Un deck sin Extra Deck'], correct: 0,
+              explain: 'FTK específicamente significa matar en el Turno 1, antes de que el rival tenga oportunidad de jugar — históricamente muy restringido por Banlist por ser poco interactivo.' },
+            { q: '¿En qué se diferencia un OTK de un FTK?',
+              options: ['Son exactamente lo mismo', 'OTK es matar en un solo turno (no necesariamente el Turno 1); FTK específicamente ocurre en el primer turno del duelo', 'OTK solo aplica a decks de quema (burn)', 'FTK es más común en el meta actual que OTK'], correct: 1,
+              explain: 'Todo FTK es un OTK, pero no todo OTK es FTK — un OTK puede ocurrir en cualquier turno propio, un FTK exige que sea el primerísimo turno.' },
+            { q: '¿Qué distingue a un deck "Combo" de uno "Control"?',
+              options: ['No hay diferencia real', 'Combo busca desarrollar un board fuerte con muchas Invocaciones en un turno explosivo; Control busca desgastar recursos rivales durante varios turnos', 'Control siempre gana más rápido', 'Combo nunca usa Handtraps'], correct: 1,
+              explain: 'Combo apuesta a un turno de desarrollo grande; Control apuesta a ganar el juego largo removiendo/negando recursos de forma sostenida.' },
+            { q: '¿Qué caracteriza a un deck "Stun"?',
+              options: ['Un board enorme de monstruos negadores', 'Bloquear al rival mediante floodgates y Handtraps en vez de presentar un board grande', 'Solo cartas de quema directa', 'Un deck sin Trampas'], correct: 1,
+              explain: 'Stun gana volviendo la partida injugable para el rival (floodgates, locks) en lugar de competir con presencia de campo.' },
+            { q: '¿Por qué es útil clasificar un deck (propio o rival) por su estrategia dominante?',
+              options: ['Es solo curiosidad, no tiene aplicación práctica', 'Ayuda a anticipar el plan de juego del matchup y a planear el Side Deck acorde', 'Determina automáticamente el ganador', 'Solo sirve para decks Tier 1'], correct: 1,
+              explain: 'Saber si enfrentas Combo, Control, Stun, etc. cambia directamente qué cartas conviene traer del Side y cómo secuenciar tu turno.' },
+        ],
+
+        'probabilidad-basica-deck': [
+            { q: '¿Por qué los decks competitivos suelen construirse con exactamente 40 cartas (el mínimo legal)?',
+              options: ['Por tradición únicamente', 'Porque cada carta por encima del mínimo diluye la probabilidad de abrir tus piezas clave', 'Porque 40 cartas barajan más rápido', 'El mínimo no afecta la probabilidad'], correct: 1,
+              explain: 'A menor cantidad total de cartas, mayor la probabilidad relativa de que cualquier carta específica aparezca en tu mano inicial — por eso "grosor del deck" es sinónimo de consistencia.' },
+            { q: 'Entre agregar 1 copia más de una pieza clave y quitar 1 carta "muerta" del deck, ¿cuál suele tener mayor impacto en la probabilidad de abrirla?',
+              options: ['Quitar la carta muerta siempre gana por mucho', 'Agregar una copia adicional de la pieza clave — el salto de 1 a 2 copias es no-lineal y suele pesar más', 'Ambas tienen exactamente el mismo efecto siempre', 'Ninguna de las dos cambia nada'], correct: 1,
+              explain: 'La probabilidad de abrir al menos 1 copia crece de forma no lineal con el número de copias — pasar de 1 a 2 copias generalmente mueve más la aguja que afinar el resto del deck en 1 carta.' },
+            { q: '¿Qué mide, en términos simples, el "grosor del deck"?',
+              options: ['El número total de cartas en el Main Deck', 'Solo el número de monstruos', 'El ATK promedio del deck', 'La cantidad de Trampas'], correct: 0,
+              explain: 'Se refiere directamente al conteo total de cartas del Main — cuantas más cartas, menor la probabilidad relativa de cualquier apertura específica.' },
+            { q: '¿Qué herramienta de Destiny Draw! calcula la probabilidad exacta de abrir una combinación de cartas en mano inicial?',
+              options: ['Estadísticas → Top Tier', 'Simuladores → 🎲 Mulligan (Hipergeometría)', 'Config → Scoring Avanzado', 'Formación → Historia del Meta'], correct: 1,
+              explain: 'El simulador de Hipergeometría (con sus 3 modos: Estándar, Mis Decks, Prueba Mulligan) calcula esto exactamente en vez de dejarlo a la intuición.' },
+            { q: 'La "tabla de confiabilidad" (reliability) que usa el Internal Score de la app (Config → Scoring Avanzado) representa…',
+              options: ['El ATK promedio por copia', 'Una probabilidad aproximada de abrir la carta según cuántas copias tiene en el deck', 'El costo en LP de jugar la carta', 'El Rango del monstruo'], correct: 1,
+              explain: 'Esa tabla (1→0.40, 2→0.65, 3→0.85, 4→0.90…) es justamente una aproximación de probabilidad de apertura por número de copias — la misma lógica de esta lección aplicada dentro del motor de Scoring.' },
+        ],
+
+        'jugar-alrededor-outs': [
+            { q: '¿Qué significa "jugar alrededor de un out" (playing around)?',
+              options: ['Asumir siempre que el rival tiene la mejor mano posible', 'Secuenciar tu turno asumiendo que el rival puede tener una respuesta razonable, no la más optimista para ti', 'Nunca comprometer ninguna carta al campo', 'Jugar sin mirar el cementerio rival'], correct: 1,
+              explain: 'Es jugar considerando el escenario razonable más desfavorable (no el peor imaginable ni el mejor para ti) para minimizar el daño si el rival tiene una respuesta.' },
+            { q: '¿Deberías jugar siempre alrededor de cualquier out posible que el rival pudiera tener?',
+              options: ['Sí, siempre hay que asumir lo peor', 'No — hay que ponderar la probabilidad real de que el rival tenga esa carta específica, no solo la posibilidad teórica', 'Solo si vas perdiendo en LP', 'Solo en Bo3'], correct: 1,
+              explain: 'Jugar alrededor de outs muy improbables cuesta tempo y recursos innecesarios. Es un balance entre riesgo y probabilidad real, no paranoia absoluta.' },
+            { q: '¿Qué es "bait" (carnada) en este contexto?',
+              options: ['Un tipo de Trampa específica', 'Comprometer primero el recurso menos valioso para provocar que el rival gaste su respuesta ahí, antes de exponer tu pieza clave', 'Mostrar tu mano al rival', 'Pasar el turno sin jugar nada'], correct: 1,
+              explain: 'Jugar tu pieza más prescindible primero puede hacer que el rival "muerda" con su negación ahí, dejando el camino libre para tu jugada realmente importante.' },
+            { q: '¿Cómo se relaciona esto con la lección de Secuenciación?',
+              options: ['No tiene relación', 'El orden en que juegas tus cartas determina exactamente qué recurso queda expuesto primero a la respuesta del rival', 'Secuenciación solo aplica en Battle Phase', 'Jugar alrededor de outs reemplaza la necesidad de secuenciar'], correct: 1,
+              explain: 'Playing around es, en la práctica, secuenciación aplicada con el objetivo específico de minimizar el impacto de una respuesta rival probable.' },
+            { q: '¿Dónde puedes revisar en la app qué tan probable es que un arquetipo rival tenga cierta carta en su lista?',
+              options: ['Solo preguntándole directamente al rival', 'Estadísticas → Poder de Cartas del Meta / Buscador filtrando por arquetipo', 'Config → Banlist', 'Formación → Juegos'], correct: 1,
+              explain: 'El Poder de Cartas del Meta y las decklists importadas dan una base real de qué tan común es una carta en un arquetipo específico, en vez de adivinar.' },
+        ],
+
+        'redundancia-lineas-alternativas': [
+            { q: '¿Cuál es la diferencia entre un Starter y un Extender?',
+              options: ['Son sinónimos', 'Un Starter puede iniciar tu combo sin depender de otra carta previa; un Extender generalmente necesita que el combo ya esté en marcha para ser útil', 'Un Extender siempre tiene más ATK', 'Solo los Extenders son Handtraps'], correct: 1,
+              explain: 'El Starter abre la línea desde cero; el Extender amplifica una línea ya iniciada, pero normalmente es una carta muerta si se abre solo.' },
+            { q: '¿Qué es una carta "no-engine"?',
+              options: ['Una carta prohibida en Banlist', 'Una carta que no forma parte de la cadena de combo del deck, pero cumple una función genérica (Handtrap, remoción)', 'Cualquier carta del Side Deck', 'Un monstruo de Extra Deck'], correct: 1,
+              explain: 'Son piezas independientes del engine principal — no dependen de él ni lo alimentan, solo aportan interacción/generic value.' },
+            { q: '¿Por qué la redundancia suele valer más en competitivo que la línea de combo teóricamente más poderosa?',
+              options: ['Porque las partidas reales incluyen disrupción del rival — una sola línea brillante pero frágil se rompe fácil ante un Handtrap o negación', 'Porque las reglas de torneo lo exigen', 'Porque siempre es ilegal tener una sola línea', 'No es cierto, el poder bruto siempre gana'], correct: 0,
+              explain: 'Un deck se enfrenta a interrupción constante. Tener múltiples formas de llegar a un buen board (aunque cada una individualmente sea "menos óptima") es más resiliente que depender de una única línea perfecta.' },
+            { q: '¿Qué herramienta de Mi Deck documenta explícitamente las líneas alternativas de combo?',
+              options: ['Banlist/Genesys', 'Línea de Combos, mediante sus "ramificaciones" (combos hijos por choke point/variante)', 'Historial de Versiones', 'Duelista'], correct: 1,
+              explain: 'Las ramificaciones de la Línea de Combos son literalmente el mapeo de tus líneas alternas ante distintos choke points — la redundancia hecha visible en la app.' },
+            { q: '¿Qué riesgo corre un deck con un solo Starter viable y sin líneas alternas?',
+              options: ['Ninguno, mientras el Starter sea muy poderoso', 'Alta tasa de manos muertas (bricks) si ese Starter es negado, descartado o simplemente no se abre', 'Solo afecta el Complejidad del Deck, no el juego real', 'Se vuelve automáticamente ilegal'], correct: 1,
+              explain: 'Sin redundancia, cualquier interacción sobre esa única pieza (o simplemente no abrirla) deja al jugador sin plan de juego ese turno.' },
+        ],
+
+        'postboard-plan-side': [
+            { q: '¿En qué se diferencia esta lección de "El Side Deck"?',
+              options: ['Son idénticas', '"El Side Deck" cubre las reglas de intercambio (límite de 15, timing); "Postboard" cubre la estrategia de QUÉ meter/sacar según el rival', 'Postboard solo aplica en Bo1', 'El Side Deck ya no existe en el formato actual'], correct: 1,
+              explain: 'Una es reglamentaria (mecánica de intercambio), la otra es de planeación estratégica matchup por matchup.' },
+            { q: 'Frente a un rival cuyo deck NO usa cierta mecánica (ej. no tiene monstruos boca abajo), ¿qué conviene sacar del Side/Main para ese matchup?',
+              options: ['Nada, nunca se debe modificar el deck', 'Las cartas que dependen específicamente de esa mecánica para ser útiles (quedarían muertas ese matchup)', 'Siempre sacar los Starters', 'Sacar todas las Trampas sin excepción'], correct: 1,
+              explain: 'Una carta situacional que depende de una mecánica ausente en el matchup es candidata directa a salir — libera espacio para tech relevante.' },
+            { q: '¿Qué módulo de la app permite revisar el historial y decklist de un rival específico para planear el side?',
+              options: ['Config → Counters', 'Mi Deck → Historial de Enfrentamientos (Matchups), con "Ver Deck" si se cargó su .ydk', 'Formación → Fuentes', 'Simuladores → Torneo'], correct: 1,
+              explain: 'Matchups guarda notas y decklist del rival por nombre — información clave para armar un plan de side consistente contra ese oponente en el futuro.' },
+            { q: 'Frente a un deck de Combo muy explosivo, ¿qué categoría de cartas suele entrar en el Side?',
+              options: ['Cartas de quema directa (burn)', 'Floodgates y Handtraps adicionales para frenar el desarrollo', 'Más Extenders propios', 'Cartas de ganancia de LP'], correct: 1,
+              explain: 'Contra decks que dependen de desplegar mucho en un turno, negar/frenar ese desarrollo (Handtraps, floodgates) suele ser más rentable que sumar más ofensiva propia.' },
+            { q: '¿Qué mide el Counter-Deck Score de la app y cómo se relaciona con el Postboard?',
+              options: ['El ATK total del deck', 'La capacidad Anti-META del deck — qué tan preparado está para interrumpir al meta, información directamente útil para decidir qué tech traer del Side', 'La cantidad de cartas Prohibidas que tiene', 'El nivel de dificultad de pilotaje'], correct: 1,
+              explain: 'Ver sección 5.3bis del reporte técnico: mide capacidad Anti-META usando los mismos pares mecánica/counter de Config → Counters, insumo directo para decidir el side plan.' },
+        ],
+
+        'reglas-torneo-juez': [
+            { q: 'Según las Guías de Penalización oficiales de Konami, ¿cuáles son categorías reales de infracción?',
+              options: ['Solo "Trampa" y "No Trampa"', 'Deck/Deck List Errors, Drawing Extra Cards, Procedural Error, y Unsporting Conduct (entre otras)', 'No existen categorías oficiales', 'Solo aplican en el Campeonato Mundial'], correct: 1,
+              explain: 'La Política de Infracciones y Penalizaciones de Konami define varias categorías oficiales con subniveles de severidad (Menor/Mayor/etc.) — el documento completo está disponible públicamente en yugioh-card.com.' },
+            { q: '¿Cuándo es apropiado llamar a un juez?',
+              options: ['Solo después de que ya ocurrió un problema grave', 'En cualquier momento que tengas dudas sobre una jugada, ruling, o sospeches una infracción — antes de continuar jugando', 'Nunca, hay que resolverlo entre jugadores', 'Solo el juez puede iniciar el llamado'], correct: 1,
+              explain: 'Es mejor pausar y llamar al juez ante la duda que seguir jugando y complicar la reversión de una jugada ya resuelta.' },
+            { q: '¿Qué es "Slow Play"?',
+              options: ['Jugar lento porque el mazo es complejo', 'Tomarse un tiempo excesivo de forma deliberada o negligente para ganar ventaja (ej. llegar al límite de tiempo estando en mejor posición)', 'Un formato de duelo sin límite de tiempo', 'Una carta que ralentiza el juego'], correct: 1,
+              explain: 'Slow Play es una infracción reconocida — jugar deliberadamente despacio para forzar un resultado por tiempo es sancionable, sea intencional o no.' },
+            { q: '¿Quién tiene derecho a barajar tu deck antes de un duelo?',
+              options: ['Solo tú', 'Tú lo barajas y luego tu rival tiene derecho a barajarlo/cortarlo también', 'Solo el juez', 'Nadie puede tocar el deck del rival'], correct: 1,
+              explain: 'Tras barajar tu propio deck, el rival tiene derecho a barajarlo y/o cortarlo antes de empezar — es parte del procedimiento estándar.' },
+            { q: '¿Por qué es más seguro llamar al juez ANTES de intentar deshacer una jugada, en vez de después de que el rival ya respondió?',
+              options: ['No hay ninguna diferencia', 'Porque una vez que se cede prioridad y el rival actuó, revertir la acción puede generar un problema de ruling más grande que la jugada original', 'Porque el juez solo puede actuar antes de la Battle Phase', 'Porque deshacer jugadas está prohibido en todo momento'], correct: 1,
+              explain: 'Una vez que el rival tomó una decisión basada en tu jugada (pasar prioridad, responder), desandar esa secuencia sin un juez presente puede crear una situación de ruling mucho más compleja de resolver limpiamente.' },
+        ],
+
+        'notas-durante-duelo': [
+            { q: '¿Qué es el "scorekeeping" durante un duelo competitivo?',
+              options: ['Llevar el conteo de LP y recursos clave (cartas en mano, GY, banlist relevante) por turno, propios y del rival', 'Anotar el resultado final únicamente', 'Una función automática de la app', 'Solo aplica en duelos online'], correct: 0,
+              explain: 'Es el hábito de tomar notas activas durante la partida — no solo LP, sino qué recursos ha gastado cada jugador, para tomar mejores decisiones sobre la marcha.' },
+            { q: '¿Por qué es útil trackear recursos rivales (handtraps ya vistas, negaciones usadas) durante el duelo?',
+              options: ['No tiene ningún valor práctico', 'Permite estimar con más precisión qué le queda en mano al rival y jugar alrededor de eso con base en información real, no solo probabilidad', 'Es obligatorio por reglamento', 'Solo sirve para llenar el tiempo'], correct: 1,
+              explain: 'Cada carta vista reduce la incertidumbre sobre lo que puede quedar en la mano rival — conecta directo con Jugar Alrededor de Outs, pero con información concreta en vez de solo probabilidad.' },
+            { q: '¿Qué se recomienda anotar además del conteo de LP?',
+              options: ['Nada más es necesario', 'Cartas clave activadas/vistas, negaciones gastadas por ambos jugadores, y el estado del board turno a turno', 'Solo el nombre del rival', 'El clima del torneo'], correct: 1,
+              explain: 'Un buen tracking incluye qué se ha gastado en ambos lados de la mesa — es lo que realmente informa tus decisiones de riesgo turno a turno.' },
+            { q: '¿Qué feature de Destiny Draw! sirve como registro estructurado post-duelo, aunque no reemplaza tomar notas EN VIVO durante la partida?',
+              options: ['Config → Scoring Avanzado', 'Mi Deck → Optimización (registro de rondas) y Matchups (notas por rival)', 'Formación → Apuntes', 'Buscador → Favoritas'], correct: 1,
+              explain: 'Optimización y Matchups capturan el resultado y contexto DESPUÉS del duelo — la toma de notas en vivo (durante los turnos) es una habilidad de mesa que complementa, no reemplaza, ese registro.' },
+            { q: '¿Es válido tomar notas físicas (papel/lápiz) durante un duelo de torneo?',
+              options: ['Nunca está permitido', 'Sí, es una práctica común y permitida — cada jugador puede llevar sus propias notas, salvo que revele información no pública del rival', 'Solo el juez puede tomar notas', 'Solo en torneos online'], correct: 1,
+              explain: 'Tomar notas propias es una práctica estándar y aceptada; el límite está en no compartir/exponer información que debería permanecer privada (como tu propia mano) de forma indebida.' },
+        ],
+
+        'manejo-reloj-tiempo': [
+            { q: '¿Por qué es importante llevar noción del tiempo restante de la ronda durante un duelo competitivo?',
+              options: ['No importa, las rondas no tienen límite de tiempo', 'Porque al agotarse el tiempo se activan reglas especiales (Turnos Adicionales/Time Extension) que pueden cambiar radicalmente tu plan de juego', 'Solo importa en la final del torneo', 'El tiempo solo lo controla el juez, no el jugador'], correct: 1,
+              explain: 'Las rondas Suizas tienen un límite fijo; al agotarse se entra en un procedimiento de turnos adicionales donde jugar de forma distinta (más agresivo, más conservador) puede ser la diferencia entre ganar, perder o empatar.' },
+            { q: 'Si vas ganando claramente en LP/ventaja y el tiempo de ronda se está agotando, ¿qué es razonable?',
+              options: ['Jugar deliberadamente despacio para llegar al límite de tiempo (esto sería Slow Play, sancionable)', 'Jugar a tu ritmo normal sin manipular el tiempo — la ventaja debe ganarse jugando, no estirando el reloj', 'Pedir tiempo extra sin justificación', 'Rendirte automáticamente'], correct: 1,
+              explain: 'Aprovechar el reloj de forma deliberada (Slow Play) es una infracción. El manejo correcto del tiempo es jugar con eficiencia normal, no manipular la duración del turno.' },
+            { q: '¿Cuándo puede ser razonable considerar conceder un Juego (game) por presión de tiempo?',
+              options: ['Nunca es razonable bajo ninguna circunstancia', 'Cuando el estado del juego hace matemáticamente improbable ganar antes de que termine el tiempo, y prolongarlo solo reduce tus chances en los juegos restantes del Match', 'Siempre que vas perdiendo en LP', 'Solo si el rival lo propone'], correct: 1,
+              explain: 'En un Bo3, a veces ceder un Juego ya comprometido por tiempo y reservar minutos para los siguientes Juegos es la decisión matemáticamente correcta, no una rendición emocional.' },
+            { q: '¿Qué relación tiene esta lección con Bo1 vs Bo3?',
+              options: ['Ninguna', 'La presión de tiempo afecta de forma distinta según el formato: en Bo1 cada minuto cuenta para un solo juego decisivo, en Bo3 hay margen para sacrificar tiempo en un Juego y compensarlo en otro', 'Bo1 nunca tiene límite de tiempo', 'Bo3 siempre dura menos que Bo1'], correct: 1,
+              explain: 'El cálculo de cuándo "vale la pena" gastar tiempo cambia completamente según si estás jugando un único Juego decisivo o tienes Juegos adicionales donde recuperarte.' },
+            { q: '¿Quién anuncia oficialmente el tiempo restante y las reglas de Turnos Adicionales en un torneo?',
+              options: ['Cada jugador lleva su propio reloj y decide unilateralmente', 'El juez/organización del torneo, según la Política de Torneos vigente de Konami', 'No se anuncia, cada mesa debe calcularlo sola', 'Solo se avisa al finalizar la ronda'], correct: 1,
+              explain: 'El manejo del reloj de ronda es responsabilidad del staff del torneo conforme a la Política de Torneos oficial — el jugador debe estar atento pero no es quien determina las reglas de tiempo.' },
         ],
     },
 
@@ -2257,15 +2484,15 @@ _ptLongPressStart: function (iid, ev) {
             'estructura-arquetipos':   this._topicEstructuraArquetipos(),
             'cadenas-prioridad':       this._topicCadenasPrioridad(),
             'mentalidad-del-jugador':  this._topicMentalidadJugador(),
-'secuenciacion':           this._topicSecuenciacion(),
+            'secuenciacion':           this._topicSecuenciacion(),
             'elegir-construir-deck':     this._topicElegirConstruirDeck(),
-'pet-deck-dominar':          this._topicPetDeckDominar(),
-'valorar-carta':             this._topicValorarCarta(),
-'staples-formato':           this._topicStaples(),
+            'pet-deck-dominar':          this._topicPetDeckDominar(),
+            'valorar-carta':             this._topicValorarCarta(),
+            'staples-formato':           this._topicStaples(),
             'anatomia-deck-competitivo': this._topicAnatomiaDeckCompetitivo(),
             'debilidades-deck':          this._topicDebilidadesDeck(),
             'optimizar-deck':            this._topicOptimizarDeck(),
-'equilibrio-deck':           this._topicEquilibrioDeck(),  
+            'equilibrio-deck':           this._topicEquilibrioDeck(),  
             'rulings-invocaciones':    this._topicRulingsInvocaciones(),
             'rulings-batalla':         this._topicRulingsBatalla(),
             'jerarquia-dano-batalla':  this._topicJerarquiaDanoBatalla(),
@@ -2274,9 +2501,21 @@ _ptLongPressStart: function (iid, ev) {
             'gestion-lp-recursos':     this._topicGestionLpRecursos(),
             'formatos-diferencias':    this._topicFormatosDiferencias(),
             'side-deck':               this._topicSideDeck(),
-'bo1-vs-bo3':              this._topicBo1VsBo3(),
-'practicar-evento':        this._topicPracticarEvento(),
+            'bo1-vs-bo3':              this._topicBo1VsBo3(),
+            'practicar-evento':        this._topicPracticarEvento(),
             'meta-tiers':              this._topicMetaTiers(),
+            'xyz-rulings':             this._topicXyzRulings(),
+            'link-rulings':            this._topicLinkRulings(),
+            'pendulo-rulings':         this._topicPenduloRulings(),
+            'especiales-rulings':      this._topicEspecialesRulings(),
+            'clasificacion-arquetipos-estrategia': this._topicClasificacionArquetipos(),
+            'probabilidad-basica-deck': this._topicProbabilidadBasica(),
+            'jugar-alrededor-outs':    this._topicJugarAlrededorOuts(),
+            'redundancia-lineas-alternativas': this._topicRedundanciaLineas(),
+            'postboard-plan-side':     this._topicPostboardPlanSide(),
+            'reglas-torneo-juez':      this._topicReglasTorneoJuez(),
+            'notas-durante-duelo':     this._topicNotasDuranteDuelo(),
+            'manejo-reloj-tiempo':     this._topicManejoRelojTiempo(),
         };
         return topics[topicId] || '<p>Contenido no disponible.</p>';
     },
@@ -2615,6 +2854,372 @@ _topicBo1VsBo3: function () { return `
         </p>
 
         `; },
+        _topicXyzRulings: function () { return `
+        <h2 class="form-nb-title">Monstruos Xyz y sus Rulings</h2>
+        <p class="form-nb-text">Xyz rompió con la lógica de Fusión/Sincronía al introducir el Rango y el concepto de materiales adjuntos. Muchos rulings raros de la mecánica salen de no entender esta diferencia de base.</p>
+
+        <h3 class="form-nb-subtitle">🟠 Rango, no Nivel</h3>
+        <p class="form-nb-text">Los monstruos Xyz usan <strong>Rango (Rank)</strong> en vez de Nivel. Necesitas 2 o más monstruos con el <strong>mismo Nivel</strong> (igual al Rango del Xyz que quieres invocar) como materiales. Un efecto que dice "monstruos de Nivel 4" <strong>no</strong> incluye Xyz, salvo que el texto también mencione Rango explícitamente.</p>
+
+        <h3 class="form-nb-subtitle">📎 Materiales Adjuntos, no Cementerio</h3>
+        <p class="form-nb-text">A diferencia de Fusión y Sincronía, los materiales usados para Invocar un Xyz <strong>no van al cementerio</strong> — quedan adjuntos (attached) debajo del propio monstruo Xyz. Solo se envían a donde corresponda (normalmente cementerio) cuando se desprenden ("detach") como costo de un efecto, y ahí sí aplica la regla general por defecto.</p>
+
+        <h3 class="form-nb-subtitle">🔗 Chaos Xyz Evolution</h3>
+        <p class="form-nb-text">Algunos Xyz pueden usar OTRO Xyz como material (Chaos Xyz Evolution, ej. <a href="#" class="form-link" onclick="Formacion.openCard('Bujintei Tsukuyomi'); return false;">Bujintei Tsukuyomi</a>). Cuando esto ocurre, los materiales que ya tenía el Xyz original <strong>se transfieren</strong> y quedan adjuntos al nuevo Xyz — no se pierden ni van al cementerio.</p>
+
+        <h3 class="form-nb-subtitle">🛡️ Desprender como Costo</h3>
+        <p class="form-nb-text">Muchos Xyz (ej. <a href="#" class="form-link" onclick="Formacion.openCard('Cyber Dragon Infinity'); return false;">Cyber Dragon Infinity</a>) piden desprender un material como costo de un efecto de negación. Igual que en Fusión/Sincronía: si el efecto es negado después, el material desprendido <strong>no vuelve</strong> — desprenderlo fue el costo, y ya se pagó antes de que el efecto resolviera o fuera negado.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Antes de comprometer una línea Xyz, revisa si tu pieza necesita desprender materiales para funcionar — si el Xyz se queda sin materiales, muchos de sus efectos dejan de estar disponibles aunque el monstruo siga en el campo.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('xyz-rulings')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Filtra en <strong>Buscador → ⚙ Filtros avanzados → Monstruo → Xyz</strong> para revisar el Rango exacto de tus piezas.
+            Documenta qué Xyz de tu línea depende de tener materiales adjuntos en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck','combos'); return false;">Mi Deck → 🧬 Línea de Combos</a>.
+        </p>
+    `; },
+
+    _topicLinkRulings: function () { return `
+        <h2 class="form-nb-title">Monstruos Link y sus Rulings</h2>
+        <p class="form-nb-text">Link redefinió el campo moderno: sin DEF, sin Posición de Defensa, y con flechas que determinan dónde puede colocarse el resto de tu Extra Deck. Entender esto es obligatorio para cualquier deck competitivo actual.</p>
+
+        <h3 class="form-nb-subtitle">⚔️ Sin DEF, Siempre en Ataque</h3>
+        <p class="form-nb-text">Los Monstruos Link no tienen DEF impresa y <strong>no pueden colocarse en Posición de Defensa</strong> — siempre están, a efectos prácticos, en Posición de Ataque. Cualquier efecto que dependa de "cambiar a Posición de Defensa" simplemente no aplica sobre ellos.</p>
+
+        <h3 class="form-nb-subtitle">🧭 Zonas de Monstruo Extra y Flechas de Link</h3>
+        <p class="form-nb-text">Sin ningún Monstruo Link en el campo, los monstruos de Extra Deck (Fusión, Sincronía, Xyz o Link) solo pueden colocarse en las <strong>Zonas de Monstruo Extra</strong> (compartidas con el rival). Una vez que tienes un Link en el campo, sus <strong>flechas</strong> "desbloquean" Zonas Principales específicas para que ahí también puedas colocar monstruos de Extra Deck.</p>
+
+        <h3 class="form-nb-subtitle">🔗 Co-Linkeo (Co-Linked)</h3>
+        <p class="form-nb-text">Dos Monstruos Link están <strong>co-linkeados</strong> cuando sus flechas se apuntan mutuamente entre sí. Varias cartas (propias del deck o genéricas) dan bonificaciones a monstruos co-linkeados — piezas como <a href="#" class="form-link" onclick="Formacion.openCard('Knightmare Phoenix'); return false;">Knightmare Phoenix</a> o <a href="#" class="form-link" onclick="Formacion.openCard('I:P Masquerena'); return false;">I:P Masquerena</a> se vuelven aún más fuertes en un board bien posicionado para maximizar el co-linkeo.</p>
+
+        <h3 class="form-nb-subtitle">📦 Materiales y Link Rating</h3>
+        <p class="form-nb-text">Por defecto necesitas un número de materiales igual al <strong>Link Rating</strong> del monstruo (salvo que su propio texto pida otra cosa). Igual que en Sincronía, los materiales van al cementerio por defecto — Link no usa el sistema de adjuntos de Xyz.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Al armar tu línea de combo, piensa las flechas de tus Link como un mapa de zonas — colocar mal un Link puede dejarte sin la Zona Principal libre que necesitas para tu siguiente Invocación de Extra Deck ese mismo turno.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('link-rulings')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Filtra en <strong>Buscador → ⚙ Filtros avanzados → Monstruo → Link</strong> para revisar el Link Rating y las flechas de tus piezas.
+            Planea el posicionamiento de tu board en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','experimentacion'); return false;">Simuladores → 🧪 Experimentación</a> antes de comprometerlo en un duelo real.
+        </p>
+    `; },
+
+    _topicPenduloRulings: function () { return `
+        <h2 class="form-nb-title">Monstruos Péndulo y sus Rulings</h2>
+        <p class="form-nb-text">Péndulo es la mecánica con la regla de reemplazo más distinta a todo lo demás: donde otros Extra Deck van al cementerio o quedan adjuntos, un Péndulo destruido tiene un destino propio que hay que memorizar aparte.</p>
+
+        <h3 class="form-nb-subtitle">🔄 La Regla de Reemplazo Péndulo</h3>
+        <p class="form-nb-text">Un Monstruo Péndulo destruido — ya sea en la <strong>Zona Péndulo</strong> (como si fuera Magia) o en la <strong>Zona de Monstruos</strong> (en batalla o por efecto) — <strong>no va al cementerio</strong>: va boca arriba al <strong>Extra Deck</strong>, salvo que una carta indique explícitamente otro destino. Esta regla aplica solo a destrucción, no a cualquier otra forma de salir del campo.</p>
+
+        <h3 class="form-nb-subtitle">📤 Cuándo NO Aplica la Regla de Reemplazo</h3>
+        <p class="form-nb-text">Si un Monstruo Péndulo se usa como <strong>material</strong> para otra invocación (Sincronía, Xyz, Link), sigue la regla de esa invocación — normalmente cementerio — <strong>no</strong> la regla de reemplazo Péndulo. La regla de reemplazo es específica de destrucción/envío al cementerio, no de "ser consumido como material".</p>
+
+        <h3 class="form-nb-subtitle">🎯 Escala y Zona Péndulo</h3>
+        <p class="form-nb-text">Colocar una carta Péndulo en la Zona Péndulo la trata como Magia Continua a efectos de destrucción/negación mientras esté ahí. Su valor de <strong>Escala</strong> (impreso en la carta, ej. <a href="#" class="form-link" onclick="Formacion.openCard('Odd-Eyes Pendulum Dragon'); return false;">Odd-Eyes Pendulum Dragon</a>) define, junto a la otra carta Péndulo en tu otra Zona Péndulo, el rango de Niveles que puedes Invocar Especialmente de forma simultánea.</p>
+
+        <h3 class="form-nb-subtitle">✨ Invocación Péndulo</h3>
+        <p class="form-nb-text">Una Invocación Péndulo Invoca Especialmente, de forma simultánea, monstruos desde tu <strong>mano</strong> y desde tu <strong>Extra Deck boca arriba</strong> (los que llegaron ahí por la regla de reemplazo), cuyo Nivel esté dentro del rango marcado por tus dos Escalas. Es, por defecto, una vez por turno — igual que cualquier otra invocación, salvo que un efecto amplíe esa cantidad.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">No confundas "va al Extra Deck boca arriba" con "está a salvo" — sigue siendo información pública y disponible para volver a Invocarse por Péndulo, pero también puede ser objetivo de cartas que interactúan con el Extra Deck rival.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('pendulo-rulings')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Filtra en <strong>Buscador → ⚙ Filtros avanzados → Monstruo → Pendulum</strong> para revisar Escala y Nivel de tus piezas Péndulo.
+        </p>
+    `; },
+
+    _topicEspecialesRulings: function () { return `
+        <h2 class="form-nb-title">Monstruos Especiales y sus Rulings</h2>
+        <p class="form-nb-text">Fuera de las invocaciones de Extra Deck, existen categorías de monstruo con reglas propias que se salen de lo intuitivo: Tokens, Monstruos Trampa y Monstruos Union. Confundirlas con un monstruo normal es un error clásico de principiante.</p>
+
+        <h3 class="form-nb-subtitle">👻 Tokens</h3>
+        <p class="form-nb-text">Un Token es un marcador, no una carta física. Cuando saldría del campo hacia cualquier otro lugar (cementerio, mano, Deck, baneadas), <strong>simplemente deja de existir</strong> — nunca pasa, ni siquiera brevemente, por ninguna otra zona. Sí son monstruos válidos para <strong>Tributo Ritual</strong>, salvo que la carta específica lo prohíba explícitamente — un error común es asumir que "no sirven para nada especial" más allá de bloquear ataques.</p>
+
+        <h3 class="form-nb-subtitle">🎴 Monstruos Trampa (Trap Monster)</h3>
+        <p class="form-nb-text">Mientras está boca abajo en la Zona de Magia/Trampa (Set), una carta de este tipo es únicamente una <strong>Carta de Trampa</strong> — no es monstruo todavía. Se convierte en monstruo solo en el momento exacto que su propio efecto lo especifica (normalmente al activarse y voltearse boca arriba). Ej: <a href="#" class="form-link" onclick="Formacion.openCard('Metal Reflect Slime'); return false;">Metal Reflect Slime</a>.</p>
+
+        <h3 class="form-nb-subtitle">🔗 Monstruos Union</h3>
+        <p class="form-nb-text">Un Monstruo Union puede equiparse a otro monstruo, tratándose como Magia de Equipo mientras dure el equipo. Si el monstruo equipado sale del campo, el Union <strong>no se va directo al cementerio</strong>: por regla general se Invoca Especialmente de vuelta al campo (si hay espacio disponible) en vez de perderse. Ej: <a href="#" class="form-link" onclick="Formacion.openCard('Assault Blackwing - Sohaya the Rain Storm'); return false;">Assault Blackwing - Sohaya the Rain Storm</a>.</p>
+
+        <h3 class="form-nb-subtitle">🏷️ "Tratado Como" (Treated As)</h3>
+        <p class="form-nb-text">Una carta cuyo texto dice "esta carta es siempre tratada como '[Nombre]'" (ej. <a href="#" class="form-link" onclick="Formacion.openCard('Buster Blader, the Destruction Swordmaster'); return false;">Buster Blader, the Destruction Swordmaster</a> tratada como "Buster Blader") <strong>solo cambia cómo la interpretan otros efectos que buscan ese nombre</strong> — su propio Tipo, ATK/DEF y clasificación de carta <strong>no cambian</strong> salvo que el texto también lo indique explícitamente.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Antes de asumir que un monstruo "muere" al salir del campo, revisa si es Token (deja de existir), Union (puede volver) o un nombre "tratado como" otro (puede activar soporte que no esperabas).</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('especiales-rulings')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Al abrir cualquier carta en <strong>Buscador → CardViewer</strong>, revisa "Carta:" para confirmar si es Trap Monster, Union u otra categoría especial antes de asumir su comportamiento.
+        </p>
+    `; },
+
+    _topicClasificacionArquetipos: function () { return `
+        <h2 class="form-nb-title">Clasificación de Arquetipos por Estrategia</h2>
+        <p class="form-nb-text">Antes de mirar cartas específicas, es útil clasificar cualquier deck (propio o rival) por su estrategia dominante. Esa etiqueta te dice, de entrada, qué tipo de matchup vas a jugar.</p>
+
+        <h3 class="form-nb-subtitle">💥 FTK y OTK</h3>
+        <ul class="form-nb-list">
+            <li><strong>FTK (First Turn Kill):</strong> ganar en el primerísimo turno del duelo, antes de que el rival tenga oportunidad de jugar. Históricamente muy restringido por Banlist por ser poco interactivo.</li>
+            <li><strong>OTK (One Turn Kill):</strong> ganar en un solo turno propio, sin importar en qué turno del duelo ocurra. Todo FTK es un OTK, pero no todo OTK es FTK.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🌀 Combo</h3>
+        <p class="form-nb-text">Busca desarrollar un board fuerte mediante muchas Invocaciones encadenadas en un solo turno explosivo. Su fortaleza es la presión inmediata; su debilidad clásica son las Handtraps y negaciones que cortan la cadena antes de completarla.</p>
+
+        <h3 class="form-nb-subtitle">🛡️ Control</h3>
+        <p class="form-nb-text">Busca desgastar recursos rivales durante varios turnos en vez de un desarrollo explosivo — remoción constante, negaciones, y ventaja de cartas acumulada. Gana el juego largo, no el turno 1.</p>
+
+        <h3 class="form-nb-subtitle">🔒 Stun</h3>
+        <p class="form-nb-text">Bloquea al rival mediante floodgates y Handtraps en vez de presentar un board grande — vuelve la partida injugable para el oponente en lugar de competir con presencia de campo.</p>
+
+        <h3 class="form-nb-subtitle">🎯 Por Qué Importa Clasificar</h3>
+        <p class="form-nb-text">Saber si enfrentas Combo, Control o Stun cambia directamente qué cartas conviene traer del Side Deck y cómo secuenciar tu turno — no es solo curiosidad, es información operativa para el matchup.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Un mismo arquetipo puede tener variantes de distinta estrategia (una lista más Combo, otra más Stun del mismo deck) — clasifica por la lista específica que vas a enfrentar, no solo por el nombre del arquetipo.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('clasificacion-arquetipos-estrategia')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Registra la estrategia dominante del rival en las notas de
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck'); return false;">Mi Deck → ⚔️ Historial de Enfrentamientos</a>
+            — te sirve para preparar el Side Deck la próxima vez que lo enfrentes.
+        </p>
+    `; },
+
+    _topicProbabilidadBasica: function () { return `
+        <h2 class="form-nb-title">Probabilidad Básica: El Grosor del Deck</h2>
+        <p class="form-nb-text">"Grosor del deck" es la forma competitiva de referirse a algo muy simple: cuántas cartas tiene tu Main Deck, y cómo eso afecta la probabilidad de abrir lo que necesitas.</p>
+
+        <h3 class="form-nb-subtitle">📉 Menos Cartas, Más Consistencia</h3>
+        <p class="form-nb-text">Los decks competitivos suelen construirse con exactamente <strong>40 cartas</strong> (el mínimo legal) porque cada carta agregada por encima del mínimo diluye la probabilidad relativa de que cualquier pieza específica aparezca en tu mano inicial. A menor cantidad total, mayor probabilidad de abrir tus piezas clave.</p>
+
+        <h3 class="form-nb-subtitle">🔢 Copias: El Salto No-Lineal de 1 a 2</h3>
+        <p class="form-nb-text">Entre agregar 1 copia adicional de una pieza clave y quitar 1 carta "muerta" del deck, generalmente pesa más lo primero: la probabilidad de abrir al menos 1 copia crece de forma <strong>no lineal</strong> con el número de copias. Pasar de 1 a 2 copias suele mover más la aguja que afinar el resto del deck en una sola carta.</p>
+
+        <h3 class="form-nb-subtitle">🎲 La Herramienta Correcta: Hipergeométrica</h3>
+        <p class="form-nb-text">La probabilidad de abrir una combinación específica en mano inicial se calcula con la distribución <strong>hipergeométrica</strong> sobre el deck actual — no con intuición ni con "me suele salir siempre". Esta es exactamente la lógica detrás de la tabla de confiabilidad que usa el Internal Score de la app (1 copia → 0.40, 2 → 0.65, 3 → 0.85, 4 → 0.90…).</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Antes de decidir "necesito una tercera copia de esta carta", calcula el salto real de probabilidad que te da — a veces el mismo espacio rinde más en una segunda copia de otra pieza distinta.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('probabilidad-basica-deck')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Calcula la probabilidad exacta de abrir tu combinación en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores','hipergeometria'); return false;">Simuladores → 🎲 Mulligan (Hipergeometría)</a>
+            — usa el modo <strong>Cálculo con Mis Decks</strong> para probar directamente sobre tu lista guardada, sin armar la combinación a mano.
+        </p>
+    `; },
+
+    _topicJugarAlrededorOuts: function () { return `
+        <h2 class="form-nb-title">Jugar Alrededor de Outs (Playing Around)</h2>
+        <p class="form-nb-text">Jugar bien tus cartas no alcanza si las secuencias mal — "jugar alrededor de un out" es la habilidad de anticipar la respuesta razonable del rival antes de exponer tu pieza más importante.</p>
+
+        <h3 class="form-nb-subtitle">🧠 Qué Significa</h3>
+        <p class="form-nb-text">Es secuenciar tu turno asumiendo que el rival puede tener una respuesta razonable (ej. <a href="#" class="form-link" onclick="Formacion.openCard('Ash Blossom & Joyous Spring'); return false;">Ash Blossom & Joyous Spring</a>, <a href="#" class="form-link" onclick="Formacion.openCard('Infinite Impermanence'); return false;">Infinite Impermanence</a>) — no la mejor mano posible para ti, pero tampoco el peor escenario imaginable. Es un balance entre riesgo real y probabilidad.</p>
+
+        <h3 class="form-nb-subtitle">⚖️ No Todo Out Merece la Misma Atención</h3>
+        <p class="form-nb-text">Jugar alrededor de outs muy improbables cuesta tempo y recursos innecesarios. Hay que ponderar la probabilidad real de que el rival tenga esa carta específica — no jugar con paranoia absoluta contra cualquier posibilidad teórica.</p>
+
+        <h3 class="form-nb-subtitle">🎣 Bait (Carnada)</h3>
+        <p class="form-nb-text">Comprometer primero el recurso menos valioso de tu línea para provocar que el rival gaste su negación ahí, dejando el camino libre para tu jugada realmente importante. Es la otra cara de la misma moneda: no solo jugar alrededor del out rival, sino inducirlo a gastarlo en el momento que a ti te conviene.</p>
+
+        <h3 class="form-nb-subtitle">🔗 Relación con Secuenciación</h3>
+        <p class="form-nb-text">Playing around es, en la práctica, Secuenciación aplicada con un objetivo específico: el orden en que juegas tus cartas determina exactamente qué recurso queda expuesto primero a la respuesta del rival.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Antes de comprometer tu pieza más importante, pregúntate: "si el rival tuviera la respuesta más común contra esto ahora mismo, ¿qué pasaría?" — si la respuesta te deja sin plan de juego, busca un orden distinto.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('jugar-alrededor-outs')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Revisa qué tan común es una carta en un arquetipo rival en <strong>Estadísticas → Poder de Cartas del Meta</strong>, en vez de adivinar.
+            Documenta los choke points de tu propia línea (dónde el rival puede cortarte) en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck','combos'); return false;">Mi Deck → 🧬 Línea de Combos</a>.
+        </p>
+    `; },
+
+    _topicRedundanciaLineas: function () { return `
+        <h2 class="form-nb-title">Redundancia y Líneas Alternativas de Combo</h2>
+        <p class="form-nb-text">Un deck no gana torneos con la línea de combo teóricamente más poderosa — gana con la línea que sobrevive a la interrupción real de un torneo. Ahí es donde entra la redundancia.</p>
+
+        <h3 class="form-nb-subtitle">🔁 Starter vs Extender</h3>
+        <p class="form-nb-text">Un <strong>Starter</strong> puede iniciar tu combo sin depender de otra carta previa. Un <strong>Extender</strong> generalmente necesita que el combo ya esté en marcha para ser útil — abierto solo, suele ser una carta muerta.</p>
+
+        <h3 class="form-nb-subtitle">🧩 Cartas No-Engine</h3>
+        <p class="form-nb-text">Son piezas independientes de la cadena de combo del deck, pero que cumplen una función genérica (Handtrap, remoción) — no dependen del engine principal ni lo alimentan, solo aportan interacción de valor genérico.</p>
+
+        <h3 class="form-nb-subtitle">🛡️ Por Qué la Redundancia Vale Más que el Poder Bruto</h3>
+        <p class="form-nb-text">Las partidas reales incluyen disrupción constante del rival. Una sola línea brillante pero frágil se rompe fácil ante un solo Handtrap o negación. Tener múltiples formas de llegar a un buen board — aunque cada una individualmente sea "menos óptima" — es más resiliente que depender de una única línea perfecta.</p>
+
+        <h3 class="form-nb-subtitle">⚠️ El Riesgo de No Tenerla</h3>
+        <p class="form-nb-text">Un deck con un solo Starter viable y sin líneas alternas sufre una alta tasa de manos muertas (bricks) si ese Starter es negado, descartado o simplemente no se abre en la mano inicial.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Al construir tu deck, pregúntate para cada choke point de tu línea principal: "si esto se rompe aquí, ¿tengo un plan B?". Si la respuesta es no, ese es tu próximo punto a reforzar con redundancia.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('redundancia-lineas-alternativas')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Mapea tus líneas alternas en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck','combos'); return false;">Mi Deck → 🧬 Línea de Combos</a>
+            usando las <strong>ramificaciones</strong> (combos hijos por choke point/variante) — es el registro explícito de tu redundancia real.
+        </p>
+    `; },
+
+    _topicPostboardPlanSide: function () { return `
+        <h2 class="form-nb-title">Postboard: Plan de Side por Matchup</h2>
+        <p class="form-nb-text">Conocer las reglas del Side Deck no es lo mismo que saber qué hacer con ellas. Esta lección es la estrategia: qué meter y qué sacar, matchup por matchup, antes de que empiece la partida 2.</p>
+
+        <h3 class="form-nb-subtitle">📋 Diferencia con "El Side Deck"</h3>
+        <p class="form-nb-text">La lección "El Side Deck" cubre las reglas de intercambio (límite de 15, timing entre partidas). <strong>Postboard</strong> cubre la estrategia real: qué cartas específicas conviene meter y sacar según el rival que tienes enfrente.</p>
+
+        <h3 class="form-nb-subtitle">🗑️ Qué Sacar</h3>
+        <p class="form-nb-text">Frente a un rival cuyo deck no usa cierta mecánica (ej. no tiene monstruos boca abajo), las cartas que dependen específicamente de esa mecánica quedarían muertas ese matchup — son candidatas directas a salir, liberando espacio para tech relevante.</p>
+
+        <h3 class="form-nb-subtitle">➕ Qué Meter Según el Perfil del Rival</h3>
+        <ul class="form-nb-list">
+            <li><strong>Contra Combo explosivo:</strong> floodgates y Handtraps adicionales para frenar el desarrollo, más que sumar ofensiva propia.</li>
+            <li><strong>Contra Control:</strong> cartas que resistan negación o robo masivo para superar la interrupción sostenida.</li>
+            <li><strong>Contra Stun:</strong> remoción de backrow/floodgates específica para no quedar bloqueado.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">📊 Información Como Insumo del Plan</h3>
+        <p class="form-nb-text">El <strong>Counter-Deck Score</strong> mide la capacidad Anti-META de tu deck — qué tan preparado está para interrumpir al meta cargado, usando los mismos pares mecánica/counter de Config → Counters. Es información directa para decidir qué tech traer del Side sin adivinar.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Define tu plan de side por matchup ANTES del torneo, no en la mesa entre partida 1 y 2 — improvisar bajo presión de tiempo lleva a decisiones peores que las que tomarías con calma.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('postboard-plan-side')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Revisa el historial y decklist de un rival específico en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck'); return false;">Mi Deck → ⚔️ Historial de Enfrentamientos</a> (con "Ver Deck" si cargaste su .ydk),
+            y consulta tu <strong>Counter-Deck Score</strong> en Estadísticas → Análisis de Deck para priorizar qué meter del Side.
+        </p>
+    `; },
+
+    _topicReglasTorneoJuez: function () { return `
+        <h2 class="form-nb-title">Reglas de Torneo y Llamado al Juez</h2>
+        <p class="form-nb-text">Saber jugar tu deck no basta en un torneo real — también hay que saber cuándo y cómo involucrar al juez para proteger tu partida de errores propios, del rival, o de infracciones.</p>
+
+        <h3 class="form-nb-subtitle">📜 Categorías Oficiales de Infracción</h3>
+        <p class="form-nb-text">La Política de Infracciones y Penalizaciones de Konami define categorías reales con subniveles de severidad — entre ellas: <strong>Deck/Deck List Errors</strong>, <strong>Drawing Extra Cards</strong>, <strong>Procedural Error</strong> y <strong>Unsporting Conduct</strong>. El documento completo está disponible públicamente en yugioh-card.com.</p>
+
+        <h3 class="form-nb-subtitle">🙋 Cuándo Llamar al Juez</h3>
+        <p class="form-nb-text">En cualquier momento que tengas dudas sobre una jugada, un ruling, o sospeches una infracción — <strong>antes</strong> de continuar jugando. Es más seguro pausar y llamar al juez ante la duda que seguir jugando y complicar la reversión de una jugada ya resuelta.</p>
+
+        <h3 class="form-nb-subtitle">🐌 Slow Play</h3>
+        <p class="form-nb-text">Tomarse un tiempo excesivo de forma deliberada o negligente para ganar ventaja (ej. llegar al límite de tiempo estando en mejor posición) es una infracción reconocida — sea intencional o no.</p>
+
+        <h3 class="form-nb-subtitle">🔀 Barajar y Cortar</h3>
+        <p class="form-nb-text">Tras barajar tu propio deck, tu rival tiene derecho a barajarlo y/o cortarlo antes de empezar el duelo — es parte del procedimiento estándar, no una cortesía opcional.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Una vez que el rival tomó una decisión basada en tu jugada (cedió prioridad, respondió), desandar esa secuencia sin un juez presente puede crear un problema de ruling mucho más grande que la jugada original. Llama al juez ANTES de intentar deshacer algo.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('reglas-torneo-juez')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Practica situaciones de torneo y llamado al juez con los tests teóricos en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('formacion','test'); return false;">Formación → 🧪 Test</a>.
+        </p>
+    `; },
+
+    _topicNotasDuranteDuelo: function () { return `
+        <h2 class="form-nb-title">Toma de Notas Durante un Duelo</h2>
+        <p class="form-nb-text">La diferencia entre un jugador intermedio y uno competitivo suele estar en la información que retiene durante la partida — no en memoria perfecta, sino en el hábito de anotar lo que importa.</p>
+
+        <h3 class="form-nb-subtitle">📝 Qué es el Scorekeeping</h3>
+        <p class="form-nb-text">Es llevar el conteo de LP y recursos clave (cartas en mano, cementerio, banlist relevante) por turno, tanto propios como del rival — no solo el resultado final, sino el estado del juego turno a turno.</p>
+
+        <h3 class="form-nb-subtitle">🔍 Trackear Recursos Rivales</h3>
+        <p class="form-nb-text">Anotar qué Handtraps o negaciones ya usó el rival te permite estimar con más precisión qué le puede quedar en mano, y jugar alrededor de eso con base en <strong>información real</strong> — no solo en probabilidad teórica. Conecta directo con la lección de Jugar Alrededor de Outs.</p>
+
+        <h3 class="form-nb-subtitle">📋 Qué Anotar</h3>
+        <ul class="form-nb-list">
+            <li>Cartas clave activadas o vistas por ambos jugadores.</li>
+            <li>Negaciones gastadas por ambos lados de la mesa.</li>
+            <li>El estado del board turno a turno, si el duelo se vuelve complejo.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">✅ Es una Práctica Permitida</h3>
+        <p class="form-nb-text">Tomar notas propias (papel/lápiz) durante un duelo de torneo es una práctica común y aceptada — el límite está en no compartir ni exponer información que debería permanecer privada (como tu propia mano) de forma indebida.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Anotar en vivo durante la partida es una habilidad de mesa distinta al registro post-duelo (Optimización/Matchups) — una complementa a la otra, ninguna reemplaza a la otra.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('notas-durante-duelo')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Registra el resultado y contexto DESPUÉS de cada duelo en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck'); return false;">Mi Deck → 🎯 Optimización</a> y en Matchups (notas por rival) —
+            complementa, sin reemplazar, tu toma de notas en vivo durante los turnos.
+        </p>
+    `; },
+
+    _topicManejoRelojTiempo: function () { return `
+        <h2 class="form-nb-title">Manejo del Reloj y Tiempo de Ronda</h2>
+        <p class="form-nb-text">Las rondas de torneo tienen un límite de tiempo fijo. No manejarlo bien puede costarte un match que ibas ganando — o darte una salida honesta cuando ibas perdiendo.</p>
+
+        <h3 class="form-nb-subtitle">⏱️ Por Qué Importa</h3>
+        <p class="form-nb-text">Al agotarse el tiempo de ronda se activan reglas especiales de <strong>Turnos Adicionales</strong> (Time Extension) que pueden cambiar radicalmente tu plan de juego — jugar de forma distinta (más agresivo, más conservador) según cuánto tiempo quede puede ser la diferencia entre ganar, perder o empatar.</p>
+
+        <h3 class="form-nb-subtitle">🚫 Ventaja Legítima vs Slow Play</h3>
+        <p class="form-nb-text">Si vas ganando claramente en LP y el tiempo se agota, lo correcto es jugar a tu ritmo normal — la ventaja debe ganarse jugando, no estirando el reloj deliberadamente. Manipular el tiempo a propósito es <strong>Slow Play</strong>, una infracción sancionable (ver Reglas de Torneo y Llamado al Juez).</p>
+
+        <h3 class="form-nb-subtitle">🏳️ Conceder un Juego por Presión de Tiempo</h3>
+        <p class="form-nb-text">Cuando el estado del juego hace matemáticamente improbable ganar antes de que se acabe el tiempo, y prolongarlo solo reduce tus chances en los Juegos restantes del match, ceder ese Juego ya comprometido puede ser la decisión correcta — no una rendición emocional, sino un cálculo de recursos.</p>
+
+        <h3 class="form-nb-subtitle">🔁 Relación con Bo1 vs Bo3</h3>
+        <p class="form-nb-text">La presión de tiempo afecta distinto según el formato: en <strong>Bo1</strong> cada minuto cuenta para un único juego decisivo; en <strong>Bo3</strong> hay margen para sacrificar tiempo en un Juego y compensarlo en los siguientes.</p>
+
+        <h3 class="form-nb-subtitle">👨‍⚖️ Quién Controla el Reloj</h3>
+        <p class="form-nb-text">El manejo oficial del tiempo de ronda y las reglas de Turnos Adicionales son responsabilidad del juez/organización del torneo, conforme a la Política de Torneos vigente de Konami — el jugador debe estar atento, pero no determina las reglas de tiempo.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Ten siempre noción aproximada del tiempo restante en tus rondas competitivas — decisiones que son claramente correctas con tiempo de sobra pueden no serlo si quedan 2 minutos y varios Juegos por jugar.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('manejo-reloj-tiempo')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Usa <strong>Simuladores → ⚔️ Duelo en Vivo</strong> con el Cronómetro Estándar o el Cronómetro Master Duel (temporizador por turno) para practicar tu ritmo de juego bajo presión de tiempo real.
+        </p>
+    `; },
     _topicFusionRulings: function () { return `
         <h2 class="form-nb-title">Monstruos Fusión y sus Rulings</h2>
         <p class="form-nb-text">La Fusión es la mecánica de Extra Deck más antigua del juego, pero sus rulings específicos (a dónde van los materiales, qué pasa si te niegan la invocación, qué es un sustituto válido) son la base para entender todas las demás invocaciones de Extra Deck.</p>
