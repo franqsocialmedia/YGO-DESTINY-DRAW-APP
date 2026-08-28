@@ -1292,24 +1292,173 @@ META_HISTORY: {
         ],
     },
     _renderHistoriaTab: function () {
-        if (!this.historiaSubTab) this.historiaSubTab = 'tcg';
-        const sub = this.historiaSubTab;
+        if (!this.historiaInnerTab) this.historiaInnerTab = 'historia';
+        const inner = this.historiaInnerTab;
         return `
             <div class="form-topic-container">
                 <div class="form-notebook form-notebook--test">
                     <h2 class="form-nb-title">📜 Historia del Meta</h2>
-                    <p class="form-nb-text">Recorrido del metagame competitivo de Yu-Gi-Oh!, dividido en TCG, OCG y Campeonato Mundial. No existe una API para esto — es un registro curado a mano. Fechas y descripciones de eras son aproximadas (consenso de la comunidad competitiva); el listado de Mundiales sí son resultados verificados. Se puede ampliar editando <code>Formacion.META_HISTORY</code> en el código.</p>
+                    <p class="form-nb-text">Dos líneas informativas: <strong>Historia</strong> (eras TCG/OCG/Master Duel + Mundiales, registro curado a mano) y <strong>Resultados</strong> (Top Cut de eventos oficiales, obtenido on-demand desde Yugipedia — igual mecanismo que el Lore de cartas).</p>
                     <div class="form-level-nav">
-                        <button class="form-level-btn${sub === 'tcg' ? ' active' : ''}" onclick="Formacion.switchHistoriaSub('tcg')">🇺🇸 TCG</button>
-                        <button class="form-level-btn${sub === 'ocg' ? ' active' : ''}" onclick="Formacion.switchHistoriaSub('ocg')">🇯🇵 OCG</button>
-                        <button class="form-level-btn${sub === 'md' ? ' active' : ''}" onclick="Formacion.switchHistoriaSub('md')">🎮 Master Duel</button>
-                        <button class="form-level-btn${sub === 'worlds' ? ' active' : ''}" onclick="Formacion.switchHistoriaSub('worlds')">🏆 Mundiales</button>
+                        <button class="form-level-btn${inner === 'historia' ? ' active' : ''}" onclick="Formacion.switchHistoriaInner('historia')">📖 Historia</button>
+                        <button class="form-level-btn${inner === 'resultados' ? ' active' : ''}" onclick="Formacion.switchHistoriaInner('resultados')">🏆 Resultados</button>
                     </div>
-                    ${sub === 'worlds' ? this._renderWorldsHistory()
-                        : sub === 'md' ? this._renderEraHistory('md') + this._renderMDChampions()
-                        : this._renderEraHistory(sub)}
+                    ${inner === 'resultados' ? this._renderResultadosTab() : this._renderHistoriaInner()}
                 </div>
             </div>
+        `;
+    },
+
+    switchHistoriaInner: function (tab) {
+        this.historiaInnerTab = tab;
+        const content = document.getElementById('form-tab-content');
+        if (content) content.innerHTML = this._renderCurrentTab();
+    },
+
+    _renderHistoriaInner: function () {
+        if (!this.historiaSubTab) this.historiaSubTab = 'tcg';
+        const sub = this.historiaSubTab;
+        return `
+            <p class="form-nb-text">Fechas y descripciones de eras son aproximadas (consenso de la comunidad competitiva); el listado de Mundiales sí son resultados verificados. Se puede ampliar editando <code>Formacion.META_HISTORY</code>.</p>
+            <div class="form-level-nav" style="margin-top:6px;">
+                <button class="form-level-btn${sub === 'tcg' ? ' active' : ''}" onclick="Formacion.switchHistoriaSub('tcg')">🇺🇸 TCG</button>
+                <button class="form-level-btn${sub === 'ocg' ? ' active' : ''}" onclick="Formacion.switchHistoriaSub('ocg')">🇯🇵 OCG</button>
+                <button class="form-level-btn${sub === 'md' ? ' active' : ''}" onclick="Formacion.switchHistoriaSub('md')">🎮 Master Duel</button>
+                <button class="form-level-btn${sub === 'worlds' ? ' active' : ''}" onclick="Formacion.switchHistoriaSub('worlds')">🏆 Mundiales</button>
+            </div>
+            ${sub === 'worlds' ? this._renderWorldsHistory()
+                : sub === 'md' ? this._renderEraHistory('md') + this._renderMDChampions()
+                : this._renderEraHistory(sub)}
+        `;
+    },
+
+    // ── Resultados de eventos (Yugipedia, scraping on-demand tipo Lore) ──
+    EVENT_TYPE_LABELS: {
+        worlds: '🏆 Mundiales',
+        md: '🎮 Master Duel',
+        ycs: '🌍 YCS',
+        nacionales: '🏳 Nacionales/Regionales',
+    },
+
+    EVENTS_INDEX: [
+        // type: 'worlds' | 'md' | 'ycs' | 'nacionales'
+        // page: título EXACTO de la página en Yugipedia — verificar/ajustar si el fetch no encuentra tabla.
+        { id: 'w2025', title: 'World Championship 2025', type: 'worlds', page: 'World Championship 2025', date: '2025-08-01' },
+        { id: 'w2024', title: 'World Championship 2024', type: 'worlds', page: 'World Championship 2024', date: '2024-08-01' },
+        { id: 'w2023', title: 'World Championship 2023', type: 'worlds', page: 'World Championship 2023', date: '2023-08-01' },
+        { id: 'w2019', title: 'World Championship 2019', type: 'worlds', page: 'World Championship 2019', date: '2019-08-01' },
+        { id: 'w2018', title: 'World Championship 2018', type: 'worlds', page: 'World Championship 2018', date: '2018-08-01' },
+        { id: 'w2017', title: 'World Championship 2017', type: 'worlds', page: 'World Championship 2017', date: '2017-08-01' },
+        { id: 'w2016', title: 'World Championship 2016', type: 'worlds', page: 'World Championship 2016', date: '2016-08-01' },
+        { id: 'mdw2025', title: 'Mundial Master Duel 2025', type: 'md', page: 'Master Duel World Championship 2025', date: '2025-08-01' },
+        { id: 'mdw2023', title: 'Mundial Master Duel 2023', type: 'md', page: 'Master Duel World Championship 2023', date: '2023-08-01' },
+        // YCS y Nacionales/Regionales: pendientes de curar (agregar { id, title, type:'ycs'|'nacionales', page, date }).
+    ],
+
+    _renderResultadosTab: function () {
+        if (!this.resultadosType) this.resultadosType = 'worlds';
+        const type = this.resultadosType;
+        const types = ['worlds', 'md', 'ycs', 'nacionales'];
+        const events = this.EVENTS_INDEX
+            .filter(e => e.type === type)
+            .slice()
+            .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+        return `
+            <p class="form-nb-text">Clic en un evento trae su Top Cut real desde Yugipedia. Puede tardar unos segundos o no encontrar tabla si la página no sigue el formato esperado — en ese caso se ofrece el link directo.</p>
+            <div class="form-level-nav" style="margin-top:6px;">
+                ${types.map(t => `
+                    <button class="form-level-btn${type === t ? ' active' : ''}" onclick="Formacion.switchResultadosType('${t}')">${this.EVENT_TYPE_LABELS[t]}</button>
+                `).join('')}
+            </div>
+            <div id="form-resultados-list" style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">
+                ${events.length ? events.map(e => `
+                    <div class="form-event-row" onclick="Formacion.openEventResults('${e.id}')"
+                         style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,0.04);border-radius:6px;flex-wrap:wrap;">
+                        <span style="min-width:70px;font-weight:700;color:#FFD700;font-size:0.85rem;">${(e.date || '').slice(0, 7)}</span>
+                        <span style="flex:1;font-size:0.85rem;color:#eee;">${e.title}</span>
+                        <span style="font-size:0.78rem;color:rgba(255,255,255,0.5);">Ver Top Cut ▸</span>
+                    </div>
+                `).join('') : `<p class="form-nb-text">Sin eventos cargados para esta categoría. Agregar entradas en <code>Formacion.EVENTS_INDEX</code>.</p>`}
+            </div>
+        `;
+    },
+
+    switchResultadosType: function (type) {
+        this.resultadosType = type;
+        const content = document.getElementById('form-tab-content');
+        if (content) content.innerHTML = this._renderCurrentTab();
+    },
+
+    openEventResults: function (id) {
+        const ev = this.EVENTS_INDEX.find(e => e.id === id);
+        if (!ev || document.getElementById('cv-lore-overlay')) return;
+        if (!window.CardViewer || typeof CardViewer._fetchWikitext !== 'function') { alert('Módulo de Yugipedia no disponible.'); return; }
+
+        const overlay = document.createElement('div');
+        overlay.id = 'cv-lore-overlay';
+        overlay.className = 'cv-lore-overlay';
+        overlay.innerHTML = `
+            <div class="cv-lore-modal">
+                <button class="cv-lore-close" onclick="document.getElementById('cv-lore-overlay').remove()">✕</button>
+                <div class="cv-lore-title">🏆 ${ev.title}</div>
+                <div id="cv-lore-loading" class="cv-lore-loading">Buscando Top Cut en Yugipedia...</div>
+                <div id="cv-lore-content" style="display:none"></div>
+                <div class="cv-lore-source">Fuente: Yugipedia — "${ev.page}"</div>
+            </div>`;
+        document.body.appendChild(overlay);
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+        CardViewer._fetchWikitext(ev.page).then(wt => {
+            const loadingEl = document.getElementById('cv-lore-loading');
+            const contentEl = document.getElementById('cv-lore-content');
+            if (!contentEl) return;
+            const table = wt ? Formacion._parseTopCutTable(wt) : null;
+            if (table && table.rows.length) {
+                contentEl.innerHTML = Formacion._renderTopCutTable(table);
+            } else {
+                const url = `https://yugipedia.com/wiki/${encodeURIComponent(ev.page.replace(/ /g, '_'))}`;
+                contentEl.innerHTML = `<p style="font-size:0.85rem;color:rgba(255,255,255,0.7);">No se pudo extraer una tabla de Top Cut automáticamente. <a href="${url}" target="_blank" rel="noopener" style="color:#FFD700;">Ver página completa en Yugipedia ↗</a></p>`;
+            }
+            if (loadingEl) loadingEl.style.display = 'none';
+            contentEl.style.display = '';
+        });
+    },
+
+    _parseTopCutTable: function (wikitext) {
+        const headingRe = /^(={2,6})\s*(top cut|final standings|results|standings)\s*\1\s*$/gim;
+        const m = headingRe.exec(wikitext);
+        const searchFrom = m ? m.index : 0;
+        const tableStart = wikitext.indexOf('{|', searchFrom);
+        if (tableStart === -1) return null;
+        const tableEnd = wikitext.indexOf('|}', tableStart);
+        if (tableEnd === -1) return null;
+        const block = wikitext.slice(tableStart, tableEnd);
+
+        const rowsRaw = block.split(/\n\|-/).slice(1);
+        let headers = null;
+        const rows = [];
+        rowsRaw.forEach(chunk => {
+            const cells = chunk
+                .split(/\n\s*(?:\|\||!!|\||!)\s*/)
+                .map(c => CardViewer._wikitextToPlain(c.replace(/^\n/, '')).trim())
+                .filter(c => c.length);
+            if (!cells.length) return;
+            if (!headers && chunk.includes('!')) { headers = cells; return; }
+            rows.push(cells);
+        });
+        if (!rows.length) return null;
+        return { headers: headers || [], rows: rows.slice(0, 32) };
+    },
+
+    _renderTopCutTable: function (table) {
+        return `
+            <table class="form-topcut-table" style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                ${table.headers.length ? `<thead><tr>${table.headers.map(h => `<th style="text-align:left;padding:4px 8px;color:#FFD700;border-bottom:1px solid rgba(255,255,255,0.15);">${h}</th>`).join('')}</tr></thead>` : ''}
+                <tbody>
+                    ${table.rows.map(r => `<tr>${r.map(c => `<td style="padding:4px 8px;color:#eee;border-bottom:1px solid rgba(255,255,255,0.06);">${c}</td>`).join('')}</tr>`).join('')}
+                </tbody>
+            </table>
         `;
     },
 
