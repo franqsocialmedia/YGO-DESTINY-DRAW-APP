@@ -535,10 +535,18 @@
     .hiper-res-grid      { grid-template-columns: 1fr; }
     .hiper-chart-area    { max-width: 100%; }
 
-    /* Experimentación: sidebar oculta por defecto, activar con scroll */
+    /* Experimentación: sidebar acoplable/desacoplable en móvil */
     .exp-body    { flex-direction: column; }
-    .exp-sidebar { flex: none; width: 100%; max-height: 200px; }
-    .exp-card-list { max-height: 160px; }
+    .exp-sidebar {
+        flex: none;
+        width: 100%;
+        max-height: 44px;         /* acoplada: solo se ve el título */
+        overflow: hidden;
+        transition: max-height .2s ease;
+    }
+    .exp-sidebar.exp-sidebar-open { max-height: 220px; }
+    .exp-sidebar-toggle { display: inline-block; }
+    .exp-card-list { max-height: 170px; }
 
     /* Winrate: columnas en fila en móvil */
     .sim-wr-wrap { flex-direction: column; }

@@ -3224,7 +3224,8 @@ const Experimentacion = {
     _instances:    [],
     _dragging:     null,
     _dsCache:      { saved: [], engines: [], meta: [] },
-    _listGroups: [],
+      _listGroups: [],
+    _sidebarOpen: false,   // móvil: colapsada por defecto (acoplada)
 
     // ── Punto de entrada ────────────────────────────────────────
     renderInto: function (container) {
@@ -3266,7 +3267,10 @@ const Experimentacion = {
 
     <!-- Lista lateral -->
     <div class="exp-sidebar" id="exp-sidebar">
-      <div class="exp-sidebar-title">🃏 Cartas</div>
+      <div class="exp-sidebar-title" onclick="Experimentacion.toggleSidebar()">
+        <span>🃏 Cartas</span>
+        <span class="exp-sidebar-toggle" id="exp-sidebar-toggle">▸</span>
+      </div>
       <div class="exp-card-list" id="exp-card-list">
         <div class="exp-list-empty">Sin cartas añadidas.</div>
       </div>
@@ -3288,8 +3292,16 @@ const Experimentacion = {
         if (canvas) canvas.style.transform = `scale(${this._zoom})`;
         const lbl = document.getElementById('exp-zoom-val');
         if (lbl) lbl.textContent = `${Math.round(this._zoom * 100)}%`;
-    },
+       },
 
+    // ── Acoplar/desacoplar lista (móvil) ──────────────────────────
+    toggleSidebar: function () {
+        this._sidebarOpen = !this._sidebarOpen;
+        const el  = document.getElementById('exp-sidebar');
+        const ico = document.getElementById('exp-sidebar-toggle');
+        if (el)  el.classList.toggle('exp-sidebar-open', this._sidebarOpen);
+        if (ico) ico.textContent = this._sidebarOpen ? '▾' : '▸';
+    },
     // ── Añadir carta ────────────────────────────────────────────
     _addCard: function (card) {
         const CARD_W = 86, CARD_H = 124, GAP = 10, COLS = 8;
