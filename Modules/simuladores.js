@@ -4238,7 +4238,65 @@ const Gauntlet = {
         this.save();
         this._refreshTests();
     },
+    // ── Realizar Test: abre Zona de Práctica con el Deck/Engine del pool
+    //    en P1 y las cartas de la Prueba en Otros ─────────────
+    runTestInPractica: function (testId) {
+        const t = this.tests.find(x => x.id === testId);
+        if (!t) return;
+        if (!window.Navigation || !window.Torneo || !window.ZonaPractica) return;
 
+        let deckCards = null;
+        if (this.poolType === 'deck') {
+            deckCards = (window.Deck && window.Deck.name === this.poolKey)
+                ? window.Deck.cards
+                : window.Deck?.getSavedDecks().find(d => d.name === this.poolKey)?.cards;
+        } else if (this.poolType === 'engine') {
+            deckCards = window.Engines?.getAll().find(e => e.name === this.poolKey)?.cards;
+        } else {
+            deckCards = this.pool;
+        }
+        if (!deckCards) { alert('No se encontró el Deck/Engine de este pool para cargar en Zona de Práctica.'); return; }
+
+        // Pool manual no trae 'location' por carta → todo va a Main por defecto
+        const normCards = {};
+        Object.entries(deckCards).forEach(([id, item]) => {
+            const loc = ['main', 'extra', 'side'].includes(item.location) ? item.location : 'main';
+            normCards[id] = { ...item, location: loc };
+        });
+
+        Navigation.showTab('simuladores');
+        setTimeout(() => {
+            Torneo.showSimTab('practica');
+            setTimeout(() => {
+                if (ZonaPractica._activePlayer !== 'P1') ZonaPractica.switchPlayer('P1', { silent: true });
+                ZonaPractica._dsCache._direct = [{ name: this.poolKey, cards: normCards }];
+                ZonaPractica._loadDeck('_direct', 0);
+                this._injectTestCardsAsOthers(t);
+            }, 80);
+        }, 60);
+    },
+
+    _injectTestCardsAsOthers: async function (t) {
+        const ids = (t.cardIds || []).filter(id => id != null);
+        if (!ids.length || !window.ZonaPractica) return;
+        try {
+            const res  = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?id=${ids.join(',')}`);
+            const data = await res.json();
+            const byId = {};
+            (data.data || []).forEach(c => { byId[String(c.id)] = c; });
+            ids.forEach(id => {
+                const full = byId[id] || {
+                    id, name: t.cards[id]?.name || `#${id}`,
+                    card_images: [{ image_url_small: t.cards[id]?.img || '' }]
+                };
+                ZonaPractica.other.push({ card: full, faceUp: true, rotation: 0 });
+            });
+            ZonaPractica._renderAllZones();
+            ZonaPractica._addLog(`🥊 Prueba "${t.title}" cargada en Otros (${ids.length} carta${ids.length === 1 ? '' : 's'}).`);
+        } catch (e) {
+            console.warn('[Gauntlet] Error cargando cartas de la Prueba en Otros:', e);
+        }
+    },
     _refreshTests: function () {
         const el = document.getElementById('gnt-tests-list');
         if (el) el.innerHTML = this._renderTests();
@@ -4260,6 +4318,7 @@ const Gauntlet = {
                 <div class="gnt-test-header">
                     <span class="gnt-test-title">${t.title}</span>
                     <div class="gnt-test-header-btns">
+                        <button class="gnt-btn-icon" onclick="Gauntlet.runTestInPractica('${t.id}')" title="Realizar Test en Zona de Práctica">⚔️</button>
                         <button class="gnt-btn-icon" onclick="Gauntlet.renameTest('${t.id}')" title="Renombrar">✏️</button>
                         <button class="gnt-btn-icon gnt-btn-icon-danger" onclick="Gauntlet.removeTest('${t.id}')" title="Eliminar">✕</button>
                     </div>
