@@ -1334,55 +1334,100 @@ META_HISTORY: {
 
     // ── Resultados de eventos (Yugipedia, scraping on-demand tipo Lore) ──
     EVENT_TYPE_LABELS: {
-        worlds: '🏆 Mundiales',
-        md: '🎮 Master Duel',
-        ycs: '🌍 YCS',
-        nacionales: '🏳 Nacionales/Regionales',
-    },
+    worlds: '🏆 Mundiales',
+    md: '🎮 Master Duel',
+    ycs: '🌍 YCS',
+    nacionales: '🏳 Nacionales/Regionales/Otros',
+},
 
-    EVENTS_INDEX: [
-        // type: 'worlds' | 'md' | 'ycs' | 'nacionales'
-        // page: título EXACTO de la página en Yugipedia — verificar/ajustar si el fetch no encuentra tabla.
-        { id: 'w2025', title: 'World Championship 2025', type: 'worlds', page: 'World Championship 2025', date: '2025-08-01' },
-        { id: 'w2024', title: 'World Championship 2024', type: 'worlds', page: 'World Championship 2024', date: '2024-08-01' },
-        { id: 'w2023', title: 'World Championship 2023', type: 'worlds', page: 'World Championship 2023', date: '2023-08-01' },
-        { id: 'w2019', title: 'World Championship 2019', type: 'worlds', page: 'World Championship 2019', date: '2019-08-01' },
-        { id: 'w2018', title: 'World Championship 2018', type: 'worlds', page: 'World Championship 2018', date: '2018-08-01' },
-        { id: 'w2017', title: 'World Championship 2017', type: 'worlds', page: 'World Championship 2017', date: '2017-08-01' },
-        { id: 'w2016', title: 'World Championship 2016', type: 'worlds', page: 'World Championship 2016', date: '2016-08-01' },
-        { id: 'mdw2025', title: 'Mundial Master Duel 2025', type: 'md', page: 'Master Duel World Championship 2025', date: '2025-08-01' },
-        { id: 'mdw2023', title: 'Mundial Master Duel 2023', type: 'md', page: 'Master Duel World Championship 2023', date: '2023-08-01' },
-        // YCS y Nacionales/Regionales: pendientes de curar (agregar { id, title, type:'ycs'|'nacionales', page, date }).
-    ],
+YGORG_BASE: 'https://ygorganization.com/wp-json/wp/v2',
+YGORG_CATEGORY_SLUG: 'competitive-deck', // https://ygorganization.com/category/decklists/competitive-deck/
+
+_ygorgFetch: function (path) {
+    const url = `${this.YGORG_BASE}${path}`;
+    return fetch(url)
+        .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+        .catch(err => {
+            console.warn('[Formacion] Fetch directo a YGOrganization falló, probando proxy CORS:', err);
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+            return fetch(proxyUrl).then(r => r.ok ? r.json() : null).catch(() => null);
+        });
+},
+
+_classifyEventType: function (title) {
+    const t = (title || '').toLowerCase();
+    if (/world championship|worlds\s+\d{4}/.test(t)) return 'worlds';
+    if (/master duel/.test(t)) return 'md';
+    if (/\bycs\b/.test(t)) return 'ycs';
+    return 'nacionales';
+},
+
+_loadResultadosPosts: function () {
+    if (this._resultadosPosts) return Promise.resolve(this._resultadosPosts);
+    if (this._resultadosPromise) return this._resultadosPromise;
+
+    const catStep = this._ygorgCatId
+        ? Promise.resolve(this._ygorgCatId)
+        : this._ygorgFetch(`/categories?slug=${this.YGORG_CATEGORY_SLUG}`)
+            .then(cats => { this._ygorgCatId = (cats && cats[0]) ? cats[0].id : null; return this._ygorgCatId; });
+
+    this._resultadosPromise = catStep.then(catId => {
+        const catParam = catId ? `&categories=${catId}` : '';
+        return this._ygorgFetch(`/posts?per_page=60&orderby=date&order=desc${catParam}&_fields=id,date,link,title`);
+    }).then(posts => {
+        this._resultadosPosts = (posts || []).map(p => ({
+            id: p.id,
+            title: p.title ? p.title.rendered.replace(/&#8217;|&#039;/g, "'").replace(/&amp;/g, '&') : '(sin título)',
+            link: p.link,
+            date: (p.date || '').slice(0, 10),
+            type: this._classifyEventType(p.title ? p.title.rendered : ''),
+        }));
+        return this._resultadosPosts;
+    }).catch(() => { this._resultadosPosts = []; return []; });
+
+    return this._resultadosPromise;
+},
+
+    
 
     _renderResultadosTab: function () {
-        if (!this.resultadosType) this.resultadosType = 'worlds';
-        const type = this.resultadosType;
-        const types = ['worlds', 'md', 'ycs', 'nacionales'];
-        const events = this.EVENTS_INDEX
-            .filter(e => e.type === type)
-            .slice()
-            .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    if (!this.resultadosType) this.resultadosType = 'worlds';
+    const type = this.resultadosType;
+    const types = ['worlds', 'md', 'ycs', 'nacionales'];
 
-        return `
-            <p class="form-nb-text">Clic en un evento trae su Top Cut real desde Yugipedia. Puede tardar unos segundos o no encontrar tabla si la página no sigue el formato esperado — en ese caso se ofrece el link directo.</p>
-            <div class="form-level-nav" style="margin-top:6px;">
-                ${types.map(t => `
-                    <button class="form-level-btn${type === t ? ' active' : ''}" onclick="Formacion.switchResultadosType('${t}')">${this.EVENT_TYPE_LABELS[t]}</button>
-                `).join('')}
-            </div>
-            <div id="form-resultados-list" style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">
-                ${events.length ? events.map(e => `
-                    <div class="form-event-row" onclick="Formacion.openEventResults('${e.id}')"
+    if (!this._resultadosPosts) {
+        this._loadResultadosPosts().then(() => {
+            const content = document.getElementById('form-tab-content');
+            if (content && this.activeTab === 'historia' && this.historiaInnerTab === 'resultados') {
+                content.innerHTML = this._renderCurrentTab();
+            }
+        });
+    }
+
+    const events = (this._resultadosPosts || [])
+        .filter(e => e.type === type)
+        .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    return `
+        <p class="form-nb-text">Top Cuts y decklists de eventos oficiales, en vivo desde <a href="https://ygorganization.com/category/decklists/competitive-deck/" target="_blank" rel="noopener" style="color:#FFD700;">YGOrganization</a> (cobertura competitiva TCG/OCG/Master Duel). Clic en un evento para ver el detalle de Top Cut.</p>
+        <div class="form-level-nav" style="margin-top:6px;">
+            ${types.map(t => `<button class="form-level-btn${type === t ? ' active' : ''}" onclick="Formacion.switchResultadosType('${t}')">${this.EVENT_TYPE_LABELS[t]}</button>`).join('')}
+        </div>
+        <div id="form-resultados-list" style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">
+            ${!this._resultadosPosts ? `<p class="form-nb-text">⏳ Cargando eventos desde YGOrganization...</p>`
+                : events.length ? events.map(e => `
+                    <div class="form-event-row" onclick="Formacion.openEventResults(${e.id})"
                          style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,0.04);border-radius:6px;flex-wrap:wrap;">
-                        <span style="min-width:70px;font-weight:700;color:#FFD700;font-size:0.85rem;">${(e.date || '').slice(0, 7)}</span>
+                        <span style="min-width:70px;font-weight:700;color:#FFD700;font-size:0.85rem;">${e.date}</span>
                         <span style="flex:1;font-size:0.85rem;color:#eee;">${e.title}</span>
                         <span style="font-size:0.78rem;color:rgba(255,255,255,0.5);">Ver Top Cut ▸</span>
                     </div>
-                `).join('') : `<p class="form-nb-text">Sin eventos cargados para esta categoría. Agregar entradas en <code>Formacion.EVENTS_INDEX</code>.</p>`}
-            </div>
-        `;
-    },
+                `).join('') : `<p class="form-nb-text">Sin eventos clasificados en esta categoría entre los últimos publicados.</p>
+                    <button class="form-level-btn" onclick="Formacion._resultadosPosts=null; Formacion._resultadosPromise=null; Formacion.switchResultadosType('${type}')">🔄 Recargar</button>`
+            }
+        </div>
+    `;
+},
 
     switchResultadosType: function (type) {
         this.resultadosType = type;
@@ -1390,10 +1435,9 @@ META_HISTORY: {
         if (content) content.innerHTML = this._renderCurrentTab();
     },
 
-    openEventResults: function (id) {
-        const ev = this.EVENTS_INDEX.find(e => e.id === id);
+        openEventResults: function (postId) {
+        const ev = (this._resultadosPosts || []).find(e => e.id === postId);
         if (!ev || document.getElementById('cv-lore-overlay')) return;
-        if (!window.CardViewer || typeof CardViewer._fetchWikitext !== 'function') { alert('Módulo de Yugipedia no disponible.'); return; }
 
         const overlay = document.createElement('div');
         overlay.id = 'cv-lore-overlay';
@@ -1402,61 +1446,58 @@ META_HISTORY: {
             <div class="cv-lore-modal">
                 <button class="cv-lore-close" onclick="document.getElementById('cv-lore-overlay').remove()">✕</button>
                 <div class="cv-lore-title">🏆 ${ev.title}</div>
-                <div id="cv-lore-loading" class="cv-lore-loading">Buscando Top Cut en Yugipedia...</div>
+                <div id="cv-lore-loading" class="cv-lore-loading">Buscando Top Cut en YGOrganization...</div>
                 <div id="cv-lore-content" style="display:none"></div>
-                <div class="cv-lore-source">Fuente: Yugipedia — "${ev.page}"</div>
+                <div class="cv-lore-source"><a href="${ev.link}" target="_blank" rel="noopener" style="color:#FFD700;">Ver artículo completo (decklists) ↗</a></div>
             </div>`;
         document.body.appendChild(overlay);
         overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
 
-        CardViewer._fetchWikitext(ev.page).then(wt => {
+        this._ygorgFetch(`/posts/${ev.id}?_fields=content`).then(post => {
             const loadingEl = document.getElementById('cv-lore-loading');
             const contentEl = document.getElementById('cv-lore-content');
             if (!contentEl) return;
-            const table = wt ? Formacion._parseTopCutTable(wt) : null;
-            if (table && table.rows.length) {
-                contentEl.innerHTML = Formacion._renderTopCutTable(table);
-            } else {
-                const url = `https://yugipedia.com/wiki/${encodeURIComponent(ev.page.replace(/ /g, '_'))}`;
-                contentEl.innerHTML = `<p style="font-size:0.85rem;color:rgba(255,255,255,0.7);">No se pudo extraer una tabla de Top Cut automáticamente. <a href="${url}" target="_blank" rel="noopener" style="color:#FFD700;">Ver página completa en Yugipedia ↗</a></p>`;
-            }
+            const html = post && post.content ? post.content.rendered : '';
+            const rows = html ? Formacion._parseTopCutPlacements(html) : [];
+            contentEl.innerHTML = rows.length ? Formacion._renderTopCutTable(rows)
+                : `<p style="font-size:0.85rem;color:rgba(255,255,255,0.7);">No se pudo extraer la lista de posiciones automáticamente. Usa el link de abajo para ver el artículo completo.</p>`;
             if (loadingEl) loadingEl.style.display = 'none';
             contentEl.style.display = '';
         });
     },
 
-    _parseTopCutTable: function (wikitext) {
-        const headingRe = /^(={2,6})\s*(top cut|final standings|results|standings)\s*\1\s*$/gim;
-        const m = headingRe.exec(wikitext);
-        const searchFrom = m ? m.index : 0;
-        const tableStart = wikitext.indexOf('{|', searchFrom);
-        if (tableStart === -1) return null;
-        const tableEnd = wikitext.indexOf('|}', tableStart);
-        if (tableEnd === -1) return null;
-        const block = wikitext.slice(tableStart, tableEnd);
-
-        const rowsRaw = block.split(/\n\|-/).slice(1);
-        let headers = null;
+    _parseTopCutPlacements: function (html) {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        const text = div.textContent || '';
+        const re = /([A-ZÀ-ÿ][A-Za-zÀ-ÿ'.\-\s]{2,60}?)\s*[–—-]\s*(\d+)(?:st|nd|rd|th)\s*Place/g;
         const rows = [];
-        rowsRaw.forEach(chunk => {
-            const cells = chunk
-                .split(/\n\s*(?:\|\||!!|\||!)\s*/)
-                .map(c => CardViewer._wikitextToPlain(c.replace(/^\n/, '')).trim())
-                .filter(c => c.length);
-            if (!cells.length) return;
-            if (!headers && chunk.includes('!')) { headers = cells; return; }
-            rows.push(cells);
-        });
-        if (!rows.length) return null;
-        return { headers: headers || [], rows: rows.slice(0, 32) };
+        const seen = new Set();
+        let m;
+        while ((m = re.exec(text)) !== null && rows.length < 64) {
+            const name = m[1].trim();
+            const place = parseInt(m[2], 10);
+            const key = place + '|' + name;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            rows.push({ place, name });
+        }
+        rows.sort((a, b) => a.place - b.place);
+        return rows;
     },
 
-    _renderTopCutTable: function (table) {
+    _renderTopCutTable: function (rows) {
         return `
-            <table class="form-topcut-table" style="width:100%;border-collapse:collapse;font-size:0.82rem;">
-                ${table.headers.length ? `<thead><tr>${table.headers.map(h => `<th style="text-align:left;padding:4px 8px;color:#FFD700;border-bottom:1px solid rgba(255,255,255,0.15);">${h}</th>`).join('')}</tr></thead>` : ''}
+            <table class="form-topcut-table" style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead><tr>
+                    <th style="text-align:left;padding:4px 8px;color:#FFD700;border-bottom:1px solid rgba(255,255,255,0.15);">Lugar</th>
+                    <th style="text-align:left;padding:4px 8px;color:#FFD700;border-bottom:1px solid rgba(255,255,255,0.15);">Duelista</th>
+                </tr></thead>
                 <tbody>
-                    ${table.rows.map(r => `<tr>${r.map(c => `<td style="padding:4px 8px;color:#eee;border-bottom:1px solid rgba(255,255,255,0.06);">${c}</td>`).join('')}</tr>`).join('')}
+                    ${rows.map(r => `<tr>
+                        <td style="padding:4px 8px;color:#FFD700;font-weight:700;border-bottom:1px solid rgba(255,255,255,0.06);">${r.place}°</td>
+                        <td style="padding:4px 8px;color:#eee;border-bottom:1px solid rgba(255,255,255,0.06);">${r.name}</td>
+                    </tr>`).join('')}
                 </tbody>
             </table>
         `;
