@@ -4770,7 +4770,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
         setTimeout(() => { if (window.Duelista) Duelista.refreshSection(); }, 0);
         return html;
     },
-    downloadDecklist: async function() {
+        downloadDecklist: async function() {
         const loadingMsg = document.createElement('div');
         loadingMsg.id = 'decklist-loading';
         loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;min-width:260px;';
@@ -4787,26 +4787,42 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 .sort((a, b) => this.compareCards(a, b, 'side')).map(([, c]) => c);
 
             // ── Parámetros de layout ──
-            const SCALE      = 2;          // resolución x2
-            const PAD        = 30 * SCALE;
-            const CARD_W     = 75 * SCALE;
-            const CARD_H     = 110 * SCALE;
-            const GAP_X      = 10 * SCALE;
-            const GAP_Y      = 14 * SCALE;
-            const COLS       = 10;
-            const SECTION_GAP = 40 * SCALE;
-            const TITLE_H    = 60 * SCALE;
-            const SECTION_H  = 36 * SCALE;
-            const NAME_H     = 28 * SCALE;  // altura reservada para nombre bajo la carta
-            const BADGE_R    = 13 * SCALE;
-            const ROLE_H     = 70 * SCALE;
-            const CANVAS_W   = PAD * 2 + COLS * CARD_W + (COLS - 1) * GAP_X;
+            const SCALE       = 2;             // resolución x2
+            const S           = v => v * SCALE;
+            const PAD         = S(30);
+            const CARD_W      = S(53);         // -30% aprox vs las 75 originales
+            const CARD_H      = S(77);         // -30% aprox vs las 110 originales
+            const GAP_X       = S(6);
+            const GAP_Y       = S(8);
+            const COLS        = 15;            // Extra/Side (máx 15) caben en 1 sola fila
+            const SECTION_GAP = S(26);
+            const SECTION_H   = S(30);
+            const NAME_H      = S(16);
+            const BADGE_R     = S(10);
 
-            // ── Cargar todas las imágenes como HTMLImageElement vía blob ──
-            // images.ygoprodeck.com no manda Access-Control-Allow-Origin, así que
-            // cargar la imagen directo con crossOrigin='anonymous' siempre falla
-            // (necesario para toBlob() sin taintear el canvas). Se enruta vía
-            // wsrv.nl, un proxy de imágenes gratuito que sí agrega el header CORS.
+            const CARDS_W    = COLS * CARD_W + (COLS - 1) * GAP_X;
+            const COL_GAP    = S(30);          // separación entre cartas y sidebar
+            const SIDEBAR_W  = S(300);
+            const SIDEBAR_X  = PAD + CARDS_W + COL_GAP;
+            const CANVAS_W   = SIDEBAR_X + SIDEBAR_W + PAD;
+
+            // ── ID del deck guardado actualmente ──
+            let deckUid = '';
+            try {
+                const rawDeck = JSON.parse(localStorage.getItem(`deck_${this.name}`));
+                deckUid = (rawDeck && rawDeck.uid) || '';
+            } catch (e) { /* sin guardar aún */ }
+
+            // ── Carta As (para el arte junto al título) ──
+            const cartaAsItem = Object.values(this.cards).find(c => c.roles?.includes('Carta As'));
+            const cartaAsUrl  = cartaAsItem?.data?.card_images?.[0]?.image_url_small;
+            const ASCARD_W = S(68);
+            const ASCARD_H = S(100);
+
+            // TITLE_H reserva espacio extra si hay Carta As para dibujar
+            const TITLE_H = cartaAsUrl ? Math.max(S(78), ASCARD_H + S(16)) : S(78);
+
+            // ── Cargar todas las imágenes (main+extra+side, incluye Carta As) ──
             const CORS_PROXY = url => `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
             const loadImg = (url) => new Promise(resolve => {
                 const img = new Image();
@@ -4828,12 +4844,58 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             }));
             await new Promise(r => setTimeout(r, 300));
 
-            // ── Calcular roles del main ──
-            const rolesCount = {};
-            mainCards.forEach(item => {
-                (item.roles || []).forEach(r => { rolesCount[r] = (rolesCount[r] || 0) + item.qty; });
-            });
-            const roleEntries = Object.entries(rolesCount).sort((a, b) => b[1] - a[1]);
+            // ── Datos del sidebar (calculados ANTES de fijar el alto del canvas) ──
+            const range = this._getActiveVersionRange(this.name);
+            const versionSessions = range
+                ? this._sessionsInRange(this.name, range.startAt, range.endAt)
+                : ((this.getOptimizacion().sessions) || []);
+            const SESSION_MAX = 6;
+            const sessionsToShow   = versionSessions.slice().reverse().slice(0, SESSION_MAX);
+            const truncatedSess    = versionSessions.length > SESSION_MAX;
+
+            // Tu Experiencia con el Deck — solo campos NO vacíos (sin Manos
+            // Muertas, que va con el radar; sin Cartas Destacadas ni Sets).
+            const expD = this.getExperiencia();
+            const expLines = [];
+            if (expD.dificultad) expLines.push(`⭐ Dificultad: ${this.EXP_ESTRELLAS_LABELS[expD.dificultad - 1]} (${expD.dificultad}/5)`);
+            if (expD.estrategia) expLines.push(`🎯 Estrategia: ${expD.estrategia}`);
+            if (expD.variante)   expLines.push(`🧪 Variante: ${expD.variante}`);
+            if (expD.nonEngineSlots) expLines.push(`🔧 Non-Engine Slots: ${expD.nonEngineSlots}`);
+            {
+                const attrCounts = {}, raceCounts = {};
+                mainCards.forEach(item => {
+                    const t = (item.data?.type || '').toLowerCase();
+                    if (t.includes('spell') || t.includes('trap')) return;
+                    const qty = item.qty || 1;
+                    if (item.data.attribute) attrCounts[item.data.attribute] = (attrCounts[item.data.attribute] || 0) + qty;
+                    if (item.data.race)      raceCounts[item.data.race]      = (raceCounts[item.data.race] || 0) + qty;
+                });
+                const top = (obj, n) => Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n);
+                const attrTop = top(attrCounts, 3), raceTop = top(raceCounts, 3);
+                if (attrTop.length) expLines.push(`🌈 Atributos: ${attrTop.map(([a, q]) => `${a} x${q}`).join(', ')}`);
+                if (raceTop.length) expLines.push(`🧬 Tipos: ${raceTop.map(([r, q]) => `${r} x${q}`).join(', ')}`);
+            }
+
+            // ── Bloques fijos del sidebar (para calcular alto del canvas) ──
+            const SB_HEADER_H         = S(24);
+            const SB_SECTION_GAP      = S(20);
+            const RADAR_TOP_MARGIN    = S(28);
+            const RADAR_R             = S(55);
+            const RADAR_BOTTOM_MARGIN = S(74);   // labels 2 líneas + Manos Muertas + nota
+            const RADAR_BLOCK_H       = RADAR_TOP_MARGIN + RADAR_R * 2 + RADAR_BOTTOM_MARGIN;
+            const SESSION_ROW_H       = S(40);   // 3 líneas: label + Win/Brick/Starter Rate sin abreviar
+            const WINRATE_BLOCK_H     = S(70);
+            const EXP_LINE_H          = S(16);
+
+            const sessionsBlockH = sessionsToShow.length
+                ? sessionsToShow.length * SESSION_ROW_H + (truncatedSess ? SESSION_ROW_H : 0)
+                : SESSION_ROW_H;
+
+            const sidebarColH =
+                SB_HEADER_H + RADAR_BLOCK_H + SB_SECTION_GAP +
+                SB_HEADER_H + sessionsBlockH + SB_SECTION_GAP +
+                SB_HEADER_H + WINRATE_BLOCK_H + SB_SECTION_GAP +
+                (expLines.length ? SB_HEADER_H + expLines.length * EXP_LINE_H : 0);
 
             // ── Helper: altura de una sección de cartas ──
             const sectionHeight = (cards) => {
@@ -4841,14 +4903,10 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 const rows = Math.ceil(cards.length / COLS);
                 return SECTION_H + rows * (CARD_H + NAME_H + GAP_Y) + SECTION_GAP;
             };
+            const cardsColH = sectionHeight(mainCards) + sectionHeight(extraCards) + sectionHeight(sideCards);
 
-            // ── Altura total del canvas ──
-            let canvasH = PAD + TITLE_H;
-            if (mainCards.length)  canvasH += sectionHeight(mainCards);
-            if (extraCards.length) canvasH += sectionHeight(extraCards);
-            if (sideCards.length)  canvasH += sectionHeight(sideCards);
-            if (roleEntries.length) canvasH += SECTION_H + ROLE_H + SECTION_GAP;
-            canvasH += PAD;
+            // ── Altura total del canvas (más ancho que alto) ──
+            const canvasH = PAD + TITLE_H + Math.max(cardsColH, sidebarColH) + PAD;
 
             setMsg('⏳ Generando imagen...');
             let canvas  = document.createElement('canvas');
@@ -4856,87 +4914,245 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             canvas.height = canvasH;
             let ctx     = canvas.getContext('2d');
 
-            // Fondo blanco
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            let y = PAD;
+            // ── Helper: truncar texto a un ancho máximo ──
+            const fitText = (c, text, maxW) => {
+                let t = String(text || '');
+                if (c.measureText(t).width <= maxW) return t;
+                while (t.length > 1 && c.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+                return t + '…';
+            };
 
-            // ── Título ──
+            // ── Helper: gráfico de araña nativo en canvas (sin SVG, evita taint) ──
+            const drawRadarChart = (c, axes, cx, cy, R) => {
+                const angleFor = i => (Math.PI * 2 * i / axes.length) - Math.PI / 2;
+                const pt = (i, r) => { const a = angleFor(i); return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; };
+                [0.25, 0.5, 0.75, 1].forEach(lv => {
+                    c.beginPath();
+                    axes.forEach((_, i) => { const [px, py] = pt(i, R * lv); i === 0 ? c.moveTo(px, py) : c.lineTo(px, py); });
+                    c.closePath();
+                    c.strokeStyle = '#dddddd'; c.lineWidth = S(1); c.stroke();
+                });
+                axes.forEach((_, i) => {
+                    const [px, py] = pt(i, R);
+                    c.beginPath(); c.moveTo(cx, cy); c.lineTo(px, py);
+                    c.strokeStyle = '#cccccc'; c.lineWidth = S(1); c.stroke();
+                });
+                c.beginPath();
+                axes.forEach((a, i) => { const [px, py] = pt(i, R * (a.norm / 10)); i === 0 ? c.moveTo(px, py) : c.lineTo(px, py); });
+                c.closePath();
+                c.fillStyle = 'rgba(52,152,219,0.35)'; c.fill();
+                c.strokeStyle = '#3498db'; c.lineWidth = S(2); c.stroke();
+
+                // Etiqueta de cada eje + puntaje entre paréntesis debajo
+                axes.forEach((a, i) => {
+                    const angle = angleFor(i);
+                    const [px, py] = pt(i, R + S(18));
+                    const cos = Math.cos(angle);
+                    c.textAlign = cos > 0.35 ? 'left' : (cos < -0.35 ? 'right' : 'center');
+
+                    c.fillStyle = '#333333';
+                    c.font = `bold ${S(8)}px Arial`;
+                    c.fillText(fitText(c, a.label, S(95)), px, py);
+
+                    const scoreTxt = a.raw != null ? `(${Math.round(a.raw * 10) / 10}${a.unit})` : '(N/A)';
+                    c.fillStyle = '#888888';
+                    c.font = `${S(7)}px Arial`;
+                    c.fillText(scoreTxt, px, py + S(9));
+                });
+            };
+
+            let y  = PAD;   // cursor columna de cartas
+            let sy = PAD;   // cursor columna de sidebar
+
+            // ── Título: Carta As (si hay) + nombre + (ID) debajo ──
+            const hasAsImg = !!(cartaAsUrl && imgCache[cartaAsUrl]);
+            let titleX = CANVAS_W / 2, titleAlign = 'center';
+            if (hasAsImg) {
+                ctx.drawImage(imgCache[cartaAsUrl], PAD, PAD + S(4), ASCARD_W, ASCARD_H);
+                titleAlign = 'left';
+                titleX = PAD + ASCARD_W + S(16);
+            }
             ctx.fillStyle = '#222222';
-            ctx.font      = `bold ${28 * SCALE}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.fillText(this.name, CANVAS_W / 2, y + 40 * SCALE);
-            y += TITLE_H;
+            ctx.font      = `bold ${S(26)}px Arial`;
+            ctx.textAlign = titleAlign;
+            ctx.fillText(this.name, titleX, PAD + S(34));
+            if (deckUid) {
+                ctx.fillStyle = '#888888';
+                ctx.font      = `${S(13)}px Arial`;
+                ctx.fillText(`(${deckUid})`, titleX, PAD + S(56));
+            }
+            y  += TITLE_H;
+            sy += TITLE_H;
 
-            // ── Función para dibujar una sección ──
+            // ── Función para dibujar una sección de cartas ──
             const drawSection = (cards, label, lineColor) => {
                 if (!cards.length) return;
 
-                // Encabezado
                 ctx.fillStyle = '#2c3e50';
-                ctx.font      = `bold ${18 * SCALE}px Arial`;
+                ctx.font      = `bold ${S(15)}px Arial`;
                 ctx.textAlign = 'left';
-                ctx.fillText(label, PAD, y + 22 * SCALE);
+                ctx.fillText(label, PAD, y + S(19));
                 ctx.strokeStyle = lineColor;
-                ctx.lineWidth   = 3 * SCALE;
+                ctx.lineWidth   = S(3);
                 ctx.beginPath();
-                ctx.moveTo(PAD, y + 30 * SCALE);
-                ctx.lineTo(CANVAS_W - PAD, y + 30 * SCALE);
+                ctx.moveTo(PAD, y + S(25));
+                ctx.lineTo(PAD + CARDS_W, y + S(25));
                 ctx.stroke();
                 y += SECTION_H;
 
-                // Cartas
                 cards.forEach((item, i) => {
                     const col  = i % COLS;
                     const row  = Math.floor(i / COLS);
                     const x    = PAD + col * (CARD_W + GAP_X);
                     const cardY = y + row * (CARD_H + NAME_H + GAP_Y);
 
-                    // Imagen
                     const url = item.data?.card_images?.[0]?.image_url_small;
                     const img = url ? imgCache[url] : null;
                     if (img) {
                         ctx.drawImage(img, x, cardY, CARD_W, CARD_H);
                     } else {
-                        // Placeholder gris
                         ctx.fillStyle = '#cccccc';
                         ctx.fillRect(x, cardY, CARD_W, CARD_H);
                         ctx.fillStyle = '#888';
-                        ctx.font = `${9 * SCALE}px Arial`;
+                        ctx.font = `${S(9)}px Arial`;
                         ctx.textAlign = 'center';
                         ctx.fillText('?', x + CARD_W / 2, cardY + CARD_H / 2);
                     }
 
-                    // Badge cantidad
-                    const bx = x + CARD_W - BADGE_R + 4 * SCALE;
-                    const by = cardY + BADGE_R - 4 * SCALE;
+                    const bx = x + CARD_W - BADGE_R + S(4);
+                    const by = cardY + BADGE_R - S(4);
                     ctx.fillStyle = 'rgba(220,0,0,0.92)';
                     ctx.beginPath();
                     ctx.arc(bx, by, BADGE_R, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.fillStyle = '#ffffff';
-                    ctx.font      = `bold ${10 * SCALE}px Arial`;
+                    ctx.font      = `bold ${S(9)}px Arial`;
                     ctx.textAlign = 'center';
-                    ctx.fillText(`x${item.qty}`, bx, by + 4 * SCALE);
+                    ctx.fillText(`x${item.qty}`, bx, by + S(3));
 
-                    // Nombre
-                    const nameY = cardY + CARD_H + 4 * SCALE;
+                    const nameY = cardY + CARD_H + S(3);
                     ctx.fillStyle = '#222222';
-                    ctx.font      = `${8 * SCALE}px Arial`;
+                    ctx.font      = `${S(7)}px Arial`;
                     ctx.textAlign = 'center';
-                    // Truncar nombre si es muy largo
-                    let name = item.data?.name || '';
-                    const maxW = CARD_W - 4;
-                    if (ctx.measureText(name).width > maxW) {
-                        while (name.length > 1 && ctx.measureText(name + '…').width > maxW) name = name.slice(0, -1);
-                        name += '…';
-                    }
-                    ctx.fillText(name, x + CARD_W / 2, nameY + 10 * SCALE);
+                    const name = fitText(ctx, item.data?.name || '', CARD_W - S(4));
+                    ctx.fillText(name, x + CARD_W / 2, nameY + S(8));
                 });
 
                 const rows = Math.ceil(cards.length / COLS);
                 y += rows * (CARD_H + NAME_H + GAP_Y) + SECTION_GAP;
+            };
+
+            // ── Función para dibujar el sidebar de stats ──
+            const drawSidebar = () => {
+                const sbHeader = (title, color) => {
+                    ctx.fillStyle = '#2c3e50';
+                    ctx.font      = `bold ${S(13)}px Arial`;
+                    ctx.textAlign = 'left';
+                    ctx.fillText(title, SIDEBAR_X, sy + S(15));
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth   = S(2);
+                    ctx.beginPath();
+                    ctx.moveTo(SIDEBAR_X, sy + S(20));
+                    ctx.lineTo(SIDEBAR_X + SIDEBAR_W, sy + S(20));
+                    ctx.stroke();
+                    sy += SB_HEADER_H;
+                };
+
+                // 📡 Perfil de Rendimiento + Manos Muertas + nota
+                sbHeader('📡 PERFIL DE RENDIMIENTO', '#3498db');
+                const axes = this._getRendimientoAxes();
+                const anyAxisData = axes.some(a => a.has);
+                const radarCx = SIDEBAR_X + SIDEBAR_W / 2;
+                const radarCy = sy + RADAR_TOP_MARGIN + RADAR_R;
+                if (anyAxisData) {
+                    drawRadarChart(ctx, axes, radarCx, radarCy, RADAR_R);
+                } else {
+                    ctx.fillStyle = '#888888';
+                    ctx.font = `${S(9)}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Sin datos suficientes en Optimización', radarCx, radarCy);
+                }
+                const mm = this._getManosMuertasStat();
+                const mmY = sy + RADAR_TOP_MARGIN + RADAR_R * 2 + S(40);
+                ctx.fillStyle = '#222222';
+                ctx.font = `bold ${S(9)}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText(`🧱 Manos Muertas: ${mm.x}/${mm.y}`, radarCx, mmY);
+                ctx.fillStyle = '#999999';
+                ctx.font = `italic ${S(7)}px Arial`;
+                ctx.fillText('* Estos resultados son de la experiencia en rondas de duelo', radarCx, mmY + S(12));
+                ctx.fillText('registrados por el usuario de esta decklist.', radarCx, mmY + S(21));
+                sy += RADAR_BLOCK_H + SB_SECTION_GAP;
+
+                // 📊 Historial de Sesiones (versión actual) — chips sin abreviar
+                sbHeader('📊 HISTORIAL DE SESIONES (Versión Actual)', '#e67e22');
+                ctx.textAlign = 'left';
+                if (sessionsToShow.length) {
+                    sessionsToShow.forEach(sess => {
+                        const m = this.calcOptMetrics(sess);
+                        ctx.fillStyle = '#222222';
+                        ctx.font = `bold ${S(11)}px Arial`;
+                        const label = `${sess.date}${sess.label ? ' · ' + sess.label : ''}`;
+                        ctx.fillText(fitText(ctx, label, SIDEBAR_W), SIDEBAR_X, sy + S(11));
+
+                        ctx.fillStyle = '#444444';
+                        ctx.font = `${S(10)}px Arial`;
+                        ctx.fillText(`Score ${m.score}  —  Win Rate ${m.wr}%`, SIDEBAR_X, sy + S(24));
+                        ctx.fillText(`Brick Rate ${m.br}%  —  Starter Rate ${m.str}%`, SIDEBAR_X, sy + S(36));
+                        sy += SESSION_ROW_H;
+                    });
+                    if (truncatedSess) {
+                        ctx.fillStyle = '#888888';
+                        ctx.font = `italic ${S(9)}px Arial`;
+                        ctx.fillText(`+ ${versionSessions.length - SESSION_MAX} sesión(es) más...`, SIDEBAR_X, sy + S(10));
+                        sy += SESSION_ROW_H;
+                    }
+                } else {
+                    ctx.fillStyle = '#888888';
+                    ctx.font = `${S(10)}px Arial`;
+                    ctx.fillText('Sin sesiones registradas en esta versión.', SIDEBAR_X, sy + S(12));
+                    sy += SESSION_ROW_H;
+                }
+                sy += SB_SECTION_GAP;
+
+                // 🏆 Winrate del Deck (reemplaza a Roles)
+                sbHeader('🏆 WINRATE DEL DECK', '#27ae60');
+                const rounds = this._getCurrentVersionOptRounds();
+                if (rounds.length) {
+                    const wins = arr => arr.filter(x => x.resultado === 'victoria').length;
+                    const r1st = rounds.filter(r => r.orden === 'primero');
+                    const r2nd = rounds.filter(r => r.orden === 'segundo');
+                    const wrAll = Math.round((wins(rounds) / rounds.length) * 1000) / 10;
+                    const wr1st = r1st.length ? Math.round((wins(r1st) / r1st.length) * 1000) / 10 : null;
+                    const wr2nd = r2nd.length ? Math.round((wins(r2nd) / r2nd.length) * 1000) / 10 : null;
+                    ctx.fillStyle = '#222222';
+                    ctx.font = `bold ${S(15)}px Arial`;
+                    ctx.fillText(`General: ${wrAll}%`, SIDEBAR_X, sy + S(18));
+                    ctx.font = `${S(12)}px Arial`;
+                    ctx.fillText(`Going 1°: ${wr1st !== null ? wr1st + '%' : '—'}    Going 2°: ${wr2nd !== null ? wr2nd + '%' : '—'}`, SIDEBAR_X, sy + S(40));
+                    ctx.fillStyle = '#888888';
+                    ctx.font = `italic ${S(10)}px Arial`;
+                    ctx.fillText(`${rounds.length} duelo(s) — versión actual`, SIDEBAR_X, sy + S(58));
+                } else {
+                    ctx.fillStyle = '#888888';
+                    ctx.font = `${S(10)}px Arial`;
+                    ctx.fillText('Sin rondas registradas en Optimización.', SIDEBAR_X, sy + S(16));
+                }
+                sy += WINRATE_BLOCK_H + SB_SECTION_GAP;
+
+                // 🧭 Tu Experiencia con el Deck (solo campos no vacíos)
+                if (expLines.length) {
+                    sbHeader('🧭 TU EXPERIENCIA CON EL DECK', '#9b59b6');
+                    ctx.font = `${S(9)}px Arial`;
+                    ctx.fillStyle = '#222222';
+                    expLines.forEach(line => {
+                        ctx.fillText(fitText(ctx, line, SIDEBAR_W), SIDEBAR_X, sy + S(11));
+                        sy += EXP_LINE_H;
+                    });
+                }
             };
 
             drawSection(mainCards,  `MAIN DECK (${mainCards.reduce((s,c)=>s+c.qty,0)})`,  '#3498db');
@@ -4944,56 +5160,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             if (sideCards.length)
                 drawSection(sideCards, `SIDE DECK (${sideCards.reduce((s,c)=>s+c.qty,0)})`, '#7f8c8d');
 
-            // ── Roles ──
-            if (roleEntries.length) {
-                ctx.fillStyle = '#2c3e50';
-                ctx.font      = `bold ${18 * SCALE}px Arial`;
-                ctx.textAlign = 'left';
-                ctx.fillText('ROLES', PAD, y + 22 * SCALE);
-                ctx.strokeStyle = '#e74c3c';
-                ctx.lineWidth   = 3 * SCALE;
-                ctx.beginPath();
-                ctx.moveTo(PAD, y + 30 * SCALE);
-                ctx.lineTo(CANVAS_W - PAD, y + 30 * SCALE);
-                ctx.stroke();
-                y += SECTION_H + 6 * SCALE;
-
-                const PILL_H   = 22 * SCALE;
-                const PILL_PAD = 12 * SCALE;
-                const PILL_GAP = 8 * SCALE;
-                let rx = PAD;
-                let ry = y;
-
-                ctx.font = `bold ${9 * SCALE}px Arial`;
-                roleEntries.forEach(([role, count]) => {
-                    const label = `${role}: ${count}`;
-                    const tw    = ctx.measureText(label).width;
-                    const pw    = tw + PILL_PAD * 2;
-
-                    if (rx + pw > CANVAS_W - PAD) { rx = PAD; ry += PILL_H + PILL_GAP; }
-
-                    // Píldora
-                    ctx.fillStyle = '#3498db';
-                    const radius  = PILL_H / 2;
-                    ctx.beginPath();
-                    ctx.moveTo(rx + radius, ry);
-                    ctx.lineTo(rx + pw - radius, ry);
-                    ctx.arcTo(rx + pw, ry, rx + pw, ry + PILL_H, radius);
-                    ctx.lineTo(rx + pw, ry + PILL_H - radius);
-                    ctx.arcTo(rx + pw, ry + PILL_H, rx + pw - radius, ry + PILL_H, radius);
-                    ctx.lineTo(rx + radius, ry + PILL_H);
-                    ctx.arcTo(rx, ry + PILL_H, rx, ry + PILL_H - radius, radius);
-                    ctx.lineTo(rx, ry + radius);
-                    ctx.arcTo(rx, ry, rx + radius, ry, radius);
-                    ctx.closePath();
-                    ctx.fill();
-
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillText(label, rx + PILL_PAD, ry + PILL_H / 2 + 3 * SCALE);
-
-                    rx += pw + PILL_GAP;
-                });
-            }
+            drawSidebar();
 
             // ── Descargar ──
             try {
@@ -5009,8 +5176,6 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                     loadingMsg.remove();
                 });
             } catch(e) {
-                // Canvas taintado: reintentar en un canvas NUEVO sin imágenes
-                // (reusar el mismo canvas no sirve, el taint es permanente).
                 console.warn('Canvas taintado, descargando sin imágenes:', e);
                 Object.keys(imgCache).forEach(k => { imgCache[k] = null; });
 
@@ -5018,19 +5183,25 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 canvas2.width  = CANVAS_W;
                 canvas2.height = canvasH;
                 const ctx2 = canvas2.getContext('2d');
-                ctx = ctx2; canvas = canvas2; // reasignar para reusar drawSection()
+                ctx = ctx2; canvas = canvas2;
 
                 ctx.fillStyle = '#ffffff';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                y = PAD;
+                y = PAD; sy = PAD;
                 ctx.fillStyle = '#222222';
-                ctx.font = `bold ${28 * SCALE}px Arial`;
+                ctx.font = `bold ${S(26)}px Arial`;
                 ctx.textAlign = 'center';
-                ctx.fillText(this.name, CANVAS_W / 2, y + 40 * SCALE);
-                y += TITLE_H;
+                ctx.fillText(this.name, CANVAS_W / 2, y + S(34));
+                if (deckUid) {
+                    ctx.fillStyle = '#888888';
+                    ctx.font      = `${S(13)}px Arial`;
+                    ctx.fillText(`(${deckUid})`, CANVAS_W / 2, y + S(56));
+                }
+                y += TITLE_H; sy += TITLE_H;
                 drawSection(mainCards,  `MAIN DECK (${mainCards.reduce((s,c)=>s+c.qty,0)})`,  '#3498db');
                 drawSection(extraCards, `EXTRA DECK (${extraCards.reduce((s,c)=>s+c.qty,0)})`, '#9b59b6');
                 if (sideCards.length) drawSection(sideCards, `SIDE DECK (${sideCards.reduce((s,c)=>s+c.qty,0)})`, '#7f8c8d');
+                drawSidebar();
                 canvas.toBlob(blob => {
                     const url = URL.createObjectURL(blob);
                     const a   = document.createElement('a');
