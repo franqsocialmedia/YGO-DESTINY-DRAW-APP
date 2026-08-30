@@ -3609,8 +3609,8 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                   desc: 'Winrate en rondas con interrupción o rotura de campo del rival.', has: false },
                 { key: 'followup', label: 'Versatilidad (Capacidad de Respuesta)', raw: null, unit: '%', norm: 0,
                   desc: 'Winrate jugando de segundo (remontar sin ventaja de turno).', has: false },
-                { key: 'eficiencia', label: 'Eficiencia (Balance entre Engines)', raw: null, unit: '%', norm: 0,
-                  desc: 'Inverso del exceso de handtraps en mano (3+) — evita slots desperdiciados en interacción reactiva.', has: false }
+                { key: 'grinding', label: 'Grinding (Recursividad del Deck)', raw: null, unit: '%', norm: 0,
+                  desc: 'Qué tanto aguanta el deck duelos largos — más turnos alcanzados = mejor, ganarlos suma extra.', has: false }
             ];
         }
 
@@ -3656,11 +3656,25 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             followUp = Math.round(interrFirstPct * 10) / 10;
         }
 
-        // 5. Eficiencia — inverso del exceso de slots reactivos en mano:
-        // handtraps (3+) o boardbreakers (3+). Se cuenta la ronda una sola
-        // vez aunque exceda en ambos (no se penaliza doble).
-        const excesoRounds = rounds.filter(r => (r.handtraps || 0) >= 3 || (r.boardbreakers || 0) >= 3).length;
-        const eficiencia = Math.round((100 - (excesoRounds / total) * 100) * 10) / 10;
+                // 5. Grinding (Recursividad del Deck) — qué tanto resiste el deck
+        // duelos que se extienden. Solo cuenta rondas con turno registrado
+        // (turnoVictoria o turnoDerrota). Cada ronda aporta un puntaje según
+        // el turno alcanzado (tope en GRIND_TURN_REF, turno 6+ = 100%);
+        // si esa ronda se GANÓ, cuenta completo; si se PERDIÓ, cuenta con
+        // descuento (GRIND_LOSS_FACTOR) — perder en turno 6 sigue mostrando
+        // que el deck aguanta, pero vale menos que ganarlo.
+        const GRIND_TURN_REF = 6;
+        const GRIND_LOSS_FACTOR = 0.7;
+        const grindRounds = rounds.filter(r => (r.turnoVictoria || r.turnoDerrota));
+        let grinding = null;
+        if (grindRounds.length) {
+            const sum = grindRounds.reduce((a, r) => {
+                const turn = r.turnoVictoria || r.turnoDerrota;
+                const base = Math.min(1, turn / GRIND_TURN_REF) * 100;
+                return a + (r.resultado === 'victoria' ? base : base * GRIND_LOSS_FACTOR);
+            }, 0);
+            grinding = Math.round((sum / grindRounds.length) * 10) / 10;
+        }
 
         return [
             { key: 'consistencia', label: 'Consistencia', raw: consist, unit: '%', norm: pct10(consist),
@@ -3671,8 +3685,8 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
               desc: '(Resiliencia) Winrate en rondas con interrupción o rotura de campo del rival.', has: !!resil },
             { key: 'followup', label: 'Versatilidad', raw: followUp, unit: '%', norm: pct10(followUp),
               desc: '(Capacidad de Adaptación) Winrate tomando en cuenta la capacidad de ir de primero y de ir segundo.', has: followUp != null },
-            { key: 'eficiencia', label: 'Eficiencia', raw: eficiencia, unit: '%', norm: pct10(eficiencia),
-              desc: '(Balance entre Engines) Equilibrio para no solo abrir solo con Handtraps y Boardbreakers.', has: true }
+            { key: 'grinding', label: 'Grinding', raw: grinding, unit: '%', norm: pct10(grinding),
+              desc: '(Recursividad del Deck) Qué tan bien aguanta duelos largos — llegar a turnos altos puntúa, ganarlos puntúa más.', has: grinding != null }
         ];
     },
         // Manos Muertas reales de la versión actual (x/y) — ya no alimenta un eje
@@ -3768,7 +3782,7 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
                 Los 5 ejes se calculan sobre <strong>todas las rondas de todas tus sesiones de 🎯 Optimización</strong>
                 para este deck: Consistencia (al menos 1 Starter en mano), Ceiling (calidad
                 de tus victorias + tasa de FTK), Resiliencia (winrate bajo interrupción/rotura de campo rival),
-                Versatilidad (winrate jugando de segundo) y Eficiencia (inverso del exceso de handtraps en mano).
+                Versatilidad (winrate jugando de segundo) y Grinding (qué tanto resiste duelos largos, según turno alcanzado).
                 Mientras más rondas registres, más confiable es el gráfico.
             </p>`;
         }
