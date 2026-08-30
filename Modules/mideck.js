@@ -3573,6 +3573,28 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
               desc: '% del Main que es Non-Engine sin sacrificar el plan de juego — más alto = Engine más compacto y eficiente.', has: eficiencia != null }
         ];
     },
+
+
+    // Score del Deck (Versión Actual) — promedio ponderado de los 5 ejes del
+    // radar (ya agregan TODAS las sesiones de la versión, no una sola racha),
+    // menos penalización por Manos Muertas. Reutiliza los mismos rangos de
+    // clasificación que el score de sesión (getSessionScoreBadge).
+    DECK_SCORE_AXIS_WEIGHTS: { consistencia: 0.25, resiliencia: 0.25, grinding: 0.20, followup: 0.15, ceiling: 0.15 },
+    DECK_SCORE_MM_PENALTY_MAX: 20, // puntos máximos a restar si el 100% de las manos fueron muertas
+
+    _getDeckScoreFromRadar: function (axes, mm) {
+        const weights = this.DECK_SCORE_AXIS_WEIGHTS;
+        const available = axes.filter(a => a.has && weights[a.key] != null);
+        if (!available.length) return null;
+        const totalWeight = available.reduce((a, x) => a + weights[x.key], 0);
+        const weightedSum = available.reduce((a, x) => a + (x.norm / 10) * 100 * weights[x.key], 0);
+        let score = weightedSum / totalWeight;
+        if (mm && mm.y > 0) {
+            score -= (mm.x / mm.y) * this.DECK_SCORE_MM_PENALTY_MAX;
+        }
+        return Math.max(0, Math.round(score * 10) / 10);
+    },
+
     // ── Rendimiento: gráfico de araña de 6 ejes + Winrate ──
     // Los 6 ejes salen 100% de 🎯 Optimización (TODAS las rondas de TODAS
     // las sesiones registradas para este deck, no solo la última sesión).
@@ -3757,11 +3779,16 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             };
         })() : null;
         const anyData = axes.some(a => a.has);
+        const mm = this._getManosMuertasStat();
+        const deckScore = anyData ? this._getDeckScoreFromRadar(axes, mm) : null;
 
         let radarHtml = `<p class="exp-empty">Sin datos suficientes — registra al menos ${this.EXP_RADAR_MIN_ROUNDS} rondas en 🎯 Optimización (Registro de Ronda de Duelo) para generar el gráfico.</p>`;
         if (anyData) {
-            const mm = this._getManosMuertasStat();
             radarHtml = `
+            <div class="exp-radar-score-header">
+                <span class="exp-radar-score-label">🧭 Puntaje del Deck (Versión Actual)</span>
+                <span class="opt-score-main ${this.getSessionScoreBadge(deckScore)[1]}">${deckScore} pts · ${this.getSessionScoreBadge(deckScore)[0]}</span>
+            </div>
             ${this._buildRendimientoRadarSvg(axes)}
             <div class="exp-radar-legend">
                 ${axes.map(a => `
