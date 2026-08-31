@@ -4831,8 +4831,8 @@ calcOptTrend: function(curr, prev, higherIsBetter) {
             const SCALE       = 2;             // resolución x2
             const S           = v => v * SCALE;
             const PAD         = S(30);
-            const CARD_W      = S(53);         // -30% aprox vs las 75 originales
-            const CARD_H      = S(77);         // -30% aprox vs las 110 originales
+            const CARD_W      = S(53 * 1.4);   // +40% sobre el tamaño anterior
+            const CARD_H      = S(77 * 1.4);   // +40% sobre el tamaño anterior
             const GAP_X       = S(6);
             const GAP_Y       = S(8);
             const COLS        = 15;            // Extra/Side (máx 15) caben en 1 sola fila
