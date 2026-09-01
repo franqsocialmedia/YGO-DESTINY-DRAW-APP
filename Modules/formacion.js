@@ -48,6 +48,9 @@ const Formacion = {
         { id: 'optimizar-deck',             label: 'Cómo Optimizar tu Deck',            level: 'Avanzado' },
         { id: 'equilibrio-deck',            label: 'Equilibrio del Deck: Detectando Excesos', level: 'Avanzado' },
         { id: 'redundancia-lineas-alternativas', label: 'Redundancia y Líneas Alternativas de Combo', level: 'Avanzado' },
+        { id: 'sub-juegos-modernos',     label: 'Sub Juegos de Yu-Gi-Oh! Moderno',  level: 'Avanzado' },
+        { id: 'mentalidad-sub-games',    label: 'Mentalidad para Jugar Sub-Games',  level: 'Avanzado' },
+        { id: 'piramide-invertida-poder', label: 'La Pirámide Invertida de Poder',  level: 'Avanzado' },
 // ── MÓDULO 4 — Motor Técnico del Juego ──
         { id: 'cadenas-prioridad',       label: 'Cadenas, Prioridad y Spell Speed', level: 'Básico' },
         { id: 'rulings-invocaciones',    label: 'Rulings de Invocaciones',          level: 'Intermedio' },
@@ -1085,7 +1088,41 @@ const Formacion = {
               options: ['El ATK total del deck', 'La capacidad Anti-META del deck — qué tan preparado está para interrumpir al meta, información directamente útil para decidir qué tech traer del Side', 'La cantidad de cartas Prohibidas que tiene', 'El nivel de dificultad de pilotaje'], correct: 1,
               explain: 'Ver sección 5.3bis del reporte técnico: mide capacidad Anti-META usando los mismos pares mecánica/counter de Config → Counters, insumo directo para decidir el side plan.' },
         ],
+        'mentalidad-sub-games': [
+            { q: 'Según la mentalidad de "jugar los sub-games", ¿dónde debe concentrarse tu presupuesto de práctica?',
+              options: ['Por igual en las 24 fases del duelo', 'En el punto de mayor apalancamiento de la partida — el cruce de hand-trap/board-breaker que decide el turno', 'Solo en memorizar el mayor combo posible sin importar interrupciones', 'En el Side Deck exclusivamente'], correct: 1,
+              explain: 'Como el diseño actual concentra tanto valor en 1-2 cruces, ese es el punto de mayor apalancamiento — el equivalente a jugar bien el preflop en poker.' },
+            { q: '¿Qué significa "jugar contra el out más probable" en vez de contra todos los outs posibles?',
+              options: ['Ignorar totalmente que el rival pueda tener una respuesta', 'Ponderar la probabilidad real de cada out y no sobre-jugar por miedo a una carta rara, evitando regalar valor gratis', 'Jugar siempre la línea más agresiva sin importar el rival', 'Sacar todas las Handtraps del deck'], correct: 1,
+              explain: 'Sobre-jugar contra un out improbable cuesta tempo y recursos innecesarios — hay que balancear riesgo real contra probabilidad.' },
+            { q: '¿Qué es "bait" (carnada) en el contexto de un cruce de sub-game?',
+              options: ['Colocar cartas boca abajo al azar', 'Comprometer primero el recurso menos valioso de tu línea para gastar la Handtrap rival ahí, y reservar tu pieza clave', 'Pasar el turno sin jugar nada', 'Mostrarle la mano al rival'], correct: 1,
+              explain: 'Es la otra cara de jugar alrededor de outs: en vez de solo evitarlos, induces al rival a gastar su respuesta en el momento que a ti te conviene.' },
+            { q: 'En deckbuilding, ¿por qué conviene variedad de tipos de Handtrap (negación de monstruo, magia/trampa, invocación) y no solo cantidad?',
+              options: ['Porque las reglas de torneo lo exigen', 'Para no depender de que el rival juegue justo la carta que tu único tipo de Handtrap contesta', 'Porque las Handtraps repetidas están limitadas a 1 copia', 'No hay ninguna razón real, es solo preferencia estética'], correct: 1,
+              explain: 'Si todas tus Handtraps cubren el mismo tipo de efecto, quedas expuesto a cualquier línea rival que no dispare específicamente ese tipo de respuesta.' },
+            { q: '¿Qué actitud describe correctamente la "disciplina emocional frente a la varianza" en este contexto?',
+              options: ['Culparte por perder cualquier cruce, ganado o no', 'Separar el resultado (ganaste/perdiste el cruce) del proceso (¿la decisión fue correcta con la información disponible?)', 'Asumir que perder un cruce siempre fue mala suerte, nunca mala decisión', 'Dejar de practicar porque el juego "ya está decidido por diseño"'], correct: 1,
+              explain: 'Perder el cruce no implica que la decisión fue mala — evaluar el proceso, no solo el resultado, es clave para mejorar de verdad.' },
+        ],
 
+        'piramide-invertida-poder': [
+            { q: 'En el modelo de la Pirámide Invertida, ¿cuáles son las 3 capas de abajo hacia arriba?',
+              options: ['Interacción, Motor, Tablero Final', 'Motor, Interacción, Tablero Final', 'Tablero Final, Interacción, Motor', 'Motor, Tablero Final, Interacción'], correct: 1,
+              explain: 'La base es el Motor (starters/extensores), el medio es la Interacción (Handtraps/negados), y arriba el Tablero Final (el payoff).' },
+            { q: '¿Por qué se dice que la capa de "Interacción" es la más delgada de las tres?',
+              options: ['Porque tiene menos cartas en el deck que las otras capas', 'Porque en la práctica se reduce a un solo cruce de cartas que decide si el Motor llega a completarse', 'Porque las Handtraps están todas prohibidas', 'Porque no afecta el resultado de la partida'], correct: 1,
+              explain: 'A diferencia del Motor (redundante) y el Tablero Final (la recompensa), la Interacción suele resolverse en un único intercambio de cartas.' },
+            { q: '¿Por qué la redundancia excesiva del Motor no lo hace necesariamente "sólido en el buen sentido"?',
+              options: ['Porque más redundancia siempre es mala', 'Porque puede volverlo casi irrompible, desbalanceando aún más la pirámide en vez de darle margen real al rival', 'Porque redundancia y Motor son conceptos no relacionados', 'Porque las reglas de torneo limitan la redundancia'], correct: 1,
+              explain: 'Un Motor con demasiados caminos redundantes hace que ni siquiera perder la interacción garantice frenarlo, agravando el desbalance de la pirámide.' },
+            { q: '¿Qué caracteriza a una pirámide de poder "sana" según el modelo?',
+              options: ['Base angosta sosteniendo una punta enorme', 'Base ancha (muchos sub-juegos posibles) sosteniendo una punta pequeña y proporcional', 'Las 3 capas deben tener exactamente el mismo tamaño', 'No debería existir ninguna capa de Tablero Final'], correct: 1,
+              explain: 'Un diseño sano reparte el margen de decisión en la base amplia, dejando la recompensa (punta) proporcional a lo que costó conseguirla.' },
+            { q: 'Según el modelo, ¿qué deberías evaluar en tu propio deck además de "qué tan fuerte es mi tablero final"?',
+              options: ['Nada más, el tablero final es lo único que importa', 'Qué tan angosta es tu base de interacción — un tablero brutal apoyado en una sola Handtrap es tan inestable como el del rival', 'Solo el costo en dólares del deck', 'El nivel de Complejidad del Deck exclusivamente'], correct: 1,
+              explain: 'Un tablero final imponente no compensa una base de interacción frágil — la pirámide sigue invertida y sigue siendo inestable.' },
+        ],
         'reglas-torneo-juez': [
             { q: 'Según las Guías de Penalización oficiales de Konami, ¿cuáles son categorías reales de infracción?',
               options: ['Solo "Trampa" y "No Trampa"', 'Deck/Deck List Errors, Drawing Extra Cards, Procedural Error, y Unsporting Conduct (entre otras)', 'No existen categorías oficiales', 'Solo aplican en el Campeonato Mundial'], correct: 1,
@@ -2588,6 +2625,7 @@ _ptLongPressStart: function (iid, ev) {
 
     _renderTopicTab: function (topic) {
         const mastered = this._getMastered();
+        
         const html     = this._getTopicContent(topic.id);
         return `
             <div class="form-topic-container">
@@ -2706,6 +2744,9 @@ _ptLongPressStart: function (iid, ev) {
             'reglas-torneo-juez':      this._topicReglasTorneoJuez(),
             'notas-durante-duelo':     this._topicNotasDuranteDuelo(),
             'manejo-reloj-tiempo':     this._topicManejoRelojTiempo(),
+            'sub-juegos-modernos':      this._topicSubJuegosModernos(),
+            'mentalidad-sub-games':     this._topicMentalidadSubGames(),
+            'piramide-invertida-poder': this._topicPiramideInvertida(),
         };
         return topics[topicId] || '<p>Contenido no disponible.</p>';
     },
@@ -3282,7 +3323,104 @@ _topicBo1VsBo3: function () { return `
             usando las <strong>ramificaciones</strong> (combos hijos por choke point/variante) — es el registro explícito de tu redundancia real.
         </p>
     `; },
+    _topicSubJuegosModernos: function () { return `
+        <h2 class="form-nb-title">Sub Juegos de Yu-Gi-Oh! Moderno</h2>
+        <p class="form-nb-text">Un "sub-juego" es cualquier mini-interacción dentro de una partida donde ambos jugadores tienen una decisión real y uno puede quedar mejor parado que el otro — una mano de póker, un intercambio neutral en un fighting game. Un buen juego reparte muchos sub-juegos a lo largo de la partida, para que el resultado final refleje una acumulación de pequeñas victorias, no una sola tirada de dados.</p>
 
+        <h3 class="form-nb-subtitle">⚠️ El Problema del Yu-Gi-Oh! Moderno</h3>
+        <p class="form-nb-text">El formato actual comprime casi todas las decisiones importantes en uno o dos cruces tempranos, y cada uno de esos cruces vale demasiado. Ganar el primero suele bastar para anular por completo el turno del rival — sin margen para que "la próxima ronda" lo compense, como sí pasa en otros TCG.</p>
+
+        <h3 class="form-nb-subtitle">🖐️ El Hand-Trap Minigame</h3>
+        <p class="form-nb-text">El sub-juego más determinante: cuando el rival juega su Starter, ¿tienes una <strong>Handtrap</strong> para pararlo (Ash Blossom & Joyous Spring, Droll & Lock Bird, Mulcharmy Fuwalos)? Tiene una capa extra — no alcanza con que tú tengas la tuya, también importa si el rival tiene su propia respuesta para proteger su Starter.</p>
+
+        <h3 class="form-nb-subtitle">🧱 El Board-Breaker Minigame</h3>
+        <p class="form-nb-text">Si dejas que el rival complete su tablero, todo pasa a depender de si sacaste una carta capaz de romperlo (un Boardbreaker). A diferencia del hand-trap minigame, este casi no llega a jugarse en la práctica: quien gana el primer cruce ya deja al otro sin capacidad de generar más puntos de decisión.</p>
+
+        <h3 class="form-nb-subtitle">🔍 Otros Sub-Juegos Puntuales</h3>
+        <ul class="form-nb-list">
+            <li>Qué Starter liderar considerando si el rival puede tener Infinite Impermanence en mano.</li>
+            <li>Resolver un efecto en cadena que termina revelando toda la mano del rival.</li>
+            <li>Efectos tipo Fate Seal, que dan información perfecta de la carta que el rival acaba de robar.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Ya que el diseño actual concentra tanto valor en muy pocos cruces, identificar CUÁL es el sub-juego relevante de tu matchup (¿hand-trap o board-breaker?) es el primer paso — el resto de tu plan de juego se construye alrededor de ganar ese cruce específico.</p>
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Registra tus choke points de hand-trap/board-breaker en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck','combos'); return false;">Mi Deck → 🧬 Línea de Combos</a>,
+            y revisa cuántos negados/breakers estás abriendo en promedio con
+            <a href="#" class="form-link" onclick="Formacion.goToTab('simuladores'); return false;">Simuladores → 🎲 Mulligan</a>.
+        </p>
+    `; },
+
+    _topicMentalidadSubGames: function () { return `
+        <h2 class="form-nb-title">Mentalidad para Jugar Correctamente los Sub-Games</h2>
+        <p class="form-nb-text">Entender que el juego se decide en 1-2 cruces de alto valor no es solo teoría de diseño — cambia directamente cómo debes prepararte, jugar y procesar el resultado de cada partida.</p>
+
+        <h3 class="form-nb-subtitle">🏗️ Antes de Jugar (Deckbuilding)</h3>
+        <ul class="form-nb-list">
+            <li>Maximiza la probabilidad de abrir una Handtrap viva en mano inicial, priorizando variedad de efecto (negación de monstruo, de magia/trampa, de invocación) sobre depender de un solo tipo.</li>
+            <li>Incluye cartas que "caven" en el mazo (dig/search) para aumentar la chance de encontrar tu out específico.</li>
+            <li>Evita líneas que dependan 100% de un solo punto de falla — si toda tu combo cae con un solo negado, regalas el sub-juego completo por una carta rival.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">⚔️ Durante el Cruce (Ejecución)</h3>
+        <ul class="form-nb-list">
+            <li>Conoce de memoria múltiples líneas para cada mano posible, incluyendo la versión "¿y si esto se niega acá?" — la ventaja real está en la cantidad de repeticiones practicadas, no en la suerte.</li>
+            <li>Secuencia para "bait": juega primero las cartas menos importantes de tu línea para gastar la Handtrap rival ahí, reservando tu pieza clave para después.</li>
+            <li>Lee al rival — cartas en mano, ritmo de juego y conocimiento del meta ayudan a inferir si probablemente guarda un out antes de comprometer tus recursos.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🧘 Mentalidad</h3>
+        <ul class="form-nb-list">
+            <li>Concentra tu presupuesto mental y de práctica en el punto de mayor apalancamiento de la partida — es literalmente el equivalente a jugar bien el preflop en poker.</li>
+            <li>Juega "contra el out más probable", no contra todos los outs posibles — sobre-jugar por miedo a una carta rara regala valor gratis.</li>
+            <li>Separa el resultado (ganaste o perdiste el cruce) del proceso (¿tomaste la decisión correcta con la información disponible?) — disciplina emocional frente a la varianza.</li>
+        </ul>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('mentalidad-sub-games')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Registra tus rondas jugando de segundo en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck'); return false;">Mi Deck → 🎯 Optimización</a>
+            (campo "Boardbreaker en mano") para medir objetivamente si tu preparación contra ese cruce específico está funcionando.
+        </p>
+    `; },
+
+    _topicPiramideInvertida: function () { return `
+        <h2 class="form-nb-title">La Pirámide Invertida de Poder</h2>
+        <p class="form-nb-text">Un modelo para entender por qué perder un único cruce en Yu-Gi-Oh! moderno puede definir toda la partida: la estructura de poder de un deck competitivo se puede pensar en 3 capas apiladas.</p>
+
+        <h3 class="form-nb-subtitle">⚙️ Motor (la base)</h3>
+        <p class="form-nb-text">Starters y extensores — las piezas que arrancan y desarrollan tu combo. En teoría debería ser la capa más ancha y estable, con muchos caminos redundantes. En la práctica, la redundancia excesiva de los engines modernos la vuelve casi irrompible por sí sola.</p>
+
+        <h3 class="form-nb-subtitle">🖐️ Interacción (el medio)</h3>
+        <p class="form-nb-text">Handtraps y negados — lo que decide si el motor llega a completarse o se frena a mitad de camino. Es la capa más delgada de las tres: en la práctica, un solo cruce de cartas.</p>
+
+        <h3 class="form-nb-subtitle">🏆 Tablero Final (la punta, pero la más ancha)</h3>
+        <p class="form-nb-text">El payoff — negados, monstruos de alto poder, el board completo. Es la recompensa por ganar la capa de interacción, y en el formato actual es desproporcionadamente pesada comparada con las otras dos.</p>
+
+        <h3 class="form-nb-subtitle">🔻 Por Qué Está "Invertida"</h3>
+        <p class="form-nb-text">En un juego sano, la base debería ser ancha (mucho margen, muchos sub-juegos posibles) sosteniendo una punta pequeña y proporcional arriba. En Yu-Gi-Oh! moderno la pirámide está literalmente al revés: una base angosta y frágil (un solo cruce de interacción) sostiene un tablero final enorme y desbalanceado. Por eso alcanza con ganar o perder una sola capa delgada para que toda la estructura se caiga para un lado.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Al evaluar tu propio deck, no te preguntes solo "¿qué tan fuerte es mi tablero final?" — pregúntate "¿qué tan angosta es mi base de interacción?". Un tablero brutal apoyado en un solo hand-trap es una pirámide tan inestable como la del rival.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('piramide-invertida-poder')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Compara visualmente tus 3 capas: Consistencia (motor) y Resiliencia (interacción) en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('estadisticas'); return false;">Estadísticas → Análisis de Deck</a>
+            frente a tu Techo de Poder G1+G2 en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck'); return false;">Mi Deck → 🧭 Tu Experiencia con el Deck → Rendimiento</a>.
+        </p>
+    `; },
     _topicPostboardPlanSide: function () { return `
         <h2 class="form-nb-title">Postboard: Plan de Side por Matchup</h2>
         <p class="form-nb-text">Conocer las reglas del Side Deck no es lo mismo que saber qué hacer con ellas. Esta lección es la estrategia: qué meter y qué sacar, matchup por matchup, antes de que empiece la partida 2.</p>
