@@ -24,6 +24,7 @@ const Formacion = {
         { id: 'tipos-cartas-basicas',    label: 'Tipos de Cartas Básicas',          level: 'Básico' },
         { id: 'tipos-cartas-especiales', label: 'Tipos de Cartas Especiales',       level: 'Básico' },
         { id: 'fusion-rulings',          label: 'Monstruos Fusión y sus Rulings',   level: 'Básico' },
+        { id: 'ritual-rulings',          label: 'Monstruos Ritual y sus Rulings',   level: 'Básico' },
         { id: 'sincronia-rulings',       label: 'Monstruos Sincronía y sus Rulings', level: 'Básico' },
         { id: 'xyz-rulings',             label: 'Monstruos Xyz y sus Rulings',      level: 'Básico' },
         { id: 'link-rulings',            label: 'Monstruos Link y sus Rulings',     level: 'Básico' },
@@ -48,9 +49,9 @@ const Formacion = {
         { id: 'optimizar-deck',             label: 'Cómo Optimizar tu Deck',            level: 'Avanzado' },
         { id: 'equilibrio-deck',            label: 'Equilibrio del Deck: Detectando Excesos', level: 'Avanzado' },
         { id: 'redundancia-lineas-alternativas', label: 'Redundancia y Líneas Alternativas de Combo', level: 'Avanzado' },
-        { id: 'sub-juegos-modernos',     label: 'Sub Juegos de Yu-Gi-Oh! Moderno',  level: 'Avanzado' },
+        { id: 'sub-juegos-modernos',     label: 'Sub Juegos de Yu-Gi-Oh! Moderno',  level: 'Intermedio' },
         { id: 'mentalidad-sub-games',    label: 'Mentalidad para Jugar Sub-Games',  level: 'Avanzado' },
-        { id: 'piramide-invertida-poder', label: 'La Pirámide Invertida de Poder',  level: 'Avanzado' },
+        { id: 'piramide-invertida-poder', label: 'La Pirámide Invertida de Poder',  level: 'Básico' },
 // ── MÓDULO 4 — Motor Técnico del Juego ──
         { id: 'cadenas-prioridad',       label: 'Cadenas, Prioridad y Spell Speed', level: 'Básico' },
         { id: 'rulings-invocaciones',    label: 'Rulings de Invocaciones',          level: 'Intermedio' },
@@ -892,7 +893,23 @@ const Formacion = {
               options: ['Solo en tu Main Phase', 'Solo en Battle Phase', 'Durante cualquier momento en que se pueda activar una Magia Rápida (incluido el turno del rival), a diferencia de una Magia de Fusión Normal', 'Nunca — no existen Magias de Fusión Rápidas'], correct: 2,
               explain: 'Una Magia Rápida de Fusión abre la ventana de reacción: puede activarse en el turno del rival, algo que una Magia de Fusión Normal no permite (solo Main Phase propia, sin cadena previa activa salvo excepciones).' },
         ],
-
+        'ritual-rulings': [
+            { q: '¿Qué carta es siempre indispensable para una Invocación Ritual (además del monstruo Ritual mismo)?',
+              options: ['Un Tuner en campo', 'Una Magia Ritual — normalmente la que el propio monstruo nombra en su texto', 'Un Xyz Material', 'Un Pendulum Scale'], correct: 1,
+              explain: 'La Invocación Ritual siempre pasa por una Magia Ritual, casi siempre nombrada explícitamente en el texto del monstruo Ritual correspondiente.' },
+            { q: '¿Cómo se paga el costo de una Invocación Ritual?', 
+              options: ['Liberando (tributando) desde el campo o la mano monstruos cuyo Nivel/Rank sume igual o más que el Nivel del Ritual', 'Descartando cartas del Extra Deck', 'Enviando cartas del Main Deck al cementerio al azar', 'No tiene costo, es automática'], correct: 0,
+              explain: 'El costo típico de una Magia Ritual es tributar monstruos (de mano o campo) que sumen igual o más Niveles que el monstruo Ritual a invocar — el excedente de Niveles no se devuelve.' },
+            { q: 'Si tributas monstruos cuya suma de Niveles SUPERA al del Ritual invocado, ¿qué pasa con el excedente?',
+              options: ['Se convierte en LP extra', 'Se pierde — no hay devolución ni compensación por el excedente de Niveles', 'Se guarda para la próxima Invocación Ritual', 'Cancela la invocación automáticamente'], correct: 1,
+              explain: 'El exceso de Niveles tributados no otorga ningún beneficio — simplemente se pierde, salvo que una carta específica diga lo contrario.' },
+            { q: 'Si la Invocación Ritual es negada (ej. Solemn Judgment) después de tributar los materiales, ¿los tributados regresan?',
+              options: ['Sí, siempre vuelven a la mano', 'No — tributar es el costo, y un costo ya pagado nunca se revierte aunque la invocación falle', 'Solo si eran monstruos de Nivel par', 'Vuelven al Extra Deck'], correct: 1,
+              explain: 'Igual que en Fusión y Sincronía, tributar es un costo pagado antes de resolver — negar la invocación no deshace ese costo.' },
+            { q: '¿Se puede Invocar Ritual un monstruo Ritual usando una Magia Ritual que NO sea la nombrada en su propio texto?',
+              options: ['Nunca, cada Ritual solo funciona con su Magia Ritual nombrada', 'Sí, si esa Magia Ritual (u otro efecto) lo permite genéricamente en su propio texto — algunas Magias Rituales genéricas invocan cualquier Ritual que cumpla el costo', 'Solo en Master Duel', 'Solo si el monstruo Ritual tiene Nivel 1'], correct: 1,
+              explain: 'Existen Magias Rituales genéricas (no ligadas a un solo monstruo) que permiten invocar cualquier Ritual que cumpla el requisito de Nivel/costo — no es una regla universal, depende del texto de la Magia usada.' },
+        ],
         'sincronia-rulings': [
             { q: 'Para una Invocación Sincro, la suma de niveles de los materiales debe…',
               options: ['Ser mayor o igual al Nivel del Sincro', 'Igualar exactamente el Nivel del Sincro, salvo que el Sincro diga "o menos"/"o más"', 'Ser cualquier valor, el nivel del Sincro es solo cosmético', 'Sumar siempre 8'], correct: 1,
@@ -2706,6 +2723,7 @@ _ptLongPressStart: function (iid, ev) {
             'estructura-efecto-carta': this._topicEstructuraEfecto(),
             'tipos-cartas-especiales': this._topicTiposCartasEspeciales(),
             'fusion-rulings':          this._topicFusionRulings(),
+            'ritual-rulings':          this._topicRitualRulings(),
             'sincronia-rulings':       this._topicSincroniaRulings(),
             'funciones-de-las-cartas': this._topicFuncionesCartas(),
             'palabras-tecnicas-juego': this._topicPalabrasTecnicas(),
@@ -3584,7 +3602,38 @@ _topicBo1VsBo3: function () { return `
             <a href="#" class="form-link" onclick="Formacion.goToTab('mideck','combos'); return false;">Mi Deck → 🧬 Línea de Combos</a>.
         </p>
     `; },
+    _topicRitualRulings: function () { return `
+        <h2 class="form-nb-title">Monstruos Ritual y sus Rulings</h2>
+        <p class="form-nb-text">El Ritual es la invocación de Extra Deck más antigua conceptualmente (aunque los monstruos Ritual viven en el Main Deck) — su costo de tributar Niveles exactos o superiores es la base para entender por qué "sobre-tributar" no es gratis.</p>
 
+        <h3 class="form-nb-subtitle">📜 La Magia Ritual es Obligatoria</h3>
+        <p class="form-nb-text">A diferencia de la Fusión de Contacto, no existe un "Ritual inherente" — siempre necesitas una <strong>Magia Ritual</strong> en cadena, casi siempre nombrada explícitamente en el texto del monstruo. Ej: <a href="#" class="form-link" onclick="Formacion.openCard('Preparation of Rites'); return false;">Preparation of Rites</a> busca la Magia Ritual específica, no el monstruo.</p>
+
+        <h3 class="form-nb-subtitle">⚖️ El Costo: Tributar por Niveles</h3>
+        <p class="form-nb-text">Se tributan monstruos (de mano o campo, según lo permita la Magia Ritual) cuya suma de Niveles sea <strong>igual o mayor</strong> al Nivel del monstruo Ritual. No es un tributo 1 a 1 como el de un Monstruo Nivel 5+ normal — es una suma libre de Niveles disponibles.</p>
+
+        <h3 class="form-nb-subtitle">🗑️ El Excedente se Pierde</h3>
+        <p class="form-nb-text">Si tributas de más (ej. sumás 10 Niveles para un Ritual de Nivel 8), el excedente de 2 Niveles no se devuelve ni compensa nada — simplemente se pierde. Por eso la eficiencia de tributo (llegar lo más exacto posible) es una consideración real de deckbuilding en decks Ritual.</p>
+
+        <h3 class="form-nb-subtitle">🚫 Negación y Costo ya Pagado</h3>
+        <p class="form-nb-text">Igual que en Fusión y Sincronía: tributar es el <strong>costo</strong> de la invocación, pagado antes de resolver. Si niegan la Invocación Ritual (Solemn Judgment, Solemn Strike), los monstruos ya tributados <strong>no regresan</strong> — perdiste el costo y no obtuviste el Ritual.</p>
+
+        <h3 class="form-nb-subtitle">🔀 Magias Rituales Genéricas</h3>
+        <p class="form-nb-text">Algunas Magias Rituales no están ligadas a un solo monstruo — permiten invocar cualquier Ritual que cumpla el requisito de Nivel/costo escrito en la Magia. Esto le da flexibilidad a un deck Ritual bien construido: no depende de sacar la combinación "Magia X + Monstruo X" exacta.</p>
+
+        <h3 class="form-nb-subtitle">💡 Consejo Clave</h3>
+        <p class="form-nb-text">Antes de tributar, calcula la combinación de Niveles más ajustada posible entre tus opciones disponibles — tributar de más es, en la práctica, quemar una carta de mano/campo sin ningún beneficio a cambio.</p>
+
+        <h3 class="form-nb-subtitle">🧪 Ponte a Prueba</h3>
+        ${this._renderQuiz('ritual-rulings')}
+
+        <h3 class="form-nb-subtitle">🛠️ Implementación en Destiny Draw!</h3>
+        <p class="form-nb-text">
+            Filtra en <strong>Buscador → ⚙ Filtros avanzados → Monstruo → Ritual</strong> para revisar la Magia Ritual asociada a cada carta.
+            Marca el choke point de negación de tu Invocación Ritual en
+            <a href="#" class="form-link" onclick="Formacion.goToTab('mideck','combos'); return false;">Mi Deck → 🧬 Línea de Combos</a>.
+        </p>
+    `; },
     _topicSincroniaRulings: function () { return `
         <h2 class="form-nb-title">Monstruos Sincronía y sus Rulings</h2>
         <p class="form-nb-text">La Sincronía introdujo el concepto de Tuner y la exigencia de niveles exactos. Entender sus rulings evita errores comunes de principiante, como asumir que cualquier combinación de niveles sirve o que los materiales siempre vuelven a la mano.</p>
