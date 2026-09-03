@@ -515,14 +515,36 @@ const Deck = {
             uid:      uid
         };
         this._activeVersionId = null;
-        localStorage.setItem(`deck_${this.name}`, JSON.stringify(deckData));
-        alert('Deck guardado');
+        if (!this._persistDeck(this.name, deckData)) return;
         this.render();
         if (window.Engines) Engines._renderSidebar();
         if (window.Estadisticas) {
             const panel = document.getElementById('deck-selector-panel');
             if (panel) panel.innerHTML = Estadisticas.renderDeckSelectorPanel();
         }
+    },
+
+    // Guarda deck_${name}; si localStorage está lleno, poda la versión más
+    // vieja del historial (la parte más pesada del guardado) y reintenta
+    // antes de avisar al usuario. Antes fallaba en silencio.
+    _persistDeck: function (name, deckData) {
+        for (let attempt = 0; attempt < 8; attempt++) {
+            try {
+                localStorage.setItem(`deck_${name}`, JSON.stringify(deckData));
+                alert('Deck guardado');
+                return true;
+            } catch (e) {
+                const isQuota = e && (e.name === 'QuotaExceededError' || e.code === 22);
+                if (!isQuota || !Array.isArray(deckData.versions) || !deckData.versions.length) {
+                    alert('❌ No se pudo guardar: almacenamiento local lleno.\n\nBorrá decks viejos o reducí el Historial de Versiones (Config → Zona de Borrado → Decks).');
+                    console.error('[Deck._persistDeck] localStorage lleno', e);
+                    return false;
+                }
+                deckData.versions.shift(); // descarta la versión más vieja y reintenta
+            }
+        }
+        alert('❌ No se pudo guardar: almacenamiento local lleno.');
+        return false;
     },
 // ── ID único del Deck (6 dígitos) ──────────────────────────────
     _generateUid: function () {
